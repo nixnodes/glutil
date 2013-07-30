@@ -1,0 +1,143 @@
+ * v0.9 RC1:
+ *
+ *   - Exception signal handlers (with internal trace)
+ *   - Added inverted regex match options (--iregex and --iregexi) (rev. 1)
+ *   - --(i)regex(i) and --exec matching applies to -d now too (rev .1)
+ *   - Added --raw: used with -d, dumps raw dirlog packets to stdout (filtering
+ *        applies) (rev. 2)
+ *   - Improved exception tracing (rev. 2)
+ *   - --(i)regex(i) and --exec matching applies to --dupechk now too (rev .2)
+ *   - Bugfix: -u (update) was not finding existing nuked folders properly (rev. 3)
+ *   - Various smaller bugfixes (rev. 3)
+ *   - Big performance optimization (~200%) on certain IO routines  - much faster
+ *      memory loading and data file writing (except during filesystem rebuild
+ *      mode -r) (rev. 3)
+ *   - Added --wbuffer, optional explicit write pre-caching (rev .4)
+ *   - Various smaller bugfixes (rev. 4)
+ *   - Bugfix: repeated slashes in path strings were causing mis-matches (rev. 5)
+ *   - Fixed some performance issues caused in revision 4 (rev. 6)
+ *   - SFV generation attempts to restore modification date after writing (rev. 7)
+ *   - Bugfix: --wbuffer mode was broken (especially when doing -r -u) (rev. 7)
+ *   - File copy procedures now use native IO functions instead of POSIX (rev. 7)
+ *   - Bugfix: backups weren't getting created before certain operations (rev. 7)
+ *
+ *
+ * v0.8:
+ *
+ *   - Added host and child process signal handlers (CTRL^C from child proc
+ *       is detected too)
+ *   - Added dirlog rebuild mode (-e or --rebuild) (rev. 1)
+ *   - Added --regex global regex filter (rev. 1)
+ *   - Multiple bugfixes (rev. 2)
+ *   - Added --regexi (case insensitive regex filter) (rev. 2)
+ *   - --(i)regex(i) made to work with -r mode (rev. 2)
+ *
+ * v0.7:
+ *
+ *   - Added --exec, command hook during certain parsing operations
+ *   - Fixed --exec to skip importing dirlog record, if call returns non-zero
+ *       (rev. 1)
+ *   - Added -y, follows symbolic links (default is to skip) (rev. 2)
+ *   - Bugfix: --dupechk wasn't checking if match string lenghts are the same (rev. 3)
+ *   - Bugfix: skipping empty directories was failing (since 0.7-1) ,
+ *   -   empty directories weren't getting detected 100% properly (rev. 4)
+ *   - Added --batch, outputs dirlog records non-formatted (for easier parsing with
+ *       external tools) (rev. 5)
+ *
+ * v0.6:
+ *
+ *  - Added --fix, attempts to correct differences between filesystem and dirlog
+ *     (works together with --check)
+ *  - Various bugfixes
+ *  - Got rid of unecessary explicit dirlog/nukelog IO functions
+ *     (g_fopen/g_close/g_read routines do everything now)
+ *  - Bugfix: -s was broken (since 0.6) (rev. 1)
+ *  - Bugfix: --check was processing nuked releases as non-nuked (since 0.6) (rev. 1)
+ *  - Bugfix: directory nuke status wasn't read properly from nukelog; in cases when
+ *      directory was nuked/unnuked multiple times, multiple records can exist in
+ *      nukelog - only last one should be read (rev. 2)
+ *  - Settings macro's can now be overriden from includes (usefull for storing
+ *      customized settings) (rev .3)
+ *  - Modified --fix to remove empty directories (rev. 4)
+ *  - File seeking 64 bit aligned (rev. 4)
+ *  - Code cleanup (rev .4)
+ *
+ * v0.5:
+ *
+ *  - Dirlog and nukelog now fully buffers into memory (large performance
+ *  	improvement); if data file is larger than DB_MAX_SIZE (--memlimit),
+ *  	buffering is not used (-v prints notices about this)
+ *  - Added --nobuffer, turns off buffering
+ *  - Bugfix: --siteroot didn't have any effect (rev. 2)
+ *  - Added --dupechk: looks for duplicate records within dirlog and prints
+ *      to stdout (rev. 3)
+ *  - Bugfix: command line options were not read properly in some cases (rev. 4)
+ *  - Added --memlimit, overrides the default max buffer limit defined by
+ *      DB_MAX_SIZE macro (rev. 4)
+ *  - Fixed command line args processing to abort & warn when not enough
+ *      parameters supplied (rev. 5)
+ *  - Added -u, updates dirlog instead of rebuilding it (used with -r) (rev. 6)
+ *
+ * v0.4:
+ *
+ *  - Added nukelog read capability
+ *  - Bugfix: now sets proper dir status by referencing nukelog,
+ *      instead of setting status based on directory nuke labels
+ *  - Added --nukedump - prints nukelog to stdout (formatted)
+ *  - While dumping dirlog (-d), looks up nukelog and prints nuke
+ *      stats, if any
+ *  - Verification (--check) now takes into account the nukelog:
+ *      checks if status flags (dirlog<->nukelog) match,
+ *      warns on missing nukelog entries
+ *  - Added --help
+ *  - Now does full siteroot recursion when .folders file is missing or -f
+ *      flag is given (rev. 1)
+ *  - Added regex skip filters at dirlog import (PREG_DIR_SKIP macro) (rev. 2)
+ *
+ *
+ * v0.3:
+ *
+ *  - Bugfix: dirlog data header was misaligned, added support
+ *     	for multiple gl versions (determined by GLVERSION var)
+ *  - Bugfix: absolute paths  instead of relative to root set used
+ *     	in dirname field of the data header
+ *  - Bugfix: nuked dirs imported without proper status set in data
+ *  	header
+ *  - Added -s option, imports individual folders; use quotation
+ *     	marks if adding multiple folders (e.g -s "/dir1 /dir2 /dir3")
+ *  - SFV generation, --sfv option when importing will generate
+ *     	new sfv files and remove existing ones
+ *  - Added --nowrite, acts normally except it does no actual writing
+ *  	(including SFV gen)
+ *  - Bugfix: on some systems, file type was not recognized properly by
+ *  	readdir, instead it now gets info from stat function (rev. 1)
+ *  - Bugfix: dirlog data was not displayer properly on 32 bit systems (rev. 2)
+ *  - Bugfix: failed creating new backup when one already existed (rev. 3)
+ *  - Added --glroot, --siteroot, --dirlog and --folders options (rev. 4)
+ *  - .folders file now requires paths relative to siteroot (no / needed in
+ *  	front) (rev. 4)
+ *  - Requires glconf.h from /bin/sources to determine proper headers, compile from
+ *  	that folder or set proper path to glconf.h in dirupdate.c (rev. 4)
+ *  - Command line arguments now use '=' with some options (e.g. glroot=/glftpd)
+ *  	(rev. 4)
+ *  - Stats output on write fixed (was not showing properly or not at all) (rev. 5)
+ *  - Output formatting fixed up a bit (rev. 5)
+ *  - Bugfix: --check output formatting was broken (rev. 5)
+ *  - Bugfix: -f (force) overwrite when doing -s was broken (rev. 6)
+ *  - Output formatting fix (rev. 6)
+ *  - Various small bugfixes and improvements in all revisions
+ *
+ * v0.2:
+ *
+ *  - Bugfix: directory handles weren't getting cleaned
+ *    	up on recursion, hitting max open handle limit.
+ *  - Flag parser, easy to add new command line arg options
+ *  - Added -r option (recursive dirlog generation), reads
+ *    	folders and depths from a file specified by DU_FLD
+ *  - Backs up dirlog before modifying it
+ *  - Added -v (verbose), -vv (more verbose) and -f
+ *    	(force) options
+ *  - Added -d (outputs records to stdout, formatted)
+ *  - Added --check, compares records in dirlog and filesystem
+ *   	and warns on differences
+ *
