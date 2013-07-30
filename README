@@ -11,18 +11,18 @@
  *
  * Installation:
  *
- *  - Copy dirupdate.c to /<glroot>/bin/sources
  *  - Install zlib development files (for crc32 calc)
  *  - Compile:
  *
+ *      cp dirupdate.c /<glroot>/bin/sources
  *      cd /<glroot>/bin/sources
- *      wget http://testing.nixnodes.net/c/dirupdate.c
  *      cc dirupdate.c -o ../dirupdate -lz -Wall -O3
  *
  *      Some warnings might pop up (should be safe)
+ *      glconf.h (found in /bin/sources) is needed to compile properly, make sure
+ *      it is in the same folder or change it's location in dirupdate.c 
  *
- *
- * Folders file (recursive rebuild only):
+ * 'dirupdate.folders' file (filesystem based rebuild only):
  *
  *  To avoid importing junk data into dirlog, a file defined by 'du_fld' macro
  *  in dirupdate.c (or at runtime with --folders argument) can be used when running
