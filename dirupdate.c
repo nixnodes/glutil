@@ -264,6 +264,7 @@ uLong crc32buf(uLong crc32, BYTE *buf, size_t len) {
 #define F_GH_FFBUFFER		0x10
 #define F_GH_WAPPEND		0x20
 #define F_GH_DFWASWIPED		0x40
+#define F_GH_DFNOWIPE		0x80
 
 #define F_EARG_SFV 			0x1
 
@@ -869,6 +870,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl);
 size_t g_load_data(FILE *fh, void *output, size_t max);
 int g_load_record(struct g_handle *hdl, const void *data);
 int remove_repeating_chars(char *string, char c);
+p_md_obj md_first(pmda md);
 
 void *f_ref[] = { "--nowbuffer", opt_g_buffering, (void*) 0, "--raw",
 		opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi, (void*) 1,
@@ -899,8 +901,9 @@ void *f_ref[] = { "--nowbuffer", opt_g_buffering, (void*) 0, "--raw",
 		opt_recursive_update_records, (void*) 0, NULL };
 
 int md_init(pmda md, int nm) {
-	if (md->objects)
+	if (md->objects) {
 		return 1;
+	}
 	bzero(md, sizeof(mda));
 	md->objects = calloc(nm, sizeof(md_obj));
 	md->count = nm;
@@ -914,7 +917,7 @@ int md_g_free(pmda md) {
 		return 1;
 
 	if (!(md->flags & F_MDA_REFPTR)) {
-		p_md_obj ptr = md->objects, ptr_s;
+		p_md_obj ptr = md_first(md), ptr_s;
 		while (ptr) {
 			ptr_s = ptr->next;
 			g_free(ptr->ptr);
@@ -929,7 +932,7 @@ int md_g_free(pmda md) {
 }
 
 AAINT md_relink(pmda md) {
-	AAINT off, l = 0;
+	off_t off, l = 0;
 
 	p_md_obj last = NULL, cur = md->objects;
 
@@ -945,6 +948,19 @@ AAINT md_relink(pmda md) {
 		cur++;
 	}
 	return l;
+}
+
+p_md_obj md_first(pmda md) {
+	off_t off = 0;
+	p_md_obj ptr = md->objects;
+
+	for (off = 0; off < md->count; off++, ptr++) {
+		if (ptr->ptr) {
+			return ptr;
+		}
+	}
+
+	return NULL;
 }
 
 #define MDA_MDALLOC_RE	0x1
@@ -1765,7 +1781,7 @@ int nukelog_print_stats(void) {
 	return 0;
 }
 
-#define 	ACT_WRITE_BUFFER_MEMBERS	1000
+#define 	ACT_WRITE_BUFFER_MEMBERS	50000
 
 int rebuild_dirlog(void) {
 	g_setjmp(0, "rebuild_dirlog", NULL, NULL);
@@ -1792,7 +1808,9 @@ int rebuild_dirlog(void) {
 	if (gfl & F_OPT_BUFFER) {
 		md_init(&actdl.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
 		actdl.block_sz = DL_SZ;
-		actdl.flags |= F_GH_FFBUFFER | F_GH_WAPPEND;
+		actdl.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
+				| (gfl & F_OPT_UPDATE ? F_GH_DFNOWIPE : 0);
+
 		actdl.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
 			printf("NOTE: %s: explicit write pre-caching enabled\n", DIRLOG);
@@ -2525,7 +2543,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			printf("NOTE: %s: filtering data..\n", file);
 		}
 
-		p_md_obj ptr = hdl->buffer.objects;
+		p_md_obj ptr = md_first(&hdl->buffer);
 
 		while (ptr) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
@@ -2621,7 +2639,8 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			hdl->fh = NULL;
 		}
 
-		if ((hdl->flags & F_GH_WAPPEND) && !(hdl->flags & F_GH_DFWASWIPED)) {
+		if (!(hdl->flags & F_GH_DFNOWIPE) && (hdl->flags & F_GH_WAPPEND)
+				&& !(hdl->flags & F_GH_DFWASWIPED)) {
 			if (remove(file)) {
 				printf("ERROR: %s: could not clean old data file\n", file);
 				ret = 9;
@@ -2702,9 +2721,9 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 	p_md_obj ptr;
 
 	if (hdl->flags & F_GH_FFBUFFER) {
-		ptr = hdl->w_buffer.objects;
+		ptr = md_first(&hdl->w_buffer);
 	} else {
-		ptr = hdl->buffer.objects;
+		ptr = md_first(&hdl->buffer);
 	}
 
 	size_t rw = 0;
@@ -2726,6 +2745,10 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 		}
 
 		ptr = ptr->next;
+	}
+
+	if (!hdl->bw) {
+		ret = 5;
 	}
 
 	g_setjmp(0, "flush_data_md(2)", NULL, NULL);
