@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 0.9-11 RC1
+ * Version     : 0.9-12 RC1
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  *
@@ -73,7 +73,7 @@
 
 #define VER_MAJOR 0
 #define VER_MINOR 9
-#define VER_REVISION 11
+#define VER_REVISION 12
 #define VER_STR "_RC1"
 
 typedef unsigned long long int ULLONG;
@@ -1157,7 +1157,7 @@ int main(int argc, char *argv[]) {
 		gfl |= F_OPT_HAS_G_REGEX;
 	}
 
-	if ((gfl & F_OPT_SFV) && updmode != UPD_MODE_RECURSIVE) {
+	if (!updmode && (gfl & F_OPT_SFV)) {
 		updmode = UPD_MODE_RECURSIVE;
 		if (!(gfl & F_OPT_NOWRITE)) {
 			gfl |= F_OPT_FORCEWSFV | F_OPT_NOWRITE;
