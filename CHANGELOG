@@ -21,6 +21,9 @@
  *   - File copy procedures now use native IO functions instead of POSIX (rev. 7)
  *   - Bugfix: backups weren't created before certain operations (rev. 7)
  *   - Bugfix: Backups were created twice in certain modes (rev. 8)
+ *   - Added corrupt dirlog detection to --check (invalid file size) (rev. 8)
+ *   - Filtering works with nukelog dumps (-n) (rev. 8)
+ *   - --fix removes ghost entries (rev. 8)
  *
  * v0.8:
  *
