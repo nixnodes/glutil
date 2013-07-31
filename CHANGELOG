@@ -29,6 +29,7 @@
  *   - --sfv now works standalone too (rev. 10)
  *   - Bugfix: Backup was not avoiding 0-byte data files (rev. 11)
  *   - Rebuild (-r) was broken (since rev. 10) (rev. 11)
+ *   - Bugfix: some in-memory searching routines were broken (rev. 11)
  *
  * v0.8:
  *
