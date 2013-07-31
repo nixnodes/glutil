@@ -1,7 +1,7 @@
  * Capabilities:
  *
  *  - Import individual/missing records or rebuild entire dirlog based on file-system
- * 		and nukelog data (see 'Folders file' description below)
+ * 		and nukelog data (read below)
  *  - Rebuild existing dirlog/nukelog using regex/custom filtering methods
  *  - Display dirlog/nukelog records in human readable formats
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
