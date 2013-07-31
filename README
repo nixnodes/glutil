@@ -88,3 +88,4 @@
  *
  *    If folders file is missing, it automatically does full siteroot recursion
  *    (same as '-f').
+ *
