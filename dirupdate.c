@@ -11,6 +11,44 @@
  *
  */
 
+#include "glconf.h"
+
+/* gl root  */
+#ifndef glroot
+#define glroot "/glftpd"
+#endif
+
+/* site root, relative to gl root */
+#ifndef siteroot
+#define siteroot "/site"
+#endif
+
+/* dirlog and nukelog locations */
+#ifndef dir_log
+#define dir_log "/glftpd/ftp-data/logs/dirlog"
+#endif
+
+#ifndef nuke_log
+#define nuke_log "/glftpd/ftp-data/logs/nukelog"
+#endif
+
+/* see README file about this */
+#ifndef du_fld
+#define du_fld "/glftpd/bin/dirupdate.folders"
+#endif
+
+#ifndef PREG_DIR_SKIP
+#define PREG_DIR_SKIP "\\/(Sample|Covers|Subs|Cover|Proof)$"
+#endif
+#ifndef PREG_SFV_SKIP
+#define PREG_SFV_SKIP PREG_DIR_SKIP
+#endif
+#ifndef PREG_SFV_SKIP_EXT
+#define PREG_SFV_SKIP_EXT "\\.(nfo|sfv)$"
+#endif
+
+/* -------------------------- */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,43 +64,10 @@
 #include <regex.h>
 #include <fcntl.h>
 #include <zlib.h>
-#include "glconf.h"
 #include <stdint.h>
 #include <inttypes.h>
 #include <signal.h>
 #include <setjmp.h>
-
-/* gl root  */
-#ifndef glroot
-#define glroot "/glftpd"
-#endif
-/* site root, relative to gl root */
-#ifndef siteroot
-#define siteroot "/site"
-#endif
-
-/* dirlog and nukelog locations */
-#ifndef dir_log
-#define dir_log "/glftpd/ftp-data/logs/dirlog"
-#endif
-#ifndef nuke_log
-#define nuke_log "/glftpd/ftp-data/logs/nukelog"
-#endif
-
-/* scroll to top to read description about this */
-#ifndef du_fld
-#define du_fld "/glftpd/bin/dirupdate.folders"
-#endif
-
-#ifndef PREG_DIR_SKIP
-#define PREG_DIR_SKIP "\\/(Sample|Covers|Subs|Cover|Proof)$"
-#endif
-#ifndef PREG_SFV_SKIP
-#define PREG_SFV_SKIP PREG_DIR_SKIP
-#endif
-#ifndef PREG_SFV_SKIP_EXT
-#define PREG_SFV_SKIP_EXT "\\.(nfo|sfv)$"
-#endif
 
 #define VER_MAJOR 0
 #define VER_MINOR 9
@@ -186,8 +191,8 @@ typedef struct sig_jmp_buf {
 
 #define V_MB				0x100000
 
-#define DL_SZ sizeof(struct dirlog)
-#define NL_SZ sizeof(struct nukelog)
+#define DL_SZ (int)sizeof(struct dirlog)
+#define NL_SZ (int)sizeof(struct nukelog)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 536870912   /* max file size allowed to load into memory */
@@ -197,6 +202,8 @@ typedef struct sig_jmp_buf {
 
 #define MSG_GEN_NODFILE "ERROR: could not open dirlog [%s]\n"
 #define MSG_GEN_DFWRITE "ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
+#define MSG_GEN_DFCORRU "ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
+#define MSG_GEN_DFRFAIL "ERROR: [%s] rebuilding data file failed!\n"
 
 #define F_SIGERR_CONTINUE 0x1  /* continue after exception */
 
@@ -470,7 +477,7 @@ char *hpd_up =
 				"                            operators {..} are overwritten with dirlog values\n"
 				"  -y, --followlinks     Follows symbolic links (default is to skip)\n"
 				"  --regex <match>       Regex match filter string, used during various operations.\n"
-				"                           can be used with -r, -e -p and -d\n"
+				"                           can be used with -r, -e -p, -d and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
@@ -939,6 +946,7 @@ void *md_unlink(pmda md, p_md_obj md_o) {
 
 	if (c_ptr) {
 		md->offset--;
+		md->pos = c_ptr;
 		if (!(md->flags & F_MDA_REFPTR) && md_o->ptr) {
 			g_free(md_o->ptr);
 			md_o->ptr = NULL;
@@ -1076,7 +1084,7 @@ int rebuild(void *arg) {
 		}
 
 		if (rebuild_data_file(DIRLOG, &actdl)) {
-			printf("ERROR: [%s] rebuilding data file failed!\n", DIRLOG);
+			printf(MSG_GEN_DFRFAIL, DIRLOG);
 			return 3;
 		}
 
@@ -1329,21 +1337,33 @@ int data_backup_records(char *file) {
 int dirlog_check_records(void) {
 	g_setjmp(0, "dirlog_check_records", NULL, NULL);
 	struct dirlog buffer, buffer4;
-	ear buffer3 = { 0 }, buffer5 = { 0 };
+	ear buffer3 = { 0 };
 	char s_buffer[255];
 	buffer3.dirlog = &buffer4;
 	int r = 0, r2;
 	char *mode = "r";
 	unsigned int flags = 0;
+	off_t dsz;
+
+	if ((dsz = get_file_size(DIRLOG)) % DL_SZ) {
+		printf(MSG_GEN_DFCORRU, DIRLOG, (ULLONG) dsz, DL_SZ);
+		printf("NOTE: use -r to rebuild (see --help)\n");
+		return -1;
+	}
 
 	if (gfl & F_OPT_FIX) {
-		mode = "r+";
-		flags = F_DL_FOPEN_FILE;
+		/*mode = "r+";
+		 flags = F_DL_FOPEN_FILE;*/
 		data_backup_records(DIRLOG);
 	}
 
 	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &actdl, DL_SZ)) {
 		return 2;
+	}
+
+	if (!actdl.buffer_count && gfl & F_OPT_FIX) {
+		printf(
+				"ERROR: internal buffering must be enabled when fixing, increase limit with --memlimit (see --help)\n");
 	}
 
 	struct dirlog *d_ptr = NULL;
@@ -1363,14 +1383,14 @@ int dirlog_check_records(void) {
 			if (d_ptr->status == 1 || d_ptr->status == 2) {
 				if (nukelog_find(d_ptr->dirname, 2, &n_buffer) == MAX_ULLONG) {
 					printf(
-							"WARNING: [%s] - was marked as '%sNUKED' in dirlog but not found in nukelog\n",
+							"WARNING: %s: was marked as '%sNUKED' in dirlog but not found in nukelog\n",
 							s_buffer, d_ptr->status == 2 ? "UN" : "");
 				} else {
 					if ((d_ptr->status == 1 && n_buffer.status != 0)
 							|| (d_ptr->status == 2 && n_buffer.status != 1)
 							|| (d_ptr->status == 0)) {
 						printf(
-								"WARNING: [%s] - MISMATCH: was marked as '%sNUKED' in dirlog, but nukelog reads '%sNUKED'\n",
+								"WARNING: %s: MISMATCH: was marked as '%sNUKED' in dirlog, but nukelog reads '%sNUKED'\n",
 								s_buffer, d_ptr->status == 2 ? "UN" : "",
 								n_buffer.status == 1 ? "UN" : "");
 					}
@@ -1381,9 +1401,15 @@ int dirlog_check_records(void) {
 
 			if (dir_exists(s_buffer)) {
 				printf(
-						"WARNING: [%s] - listed in dirlog but does not exist in filesystem\n",
+						"WARNING: %s: listed in dirlog but does not exist in filesystem\n",
 						s_buffer);
-				r++;
+				if (gfl & F_OPT_FIX) {
+					if (!md_unlink(&actdl.buffer, actdl.buffer.pos)) {
+						printf("ERROR: %s: unlinking ghost record failed\n",
+								s_buffer);
+					}
+					r++;
+				}
 				continue;
 			}
 
@@ -1392,7 +1418,7 @@ int dirlog_check_records(void) {
 					if (gfl & F_OPT_FIX) {
 						if (remove(s_buffer)) {
 							printf(
-									"WARNING: [%s] - failed removing empty directory\n",
+									"WARNING: %s: failed removing empty directory\n",
 									s_buffer);
 
 						} else {
@@ -1465,25 +1491,18 @@ int dirlog_check_records(void) {
 					printf("OK: %s\n", d_ptr->dirname);
 				}
 			} else {
-				if (gfl & F_OPT_FIX) {
-					int dr;
-					off_t offset = actdl.offset - 1;
-					if ((dr = dirlog_write_record(d_ptr, offset, SEEK_SET))) {
-						printf(MSG_GEN_DFWRITE, d_ptr->dirname, dr,
-								(ULLONG) offset, mode);
-						continue;
-					}
-					if (gfl & F_OPT_VERBOSE) {
-						printf("FIX: %s\n", d_ptr->dirname);
-					}
-					char ss_buffer[2048] = { 0 };
-					buffer5.dirlog = d_ptr;
-					if (dirlog_format_block(d_ptr->dirname, &buffer5, ss_buffer)
-							> 0) {
-						printf(ss_buffer);
-					}
+				if (gfl & F_OPT_VERBOSE2) {
+					printf("BAD: %s\n", d_ptr->dirname);
 				}
+
 			}
+		}
+
+	}
+
+	if (!(gfl & F_OPT_KILL_GLOBAL) && gfl & F_OPT_FIX && r) {
+		if (rebuild_data_file(DIRLOG, &actdl)) {
+			printf(MSG_GEN_DFRFAIL, DIRLOG);
 		}
 	}
 
@@ -1596,6 +1615,10 @@ int nukelog_print_stats(void) {
 			NULL);
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
+			}
+
+			if (g_bmatch(n_ptr, &actnl)) {
+				continue;
 			}
 
 			c++;
@@ -2464,7 +2487,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 						errno);
 				ret = 4;
 			}
-			//remove(hdl->s_buffer);
+//remove(hdl->s_buffer);
 		} else {
 			if ((r = rename(hdl->s_buffer, file))) {
 				printf("ERROR: %s: [%d] renaming temporary file failed!\n",
@@ -2655,9 +2678,7 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl,
 	}
 
 	if (st.st_size % block_sz) {
-		printf(
-				"ERROR: %s: corrupt dirlog detected! (data file size is not a multiple of block size) [%d]\n",
-				file, block_sz);
+		printf(MSG_GEN_DFCORRU, file, (ULLONG) st.st_size, block_sz);
 		return 12;
 	}
 
