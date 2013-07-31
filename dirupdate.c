@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 0.9-7 RC1
+ * Version     : 0.9-8 RC1
  * Depends     : zlib
  * Description : glftpd directory log manipulation tool
  * ============================================================================
@@ -66,7 +66,7 @@
 
 #define VER_MAJOR 0
 #define VER_MINOR 9
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR "_RC1"
 
 #define ULLONG unsigned long long int
@@ -1067,8 +1067,6 @@ int rebuild(void *arg) {
 		return 1;
 	}
 
-	data_backup_records(DIRLOG);
-
 	char *a_ptr = (char*) arg;
 
 	if (!strncmp(a_ptr, "dirlog", 6)) {
@@ -1314,11 +1312,15 @@ int data_backup_records(char *file) {
 
 	sprintf(buffer, "%s.bk", file);
 
-	if ((r = file_copy(file, buffer, "w")) == -1) {
+	if (gfl & F_OPT_VERBOSE2) {
+		printf("NOTE: %s: creating data backup: %s ..\n", file, buffer);
+	}
+
+	if ((r = file_copy(file, buffer, "w")) < 1) {
 		printf("ERROR: %s: [%d] failed to create backup %s\n", file, r, buffer);
 		return r;
 	}
-	if (gfl && F_OPT_VERBOSE) {
+	if (gfl & F_OPT_VERBOSE) {
 		printf("NOTE: %s: created data backup: %s\n", file, buffer);
 	}
 	return 0;
@@ -1642,14 +1644,6 @@ int rebuild_dirlog(void) {
 		g_strncpy(mode, "r", 2);
 	}
 
-	data_backup_records(DIRLOG);
-
-	if (g_fopen(DIRLOG, mode, flags, &actdl, DL_SZ)) {
-		printf("ERROR: could not open dirlog, mode '%s', flags %u\n", mode,
-				flags);
-		return errno;
-	}
-
 	if (gfl & F_OPT_BUFFER) {
 		md_init(&actdl.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
 		actdl.block_sz = DL_SZ;
@@ -1657,6 +1651,14 @@ int rebuild_dirlog(void) {
 		if (gfl & F_OPT_VERBOSE) {
 			printf("NOTE: %s: explicit write pre-caching enabled\n", DIRLOG);
 		}
+	} else {
+		data_backup_records(DIRLOG);
+	}
+
+	if (g_fopen(DIRLOG, mode, flags, &actdl, DL_SZ)) {
+		printf("ERROR: could not open dirlog, mode '%s', flags %u\n", mode,
+				flags);
+		return errno;
 	}
 
 	if (gfl & F_OPT_FORCE) {
@@ -2437,10 +2439,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (!(gfl & F_OPT_NOWRITE)) {
-
-		if ((r = (int) file_copy(file, buffer, "w")) == -1) {
-			printf("ERROR: %s: [%d] [%d] creating data backup failed!\n",
-					hdl->s_buffer, r, errno);
+		if (data_backup_records(DIRLOG)) {
 			ret = 3;
 			if (!(gfl & F_OPT_NOWRITE)) {
 				remove(hdl->s_buffer);

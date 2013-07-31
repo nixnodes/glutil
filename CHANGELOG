@@ -19,7 +19,8 @@
  *   - SFV generation attempts to restore modification date after writing (rev. 7)
  *   - Bugfix: --wbuffer mode was broken (especially when doing -r -u) (rev. 7)
  *   - File copy procedures now use native IO functions instead of POSIX (rev. 7)
- *   - Bugfix: backups weren't getting created before certain operations (rev. 7)
+ *   - Bugfix: backups weren't created before certain operations (rev. 7)
+ *   - Bugfix: Backuos were created twice in certain modes (rev. 8)
  *
  *
  * v0.8:
