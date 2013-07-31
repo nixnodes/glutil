@@ -24,6 +24,7 @@
  *   - Added corrupt dirlog detection to --check (invalid file size) (rev. 8)
  *   - Filtering works with nukelog dumps (-n) (rev. 8)
  *   - --fix removes ghost entries (rev. 8)
+ *   - zlib is no longer required (crc32 calculation is built in) (rev. 9)
  *
  * v0.8:
  *
