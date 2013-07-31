@@ -16,6 +16,7 @@
  *
  *      cp dirupdate.c /<glroot>/bin/sources
  *      cd /<glroot>/bin/sources
+ 		vi dirupdate.c  (set proper paths in upper variables)
  *      cc dirupdate.c -o ../dirupdate -lz -Wall -O3
  *
  *      Some warnings might pop up (should be safe)
