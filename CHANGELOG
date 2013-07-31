@@ -26,6 +26,7 @@
  *   - --fix removes ghost entries (rev. 8)
  *   - zlib is no longer required (crc32 calculation is built in) (rev. 9)
  *   - Made explicit write pre-caching default (turns off with --nowbuffer) (rev. 10)
+ *   - --sfv now works standalone too (rev. 10)
  *
  * v0.8:
  *
