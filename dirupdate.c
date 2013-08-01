@@ -5,7 +5,6 @@
  * Version     : 0.10 RC2
  * Description : glftpd directory log manipulation tool
  * ============================================================================
- *
  */
 
 #include "glconf.h"
@@ -559,8 +558,10 @@ char *hpd_up =
 				"                           .folders file (see README) defines a list of dirs in SITEROOT to scan\n"
 				"                           -u only imports new records and does not truncate existing dirlog\n"
 				"                           -f ignores .folders file and do a full recursive scan\n"
-				"  -d, --dump [--raw]    Print contents of entire dirlog in readable form to stdout (-vv prints dir nuke status)\n"
-				"  -n, --nukedump        Print contents of entire nukelog in readable form to stdout\n"
+				"  -d, [--raw]           Print directory log to stdout in readable format (-vv prints dir nuke status)\n"
+				"  -n, [--raw]           Print nuke log to stdout in readable format\n"
+				"  -i, [--raw]           Print dupe file to stdout in readable format\n"
+				"  -l, [--raw]           Print last-on log to stdout in readable format\n"
 				"  -c, --check [--fix]   Compare dirlog and filesystem records and warn on differences\n"
 				"                           --fix attempts to correct dirlog\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
@@ -579,7 +580,7 @@ char *hpd_up =
 				"  --sfv                 Generate new SFV files inside target folders, works with -r, -u and -s\n"
 				"                        Used by itself, it goes into -r (fs rebuild) mode, but does not change dirlog\n"
 				"                           Avoid using this if when doing a full recursive rebuild\n"
-				"  --exec <command {[base]dir}|{user}|{group}|{size}|.{files}|{time}|{nuker}|..\n"
+				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|..\n"
 				"          ..{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
