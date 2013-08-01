@@ -12,11 +12,11 @@
  *
  * Supported glFTPd data types (with default paths):
  *
- *  - Directory log (/ftp-data/logs/dirlog)
- *  - Nuke log (/ftp-data/logs/nukelog)
- *  - Dupe file (/ftp-data/logs/dupefile)
- *  - Last-online log (/ftp-data/logs/lastonlog)
- *  - Oneliners file (/ftp-data/logs/oneliners)
+ *  - Directory log    (/ftp-data/logs/dirlog)
+ *  - Nuke log         (/ftp-data/logs/nukelog)
+ *  - Dupe file        (/ftp-data/logs/dupefile)
+ *  - Last-online log  (/ftp-data/logs/lastonlog)
+ *  - Oneliners file   (/ftp-data/logs/oneliners)
  *
  * Installation:
  *
