@@ -1,3 +1,9 @@
+ * v0.10 RC2:
+ *
+ *   - Added support for dupefile and last-on log (filtering and
+ *       displaying in human readable format) (see --help) (added 
+ *       insertable vars for new data-types to --exec)
+ *
  * v0.9 RC1:
  *
  *   - Exception signal handlers (with internal trace)
