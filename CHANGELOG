@@ -3,6 +3,8 @@
  *   - Added support for dupefile and last-on log (filtering and
  *       displaying in human readable format) (see --help) (added 
  *       insertable vars for new data-types to --exec)
+ *   - Bugfix: flag collision (rev. 1)
+ *   - Added suport for onliners data file (rev. 1)
  *
  * v0.9 RC1:
  *
