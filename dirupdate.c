@@ -1027,7 +1027,7 @@ int md_g_free(pmda md) {
 }
 
 AAINT md_relink(pmda md) {
-	off_t off, l = 0;
+	off_t off, l = 1;
 
 	p_md_obj last = NULL, cur = md->objects;
 
@@ -1064,53 +1064,54 @@ void *md_alloc(pmda md, int b) {
 	int flags = 0;
 
 	if (md->offset >= md->count) {
-		if (md->flags & F_MDA_REUSE) {
-			int isf = 0;
+		/*if (md->flags & F_MDA_REUSE) {
+		 int isf = 0;
 
-			if ((md->flags & F_MDA_EOF) || !(md->flags & F_MDA_WAS_REUSED)) {
-				md->pos = md_first(md);
-				md->flags |= F_MDA_WAS_REUSED;
-				md->flags ^= F_MDA_EOF;
-				isf++;
-			}
+		 if ((md->flags & F_MDA_EOF) || !(md->flags & F_MDA_WAS_REUSED)) {
+		 md->pos = md_first(md);
+		 md->flags |= F_MDA_WAS_REUSED;
+		 if (md->flags & F_MDA_EOF) {
+		 md->flags ^= F_MDA_EOF;
+		 }
+		 isf++;
+		 }
 
-			p_md_obj c_pos = md->pos;
+		 p_md_obj c_pos = md->pos;
 
-			if (!c_pos->next) {
-				if (md->flags & F_MDA_EOF) {
-					return NULL;
-				} else {
-					md->flags |= F_MDA_EOF;
-				}
-			} else {
-				if (!isf) {
-					md->pos = c_pos->next;
-				}
-			}
+		 if (!c_pos->next) {
+		 if (md->flags & F_MDA_EOF) {
+		 return NULL;
+		 } else {
+		 md->flags |= F_MDA_EOF;
+		 }
+		 } else {
+		 //if (!isf) {
+		 md->pos = c_pos->next;
+		 //}
+		 }
 
-			return c_pos->ptr;
-		} else {
-			if (gfl & F_OPT_VERBOSE3) {
-				printf(
-						"NOTE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
-						(ULLONG) (AAINT) md->objects, (ULLONG) md->count);
-			}
-			md->objects = realloc(md->objects,
-					(md->count * sizeof(md_obj)) * 2);
-			md->pos = md->objects;
-			md->pos += md->count;
-			bzero(md->pos, md->count * sizeof(md_obj));
-
-			md->count *= 2;
-			AAINT rlc = md_relink(md);
-			flags |= MDA_MDALLOC_RE;
-			if (gfl & F_OPT_VERBOSE3) {
-				printf(
-						"NOTE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
-						(ULLONG) (AAINT) md->objects, (ULLONG) md->count,
-						(ULLONG) rlc);
-			}
+		 return c_pos->ptr;
+		 } else {*/
+		if (gfl & F_OPT_VERBOSE3) {
+			printf(
+					"NOTE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
+					(ULLONG) (AAINT) md->objects, (ULLONG) md->count);
 		}
+		md->objects = realloc(md->objects, (md->count * sizeof(md_obj)) * 2);
+		md->pos = md->objects;
+		md->pos += md->count;
+		bzero(md->pos, md->count * sizeof(md_obj));
+
+		md->count *= 2;
+		AAINT rlc = md_relink(md);
+		flags |= MDA_MDALLOC_RE;
+		if (gfl & F_OPT_VERBOSE3) {
+			printf(
+					"NOTE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
+					(ULLONG) (AAINT) md->objects, (ULLONG) md->count,
+					(ULLONG) rlc);
+		}
+
 	}
 
 	p_md_obj prev = md->pos;
@@ -1544,7 +1545,7 @@ int dirlog_update_record(char **argv) {
 	}
 	r_end: md_g_free(&dirchain);
 
-	printf("DIRLOG: wrote %llu bytes in %llu records\n", dl_stats.bw,
+	printf("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
 			dl_stats.rw);
 
 	return ret;
@@ -1965,7 +1966,7 @@ int dirlog_print_stats(void) {
 	return 0;
 }
 
-#define 	ACT_WRITE_BUFFER_MEMBERS	50000
+#define 	ACT_WRITE_BUFFER_MEMBERS	2
 
 int rebuild_dirlog(void) {
 	g_setjmp(0, "rebuild_dirlog", NULL, NULL);
@@ -2046,10 +2047,8 @@ int rebuild_dirlog(void) {
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
-		printf("NOTE: %s: allocating %u KBytes for references (overhead)\n",
-				DIRLOG,
-				(unsigned int) (ACT_WRITE_BUFFER_MEMBERS * sizeof(md_obj))
-						/ 1024);
+		printf("NOTE: %s: allocating %u B for references (overhead)\n", DIRLOG,
+				(unsigned int) (ACT_WRITE_BUFFER_MEMBERS * sizeof(md_obj)));
 	}
 
 	int i = 0, ib;
@@ -2113,7 +2112,7 @@ int rebuild_dirlog(void) {
 
 	g_close(&actdl);
 
-	printf("DIRLOG: wrote %llu bytes in %llu records\n", dl_stats.bw,
+	printf("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
 			dl_stats.rw);
 
 	return 0;
@@ -2827,10 +2826,12 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			if (g_bmatch(ptr->ptr, hdl)) {
 				if (!(ptr = md_unlink(&hdl->buffer, ptr))) {
 					if (!hdl->buffer.offset) {
-						printf(
-								"WARNING: %s: everything got filtered, refusing to write 0-byte data file\n",
-								file);
-						return 11;
+						if (!(gfl & F_OPT_FORCE)) {
+							printf(
+									"WARNING: %s: everything got filtered, refusing to write 0-byte data file\n",
+									file);
+							return 11;
+						}
 					} else {
 						printf(
 								"ERROR: %s: failed unlinking record entry after match!\n",
@@ -2866,6 +2867,8 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		printf("NOTE: %s: using mode %o\n", file, hdl->st_mode);
 	}
 
+	off_t rw_o = hdl->rw, bw_o = hdl->bw;
+
 	if ((r = flush_data_md(hdl, hdl->s_buffer))) {
 		if (r == 1) {
 			if (gfl & F_OPT_VERBOSE) {
@@ -2881,6 +2884,11 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		goto end;
 	}
 
+	if (gfl & F_OPT_VERBOSE2) {
+		printf("NOTE: %s: flushed %llu records, %llu bytes\n", file,
+				(ULLONG) (hdl->rw - rw_o), (ULLONG) (hdl->bw - bw_o));
+	}
+
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
 	if (gfl & F_OPT_KILL_GLOBAL) {
@@ -2893,7 +2901,9 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		return 0;
 	}
 
-	if (!(gfl & F_OPT_NOWRITE)
+	g_setjmp(0, "rebuild_data_file(4)", NULL, NULL);
+
+	if (!(gfl & F_OPT_FORCE) && !(gfl & F_OPT_NOWRITE)
 			&& (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz) {
 		printf(
 				"ERROR: %s: [%u/%u] generated data file is smaller than a single record!\n",
@@ -2906,9 +2916,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		goto end;
 	}
 
-	/*if ((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED)) {
-	 goto s_bkp;
-	 }*/
+	g_setjmp(0, "rebuild_data_file(5)", NULL, NULL);
 
 	if (!(gfl & F_OPT_NOWRITE)
 			&& !((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED))) {
@@ -2921,7 +2929,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		}
 	}
 
-	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
+	g_setjmp(0, "rebuild_data_file(6)", NULL, NULL);
 
 	if (!(gfl & F_OPT_NOWRITE)) {
 
@@ -2940,6 +2948,8 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			}
 			hdl->flags |= F_GH_DFWASWIPED;
 		}
+
+		g_setjmp(0, "rebuild_data_file(7)", NULL, NULL);
 
 		if (!strncmp(hdl->mode, "a", 1) || (hdl->flags & F_GH_WAPPEND)) {
 			if ((r = (int) file_copy(hdl->s_buffer, file, "a", F_FC_MSET_SRC))
@@ -2967,12 +2977,6 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 	g_setjmp(0, "g_load_record", NULL, NULL);
 	void *buffer = NULL;
 
-	if ((hdl->w_buffer.flags & F_MDA_EOF)) {
-		if (rebuild_data_file(hdl->file, hdl)) {
-			return 1;
-		}
-	}
-
 	buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
 
 	if (!buffer) {
@@ -2980,6 +2984,12 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 	}
 
 	memcpy(buffer, data, hdl->block_sz);
+
+	if ((hdl->w_buffer.flags & F_MDA_EOF)) {
+		if (rebuild_data_file(hdl->file, hdl)) {
+			return 1;
+		}
+	}
 
 	return 0;
 }
@@ -2993,13 +3003,15 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 
 	int ret = 0;
 
-	if (hdl->flags & F_GH_FFBUFFER) {
-		if (!hdl->w_buffer.offset) {
-			return 1;
-		}
-	} else {
-		if (!hdl->buffer_count) {
-			return 1;
+	if (!(gfl & F_OPT_FORCE)) {
+		if (hdl->flags & F_GH_FFBUFFER) {
+			if (!hdl->w_buffer.offset) {
+				return 1;
+			}
+		} else {
+			if (!hdl->buffer_count) {
+				return 1;
+			}
 		}
 	}
 
@@ -3040,7 +3052,7 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 		ptr = ptr->next;
 	}
 
-	if (!hdl->bw) {
+	if (!hdl->bw && !(gfl & F_OPT_FORCE)) {
 		ret = 5;
 	}
 
