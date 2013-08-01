@@ -1,4 +1,4 @@
- * Capabilities:
+ * Features:
  *
  *  - Import individual/missing records or rebuild entire dirlog based 
  * 		on file-system and nukelog data (read below)
