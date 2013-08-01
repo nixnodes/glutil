@@ -4,14 +4,14 @@
  *   - Added inverted regex match options (--iregex and --iregexi) (rev. 1)
  *   - --(i)regex(i) and --exec matching applies to -d now too (rev .1)
  *   - Added --raw: used with -d, dumps raw dirlog packets to stdout (filtering
- *        applies) (rev. 2)
+ *       applies) (rev. 2)
  *   - Improved exception tracing (rev. 2)
  *   - --(i)regex(i) and --exec matching applies to --dupechk now too (rev .2)
  *   - Bugfix: -u (update) was not finding existing nuked folders properly (rev. 3)
  *   - Various smaller bugfixes (rev. 3)
  *   - Big performance optimization (~200%) on certain IO routines  - much faster
- *      memory loading and data file writing (except during filesystem rebuild
- *      mode -r) (rev. 3)
+ *       memory loading and data file writing (except during filesystem rebuild
+ *       mode -r) (rev. 3)
  *   - Added --wbuffer, optional explicit write pre-caching (rev .4)
  *   - Various smaller bugfixes (rev. 4)
  *   - Bugfix: repeated slashes in path strings were causing mis-matches (rev. 5)
@@ -33,6 +33,9 @@
  *   - Bugfix: -s used with --sfv resulted in a recursive import (rev. 12)
  *   - Bugfix: permissions weren't inherited properly (rev. 13)
  *   - Bugfix: rebuild update mode (-r -u) failed when no existing dirlog (rev. 13)
+ *   - Bugfix: nukelog dump/filtering was not working properly (rev. 14)
+ *   - Bugfix: removed data records (in memory) were not unlinked properly, 
+ *       causing filtering to fail on first record in chain (rev. 14)
  *
  * v0.8:
  *
