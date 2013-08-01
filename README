@@ -20,8 +20,9 @@
  *      cc dirupdate.c -o ../dirupdate -Wall -O3
  *
  *      Some warnings might pop up (should be safe)
- *      glconf.h (found in /bin/sources) is needed to compile properly, make sure
- *      it is in the same folder or change it's location in dirupdate.c 
+ *      glconf.h (found in /bin/sources) is needed to compile properly,
+ *       make sure it is in the same folder or change it's location in 
+ *       dirupdate.c 
  *
  * 'dirupdate.folders' file (filesystem based rebuild only):
  *
