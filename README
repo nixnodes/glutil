@@ -2,8 +2,8 @@
  *
  *  - Import individual/missing records or rebuild entire dirlog based on file-system
  * 		and nukelog data (read below)
- *  - Rebuild existing dirlog/nukelog using regex/custom filtering methods
- *  - Display dirlog/nukelog records in human readable formats
+ *  - Rebuild existing glFTPd data files (dirlog,nukelog,dupefile, etc..) using regex/custom filtering methods
+ *  - Display various glFTPd data records in human readable formats
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
  *      fix them
  *  - Search for duplicates in dirlog
