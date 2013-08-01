@@ -31,6 +31,8 @@
  *   - Rebuild (-r) was broken (since rev. 10) (rev. 11)
  *   - Bugfix: some in-memory searching routines were broken (rev. 11)
  *   - Bugfix: -s used with --sfv resulted in a recursive import (rev. 12)
+ *   - Bugfix: permissions weren't inherited properly (rev. 13)
+ *   - Bugfix: rebuild update mode (-r -u) failed when no existing dirlog (rev. 13)
  *
  * v0.8:
  *
