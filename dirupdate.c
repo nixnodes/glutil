@@ -94,6 +94,9 @@ char ARCH = 0;
 #define _FILE_OFFSET_BITS 64
 #endif
 
+#define MAX_ULLONG 		0xFFFFFFFFFFFFFFFF
+#define MAX_ULONG 		0xFFFFFFFF
+
 typedef struct e_arg {
 	int depth;
 	unsigned int flags;
@@ -141,6 +144,7 @@ struct g_handle {
 	size_t buffer_count;
 	void *last;
 	char s_buffer[4096], file[4096], mode[32];
+	mode_t st_mode;
 };
 
 typedef struct sig_jmp_buf {
@@ -209,7 +213,7 @@ uLong crc32buf(uLong crc32, BYTE *buf, size_t len) {
 	if (crc32) {
 		oldcrc32 = crc32;
 	} else {
-		oldcrc32 = 0xFFFFFFFF;
+		oldcrc32 = MAX_ULONG;
 	}
 
 	for (; len; len--, buf++) {
@@ -268,6 +272,9 @@ uLong crc32buf(uLong crc32, BYTE *buf, size_t len) {
 
 #define F_EARG_SFV 			0x1
 
+#define F_FC_MSET_SRC	0x1
+#define F_FC_MSET_DEST	0x2
+
 #define V_MB				0x100000
 
 #define DL_SZ (int)sizeof(struct dirlog)
@@ -276,8 +283,6 @@ uLong crc32buf(uLong crc32, BYTE *buf, size_t len) {
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 536870912   /* max file size allowed to load into memory */
 
-#define MAX_ULLONG 0xFFFFFFFFFFFFFFFF
-#define MAX_ULONG 0xFFFFFFFF
 #define	PIPE_READ_MAX	0x2000
 
 #define MSG_GEN_NODFILE "ERROR: could not open dirlog [%s]\n"
@@ -822,7 +827,7 @@ int opt_membuffer_limit(void *arg, int m) {
 ULLONG file_crc32(char *file, uLong *crc_out);
 int rebuild_dirlog(void);
 int data_backup_records(char*);
-ssize_t file_copy(char *source, char *dest, char *mode);
+ssize_t file_copy(char *source, char *dest, char *mode, unsigned int flags);
 int dirlog_check_records(void);
 int dirlog_print_stats(void);
 int dirlog_format_block(char *name, ear *iarg, char *output);
@@ -1175,6 +1180,11 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)
+			&& !(gfl & F_OPT_MODE_RAWDUMP)) {
+		printf("NOTE: performing dry run, no writing will be done\n");
+	}
+
 	actdl.flags |= F_GH_ISDIRLOG;
 	actnl.flags |= F_GH_ISNUKELOG;
 
@@ -1462,7 +1472,7 @@ int data_backup_records(char *file) {
 		printf("NOTE: %s: creating data backup: %s ..\n", file, buffer);
 	}
 
-	if ((r = file_copy(file, buffer, "w")) < 1) {
+	if ((r = (int) file_copy(file, buffer, "w", F_FC_MSET_SRC)) < 1) {
 		printf("ERROR: %s: [%d] failed to create backup %s\n", file, r, buffer);
 		return r;
 	}
@@ -1798,30 +1808,39 @@ int rebuild_dirlog(void) {
 		g_strncpy(mode, "w+", 2);
 	}
 
-	g_strncpy(actdl.mode, mode, strlen(mode));
-
 	if (gfl & F_OPT_BUFFER) {
-		bzero(mode, 255);
-		g_strncpy(mode, "r", 2);
-	}
-
-	if (gfl & F_OPT_BUFFER) {
+		g_strncpy(actdl.mode, "r", 1);
 		md_init(&actdl.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
 		actdl.block_sz = DL_SZ;
 		actdl.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
-				| (gfl & F_OPT_UPDATE ? F_GH_DFNOWIPE : 0);
+				| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
 
 		actdl.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
 			printf("NOTE: %s: explicit write pre-caching enabled\n", DIRLOG);
 		}
 	} else {
+		g_strncpy(actdl.mode, mode, strlen(mode));
 		data_backup_records(DIRLOG);
 	}
 
-	if (g_fopen(DIRLOG, mode, flags, &actdl, DL_SZ)) {
-		printf("ERROR: could not open dirlog, mode '%s', flags %u\n", mode,
-				flags);
+	if ((gfl & F_OPT_UPDATE) && file_exists(DIRLOG)) {
+		printf(
+				"WARNING: %s: requested update, but no dirlog exists - removing update flag..\n",
+				DIRLOG);
+		gfl ^= F_OPT_UPDATE;
+		flags ^= F_DL_FOPEN_BUFFER;
+	}
+
+	if (!strncmp(actdl.mode, "r", 1) && file_exists(DIRLOG)) {
+		if (gfl & F_OPT_VERBOSE) {
+			printf(
+					"WARNING: %s: requested read mode access but file not there\n",
+					DIRLOG);
+		}
+	} else if (g_fopen(DIRLOG, actdl.mode, flags, &actdl, DL_SZ)) {
+		printf("ERROR: could not open dirlog, mode '%s', flags %u\n",
+				actdl.mode, flags);
 		return errno;
 	}
 
@@ -2022,10 +2041,6 @@ int update_records(char *dirname, int depth) {
 
 	arg.depth = depth;
 	arg.dirlog = &buffer;
-
-	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)) {
-		printf("NOTE: performing dry run, no writing will be done\n");
-	}
 
 	return enum_dir(dirname, proc_section, &arg, 0);
 
@@ -2522,6 +2537,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	g_setjmp(0, "rebuild_data_file", NULL, NULL);
 	int ret = 0, r;
 	off_t sz_r;
+	struct stat st;
 	char buffer[4096] = { 0 };
 
 	if (strlen(file) + 4 > 4096) {
@@ -2574,6 +2590,23 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		printf("NOTE: %s: flushing data to disk..\n", file);
 	}
 
+	hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
+	if (!file_exists(file)) {
+		if (stat(file, &st)) {
+			printf(
+					"WARNING: %s: could not get stats from data file! (chmod manually)\n",
+					file);
+		} else {
+			hdl->st_mode = 0;
+			hdl->st_mode |= st.st_mode;
+		}
+	}
+
+	if (gfl & F_OPT_VERBOSE2) {
+		printf("NOTE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
+	}
+
 	if ((r = flush_data_md(hdl, hdl->s_buffer))) {
 		if (r == 1) {
 			if (gfl & F_OPT_VERBOSE) {
@@ -2591,15 +2624,15 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
-	/*if (gfl & F_OPT_KILL_GLOBAL) {
-	 printf(
-	 "WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n",
-	 file);
-	 if (!(gfl & F_OPT_NOWRITE)) {
-	 remove(hdl->s_buffer);
-	 }
-	 return 0;
-	 }*/
+	if (gfl & F_OPT_KILL_GLOBAL) {
+		printf(
+				"WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n",
+				file);
+		if (!(gfl & F_OPT_NOWRITE)) {
+			remove(hdl->s_buffer);
+		}
+		return 0;
+	}
 
 	if (!(gfl & F_OPT_NOWRITE)
 			&& (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz) {
@@ -2614,11 +2647,12 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		goto end;
 	}
 
-	if ((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED)) {
-		goto s_bkp;
-	}
+	/*if ((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED)) {
+	 goto s_bkp;
+	 }*/
 
-	if (!(gfl & F_OPT_NOWRITE)) {
+	if (!(gfl & F_OPT_NOWRITE)
+			&& !((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED))) {
 		if (data_backup_records(DIRLOG)) {
 			ret = 3;
 			if (!(gfl & F_OPT_NOWRITE)) {
@@ -2627,8 +2661,6 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			goto end;
 		}
 	}
-
-	s_bkp:
 
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
@@ -2639,20 +2671,22 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			hdl->fh = NULL;
 		}
 
-		if (!(hdl->flags & F_GH_DFNOWIPE) && (hdl->flags & F_GH_WAPPEND)
+		if (!file_exists(file) && !(hdl->flags & F_GH_DFNOWIPE)
+				&& (hdl->flags & F_GH_WAPPEND)
 				&& !(hdl->flags & F_GH_DFWASWIPED)) {
 			if (remove(file)) {
 				printf("ERROR: %s: could not clean old data file\n", file);
 				ret = 9;
+				goto end;
 			}
 			hdl->flags |= F_GH_DFWASWIPED;
 		}
 
 		if (!strncmp(hdl->mode, "a", 1) || (hdl->flags & F_GH_WAPPEND)) {
-			if ((r = (int) file_copy(hdl->s_buffer, file, "a")) == -1) {
+			if ((r = (int) file_copy(hdl->s_buffer, file, "a", F_FC_MSET_SRC))
+					< 1) {
 				printf("ERROR: %s: [%d] merging temp file failed!\n",
-						hdl->s_buffer,
-						errno);
+						hdl->s_buffer, r);
 				ret = 4;
 			}
 
@@ -2755,6 +2789,10 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 
 	g_free(buffer);
 	g_fclose(fh);
+
+	if (hdl->st_mode) {
+		chmod(outfile, hdl->st_mode);
+	}
 
 	return ret;
 }
@@ -3277,10 +3315,17 @@ int file_exists(char *file) {
 	return r;
 }
 
-ssize_t file_copy(char *source, char *dest, char *mode) {
+ssize_t file_copy(char *source, char *dest, char *mode, unsigned int flags) {
 	g_setjmp(0, "file_copy", NULL, NULL);
 
-	off_t ssize = get_file_size(source);
+	struct stat st_s, st_d;
+	mode_t st_mode = 0;
+
+	if (stat(source, &st_s)) {
+		return -9;
+	}
+
+	off_t ssize = st_s.st_size;
 
 	if (ssize < 1) {
 		return -1;
@@ -3290,6 +3335,19 @@ ssize_t file_copy(char *source, char *dest, char *mode) {
 
 	if (!fh_s) {
 		return -2;
+	}
+
+	if (!strncmp(mode, "a", 1) && (flags & F_FC_MSET_DEST)) {
+		if (file_exists(dest)) {
+			st_mode = st_s.st_mode;
+		} else {
+			if (stat(source, &st_d)) {
+				return -10;
+			}
+			st_mode = st_d.st_mode;
+		}
+	} else if (flags & F_FC_MSET_SRC) {
+		st_mode = st_s.st_mode;
 	}
 
 	FILE *fh_d = gg_fopen(dest, mode);
@@ -3312,6 +3370,10 @@ ssize_t file_copy(char *source, char *dest, char *mode) {
 	g_free(buffer);
 	g_fclose(fh_d);
 	g_fclose(fh_s);
+
+	if (st_mode) {
+		chmod(dest, st_mode);
+	}
 
 	return t;
 }
