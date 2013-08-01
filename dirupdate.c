@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 0.9-14 RC1
+ * Version     : 0.10 RC2
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  *
@@ -27,6 +27,14 @@
 
 #ifndef nuke_log
 #define nuke_log "/glftpd/ftp-data/logs/nukelog"
+#endif
+
+#ifndef dupe_file
+#define dupe_file "/glftpd/ftp-data/logs/dupefile"
+#endif
+
+#ifndef last_on_log
+#define last_on_log "/glftpd/ftp-data/logs/laston.log"
 #endif
 
 /* see README file about this */
@@ -70,9 +78,9 @@
 #include <setjmp.h>
 
 #define VER_MAJOR 0
-#define VER_MINOR 9
-#define VER_REVISION 14
-#define VER_STR "_RC1"
+#define VER_MINOR 10
+#define VER_REVISION 0
+#define VER_STR "_RC2"
 
 typedef unsigned long long int ULLONG;
 typedef unsigned char BYTE;
@@ -101,6 +109,8 @@ typedef struct e_arg {
 	char buffer[1024];
 	struct dirlog *dirlog;
 	struct nukelog *nukelog;
+	struct dupefile *dupefile;
+	struct lastonlog *lastonlog;
 	time_t t_stor;
 } ear;
 
@@ -232,6 +242,8 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define UPD_MODE_DUMP_NUKE	0x5
 #define UPD_MODE_DUPE_CHK	0x6
 #define UPD_MODE_REBUILD	0x7
+#define UPD_MODE_DUMP_DUPEF 0x8
+#define UPD_MODE_DUMP_LON	0x9
 
 #define F_OPT_FORCE 		0x1
 #define F_OPT_VERBOSE 		0x2
@@ -267,6 +279,11 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_GH_WAPPEND		0x20
 #define F_GH_DFWASWIPED		0x40
 #define F_GH_DFNOWIPE		0x80
+#define F_GH_ISDUPEFILE		0x100
+#define F_GH_ISLASTONLOG	0x200
+
+/* these bits determine file type */
+#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG)
 
 #define F_EARG_SFV 			0x1
 
@@ -277,13 +294,15 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 
 #define DL_SZ (int)sizeof(struct dirlog)
 #define NL_SZ (int)sizeof(struct nukelog)
+#define DF_SZ (int)sizeof(struct dupefile)
+#define LO_SZ (int)sizeof(struct lastonlog)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 536870912   /* max file size allowed to load into memory */
 
 #define	PIPE_READ_MAX	0x2000
 
-#define MSG_GEN_NODFILE "ERROR: could not open dirlog [%s]\n"
+#define MSG_GEN_NODFILE "ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE "ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
 #define MSG_GEN_DFCORRU "ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
 #define MSG_GEN_DFRFAIL "ERROR: [%s] rebuilding data file failed!\n"
@@ -515,6 +534,8 @@ char SITEROOT[255] = { 0 };
 char DIRLOG[255] = { dir_log };
 char NUKELOG[255] = { nuke_log };
 char DU_FLD[255] = { du_fld };
+char DUPEFILE[255] = { dupe_file };
+char LASTONLOG[255] = { last_on_log };
 long long int db_max_size = DB_MAX_SIZE;
 int glob_regex_flags = 0;
 char GLOB_REGEX[4096] = { 0 };
@@ -544,7 +565,8 @@ char *hpd_up =
 				"                           --fix attempts to correct dirlog\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
-				"  -e <dirlog|nukelog>   Rebuilds existing data file, based on filtering rules (see --exec\n"
+				"  -e <dirlog|nukelog|dupefile|lastonlog>\n"
+				"                         Rebuilds existing data file, based on filtering rules (see --exec\n"
 				"                           and --(i)regex(i))\n"
 				"\n"
 				"Options:\n"
@@ -557,13 +579,14 @@ char *hpd_up =
 				"  --sfv                 Generate new SFV files inside target folders, works with -r, -u and -s\n"
 				"                        Used by itself, it goes into -r (fs rebuild) mode, but does not change dirlog\n"
 				"                           Avoid using this if when doing a full recursive rebuild\n"
-				"  --exec <command {[base]dir}|{user}|{group}|{size}|.{files}|{time}|{nuker}|{unnuker}|{nukee}|{reason}>\n"
+				"  --exec <command {[base]dir}|{user}|{group}|{size}|.{files}|{time}|{nuker}|..\n"
+				"          ..{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
-				"                            Works with -d, -r, -e, and -c\n"
+				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  -y, --followlinks     Follows symbolic links (default is to skip)\n"
 				"  --regex <match>       Regex match filter string, used during various operations.\n"
-				"                           Works with -r, -e -p, -d and -n\n"
+				"                           Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
@@ -573,8 +596,10 @@ char *hpd_up =
 				"Directory and file:\n"
 				"  --glroot=PATH         Override default glFTPd root path\n"
 				"  --siteroot=PATH       Override default site root path (relative to glFTPd root)\n"
-				"  --dirlog=FILE         Override default path to dirlog file\n"
-				"  --nukelog=FILE        Override default path to nukelog file\n"
+				"  --dirlog=FILE         Override default path to directory log\n"
+				"  --nukelog=FILE        Override default path to nuke log\n"
+				"  --dupefile=FILE       Override default path to dupe file\n"
+				"  --lastonlog=FILE      Override default path to last-on log\n"
 				"  --folders=FILE        Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
 				"\n";
@@ -709,6 +734,22 @@ int opt_siteroot(void *arg, int m) {
 	return 0;
 }
 
+int opt_dupefile(void *arg, int m) {
+	g_cpg(arg, DUPEFILE, m, 255);
+	if (gfl & F_OPT_VERBOSE) {
+		printf("NOTE: DUPEFILE path set to '%s'\n", DUPEFILE);
+	}
+	return 0;
+}
+
+int opt_lastonlog(void *arg, int m) {
+	g_cpg(arg, LASTONLOG, m, 255);
+	if (gfl & F_OPT_VERBOSE) {
+		printf("NOTE: LASTONLOG path set to '%s'\n", LASTONLOG);
+	}
+	return 0;
+}
+
 void *p_argv_off = NULL;
 
 int opt_rebuild(void *arg, int m) {
@@ -785,6 +826,16 @@ int opt_dirlog_dump(void *arg, int m) {
 	return 0;
 }
 
+int opt_dupefile_dump(void *arg, int m) {
+	updmode = UPD_MODE_DUMP_DUPEF;
+	return 0;
+}
+
+int opt_lastonlog_dump(void *arg, int m) {
+	updmode = UPD_MODE_DUMP_LON;
+	return 0;
+}
+
 int opt_dirlog_dump_nukelog(void *arg, int m) {
 	updmode = UPD_MODE_DUMP_NUKE;
 	return 0;
@@ -857,14 +908,16 @@ int dir_exists(char *dir);
 int dirlog_update_record(char **argv);
 int dirlog_check_dupe(void);
 int gh_rewind(struct g_handle *hdl);
-int g_fopen(char *, char *, unsigned int, struct g_handle *, size_t);
-int determine_datatype(char *);
+int g_fopen(char *, char *, unsigned int, struct g_handle *);
+int determine_datatype(struct g_handle *);
 int g_close(struct g_handle *hdl);
 void *g_read(void *buffer, struct g_handle *hdl, size_t size);
 int process_exec_string(char *, char *, void *, void*);
 int ref_to_val_dirlog(void *, char *, char *, size_t);
 int ref_to_val_nukelog(void *, char *, char *, size_t);
-int g_do_exec(void *, struct g_handle *);
+int ref_to_val_dupefile(void *, char *, char *, size_t);
+int ref_to_val_lastonlog(void *, char *, char *, size_t);
+int g_do_exec(void *, struct g_handle *, void *);
 size_t exec_and_wait_for_output(char*, char*);
 void sig_handler(int);
 void child_sig_handler(int, siginfo_t*, void*);
@@ -876,20 +929,26 @@ size_t g_load_data(FILE *fh, void *output, size_t max);
 int g_load_record(struct g_handle *hdl, const void *data);
 int remove_repeating_chars(char *string, char c);
 p_md_obj md_first(pmda md);
+int g_buffer_into_memory(char *file, struct g_handle *hdl);
+int g_print_stats(char *);
+int lastonlog_format_block(char *, ear *, char *);
+int dupefile_format_block(char *, ear *, char *);
 
-void *f_ref[] = { "--nowbuffer", opt_g_buffering, (void*) 0, "--raw",
-		opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi, (void*) 1,
-		"--iregex", opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi,
-		(void*) 1, "--regex", opt_g_regex, (void*) 1, "-e", opt_rebuild,
-		(void*) 1, "--batch", opt_batch_output_formatting, (void*) 0, "-y",
-		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
-		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
-		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
-		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
-		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
-		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
-		opt_dirlog_chk_dupe, (void*) 0, "-b", opt_g_nobuffering, (void*) 0,
-		"--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
+void *f_ref[] = { "-l", opt_lastonlog_dump, (void*) 0, "--lastonlog",
+		opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
+		"--dupefile", opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering,
+		(void*) 0, "--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi,
+		(void*) 1, "--iregex", opt_g_iregex, (void*) 1, "--regexi",
+		opt_g_regexi, (void*) 1, "--regex", opt_g_regex, (void*) 1, "-e",
+		opt_rebuild, (void*) 1, "--batch", opt_batch_output_formatting,
+		(void*) 0, "-y", opt_g_followlinks, (void*) 0, "--allowsymbolic",
+		opt_g_followlinks, (void*) 0, "--followlinks", opt_g_followlinks,
+		(void*) 0, "--allowlinks", opt_g_followlinks, (void*) 0, "-exec",
+		opt_exec, (void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix,
+		(void*) 0, "-u", opt_g_update, (void*) 0, "--memlimit",
+		opt_membuffer_limit, (void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0,
+		"--dupechk", opt_dirlog_chk_dupe, (void*) 0, "-b", opt_g_nobuffering,
+		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
 		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
 		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
 		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
@@ -1203,7 +1262,13 @@ int main(int argc, char *argv[]) {
 		dirlog_print_stats();
 		break;
 	case UPD_MODE_DUMP_NUKE:
-		nukelog_print_stats();
+		g_print_stats(NUKELOG);
+		break;
+	case UPD_MODE_DUMP_DUPEF:
+		g_print_stats(DUPEFILE);
+		break;
+	case UPD_MODE_DUMP_LON:
+		g_print_stats(LASTONLOG);
 		break;
 	case UPD_MODE_DUPE_CHK:
 		dirlog_check_dupe();
@@ -1226,30 +1291,30 @@ int rebuild(void *arg) {
 
 	char *a_ptr = (char*) arg;
 	char *datafile = NULL;
-	size_t block_sz = 0;
-	struct g_handle *hdl = &actdl;
+	struct g_handle hdl = { 0 };
 
 	if (!strncmp(a_ptr, "dirlog", 6)) {
 		datafile = DIRLOG;
-		block_sz = DL_SZ;
 	} else if (!strncmp(a_ptr, "nukelog", 7)) {
 		datafile = NUKELOG;
-		block_sz = NL_SZ;
+	} else if (!strncmp(a_ptr, "dupefile", 8)) {
+		datafile = DUPEFILE;
+	} else if (!strncmp(a_ptr, "lastonlog", 9)) {
+		datafile = LASTONLOG;
 	}
 
-	if (datafile && block_sz && hdl) {
-		if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, hdl, block_sz)) {
-			printf(MSG_GEN_NODFILE, datafile);
+	if (datafile) {
+		if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &hdl)) {
 			return 3;
 		}
 
-		if (rebuild_data_file(datafile, hdl)) {
+		if (rebuild_data_file(datafile, &hdl)) {
 			printf(MSG_GEN_DFRFAIL, datafile);
 			return 3;
 		}
 
 		printf("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
-				(ULLONG) hdl->bw, (ULLONG) hdl->rw);
+				(ULLONG) hdl.bw, (ULLONG) hdl.rw);
 	} else {
 		printf("ERROR: [%s] unrecognized data type\n", a_ptr);
 		return 2;
@@ -1264,8 +1329,7 @@ int dirlog_check_dupe(void) {
 	struct dirlog *d_ptr = NULL, *dd_ptr = NULL;
 	char *s_buffer, *ss_buffer, *s_pb, *ss_pb;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &actdl, DL_SZ)) {
-		printf(MSG_GEN_NODFILE, DIRLOG);
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &actdl)) {
 		return 2;
 	}
 	off_t st1, st2;
@@ -1412,8 +1476,7 @@ int dirlog_update_record(char **argv) {
 			mode = "r+";
 		}
 
-		if (g_fopen(DIRLOG, mode, 0, &actdl, DL_SZ)) {
-			printf(MSG_GEN_NODFILE, mode);
+		if (g_fopen(DIRLOG, mode, 0, &actdl)) {
 			goto end;
 		}
 
@@ -1518,7 +1581,7 @@ int dirlog_check_records(void) {
 		data_backup_records(DIRLOG);
 	}
 
-	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &actdl, DL_SZ)) {
+	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &actdl)) {
 		return 2;
 	}
 
@@ -1538,7 +1601,7 @@ int dirlog_check_records(void) {
 				break;
 			}
 			sprintf(s_buffer, "%s%s", GLROOT, d_ptr->dirname);
-			g_do_exec(d_ptr, &actdl);
+			//g_do_exec(d_ptr, &actdl);
 			struct nukelog n_buffer;
 			ir = r;
 			if (d_ptr->status == 1 || d_ptr->status == 2) {
@@ -1674,7 +1737,30 @@ int dirlog_check_records(void) {
 
 int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	g_setjmp(0, "g_bmatch", NULL, NULL);
-	int r_e = g_do_exec(d_ptr, hdl);
+
+	char *mstr = NULL;
+	void *callback = NULL;
+
+	switch (hdl->flags & F_GH_ISTYPE) {
+	case F_GH_ISDIRLOG:
+		mstr = (char*) ((struct dirlog*) d_ptr)->dirname;
+		callback = ref_to_val_dirlog;
+		break;
+	case F_GH_ISNUKELOG:
+		mstr = (char*) ((struct nukelog*) d_ptr)->dirname;
+		callback = ref_to_val_nukelog;
+		break;
+	case F_GH_ISDUPEFILE:
+		mstr = (char*) ((struct dupefile*) d_ptr)->filename;
+		callback = ref_to_val_dupefile;
+		break;
+	case F_GH_ISLASTONLOG:
+		mstr = (char*) ((struct lastonlog*) d_ptr)->uname;
+		callback = ref_to_val_lastonlog;
+		break;
+	}
+
+	int r_e = g_do_exec(d_ptr, hdl, callback);
 
 	if (exec_str && WEXITSTATUS(r_e)) {
 		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
@@ -1685,17 +1771,9 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		return 1;
 	}
 
-	char *mstr = NULL;
-
-	if (hdl->flags & F_GH_ISDIRLOG) {
-		mstr = (char*) ((struct dirlog*) d_ptr)->dirname;
-	} else if (hdl->flags & F_GH_ISNUKELOG) {
-		mstr = (char*) ((struct nukelog*) d_ptr)->dirname;
-	}
-
 	if ((gfl & F_OPT_HAS_G_REGEX) && mstr
 			&& reg_match(GLOB_REGEX, mstr, glob_regex_flags) == glob_reg_i_m) {
-		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			printf("WARNING: %s: regex match positive, ignoring this record\n",
 					mstr);
 		}
@@ -1704,14 +1782,93 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	return 0;
 }
 
+int g_print_stats(char *file) {
+	g_setjmp(0, "g_print_stats", NULL, NULL);
+
+	struct g_handle hdl = { 0 };
+
+	if (g_fopen(file, "r", F_DL_FOPEN_BUFFER, &hdl)) {
+		return 2;
+	}
+
+	void *ptr;
+	void *buffer = calloc(1, hdl.block_sz);
+	char sbuffer[4096], *ns_ptr;
+	int c = 0;
+	ear e;
+	int re_c;
+
+	while ((ptr = g_read(buffer, &hdl, hdl.block_sz))) {
+		if (!sigsetjmp(g_sigjmp.env, 1)) {
+			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL, NULL);
+
+			if (gfl & F_OPT_KILL_GLOBAL) {
+				break;
+			}
+
+			if (g_bmatch(ptr, &hdl)) {
+				continue;
+			}
+
+			if (gfl & F_OPT_MODE_RAWDUMP) {
+				g_fwrite((void*) ptr, hdl.block_sz, 1, stdout);
+			} else {
+				re_c = 0;
+				ns_ptr = "UNKNOWN";
+				switch (hdl.flags & F_GH_ISTYPE) {
+				case F_GH_ISDIRLOG:
+					e.dirlog = (struct dirlog*) ptr;
+					ns_ptr = e.dirlog->dirname;
+					re_c += dirlog_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISNUKELOG:
+					e.nukelog = (struct nukelog*) ptr;
+					ns_ptr = e.dirlog->dirname;
+					re_c += nukelog_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISDUPEFILE:
+					e.dupefile = (struct dupefile*) ptr;
+					ns_ptr = e.dupefile->filename;
+					re_c += dupefile_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISLASTONLOG:
+					e.lastonlog = (struct lastonlog*) ptr;
+					ns_ptr = e.lastonlog->uname;
+					re_c += lastonlog_format_block(ns_ptr, &e, sbuffer);
+					break;
+
+				}
+				if (re_c) {
+					printf(sbuffer);
+				} else {
+					printf("ERROR: %s: zero-length formatted result\n", ns_ptr);
+					continue;
+				}
+			}
+			c++;
+		}
+	}
+
+	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
+
+	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		printf("STATS: %s: read %d records\n", DIRLOG, c);
+	}
+
+	g_close(&actdl);
+
+	return 0;
+}
+
 int dirlog_print_stats(void) {
 	g_setjmp(0, "dirlog_print_stats", NULL, NULL);
 	struct dirlog buffer;
 	char sbuffer[2048];
-	ear e = { 0 };
-	int c = 0;
 
-	if (g_fopen(DIRLOG, "r", 0, &actdl, DL_SZ))
+	int c = 0;
+	ear e;
+
+	if (g_fopen(DIRLOG, "r", 0, &actdl))
 		return 2;
 
 	struct dirlog *d_ptr = NULL;
@@ -1771,7 +1928,7 @@ int nukelog_print_stats(void) {
 
 	g_setjmp(0, "nukelog_print_stats", NULL, NULL);
 
-	if (g_fopen(NUKELOG, "r", 0, &actnl, NL_SZ))
+	if (g_fopen(NUKELOG, "r", 0, &actnl))
 		return 2;
 
 	struct nukelog *n_ptr = NULL;
@@ -1857,7 +2014,7 @@ int rebuild_dirlog(void) {
 					"WARNING: %s: requested read mode access but file not there\n",
 					DIRLOG);
 		}
-	} else if (g_fopen(DIRLOG, actdl.mode, flags, &actdl, DL_SZ)) {
+	} else if (g_fopen(DIRLOG, actdl.mode, flags, &actdl)) {
 		printf("ERROR: could not open dirlog, mode '%s', flags %u\n",
 				actdl.mode, flags);
 		return errno;
@@ -2349,6 +2506,8 @@ int get_relative_path(char *subject, char *root, char *output) {
 	return 0;
 }
 
+#define STD_FMT_TIME_STR  	"%a, %d %b %Y %T %z"
+
 int dirlog_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "dirlog_format_block", NULL, NULL);
 	char buffer[2048], buffer2[255];
@@ -2361,7 +2520,7 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 
 	time_t t_t = (time_t) iarg->dirlog->uptime;
 
-	strftime(buffer2, 255, "%a, %d %b %Y %T %z", localtime(&t_t));
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
 	int c;
 
@@ -2398,7 +2557,7 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 
 	time_t t_t = (time_t) iarg->nukelog->nuketime;
 
-	strftime(buffer2, 255, "%a, %d %b %Y %T %z", localtime(&t_t));
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = sprintf(buffer, "NUKELOG %s %s %hu %.2f %s %s %u\n", base,
@@ -2420,6 +2579,63 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 						iarg->nukelog->nukee, buffer2);
 	}
 	g_free(ndup);
+
+	g_memcpy(output, buffer, 2048);
+
+	return c;
+}
+
+int dupefile_format_block(char *name, ear *iarg, char *output) {
+	g_setjmp(0, "dupefile_format_block", NULL, NULL);
+	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
+
+	time_t t_t = (time_t) iarg->dupefile->timeup;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+	int c;
+	if (gfl & F_OPT_FORMAT_BATCH) {
+		c = sprintf(buffer, "DUPEFILE %s %s %u\n", iarg->dupefile->filename,
+				iarg->dupefile->uploader, iarg->dupefile->timeup);
+	} else {
+		c = sprintf(buffer, "DUPEFILE: %s - uploader: %s, time: %s\n",
+				iarg->dupefile->filename, iarg->dupefile->uploader, buffer2);
+	}
+
+	g_memcpy(output, buffer, 2048);
+
+	return c;
+}
+
+int lastonlog_format_block(char *name, ear *iarg, char *output) {
+	g_setjmp(0, "lastonlog_format_block", NULL, NULL);
+	char buffer[2048] = { 0 }, buffer2[255] = { 0 }, buffer3[255] = { 0 },
+			buffer4[12] = { 0 };
+
+	time_t t_t_ln = (time_t) iarg->lastonlog->logon;
+	time_t t_t_lf = (time_t) iarg->lastonlog->logoff;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t_ln));
+	strftime(buffer3, 255, STD_FMT_TIME_STR, localtime(&t_t_lf));
+
+	g_memcpy(buffer4, iarg->lastonlog->stats, sizeof(iarg->lastonlog->stats));
+
+	int c;
+	if (gfl & F_OPT_FORMAT_BATCH) {
+		c = sprintf(buffer, "LASTONLOG;%s;%s;%s;%u;%u;%u;%u;%s\n",
+				iarg->lastonlog->uname, iarg->lastonlog->gname,
+				iarg->lastonlog->tagline, (unsigned int) iarg->lastonlog->logon,
+				(unsigned int) iarg->lastonlog->logoff,
+				(unsigned int) iarg->lastonlog->upload,
+				(unsigned int) iarg->lastonlog->download, buffer4);
+	} else {
+		c =
+				sprintf(buffer,
+						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %u/%u B, changes: %s\n",
+						iarg->lastonlog->uname, iarg->lastonlog->gname,
+						iarg->lastonlog->tagline, buffer2, buffer3,
+						(unsigned int) iarg->lastonlog->upload,
+						(unsigned int) iarg->lastonlog->download, buffer4);
+	}
 
 	g_memcpy(output, buffer, 2048);
 
@@ -2450,7 +2666,7 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl, DL_SZ))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl))
 		return MAX_ULLONG;
 
 	int r;
@@ -2507,7 +2723,7 @@ ULLONG nukelog_find(char *dirn, int mode, struct nukelog *output) {
 	ULLONG r = MAX_ULLONG;
 	char *dup, *dup2, *base, *dir;
 
-	if (g_fopen(NUKELOG, "r", F_DL_FOPEN_BUFFER, &actnl, NL_SZ)) {
+	if (g_fopen(NUKELOG, "r", F_DL_FOPEN_BUFFER, &actnl)) {
 		goto r_end;
 	}
 
@@ -2623,7 +2839,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
+		printf("NOTE: %s: using mode %o\n", file, hdl->st_mode);
 	}
 
 	if ((r = flush_data_md(hdl, hdl->s_buffer))) {
@@ -2880,8 +3096,7 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 	return r;
 }
 
-int g_buffer_into_memory(char *file, struct g_handle *hdl,
-		unsigned int block_sz) {
+int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 	g_setjmp(0, "g_buffer_into_memory", NULL, NULL);
 
 	if (hdl->buffer.count) {
@@ -2901,11 +3116,6 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl,
 		return 3;
 	}
 
-	if (st.st_size % block_sz) {
-		printf(MSG_GEN_DFCORRU, file, (ULLONG) st.st_size, block_sz);
-		return 12;
-	}
-
 	if (st.st_size > db_max_size) {
 		printf(
 				"WARNING: %s: disabling memory buffering, file too big (max %lld MB)\n",
@@ -2914,8 +3124,20 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl,
 		return 5;
 	}
 
+	bzero(hdl->file, 4096);
+	g_strncpy(hdl->file, file, strlen(file));
+
+	if (determine_datatype(hdl)) {
+		printf("ERROR: %s: could not determine data type\n", file);
+		return 6;
+	}
+
+	if (st.st_size % hdl->block_sz) {
+		printf(MSG_GEN_DFCORRU, file, (ULLONG) st.st_size, hdl->block_sz);
+		return 12;
+	}
+
 	hdl->total_sz = st.st_size;
-	hdl->block_sz = block_sz;
 
 	if (gfl & F_OPT_VERBOSE2)
 		printf(
@@ -2932,25 +3154,33 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl,
 				(unsigned int) hdl->total_sz, hdl->block_sz);
 		return 4;
 	} else {
-		if (gfl & F_OPT_VERBOSE2)
+		if (gfl & F_OPT_VERBOSE2) {
 			printf("NOTE: %s: loaded %u records into memory\n", file, r);
-		g_strncpy(hdl->file, file, strlen(file));
-		hdl->flags |= determine_datatype(file);
+		}
 	}
 	return 0;
 }
 
-int determine_datatype(char *data) {
-	if (!strncmp(data, DIRLOG, strlen(DIRLOG))) {
-		return F_GH_ISDIRLOG;
-	} else if (!strncmp(data, NUKELOG, strlen(NUKELOG))) {
-		return F_GH_ISNUKELOG;
+int determine_datatype(struct g_handle *hdl) {
+	if (!strncmp(hdl->file, DIRLOG, strlen(DIRLOG))) {
+		hdl->flags |= F_GH_ISDIRLOG;
+		hdl->block_sz = DL_SZ;
+	} else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG))) {
+		hdl->flags |= F_GH_ISNUKELOG;
+		hdl->block_sz = NL_SZ;
+	} else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE))) {
+		hdl->flags |= F_GH_ISDUPEFILE;
+		hdl->block_sz = DF_SZ;
+	} else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG))) {
+		hdl->flags |= F_GH_ISLASTONLOG;
+		hdl->block_sz = LO_SZ;
+	} else {
+		return 1;
 	}
 	return 0;
 }
 
-int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl,
-		size_t size) {
+int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl) {
 	g_setjmp(0, "g_fopen", NULL, NULL);
 
 	if (flags & F_DL_FOPEN_REWIND) {
@@ -2959,9 +3189,14 @@ int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl,
 
 	if (!(gfl & F_OPT_NOBUFFER) && (flags & F_DL_FOPEN_BUFFER)
 			&& !(hdl->flags & F_GH_NOMEM)) {
-		if (!g_buffer_into_memory(file, hdl, size)) {
+		int r;
+		if (!(r = g_buffer_into_memory(file, hdl))) {
 			if (!(flags & F_DL_FOPEN_FILE)) {
 				return 0;
+			}
+		} else {
+			if (!(hdl->flags & F_GH_NOMEM)) {
+				return 4;
 			}
 		}
 	}
@@ -2971,18 +3206,37 @@ int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl,
 	}
 
 	if (strlen(file) > 4096) {
+		printf(MSG_GEN_NODFILE, file, "file path too large");
 		return 2;
+	}
+
+	hdl->total_sz = get_file_size(file);
+
+	if (!hdl->total_sz) {
+		printf(MSG_GEN_NODFILE, file, "zero-byte data file");
+	}
+
+	bzero(hdl->file, 4096);
+	g_strncpy(hdl->file, file, strlen(file));
+
+	if (determine_datatype(hdl)) {
+		printf(MSG_GEN_NODFILE, file, "could not determine data-type");
+		return 3;
+	}
+
+	if (hdl->total_sz % hdl->block_sz) {
+		printf(MSG_GEN_DFCORRU, file, (ULLONG) hdl->total_sz, hdl->block_sz);
+		return 4;
 	}
 
 	FILE *fd;
 
 	if (!(fd = gg_fopen(file, mode))) {
+		printf(MSG_GEN_NODFILE, file, "not available");
 		return 1;
 	}
 
-	g_strncpy(hdl->file, file, strlen(file));
 	hdl->fh = fd;
-	hdl->flags |= determine_datatype(file);
 
 	return 0;
 }
@@ -3011,9 +3265,8 @@ int g_close(struct g_handle *hdl) {
 	return 0;
 }
 
-int g_do_exec(void *buffer, struct g_handle *hdl) {
+int g_do_exec(void *buffer, struct g_handle *hdl, void *callback) {
 	g_setjmp(0, "g_do_exec", NULL, NULL);
-	void *callback = NULL;
 
 	if (!exec_str) {
 		return 1;
@@ -3021,14 +3274,12 @@ int g_do_exec(void *buffer, struct g_handle *hdl) {
 
 	bzero(b_glob, MAX_EXEC_STR);
 
-	if (hdl->flags & F_GH_ISDIRLOG) {
-		callback = ref_to_val_dirlog;
-	} else if (hdl->flags & F_GH_ISNUKELOG) {
-		callback = ref_to_val_nukelog;
+	if (!callback) {
+		return 2;
 	}
 
 	if (process_exec_string(exec_str, b_glob, callback, buffer)) {
-		return 1;
+		return 3;
 	}
 
 	return system(b_glob);
@@ -3044,11 +3295,12 @@ void *g_read(void *buffer, struct g_handle *hdl, size_t size) {
 		hdl->buffer.r_pos = hdl->buffer.r_pos->next;
 		hdl->buffer.offset++;
 		hdl->offset++;
-		hdl->br += DL_SZ;
+		hdl->br += hdl->block_sz;
 		return (struct dirlog *) hdl->buffer.pos->ptr;
 	}
 
 	if (!buffer) {
+		printf("IO ERROR: no buffer to write to\n");
 		return NULL;
 	}
 
@@ -3512,6 +3764,58 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, "%d", (int) data->status);
 	} else if (!strcmp(match, "mult")) {
 		sprintf(output, "%d", (int) data->mult);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
+int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_dupefile", NULL, NULL);
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	struct dupefile *data = (struct dupefile *) arg;
+
+	if (!strcmp(match, "file")) {
+		g_strncpy(output, data->filename, sizeof(data->filename));
+	} else if (!strcmp(match, "user")) {
+		sprintf(output, "%s", data->uploader);
+	} else if (!strcmp(match, "time")) {
+		sprintf(output, "%u", (unsigned int) data->timeup);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
+int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_lastonlog", NULL, NULL);
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	struct lastonlog *data = (struct lastonlog *) arg;
+
+	if (!strcmp(match, "user")) {
+		g_strncpy(output, data->uname, sizeof(data->uname));
+	} else if (!strcmp(match, "group")) {
+		g_strncpy(output, data->gname, sizeof(data->gname));
+	} else if (!strcmp(match, "stats")) {
+		g_strncpy(output, data->stats, sizeof(data->stats));
+	} else if (!strcmp(match, "logon")) {
+		sprintf(output, "%u", (unsigned int) data->logon);
+	} else if (!strcmp(match, "logoff")) {
+		sprintf(output, "%u", (unsigned int) data->logoff);
+	} else if (!strcmp(match, "upload")) {
+		sprintf(output, "%u", (unsigned int) data->upload);
+	} else if (!strcmp(match, "download")) {
+		sprintf(output, "%u", (unsigned int) data->download);
 	} else {
 		return 1;
 	}
