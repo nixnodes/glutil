@@ -43,8 +43,9 @@
  *    ARCHIVE/TV-XVID 3
  *
  *
- * 	Depth value defines the exact level of a folder's directory tree, at which
- * 	the tool imports folders to dirlog, this way, avoiding irrelevant entries.
+ * 	Depth value defines the exact level of a folder's directory tree, at 
+ * 	which the tool imports folders to dirlog, this way, avoiding irrelevant
+ *  entries.
  *
  * 	For example:
  *
@@ -61,8 +62,9 @@
  *      MP3 2
  *
  *    This would NOT import 'mp3/0601/' and 'mp3/0602/' folders, but would 
- *    import 'some-album-1-la/', 'some-album-2-la/' and 'some-other-album-1-la/'.
- *    Folders inside 'some-album-..' folders are not imported.
+ *    import 'some-album-1-la/', 'some-album-2-la/' and 
+ *    'some-other-album-1-la/' .Folders inside 'some-album-..' folders 
+ *    are not imported.
  *
  *      MP3 1
  *
