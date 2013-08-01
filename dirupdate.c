@@ -41,7 +41,7 @@
 
 /* oneliner file path */
 #ifndef oneliner_file
-#define oneliner_file "/glftpd/ftp-data/logs/laston.log"
+#define oneliner_file "/glftpd/ftp-data/logs/oneliners.log"
 #endif
 
 /* see README file about this */
