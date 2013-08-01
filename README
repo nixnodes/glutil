@@ -27,8 +27,8 @@
  * 'dirupdate.folders' file (filesystem based rebuild only):
  *
  *  To avoid importing junk data into dirlog, a file defined by 'du_fld' macro
- *  in dirupdate.c (or at runtime with --folders argument) can be used when running
- *  in recursive mode (-r).
+ *  in dirupdate.c (or at runtime with --folders argument) can be used when 
+ *  running in recursive mode (-r).
  *  Each line should contain a relative to site root PATH (no / in front or
  *  back required) and depth to scan at, separated by space.
  *
@@ -55,41 +55,42 @@
  *     /mp3/0602/some-other-album-1-la
  *     ..
  *
- *    We want to avoid importing /mp3/0602 folder itself into dirlog and import
- *    only what is inside it.
+ *    We want to avoid importing /mp3/0602 folder itself into dirlog and
+ *    import only what is inside it.
  *
  *      MP3 2
  *
- *    This would NOT import 'mp3/0601/' and 'mp3/0602/' folders, but would import
- *    'some-album-1-la/', 'some-album-2-la/' and 'some-other-album-1-la/'.
+ *    This would NOT import 'mp3/0601/' and 'mp3/0602/' folders, but would 
+ *    import 'some-album-1-la/', 'some-album-2-la/' and 'some-other-album-1-la/'.
  *    Folders inside 'some-album-..' folders are not imported.
  *
  *      MP3 1
  *
- *    This would import '0601/' and '0602/' only, scanning all content inside it.
+ *    This would import '0601/' and '0602/' only, scanning all content
+ *      inside it.
  *
  *    There's no reason you can't do this:
  *
  *      MP3 1
  *      MP3 2
  *
- *    But in this particular case, having dated folders in there likely poses no
- *    advantage.
+ *    But in this particular case, having dated folders in there likely
+ *    poses no advantage.
  *
  *    But maybe you'd want to have individual CD/DVD dirs some section:
  *
  *    	XVID 1
  *    	XVID 2
  *
- *    This does two passes, one on each directory tree level, 1 does the releases,
- *    2 the folders inside them.
+ *    This does two passes, one on each directory tree level, 1 does the,
+ *    releases 2 the folders inside them.
  *
  *    Using -f (force) when recursing ignores the folders file and imports
- *    every single folder inside gl's site root into your dirlog (scanning it
- *    for sizes/file counts).
+ *    every single folder inside gl's site root into your dirlog (scanning
+ *    it for sizes/file counts).
  *
- *    If folders file is missing, it automatically does full siteroot recursion
- *    (same as '-f').
+ *    If folders file is missing, it automatically does full siteroot
+ *    recursion (same as '-f').
  *
  *
  *    Credits : Bsugar for the original idea, design and beta testing
