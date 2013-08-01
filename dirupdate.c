@@ -297,7 +297,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_GH_ISONELINERS	0x400
 
 /* these bits determine file type */
-#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG)
+#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS)
 
 #define V_MB				0x100000
 
