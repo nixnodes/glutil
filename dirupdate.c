@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 0.9-12 RC1
+ * Version     : 0.9-13 RC1
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  *
@@ -73,7 +73,7 @@
 
 #define VER_MAJOR 0
 #define VER_MINOR 9
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR "_RC1"
 
 typedef unsigned long long int ULLONG;
