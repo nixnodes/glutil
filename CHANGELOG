@@ -5,6 +5,9 @@
  *       insertable vars for new data-types to --exec)
  *   - Bugfix: flag collision (rev. 1)
  *   - Added suport for onliners data file (rev. 1)
+ *   - Shared memory segment read support (rev. 2)
+ *   - Added -w (dumps from ONLINE data) (rev. 2)
+ *   - Added --ipc <key> (rev. 2)
  *
  * v0.9 RC1:
  *
