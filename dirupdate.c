@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 0.10-1 RC2
+ * Version     : 0.10-2 RC2
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -65,6 +65,10 @@
 
 /* -------------------------- */
 
+#if _FILE_OFFSET_BITS != 64
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,10 +87,12 @@
 #include <inttypes.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #define VER_MAJOR 0
 #define VER_MINOR 10
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR "_RC2"
 
 typedef unsigned long long int ULLONG;
@@ -103,10 +109,6 @@ char ARCH = 1;
 char ARCH = 0;
 #endif
 
-#if _FILE_OFFSET_BITS != 64
-#define _FILE_OFFSET_BITS 64
-#endif
-
 #define MAX_ULLONG 		0xFFFFFFFFFFFFFFFF
 #define MAX_ULONG 		0xFFFFFFFF
 
@@ -119,6 +121,7 @@ typedef struct e_arg {
 	struct dupefile *dupefile;
 	struct lastonlog *lastonlog;
 	struct oneliner *oneliner;
+	struct ONLINE *online;
 	time_t t_stor;
 } ear;
 
@@ -161,6 +164,9 @@ struct g_handle {
 	void *last;
 	char s_buffer[4096], file[4096], mode[32];
 	mode_t st_mode;
+	struct ONLINE *ol;
+	int shmid;
+	struct shmid_ds ipcbuf;
 };
 
 typedef struct sig_jmp_buf {
@@ -252,7 +258,8 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define UPD_MODE_REBUILD	0x7
 #define UPD_MODE_DUMP_DUPEF 0x8
 #define UPD_MODE_DUMP_LON	0x9
-#define UPD_MODE_DUMP_ONL	0xA
+#define UPD_MODE_DUMP_ONEL	0xA
+#define UPD_MODE_DUMP_ONL	0xB
 
 #define F_OPT_FORCE 		0x1
 #define F_OPT_VERBOSE 		0x2
@@ -277,6 +284,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_DL_FOPEN_BUFFER	0x1
 #define F_DL_FOPEN_FILE		0x2
 #define F_DL_FOPEN_REWIND	0x4
+#define F_DL_FOPEN_SHM		0x8
 
 #define F_EARG_SFV 			0x1
 #define F_EAR_NOVERB		0x2
@@ -295,17 +303,20 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_GH_ISDUPEFILE		0x100
 #define F_GH_ISLASTONLOG	0x200
 #define F_GH_ISONELINERS	0x400
+#define F_GH_SHM			0x800
+#define F_GH_ISONLINE		0x1000
 
 /* these bits determine file type */
-#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS)
+#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
 
 #define V_MB				0x100000
 
-#define DL_SZ (int)sizeof(struct dirlog)
-#define NL_SZ (int)sizeof(struct nukelog)
-#define DF_SZ (int)sizeof(struct dupefile)
-#define LO_SZ (int)sizeof(struct lastonlog)
-#define OL_SZ (int)sizeof(struct oneliner)
+#define DL_SZ sizeof(struct dirlog)
+#define NL_SZ sizeof(struct nukelog)
+#define DF_SZ sizeof(struct dupefile)
+#define LO_SZ sizeof(struct lastonlog)
+#define OL_SZ sizeof(struct oneliner)
+#define ON_SZ sizeof(struct ONLINE)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 536870912   /* max file size allowed to load into memory */
@@ -548,6 +559,7 @@ char DUPEFILE[255] = { dupe_file };
 char LASTONLOG[255] = { last_on_log };
 char ONELINERS[255] = { oneliner_file };
 long long int db_max_size = DB_MAX_SIZE;
+key_t SHM_IPC = 0;
 int glob_regex_flags = 0;
 char GLOB_REGEX[4096] = { 0 };
 
@@ -571,10 +583,11 @@ char *hpd_up =
 				"                           -u only imports new records and does not truncate existing dirlog\n"
 				"                           -f ignores .folders file and do a full recursive scan\n"
 				"  -d, [--raw]           Print directory log to stdout in readable format (-vv prints dir nuke status)\n"
-				"  -n, [--raw]           Print nuke log to stdout in readable format\n"
-				"  -i, [--raw]           Print dupe file to stdout in readable format\n"
-				"  -l, [--raw]           Print last-on log to stdout in readable format\n"
-				"  -o, [--raw]           Print oneliners to stdout in readable format\n"
+				"  -n, [--raw]           Print nuke log to stdout\n"
+				"  -i, [--raw]           Print dupe file to stdout\n"
+				"  -l, [--raw]           Print last-on log to stdout\n"
+				"  -o, [--raw]           Print oneliners to stdout\n"
+				"  -w  [--raw]           Print online users data (from shared memory) to stdout\n"
 				"  -c, --check [--fix]   Compare dirlog and filesystem records and warn on differences\n"
 				"                           --fix attempts to correct dirlog\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
@@ -605,6 +618,7 @@ char *hpd_up =
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
 				"  --batch               Prints dirlog data non-formatted\n"
+				"  --ipc <key>           Override gl shared memory segment key setting\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -713,6 +727,12 @@ int g_cpg(void *arg, void *out, int m, size_t sz) {
 	g_strncpy(out, buffer, strlen(buffer));
 	return 0;
 }
+void *g_pg(void *arg, int m) {
+	if (m == 2) {
+		return (char *) arg;
+	}
+	return ((char **) arg)[0];
+}
 
 int opt_exec(void *arg, int m) {
 	char *buffer;
@@ -730,6 +750,23 @@ int opt_exec(void *arg, int m) {
 	blen++;
 	exec_str = calloc(blen, 1);
 	g_strncpy(exec_str, buffer, blen);
+	return 0;
+}
+
+int opt_shmipc(void *arg, int m) {
+
+	char *buffer = g_pg(arg, m);
+
+	if (!strlen(buffer)) {
+		return 1;
+	}
+
+	SHM_IPC = (key_t) strtoul(buffer, NULL, 16);
+
+	if (!SHM_IPC) {
+		return 2;
+	}
+
 	return 0;
 }
 
@@ -854,6 +891,11 @@ int opt_dupefile_dump(void *arg, int m) {
 	return 0;
 }
 
+int opt_online_dump(void *arg, int m) {
+	updmode = UPD_MODE_DUMP_ONL;
+	return 0;
+}
+
 int opt_lastonlog_dump(void *arg, int m) {
 	updmode = UPD_MODE_DUMP_LON;
 	return 0;
@@ -865,7 +907,7 @@ int opt_dirlog_dump_nukelog(void *arg, int m) {
 }
 
 int opt_oneliner_dump(void *arg, int m) {
-	updmode = UPD_MODE_DUMP_ONL;
+	updmode = UPD_MODE_DUMP_ONEL;
 	return 0;
 }
 
@@ -945,6 +987,7 @@ int ref_to_val_nukelog(void *, char *, char *, size_t);
 int ref_to_val_dupefile(void *, char *, char *, size_t);
 int ref_to_val_lastonlog(void *, char *, char *, size_t);
 int ref_to_val_oneliners(void *, char *, char *, size_t);
+int ref_to_val_online(void *, char *, char *, size_t);
 int g_do_exec(void *, struct g_handle *, void *);
 size_t exec_and_wait_for_output(char*, char*);
 void sig_handler(int);
@@ -953,17 +996,21 @@ int flush_data_md(struct g_handle *hdl, char *outfile);
 int rebuild(void *arg);
 int rebuild_data_file(char *file, struct g_handle *hdl);
 int g_bmatch(void *d_ptr, struct g_handle *hdl);
-size_t g_load_data(FILE *fh, void *output, size_t max);
+size_t g_load_data(void *output, size_t max, char *file);
 int g_load_record(struct g_handle *hdl, const void *data);
 int remove_repeating_chars(char *string, char c);
 p_md_obj md_first(pmda md);
 int g_buffer_into_memory(char *file, struct g_handle *hdl);
-int g_print_stats(char *);
+int g_print_stats(char *, unsigned int, size_t);
 int lastonlog_format_block(char *, ear *, char *);
 int dupefile_format_block(char *, ear *, char *);
 int oneliner_format_block(char *, ear *, char *);
+int online_format_block(char *, ear *, char *);
+int shmap(struct g_handle *hdl, key_t ipc);
+int g_map_shm(key_t ipc, struct g_handle *hdl);
 
-void *f_ref[] = { "-l", opt_lastonlog_dump, (void*) 0, "--oneliners",
+void *f_ref[] = { "-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc,
+		(void*) 1, "-l", opt_lastonlog_dump, (void*) 0, "--oneliners",
 		opt_oneliner, (void*) 1, "-o", opt_oneliner_dump, (void*) 0,
 		"--lastonlog", opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump,
 		(void*) 0, "--dupefile", opt_dupefile, (void*) 1, "--nowbuffer",
@@ -1066,17 +1113,25 @@ void *md_alloc(pmda md, int b) {
 	if (md->offset >= md->count) {
 		/*if (md->flags & F_MDA_REUSE) {
 		 int isf = 0;
+		 p_md_obj c_pos = NULL;
 
-		 if ((md->flags & F_MDA_EOF) || !(md->flags & F_MDA_WAS_REUSED)) {
-		 md->pos = md_first(md);
+		 if (!(md->flags & F_MDA_WAS_REUSED)) {
 		 md->flags |= F_MDA_WAS_REUSED;
-		 if (md->flags & F_MDA_EOF) {
-		 md->flags ^= F_MDA_EOF;
-		 }
-		 isf++;
+		 md->flags |= F_MDA_EOF;
+		 md->pos = md_first(md);
+		 return md->pos->ptr;
 		 }
 
-		 p_md_obj c_pos = md->pos;
+		 if (!md->pos) {
+		 c_pos = md_first(md);
+		 if (md->pos) {
+		 md->pos = md->pos->next;
+		 }
+		 md->flags ^= F_MDA_EOF;
+		 return c_pos->ptr;
+		 }
+
+		 c_pos = md->pos;
 
 		 if (!c_pos->next) {
 		 if (md->flags & F_MDA_EOF) {
@@ -1111,6 +1166,7 @@ void *md_alloc(pmda md, int b) {
 					(ULLONG) (AAINT) md->objects, (ULLONG) md->count,
 					(ULLONG) rlc);
 		}
+		//}
 
 	}
 
@@ -1273,6 +1329,10 @@ int main(int argc, char *argv[]) {
 		if (gfl & F_OPT_NOBUFFER) {
 			printf("NOTE: disabling memory buffering\n");
 		}
+		if (SHM_IPC) {
+			printf("NOTE: IPC set to '%u'\n", SHM_IPC);
+		}
+
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)
@@ -1294,22 +1354,25 @@ int main(int argc, char *argv[]) {
 		dirlog_print_stats();
 		break;
 	case UPD_MODE_DUMP_NUKE:
-		g_print_stats(NUKELOG);
+		g_print_stats(NUKELOG, 0, 0);
 		break;
 	case UPD_MODE_DUMP_DUPEF:
-		g_print_stats(DUPEFILE);
+		g_print_stats(DUPEFILE, 0, 0);
 		break;
 	case UPD_MODE_DUMP_LON:
-		g_print_stats(LASTONLOG);
+		g_print_stats(LASTONLOG, 0, 0);
 		break;
-	case UPD_MODE_DUMP_ONL:
-		g_print_stats(ONELINERS);
+	case UPD_MODE_DUMP_ONEL:
+		g_print_stats(ONELINERS, 0, 0);
 		break;
 	case UPD_MODE_DUPE_CHK:
 		dirlog_check_dupe();
 		break;
 	case UPD_MODE_REBUILD:
 		rebuild(p_argv_off);
+		break;
+	case UPD_MODE_DUMP_ONL:
+		g_print_stats(NULL, F_DL_FOPEN_SHM, ON_SZ);
 		break;
 	}
 
@@ -1374,7 +1437,8 @@ int dirlog_check_dupe(void) {
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)", NULL, NULL);
+			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)", NULL,
+			NULL);
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
@@ -1405,7 +1469,8 @@ int dirlog_check_dupe(void) {
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)", NULL,
 			NULL);
 			int ch = 0;
-			while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &actdl, DL_SZ))) {
+			while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &actdl,
+			DL_SZ))) {
 				if (gfl & F_OPT_KILL_GLOBAL) {
 					break;
 				}
@@ -1607,7 +1672,7 @@ int dirlog_check_records(void) {
 	off_t dsz;
 
 	if ((dsz = get_file_size(DIRLOG)) % DL_SZ) {
-		printf(MSG_GEN_DFCORRU, DIRLOG, (ULLONG) dsz, DL_SZ);
+		printf(MSG_GEN_DFCORRU, DIRLOG, (ULLONG) dsz, (int) DL_SZ);
 		printf("NOTE: use -r to rebuild (see --help)\n");
 		return -1;
 	}
@@ -1799,6 +1864,10 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		mstr = (char*) ((struct oneliner*) d_ptr)->uname;
 		callback = ref_to_val_oneliners;
 		break;
+	case F_GH_ISONLINE:
+		mstr = (char*) ((struct ONLINE*) d_ptr)->username;
+		callback = ref_to_val_online;
+		break;
 	}
 
 	int r_e = g_do_exec(d_ptr, hdl, callback);
@@ -1823,12 +1892,16 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	return 0;
 }
 
-int g_print_stats(char *file) {
+int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 	g_setjmp(0, "g_print_stats", NULL, NULL);
 
 	struct g_handle hdl = { 0 };
 
-	if (g_fopen(file, "r", F_DL_FOPEN_BUFFER, &hdl)) {
+	if (block_sz) {
+		hdl.block_sz = block_sz;
+	}
+
+	if (g_fopen(file, "r", F_DL_FOPEN_BUFFER | flags, &hdl)) {
 		return 2;
 	}
 
@@ -1882,8 +1955,14 @@ int g_print_stats(char *file) {
 					ns_ptr = e.oneliner->uname;
 					re_c += oneliner_format_block(ns_ptr, &e, sbuffer);
 					break;
+				case F_GH_ISONLINE:
+					e.online = (struct ONLINE*) ptr;
+					ns_ptr = e.online->username;
+					if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
+						goto end;
+					}
+					break;
 				}
-
 				if (re_c) {
 					printf(sbuffer);
 				} else {
@@ -1894,6 +1973,8 @@ int g_print_stats(char *file) {
 			c++;
 		}
 	}
+
+	end:
 
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
@@ -1921,7 +2002,8 @@ int dirlog_print_stats(void) {
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_print_stats(loop)", NULL, NULL);
+			g_setjmp(F_SIGERR_CONTINUE, "dirlog_print_stats(loop)", NULL,
+			NULL);
 
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
@@ -1966,7 +2048,7 @@ int dirlog_print_stats(void) {
 	return 0;
 }
 
-#define 	ACT_WRITE_BUFFER_MEMBERS	2
+#define 	ACT_WRITE_BUFFER_MEMBERS	1000
 
 int rebuild_dirlog(void) {
 	g_setjmp(0, "rebuild_dirlog", NULL, NULL);
@@ -1987,8 +2069,8 @@ int rebuild_dirlog(void) {
 		g_strncpy(actdl.mode, "r", 1);
 		md_init(&actdl.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
 		actdl.block_sz = DL_SZ;
-		actdl.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
-				| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
+		actdl.flags |= F_GH_FFBUFFER // | F_GH_WAPPEND
+		| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
 
 		actdl.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
@@ -1998,8 +2080,11 @@ int rebuild_dirlog(void) {
 		g_strncpy(actdl.mode, mode, strlen(mode));
 		data_backup_records(DIRLOG);
 	}
+	actdl.block_sz = DL_SZ;
 
-	if ((gfl & F_OPT_UPDATE) && file_exists(DIRLOG)) {
+	int dfex = file_exists(DIRLOG);
+
+	if ((gfl & F_OPT_UPDATE) && dfex) {
 		printf(
 				"WARNING: %s: requested update, but no dirlog exists - removing update flag..\n",
 				DIRLOG);
@@ -2007,7 +2092,7 @@ int rebuild_dirlog(void) {
 		flags ^= F_DL_FOPEN_BUFFER;
 	}
 
-	if (!strncmp(actdl.mode, "r", 1) && file_exists(DIRLOG)) {
+	if (!strncmp(actdl.mode, "r", 1) && dfex) {
 		if (gfl & F_OPT_VERBOSE) {
 			printf(
 					"WARNING: %s: requested read mode access but file not there\n",
@@ -2073,8 +2158,8 @@ int rebuild_dirlog(void) {
 			sprintf(s_buffer, "%s/%s", SITEROOT, (char*) buffer2.objects->ptr);
 			remove_repeating_chars(s_buffer, 0x2F);
 
-			ib = strtol((char*) ((p_md_obj) buffer2.objects->next)->ptr, NULL,
-					10);
+			ib = strtol((char*) ((p_md_obj) buffer2.objects->next)->ptr,
+			NULL, 10);
 
 			if (errno == ERANGE) {
 				printf("ERROR: could not get depth from line %d\n", i);
@@ -2094,7 +2179,9 @@ int rebuild_dirlog(void) {
 			}
 
 			g_free(ndup);
-			lend: md_g_free(&buffer2);
+			lend:
+
+			md_g_free(&buffer2);
 		}
 		ptr = ptr->next;
 	}
@@ -2655,9 +2742,59 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 				iarg->oneliner->message);
 	} else {
 		c = sprintf(buffer,
-				"LASTONLOG: user: %s/%s [%s] - time: %s, message: %s\n",
+				"ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
 				iarg->oneliner->uname, iarg->oneliner->gname,
 				iarg->oneliner->tagline, buffer2, iarg->oneliner->message);
+	}
+
+	g_memcpy(output, buffer, 2048);
+
+	return c;
+}
+
+int online_format_block(char *name, ear *iarg, char *output) {
+	g_setjmp(0, "online_format_block", NULL, NULL);
+	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
+
+	time_t t_t = (time_t) iarg->online->login_time;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+
+	if (!strlen(iarg->online->username)) {
+		return 0;
+	}
+
+	int c = 0;
+	if (gfl & F_OPT_FORMAT_BATCH) {
+		c = sprintf(buffer, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%s\n",
+				iarg->online->username, iarg->online->host,
+				(unsigned int) iarg->online->groupid,
+				(unsigned int) iarg->online->login_time, iarg->online->tagline,
+				(unsigned int) iarg->online->ssl_flag,
+				(unsigned int) iarg->online->procid,
+				(ULLONG) iarg->online->bytes_xfer,
+				(ULLONG) iarg->online->bytes_txfer, iarg->online->currentdir);
+	} else {
+		c = sprintf(buffer, "[ONLINE]\n"
+				"    User:            %s\n"
+				"    Host:            %s\n"
+				"    GID:             %u\n"
+				"    Login:           %s\n"
+				"    Tag:             %s\n"
+				"    SSL:             %s\n"
+				"    PID:             %u\n"
+				"    XFER:            %lld Bytes\n"
+				"    CWD:             %s\n", iarg->online->username,
+				iarg->online->host, (unsigned int) iarg->online->groupid,
+				buffer2, iarg->online->tagline,
+				(!iarg->online->ssl_flag ?
+						"NO" :
+						(iarg->online->ssl_flag == 1 ?
+								"YES" :
+								(iarg->online->ssl_flag == 2 ?
+										"YES (DATA)" : "UNKNOWN"))),
+				(unsigned int) iarg->online->procid,
+				(ULLONG) iarg->online->bytes_xfer, iarg->online->currentdir);
 	}
 
 	g_memcpy(output, buffer, 2048);
@@ -2952,8 +3089,8 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		g_setjmp(0, "rebuild_data_file(7)", NULL, NULL);
 
 		if (!strncmp(hdl->mode, "a", 1) || (hdl->flags & F_GH_WAPPEND)) {
-			if ((r = (int) file_copy(hdl->s_buffer, file, "a", F_FC_MSET_SRC))
-					< 1) {
+			if ((r = (int) file_copy(hdl->s_buffer, file, "a",
+			F_FC_MSET_SRC)) < 1) {
 				printf("ERROR: %s: [%d] merging temp file failed!\n",
 						hdl->s_buffer, r);
 				ret = 4;
@@ -2983,13 +3120,13 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 		return 2;
 	}
 
-	memcpy(buffer, data, hdl->block_sz);
-
 	if ((hdl->w_buffer.flags & F_MDA_EOF)) {
 		if (rebuild_data_file(hdl->file, hdl)) {
 			return 1;
 		}
 	}
+
+	memcpy(buffer, data, hdl->block_sz);
 
 	return 0;
 }
@@ -3068,34 +3205,46 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 	return ret;
 }
 
-size_t g_load_data(FILE *fh, void *output, size_t max) {
+size_t g_load_data(void *output, size_t max, char *file) {
 	size_t fr, c_fr = 0;
+	FILE *fh;
+
+	if (!(fh = gg_fopen(file, "r"))) {
+		return 0;
+	}
+
 	unsigned char *b_output = (unsigned char*) output;
 	while ((fr = g_fread(&b_output[c_fr], 1, max - c_fr, fh))) {
 		c_fr += fr;
 	}
+
+	g_fclose(fh);
 	return c_fr;
 }
 
 int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 	g_setjmp(0, "load_data_md", NULL, NULL);
-	FILE *fh;
+
 	int r = 0;
+	size_t count = 0;
 
 	if (!hdl->block_sz) {
 		return -2;
 	}
 
-	if (!(fh = gg_fopen(file, "r"))) {
-		return -3;
+	if (hdl->flags & F_GH_SHM) {
+		if ((r = shmap(hdl, SHM_IPC))) {
+			md_g_free(md);
+			return r;
+		}
+		count = hdl->total_sz / hdl->block_sz;
+	} else {
+		count = hdl->total_sz / hdl->block_sz;
+		hdl->data = calloc(count, hdl->block_sz);
 	}
 
-	size_t count = hdl->total_sz / hdl->block_sz;
-	hdl->data = calloc(count, hdl->block_sz);
-
 	if (md_init(md, count)) {
-		r = -4;
-		goto end;
+		return -4;
 	}
 
 	size_t i, b_read = 0;
@@ -3103,10 +3252,12 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 	hdl->buffer_count = 0;
 	md->flags |= F_MDA_REFPTR;
 
-	if ((b_read = g_load_data(fh, hdl->data, hdl->total_sz)) != hdl->total_sz) {
-		r = -9;
-		md_g_free(md);
-		goto end;
+	if (!(hdl->flags & F_GH_SHM)) {
+		if ((b_read = g_load_data(hdl->data, hdl->total_sz, file))
+				!= hdl->total_sz) {
+			md_g_free(md);
+			return -9;
+		}
 	}
 
 	unsigned char *w_ptr = (unsigned char*) hdl->data;
@@ -3115,9 +3266,8 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 		md->lref_ptr = (void*) w_ptr;
 		w_ptr += hdl->block_sz;
 		if (!md_alloc(md, hdl->block_sz)) {
-			r = -5;
 			md_g_free(md);
-			goto end;
+			return -5;
 		}
 
 		hdl->buffer_count++;
@@ -3127,9 +3277,44 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 
 	r = hdl->buffer_count;
 
-	end: g_fclose(fh);
-
 	return r;
+}
+
+#define MSG_DEF_SHM "SHARED MEMORY"
+
+int g_map_shm(key_t ipc, struct g_handle *hdl) {
+	hdl->flags |= F_GH_SHM;
+
+	if (hdl->buffer.count) {
+		return 0;
+	}
+
+	if (!SHM_IPC) {
+		printf("ERROR: %s: could not get IPC key, set manually (--ipc <key>)\n",
+		MSG_DEF_SHM);
+		return 1;
+	}
+
+	int r = load_data_md(&hdl->buffer, NULL, hdl);
+
+	if (!hdl->buffer_count) {
+		printf(
+				"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
+				MSG_DEF_SHM, (unsigned int) hdl->buffer_count,
+				(unsigned int) (hdl->total_sz / hdl->block_sz),
+				(unsigned int) hdl->total_sz, hdl->block_sz, r);
+		return 9;
+	}
+
+	if (gfl & F_OPT_VERBOSE2) {
+		printf(
+				"NOTE: %s: sucessfully mapped shared memory segment (%u records)\n",
+				MSG_DEF_SHM, (unsigned int) hdl->buffer_count);
+	}
+
+	hdl->flags |= F_GH_ISONLINE;
+
+	return 0;
 }
 
 int g_buffer_into_memory(char *file, struct g_handle *hdl) {
@@ -3160,6 +3345,8 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 		return 5;
 	}
 
+	hdl->total_sz = st.st_size;
+
 	bzero(hdl->file, 4096);
 	g_strncpy(hdl->file, file, strlen(file));
 
@@ -3173,8 +3360,6 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 		return 12;
 	}
 
-	hdl->total_sz = st.st_size;
-
 	if (gfl & F_OPT_VERBOSE2)
 		printf(
 				"NOTE: %s: loading data file into memory [%u records] [%llu bytes]\n",
@@ -3185,7 +3370,7 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 	if ((r = load_data_md(&hdl->buffer, file, hdl))
 			!= (hdl->total_sz / hdl->block_sz)) {
 		printf(
-				"ERROR: %s: [%d/%u] [%u] [%u] could not load data file into memory!\n",
+				"ERROR: %s: [%d/%u] [%u] [%u] could not load data into memory!\n",
 				file, r, (unsigned int) (hdl->total_sz / hdl->block_sz),
 				(unsigned int) hdl->total_sz, hdl->block_sz);
 		return 4;
@@ -3222,20 +3407,26 @@ int determine_datatype(struct g_handle *hdl) {
 int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl) {
 	g_setjmp(0, "g_fopen", NULL, NULL);
 
+	if (flags & F_DL_FOPEN_SHM) {
+		if (g_map_shm(SHM_IPC, hdl)) {
+			return 12;
+		}
+		return 0;
+	}
+
 	if (flags & F_DL_FOPEN_REWIND) {
 		gh_rewind(hdl);
 	}
 
 	if (!(gfl & F_OPT_NOBUFFER) && (flags & F_DL_FOPEN_BUFFER)
 			&& !(hdl->flags & F_GH_NOMEM)) {
-		int r;
-		if (!(r = g_buffer_into_memory(file, hdl))) {
+		if (!g_buffer_into_memory(file, hdl)) {
 			if (!(flags & F_DL_FOPEN_FILE)) {
 				return 0;
 			}
 		} else {
 			if (!(hdl->flags & F_GH_NOMEM)) {
-				return 4;
+				return 11;
 			}
 		}
 	}
@@ -3864,7 +4055,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 }
 
 int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_lastonlog", NULL, NULL);
+	g_setjmp(0, "ref_to_val_oneliners", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -3883,6 +4074,48 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 		g_strncpy(output, data->message, sizeof(data->message));
 	} else if (!strcmp(match, "time")) {
 		sprintf(output, "%u", (unsigned int) data->timestamp);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
+int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_online", NULL, NULL);
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	struct ONLINE *data = (struct ONLINE *) arg;
+
+	if (!strcmp(match, "user")) {
+		g_strncpy(output, data->username, sizeof(data->username));
+	} else if (!strcmp(match, "tag")) {
+		g_strncpy(output, data->tagline, sizeof(data->tagline));
+	} else if (!strcmp(match, "status")) {
+		g_strncpy(output, data->status, sizeof(data->status));
+	} else if (!strcmp(match, "host")) {
+		g_strncpy(output, data->host, sizeof(data->host));
+	} else if (!strcmp(match, "dir")) {
+		g_strncpy(output, data->currentdir, sizeof(data->currentdir));
+	} else if (!strcmp(match, "ssl")) {
+		sprintf(output, "%u", (unsigned int) data->ssl_flag);
+	} else if (!strcmp(match, "group")) {
+		sprintf(output, "%u", (unsigned int) data->groupid);
+	} else if (!strcmp(match, "time")) {
+		sprintf(output, "%u", (unsigned int) data->login_time);
+		/*} else if (!strcmp(match, "lupdtime")) {
+		 sprintf(output, "%u", (unsigned int) data->tstart);
+		 } else if (!strcmp(match, "lxfertime")) {
+		 sprintf(output, "%u", (unsigned int) data->txfer);*/
+	} else if (!strcmp(match, "bxfer")) {
+		sprintf(output, "%llu", (ULLONG) data->bytes_xfer);
+	} else if (!strcmp(match, "btxfer")) {
+		sprintf(output, "%llu", (ULLONG) data->bytes_txfer);
+	} else if (!strcmp(match, "procid")) {
+		sprintf(output, "%u", (unsigned int) data->procid);
 	} else {
 		return 1;
 	}
@@ -3999,6 +4232,38 @@ void sig_handler(int signal) {
 		printf("NOTE: Caught signal %d\n", signal);
 		break;
 	}
+}
+
+int shmap(struct g_handle *hdl, key_t ipc) {
+	g_setjmp(0, "shmap", NULL, NULL);
+	if (hdl->shmid) {
+		return 1001;
+	}
+
+	if ((hdl->shmid = shmget(ipc, 0, 0)) == -1) {
+		return 1002;
+	}
+
+	if ((hdl->data = shmat(hdl->shmid, NULL, SHM_RDONLY)) == (void*) -1) {
+		hdl->data = NULL;
+		return 1003;
+	}
+
+	if (shmctl(hdl->shmid, IPC_STAT, &hdl->ipcbuf) == -1) {
+		return 1004;
+	}
+
+	if (!hdl->ipcbuf.shm_segsz) {
+		return 1005;
+	}
+
+	/*if (hdl->ipcbuf.shm_segsz % hdl->block_sz) {
+	 return 1006;
+	 }*/
+
+	hdl->total_sz = (off_t) hdl->ipcbuf.shm_segsz;
+
+	return 0;
 }
 
 int get_file_type(char *file) {
