@@ -15,8 +15,9 @@
  *  - Directory log    (/ftp-data/logs/dirlog)
  *  - Nuke log         (/ftp-data/logs/nukelog)
  *  - Dupe file        (/ftp-data/logs/dupefile)
- *  - Last-online log  (/ftp-data/logs/lastonlog)
- *  - Oneliners file   (/ftp-data/logs/oneliners)
+ *  - Last-online log  (/ftp-data/logs/laston.log)
+ *  - Oneliners file   (/ftp-data/logs/oneliners.log)
+ *  - Online users     (shared memory segment)
  *
  * Installation:
  *
@@ -101,6 +102,9 @@
  *
  *  If folders file is missing, it automatically does full siteroot
  *  recursion (same as '-f').
+ *
+ * Examples:
+ *
  *
  *
  *  Credits : Bsugar for the original idea, design and beta testing
