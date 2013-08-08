@@ -19,6 +19,10 @@
 #define siteroot "/site"
 #endif
 
+#ifndef shm_ipc
+#define shm_ipc 0x0000DEAD
+#endif
+
 /* dirlog file path */
 #ifndef dir_log
 #define dir_log "/glftpd/ftp-data/logs/dirlog"
@@ -559,7 +563,7 @@ char DUPEFILE[255] = { dupe_file };
 char LASTONLOG[255] = { last_on_log };
 char ONELINERS[255] = { oneliner_file };
 long long int db_max_size = DB_MAX_SIZE;
-key_t SHM_IPC = 0;
+key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = 0;
 char GLOB_REGEX[4096] = { 0 };
 
