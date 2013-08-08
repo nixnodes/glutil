@@ -94,6 +94,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#ifndef WEXITSTATUS
+#define	WEXITSTATUS(status)	(((status) & 0xff00) >> 8)
+#endif
+
 #define VER_MAJOR 0
 #define VER_MINOR 10
 #define VER_REVISION 2
