@@ -1,3 +1,8 @@
+ * v1.0
+ *
+ *   - FreeBSD compatibility
+ *   - Reads settings from glftpd.conf
+ *
  * v0.10 RC2:
  *
  *   - Added support for dupefile and last-on log (filtering and
