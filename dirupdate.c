@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 0.10-2 RC2
+ * Version     : 1.0
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -69,9 +69,7 @@
 
 /* -------------------------- */
 
-#if _FILE_OFFSET_BITS != 64
 #define _FILE_OFFSET_BITS 64
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,10 +95,10 @@
 #define	WEXITSTATUS(status)	(((status) & 0xff00) >> 8)
 #endif
 
-#define VER_MAJOR 0
-#define VER_MINOR 10
-#define VER_REVISION 2
-#define VER_STR "_RC2"
+#define VER_MAJOR 1
+#define VER_MINOR 0
+#define VER_REVISION 0
+#define VER_STR ""
 
 typedef unsigned long long int ULLONG;
 typedef unsigned char BYTE;
@@ -159,6 +157,11 @@ typedef struct mda_header {
 	unsigned int flags;
 	void *lref_ptr;
 } mda, *pmda;
+
+typedef struct config_header {
+	char *key, *value;
+	mda data;
+} cfg_h, *p_cfg_h;
 
 struct g_handle {
 	FILE *fh;
@@ -312,6 +315,10 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_GH_ISONELINERS	0x400
 #define F_GH_SHM			0x800
 #define F_GH_ISONLINE		0x1000
+
+#define F_OVRR_IPC			0x1
+#define F_OVRR_GLROOT		0x2
+#define F_OVRR_SITEROOT		0x4
 
 /* these bits determine file type */
 #define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
@@ -554,6 +561,7 @@ mda dirlog_buffer = { 0 };
 mda nukelog_buffer = { 0 };
 
 unsigned int gfl = F_OPT_BUFFER;
+unsigned int ofl = 0;
 int updmode = 0;
 char **argv_off = NULL;
 char GLROOT[255] = { glroot };
@@ -577,6 +585,8 @@ char *exec_str = NULL;
 char b_glob[MAX_EXEC_STR] = { 0 };
 
 int glob_reg_i_m = 0;
+
+mda glconf = { 0 };
 
 char *hpd_up =
 		"glFTPd dirlog tool, version %d.%d-%d%s-%s\n"
@@ -625,7 +635,7 @@ char *hpd_up =
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
 				"  --batch               Prints dirlog data non-formatted\n"
-				"  --ipc <key>           Override gl shared memory segment key setting\n"
+				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -774,6 +784,8 @@ int opt_shmipc(void *arg, int m) {
 		return 2;
 	}
 
+	ofl |= F_OVRR_IPC;
+
 	return 0;
 }
 
@@ -782,6 +794,7 @@ int opt_glroot(void *arg, int m) {
 	if (gfl & F_OPT_VERBOSE) {
 		printf("NOTE: GLROOT path set to '%s'\n", GLROOT);
 	}
+	ofl |= F_OVRR_GLROOT;
 	return 0;
 }
 
@@ -790,6 +803,7 @@ int opt_siteroot(void *arg, int m) {
 	if (gfl & F_OPT_VERBOSE) {
 		printf("NOTE: SITEROOT path set to '%s'\n", SITEROOT_N);
 	}
+	ofl |= F_OVRR_SITEROOT;
 	return 0;
 }
 
@@ -968,13 +982,14 @@ ULLONG dirlog_find(char *dirname, int mode, unsigned int flags, void *callback);
 int enum_dir(char *dir, void *cb, void *arg, int f);
 int file_exists(char *file);
 int update_records(char *dirname, int depth);
-off_t read_file(char *file, unsigned char *buffer, size_t read_max,
-		off_t offset);
+off_t read_file(char *file, void *buffer, size_t read_max, off_t offset);
 int option_crc32(void *arg);
 int write_file_text(char *data, char *file);
 int reg_match(char *expression, char *match, int flags);
 int delete_file(char *name, unsigned char type, void *arg);
 int get_file_type(char *file);
+p_md_obj get_cfg_opt(char *, pmda);
+int load_cfg(char *, pmda);
 int nukelog_format_block(char *name, ear *iarg, char *output);
 ULLONG nukelog_find(char *dirname, int mode, struct nukelog *output1);
 int parse_args(int argc, char *argv[]);
@@ -1286,6 +1301,7 @@ int g_shutdown(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
+	int r;
 
 	if (setup_sighandlers()) {
 		printf(
@@ -1295,16 +1311,56 @@ int main(int argc, char *argv[]) {
 
 	g_setjmp(0, "main", NULL, NULL);
 
-	//sigsetjmp(g_sigjmp.env, 1);
-
-	int r = parse_args(argc, argv);
+	r = parse_args(argc, argv);
 	if (r == -2 || r == -1) {
 		print_help(NULL, 0);
 		return 4;
 	}
 
+#ifdef GLCONF
+	if ((r = load_cfg(GLCONF, &glconf))) {
+		printf("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
+	}
+
+	if ((gfl & F_OPT_VERBOSE) && glconf.offset) {
+		printf("NOTE: %s: loaded %d config lines into memory\n", GLCONF,
+				(int) glconf.offset);
+	}
+
+	p_md_obj ptr = get_cfg_opt("ipc_key", &glconf);
+
+	if (ptr && !(ofl & F_OVRR_IPC)) {
+		SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
+	}
+
+	ptr = get_cfg_opt("rootpath", &glconf);
+
+	if (ptr && !(ofl & F_OVRR_GLROOT)) {
+		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
+		if (gfl & F_OPT_VERBOSE) {
+			printf("GLCONF: loaded GLROOT: %s\n", GLROOT);
+		}
+	}
+
+	ptr = get_cfg_opt("min_homedir", &glconf);
+
+	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
+		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
+		if (gfl & F_OPT_VERBOSE) {
+			printf("GLCONF: loaded SITEROOT: %s\n", SITEROOT_N);
+		}
+	}
+
+#else
+	printf("WARNING: GLCONF not defined (in glconf.h)");
+#endif
+
+	remove_repeating_chars(GLROOT, 0x2F);
+	remove_repeating_chars(SITEROOT, 0x2F);
+
 	bzero(SITEROOT, 255);
 	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
+	remove_repeating_chars(SITEROOT, 0x2F);
 
 	if (!strlen(GLROOT)) {
 		printf("ERROR: glftpd root directory not specified!\n");
@@ -1336,8 +1392,8 @@ int main(int argc, char *argv[]) {
 		if (gfl & F_OPT_NOBUFFER) {
 			printf("NOTE: disabling memory buffering\n");
 		}
-		if (SHM_IPC) {
-			printf("NOTE: IPC set to '%u'\n", SHM_IPC);
+		if (SHM_IPC && SHM_IPC != shm_ipc) {
+			printf("NOTE: IPC key set to '0x%.8X'\n", SHM_IPC);
 		}
 
 	}
@@ -2120,7 +2176,7 @@ int rebuild_dirlog(void) {
 	char buffer[1024 * 1024] = { 0 };
 	mda dirchain = { 0 }, buffer2 = { 0 };
 
-	if (read_file(DU_FLD, (unsigned char*) buffer, 1024 * 1024, 0) < 1) {
+	if (read_file(DU_FLD, buffer, 1024 * 1024, 0) < 1) {
 		printf(
 				"WARNING: unable to read folders file, doing full siteroot recursion in '%s'..\n",
 				SITEROOT);
@@ -3725,7 +3781,31 @@ int split_string(char *line, char dl, pmda output_t) {
 			i++;
 
 		if (i > p) {
-			char *buffer = md_alloc(output_t, 2048);
+			char *buffer = md_alloc(output_t, (i - p) + 10);
+			if (!buffer)
+				return -1;
+			g_memcpy(buffer, &line[p], i - p);
+			c++;
+		}
+	}
+	return c;
+}
+
+int split_string_sp_tab(char *line, pmda output_t) {
+	g_setjmp(0, "split_string_sp_tab", NULL, NULL);
+	int i, p, c, llen = strlen(line);
+
+	for (i = 0, p = 0, c = 0; i <= llen; i++) {
+
+		while ((line[i] == 0x20 && line[i] != 0x9) && line[i])
+			i++;
+		p = i;
+
+		while ((line[i] != 0x20 && line[i] != 0x9) && line[i] != 0xA && line[i])
+			i++;
+
+		if (i > p) {
+			char *buffer = md_alloc(output_t, (i - p) + 10);
 			if (!buffer)
 				return -1;
 			g_memcpy(buffer, &line[p], i - p);
@@ -3790,8 +3870,7 @@ int delete_file(char *name, unsigned char type, void *arg) {
 	return 2;
 }
 
-off_t read_file(char *file, unsigned char *buffer, size_t read_max,
-		off_t offset) {
+off_t read_file(char *file, void *buffer, size_t read_max, off_t offset) {
 	g_setjmp(0, "read_file", NULL, NULL);
 	size_t read;
 	int r;
@@ -3813,7 +3892,8 @@ off_t read_file(char *file, unsigned char *buffer, size_t read_max,
 		fseeko(fp, (off_t) offset, SEEK_SET);
 
 	for (read = 0; !feof(fp) && read < read_max;) {
-		if ((r = g_fread(&buffer[read], 1, read_max - read, fp)) < 1)
+		if ((r = g_fread(&((unsigned char*) buffer)[read], 1, read_max - read,
+				fp)) < 1)
 			break;
 		read += r;
 	}
@@ -4271,6 +4351,82 @@ int shmap(struct g_handle *hdl, key_t ipc) {
 	hdl->total_sz = (off_t) hdl->ipcbuf.shm_segsz;
 
 	return 0;
+}
+
+int load_cfg(char *file, pmda md) {
+	g_setjmp(0, "load_cfg", NULL, NULL);
+	int r = 0;
+	FILE *fh;
+
+	if (md_init(md, 256)) {
+		return 1;
+	}
+
+	size_t f_sz = get_file_size(file);
+
+	if (!f_sz) {
+		return 2;
+	}
+
+	if (!(fh = gg_fopen(file, "r"))) {
+		return 3;
+	}
+
+	char *buffer = calloc(V_MB, 1);
+	p_cfg_h pce;
+	int rd, i;
+
+	while (fgets(buffer, V_MB, fh)) {
+		if (strlen(buffer) < 3) {
+			continue;
+		}
+
+		for (i = 0; buffer[i] == 0x20 || buffer[i] == 0x9; i++) {
+		}
+
+		if (buffer[i] == 0x23) {
+			continue;
+		}
+
+		pce = md_alloc(md, sizeof(cfg_h));
+		md_init(&pce->data, 8);
+		if ((rd = split_string_sp_tab(buffer, &pce->data)) < 1) {
+			continue;
+		}
+
+		pce->key = pce->data.objects->ptr;
+	}
+
+	g_free(buffer);
+
+	return r;
+}
+
+p_md_obj get_cfg_opt(char *key, pmda md) {
+	g_setjmp(0, "get_cfg_opt", NULL, NULL);
+	if (!md->count) {
+		return NULL;
+	}
+
+	p_md_obj ptr = md_first(md);
+	size_t pce_key_sz, key_sz = strlen(key);
+	p_cfg_h pce;
+
+	while (ptr) {
+		pce = (p_cfg_h) ptr->ptr;
+		pce_key_sz = strlen(pce->key);
+		if (pce_key_sz == key_sz && !strncmp(pce->key, key, pce_key_sz)) {
+			p_md_obj r_ptr = md_first(&pce->data);
+			if (r_ptr) {
+				return (p_md_obj) r_ptr->next;
+			} else {
+				return NULL;
+			}
+		}
+		ptr = ptr->next;
+	}
+
+	return NULL;
 }
 
 int get_file_type(char *file) {
