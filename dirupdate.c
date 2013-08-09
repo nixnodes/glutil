@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0
+ * Version     : 1.0-1
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -17,6 +17,10 @@
 /* site root, relative to gl root */
 #ifndef siteroot
 #define siteroot "/site"
+#endif
+
+#ifndef ftp_data
+#define ftp_data "/ftp-data"
 #endif
 
 #ifndef shm_ipc
@@ -97,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -333,7 +337,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define ON_SZ sizeof(struct ONLINE)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
-#define	DB_MAX_SIZE 536870912   /* max file size allowed to load into memory */
+#define	DB_MAX_SIZE 	536870912   /* max file size allowed to load into memory */
 
 #define	PIPE_READ_MAX	0x2000
 
@@ -342,17 +346,25 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define MSG_GEN_DFCORRU "ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
 #define MSG_GEN_DFRFAIL "ERROR: %s: rebuilding data file failed!\n"
 
-#define F_SIGERR_CONTINUE 0x1  /* continue after exception */
+#define DEFPATH_LOGS 	"/logs"
 
-#define ID_SIGERR_UNSPEC 0x0
-#define ID_SIGERR_MEMCPY 0x1
-#define ID_SIGERR_STRCPY 0x2
-#define ID_SIGERR_FREE 0x3
-#define ID_SIGERR_FREAD 0x4
-#define ID_SIGERR_FWRITE 0x5
-#define ID_SIGERR_FOPEN 0x6
-#define ID_SIGERR_FCLOSE 0x7
-#define ID_SIGERR_MEMMOVE 0x8
+#define DEFF_DIRLOG 	"dirlog"
+#define DEFF_NUKELOG 	"nukelog"
+#define DEFF_LASTONLOG  "laston.log"
+#define DEFF_DUPEFILE 	"dupefile"
+#define DEFF_ONELINERS 	"oneliners.log"
+
+#define F_SIGERR_CONTINUE 	0x1  /* continue after exception */
+
+#define ID_SIGERR_UNSPEC 	0x0
+#define ID_SIGERR_MEMCPY 	0x1
+#define ID_SIGERR_STRCPY 	0x2
+#define ID_SIGERR_FREE 		0x3
+#define ID_SIGERR_FREAD 	0x4
+#define ID_SIGERR_FWRITE 	0x5
+#define ID_SIGERR_FOPEN 	0x6
+#define ID_SIGERR_FCLOSE 	0x7
+#define ID_SIGERR_MEMMOVE 	0x8
 
 sigjmp g_sigjmp = { { { { 0 } } } };
 
@@ -526,7 +538,6 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 	case ID_SIGERR_MEMMOVE:
 		s_ptr2 = "memove";
 		break;
-
 	}
 
 	if (g_sigjmp.flags & F_SIGERR_CONTINUE) {
@@ -573,6 +584,7 @@ char DU_FLD[255] = { du_fld };
 char DUPEFILE[255] = { dupe_file };
 char LASTONLOG[255] = { last_on_log };
 char ONELINERS[255] = { oneliner_file };
+char FTPDATA[255] = { ftp_data };
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = 0;
@@ -1189,7 +1201,6 @@ void *md_alloc(pmda md, int b) {
 					(ULLONG) rlc);
 		}
 		//}
-
 	}
 
 	p_md_obj prev = md->pos;
@@ -1300,6 +1311,34 @@ int g_shutdown(void *arg) {
 	exit(0);
 }
 
+char *build_data_path(char *file, char *path) {
+	if (!file_exists(path)) {
+		return path;
+	}
+
+	char buffer[4096] = { 0 };
+
+	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS, file);
+
+	remove_repeating_chars(buffer, 0x2F);
+
+	size_t blen = strlen(buffer);
+
+	if (blen > 255) {
+		return path;
+	}
+
+	if (gfl & F_OPT_VERBOSE3) {
+		printf("NOTE: %s was not found, setting default data path: %s\n", path,
+				buffer);
+	}
+
+	bzero(path, 255);
+	g_memcpy(path, buffer, blen);
+
+	return path;
+}
+
 int main(int argc, char *argv[]) {
 	int r;
 
@@ -1336,8 +1375,9 @@ int main(int argc, char *argv[]) {
 	ptr = get_cfg_opt("rootpath", &glconf);
 
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
+		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
-		if (gfl & F_OPT_VERBOSE) {
+		if (gfl & F_OPT_VERBOSE2) {
 			printf("GLCONF: loaded GLROOT: %s\n", GLROOT);
 		}
 	}
@@ -1345,22 +1385,30 @@ int main(int argc, char *argv[]) {
 	ptr = get_cfg_opt("min_homedir", &glconf);
 
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
+		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
-		if (gfl & F_OPT_VERBOSE) {
+		if (gfl & F_OPT_VERBOSE2) {
 			printf("GLCONF: loaded SITEROOT: %s\n", SITEROOT_N);
 		}
 	}
 
+	ptr = get_cfg_opt("ftp-data", &glconf);
+
+	if (ptr) {
+		bzero(FTPDATA, 255);
+		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
+		if (gfl & F_OPT_VERBOSE2) {
+			printf("GLCONF: loaded FTPDATA: %s\n", FTPDATA);
+		}
+	}
+
+	remove_repeating_chars(FTPDATA, 0x2F);
 #else
-	printf("WARNING: GLCONF not defined (in glconf.h)");
+	printf("WARNING: GLCONF not defined in glconf.h");
 #endif
 
 	remove_repeating_chars(GLROOT, 0x2F);
-	remove_repeating_chars(SITEROOT, 0x2F);
-
-	bzero(SITEROOT, 255);
-	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
-	remove_repeating_chars(SITEROOT, 0x2F);
+	remove_repeating_chars(SITEROOT_N, 0x2F);
 
 	if (!strlen(GLROOT)) {
 		printf("ERROR: glftpd root directory not specified!\n");
@@ -1371,6 +1419,16 @@ int main(int argc, char *argv[]) {
 		printf("ERROR: glftpd site root directory not specified!\n");
 		return 2;
 	}
+
+	build_data_path(DEFF_DIRLOG, DIRLOG);
+	build_data_path(DEFF_NUKELOG, NUKELOG);
+	build_data_path(DEFF_LASTONLOG, LASTONLOG);
+	build_data_path(DEFF_DUPEFILE, DUPEFILE);
+	build_data_path(DEFF_ONELINERS, ONELINERS);
+
+	bzero(SITEROOT, 255);
+	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
+	remove_repeating_chars(SITEROOT, 0x2F);
 
 	if (strlen(GLOB_REGEX)) {
 		gfl |= F_OPT_HAS_G_REGEX;
@@ -1395,7 +1453,6 @@ int main(int argc, char *argv[]) {
 		if (SHM_IPC && SHM_IPC != shm_ipc) {
 			printf("NOTE: IPC key set to '0x%.8X'\n", SHM_IPC);
 		}
-
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)
@@ -3047,7 +3104,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: %s: flushing data to disk..\n", file);
+		printf("NOTE: %s: flushing data to disk..\n", hdl->s_buffer);
 	}
 
 	hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
@@ -3064,7 +3121,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: using mode %o\n", file, hdl->st_mode);
+		printf("NOTE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
 	}
 
 	off_t rw_o = hdl->rw, bw_o = hdl->bw;
@@ -3085,7 +3142,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: flushed %llu records, %llu bytes\n", file,
+		printf("NOTE: %s: flushed %llu records, %llu bytes\n", hdl->s_buffer,
 				(ULLONG) (hdl->rw - rw_o), (ULLONG) (hdl->bw - bw_o));
 	}
 
@@ -3196,6 +3253,11 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 
 int flush_data_md(struct g_handle *hdl, char *outfile) {
 	g_setjmp(0, "flush_data_md", NULL, NULL);
+
+	if (gfl & F_OPT_NOWRITE) {
+		return 0;
+	}
+
 	FILE *fh = NULL;
 	size_t bw = 0;
 	unsigned char *buffer = NULL;
@@ -3657,11 +3719,13 @@ size_t exec_and_wait_for_output(char *command, char *output) {
 
 int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 	g_setjmp(0, "dirlog_write_record", NULL, NULL);
-	if (gfl & F_OPT_NOWRITE)
+	if (gfl & F_OPT_NOWRITE) {
 		return 0;
+	}
 
-	if (!buffer)
+	if (!buffer) {
 		return 2;
+	}
 
 	if (!actdl.fh) {
 		printf("ERROR: dirlog handle is not open\n");
@@ -3921,6 +3985,10 @@ int file_exists(char *file) {
 
 ssize_t file_copy(char *source, char *dest, char *mode, unsigned int flags) {
 	g_setjmp(0, "file_copy", NULL, NULL);
+
+	if (gfl & F_OPT_NOWRITE) {
+		return 1;
+	}
 
 	struct stat st_s, st_d;
 	mode_t st_mode = 0;
