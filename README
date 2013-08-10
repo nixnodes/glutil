@@ -1,7 +1,7 @@
  * Features:
  *
  *  - Import individual/missing records or rebuild entire dirlog based 
- * 		on file-system and nukelog data (read below)
+ *      on file-system and nukelog data (read below)
  *  - Rebuild existing glFTPd log data files (see full list below) 
  *      using regex/custom filtering methods
  *  - Display various glFTPd log data in human readable formats
