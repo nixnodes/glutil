@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-4
+ * Version     : 1.0-5
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -550,8 +550,8 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 		s_ptr3 = ", resuming execution..";
 	}
 
-	printf("%s: [%s] [%s]%s%s\n", s_ptr1, g_sigjmp.type, s_ptr2, buffer1,
-			s_ptr3);
+	printf("%s: [%s] [%d] [%s]%s%s\n", s_ptr1, g_sigjmp.type, errno, s_ptr2,
+			buffer1, s_ptr3);
 
 	usleep(250000);
 
@@ -593,7 +593,7 @@ char ONELINERS[255] = { oneliner_file };
 char FTPDATA[255] = { ftp_data };
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
-int glob_regex_flags = 0;
+int glob_regex_flags = REG_EXTENDED;
 char GLOB_REGEX[4096] = { 0 };
 
 #define MAX_EXEC_STR 0x200000
@@ -1509,7 +1509,7 @@ int main(int argc, char *argv[]) {
 		rebuild(p_argv_off);
 		break;
 	case UPD_MODE_DUMP_ONL:
-		g_print_stats(NULL, F_DL_FOPEN_SHM, ON_SZ);
+		g_print_stats("ONLINE USERS", F_DL_FOPEN_SHM, ON_SZ);
 		break;
 	case UPD_MODE_NOOP:
 		break;
@@ -1550,8 +1550,9 @@ int rebuild(void *arg) {
 			return 3;
 		}
 
-		if ( !hdl.buffer_count ) {
-			printf("ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
+		if (!hdl.buffer_count) {
+			printf(
+					"ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
 			return 4;
 		}
 
@@ -2017,6 +2018,9 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		break;
 	case F_GH_ISONLINE:
 		mstr = (char*) ((struct ONLINE*) d_ptr)->username;
+		if (!strlen(mstr)) {
+			return -1;
+		}
 		callback = ref_to_val_online;
 		break;
 	}
@@ -2061,7 +2065,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 	char sbuffer[4096], *ns_ptr;
 	int c = 0;
 	ear e;
-	int re_c;
+	int re_c, r;
 
 	while ((ptr = g_read(buffer, &hdl, hdl.block_sz))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
@@ -2071,7 +2075,10 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 				break;
 			}
 
-			if (g_bmatch(ptr, &hdl)) {
+			if ((r=g_bmatch(ptr, &hdl))) {
+				if ( r == -1 ) {
+					break;
+				}
 				continue;
 			}
 
@@ -2130,7 +2137,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-		printf("STATS: %s: read %d records\n", DIRLOG, c);
+		printf("STATS: %s: read %d records\n", file, c);
 	}
 
 	g_close(&actdl);
@@ -2906,6 +2913,13 @@ int online_format_block(char *name, ear *iarg, char *output) {
 		return 0;
 	}
 
+	int32_t tdiff = (int32_t) time(NULL) - iarg->online->tstart.tv_sec;
+	float kb = (iarg->online->bytes_xfer / 1024), kbps = 0.0;
+
+	if (tdiff > 0 && kb > 0) {
+		kbps = kb / (float) tdiff;
+	}
+
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = sprintf(buffer, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%s\n",
@@ -2926,7 +2940,8 @@ int online_format_block(char *name, ear *iarg, char *output) {
 				"    SSL:             %s\n"
 				"    PID:             %u\n"
 				"    XFER:            %lld Bytes\n"
-				"    CWD:             %s\n", iarg->online->username,
+				"    Rate:            %.3f KB/s\n"
+				"    CWD:             %s\n\n", iarg->online->username,
 				iarg->online->host, (unsigned int) iarg->online->groupid,
 				buffer2, iarg->online->tagline,
 				(!iarg->online->ssl_flag ?
@@ -2936,7 +2951,8 @@ int online_format_block(char *name, ear *iarg, char *output) {
 								(iarg->online->ssl_flag == 2 ?
 										"YES (DATA)" : "UNKNOWN"))),
 				(unsigned int) iarg->online->procid,
-				(ULLONG) iarg->online->bytes_xfer, iarg->online->currentdir);
+				(ULLONG) iarg->online->bytes_xfer, kbps,
+				iarg->online->currentdir);
 	}
 
 	g_memcpy(output, buffer, 2048);
@@ -3262,7 +3278,7 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 		hdl->w_buffer.flags |= F_MDA_FREE;
 		rebuild_data_file(hdl->file, hdl);
 		p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
-		if ( gfl & F_OPT_VERBOSE3) {
+		if (gfl & F_OPT_VERBOSE3) {
 			printf("NOTE: scrubbing write cache..\n");
 		}
 		while (ptr) {
@@ -3459,7 +3475,7 @@ int g_map_shm(key_t ipc, struct g_handle *hdl) {
 
 	if (gfl & F_OPT_VERBOSE2) {
 		printf(
-				"NOTE: %s: sucessfully mapped shared memory segment (%u records)\n",
+				"NOTE: %s: mapped %u records\n",
 				MSG_DEF_SHM, (unsigned int) hdl->buffer_count);
 	}
 
@@ -4485,6 +4501,7 @@ int load_cfg(char *file, pmda md) {
 		pce = md_alloc(md, sizeof(cfg_h));
 		md_init(&pce->data, 8);
 		if ((rd = split_string_sp_tab(buffer, &pce->data)) < 1) {
+			md_g_free(&pce->data);
 			continue;
 		}
 
