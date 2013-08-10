@@ -3,6 +3,7 @@
  *   - FreeBSD compatibility
  *   - Reads settings from glftpd.conf
  *   - Reverts to default data paths, when defined ones are missing (rev. 1)
+ *   - Minor fixes (rev. 2)
  *
  * v0.10 RC2:
  *
