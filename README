@@ -2,15 +2,15 @@
  *
  *  - Import individual/missing records or rebuild entire dirlog based 
  * 		on file-system and nukelog data (read below)
- *  - Rebuild existing glFTPd data files (see full list below) 
+ *  - Rebuild existing glFTPd log data files (see full list below) 
  *      using regex/custom filtering methods
- *  - Display various glFTPd data records in human readable formats
+ *  - Display various glFTPd log data in human readable formats
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
  *      fix them
  *  - Search for duplicates in dirlog
  *  - Generate SFV files inside respective folders
  *
- * Supported glFTPd data types (with default paths):
+ * Supported glFTPd data logs (with default paths):
  *
  *  - Directory log    (/ftp-data/logs/dirlog)
  *  - Nuke log         (/ftp-data/logs/nukelog)
