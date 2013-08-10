@@ -4,6 +4,9 @@
  *   - Reads settings from glftpd.conf
  *   - Reverts to default data paths, when defined ones are missing (rev. 1)
  *   - Minor fixes (rev. 2)
+ *   - Bugfix: dirlog update was broken (rev. 2)
+ *   - Flushes write buffer to disk,  if it gets too big (> 100000 records) (rev. 3)
+ *   - --sfv used with -s doesn't modify dirlog anymore (rev .3)
  *
  * v0.10 RC2:
  *
