@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-1
+ * Version     : 1.0-2
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -274,6 +274,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define UPD_MODE_DUMP_LON	0x9
 #define UPD_MODE_DUMP_ONEL	0xA
 #define UPD_MODE_DUMP_ONL	0xB
+#define UPD_MODE_HELP		0xC
 
 #define F_OPT_FORCE 		0x1
 #define F_OPT_VERBOSE 		0x2
@@ -323,6 +324,11 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OVRR_IPC			0x1
 #define F_OVRR_GLROOT		0x2
 #define F_OVRR_SITEROOT		0x4
+#define F_OVRR_DUPEFILE		0x8
+#define F_OVRR_LASTONLOG	0x10
+#define F_OVRR_ONELINERS	0x20
+#define F_OVRR_DIRLOG		0x40
+#define F_OVRR_NUKELOG		0x80
 
 /* these bits determine file type */
 #define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
@@ -610,7 +616,7 @@ char *hpd_up =
 				"  -r [-u]               Rebuild dirlog based on filesystem data\n"
 				"                           .folders file (see README) defines a list of dirs in SITEROOT to scan\n"
 				"                           -u only imports new records and does not truncate existing dirlog\n"
-				"                           -f ignores .folders file and do a full recursive scan\n"
+				"                           -f ignores .folders file and does a full recursive scan\n"
 				"  -d, [--raw]           Print directory log to stdout in readable format (-vv prints dir nuke status)\n"
 				"  -n, [--raw]           Print nuke log to stdout\n"
 				"  -i, [--raw]           Print dupe file to stdout\n"
@@ -803,43 +809,31 @@ int opt_shmipc(void *arg, int m) {
 
 int opt_glroot(void *arg, int m) {
 	g_cpg(arg, GLROOT, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: GLROOT path set to '%s'\n", GLROOT);
-	}
 	ofl |= F_OVRR_GLROOT;
 	return 0;
 }
 
 int opt_siteroot(void *arg, int m) {
 	g_cpg(arg, SITEROOT_N, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: SITEROOT path set to '%s'\n", SITEROOT_N);
-	}
 	ofl |= F_OVRR_SITEROOT;
 	return 0;
 }
 
 int opt_dupefile(void *arg, int m) {
 	g_cpg(arg, DUPEFILE, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: DUPEFILE path set to '%s'\n", DUPEFILE);
-	}
+	ofl |= F_OVRR_DUPEFILE;
 	return 0;
 }
 
 int opt_lastonlog(void *arg, int m) {
 	g_cpg(arg, LASTONLOG, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: LASTONLOG path set to '%s'\n", LASTONLOG);
-	}
+	ofl |= F_OVRR_LASTONLOG;
 	return 0;
 }
 
 int opt_oneliner(void *arg, int m) {
 	g_cpg(arg, ONELINERS, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: ONELINERS path set to '%s'\n", ONELINERS);
-	}
+	ofl |= F_OVRR_ONELINERS;
 	return 0;
 }
 
@@ -857,9 +851,7 @@ int opt_rebuild(void *arg, int m) {
 
 int opt_dirlog_file(void *arg, int m) {
 	g_cpg(arg, DIRLOG, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: dirlog file set to '%s'\n", DIRLOG);
-	}
+	ofl |= F_OVRR_DIRLOG;
 	return 0;
 }
 
@@ -889,17 +881,12 @@ int opt_g_iregex(void *arg, int m) {
 
 int opt_nukelog_file(void *arg, int m) {
 	g_cpg(arg, NUKELOG, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: nukelog file set to '%s'\n", NUKELOG);
-	}
+	ofl |= F_OVRR_NUKELOG;
 	return 0;
 }
 
 int opt_dirlog_sections_file(void *arg, int m) {
 	g_cpg(arg, DU_FLD, m, 255);
-	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: sections file set to '%s'\n", DU_FLD);
-	}
 	return 0;
 }
 
@@ -947,6 +934,7 @@ int opt_oneliner_dump(void *arg, int m) {
 int print_help(void *arg, int m) {
 	printf(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
 	VER_STR, ARCH ? "x86_64" : "i686");
+	updmode = UPD_MODE_HELP;
 	return 0;
 }
 
@@ -1042,6 +1030,8 @@ int oneliner_format_block(char *, ear *, char *);
 int online_format_block(char *, ear *, char *);
 int shmap(struct g_handle *hdl, key_t ipc);
 int g_map_shm(key_t ipc, struct g_handle *hdl);
+char *build_data_path(char *file, char *path);
+void free_cfg(pmda);
 
 void *f_ref[] = { "-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc,
 		(void*) 1, "-l", opt_lastonlog_dump, (void*) 0, "--oneliners",
@@ -1308,10 +1298,13 @@ int g_shutdown(void *arg) {
 	md_g_free(&actdl.w_buffer);
 	md_g_free(&actnl.buffer);
 	md_g_free(&actnl.w_buffer);
+	free_cfg(&glconf);
 	exit(0);
 }
 
 char *build_data_path(char *file, char *path) {
+	remove_repeating_chars(path, 0x2F);
+
 	if (!file_exists(path)) {
 		return path;
 	}
@@ -1453,6 +1446,27 @@ int main(int argc, char *argv[]) {
 		if (SHM_IPC && SHM_IPC != shm_ipc) {
 			printf("NOTE: IPC key set to '0x%.8X'\n", SHM_IPC);
 		}
+		if (ofl & F_OVRR_GLROOT) {
+			printf("NOTE: GLROOT path set to '%s'\n", GLROOT);
+		}
+		if (ofl & F_OVRR_SITEROOT) {
+			printf("NOTE: SITEROOT path set to '%s'\n", SITEROOT);
+		}
+		if (ofl & F_OVRR_DIRLOG) {
+			printf("NOTE: DIRLOG path set to '%s'\n", DIRLOG);
+		}
+		if (ofl & F_OVRR_NUKELOG) {
+			printf("NOTE: NUKELOG path set to '%s'\n", NUKELOG);
+		}
+		if (ofl & F_OVRR_DUPEFILE) {
+			printf("NOTE: DUPEFILE path set to '%s'\n", DUPEFILE);
+		}
+		if (ofl & F_OVRR_LASTONLOG) {
+			printf("NOTE: LASTONLOG path set to '%s'\n", LASTONLOG);
+		}
+		if (ofl & F_OVRR_ONELINERS) {
+			printf("NOTE: ONELINERS path set to '%s'\n", ONELINERS);
+		}
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)
@@ -1493,6 +1507,11 @@ int main(int argc, char *argv[]) {
 		break;
 	case UPD_MODE_DUMP_ONL:
 		g_print_stats(NULL, F_DL_FOPEN_SHM, ON_SZ);
+		break;
+	case UPD_MODE_HELP:
+		break;
+	default:
+		printf("ERROR: no mode specified (see --help)\n");
 		break;
 	}
 
@@ -4468,6 +4487,20 @@ int load_cfg(char *file, pmda md) {
 	g_free(buffer);
 
 	return r;
+}
+
+void free_cfg(pmda md) {
+	g_setjmp(0, "free_cfg", NULL, NULL);
+	p_md_obj ptr = md_first(md);
+	p_cfg_h pce;
+
+	while (ptr) {
+		pce = (p_cfg_h) ptr->ptr;
+		md_g_free(&pce->data);
+		ptr = ptr->next;
+	}
+
+	md_g_free(md);
 }
 
 p_md_obj get_cfg_opt(char *key, pmda md) {
