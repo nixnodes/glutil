@@ -1550,9 +1550,14 @@ int rebuild(void *arg) {
 			return 3;
 		}
 
+		if ( !hdl.buffer_count ) {
+			printf("ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
+			return 4;
+		}
+
 		if (rebuild_data_file(datafile, &hdl)) {
 			printf(MSG_GEN_DFRFAIL, datafile);
-			return 3;
+			return 5;
 		}
 
 		printf("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
