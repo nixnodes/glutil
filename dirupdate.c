@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-2
+ * Version     : 1.0-3
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -156,7 +156,7 @@ typedef struct mda_object {
 #define F_MDA_FIRST_REUSED  0x20
 
 typedef struct mda_header {
-	p_md_obj objects, pos, r_pos;
+	p_md_obj objects, pos, r_pos, c_pos;
 	off_t offset, r_offset, count;
 	unsigned int flags;
 	void *lref_ptr;
@@ -638,9 +638,9 @@ char *hpd_up =
 				"  -b, --nobuffer        Disable data file memory buffering\n"
 				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
 				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
-				"  --sfv                 Generate new SFV files inside target folders, works with -r, -u and -s\n"
-				"                        Used by itself, it goes into -r (fs rebuild) mode, but does not change dirlog\n"
-				"                           Avoid using this if when doing a full recursive rebuild\n"
+				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
+				"                           Used by itself, it goes into -r (fs rebuild) dry run (does not modify dirlog)\n"
+				"                           Avoid using this if doing a full recursive rebuild\n"
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
 				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
@@ -1680,6 +1680,10 @@ int dirlog_update_record(char **argv) {
 	ear arg = { 0 };
 	arg.dirlog = &dl;
 
+	if (gfl & F_OPT_SFV) {
+		gfl |= F_OPT_NOWRITE | F_OPT_FORCE;
+	}
+
 	mda dirchain = { 0 };
 	p_md_obj ptr;
 
@@ -2190,7 +2194,7 @@ int dirlog_print_stats(void) {
 	return 0;
 }
 
-#define 	ACT_WRITE_BUFFER_MEMBERS	1000
+#define 	ACT_WRITE_BUFFER_MEMBERS	10000
 
 int rebuild_dirlog(void) {
 	g_setjmp(0, "rebuild_dirlog", NULL, NULL);
@@ -2547,13 +2551,6 @@ int proc_section(char *name, unsigned char type, void *arg) {
 							name, r);
 				goto end;
 			}
-
-			/*if (gfl & F_OPT_UPDATE && iarg->dirlog->status == 1) {
-			 printf(
-			 "WARNING: %s: refusing to import nuked directories while doing update\n",
-			 name);
-			 goto end;
-			 }*/
 
 			if (g_bmatch(iarg->dirlog, &actdl)) {
 				goto end;
@@ -3250,21 +3247,30 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	return ret;
 }
 
+#define MAX_WBUFFER_HOLD	100000
+
 int g_load_record(struct g_handle *hdl, const void *data) {
 	g_setjmp(0, "g_load_record", NULL, NULL);
 	void *buffer = NULL;
+
+	if (hdl->w_buffer.offset == MAX_WBUFFER_HOLD) {
+		rebuild_data_file(hdl->file, hdl);
+		p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
+		while (ptr) {
+			ptr_s = ptr->next;
+			g_free(ptr->ptr);
+			bzero(ptr, sizeof(md_obj));
+			ptr = ptr_s;
+		}
+		hdl->w_buffer.pos = hdl->w_buffer.objects;
+		hdl->w_buffer.offset = 0;
+	}
 
 	buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
 
 	if (!buffer) {
 		return 2;
 	}
-
-	/*if ((hdl->w_buffer.flags & F_MDA_EOF)) {
-	 if (rebuild_data_file(hdl->file, hdl)) {
-	 return 1;
-	 }
-	 }*/
 
 	memcpy(buffer, data, hdl->block_sz);
 
