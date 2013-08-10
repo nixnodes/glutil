@@ -274,7 +274,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define UPD_MODE_DUMP_LON	0x9
 #define UPD_MODE_DUMP_ONEL	0xA
 #define UPD_MODE_DUMP_ONL	0xB
-#define UPD_MODE_HELP		0xC
+#define UPD_MODE_NOOP		0xC
 
 #define F_OPT_FORCE 		0x1
 #define F_OPT_VERBOSE 		0x2
@@ -291,7 +291,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_MODE_RAWDUMP  0x1000
 #define F_OPT_HAS_G_REGEX	0x2000
 #define F_OPT_VERBOSE4 		0x4000
-#define F_OPT_BUFFER		0x8000
+#define F_OPT_WBUFFER		0x8000
 #define F_OPT_FORCEWSFV		0x10000
 
 #define F_MD_NOREAD			0x1
@@ -577,7 +577,7 @@ struct d_stats nl_stats = { 0 };
 mda dirlog_buffer = { 0 };
 mda nukelog_buffer = { 0 };
 
-unsigned int gfl = F_OPT_BUFFER;
+unsigned int gfl = F_OPT_WBUFFER;
 unsigned int ofl = 0;
 int updmode = 0;
 char **argv_off = NULL;
@@ -724,7 +724,7 @@ int opt_g_nobuffering(void *arg, int m) {
 }
 
 int opt_g_buffering(void *arg, int m) {
-	gfl ^= F_OPT_BUFFER;
+	gfl ^= F_OPT_WBUFFER;
 	return 0;
 }
 
@@ -934,7 +934,7 @@ int opt_oneliner_dump(void *arg, int m) {
 int print_help(void *arg, int m) {
 	printf(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
 	VER_STR, ARCH ? "x86_64" : "i686");
-	updmode = UPD_MODE_HELP;
+	updmode = UPD_MODE_NOOP;
 	return 0;
 }
 
@@ -964,45 +964,45 @@ int opt_membuffer_limit(void *arg, int m) {
 	return 0;
 }
 
-ULLONG file_crc32(char *file, uLong *crc_out);
+ULLONG file_crc32(char *, uLong *);
 int rebuild_dirlog(void);
 int data_backup_records(char*);
-ssize_t file_copy(char *source, char *dest, char *mode, unsigned int flags);
+ssize_t file_copy(char *, char *, char *, unsigned int);
 int dirlog_check_records(void);
 int dirlog_print_stats(void);
-int dirlog_format_block(char *name, ear *iarg, char *output);
-int proc_section(char *name, unsigned char type, void *arg);
-int proc_release(char *name, unsigned char type, void *arg);
-int split_string(char *line, char dl, pmda output_t);
-int release_generate_block(char *name, ear *iarg);
-long get_file_size(char *file);
-time_t get_file_creation_time(struct stat *st);
-int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence);
-ULLONG dirlog_find(char *dirname, int mode, unsigned int flags, void *callback);
-int enum_dir(char *dir, void *cb, void *arg, int f);
-int file_exists(char *file);
-int update_records(char *dirname, int depth);
-off_t read_file(char *file, void *buffer, size_t read_max, off_t offset);
-int option_crc32(void *arg);
-int write_file_text(char *data, char *file);
-int reg_match(char *expression, char *match, int flags);
-int delete_file(char *name, unsigned char type, void *arg);
-int get_file_type(char *file);
+int dirlog_format_block(char *, ear *, char *);
+int proc_section(char *, unsigned char, void *);
+int proc_release(char *, unsigned char, void *);
+int split_string(char *, char, pmda);
+int release_generate_block(char *, ear *);
+long get_file_size(char *);
+time_t get_file_creation_time(struct stat *);
+int dirlog_write_record(struct dirlog *, off_t, int);
+ULLONG dirlog_find(char *, int, unsigned int, void *);
+int enum_dir(char *, void *, void *, int);
+int file_exists(char *);
+int update_records(char *, int);
+off_t read_file(char *, void *, size_t, off_t);
+int option_crc32(void *);
+int write_file_text(char *, char *);
+int reg_match(char *, char *, int);
+int delete_file(char *, unsigned char, void *);
+int get_file_type(char *);
 p_md_obj get_cfg_opt(char *, pmda);
 int load_cfg(char *, pmda);
-int nukelog_format_block(char *name, ear *iarg, char *output);
-ULLONG nukelog_find(char *dirname, int mode, struct nukelog *output1);
+int nukelog_format_block(char *, ear *, char *);
+ULLONG nukelog_find(char *, int, struct nukelog *);
 int parse_args(int argc, char *argv[]);
-int get_relative_path(char *subject, char *root, char *output);
-int process_opt(char *opt, void *arg, void *reference_array, int m);
-int dir_exists(char *dir);
-int dirlog_update_record(char **argv);
+int get_relative_path(char *, char *, char *);
+int process_opt(char *, void *, void *, int);
+int dir_exists(char *);
+int dirlog_update_record(char **);
 int dirlog_check_dupe(void);
-int gh_rewind(struct g_handle *hdl);
+int gh_rewind(struct g_handle *);
 int g_fopen(char *, char *, unsigned int, struct g_handle *);
 int determine_datatype(struct g_handle *);
-int g_close(struct g_handle *hdl);
-void *g_read(void *buffer, struct g_handle *hdl, size_t size);
+int g_close(struct g_handle *);
+void *g_read(void *buffer, struct g_handle *, size_t);
 int process_exec_string(char *, char *, void *, void*);
 int ref_to_val_dirlog(void *, char *, char *, size_t);
 int ref_to_val_nukelog(void *, char *, char *, size_t);
@@ -1014,23 +1014,23 @@ int g_do_exec(void *, struct g_handle *, void *);
 size_t exec_and_wait_for_output(char*, char*);
 void sig_handler(int);
 void child_sig_handler(int, siginfo_t*, void*);
-int flush_data_md(struct g_handle *hdl, char *outfile);
-int rebuild(void *arg);
-int rebuild_data_file(char *file, struct g_handle *hdl);
-int g_bmatch(void *d_ptr, struct g_handle *hdl);
-size_t g_load_data(void *output, size_t max, char *file);
-int g_load_record(struct g_handle *hdl, const void *data);
+int flush_data_md(struct g_handle *, char *);
+int rebuild(void *);
+int rebuild_data_file(char *, struct g_handle *);
+int g_bmatch(void *, struct g_handle *);
+size_t g_load_data(void *, size_t, char *);
+int g_load_record(struct g_handle *, const void *);
 int remove_repeating_chars(char *string, char c);
 p_md_obj md_first(pmda md);
-int g_buffer_into_memory(char *file, struct g_handle *hdl);
+int g_buffer_into_memory(char *, struct g_handle *);
 int g_print_stats(char *, unsigned int, size_t);
 int lastonlog_format_block(char *, ear *, char *);
 int dupefile_format_block(char *, ear *, char *);
 int oneliner_format_block(char *, ear *, char *);
 int online_format_block(char *, ear *, char *);
-int shmap(struct g_handle *hdl, key_t ipc);
-int g_map_shm(key_t ipc, struct g_handle *hdl);
-char *build_data_path(char *file, char *path);
+int shmap(struct g_handle *, key_t);
+int g_map_shm(key_t, struct g_handle *);
+char *build_data_path(char *, char *);
 void free_cfg(pmda);
 
 void *f_ref[] = { "-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc,
@@ -1295,6 +1295,9 @@ int setup_sighandlers(void) {
 
 int g_shutdown(void *arg) {
 	md_g_free(&actdl.buffer);
+	if (actdl.data) {
+		g_free(actdl.data);
+	}
 	md_g_free(&actdl.w_buffer);
 	md_g_free(&actnl.buffer);
 	md_g_free(&actnl.w_buffer);
@@ -1322,7 +1325,7 @@ char *build_data_path(char *file, char *path) {
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
-		printf("NOTE: %s was not found, setting default data path: %s\n", path,
+		printf("NOTE: %s: was not found, setting default data path: %s\n", path,
 				buffer);
 	}
 
@@ -1508,7 +1511,7 @@ int main(int argc, char *argv[]) {
 	case UPD_MODE_DUMP_ONL:
 		g_print_stats(NULL, F_DL_FOPEN_SHM, ON_SZ);
 		break;
-	case UPD_MODE_HELP:
+	case UPD_MODE_NOOP:
 		break;
 	default:
 		printf("ERROR: no mode specified (see --help)\n");
@@ -2204,13 +2207,12 @@ int rebuild_dirlog(void) {
 		g_strncpy(mode, "w+", 2);
 	}
 
-	if (gfl & F_OPT_BUFFER) {
+	if (gfl & F_OPT_WBUFFER) {
 		g_strncpy(actdl.mode, "r", 1);
 		md_init(&actdl.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
 		actdl.block_sz = DL_SZ;
-		actdl.flags |= F_GH_FFBUFFER // | F_GH_WAPPEND
-		| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
-
+		actdl.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
+				| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
 		actdl.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
 			printf("NOTE: %s: explicit write pre-caching enabled\n", DIRLOG);
@@ -2249,10 +2251,10 @@ int rebuild_dirlog(void) {
 		goto end;
 	}
 
-	char buffer[1024 * 1024] = { 0 };
+	char buffer[V_MB + 1] = { 0 };
 	mda dirchain = { 0 }, buffer2 = { 0 };
 
-	if (read_file(DU_FLD, buffer, 1024 * 1024, 0) < 1) {
+	if (read_file(DU_FLD, buffer, V_MB, 0) < 1) {
 		printf(
 				"WARNING: unable to read folders file, doing full siteroot recursion in '%s'..\n",
 				SITEROOT);
@@ -2331,7 +2333,6 @@ int rebuild_dirlog(void) {
 
 	r_end:
 
-	md_g_free(&actdl.w_buffer);
 	md_g_free(&dirchain);
 
 	end:
@@ -3259,11 +3260,11 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 		return 2;
 	}
 
-	if ((hdl->w_buffer.flags & F_MDA_EOF)) {
-		if (rebuild_data_file(hdl->file, hdl)) {
-			return 1;
-		}
-	}
+	/*if ((hdl->w_buffer.flags & F_MDA_EOF)) {
+	 if (rebuild_data_file(hdl->file, hdl)) {
+	 return 1;
+	 }
+	 }*/
 
 	memcpy(buffer, data, hdl->block_sz);
 
@@ -3300,7 +3301,7 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 		return 2;
 	}
 
-	size_t v = (V_MB * 32) / hdl->block_sz;
+	size_t v = (V_MB * 8) / hdl->block_sz;
 
 	buffer = calloc(v, hdl->block_sz);
 
@@ -3312,24 +3313,15 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 		ptr = md_first(&hdl->buffer);
 	}
 
-	size_t rw = 0;
-
 	g_setjmp(0, "flush_data_md(loop)", NULL, NULL);
 
 	while (ptr) {
-		g_memcpy(&buffer[rw * hdl->block_sz], ptr->ptr, hdl->block_sz);
-		rw++;
-		if ((rw == v || !ptr->next)) {
-			if ((bw = g_fwrite(buffer, hdl->block_sz, rw, fh)) != rw) {
-				ret = 3;
-				break;
-			}
-			hdl->bw += bw * hdl->block_sz;
-			hdl->rw += rw;
-			bzero(buffer, v * hdl->block_sz);
-			rw = 0;
+		if ((bw = g_fwrite(ptr->ptr, hdl->block_sz, 1, fh)) != 1) {
+			ret = 3;
+			break;
 		}
-
+		hdl->bw += hdl->block_sz;
+		hdl->rw++;
 		ptr = ptr->next;
 	}
 
