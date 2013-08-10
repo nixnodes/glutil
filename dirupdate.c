@@ -2075,8 +2075,8 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 				break;
 			}
 
-			if ((r=g_bmatch(ptr, &hdl))) {
-				if ( r == -1 ) {
+			if ((r = g_bmatch(ptr, &hdl))) {
+				if (r == -1) {
 					break;
 				}
 				continue;
@@ -2922,14 +2922,15 @@ int online_format_block(char *name, ear *iarg, char *output) {
 
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%s\n",
+		c = sprintf(buffer, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%llu;%s\n",
 				iarg->online->username, iarg->online->host,
 				(unsigned int) iarg->online->groupid,
 				(unsigned int) iarg->online->login_time, iarg->online->tagline,
 				(unsigned int) iarg->online->ssl_flag,
 				(unsigned int) iarg->online->procid,
 				(ULLONG) iarg->online->bytes_xfer,
-				(ULLONG) iarg->online->bytes_txfer, iarg->online->currentdir);
+				(ULLONG) iarg->online->bytes_txfer, (ULLONG) kbps,
+				iarg->online->currentdir);
 	} else {
 		c = sprintf(buffer, "[ONLINE]\n"
 				"    User:            %s\n"
@@ -3474,9 +3475,8 @@ int g_map_shm(key_t ipc, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf(
-				"NOTE: %s: mapped %u records\n",
-				MSG_DEF_SHM, (unsigned int) hdl->buffer_count);
+		printf("NOTE: %s: mapped %u records\n",
+		MSG_DEF_SHM, (unsigned int) hdl->buffer_count);
 	}
 
 	hdl->flags |= F_GH_ISONLINE;
