@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-3
+ * Version     : 1.0-4
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -149,7 +149,7 @@ typedef struct mda_object {
 }*p_md_obj, md_obj;
 
 #define F_MDA_REFPTR		0x1
-#define F_MDA_UNLINK_FREE	0x2
+#define F_MDA_FREE			0x2
 #define F_MDA_REUSE			0x4
 #define F_MDA_WAS_REUSED	0x8
 #define F_MDA_EOF			0x10
@@ -3254,8 +3254,12 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 	void *buffer = NULL;
 
 	if (hdl->w_buffer.offset == MAX_WBUFFER_HOLD) {
+		hdl->w_buffer.flags |= F_MDA_FREE;
 		rebuild_data_file(hdl->file, hdl);
 		p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
+		if ( gfl & F_OPT_VERBOSE3) {
+			printf("NOTE: scrubbing write cache..\n");
+		}
 		while (ptr) {
 			ptr_s = ptr->next;
 			g_free(ptr->ptr);
