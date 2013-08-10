@@ -8,6 +8,8 @@
  *   - Flushes write buffer to disk,  if it gets too big (> 100000 records) (rev. 3)
  *   - --sfv used with -s doesn't modify dirlog anymore (rev .3)
  *   - Performance boost (filesystem dirlog rebuild mode) (rev. 4)
+ *   - Displays user transfer speed (-w) (rev. 5)
+ *   - Minor formatting fixes (rev. 5)
  *
  * v0.10 RC2:
  *
