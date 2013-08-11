@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-8
+ * Version     : 1.0-9
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
