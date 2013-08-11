@@ -1751,10 +1751,11 @@ int option_crc32(void *arg) {
 	ULLONG read = file_crc32(argv[0], &crc32);
 
 	if (read)
-		printf("%s: CRC32: %.8X | length: %llu bytes\n", argv[0],
-				(unsigned int) crc32, read);
+		printf("%.8X\n", (unsigned int) crc32);
 	else
 		printf("ERROR: %s: [%d] could not get CRC32\n", argv[0], errno);
+
+	updmode = UPD_MODE_NOOP;
 
 	return 0;
 }
