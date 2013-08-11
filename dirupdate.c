@@ -643,7 +643,7 @@ char *hpd_up =
 				"                           Used by itself, it goes into -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
-				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}..>\n"
+				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..>\n"
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
@@ -1144,42 +1144,6 @@ void *md_alloc(pmda md, int b) {
 	int flags = 0;
 
 	if (md->offset >= md->count) {
-		/*if (md->flags & F_MDA_REUSE) {
-		 int isf = 0;
-		 p_md_obj c_pos = NULL;
-
-		 if (!(md->flags & F_MDA_WAS_REUSED)) {
-		 md->flags |= F_MDA_WAS_REUSED;
-		 md->flags |= F_MDA_EOF;
-		 md->pos = md_first(md);
-		 return md->pos->ptr;
-		 }
-
-		 if (!md->pos) {
-		 c_pos = md_first(md);
-		 if (md->pos) {
-		 md->pos = md->pos->next;
-		 }
-		 md->flags ^= F_MDA_EOF;
-		 return c_pos->ptr;
-		 }
-
-		 c_pos = md->pos;
-
-		 if (!c_pos->next) {
-		 if (md->flags & F_MDA_EOF) {
-		 return NULL;
-		 } else {
-		 md->flags |= F_MDA_EOF;
-		 }
-		 } else {
-		 //if (!isf) {
-		 md->pos = c_pos->next;
-		 //}
-		 }
-
-		 return c_pos->ptr;
-		 } else {*/
 		if (gfl & F_OPT_VERBOSE3) {
 			printf(
 					"NOTE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
@@ -1199,7 +1163,6 @@ void *md_alloc(pmda md, int b) {
 					(ULLONG) (AAINT) md->objects, (ULLONG) md->count,
 					(ULLONG) rlc);
 		}
-		//}
 	}
 
 	p_md_obj prev = md->pos;
