@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-7
+ * Version     : 1.0-8
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -643,7 +643,8 @@ char *hpd_up =
 				"                           Used by itself, it goes into -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
-				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}>\n"
+				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}..>\n"
+				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
@@ -2127,9 +2128,10 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 					if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
 						goto end;
 					}
-					if ( c == 1 && (gfl & F_OPT_FORMAT_COMP) ) {
-						printf("|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |   DIRECTORY/FILE    \n"
-							   "|---------------------------------------------------------|--------------------|-----------------------|---------------------\n");
+					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
+						printf(
+								"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |   DIRECTORY/FILE    \n"
+										"|---------------------------------------------------------|--------------------|-----------------------|---------------------\n");
 					}
 					break;
 				}
@@ -2148,7 +2150,8 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
-	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP) && !(gfl & F_OPT_FORMAT_COMP)) {
+	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)
+			&& !(gfl & F_OPT_FORMAT_COMP)) {
 		printf("STATS: %s: read %d records\n", file, c);
 	}
 
@@ -4355,16 +4358,24 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, "%u", (unsigned int) data->groupid);
 	} else if (!strcmp(match, "time")) {
 		sprintf(output, "%u", (unsigned int) data->login_time);
-		/*} else if (!strcmp(match, "lupdtime")) {
-		 sprintf(output, "%u", (unsigned int) data->tstart);
-		 } else if (!strcmp(match, "lxfertime")) {
-		 sprintf(output, "%u", (unsigned int) data->txfer);*/
+	} else if (!strcmp(match, "lupdtime")) {
+		sprintf(output, "%u", (unsigned int) data->tstart.tv_sec);
+	} else if (!strcmp(match, "lxfertime")) {
+		sprintf(output, "%u", (unsigned int) data->txfer.tv_sec);
 	} else if (!strcmp(match, "bxfer")) {
 		sprintf(output, "%llu", (ULLONG) data->bytes_xfer);
 	} else if (!strcmp(match, "btxfer")) {
 		sprintf(output, "%llu", (ULLONG) data->bytes_txfer);
-	} else if (!strcmp(match, "procid")) {
+	} else if (!strcmp(match, "pid")) {
 		sprintf(output, "%u", (unsigned int) data->procid);
+	} else if (!strcmp(match, "rate")) {
+		int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
+		unsigned int kbps = 0;
+
+		if (tdiff > 0 && data->bytes_xfer > 0) {
+			kbps = data->bytes_xfer / tdiff;
+		}
+		sprintf(output, "%u", kbps);
 	} else {
 		return 1;
 	}
