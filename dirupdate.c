@@ -3,7 +3,7 @@
  * Name        : dirupdate
  * Authors     : nymfo, siska
  * Version     : 1.0-8
- * Description : glftpd directory log manipulation tool
+ * Description : glFTPd binary log tool
  * ============================================================================
  */
 
@@ -608,7 +608,7 @@ int glob_reg_i_m = 0;
 mda glconf = { 0 };
 
 char *hpd_up =
-		"glFTPd dirlog tool, version %d.%d-%d%s-%s\n"
+		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
 				"\n"
 				"Main:\n"
 				"  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
