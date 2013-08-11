@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-5
+ * Version     : 1.0-6
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -293,6 +293,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_VERBOSE4 		0x4000
 #define F_OPT_WBUFFER		0x8000
 #define F_OPT_FORCEWSFV		0x10000
+#define F_OPT_FORMAT_COMP   0x20000
 
 #define F_MD_NOREAD			0x1
 
@@ -713,6 +714,11 @@ int opt_batch_output_formatting(void *arg, int m) {
 	return 0;
 }
 
+int opt_compact_output_formatting(void *arg, int m) {
+	gfl |= F_OPT_FORMAT_COMP;
+	return 0;
+}
+
 int opt_g_nowrite(void *arg, int m) {
 	gfl |= F_OPT_NOWRITE;
 	return 0;
@@ -976,6 +982,7 @@ int proc_release(char *, unsigned char, void *);
 int split_string(char *, char, pmda);
 int release_generate_block(char *, ear *);
 long get_file_size(char *);
+char *generate_chars(size_t, char, char*);
 time_t get_file_creation_time(struct stat *);
 int dirlog_write_record(struct dirlog *, off_t, int);
 ULLONG dirlog_find(char *, int, unsigned int, void *);
@@ -1041,7 +1048,8 @@ void *f_ref[] = { "-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc,
 		opt_g_buffering, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
 		"--iregexi", opt_g_iregexi, (void*) 1, "--iregex", opt_g_iregex,
 		(void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex", opt_g_regex,
-		(void*) 1, "-e", opt_rebuild, (void*) 1, "--batch",
+		(void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
+		opt_compact_output_formatting, (void*) 0, "--batch",
 		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
 		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
 		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
@@ -2081,7 +2089,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 				}
 				continue;
 			}
-
+			c++;
 			if (gfl & F_OPT_MODE_RAWDUMP) {
 				g_fwrite((void*) ptr, hdl.block_sz, 1, stdout);
 			} else {
@@ -2119,6 +2127,10 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 					if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
 						goto end;
 					}
+					if ( c == 1 && (gfl & F_OPT_FORMAT_COMP) ) {
+						printf("|          USER/HOST              |    TIME ONLINE     |    TRANSFER RATE      |   DIRECTORY/FILE    \n"
+							   "|---------------------------------|--------------------|-----------------------|---------------------\n");
+					}
 					break;
 				}
 				if (re_c) {
@@ -2128,7 +2140,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 					continue;
 				}
 			}
-			c++;
+
 		}
 	}
 
@@ -2136,7 +2148,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
-	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP) && !(gfl & F_OPT_FORMAT_COMP)) {
 		printf("STATS: %s: read %d records\n", file, c);
 	}
 
@@ -2739,7 +2751,7 @@ int get_relative_path(char *subject, char *root, char *output) {
 	return 0;
 }
 
-#define STD_FMT_TIME_STR  	"%a, %d %b %Y %T %z"
+#define STD_FMT_TIME_STR  	"%d %b %Y %T"
 
 int dirlog_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "dirlog_format_block", NULL, NULL);
@@ -2901,6 +2913,8 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 	return c;
 }
 
+#define FMT_SP_OFF 	30
+
 int online_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "online_format_block", NULL, NULL);
 	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
@@ -2920,6 +2934,12 @@ int online_format_block(char *name, ear *iarg, char *output) {
 		kbps = kb / (float) tdiff;
 	}
 
+	time_t ltime = time(NULL) - (time_t) iarg->online->login_time;
+
+	if (ltime < 0) {
+		ltime = 0;
+	}
+
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = sprintf(buffer, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%llu;%s\n",
@@ -2932,33 +2952,64 @@ int online_format_block(char *name, ear *iarg, char *output) {
 				(ULLONG) iarg->online->bytes_txfer, (ULLONG) kbps,
 				iarg->online->currentdir);
 	} else {
-		c = sprintf(buffer, "[ONLINE]\n"
-				"    User:            %s\n"
-				"    Host:            %s\n"
-				"    GID:             %u\n"
-				"    Login:           %s\n"
-				"    Tag:             %s\n"
-				"    SSL:             %s\n"
-				"    PID:             %u\n"
-				"    XFER:            %lld Bytes\n"
-				"    Rate:            %.3f KB/s\n"
-				"    CWD:             %s\n\n", iarg->online->username,
-				iarg->online->host, (unsigned int) iarg->online->groupid,
-				buffer2, iarg->online->tagline,
-				(!iarg->online->ssl_flag ?
-						"NO" :
-						(iarg->online->ssl_flag == 1 ?
-								"YES" :
-								(iarg->online->ssl_flag == 2 ?
-										"YES (DATA)" : "UNKNOWN"))),
-				(unsigned int) iarg->online->procid,
-				(ULLONG) iarg->online->bytes_xfer, kbps,
-				iarg->online->currentdir);
+		if (gfl & F_OPT_FORMAT_COMP) {
+			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
+			char d_buffer[255] = { 0 };
+			sprintf(d_buffer, "%u", (unsigned int) ltime);
+			size_t d_len1 = strlen(d_buffer);
+			sprintf(d_buffer, "%.2f", kbps);
+			size_t d_len2 = strlen(d_buffer);
+			generate_chars(
+					30
+							- (strlen(iarg->online->username)
+									+ strlen(iarg->online->host)), 0x20,
+					sp_buffer);
+			generate_chars(12 - d_len1, 0x20, sp_buffer2);
+			generate_chars(11 - d_len2, 0x20, sp_buffer3);
+			c = sprintf(buffer,
+					"| %s!%s%s |      %us%s |       %.2fKB/s%s |  %s\n",
+					iarg->online->username, iarg->online->host, sp_buffer,
+					(unsigned int) ltime, sp_buffer2, kbps, sp_buffer3,
+					iarg->online->currentdir);
+		} else {
+			c = sprintf(buffer, "[ONLINE]\n"
+					"    User:            %s\n"
+					"    Host:            %s\n"
+					"    GID:             %u\n"
+					"    Login:           %s (%us)\n"
+					"    Tag:             %s\n"
+					"    SSL:             %s\n"
+					"    PID:             %u\n"
+					"    XFER:            %lld Bytes\n"
+					"    Rate:            %.2f KB/s\n"
+					"    CWD:             %s\n\n", iarg->online->username,
+					iarg->online->host, (unsigned int) iarg->online->groupid,
+					buffer2, (unsigned int) ltime, iarg->online->tagline,
+					(!iarg->online->ssl_flag ?
+							"NO" :
+							(iarg->online->ssl_flag == 1 ?
+									"YES" :
+									(iarg->online->ssl_flag == 2 ?
+											"YES (DATA)" : "UNKNOWN"))),
+					(unsigned int) iarg->online->procid,
+					(ULLONG) iarg->online->bytes_xfer, kbps,
+					iarg->online->currentdir);
+		}
 	}
 
 	g_memcpy(output, buffer, 2048);
 
 	return c;
+}
+
+char *generate_chars(size_t num, char chr, char*buffer) {
+	bzero(buffer, 255);
+	if (num < 1) {
+		return buffer;
+	}
+	memset(buffer, (int) chr, num);
+
+	return buffer;
 }
 
 off_t get_file_size(char *file) {
