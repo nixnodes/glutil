@@ -11,6 +11,8 @@
  *   - Displays user transfer speed (-w) (rev. 5)
  *   - Minor formatting fixes (rev. 5)
  *   - Compact WHO view (rows and columns) (./dirupdate -w --comp) (rev. 6)
+ *   - Bugfix: WHO segfaulted (rows and tables were misaligned) (rev. 7)
+ *   - Added {rate}, {lupdtime} and {lxfertime} (used with WHO) --exec args (rev. 8)
  *
  * v0.10 RC2:
  *
