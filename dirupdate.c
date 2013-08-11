@@ -551,7 +551,7 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 		s_ptr3 = ", resuming execution..";
 	}
 
-	printf("%s: [%s] [%d] [%s]%s%s\n", s_ptr1, g_sigjmp.type, errno, s_ptr2,
+	printf("%s: [%s] [%d] [%s]%s%s\n", s_ptr1, g_sigjmp.type, siginfo->si_errno, s_ptr2,
 			buffer1, s_ptr3);
 
 	usleep(250000);
@@ -565,7 +565,7 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 	g_sigjmp.ci = 0;
 	g_sigjmp.flags = 0;
 
-	exit(0);
+	exit(siginfo->si_errno);
 }
 
 /* ---------------------------------------------------------------------------------- */
@@ -596,6 +596,7 @@ long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = REG_EXTENDED;
 char GLOB_REGEX[4096] = { 0 };
+int EXITVAL = 0;
 
 #define MAX_EXEC_STR 0x200000
 
@@ -1274,7 +1275,7 @@ int g_shutdown(void *arg) {
 	md_g_free(&actnl.buffer);
 	md_g_free(&actnl.w_buffer);
 	free_cfg(&glconf);
-	exit(0);
+	exit(EXITVAL);
 }
 
 char *build_data_path(char *file, char *path) {
@@ -1492,7 +1493,7 @@ int main(int argc, char *argv[]) {
 
 	g_shutdown(NULL);
 
-	exit(0);
+	exit(EXITVAL);
 }
 
 int rebuild(void *arg) {
@@ -1752,8 +1753,10 @@ int option_crc32(void *arg) {
 
 	if (read)
 		printf("%.8X\n", (unsigned int) crc32);
-	else
+	else {
 		printf("ERROR: %s: [%d] could not get CRC32\n", argv[0], errno);
+		EXITVAL = 1;
+	}
 
 	updmode = UPD_MODE_NOOP;
 
