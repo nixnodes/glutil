@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Usage: ./dirupdate -w -exec "scripts/killslow.sh {bxfer} {lupdtime} {user} {pid}"
+# Usage: ./dirupdate -w -exec "scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate}"
 #
 
 # Minimum allowed transfer rate (bytes per second)
@@ -18,11 +18,13 @@ LOG="/var/log/killslow.log"
 [ -z "$2" ] && exit 1
 [ -z "$3" ] && exit 1
 [ -z "$4" ] && exit 1
+[ -z "$5" ] && exit 1
 
-BXFRD=$1
+BXFER=$1
 
-[ $BXFRD -lt 1 ] && exit 1
+[ $BXFER -lt 1 ] && exit 1
 
+RATE=$5
 LUPDT=$2
 GLUSER=$3
 CT=$(date +%s)
@@ -30,8 +32,6 @@ CT=$(date +%s)
 DIFFT=$[CT-LUPDT];
 
 [ $DIFFT -lt 1 ] && exit 1
-
-DRATE=$[BXFRD/DIFFT]
 
 echo "$GLUSER @ $DRATE B/s for $DIFFT seconds"
 
