@@ -2,9 +2,9 @@
  *
  *  - Import individual/missing records or rebuild entire dirlog based 
  *      on file-system and nukelog data (read below)
- *  - Rebuild existing glFTPd log data files (see full list below) 
+ *  - Rebuild existing binary glFTPd logs (see full list below) 
  *      using regex/custom filtering methods
- *  - Display various glFTPd log data in human readable formats
+ *  - Display various binary glFTPd logs in human readable formats
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
  *      fix them
  *  - Search for duplicates in dirlog
