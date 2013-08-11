@@ -24,7 +24,7 @@ BXFER=$1
 
 [ $BXFER -lt 1 ] && exit 1
 
-RATE=$5
+DRATE=$5
 LUPDT=$2
 GLUSER=$3
 CT=$(date +%s)
