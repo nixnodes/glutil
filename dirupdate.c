@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-6
+ * Version     : 1.0-7
  * Description : glftpd directory log manipulation tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -2128,8 +2128,8 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 						goto end;
 					}
 					if ( c == 1 && (gfl & F_OPT_FORMAT_COMP) ) {
-						printf("|          USER/HOST              |    TIME ONLINE     |    TRANSFER RATE      |   DIRECTORY/FILE    \n"
-							   "|---------------------------------|--------------------|-----------------------|---------------------\n");
+						printf("|                    USER/HOST                        |    TIME ONLINE     |    TRANSFER RATE      |   DIRECTORY/FILE    \n"
+							   "|-----------------------------------------------------|--------------------|-----------------------|---------------------\n");
 					}
 					break;
 				}
@@ -2960,7 +2960,7 @@ int online_format_block(char *name, ear *iarg, char *output) {
 			sprintf(d_buffer, "%.2f", kbps);
 			size_t d_len2 = strlen(d_buffer);
 			generate_chars(
-					30
+					50
 							- (strlen(iarg->online->username)
 									+ strlen(iarg->online->host)), 0x20,
 					sp_buffer);
@@ -3003,8 +3003,9 @@ int online_format_block(char *name, ear *iarg, char *output) {
 }
 
 char *generate_chars(size_t num, char chr, char*buffer) {
+	g_setjmp(0, "generate_chars", NULL, NULL);
 	bzero(buffer, 255);
-	if (num < 1) {
+	if (num < 1 || num > 254) {
 		return buffer;
 	}
 	memset(buffer, (int) chr, num);
