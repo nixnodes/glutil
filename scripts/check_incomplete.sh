@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Usage: /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
+## Checks a release for incomplete/corrupt files by comparing SFV data with filesystem
+#
+## Usage: /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
 #
 #
 ## Verbose output
