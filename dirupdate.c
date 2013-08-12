@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-9
+ * Version     : 1.0-11
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 9
+#define VER_REVISION 11
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -2514,6 +2514,11 @@ int proc_release(char *name, unsigned char type, void *arg) {
 		g_free(fn2);
 		break;
 	case DT_DIR:
+		if ((gfl & F_OPT_SFV)
+				&& (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV))) {
+			enum_dir(name, delete_file, (void*) "\\.sfv$", 0);
+		}
+
 		if (!reg_match(PREG_DIR_SKIP, name, REG_NEWLINE | REG_ICASE)) {
 			return 2;
 		}
@@ -2747,7 +2752,7 @@ int get_relative_path(char *subject, char *root, char *output) {
 
 int dirlog_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "dirlog_format_block", NULL, NULL);
-	char buffer[2048], buffer2[255];
+	char buffer2[255];
 	char *ndup = strdup(iarg->dirlog->dirname), *base = NULL;
 
 	if (gfl & F_OPT_VERBOSE)
@@ -2762,13 +2767,13 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 	int c;
 
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "DIRLOG;%s;%llu;%hu;%u;%hu;%hu;%hu\n", base,
+		c = sprintf(output, "DIRLOG;%s;%llu;%hu;%u;%hu;%hu;%hu\n", base,
 				(ULLONG) iarg->dirlog->bytes, iarg->dirlog->files,
 				iarg->dirlog->uptime, iarg->dirlog->uploader,
 				iarg->dirlog->group, iarg->dirlog->status);
 	} else {
 		c =
-				sprintf(buffer,
+				sprintf(output,
 						"DIRLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
 						base, (ULLONG) (iarg->dirlog->bytes / 1024 / 1024),
 						iarg->dirlog->files, buffer2, iarg->dirlog->uploader,
@@ -2777,14 +2782,12 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 
 	g_free(ndup);
 
-	g_memcpy(output, buffer, 2048);
-
 	return c;
 }
 
 int nukelog_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "nukelog_format_block", NULL, NULL);
-	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
+	char buffer2[255] = { 0 };
 	char *ndup = strdup(iarg->nukelog->dirname), *base = NULL;
 
 	if (gfl & F_OPT_VERBOSE)
@@ -2797,7 +2800,7 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "NUKELOG;%s;%s;%hu;%.2f;%s;%s;%u\n", base,
+		c = sprintf(output, "NUKELOG;%s;%s;%hu;%.2f;%s;%s;%u\n", base,
 				iarg->nukelog->reason, iarg->nukelog->mult,
 				iarg->nukelog->bytes,
 				!iarg->nukelog->status ?
@@ -2805,7 +2808,7 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 				iarg->nukelog->nukee, iarg->nukelog->nuketime);
 	} else {
 		c =
-				sprintf(buffer,
+				sprintf(output,
 						"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, creator: %s - %s\n",
 						base, !iarg->nukelog->status ? "NUKED" : "UNNUKED",
 						iarg->nukelog->reason, iarg->nukelog->bytes,
@@ -2817,36 +2820,31 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 	}
 	g_free(ndup);
 
-	g_memcpy(output, buffer, 2048);
-
 	return c;
 }
 
 int dupefile_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "dupefile_format_block", NULL, NULL);
-	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
+	char buffer2[255] = { 0 };
 
 	time_t t_t = (time_t) iarg->dupefile->timeup;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "DUPEFILE;%s;%s;%u\n", iarg->dupefile->filename,
+		c = sprintf(output, "DUPEFILE;%s;%s;%u\n", iarg->dupefile->filename,
 				iarg->dupefile->uploader, iarg->dupefile->timeup);
 	} else {
-		c = sprintf(buffer, "DUPEFILE: %s - uploader: %s, time: %s\n",
+		c = sprintf(output, "DUPEFILE: %s - uploader: %s, time: %s\n",
 				iarg->dupefile->filename, iarg->dupefile->uploader, buffer2);
 	}
-
-	g_memcpy(output, buffer, 2048);
 
 	return c;
 }
 
 int lastonlog_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "lastonlog_format_block", NULL, NULL);
-	char buffer[2048] = { 0 }, buffer2[255] = { 0 }, buffer3[255] = { 0 },
-			buffer4[12] = { 0 };
+	char buffer2[255] = { 0 }, buffer3[255] = { 0 }, buffer4[12] = { 0 };
 
 	time_t t_t_ln = (time_t) iarg->lastonlog->logon;
 	time_t t_t_lf = (time_t) iarg->lastonlog->logoff;
@@ -2858,7 +2856,7 @@ int lastonlog_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "LASTONLOG;%s;%s;%s;%u;%u;%u;%u;%s\n",
+		c = sprintf(output, "LASTONLOG;%s;%s;%s;%u;%u;%u;%u;%s\n",
 				iarg->lastonlog->uname, iarg->lastonlog->gname,
 				iarg->lastonlog->tagline, (unsigned int) iarg->lastonlog->logon,
 				(unsigned int) iarg->lastonlog->logoff,
@@ -2866,7 +2864,7 @@ int lastonlog_format_block(char *name, ear *iarg, char *output) {
 				(unsigned int) iarg->lastonlog->download, buffer4);
 	} else {
 		c =
-				sprintf(buffer,
+				sprintf(output,
 						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %u/%u B, changes: %s\n",
 						iarg->lastonlog->uname, iarg->lastonlog->gname,
 						iarg->lastonlog->tagline, buffer2, buffer3,
@@ -2874,14 +2872,12 @@ int lastonlog_format_block(char *name, ear *iarg, char *output) {
 						(unsigned int) iarg->lastonlog->download, buffer4);
 	}
 
-	g_memcpy(output, buffer, 2048);
-
 	return c;
 }
 
 int oneliner_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "oneliner_format_block", NULL, NULL);
-	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
+	char buffer2[255] = { 0 };
 
 	time_t t_t = (time_t) iarg->oneliner->timestamp;
 
@@ -2889,18 +2885,16 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "ONELINER;%s;%s;%s;%u;%s\n", iarg->oneliner->uname,
+		c = sprintf(output, "ONELINER;%s;%s;%s;%u;%s\n", iarg->oneliner->uname,
 				iarg->oneliner->gname, iarg->oneliner->tagline,
 				(unsigned int) iarg->oneliner->timestamp,
 				iarg->oneliner->message);
 	} else {
-		c = sprintf(buffer,
+		c = sprintf(output,
 				"ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
 				iarg->oneliner->uname, iarg->oneliner->gname,
 				iarg->oneliner->tagline, buffer2, iarg->oneliner->message);
 	}
-
-	g_memcpy(output, buffer, 2048);
 
 	return c;
 }
@@ -2909,7 +2903,7 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 
 int online_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "online_format_block", NULL, NULL);
-	char buffer[2048] = { 0 }, buffer2[255] = { 0 };
+	char buffer2[255] = { 0 };
 
 	time_t t_t = (time_t) iarg->online->login_time;
 
@@ -2934,7 +2928,7 @@ int online_format_block(char *name, ear *iarg, char *output) {
 
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(buffer, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%llu;%s\n",
+		c = sprintf(output, "ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%llu;%s\n",
 				iarg->online->username, iarg->online->host,
 				(unsigned int) iarg->online->groupid,
 				(unsigned int) iarg->online->login_time, iarg->online->tagline,
@@ -2958,13 +2952,13 @@ int online_format_block(char *name, ear *iarg, char *output) {
 					sp_buffer);
 			generate_chars(12 - d_len1, 0x20, sp_buffer2);
 			generate_chars(11 - d_len2, 0x20, sp_buffer3);
-			c = sprintf(buffer,
+			c = sprintf(output,
 					"| %s!%s%s |      %us%s |       %.2fKB/s%s |  %s\n",
 					iarg->online->username, iarg->online->host, sp_buffer,
 					(unsigned int) ltime, sp_buffer2, kbps, sp_buffer3,
 					iarg->online->currentdir);
 		} else {
-			c = sprintf(buffer, "[ONLINE]\n"
+			c = sprintf(output, "[ONLINE]\n"
 					"    User:            %s\n"
 					"    Host:            %s\n"
 					"    GID:             %u\n"
@@ -2988,8 +2982,6 @@ int online_format_block(char *name, ear *iarg, char *output) {
 					iarg->online->currentdir);
 		}
 	}
-
-	g_memcpy(output, buffer, 2048);
 
 	return c;
 }
@@ -4554,10 +4546,6 @@ int shmap(struct g_handle *hdl, key_t ipc) {
 		return 1005;
 	}
 
-	/*if (hdl->ipcbuf.shm_segsz % hdl->block_sz) {
-	 return 1006;
-	 }*/
-
 	hdl->total_sz = (off_t) hdl->ipcbuf.shm_segsz;
 
 	return 0;
@@ -4655,6 +4643,7 @@ p_md_obj get_cfg_opt(char *key, pmda md) {
 }
 
 int self_get_path(char *out) {
+	g_setjmp(0, "self_get_path", NULL, NULL);
 	char path[PATH_MAX];
 
 	pid_t pid = getpid();
@@ -4690,5 +4679,4 @@ int get_file_type(char *file) {
 		return 0;
 	}
 }
-
 
