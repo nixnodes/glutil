@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-12
+ * Version     : 1.0-13
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -332,6 +332,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OVRR_ONELINERS	0x20
 #define F_OVRR_DIRLOG		0x40
 #define F_OVRR_NUKELOG		0x80
+#define F_OVRR_NUKESTR		0x100
 
 /* these bits determine file type */
 #define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
@@ -602,6 +603,7 @@ int EXITVAL = 0;
 int g_PID = 0;
 int loop_interval = 1;
 int loop_times = 0;
+char *NUKESTR = NULL;
 
 #define MAX_EXEC_STR 0x200000
 
@@ -1013,6 +1015,10 @@ char *generate_chars(size_t, char, char*);
 time_t get_file_creation_time(struct stat *);
 int dirlog_write_record(struct dirlog *, off_t, int);
 ULLONG dirlog_find(char *, int, unsigned int, void *);
+ULLONG dirlog_find_old(char *, int, unsigned int, void *);
+ULLONG dirlog_find_simple(char *, int, unsigned int, void *);
+size_t str_match(char *, char *);
+char *string_replace(char *, char *, char *, char *, size_t);
 int enum_dir(char *, void *, void *, int);
 int file_exists(char *);
 int update_records(char *, int);
@@ -1301,6 +1307,9 @@ int g_shutdown(void *arg) {
 	md_g_free(&actnl.buffer);
 	md_g_free(&actnl.w_buffer);
 	free_cfg(&glconf);
+	if (NUKESTR) {
+		g_free(NUKESTR);
+	}
 	exit(EXITVAL);
 }
 
@@ -1320,6 +1329,10 @@ char *build_data_path(char *file, char *path) {
 	size_t blen = strlen(buffer);
 
 	if (blen > 255) {
+		return path;
+	}
+
+	if (!strncmp(buffer, path, strlen(path))) {
 		return path;
 	}
 
@@ -1375,7 +1388,7 @@ int main(int argc, char *argv[]) {
 		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: loaded GLROOT: %s\n", GLROOT);
+			printf("GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
 	}
 
@@ -1385,7 +1398,7 @@ int main(int argc, char *argv[]) {
 		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: loaded SITEROOT: %s\n", SITEROOT_N);
+			printf("GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
 	}
 
@@ -1395,8 +1408,20 @@ int main(int argc, char *argv[]) {
 		bzero(FTPDATA, 255);
 		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: loaded FTPDATA: %s\n", FTPDATA);
+			printf("GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
+	}
+
+	ptr = get_cfg_opt("nukedir_style", &glconf);
+
+	if (ptr) {
+		NUKESTR = calloc(255, 1);
+		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
+		if (gfl & F_OPT_VERBOSE2) {
+			printf("GLCONF: using 'nukedir_style': %s\n", NUKESTR);
+		}
+		ofl |= F_OVRR_NUKESTR;
+
 	}
 
 	remove_repeating_chars(FTPDATA, 0x2F);
@@ -2245,6 +2270,11 @@ int rebuild_dirlog(void) {
 	char mode[255] = { 0 };
 	unsigned int flags = 0;
 
+	if (!(ofl & F_OVRR_NUKESTR)) {
+		printf(
+				"WARNING: failed extracting nuke string from glftpd.conf, nuked dirs might not get detected properly\n");
+	}
+
 	if (gfl & F_OPT_NOWRITE) {
 		g_strncpy(mode, "r", 1);
 		flags |= F_DL_FOPEN_BUFFER;
@@ -3055,6 +3085,65 @@ time_t get_file_creation_time(struct stat *st) {
 
 ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 	g_setjmp(0, "dirlog_find", NULL, NULL);
+
+	if (!(ofl & F_OVRR_NUKESTR)) {
+		return dirlog_find_old(dirn, mode, flags, callback);
+	}
+
+	struct dirlog buffer;
+	int (*callback_f)(struct dirlog *data) = callback;
+
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl))
+		return MAX_ULLONG;
+
+	int r;
+	ULLONG ur = MAX_ULLONG;
+
+	char buffer_s[255] = { 0 }, buffer_s2[255], buffer_s3[255];
+	char *dup, *dup2, *base, *dir;
+
+	if ((r = get_relative_path(dirn, GLROOT, buffer_s)))
+		g_strncpy(buffer_s, dirn, strlen(dirn));
+
+	size_t d_l = strlen(buffer_s);
+
+	struct dirlog *d_ptr = NULL;
+
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+
+		if (!strncmp(buffer_s, d_ptr->dirname, d_l)) {
+			goto match;
+		}
+		dup = strdup(d_ptr->dirname);
+		base = basename(dup);
+		dup2 = strdup(d_ptr->dirname);
+		dir = dirname(dup2);
+		sprintf(buffer_s2, NUKESTR, base);
+		sprintf(buffer_s3, "%s/%s", dir, buffer_s2);
+		remove_repeating_chars(buffer_s3, 0x2F);
+		g_free(dup);
+		g_free(dup2);
+		if (!strncmp(buffer_s3, buffer_s, d_l)) {
+			match: ur = actdl.offset - 1;
+			if (mode == 2 && callback) {
+				if (callback_f(&buffer)) {
+					break;
+				}
+
+			} else {
+				break;
+			}
+		}
+	}
+
+	if (mode != 1)
+		g_close(&actdl);
+
+	return ur;
+}
+
+ULLONG dirlog_find_old(char *dirn, int mode, unsigned int flags, void *callback) {
+	g_setjmp(0, "dirlog_find_old", NULL, NULL);
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
@@ -3081,7 +3170,6 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 		gi1 = strlen(base);
 		dup2 = strdup(d_ptr->dirname);
 		dir = dirname(dup2);
-		//printf("::%s ;; %s :: %s :: %s\n", &buffer_s[gi2 - gi1], buffer_s, d_ptr->dirname, base);
 		if (!strncmp(&buffer_s[gi2 - gi1], base, gi1)
 				&& !strncmp(buffer_s, d_ptr->dirname, strlen(dir))) {
 
@@ -3105,6 +3193,84 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 
 	if (mode != 1)
 		g_close(&actdl);
+
+	return ur;
+}
+
+size_t str_match(char *input, char *match) {
+	size_t i_l = strlen(input), m_l = strlen(match);
+
+	size_t i;
+
+	for (i = 0; i < i_l - m_l + 1; i++) {
+		if (!strncmp(&input[i], match, m_l)) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+char *string_replace(char *input, char *match, char *with, char *output,
+		size_t max_out) {
+	size_t i_l = strlen(input), w_l = strlen(with), m_l = strlen(match);
+
+	size_t m_off = str_match(input, match);
+
+	if ((int) m_off < 0) {
+		return output;
+	}
+
+	bzero(output, max_out);
+
+	g_strncpy(output, input, m_off);
+	g_strncpy(&output[m_off], with, w_l);
+	g_strncpy(&output[m_off + w_l], &input[m_off + m_l], i_l - m_off - m_l);
+
+	return output;
+}
+
+ULLONG dirlog_find_simple(char *dirn, int mode, unsigned int flags,
+		void *callback) {
+	g_setjmp(0, "dirlog_find_simple", NULL, NULL);
+	struct dirlog buffer;
+	int (*callback_f)(struct dirlog *data) = callback;
+
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl)) {
+		return MAX_ULLONG;
+	}
+
+	int r;
+	ULLONG ur = MAX_ULLONG;
+
+	char buffer_s[255] = { 0 };
+
+	if ((r = get_relative_path(dirn, GLROOT, buffer_s)))
+		g_strncpy(buffer_s, dirn, strlen(dirn));
+
+	size_t s_blen = strlen(buffer_s), d_ptr_blen;
+
+	struct dirlog *d_ptr = NULL;
+
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+		d_ptr_blen = strlen(d_ptr->dirname);
+		if (d_ptr_blen == s_blen
+				&& !strncmp(buffer_s, d_ptr->dirname, d_ptr_blen)) {
+			ur = actdl.offset - 1;
+			if (mode == 2 && callback) {
+				if (callback_f(&buffer)) {
+					break;
+				}
+			} else {
+
+				break;
+			}
+		}
+	}
+
+	if (mode != 1) {
+		g_close(&actdl);
+	}
 
 	return ur;
 }
