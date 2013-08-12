@@ -13,6 +13,9 @@
  *   - Compact WHO view (rows and columns) (./dirupdate -w --comp) (rev. 6)
  *   - Bugfix: WHO segfaulted (rows and tables were misaligned) (rev. 7)
  *   - Added {rate}, {lupdtime} and {lxfertime} (used with WHO) --exec args (rev. 8)
+ *   - Exception handling returns errno (rev. 9)
+ *   - Added generic -exec args {glroot} and {exe} (full path to executable) (rev. 10)
+ *   - Bugfix: SFV gen with -s was not working properly (rev. 10)
  *
  * v0.10 RC2:
  *
