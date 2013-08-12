@@ -17,10 +17,6 @@ GLROOT=$3
 DIR=$GLROOT$1
 EXE=$2
 
-#echo $DIR $EXE
-
-#sleep 1
-
 ! [ -d "$DIR" ] && exit 1
 
 proc_dir() {
