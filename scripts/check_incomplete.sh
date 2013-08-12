@@ -6,7 +6,7 @@
 ## Verbose output
 VERBOSE=0
 #
-## Optional corruption checking
+## Corruption checking
 CHECK_CORRUPT=0
 #
 #########################################################################
