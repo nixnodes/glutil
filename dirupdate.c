@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-14
+ * Version     : 1.0-15
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 14
+#define VER_REVISION 15
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -1793,7 +1793,7 @@ int dirlog_update_record(char *argv) {
 		}
 
 		if (g_fopen(DIRLOG, mode, 0, &actdl)) {
-			goto end;
+			goto r_end;
 		}
 
 		if ((r = release_generate_block(s_buffer, &arg))) {
@@ -2218,6 +2218,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 		printf("STATS: %s: read %d records\n", file, c);
 	}
 
+	g_free(buffer);
 	g_close(&hdl);
 
 	return 0;
@@ -3913,17 +3914,25 @@ int g_close(struct g_handle *hdl) {
 		hdl->fh = NULL;
 	}
 
-	if (hdl->buffer_count) {
-		hdl->offset = 0;
-		hdl->buffer.r_pos = hdl->buffer.objects;
-	}
-
 	if ((hdl->flags & F_GH_SHM)) {
 		shmctl(hdl->shmid, IPC_STAT, &hdl->ipcbuf);
 		if (hdl->ipcbuf.shm_nattch <= 1) {
 			shmctl(hdl->shmid, IPC_RMID, 0);
 		}
 		shmdt(hdl->data);
+	}
+
+	if (hdl->buffer_count) {
+		hdl->offset = 0;
+		hdl->buffer.r_pos = hdl->buffer.objects;
+		if ((hdl->flags & F_GH_SHM)) {
+			md_g_free(&hdl->buffer);
+			md_g_free(&hdl->w_buffer);
+		}
+		if (hdl->data && !(hdl->flags & F_GH_SHM)) {
+			g_free(hdl->data);
+			hdl->data = NULL;
+		}
 	}
 
 	hdl->br = 0;
