@@ -16,6 +16,7 @@
  *   - Exception handling returns errno (rev. 9)
  *   - Added generic -exec args {glroot} and {exe} (full path to executable) (rev. 10)
  *   - Bugfix: SFV gen with -s was not working properly (rev. 10)
+ *   - Bugfix: SFV gen failed to clean old .sfv files, before entering subdir (rev. 11)
  *
  * v0.10 RC2:
  *
