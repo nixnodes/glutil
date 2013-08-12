@@ -22,6 +22,7 @@
  *   - Bugfix: shared memory wasn't freed on exit (rev. 14)
  *   - Added --loopexec (rev. 14)
  *   - WHO prints status (rev. 14)
+ *   - Bugfix: small memory leaks plugged (rev. 15)
  *
  * v0.10 RC2:
  *
