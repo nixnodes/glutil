@@ -17,6 +17,7 @@
  *   - Added generic -exec args {glroot} and {exe} (full path to executable) (rev. 10)
  *   - Bugfix: SFV gen with -s was not working properly (rev. 10)
  *   - Bugfix: SFV gen failed to clean old .sfv files, before entering subdir (rev. 11)
+ *   - Added --loop=<interval> and --daemon (see --help) (rev. 12)
  *
  * v0.10 RC2:
  *
