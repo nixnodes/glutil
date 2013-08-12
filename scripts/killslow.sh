@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-## Example usage: /glroot/bin/dirupdate -w -exec '/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate}'
+## Usage: /glroot/bin/dirupdate -w -exec '/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate}'
 #
 #
 ## Minimum allowed transfer rate (bytes per second)
@@ -55,7 +55,7 @@ if [ $SLOW -eq 1 ] && [ -d /tmp/du-ks/$4 ]; then
 	UNDERTIME=$[CT-MT1]
 	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
 		O="KILLING: Under speed limit for too long ($UNDERTIME secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" &&  
-		echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 && rmdir /tmp/du-ks/$4
+			echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 && rmdir /tmp/du-ks/$4
 elif [ $SLOW -eq 1 ]; then
 	mkdir /tmp/du-ks/$4
 elif [ $SLOW -eq 0 ] && [ -d /tmp/du-ks/$4 ]; then
