@@ -551,8 +551,8 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 		s_ptr3 = ", resuming execution..";
 	}
 
-	printf("%s: [%s] [%d] [%s]%s%s\n", s_ptr1, g_sigjmp.type, siginfo->si_errno, s_ptr2,
-			buffer1, s_ptr3);
+	printf("%s: [%s] [%d] [%s]%s%s\n", s_ptr1, g_sigjmp.type, siginfo->si_errno,
+			s_ptr2, buffer1, s_ptr3);
 
 	usleep(250000);
 
@@ -581,7 +581,7 @@ mda nukelog_buffer = { 0 };
 unsigned int gfl = F_OPT_WBUFFER;
 unsigned int ofl = 0;
 int updmode = 0;
-char **argv_off = NULL;
+char *argv_off = NULL;
 char GLROOT[255] = { glroot };
 char SITEROOT_N[255] = { siteroot };
 char SITEROOT[255] = { 0 };
@@ -742,7 +742,11 @@ int opt_g_followlinks(void *arg, int m) {
 }
 
 int opt_update_single_record(void *arg, int m) {
-	argv_off = (char**) arg;
+	if (m == 2) {
+		argv_off = (char *) arg;
+	} else {
+		argv_off = ((char **) arg)[0];
+	}
 	updmode = UPD_MODE_SINGLE;
 	return 0;
 }
@@ -977,6 +981,7 @@ int rebuild_dirlog(void);
 int data_backup_records(char*);
 ssize_t file_copy(char *, char *, char *, unsigned int);
 int dirlog_check_records(void);
+int self_get_path(char *);
 int dirlog_print_stats(void);
 int dirlog_format_block(char *, ear *, char *);
 int proc_section(char *, unsigned char, void *);
@@ -992,7 +997,7 @@ int enum_dir(char *, void *, void *, int);
 int file_exists(char *);
 int update_records(char *, int);
 off_t read_file(char *, void *, size_t, off_t);
-int option_crc32(void *);
+int option_crc32(void *, int);
 int write_file_text(char *, char *);
 int reg_match(char *, char *, int);
 int delete_file(char *, unsigned char, void *);
@@ -1005,7 +1010,7 @@ int parse_args(int argc, char *argv[]);
 int get_relative_path(char *, char *, char *);
 int process_opt(char *, void *, void *, int);
 int dir_exists(char *);
-int dirlog_update_record(char **);
+int dirlog_update_record(char *);
 int dirlog_check_dupe(void);
 int gh_rewind(struct g_handle *);
 int g_fopen(char *, char *, unsigned int, struct g_handle *);
@@ -1647,10 +1652,8 @@ int gh_rewind(struct g_handle *hdl) {
 	return 0;
 }
 
-int dirlog_update_record(char **argv) {
+int dirlog_update_record(char *argv) {
 	g_setjmp(0, "dirlog_update_record", NULL, NULL);
-	if (!argv || !argv[0])
-		return 1;
 
 	int r, seek = SEEK_END, ret = 0, dr;
 	off_t offset = 0;
@@ -1660,7 +1663,7 @@ int dirlog_update_record(char **argv) {
 	arg.dirlog = &dl;
 
 	if (gfl & F_OPT_SFV) {
-		gfl |= F_OPT_NOWRITE | F_OPT_FORCE;
+		gfl |= F_OPT_NOWRITE | F_OPT_FORCE | F_OPT_FORCEWSFV;
 	}
 
 	mda dirchain = { 0 };
@@ -1668,7 +1671,7 @@ int dirlog_update_record(char **argv) {
 
 	md_init(&dirchain, 1024);
 
-	if ((r = split_string(argv[0], 0x20, &dirchain)) < 1) {
+	if ((r = split_string(argv, 0x20, &dirchain)) < 1) {
 		printf("ERROR: [dirlog_update_record]: missing arguments\n");
 		ret = 1;
 		goto r_end;
@@ -1681,6 +1684,10 @@ int dirlog_update_record(char **argv) {
 	while (ptr) {
 		sprintf(s_buffer, "%s/%s", SITEROOT, (char*) ptr->ptr);
 		remove_repeating_chars(s_buffer, 0x2F);
+		size_t s_buf_len = strlen(s_buffer);
+		if (s_buffer[s_buf_len - 1] == 0x2F) {
+			s_buffer[s_buf_len - 1] = 0x0;
+		}
 
 		rl = dirlog_find(s_buffer, 0, 0, NULL);
 
@@ -1741,24 +1748,30 @@ int dirlog_update_record(char **argv) {
 	return ret;
 }
 
-int option_crc32(void *arg) {
+int option_crc32(void *arg, int m) {
 	g_setjmp(0, "option_crc32", NULL, NULL);
-	char **argv = (char**) arg;
-	uLong crc32;
+	char *buffer;
+	if (m == 2) {
+		buffer = (char *) arg;
+	} else {
+		buffer = ((char **) arg)[0];
+	}
 
-	if (!argv[0])
+	updmode = UPD_MODE_NOOP;
+
+	if (!buffer)
 		return 1;
 
-	ULLONG read = file_crc32(argv[0], &crc32);
+	uLong crc32;
+
+	ULLONG read = file_crc32(buffer, &crc32);
 
 	if (read)
 		printf("%.8X\n", (unsigned int) crc32);
 	else {
-		printf("ERROR: %s: [%d] could not get CRC32\n", argv[0], errno);
+		printf("ERROR: %s: [%d] could not get CRC32\n", buffer, errno);
 		EXITVAL = 1;
 	}
-
-	updmode = UPD_MODE_NOOP;
 
 	return 0;
 }
@@ -2297,6 +2310,11 @@ int rebuild_dirlog(void) {
 			sprintf(s_buffer, "%s/%s", SITEROOT, (char*) buffer2.objects->ptr);
 			remove_repeating_chars(s_buffer, 0x2F);
 
+			size_t s_buf_len = strlen(s_buffer);
+			if (s_buffer[s_buf_len - 1] == 0x2F) {
+				s_buffer[s_buf_len - 1] = 0x0;
+			}
+
 			ib = strtol((char*) ((p_md_obj) buffer2.objects->next)->ptr,
 			NULL, 10);
 
@@ -2496,6 +2514,9 @@ int proc_release(char *name, unsigned char type, void *arg) {
 		g_free(fn2);
 		break;
 	case DT_DIR:
+		if (!reg_match(PREG_DIR_SKIP, name, REG_NEWLINE | REG_ICASE)) {
+			return 2;
+		}
 		enum_dir(name, proc_release, iarg, 0);
 		break;
 	}
@@ -2615,7 +2636,8 @@ int release_generate_block(char *name, ear *iarg) {
 
 	time_t orig_ctime = get_file_creation_time(&st);
 
-	if ((gfl & F_OPT_SFV) && !(gfl & F_OPT_NOWRITE)) {
+	if ((gfl & F_OPT_SFV)
+			&& (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV))) {
 		enum_dir(name, delete_file, (void*) "\\.sfv$", 0);
 	}
 
@@ -3030,9 +3052,10 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 		gi1 = strlen(base);
 		dup2 = strdup(d_ptr->dirname);
 		dir = dirname(dup2);
-
+		//printf("::%s ;; %s :: %s :: %s\n", &buffer_s[gi2 - gi1], buffer_s, d_ptr->dirname, base);
 		if (!strncmp(&buffer_s[gi2 - gi1], base, gi1)
 				&& !strncmp(buffer_s, d_ptr->dirname, strlen(dir))) {
+
 			ur = actdl.offset - 1;
 			if (mode == 2 && callback) {
 				if (callback_f(&buffer)) {
@@ -3986,9 +4009,6 @@ int delete_file(char *name, unsigned char type, void *arg) {
 	g_setjmp(0, "delete_file", NULL, NULL);
 	char *match = (char*) arg;
 
-	if (gfl & F_OPT_NOWRITE)
-		return 0;
-
 	if (type != DT_REG)
 		return 1;
 
@@ -4147,6 +4167,32 @@ ULLONG file_crc32(char *file, uLong *crc_out) {
 	return read;
 }
 
+int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_generic", NULL, NULL);
+
+	if (!output) {
+		return 2;
+	}
+
+	if (!strcmp(match, "exe")) {
+		char buffer[PATH_MAX] = { 0 };
+		if (!self_get_path(buffer)) {
+			size_t blen = strlen(buffer);
+			if (blen > 254) {
+				blen = 254;
+			}
+			g_strncpy(output, buffer, blen);
+		} else {
+			sprintf(output, "UNKNOWN");
+		}
+	} else if (!strcmp(match, "glroot")) {
+		sprintf(output, GLROOT);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	g_setjmp(0, "ref_to_val_dirlog", NULL, NULL);
 	if (!output) {
@@ -4155,13 +4201,17 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
+
 	struct dirlog *data = (struct dirlog *) arg;
 
 	if (!strcmp(match, "dir")) {
-		g_strncpy(output, data->dirname, sizeof(data->dirname));
+		sprintf(output, data->dirname);
 	} else if (!strcmp(match, "basedir")) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		g_strncpy(output, base, strlen(base));
+		sprintf(output, base);
 		g_free(s_buffer);
 	} else if (!strcmp(match, "user")) {
 		sprintf(output, "%d", data->uploader);
@@ -4188,6 +4238,10 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	}
 
 	bzero(output, max_size);
+
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
 
 	struct nukelog *data = (struct nukelog *) arg;
 
@@ -4227,6 +4281,10 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
+
 	struct dupefile *data = (struct dupefile *) arg;
 
 	if (!strcmp(match, "file")) {
@@ -4248,6 +4306,10 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	}
 
 	bzero(output, max_size);
+
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
 
 	struct lastonlog *data = (struct lastonlog *) arg;
 
@@ -4281,6 +4343,10 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 
 	bzero(output, max_size);
 
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
+
 	struct oneliner *data = (struct oneliner *) arg;
 
 	if (!strcmp(match, "user")) {
@@ -4306,6 +4372,10 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	}
 
 	bzero(output, max_size);
+
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
 
 	struct ONLINE *data = (struct ONLINE *) arg;
 
@@ -4584,6 +4654,17 @@ p_md_obj get_cfg_opt(char *key, pmda md) {
 	return NULL;
 }
 
+int self_get_path(char *out) {
+	char path[PATH_MAX];
+
+	pid_t pid = getpid();
+	sprintf(path, "/proc/%d/exe", pid);
+	if (readlink(path, out, PATH_MAX) == -1) {
+		return 1;
+	}
+	return 0;
+}
+
 int get_file_type(char *file) {
 	struct stat sb;
 
@@ -4609,4 +4690,5 @@ int get_file_type(char *file) {
 		return 0;
 	}
 }
+
 
