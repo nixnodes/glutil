@@ -18,6 +18,7 @@
  *   - Bugfix: SFV gen with -s was not working properly (rev. 10)
  *   - Bugfix: SFV gen failed to clean old .sfv files, before entering subdir (rev. 11)
  *   - Added --loop=<interval> and --daemon (see --help) (rev. 12)
+ *   - Dirlog search takes nuke string into account (reads from glftpd.conf) (rev. 13)
  *
  * v0.10 RC2:
  *
