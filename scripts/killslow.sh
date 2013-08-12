@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-## Usage: /glroot/bin/dirupdate -w -exec '/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate}'
+# Usage: /glroot/bin/dirupdate -w --loop=1 --daemon -exec '/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate}'
 #
 #
 ## Minimum allowed transfer rate (bytes per second)
