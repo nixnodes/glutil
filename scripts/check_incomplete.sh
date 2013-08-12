@@ -6,7 +6,7 @@
 ## Verbose output
 VERBOSE=0
 #
-## Corruption checking
+## Optional corruption checking
 CHECK_CORRUPT=0
 #
 #########################################################################
@@ -20,31 +20,28 @@ GLROOT=$3
 DIR=$GLROOT$1
 EXE=$2
 
+[ -n "$4" ] && VERBOSE=1
+
 ! [ -d "$DIR" ] && exit 1
 
 proc_dir() {
 	for i in $1/*; do
-		pdbn=$(basename "$i")
-		[ -d "$i" ] && [[ "$pdbn" != ".." ]] && [[ "$pdbn" != "." ]] && proc_dir $i
 		if [ -f "$i" ] && echo $i | grep -P "\.sfv$" > /dev/null; then
 			while read l; do
-				arr=($(echo $l | tr " " "\n")) ; nm="${#arr[@]}"
-				FCRC="${arr[$nm-1]}"; FFL=""
-				for ((ii=0; ii<nm-1; ii++)); do
-					FFL="$FFL${arr[$ii]}"
-				done
-	
+				FFL=$(echo $l | sed 's/ [A-Fa-f0-9]*$//')
+				FCRC=$(echo $l | grep -o -P "[A-Fa-f0-9]*$")
 				FFT=$(dirname $i)/$FFL
 				! [ -f "$FFT" ] && echo "WARNING: $DIR: incomplete, missing file: $FFL" && continue
 				[ $CHECK_CORRUPT -gt 0 ] && CRC32=$($EXE --crc32 $FFT) && [ $CRC32 != $FCRC ] && echo "WARNING: $DIR: corrupted: $FFL, CRC32: $CRC32, should be: $FCRC" && continue
-					
-				[ $VERBOSE -gt 0 ] && echo "OK: $FFL: $CRC32"
+				[ $VERBOSE -gt 0 ] && echo "OK: $FFL: $FCRC"
 			done < "$i"
-		fi	
+		else
+			pdbn=$(basename "$i")
+			[ -d "$i" ] && [[ "$pdbn" != ".." ]] && [[ "$pdbn" != "." ]] && proc_dir $i
+		fi
 	done
 }
 
 proc_dir $DIR
 
 exit 1
-
