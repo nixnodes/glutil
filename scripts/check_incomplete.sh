@@ -6,6 +6,9 @@
 ## Verbose output
 VERBOSE=0
 #
+## Optional corruption checking
+CHECK_CORRUPT=0
+#
 #########################################################################
 
 
@@ -21,7 +24,6 @@ EXE=$2
 
 proc_dir() {
 	for i in $1/*; do
-		echo $i
 		pdbn=$(basename "$i")
 		[ -d "$i" ] && [[ "$pdbn" != ".." ]] && [[ "$pdbn" != "." ]] && proc_dir $i
 		if [ -f "$i" ] && echo $i | grep -P "\.sfv$" > /dev/null; then
@@ -34,8 +36,7 @@ proc_dir() {
 	
 				FFT=$(dirname $i)/$FFL
 				! [ -f "$FFT" ] && echo "WARNING: $DIR: incomplete, missing file: $FFL" && continue
-				CRC32=$($EXE --crc32 $FFT)				
-				[ $CRC32 != $FCRC ] && echo "WARNING: $DIR: corrupted: $FFL, CRC32: $CRC32, should be: $FCRC" && continue
+				[ $CHECK_CORRUPT -gt 0 ] && CRC32=$($EXE --crc32 $FFT) && [ $CRC32 != $FCRC ] && echo "WARNING: $DIR: corrupted: $FFL, CRC32: $CRC32, should be: $FCRC" && continue
 					
 				[ $VERBOSE -gt 0 ] && echo "OK: $FFL: $CRC32"
 			done < "$i"
