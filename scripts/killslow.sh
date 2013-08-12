@@ -24,6 +24,9 @@ LOG="/var/log/killslow.log"
 [ -z "$3" ] && exit 1
 [ -z "$4" ] && exit 1
 [ -z "$5" ] && exit 1
+[ -z "$6" ] && exit 1
+
+! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
 
 ! [ -d "/tmp/du-ks" ] && mkdir -p /tmp/du-ks
 
@@ -55,9 +58,9 @@ KILLED=0
 if [ $SLOW -eq 1 ] && [ -d /tmp/du-ks/$4 ]; then
 	MT1=$(stat -c %Y /tmp/du-ks/$4) 
 	UNDERTIME=$[CT-MT1]
-	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
+	[ $UNDERTIME -gt 10 ] && 
 		O="KILLING: Under speed limit for too long ($UNDERTIME secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" &&  
-			echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 && rmdir /tmp/du-ks/$4
+		echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 && rmdir /tmp/du-ks/$4
 elif [ $SLOW -eq 1 ]; then
 	mkdir /tmp/du-ks/$4
 elif [ $SLOW -eq 0 ] && [ -d /tmp/du-ks/$4 ]; then
@@ -70,4 +73,3 @@ fi
 	[ -d /tmp/du-ks/$4 ] && rmdir /tmp/du-ks/$4
 
 exit 1
-
