@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-## Usage: /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
+# Usage: /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
 #
 #
 ## Verbose output
