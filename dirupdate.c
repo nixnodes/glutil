@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-11
+ * Version     : 1.0-12
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -101,7 +101,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_REVISION 11
+#define VER_REVISION 12
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -294,6 +294,8 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_WBUFFER		0x8000
 #define F_OPT_FORCEWSFV		0x10000
 #define F_OPT_FORMAT_COMP   0x20000
+#define F_OPT_DAEMONIZE		0x40000
+#define F_OPT_LOOP			0x80000
 
 #define F_MD_NOREAD			0x1
 
@@ -597,6 +599,9 @@ key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = REG_EXTENDED;
 char GLOB_REGEX[4096] = { 0 };
 int EXITVAL = 0;
+int g_PID = 0;
+int loop_interval = 1;
+int loop_times = 0;
 
 #define MAX_EXEC_STR 0x200000
 
@@ -611,7 +616,7 @@ mda glconf = { 0 };
 char *hpd_up =
 		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
 				"\n"
-				"Main:\n"
+				"Main options:\n"
 				"  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
 				"                           <folders> are passed relative to SITEROOT, separated by space\n"
 				"                           Use -f to overwrite existing entries\n"
@@ -657,6 +662,10 @@ char *hpd_up =
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
 				"  --batch               Prints dirlog data non-formatted\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
+				"  --daemon              Fork process into background\n"
+				"  --loop <interval>     Loops whatever Main option is given\n"
+				"                           Use caution, some operations might fail when looped\n"
+				"                           This is usefull when running yourown scripts (--exec)\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -670,6 +679,26 @@ char *hpd_up =
 				"  --folders=FILE        Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
 				"\n";
+
+int g_cpg(void *arg, void *out, int m, size_t sz) {
+	char *buffer;
+	if (m == 2) {
+		buffer = (char *) arg;
+	} else {
+		buffer = ((char **) arg)[0];
+	}
+	if (!buffer)
+		return 1;
+	bzero(out, sz);
+	g_strncpy(out, buffer, strlen(buffer));
+	return 0;
+}
+void *g_pg(void *arg, int m) {
+	if (m == 2) {
+		return (char *) arg;
+	}
+	return ((char **) arg)[0];
+}
 
 int opt_g_verbose(void *arg, int m) {
 	gfl |= F_OPT_VERBOSE;
@@ -698,6 +727,21 @@ int opt_g_force(void *arg, int m) {
 
 int opt_g_update(void *arg, int m) {
 	gfl |= F_OPT_UPDATE;
+	return 0;
+}
+
+int opt_g_loop(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	loop_interval = (int) strtol(buffer, NULL, 10);
+
+	if (loop_interval) {
+		gfl |= F_OPT_LOOP;
+	}
+	return 0;
+}
+
+int opt_g_daemonize(void *arg, int m) {
+	gfl |= F_OPT_DAEMONIZE;
 	return 0;
 }
 
@@ -742,11 +786,7 @@ int opt_g_followlinks(void *arg, int m) {
 }
 
 int opt_update_single_record(void *arg, int m) {
-	if (m == 2) {
-		argv_off = (char *) arg;
-	} else {
-		argv_off = ((char **) arg)[0];
-	}
+	argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_SINGLE;
 	return 0;
 }
@@ -759,26 +799,6 @@ int opt_recursive_update_records(void *arg, int m) {
 int opt_raw_dump(void *arg, int m) {
 	gfl = F_OPT_MODE_RAWDUMP;
 	return 0;
-}
-
-int g_cpg(void *arg, void *out, int m, size_t sz) {
-	char *buffer;
-	if (m == 2) {
-		buffer = (char *) arg;
-	} else {
-		buffer = ((char **) arg)[0];
-	}
-	if (!buffer)
-		return 1;
-	bzero(out, sz);
-	g_strncpy(out, buffer, strlen(buffer));
-	return 0;
-}
-void *g_pg(void *arg, int m) {
-	if (m == 2) {
-		return (char *) arg;
-	}
-	return ((char **) arg)[0];
 }
 
 int opt_exec(void *arg, int m) {
@@ -1047,7 +1067,8 @@ int g_map_shm(key_t, struct g_handle *);
 char *build_data_path(char *, char *);
 void free_cfg(pmda);
 
-void *f_ref[] = { "-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc,
+void *f_ref[] = { "--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize,
+		(void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc,
 		(void*) 1, "-l", opt_lastonlog_dump, (void*) 0, "--oneliners",
 		opt_oneliner, (void*) 1, "-o", opt_oneliner_dump, (void*) 0,
 		"--lastonlog", opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump,
@@ -1316,6 +1337,8 @@ char *build_data_path(char *file, char *path) {
 int main(int argc, char *argv[]) {
 	int r;
 
+	g_PID = getpid();
+
 	if (setup_sighandlers()) {
 		printf(
 				"WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!)\n");
@@ -1455,6 +1478,15 @@ int main(int argc, char *argv[]) {
 		printf("NOTE: performing dry run, no writing will be done\n");
 	}
 
+	if (gfl & F_OPT_DAEMONIZE) {
+		if (!(gfl & F_OPT_MODE_RAWDUMP)) {
+			printf("NOTE: forking into background.. [PID: %d]\n", g_PID);
+		}
+		daemon(1, 0);
+	}
+
+	enter:
+
 	switch (updmode) {
 	case UPD_MODE_RECURSIVE:
 		rebuild_dirlog();
@@ -1494,6 +1526,11 @@ int main(int argc, char *argv[]) {
 	default:
 		printf("ERROR: no mode specified (see --help)\n");
 		break;
+	}
+
+	if (gfl & F_OPT_LOOP) {
+		sleep(loop_interval);
+		goto enter;
 	}
 
 	g_shutdown(NULL);
@@ -4644,12 +4681,16 @@ p_md_obj get_cfg_opt(char *key, pmda md) {
 
 int self_get_path(char *out) {
 	g_setjmp(0, "self_get_path", NULL, NULL);
+
+	if (!g_PID) {
+		return 1;
+	}
+
 	char path[PATH_MAX];
 
-	pid_t pid = getpid();
-	sprintf(path, "/proc/%d/exe", pid);
+	sprintf(path, "/proc/%d/exe", g_PID);
 	if (readlink(path, out, PATH_MAX) == -1) {
-		return 1;
+		return 2;
 	}
 	return 0;
 }
