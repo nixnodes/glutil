@@ -3929,10 +3929,10 @@ int g_close(struct g_handle *hdl) {
 			md_g_free(&hdl->buffer);
 			md_g_free(&hdl->w_buffer);
 		}
-		if (hdl->data && !(hdl->flags & F_GH_SHM)) {
+		/*if (hdl->data && !(hdl->flags & F_GH_SHM)) {
 			g_free(hdl->data);
 			hdl->data = NULL;
-		}
+		}*/
 	}
 
 	hdl->br = 0;
