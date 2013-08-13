@@ -7,6 +7,7 @@
  *   - Bugfix: memory leaks (rev. 2)
  *   - Bugfix: more mem leaks (rev. 3)
  *   - Bugfix: some file handles weren't getting cleaned up (rev. 4)
+ *   - Bugfix: formatted strings were printing in main on raw dump (rev. 5) 
  *
  * v1.0
  *
