@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.1-3
+ * Version     : 1.1-4
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 1
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -5126,6 +5126,7 @@ int load_cfg(char *file, pmda md) {
 		pce->key = pce->data.objects->ptr;
 	}
 
+	g_fclose(fh);
 	g_free(buffer);
 
 	return r;
@@ -5145,7 +5146,6 @@ void free_cfg(pmda md) {
 		pce = (p_cfg_h) ptr->ptr;
 		if (pce) {
 			md_g_free(&pce->data);
-			//g_free(pce);
 		}
 		ptr = ptr->next;
 	}
