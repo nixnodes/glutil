@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.1-0
+ * Version     : 1.1-1
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 1
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -518,9 +518,11 @@ int g_fclose(FILE *fp) {
 	return ret;
 }
 
+#define MSG_DEF_UNKN1 	"(unknown)"
+
 void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 
-	char *s_ptr1 = "EXCEPTION", *s_ptr2 = "(unknown)", *s_ptr3 = "";
+	char *s_ptr1 = MSG_DEF_UNKN1, *s_ptr2 = MSG_DEF_UNKN1, *s_ptr3 = "";
 	char buffer1[4096] = { 0 };
 
 	switch (sig) {
@@ -574,8 +576,8 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 		s_ptr3 = ", resuming execution..";
 	}
 
-	printf("%s: [%s] [%d] [%s]%s%s\n", s_ptr1, g_sigjmp.type, siginfo->si_errno,
-			s_ptr2, buffer1, s_ptr3);
+	printf("EXCEPTION: %s: [%s] [%s] [%d]%s%s\n", s_ptr1, g_sigjmp.type, s_ptr2,
+			siginfo->si_errno, buffer1, s_ptr3);
 
 	usleep(250000);
 
@@ -596,15 +598,25 @@ struct tm *get_localtime(void) {
 	return localtime(&t);
 }
 
-#define F_MSG_TYPE_ERROR 	0x1
-#define F_MSG_TYPE_WARNING 	0x2
-#define F_MSG_TYPE_NOTICE	0x4
-#define F_MSG_TYPE_UNKNOWN	0x10000
-#define F_MSG_TYPE_ALL 		(F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING|F_MSG_TYPE_NOTICE)
+#define F_MSG_TYPE_ANY		 	0xFFFFFFFF
+#define F_MSG_TYPE_EXCEPTION 	0x1
+#define F_MSG_TYPE_ERROR 		0x2
+#define F_MSG_TYPE_WARNING 		0x4
+#define F_MSG_TYPE_NOTICE		0x8
+#define F_MSG_TYPE_STATS		0x10
+#define F_MSG_TYPE_NORMAL		0x20
 
-unsigned int LOGLVL = F_MSG_TYPE_ALL;
+#define F_MSG_TYPE_EEW 			(F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING)
+
+unsigned int LOGLVL = F_MSG_TYPE_EEW;
 
 unsigned int get_msg_type(char *msg) {
+	if (!strncmp(msg, "INIT:", 5)) {
+		return F_MSG_TYPE_ANY;
+	}
+	if (!strncmp(msg, "EXCEPTION:", 10)) {
+		return F_MSG_TYPE_EXCEPTION;
+	}
 	if (!strncmp(msg, "ERROR:", 6)) {
 		return F_MSG_TYPE_ERROR;
 	}
@@ -614,12 +626,16 @@ unsigned int get_msg_type(char *msg) {
 	if (!strncmp(msg, "NOTICE:", 7)) {
 		return F_MSG_TYPE_NOTICE;
 	}
-	return F_MSG_TYPE_UNKNOWN;
+	if (!strncmp(msg, "STATS:", 6)) {
+		return F_MSG_TYPE_STATS;
+	}
+
+	return F_MSG_TYPE_NORMAL;
 }
 
 int w_log(char *w, char *ow) {
 
-	if (!(get_msg_type(ow) & LOGLVL)) {
+	if (ow && !(get_msg_type(ow) & LOGLVL)) {
 		return 1;
 	}
 
@@ -776,9 +792,10 @@ char *hpd_up =
 				"                           This is usefull when running yourown scripts (--exec)\n"
 				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute command each loop\n"
-				"  --loglevel <1-3>      Log verbosity level\n"
+				"  --loglevel <1-6>      Log verbosity level (1: exception only..6: everything)\n"
 				"  --silent              Silent mode\n"
 				"  --ftime               Prepend formatted timestamps to output\n"
+				"  --log                 Force logging enabled\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -1473,6 +1490,11 @@ int g_shutdown(void *arg) {
 	if (NUKESTR) {
 		g_free(NUKESTR);
 	}
+
+	if ((gfl & F_OPT_PS_LOGGING) && fd_log) {
+		g_fclose(fd_log);
+	}
+
 	exit(EXITVAL);
 }
 
@@ -1538,10 +1560,12 @@ int main(int argc, char *argv[]) {
 			print_str(
 					"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
 					LOGFILE, errno);
-		} else {
-			fprintf(fd_log, "\n");
 		}
 	}
+
+	print_str("INIT: dirupdate %d.%d-%d%s-%s starting..\n", VER_MAJOR,
+			VER_MINOR,
+			VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
 
 #ifdef GLCONF
 	if ((r = load_cfg(GLCONF, &glconf))) {
