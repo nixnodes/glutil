@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.1-2
+ * Version     : 1.1-3
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 1
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -1309,7 +1309,10 @@ int md_g_free(pmda md) {
 		p_md_obj ptr = md_first(md), ptr_s;
 		while (ptr) {
 			ptr_s = ptr->next;
-			g_free(ptr->ptr);
+			if (ptr->ptr) {
+				g_free(ptr->ptr);
+				ptr->ptr = NULL;
+			}
 			ptr = ptr_s;
 		}
 	}
@@ -4980,7 +4983,7 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 						i++;
 						break;
 					}
-
+					//free_cfg(&l_mdo_1);
 					g_memcpy(&buffer_o[pi], buffer2, strlen(buffer2));
 
 					pi += strlen(buffer2);
@@ -5130,12 +5133,20 @@ int load_cfg(char *file, pmda md) {
 
 void free_cfg(pmda md) {
 	g_setjmp(0, "free_cfg", NULL, NULL);
+
+	if ( !md->objects) {
+		return;
+	}
+
 	p_md_obj ptr = md_first(md);
 	p_cfg_h pce;
 
 	while (ptr) {
 		pce = (p_cfg_h) ptr->ptr;
-		md_g_free(&pce->data);
+		if (pce) {
+			md_g_free(&pce->data);
+			//g_free(pce);
+		}
 		ptr = ptr->next;
 	}
 
