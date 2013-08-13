@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.1-4
+ * Version     : 1.1-5
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 1
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -1575,16 +1575,19 @@ int main(int argc, char *argv[]) {
 		build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
 		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
 			gfl ^= F_OPT_PS_LOGGING;
-			print_str(
-					"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
-					LOGFILE, errno);
+			if (!(gfl & F_OPT_MODE_RAWDUMP)) {
+				print_str(
+						"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
+						LOGFILE, errno);
+			}
 		}
 	}
 
-	if (updmode != UPD_MODE_NOOP) {
-		print_str("INIT: dirupdate %d.%d-%d%s-%s starting..\n", VER_MAJOR,
+	if (updmode != UPD_MODE_NOOP && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		print_str("INIT: dirupdate %d.%d-%d%s-%s starting [PID: %d]\n",
+		VER_MAJOR,
 		VER_MINOR,
-		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
+		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686", g_PID);
 	}
 
 #ifdef GLCONF
@@ -1592,7 +1595,7 @@ int main(int argc, char *argv[]) {
 		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
-	if ((gfl & F_OPT_VERBOSE) && glconf.offset) {
+	if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP) && glconf.offset) {
 		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
 				(int) glconf.offset);
 	}
@@ -1608,7 +1611,7 @@ int main(int argc, char *argv[]) {
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
 		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
-		if (gfl & F_OPT_VERBOSE2) {
+		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str("GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
 	}
@@ -1618,7 +1621,7 @@ int main(int argc, char *argv[]) {
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
 		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
-		if (gfl & F_OPT_VERBOSE2) {
+		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str("GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
 	}
@@ -1628,7 +1631,7 @@ int main(int argc, char *argv[]) {
 	if (ptr) {
 		bzero(FTPDATA, 255);
 		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
-		if (gfl & F_OPT_VERBOSE2) {
+		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str("GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
 	}
@@ -1638,7 +1641,7 @@ int main(int argc, char *argv[]) {
 	if (ptr) {
 		NUKESTR = calloc(255, 1);
 		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-		if (gfl & F_OPT_VERBOSE2) {
+		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str("GLCONF: using 'nukedir_style': %s\n", NUKESTR);
 		}
 		ofl |= F_OVRR_NUKESTR;
@@ -1647,7 +1650,9 @@ int main(int argc, char *argv[]) {
 
 	remove_repeating_chars(FTPDATA, 0x2F);
 #else
-	print_str("WARNING: GLCONF not defined in glconf.h");
+	if ( && !(gfl & F_OPT_MODE_RAWDUMP) ) {
+		print_str("WARNING: GLCONF not defined in glconf.h");
+	}
 #endif
 
 	remove_repeating_chars(GLROOT, 0x2F);
@@ -4481,11 +4486,13 @@ int delete_file(char *name, unsigned char type, void *arg) {
 	g_setjmp(0, "delete_file", NULL, NULL);
 	char *match = (char*) arg;
 
-	if (type != DT_REG)
+	if (type != DT_REG) {
 		return 1;
+	}
 
-	if (!reg_match(match, name, 0))
+	if (!reg_match(match, name, 0)) {
 		return remove(name);
+	}
 
 	return 2;
 }
@@ -5135,7 +5142,7 @@ int load_cfg(char *file, pmda md) {
 void free_cfg(pmda md) {
 	g_setjmp(0, "free_cfg", NULL, NULL);
 
-	if ( !md->objects) {
+	if (!md->objects) {
 		return;
 	}
 
