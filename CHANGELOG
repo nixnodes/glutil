@@ -4,6 +4,7 @@
  *   - Logging system
  *   - Added more logging levels (rev. 1)
  *   - Added init string (rev. 1)
+ *   - Bugfix: memory leaks (rev. 2)
  *
  * v1.0
  *
