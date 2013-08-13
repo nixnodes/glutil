@@ -6,6 +6,7 @@
  *   - Added init string (rev. 1)
  *   - Bugfix: memory leaks (rev. 2)
  *   - Bugfix: more mem leaks (rev. 3)
+ *   - Bugfix: some file handles weren't getting cleaned up (rev. 4)
  *
  * v1.0
  *
