@@ -59,7 +59,7 @@ KILLED=0
 if [ $SLOW -eq 1 ] && [ -d /tmp/du-ks/$4 ]; then
 	MT1=$(stat -c %Y /tmp/du-ks/$4) 
 	UNDERTIME=$[CT-MT1]
-	[ $UNDERTIME -gt 10 ] && 
+	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
 		O="KILLING: Below speed limit for too long ($UNDERTIME secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" &&  
 		echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 && rmdir /tmp/du-ks/$4
 elif [ $SLOW -eq 1 ]; then
