@@ -658,10 +658,6 @@ int w_log(char *w, char *ow) {
 int print_str(const char * volatile buf, ...) {
 	g_setjmp(0, "print_str", NULL, NULL);
 
-	if (gfl & F_OPT_PS_SILENT) {
-		return 0;
-	}
-
 	char d_buffer_2[PSTR_MAX];
 	va_list al;
 	va_start(al, buf);
@@ -677,6 +673,10 @@ int print_str(const char * volatile buf, ...) {
 		char wl_buffer[PSTR_MAX];
 		vsprintf(wl_buffer, d_buffer_2, al);
 		w_log(wl_buffer, (char*) buf);
+	}
+
+	if (gfl & F_OPT_PS_SILENT) {
+		return 0;
 	}
 
 	va_end(al);
@@ -842,6 +842,7 @@ int opt_g_loglvl(void *arg, int m) {
 	}
 
 	LOGLVL = t_LOGLVL;
+	gfl |= F_OPT_PS_LOGGING;
 
 	return 0;
 }
@@ -1564,8 +1565,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	print_str("INIT: dirupdate %d.%d-%d%s-%s starting..\n", VER_MAJOR,
-			VER_MINOR,
-			VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
+	VER_MINOR,
+	VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
 
 #ifdef GLCONF
 	if ((r = load_cfg(GLCONF, &glconf))) {
@@ -2407,7 +2408,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)
-			&& !(gfl & F_OPT_FORMAT_COMP)) {
+			&& !(gfl & F_OPT_FORMAT_COMP) && !(hdl.flags & F_GH_ISONLINE)) {
 		print_str("STATS: %s: read %d records\n", file, c);
 	}
 
@@ -3929,11 +3930,13 @@ int g_map_shm(key_t ipc, struct g_handle *hdl) {
 	int r = load_data_md(&hdl->buffer, NULL, hdl);
 
 	if (!hdl->buffer_count) {
-		print_str(
-				"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
-				MSG_DEF_SHM, (unsigned int) hdl->buffer_count,
-				(unsigned int) (hdl->total_sz / hdl->block_sz),
-				(unsigned int) hdl->total_sz, hdl->block_sz, r);
+		if ((gfl & F_OPT_VERBOSE) || r != 1002) {
+			print_str(
+					"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
+					MSG_DEF_SHM, (unsigned int) hdl->buffer_count,
+					(unsigned int) (hdl->total_sz / hdl->block_sz),
+					(unsigned int) hdl->total_sz, hdl->block_sz, r);
+		}
 		return 9;
 	}
 
@@ -4192,7 +4195,7 @@ void *g_read(void *buffer, struct g_handle *hdl, size_t size) {
 	}
 
 	if (!hdl->fh) {
-		print_str("IO ERROR: dirlog handle not open\n");
+		print_str("IO ERROR: data file handle not open\n");
 		return NULL;
 	}
 
