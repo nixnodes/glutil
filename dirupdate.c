@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.0-15
+ * Version     : 1.1-0
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -19,12 +19,22 @@
 #define siteroot "/site"
 #endif
 
+/* ftp-data, relative to gl root */
 #ifndef ftp_data
 #define ftp_data "/ftp-data"
 #endif
 
+/* gl's ipc key */
 #ifndef shm_ipc
 #define shm_ipc 0x0000DEAD
+#endif
+
+/*
+ * Set this to enable logging by default,
+ * or use --logfile from command line
+ */
+#ifndef log_file
+#define log_file ""
 #endif
 
 /* dirlog file path */
@@ -77,6 +87,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <libgen.h>
 #include <time.h>
@@ -100,8 +111,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 0
-#define VER_REVISION 15
+#define VER_MINOR 1
+#define VER_REVISION 0
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -297,6 +308,9 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_DAEMONIZE		0x40000
 #define F_OPT_LOOP			0x80000
 #define F_OPT_LOOPEXEC		0x100000
+#define F_OPT_PS_SILENT		0x200000
+#define F_OPT_PS_TIME		0x400000
+#define F_OPT_PS_LOGGING	0x800000
 
 #define F_MD_NOREAD			0x1
 
@@ -364,6 +378,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define DEFF_LASTONLOG  "laston.log"
 #define DEFF_DUPEFILE 	"dupefile"
 #define DEFF_ONELINERS 	"oneliners.log"
+#define DEFF_DULOG	 	"dirupdate.log"
 
 #define F_SIGERR_CONTINUE 	0x1  /* continue after exception */
 
@@ -378,6 +393,10 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define ID_SIGERR_MEMMOVE 	0x8
 
 sigjmp g_sigjmp = { { { { 0 } } } };
+ULLONG gfl = F_OPT_WBUFFER;
+unsigned int ofl = 0;
+FILE *fd_log = NULL;
+char LOGFILE[PATH_MAX] = { log_file };
 
 void e_pop(p_sigjmp psm) {
 	memcpy(psm->p_env, psm->env, sizeof(sigjmp_buf));
@@ -572,6 +591,93 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 	exit(siginfo->si_errno);
 }
 
+struct tm *get_localtime(void) {
+	time_t t = time(NULL);
+	return localtime(&t);
+}
+
+#define F_MSG_TYPE_ERROR 	0x1
+#define F_MSG_TYPE_WARNING 	0x2
+#define F_MSG_TYPE_NOTICE	0x4
+#define F_MSG_TYPE_UNKNOWN	0x10000
+#define F_MSG_TYPE_ALL 		(F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING|F_MSG_TYPE_NOTICE)
+
+unsigned int LOGLVL = F_MSG_TYPE_ALL;
+
+unsigned int get_msg_type(char *msg) {
+	if (!strncmp(msg, "ERROR:", 6)) {
+		return F_MSG_TYPE_ERROR;
+	}
+	if (!strncmp(msg, "WARNING:", 8)) {
+		return F_MSG_TYPE_WARNING;
+	}
+	if (!strncmp(msg, "NOTICE:", 7)) {
+		return F_MSG_TYPE_NOTICE;
+	}
+	return F_MSG_TYPE_UNKNOWN;
+}
+
+int w_log(char *w, char *ow) {
+
+	if (!(get_msg_type(ow) & LOGLVL)) {
+		return 1;
+	}
+
+	size_t wc, wll;
+
+	wll = strlen(w);
+
+	if ((wc = fwrite(w, 1, wll, fd_log)) != wll) {
+		printf("ERROR: %s: writing log failed [%d/%d]\n", LOGFILE, (int) wc,
+				(int) wll);
+	}
+
+	fflush(fd_log);
+
+	return 0;
+}
+
+#define PSTR_MAX	(V_MB/4)
+
+int print_str(const char * volatile buf, ...) {
+	g_setjmp(0, "print_str", NULL, NULL);
+
+	if (gfl & F_OPT_PS_SILENT) {
+		return 0;
+	}
+
+	char d_buffer_2[PSTR_MAX];
+	va_list al;
+	va_start(al, buf);
+
+	if ((gfl & F_OPT_PS_TIME) || (gfl & F_OPT_PS_LOGGING)) {
+		struct tm tm = *get_localtime();
+		sprintf(d_buffer_2, "[%.2u-%.2u-%.2u %.2u:%.2u:%.2u] %s",
+				(tm.tm_year + 1900) % 100, tm.tm_mon + 1, tm.tm_mday,
+				tm.tm_hour, tm.tm_min, tm.tm_sec, buf);
+	}
+
+	if ((gfl & F_OPT_PS_LOGGING) && fd_log) {
+		char wl_buffer[PSTR_MAX];
+		vsprintf(wl_buffer, d_buffer_2, al);
+		w_log(wl_buffer, (char*) buf);
+	}
+
+	va_end(al);
+	va_start(al, buf);
+
+	if (gfl & F_OPT_PS_TIME) {
+		vprintf(d_buffer_2, al);
+	} else {
+		vprintf(buf, al);
+
+	}
+
+	fflush(stdout);
+
+	return 0;
+}
+
 /* ---------------------------------------------------------------------------------- */
 
 struct g_handle actdl = { 0 };
@@ -582,8 +688,6 @@ struct d_stats nl_stats = { 0 };
 mda dirlog_buffer = { 0 };
 mda nukelog_buffer = { 0 };
 
-unsigned int gfl = F_OPT_WBUFFER;
-unsigned int ofl = 0;
 int updmode = 0;
 char *argv_off = NULL;
 char GLROOT[255] = { glroot };
@@ -659,7 +763,7 @@ char *hpd_up =
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  -y, --followlinks     Follows symbolic links (default is to skip)\n"
-				"  --regex <match>       Regex match filter string, used during various operations.\n"
+				"  --regex <match>       Regex match filter string, used during various operations\n"
 				"                           Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
@@ -670,8 +774,11 @@ char *hpd_up =
 				"  --loop <interval>     Loops the given 'Main option' operation\n"
 				"                           Use caution, some operations might fail when looped\n"
 				"                           This is usefull when running yourown scripts (--exec)\n"
-				"  --loopexec <command {exe}|{glroot}>\n"
+				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute command each loop\n"
+				"  --loglevel <1-3>      Log verbosity level\n"
+				"  --silent              Silent mode\n"
+				"  --ftime               Prepend formatted timestamps to output\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -684,6 +791,7 @@ char *hpd_up =
 				"  --oneliners=FILE      Override default path to oneliners file\n"
 				"  --folders=FILE        Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
+				"  --logfile=FILE        Override default log file path\n"
 				"\n";
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
@@ -704,6 +812,21 @@ void *g_pg(void *arg, int m) {
 		return (char *) arg;
 	}
 	return ((char **) arg)[0];
+}
+
+int opt_g_loglvl(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	int lvl = atoi(buffer), i;
+	unsigned int t_LOGLVL = 0;
+
+	for (i = 0; i < lvl; i++) {
+		t_LOGLVL <<= 1;
+		t_LOGLVL |= 0x1;
+	}
+
+	LOGLVL = t_LOGLVL;
+
+	return 0;
 }
 
 int opt_g_verbose(void *arg, int m) {
@@ -800,6 +923,11 @@ int opt_g_followlinks(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_ftime(void *arg, int m) {
+	gfl |= F_OPT_PS_TIME;
+	return 0;
+}
+
 int opt_update_single_record(void *arg, int m) {
 	argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_SINGLE;
@@ -812,7 +940,17 @@ int opt_recursive_update_records(void *arg, int m) {
 }
 
 int opt_raw_dump(void *arg, int m) {
-	gfl = F_OPT_MODE_RAWDUMP;
+	gfl |= F_OPT_MODE_RAWDUMP;
+	return 0;
+}
+
+int opt_silent(void *arg, int m) {
+	gfl |= F_OPT_PS_SILENT;
+	return 0;
+}
+
+int opt_logging(void *arg, int m) {
+	gfl |= F_OPT_PS_LOGGING;
 	return 0;
 }
 
@@ -851,6 +989,12 @@ int opt_shmipc(void *arg, int m) {
 
 	ofl |= F_OVRR_IPC;
 
+	return 0;
+}
+
+int opt_log_file(void *arg, int m) {
+	g_cpg(arg, LOGFILE, m, PATH_MAX);
+	gfl |= F_OPT_PS_LOGGING;
 	return 0;
 }
 
@@ -938,7 +1082,7 @@ int opt_dirlog_sections_file(void *arg, int m) {
 }
 
 int print_version(void *arg, int m) {
-	printf("dirupdate-%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
+	print_str("dirupdate-%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
 	VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
 	updmode = UPD_MODE_NOOP;
 	return 0;
@@ -980,7 +1124,7 @@ int opt_oneliner_dump(void *arg, int m) {
 }
 
 int print_help(void *arg, int m) {
-	printf(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
+	print_str(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
 	VER_STR, ARCH ? "x86_64" : "i686");
 	updmode = UPD_MODE_NOOP;
 	return 0;
@@ -1003,10 +1147,11 @@ int opt_membuffer_limit(void *arg, int m) {
 	long long int l_buffer = atoll(buffer);
 	if (l_buffer > 1024) {
 		db_max_size = l_buffer;
-		printf("NOTE: max memory buffer limit set to %lld bytes\n", l_buffer);
+		print_str("NOTICE: max memory buffer limit set to %lld bytes\n",
+				l_buffer);
 	} else {
-		printf(
-				"NOTE: invalid memory buffer limit, using default (%lld bytes)\n",
+		print_str(
+				"NOTICE: invalid memory buffer limit, using default (%lld bytes)\n",
 				db_max_size);
 	}
 	return 0;
@@ -1088,29 +1233,32 @@ int g_map_shm(key_t, struct g_handle *);
 char *build_data_path(char *, char *);
 void free_cfg(pmda);
 
-void *f_ref[] = { "--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
-		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
-		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
-		opt_lastonlog_dump, (void*) 0, "--oneliners", opt_oneliner, (void*) 1,
-		"-o", opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog,
-		(void*) 1, "-i", opt_dupefile_dump, (void*) 0, "--dupefile",
-		opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering, (void*) 0,
-		"--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi, (void*) 1,
-		"--iregex", opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi,
-		(void*) 1, "--regex", opt_g_regex, (void*) 1, "-e", opt_rebuild,
-		(void*) 1, "--comp", opt_compact_output_formatting, (void*) 0,
-		"--batch", opt_batch_output_formatting, (void*) 0, "-y",
-		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
-		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
-		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
-		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
-		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
-		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
-		opt_dirlog_chk_dupe, (void*) 0, "-b", opt_g_nobuffering, (void*) 0,
-		"--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
-		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
-		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
-		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+void *f_ref[] = { "--loglevel", opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime,
+		(void*) 0, "--logfile", opt_log_file, (void*) 0, "--log", opt_logging,
+		(void*) 0, "--silent", opt_silent, (void*) 0, "--loopexec",
+		opt_g_loopexec, (void*) 1, "--loop", opt_g_loop, (void*) 1, "--daemon",
+		opt_g_daemonize, (void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc",
+		opt_shmipc, (void*) 1, "-l", opt_lastonlog_dump, (void*) 0,
+		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
+		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
+		opt_dupefile_dump, (void*) 0, "--dupefile", opt_dupefile, (void*) 1,
+		"--nowbuffer", opt_g_buffering, (void*) 0, "--raw", opt_raw_dump,
+		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
+		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
+		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
+		opt_compact_output_formatting, (void*) 0, "--batch",
+		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
+		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
+		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
+		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
+		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
+		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
+		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
+		(void*) 0, "-b", opt_g_nobuffering, (void*) 0, "--nobuffer",
+		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
+		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
+		print_help, (void*) 0, "--version", print_version, (void*) 0,
+		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
 		(void*) 1, "-k", opt_g_nowrite, (void*) 0, "--nowrite", opt_g_nowrite,
@@ -1193,8 +1341,8 @@ void *md_alloc(pmda md, int b) {
 
 	if (md->offset >= md->count) {
 		if (gfl & F_OPT_VERBOSE3) {
-			printf(
-					"NOTE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
+			print_str(
+					"NOTICE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
 					(ULLONG) (AAINT) md->objects, (ULLONG) md->count);
 		}
 		md->objects = realloc(md->objects, (md->count * sizeof(md_obj)) * 2);
@@ -1206,8 +1354,8 @@ void *md_alloc(pmda md, int b) {
 		AAINT rlc = md_relink(md);
 		flags |= MDA_MDALLOC_RE;
 		if (gfl & F_OPT_VERBOSE3) {
-			printf(
-					"NOTE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
+			print_str(
+					"NOTICE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
 					(ULLONG) (AAINT) md->objects, (ULLONG) md->count,
 					(ULLONG) rlc);
 		}
@@ -1331,7 +1479,7 @@ int g_shutdown(void *arg) {
 char *build_data_path(char *file, char *path) {
 	remove_repeating_chars(path, 0x2F);
 
-	if (!file_exists(path)) {
+	if (strlen(path) && !file_exists(path)) {
 		return path;
 	}
 
@@ -1341,39 +1489,41 @@ char *build_data_path(char *file, char *path) {
 
 	remove_repeating_chars(buffer, 0x2F);
 
-	size_t blen = strlen(buffer);
+	size_t blen = strlen(buffer), plen = strlen(path);
 
 	if (blen > 255) {
 		return path;
 	}
 
-	if (!strncmp(buffer, path, strlen(path))) {
+	if (plen == blen && !strncmp(buffer, path, plen)) {
 		return path;
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
-		printf("NOTE: %s: was not found, setting default data path: %s\n", path,
-				buffer);
+		print_str("NOTICE: %s: was not found, setting default data path: %s\n",
+				path, buffer);
 	}
 
 	bzero(path, 255);
-	g_memcpy(path, buffer, blen);
-
+	g_memcpy(path, buffer, strlen(buffer));
 	return path;
 }
 
 int main(int argc, char *argv[]) {
+	g_setjmp(0, "main", NULL, NULL);
 	int r;
 
 	g_PID = getpid();
 
+	if (strlen(LOGFILE)) {
+		gfl |= F_OPT_PS_LOGGING;
+	}
+
 	if (setup_sighandlers()) {
-		printf(
+		print_str(
 				"WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!)\n");
 		sleep(5);
 	}
-
-	g_setjmp(0, "main", NULL, NULL);
 
 	r = parse_args(argc, argv);
 	if (r == -2 || r == -1) {
@@ -1381,13 +1531,25 @@ int main(int argc, char *argv[]) {
 		return 4;
 	}
 
+	if (gfl & F_OPT_PS_LOGGING) {
+		build_data_path(DEFF_DULOG, LOGFILE);
+		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
+			gfl ^= F_OPT_PS_LOGGING;
+			print_str(
+					"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
+					LOGFILE, errno);
+		} else {
+			fprintf(fd_log, "\n");
+		}
+	}
+
 #ifdef GLCONF
 	if ((r = load_cfg(GLCONF, &glconf))) {
-		printf("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
+		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && glconf.offset) {
-		printf("NOTE: %s: loaded %d config lines into memory\n", GLCONF,
+		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
 				(int) glconf.offset);
 	}
 
@@ -1403,7 +1565,7 @@ int main(int argc, char *argv[]) {
 		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: using 'rootpath': %s\n", GLROOT);
+			print_str("GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
 	}
 
@@ -1413,7 +1575,7 @@ int main(int argc, char *argv[]) {
 		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
+			print_str("GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
 	}
 
@@ -1423,7 +1585,7 @@ int main(int argc, char *argv[]) {
 		bzero(FTPDATA, 255);
 		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: using 'ftp-data': %s\n", FTPDATA);
+			print_str("GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
 	}
 
@@ -1433,7 +1595,7 @@ int main(int argc, char *argv[]) {
 		NUKESTR = calloc(255, 1);
 		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("GLCONF: using 'nukedir_style': %s\n", NUKESTR);
+			print_str("GLCONF: using 'nukedir_style': %s\n", NUKESTR);
 		}
 		ofl |= F_OVRR_NUKESTR;
 
@@ -1441,19 +1603,19 @@ int main(int argc, char *argv[]) {
 
 	remove_repeating_chars(FTPDATA, 0x2F);
 #else
-	printf("WARNING: GLCONF not defined in glconf.h");
+	print_str("WARNING: GLCONF not defined in glconf.h");
 #endif
 
 	remove_repeating_chars(GLROOT, 0x2F);
 	remove_repeating_chars(SITEROOT_N, 0x2F);
 
 	if (!strlen(GLROOT)) {
-		printf("ERROR: glftpd root directory not specified!\n");
+		print_str("ERROR: glftpd root directory not specified!\n");
 		return 2;
 	}
 
 	if (!strlen(SITEROOT_N)) {
-		printf("ERROR: glftpd site root directory not specified!\n");
+		print_str("ERROR: glftpd site root directory not specified!\n");
 		return 2;
 	}
 
@@ -1478,49 +1640,52 @@ int main(int argc, char *argv[]) {
 		}
 
 		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-			printf(
-					"NOTE: switching to non-destructive filesystem rebuild mode\n");
+			print_str(
+					"NOTICE: switching to non-destructive filesystem rebuild mode\n");
 		}
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 		if (gfl & F_OPT_NOBUFFER) {
-			printf("NOTE: disabling memory buffering\n");
+			print_str("NOTICE: disabling memory buffering\n");
 		}
 		if (SHM_IPC && SHM_IPC != shm_ipc) {
-			printf("NOTE: IPC key set to '0x%.8X'\n", SHM_IPC);
+			print_str("NOTICE: IPC key set to '0x%.8X'\n", SHM_IPC);
 		}
 		if (ofl & F_OVRR_GLROOT) {
-			printf("NOTE: GLROOT path set to '%s'\n", GLROOT);
+			print_str("NOTICE: GLROOT path set to '%s'\n", GLROOT);
 		}
 		if (ofl & F_OVRR_SITEROOT) {
-			printf("NOTE: SITEROOT path set to '%s'\n", SITEROOT);
+			print_str("NOTICE: SITEROOT path set to '%s'\n", SITEROOT);
 		}
 		if (ofl & F_OVRR_DIRLOG) {
-			printf("NOTE: DIRLOG path set to '%s'\n", DIRLOG);
+			print_str("NOTICE: DIRLOG path set to '%s'\n", DIRLOG);
 		}
 		if (ofl & F_OVRR_NUKELOG) {
-			printf("NOTE: NUKELOG path set to '%s'\n", NUKELOG);
+			print_str("NOTICE: NUKELOG path set to '%s'\n", NUKELOG);
 		}
 		if (ofl & F_OVRR_DUPEFILE) {
-			printf("NOTE: DUPEFILE path set to '%s'\n", DUPEFILE);
+			print_str("NOTICE: DUPEFILE path set to '%s'\n", DUPEFILE);
 		}
 		if (ofl & F_OVRR_LASTONLOG) {
-			printf("NOTE: LASTONLOG path set to '%s'\n", LASTONLOG);
+			print_str("NOTICE: LASTONLOG path set to '%s'\n", LASTONLOG);
 		}
 		if (ofl & F_OVRR_ONELINERS) {
-			printf("NOTE: ONELINERS path set to '%s'\n", ONELINERS);
+			print_str("NOTICE: ONELINERS path set to '%s'\n", ONELINERS);
+		}
+		if ((gfl & F_OPT_VERBOSE2) && (gfl & F_OPT_PS_LOGGING)) {
+			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
 		}
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)
 			&& !(gfl & F_OPT_MODE_RAWDUMP)) {
-		printf("NOTE: performing dry run, no writing will be done\n");
+		print_str("NOTICE: performing dry run, no writing will be done\n");
 	}
 
 	if (gfl & F_OPT_DAEMONIZE) {
 		if (!(gfl & F_OPT_MODE_RAWDUMP)) {
-			printf("NOTE: forking into background.. [PID: %d]\n", g_PID);
+			print_str("NOTICE: forking into background.. [PID: %d]\n", g_PID);
 		}
 		daemon(1, 0);
 	}
@@ -1566,7 +1731,7 @@ int main(int argc, char *argv[]) {
 	case UPD_MODE_NOOP:
 		break;
 	default:
-		printf("ERROR: no mode specified (see --help)\n");
+		print_str("ERROR: no mode specified (see --help)\n");
 		break;
 	}
 
@@ -1585,7 +1750,7 @@ int main(int argc, char *argv[]) {
 
 int rebuild(void *arg) {
 	if (!arg) {
-		printf("ERROR: missing data type argument (-e <dirlog|nukelog>)\n");
+		print_str("ERROR: missing data type argument (-e <dirlog|nukelog>)\n");
 		return 1;
 	}
 
@@ -1611,20 +1776,20 @@ int rebuild(void *arg) {
 		}
 
 		if (!hdl.buffer_count) {
-			printf(
+			print_str(
 					"ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
 			return 4;
 		}
 
 		if (rebuild_data_file(datafile, &hdl)) {
-			printf(MSG_GEN_DFRFAIL, datafile);
+			print_str(MSG_GEN_DFRFAIL, datafile);
 			return 5;
 		}
 
-		printf("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
+		print_str("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
 				(ULLONG) hdl.bw, (ULLONG) hdl.rw);
 	} else {
-		printf("ERROR: [%s] unrecognized data type\n", a_ptr);
+		print_str("ERROR: [%s] unrecognized data type\n", a_ptr);
 		return 2;
 	}
 
@@ -1693,9 +1858,9 @@ int dirlog_check_dupe(void) {
 						actdl.buffer.pos->flags |= F_MD_NOREAD;
 					}
 					if (!ch) {
-						printf("DUPE %s\n", d_ptr->dirname);
+						print_str("DUPE %s\n", d_ptr->dirname);
 					}
-					printf("DUPE %s\n", dd_ptr->dirname);
+					print_str("DUPE %s\n", dd_ptr->dirname);
 					ch++;
 				}
 				g_free(ss_buffer);
@@ -1754,7 +1919,7 @@ int dirlog_update_record(char *argv) {
 	md_init(&dirchain, 1024);
 
 	if ((r = split_string(argv, 0x20, &dirchain)) < 1) {
-		printf("ERROR: [dirlog_update_record]: missing arguments\n");
+		print_str("ERROR: [dirlog_update_record]: missing arguments\n");
 		ret = 1;
 		goto r_end;
 	}
@@ -1776,14 +1941,14 @@ int dirlog_update_record(char *argv) {
 		char *mode = "a";
 
 		if (!(gfl & F_OPT_FORCE) && rl < MAX_ULLONG) {
-			printf(
+			print_str(
 					"WARNING: %s: [%llu] already exists in dirlog (use -f to overwrite)\n",
 					(char*) ptr->ptr, rl);
 			ret = 4;
 			goto end;
 		} else if (rl < MAX_ULLONG) {
 			if (gfl & F_OPT_VERBOSE) {
-				printf(
+				print_str(
 						"WARNING: %s: [%llu] overwriting existing dirlog record\n",
 						(char*) ptr->ptr, rl);
 			}
@@ -1798,7 +1963,8 @@ int dirlog_update_record(char *argv) {
 
 		if ((r = release_generate_block(s_buffer, &arg))) {
 			if (r < 5) {
-				printf("ERROR: %s: [%d] generating dirlog data chunk failed\n",
+				print_str(
+						"ERROR: %s: [%d] generating dirlog data chunk failed\n",
 						(char*) ptr->ptr, r);
 			}
 			ret = 3;
@@ -1806,7 +1972,7 @@ int dirlog_update_record(char *argv) {
 		}
 
 		if ((dr = dirlog_write_record(arg.dirlog, offset, seek))) {
-			printf(
+			print_str(
 			MSG_GEN_DFWRITE, (char*) ptr->ptr, dr, (ULLONG) offset, mode);
 			ret = 6;
 			goto end;
@@ -1815,7 +1981,7 @@ int dirlog_update_record(char *argv) {
 		char buffer[2048] = { 0 };
 
 		if (dirlog_format_block((char*) ptr->ptr, &arg, buffer) > 0)
-			printf(buffer);
+			print_str(buffer);
 
 		end:
 
@@ -1824,7 +1990,7 @@ int dirlog_update_record(char *argv) {
 	}
 	r_end: md_g_free(&dirchain);
 
-	printf("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
+	print_str("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
 			dl_stats.rw);
 
 	return ret;
@@ -1849,9 +2015,9 @@ int option_crc32(void *arg, int m) {
 	ULLONG read = file_crc32(buffer, &crc32);
 
 	if (read)
-		printf("%.8X\n", (unsigned int) crc32);
+		print_str("%.8X\n", (unsigned int) crc32);
 	else {
-		printf("ERROR: %s: [%d] could not get CRC32\n", buffer, errno);
+		print_str("ERROR: %s: [%d] could not get CRC32\n", buffer, errno);
 		EXITVAL = 1;
 	}
 
@@ -1870,15 +2036,16 @@ int data_backup_records(char *file) {
 	sprintf(buffer, "%s.bk", file);
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: creating data backup: %s ..\n", file, buffer);
+		print_str("NOTICE: %s: creating data backup: %s ..\n", file, buffer);
 	}
 
 	if ((r = (int) file_copy(file, buffer, "w", F_FC_MSET_SRC)) < 1) {
-		printf("ERROR: %s: [%d] failed to create backup %s\n", file, r, buffer);
+		print_str("ERROR: %s: [%d] failed to create backup %s\n", file, r,
+				buffer);
 		return r;
 	}
 	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: %s: created data backup: %s\n", file, buffer);
+		print_str("NOTICE: %s: created data backup: %s\n", file, buffer);
 	}
 	return 0;
 }
@@ -1895,8 +2062,8 @@ int dirlog_check_records(void) {
 	off_t dsz;
 
 	if ((dsz = get_file_size(DIRLOG)) % DL_SZ) {
-		printf(MSG_GEN_DFCORRU, DIRLOG, (ULLONG) dsz, (int) DL_SZ);
-		printf("NOTE: use -r to rebuild (see --help)\n");
+		print_str(MSG_GEN_DFCORRU, DIRLOG, (ULLONG) dsz, (int) DL_SZ);
+		print_str("NOTICE: use -r to rebuild (see --help)\n");
 		return -1;
 	}
 
@@ -1911,7 +2078,7 @@ int dirlog_check_records(void) {
 	}
 
 	if (!actdl.buffer_count && (gfl & F_OPT_FIX)) {
-		printf(
+		print_str(
 				"ERROR: internal buffering must be enabled when fixing, increase limit with --memlimit (see --help)\n");
 	}
 
@@ -1931,14 +2098,14 @@ int dirlog_check_records(void) {
 			ir = r;
 			if (d_ptr->status == 1 || d_ptr->status == 2) {
 				if (nukelog_find(d_ptr->dirname, 2, &n_buffer) == MAX_ULLONG) {
-					printf(
+					print_str(
 							"WARNING: %s: was marked as '%sNUKED' in dirlog but not found in nukelog\n",
 							s_buffer, d_ptr->status == 2 ? "UN" : "");
 				} else {
 					if ((d_ptr->status == 1 && n_buffer.status != 0)
 							|| (d_ptr->status == 2 && n_buffer.status != 1)
 							|| (d_ptr->status == 0)) {
-						printf(
+						print_str(
 								"WARNING: %s: MISMATCH: was marked as '%sNUKED' in dirlog, but nukelog reads '%sNUKED'\n",
 								s_buffer, d_ptr->status == 2 ? "UN" : "",
 								n_buffer.status == 1 ? "UN" : "");
@@ -1949,12 +2116,12 @@ int dirlog_check_records(void) {
 			buffer3.flags |= F_EAR_NOVERB;
 
 			if (dir_exists(s_buffer)) {
-				printf(
+				print_str(
 						"WARNING: %s: listed in dirlog but does not exist in filesystem\n",
 						s_buffer);
 				if (gfl & F_OPT_FIX) {
 					if (!md_unlink(&actdl.buffer, actdl.buffer.pos)) {
-						printf("ERROR: %s: unlinking ghost record failed\n",
+						print_str("ERROR: %s: unlinking ghost record failed\n",
 								s_buffer);
 					}
 					r++;
@@ -1966,19 +2133,19 @@ int dirlog_check_records(void) {
 				if (r2 == 5) {
 					if (gfl & F_OPT_FIX) {
 						if (remove(s_buffer)) {
-							printf(
+							print_str(
 									"WARNING: %s: failed removing empty directory\n",
 									s_buffer);
 
 						} else {
 							if (gfl & F_OPT_VERBOSE) {
-								printf("FIX: %s: removed empty directory\n",
+								print_str("FIX: %s: removed empty directory\n",
 										s_buffer);
 							}
 						}
 					}
 				} else {
-					printf(
+					print_str(
 							"WARNING: [%s] - could not get directory information from the filesystem\n",
 							s_buffer);
 				}
@@ -1986,7 +2153,7 @@ int dirlog_check_records(void) {
 				continue;
 			}
 			if (d_ptr->files != buffer4.files) {
-				printf(
+				print_str(
 						"WARNING: [%s] file counts in dirlog and on disk do not match (dirlog:%hu, filesystem:%hu)\n",
 						d_ptr->dirname, d_ptr->files, buffer4.files);
 				r++;
@@ -1996,7 +2163,7 @@ int dirlog_check_records(void) {
 			}
 
 			if (d_ptr->bytes != buffer4.bytes) {
-				printf(
+				print_str(
 						"WARNING: [%s] directory sizes in dirlog and on disk do not match ( dirlog: %llu , filesystem: %llu )\n",
 						d_ptr->dirname, (ULLONG) d_ptr->bytes,
 						(ULLONG) buffer4.bytes);
@@ -2007,7 +2174,7 @@ int dirlog_check_records(void) {
 			}
 
 			if (d_ptr->group != buffer4.group) {
-				printf(
+				print_str(
 						"WARNING: [%s] group ids in dirlog and on disk do not match (dirlog:%hu filesystem:%hu)\n",
 						d_ptr->dirname, d_ptr->group, buffer4.group);
 				r++;
@@ -2017,7 +2184,7 @@ int dirlog_check_records(void) {
 			}
 
 			if (d_ptr->uploader != buffer4.uploader) {
-				printf(
+				print_str(
 						"WARNING: [%s] user ids in dirlog and on disk do not match (dirlog:%hu, filesystem:%hu)\n",
 						d_ptr->dirname, d_ptr->uploader, buffer4.uploader);
 				r++;
@@ -2027,7 +2194,7 @@ int dirlog_check_records(void) {
 			}
 
 			if ((gfl & F_OPT_FORCE) && d_ptr->uptime != buffer4.uptime) {
-				printf(
+				print_str(
 						"WARNING: [%s] folder creation dates in dirlog and on disk do not match (dirlog:%u, filesystem:%u)\n",
 						d_ptr->dirname, d_ptr->uptime, buffer4.uptime);
 				r++;
@@ -2037,11 +2204,11 @@ int dirlog_check_records(void) {
 			}
 			if (r == ir) {
 				if (gfl & F_OPT_VERBOSE2) {
-					printf("OK: %s\n", d_ptr->dirname);
+					print_str("OK: %s\n", d_ptr->dirname);
 				}
 			} else {
 				if (gfl & F_OPT_VERBOSE2) {
-					printf("BAD: %s\n", d_ptr->dirname);
+					print_str("BAD: %s\n", d_ptr->dirname);
 				}
 
 			}
@@ -2051,7 +2218,7 @@ int dirlog_check_records(void) {
 
 	if (!(gfl & F_OPT_KILL_GLOBAL) && (gfl & F_OPT_FIX) && r) {
 		if (rebuild_data_file(DIRLOG, &actdl)) {
-			printf(MSG_GEN_DFRFAIL, DIRLOG);
+			print_str(MSG_GEN_DFRFAIL, DIRLOG);
 		}
 	}
 
@@ -2100,7 +2267,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 
 	if (exec_str && WEXITSTATUS(r_e)) {
 		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-			printf(
+			print_str(
 					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
 					WEXITSTATUS(r_e));
 		}
@@ -2110,7 +2277,8 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	if ((gfl & F_OPT_HAS_G_REGEX) && mstr
 			&& reg_match(GLOB_REGEX, mstr, glob_regex_flags) == glob_reg_i_m) {
 		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-			printf("WARNING: %s: regex match positive, ignoring this record\n",
+			print_str(
+					"WARNING: %s: regex match positive, ignoring this record\n",
 					mstr);
 		}
 		return 2;
@@ -2191,7 +2359,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 						goto end;
 					}
 					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
-						printf(
+						print_str(
 								"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
 										"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
 										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
@@ -2199,9 +2367,10 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 					break;
 				}
 				if (re_c) {
-					printf(sbuffer);
+					print_str(sbuffer);
 				} else {
-					printf("ERROR: %s: zero-length formatted result\n", ns_ptr);
+					print_str("ERROR: %s: zero-length formatted result\n",
+							ns_ptr);
 					continue;
 				}
 			}
@@ -2215,7 +2384,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)
 			&& !(gfl & F_OPT_FORMAT_COMP)) {
-		printf("STATS: %s: read %d records\n", file, c);
+		print_str("STATS: %s: read %d records\n", file, c);
 	}
 
 	g_free(buffer);
@@ -2232,7 +2401,7 @@ int dirlog_print_stats(void) {
 	int c = 0;
 	ear e;
 
-	if (g_fopen(DIRLOG, "r", 0, &actdl))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &actdl))
 		return 2;
 
 	struct dirlog *d_ptr = NULL;
@@ -2256,7 +2425,7 @@ int dirlog_print_stats(void) {
 				g_fwrite((void*) d_ptr, DL_SZ, 1, stdout);
 			} else {
 				if (dirlog_format_block(d_ptr->dirname, &e, sbuffer) > 0) {
-					printf(sbuffer);
+					print_str(sbuffer);
 				}
 			}
 
@@ -2266,7 +2435,7 @@ int dirlog_print_stats(void) {
 					e.nukelog = &n_buffer;
 					bzero(sbuffer, 2048);
 					if (nukelog_format_block(d_ptr->dirname, &e, sbuffer) > 0) {
-						printf(sbuffer);
+						print_str(sbuffer);
 					}
 				}
 			}
@@ -2277,7 +2446,7 @@ int dirlog_print_stats(void) {
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-		printf("STATS: %s: read %d records\n", DIRLOG, c);
+		print_str("STATS: %s: read %d records\n", DIRLOG, c);
 	}
 
 	g_close(&actdl);
@@ -2293,7 +2462,7 @@ int rebuild_dirlog(void) {
 	unsigned int flags = 0;
 
 	if (!(ofl & F_OVRR_NUKESTR)) {
-		printf(
+		print_str(
 				"WARNING: failed extracting nuke string from glftpd.conf, nuked dirs might not get detected properly\n");
 	}
 
@@ -2315,7 +2484,8 @@ int rebuild_dirlog(void) {
 				| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
 		actdl.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
-			printf("NOTE: %s: explicit write pre-caching enabled\n", DIRLOG);
+			print_str("NOTICE: %s: explicit write pre-caching enabled\n",
+					DIRLOG);
 		}
 	} else {
 		g_strncpy(actdl.mode, mode, strlen(mode));
@@ -2326,7 +2496,7 @@ int rebuild_dirlog(void) {
 	int dfex = file_exists(DIRLOG);
 
 	if ((gfl & F_OPT_UPDATE) && dfex) {
-		printf(
+		print_str(
 				"WARNING: %s: requested update, but no dirlog exists - removing update flag..\n",
 				DIRLOG);
 		gfl ^= F_OPT_UPDATE;
@@ -2335,18 +2505,18 @@ int rebuild_dirlog(void) {
 
 	if (!strncmp(actdl.mode, "r", 1) && dfex) {
 		if (gfl & F_OPT_VERBOSE) {
-			printf(
+			print_str(
 					"WARNING: %s: requested read mode access but file not there\n",
 					DIRLOG);
 		}
 	} else if (g_fopen(DIRLOG, actdl.mode, flags, &actdl)) {
-		printf("ERROR: could not open dirlog, mode '%s', flags %u\n",
+		print_str("ERROR: could not open dirlog, mode '%s', flags %u\n",
 				actdl.mode, flags);
 		return errno;
 	}
 
 	if (gfl & F_OPT_FORCE) {
-		printf("SCANNING: '%s'\n", SITEROOT);
+		print_str("SCANNING: '%s'\n", SITEROOT);
 		update_records(SITEROOT, 0);
 		goto end;
 	}
@@ -2355,7 +2525,7 @@ int rebuild_dirlog(void) {
 	mda dirchain = { 0 }, buffer2 = { 0 };
 
 	if (read_file(DU_FLD, buffer, V_MB, 0) < 1) {
-		printf(
+		print_str(
 				"WARNING: unable to read folders file, doing full siteroot recursion in '%s'..\n",
 				SITEROOT);
 		gfl |= F_OPT_FORCE;
@@ -2368,12 +2538,13 @@ int rebuild_dirlog(void) {
 	md_init(&dirchain, 1024);
 
 	if ((r = split_string(buffer, 0x13, &dirchain)) < 1) {
-		printf("ERROR: [%d] could not parse input from %s\n", r, DU_FLD);
+		print_str("ERROR: [%d] could not parse input from %s\n", r, DU_FLD);
 		goto r_end;
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
-		printf("NOTE: %s: allocating %u B for references (overhead)\n", DIRLOG,
+		print_str("NOTICE: %s: allocating %u B for references (overhead)\n",
+				DIRLOG,
 				(unsigned int) (ACT_WRITE_BUFFER_MEMBERS * sizeof(md_obj)));
 	}
 
@@ -2391,8 +2562,8 @@ int rebuild_dirlog(void) {
 			md_init(&buffer2, 6);
 			i++;
 			if ((r2 = split_string((char*) ptr->ptr, 0x20, &buffer2)) != 2) {
-				printf("ERROR: [%d] could not parse line %d from %s\n", r2, i,
-						DU_FLD);
+				print_str("ERROR: [%d] could not parse line %d from %s\n", r2,
+						i, DU_FLD);
 				goto lend;
 			}
 			bzero(s_buffer, 2048);
@@ -2408,20 +2579,20 @@ int rebuild_dirlog(void) {
 			NULL, 10);
 
 			if (errno == ERANGE) {
-				printf("ERROR: could not get depth from line %d\n", i);
+				print_str("ERROR: could not get depth from line %d\n", i);
 				goto lend;
 			}
 			if (file_exists(s_buffer)) {
-				printf("ERROR: %s: directory doesn't exist (line %d)\n",
+				print_str("ERROR: %s: directory doesn't exist (line %d)\n",
 						s_buffer, i);
 				goto lend;
 			}
 			char *ndup = strdup(s_buffer);
 			char *nbase = basename(ndup);
 
-			printf("SCANNING: '%s', depth: %d\n", nbase, ib);
+			print_str("SCANNING: '%s', depth: %d\n", nbase, ib);
 			if (update_records(s_buffer, ib) < 1) {
-				printf("WARNING: %s: nothing was processed\n", nbase);
+				print_str("WARNING: %s: nothing was processed\n", nbase);
 			}
 
 			g_free(ndup);
@@ -2444,7 +2615,7 @@ int rebuild_dirlog(void) {
 
 	g_close(&actdl);
 
-	printf("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
+	print_str("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
 			dl_stats.rw);
 
 	return 0;
@@ -2469,7 +2640,7 @@ int parse_args(int argc, char *argv[]) {
 		}
 
 		if ((vi = process_opt(c_arg, NULL, f_ref, 1)) < 0) {
-			printf("CMDLINE: [%d] invalid argument '%s'\n", vi, c_arg);
+			print_str("CMDLINE: [%d] invalid argument '%s'\n", vi, c_arg);
 			ret = -2;
 			goto end;
 		}
@@ -2485,7 +2656,8 @@ int parse_args(int argc, char *argv[]) {
 
 			if ((vp = (AAINT) ora[vi].arg_cnt)) {
 				if (i + vp > argc - 1) {
-					printf("CMDLINE: '%s' missing argument parameters [%llu]\n",
+					print_str(
+							"CMDLINE: '%s' missing argument parameters [%llu]\n",
 							argv[i], (ULLONG) ((i + vp) - (argc - 1)));
 					c = 0;
 					goto end;
@@ -2583,7 +2755,7 @@ int proc_release(char *name, unsigned char type, void *arg) {
 			sprintf(buffer2, "%s %.8X\n", base, (unsigned int) crc32);
 			if (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)) {
 				if (!write_file_text(buffer2, buffer)) {
-					printf("ERROR: %s: failed writing to SFV file: '%s'\n",
+					print_str("ERROR: %s: failed writing to SFV file: '%s'\n",
 							name, buffer);
 				}
 			}
@@ -2596,8 +2768,8 @@ int proc_release(char *name, unsigned char type, void *arg) {
 		iarg->dirlog->bytes += fs;
 		iarg->dirlog->files++;
 		if (gfl & F_OPT_VERBOSE4) {
-			printf("     %s  %.2fMB%s\n", base, (double) fs / 1024.0 / 1024.0,
-					buffer);
+			print_str("     %s  %.2fMB%s\n", base,
+					(double) fs / 1024.0 / 1024.0, buffer);
 		}
 		g_free(fn3);
 		g_free(fn2);
@@ -2644,7 +2816,7 @@ int proc_section(char *name, unsigned char type, void *arg) {
 				if (((rl = dirlog_find(name, 1, F_DL_FOPEN_REWIND, NULL))
 						< MAX_ULLONG)) {
 					if (gfl & F_OPT_VERBOSE2) {
-						printf(
+						print_str(
 								"WARNING: %s: [%llu] record already exists, not importing\n",
 								name, rl);
 					}
@@ -2655,7 +2827,7 @@ int proc_section(char *name, unsigned char type, void *arg) {
 			iarg->flags = 0;
 			if ((r = release_generate_block(name, iarg))) {
 				if (r < 5)
-					printf(
+					print_str(
 							"ERROR: %s: [%d] generating dirlog data chunk failed\n",
 							name, r);
 				goto end;
@@ -2668,18 +2840,18 @@ int proc_section(char *name, unsigned char type, void *arg) {
 			if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)) {
 				iarg->dirlog->bytes += get_file_size(iarg->buffer);
 				iarg->dirlog->files++;
-				printf("SFV: succesfully generated '%s'\n",
+				print_str("SFV: succesfully generated '%s'\n",
 				basename(iarg->buffer));
 			}
 
 			if (actdl.flags & F_GH_FFBUFFER) {
 				if ((r = g_load_record(&actdl, (const void*) iarg->dirlog))) {
-					printf(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
+					print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
 							(ULLONG) actdl.w_buffer.offset, "wbuffer");
 				}
 			} else {
 				if ((r = dirlog_write_record(iarg->dirlog, 0, SEEK_END))) {
-					printf(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
+					print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
 							(ULLONG) actdl.offset - 1, "w");
 					goto end;
 				}
@@ -2689,7 +2861,7 @@ int proc_section(char *name, unsigned char type, void *arg) {
 
 			if ((gfl & F_OPT_VERBOSE)
 					&& dirlog_format_block(name, iarg, buffer) > 0) {
-				printf(buffer);
+				print_str(buffer);
 			}
 
 			if (gfl & F_OPT_FORCE) {
@@ -2722,7 +2894,7 @@ int release_generate_block(char *name, ear *iarg) {
 
 		if ((st.st_mode & S_IFMT) == S_IFLNK) {
 			if (gfl & F_OPT_VERBOSE2) {
-				printf("WARNING: %s - is symbolic link, skipping..\n", name);
+				print_str("WARNING: %s - is symbolic link, skipping..\n", name);
 			}
 			return 6;
 		}
@@ -2736,19 +2908,19 @@ int release_generate_block(char *name, ear *iarg) {
 	}
 
 	if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-		printf("ENTERING: %s\n", name);
+		print_str("ENTERING: %s\n", name);
 
 	if ((r = enum_dir(name, proc_release, iarg, 0)) < 1
 			|| !iarg->dirlog->files) {
 		if (gfl & F_OPT_VERBOSE) {
-			printf("WARNING: %s: [%d] - empty directory\n", name, r);
+			print_str("WARNING: %s: [%d] - empty directory\n", name, r);
 		}
 		ret = 5;
 	}
 	g_setjmp(0, "release_generate_block(2)", NULL, NULL);
 
 	if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-		printf("EXITING: %s\n", name);
+		print_str("EXITING: %s\n", name);
 
 	if ((gfl & F_OPT_SFV) && !(gfl & F_OPT_NOWRITE)) {
 		if (gfl & F_OPT_FOLLOW_LINKS) {
@@ -2763,15 +2935,15 @@ int release_generate_block(char *name, ear *iarg) {
 		time_t c_ctime = get_file_creation_time(&st2);
 		if (c_ctime != orig_ctime) {
 			if (gfl & F_OPT_VERBOSE4) {
-				printf(
-						"NOTE: %s: restoring original folder modification date\n",
+				print_str(
+						"NOTICE: %s: restoring original folder modification date\n",
 						name);
 			}
 			struct utimbuf utb;
 			utb.actime = 0;
 			utb.modtime = orig_ctime;
 			if (utime(name, &utb)) {
-				printf(
+				print_str(
 						"WARNING: %s: SFVGEN failed to restore original modification date\n",
 						name);
 			}
@@ -2792,7 +2964,7 @@ int release_generate_block(char *name, ear *iarg) {
 	char buffer[255] = { 0 };
 
 	if ((r = get_relative_path(name, GLROOT, buffer))) {
-		printf("ERROR: [%s] could not get relative to root directory name\n",
+		print_str("ERROR: [%s] could not get relative to root directory name\n",
 				bn);
 		ret = 2;
 		goto r_end;
@@ -3374,7 +3546,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			&& updmode != UPD_MODE_RECURSIVE) {
 		g_setjmp(0, "rebuild_data_file(2)", NULL, NULL);
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("NOTE: %s: filtering data..\n", file);
+			print_str("NOTICE: %s: filtering data..\n", file);
 		}
 
 		p_md_obj ptr = md_first(&hdl->buffer);
@@ -3387,13 +3559,13 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 				if (!(ptr = md_unlink(&hdl->buffer, ptr))) {
 					if (!hdl->buffer.offset) {
 						if (!(gfl & F_OPT_FORCE)) {
-							printf(
+							print_str(
 									"WARNING: %s: everything got filtered, refusing to write 0-byte data file\n",
 									file);
 							return 11;
 						}
 					} else {
-						printf(
+						print_str(
 								"ERROR: %s: failed unlinking record entry after match!\n",
 								file);
 						return 12;
@@ -3407,14 +3579,14 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE) {
-		printf("NOTE: %s: flushing data to disk..\n", hdl->s_buffer);
+		print_str("NOTICE: %s: flushing data to disk..\n", hdl->s_buffer);
 	}
 
 	hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 	if (!file_exists(file)) {
 		if (stat(file, &st)) {
-			printf(
+			print_str(
 					"WARNING: %s: could not get stats from data file! (chmod manually)\n",
 					file);
 		} else {
@@ -3424,7 +3596,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
+		print_str("NOTICE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
 	}
 
 	off_t rw_o = hdl->rw, bw_o = hdl->bw;
@@ -3432,12 +3604,13 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	if ((r = flush_data_md(hdl, hdl->s_buffer))) {
 		if (r == 1) {
 			if (gfl & F_OPT_VERBOSE) {
-				printf("WARNING: %s: empty buffer (nothing to flush)\n",
+				print_str("WARNING: %s: empty buffer (nothing to flush)\n",
 						hdl->s_buffer);
 			}
 			ret = 0;
 		} else {
-			printf("ERROR: %s: [%d] flushing data failed!\n", hdl->s_buffer, r);
+			print_str("ERROR: %s: [%d] flushing data failed!\n", hdl->s_buffer,
+					r);
 			ret = 2;
 		}
 
@@ -3445,14 +3618,15 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: flushed %llu records, %llu bytes\n", hdl->s_buffer,
-				(ULLONG) (hdl->rw - rw_o), (ULLONG) (hdl->bw - bw_o));
+		print_str("NOTICE: %s: flushed %llu records, %llu bytes\n",
+				hdl->s_buffer, (ULLONG) (hdl->rw - rw_o),
+				(ULLONG) (hdl->bw - bw_o));
 	}
 
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
 	if (gfl & F_OPT_KILL_GLOBAL) {
-		printf(
+		print_str(
 				"WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n",
 				file);
 		if (!(gfl & F_OPT_NOWRITE)) {
@@ -3465,7 +3639,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 
 	if (!(gfl & F_OPT_FORCE) && !(gfl & F_OPT_NOWRITE)
 			&& (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz) {
-		printf(
+		print_str(
 				"ERROR: %s: [%u/%u] generated data file is smaller than a single record!\n",
 				hdl->s_buffer, (unsigned int) sz_r,
 				(unsigned int) hdl->block_sz);
@@ -3502,7 +3676,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 				&& (hdl->flags & F_GH_WAPPEND)
 				&& !(hdl->flags & F_GH_DFWASWIPED)) {
 			if (remove(file)) {
-				printf("ERROR: %s: could not clean old data file\n", file);
+				print_str("ERROR: %s: could not clean old data file\n", file);
 				ret = 9;
 				goto end;
 			}
@@ -3514,14 +3688,14 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		if (!strncmp(hdl->mode, "a", 1) || (hdl->flags & F_GH_WAPPEND)) {
 			if ((r = (int) file_copy(hdl->s_buffer, file, "a",
 			F_FC_MSET_SRC)) < 1) {
-				printf("ERROR: %s: [%d] merging temp file failed!\n",
+				print_str("ERROR: %s: [%d] merging temp file failed!\n",
 						hdl->s_buffer, r);
 				ret = 4;
 			}
 
 		} else {
 			if ((r = rename(hdl->s_buffer, file))) {
-				printf("ERROR: %s: [%d] renaming temporary file failed!\n",
+				print_str("ERROR: %s: [%d] renaming temporary file failed!\n",
 						hdl->s_buffer,
 						errno);
 				ret = 4;
@@ -3544,7 +3718,7 @@ int g_load_record(struct g_handle *hdl, const void *data) {
 		rebuild_data_file(hdl->file, hdl);
 		p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
 		if (gfl & F_OPT_VERBOSE3) {
-			printf("NOTE: scrubbing write cache..\n");
+			print_str("NOTICE: scrubbing write cache..\n");
 		}
 		while (ptr) {
 			ptr_s = ptr->next;
@@ -3722,15 +3896,16 @@ int g_map_shm(key_t ipc, struct g_handle *hdl) {
 	}
 
 	if (!SHM_IPC) {
-		printf("ERROR: %s: could not get IPC key, set manually (--ipc <key>)\n",
-		MSG_DEF_SHM);
+		print_str(
+				"ERROR: %s: could not get IPC key, set manually (--ipc <key>)\n",
+				MSG_DEF_SHM);
 		return 1;
 	}
 
 	int r = load_data_md(&hdl->buffer, NULL, hdl);
 
 	if (!hdl->buffer_count) {
-		printf(
+		print_str(
 				"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
 				MSG_DEF_SHM, (unsigned int) hdl->buffer_count,
 				(unsigned int) (hdl->total_sz / hdl->block_sz),
@@ -3739,7 +3914,7 @@ int g_map_shm(key_t ipc, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
-		printf("NOTE: %s: mapped %u records\n",
+		print_str("NOTICE: %s: mapped %u records\n",
 		MSG_DEF_SHM, (unsigned int) hdl->buffer_count);
 	}
 
@@ -3758,18 +3933,19 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 	struct stat st;
 
 	if (stat(file, &st) == -1) {
-		printf("ERROR: %s: [%d] unable to get information from file!\n", file,
-		errno);
+		print_str("ERROR: %s: [%d] unable to get information from file!\n",
+				file,
+				errno);
 		return 2;
 	}
 
 	if (!st.st_size) {
-		printf("ERROR: %s: 0-byte data file detected!!\n", file);
+		print_str("ERROR: %s: 0-byte data file detected!!\n", file);
 		return 3;
 	}
 
 	if (st.st_size > db_max_size) {
-		printf(
+		print_str(
 				"WARNING: %s: disabling memory buffering, file too big (max %lld MB)\n",
 				file, db_max_size / 1024 / 1024);
 		hdl->flags |= F_GH_NOMEM;
@@ -3782,32 +3958,32 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 	g_strncpy(hdl->file, file, strlen(file));
 
 	if (determine_datatype(hdl)) {
-		printf("ERROR: %s: could not determine data type\n", file);
+		print_str("ERROR: %s: could not determine data type\n", file);
 		return 6;
 	}
 
 	if (st.st_size % hdl->block_sz) {
-		printf(MSG_GEN_DFCORRU, file, (ULLONG) st.st_size, hdl->block_sz);
+		print_str(MSG_GEN_DFCORRU, file, (ULLONG) st.st_size, hdl->block_sz);
 		return 12;
 	}
 
 	if (gfl & F_OPT_VERBOSE2)
-		printf(
-				"NOTE: %s: loading data file into memory [%u records] [%llu bytes]\n",
+		print_str(
+				"NOTICE: %s: loading data file into memory [%u records] [%llu bytes]\n",
 				file, (unsigned int) (hdl->total_sz / hdl->block_sz),
 				(ULLONG) hdl->total_sz);
 
 	int r;
 	if ((r = load_data_md(&hdl->buffer, file, hdl))
 			!= (hdl->total_sz / hdl->block_sz)) {
-		printf(
+		print_str(
 				"ERROR: %s: [%d/%u] [%u] [%u] could not load data into memory!\n",
 				file, r, (unsigned int) (hdl->total_sz / hdl->block_sz),
 				(unsigned int) hdl->total_sz, hdl->block_sz);
 		return 4;
 	} else {
 		if (gfl & F_OPT_VERBOSE2) {
-			printf("NOTE: %s: loaded %u records into memory\n", file, r);
+			print_str("NOTICE: %s: loaded %u records into memory\n", file, r);
 		}
 	}
 	return 0;
@@ -3867,33 +4043,33 @@ int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl) {
 	}
 
 	if (strlen(file) > 4096) {
-		printf(MSG_GEN_NODFILE, file, "file path too large");
+		print_str(MSG_GEN_NODFILE, file, "file path too large");
 		return 2;
 	}
 
 	hdl->total_sz = get_file_size(file);
 
 	if (!hdl->total_sz) {
-		printf(MSG_GEN_NODFILE, file, "zero-byte data file");
+		print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
 	}
 
 	bzero(hdl->file, 4096);
 	g_strncpy(hdl->file, file, strlen(file));
 
 	if (determine_datatype(hdl)) {
-		printf(MSG_GEN_NODFILE, file, "could not determine data-type");
+		print_str(MSG_GEN_NODFILE, file, "could not determine data-type");
 		return 3;
 	}
 
 	if (hdl->total_sz % hdl->block_sz) {
-		printf(MSG_GEN_DFCORRU, file, (ULLONG) hdl->total_sz, hdl->block_sz);
+		print_str(MSG_GEN_DFCORRU, file, (ULLONG) hdl->total_sz, hdl->block_sz);
 		return 4;
 	}
 
 	FILE *fd;
 
 	if (!(fd = gg_fopen(file, mode))) {
-		printf(MSG_GEN_NODFILE, file, "not available");
+		print_str(MSG_GEN_NODFILE, file, "not available");
 		return 1;
 	}
 
@@ -3930,9 +4106,9 @@ int g_close(struct g_handle *hdl) {
 			md_g_free(&hdl->w_buffer);
 		}
 		/*if (hdl->data && !(hdl->flags & F_GH_SHM)) {
-			g_free(hdl->data);
-			hdl->data = NULL;
-		}*/
+		 g_free(hdl->data);
+		 hdl->data = NULL;
+		 }*/
 	}
 
 	hdl->br = 0;
@@ -3987,12 +4163,12 @@ void *g_read(void *buffer, struct g_handle *hdl, size_t size) {
 	}
 
 	if (!buffer) {
-		printf("IO ERROR: no buffer to write to\n");
+		print_str("IO ERROR: no buffer to write to\n");
 		return NULL;
 	}
 
 	if (!hdl->fh) {
-		printf("IO ERROR: dirlog handle not open\n");
+		print_str("IO ERROR: dirlog handle not open\n");
 		return NULL;
 	}
 
@@ -4060,19 +4236,19 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 	}
 
 	if (!actdl.fh) {
-		printf("ERROR: dirlog handle is not open\n");
+		print_str("ERROR: dirlog handle is not open\n");
 		return 1;
 	}
 
 	if (whence == SEEK_SET && fseeko(actdl.fh, offset * DL_SZ, SEEK_SET) < 0) {
-		printf("ERROR: seeking dirlog failed!\n");
+		print_str("ERROR: seeking dirlog failed!\n");
 		return 1;
 	}
 
 	int fw;
 
 	if ((fw = g_fwrite(buffer, 1, DL_SZ, actdl.fh)) < DL_SZ) {
-		printf("ERROR: could not write dirlog record! %d/%d\n", fw,
+		print_str("ERROR: could not write dirlog record! %d/%d\n", fw,
 				(int) DL_SZ);
 		return 1;
 	}
@@ -4432,6 +4608,16 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		}
 	} else if (!strcmp(match, "glroot")) {
 		sprintf(output, GLROOT);
+	} else if (!strcmp(match, "siteroot")) {
+		sprintf(output, SITEROOT);
+	} else if (!strcmp(match, "ftpdata")) {
+		sprintf(output, FTPDATA);
+	} else if (!strcmp(match, "logfile")) {
+		sprintf(output, LOGFILE);
+	} else if (!strcmp(match, "PID")) {
+		sprintf(output, "%d", g_PID);
+	} else if (!strcmp(match, "IPC")) {
+		sprintf(output, "%.8X", (unsigned int) SHM_IPC);
 	} else {
 		return 1;
 	}
@@ -4731,15 +4917,15 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 void child_sig_handler(int signal, siginfo_t * si, void *p) {
 	switch (si->si_code) {
 	case CLD_KILLED:
-		printf(
-				"NOTE: Child process caught SIGINT (hit CTRL^C again to quit)\n");
+		print_str(
+				"NOTICE: Child process caught SIGINT (hit CTRL^C again to quit)\n");
 		usleep(1000000);
 		break;
 	case CLD_EXITED:
 		break;
 	default:
 		if (gfl & F_OPT_VERBOSE3) {
-			printf("NOTE: Child caught signal: %d \n", si->si_code);
+			print_str("NOTICE: Child caught signal: %d \n", si->si_code);
 		}
 		break;
 	}
@@ -4750,24 +4936,25 @@ void child_sig_handler(int signal, siginfo_t * si, void *p) {
 void sig_handler(int signal) {
 	switch (signal) {
 	case SIGTERM:
-		printf("NOTE: Caught SIGTERM, terminating gracefully.\n");
+		print_str("NOTICE: Caught SIGTERM, terminating gracefully.\n");
 		gfl |= F_OPT_KILL_GLOBAL;
 		break;
 	case SIGINT:
 		if (gfl & F_OPT_KILL_GLOBAL) {
-			printf("NOTE: Caught SIGINT twice in %.2f seconds, terminating..\n",
-			SIG_BREAK_TIMEOUT_NS / (1000000.0));
+			print_str(
+					"NOTICE: Caught SIGINT twice in %.2f seconds, terminating..\n",
+					SIG_BREAK_TIMEOUT_NS / (1000000.0));
 			exit(0);
 		} else {
-			printf(
-					"NOTE: Caught SIGINT, quitting (hit CTRL^C again to terminate by force)\n");
+			print_str(
+					"NOTICE: Caught SIGINT, quitting (hit CTRL^C again to terminate by force)\n");
 			gfl |= F_OPT_KILL_GLOBAL;
 		}
 		usleep(SIG_BREAK_TIMEOUT_NS);
 		break;
 	default:
 		usleep(SIG_BREAK_TIMEOUT_NS);
-		printf("NOTE: Caught signal %d\n", signal);
+		print_str("NOTICE: Caught signal %d\n", signal);
 		break;
 	}
 }
