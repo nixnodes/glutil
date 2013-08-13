@@ -5,6 +5,7 @@
  *   - Added more logging levels (rev. 1)
  *   - Added init string (rev. 1)
  *   - Bugfix: memory leaks (rev. 2)
+ *   - Bugfix: more mem leaks (rev. 3)
  *
  * v1.0
  *
