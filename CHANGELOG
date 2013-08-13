@@ -2,6 +2,8 @@
  *
  *   - Added --loglevel, --logfile, --silent, --ftime (see --help)
  *   - Logging system
+ *   - Added more logging levels (rev. 1)
+ *   - Added init string (rev. 1)
  *
  * v1.0
  *
