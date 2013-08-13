@@ -2,7 +2,7 @@
 #
 ## Kills any transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage: /glroot/bin/dirupdate -w --loop=3 --daemon --silent -exec '/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}'
+## Usage: /glroot/bin/dirupdate -w --loop=3 --daemon --loglevel 3 --silent -exec '/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}'
 #
 ## See ./dirupdate --help for more info
 #
