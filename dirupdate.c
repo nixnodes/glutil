@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.1-1
+ * Version     : 1.1-2
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 1
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -372,6 +372,8 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define MSG_GEN_DFRFAIL "ERROR: %s: rebuilding data file failed!\n"
 
 #define DEFPATH_LOGS 	"/logs"
+#define DEFPATH_USERS 	"/users"
+#define DEFPATH_GROUPS 	"/groups"
 
 #define DEFF_DIRLOG 	"dirlog"
 #define DEFF_NUKELOG 	"nukelog"
@@ -696,10 +698,11 @@ int print_str(const char * volatile buf, ...) {
 
 /* ---------------------------------------------------------------------------------- */
 
-struct g_handle actdl = { 0 };
-struct g_handle actnl = { 0 };
 struct d_stats dl_stats = { 0 };
 struct d_stats nl_stats = { 0 };
+
+struct g_handle g_act_1 = { 0 };
+struct g_handle g_act_2 = { 0 };
 
 mda dirlog_buffer = { 0 };
 mda nukelog_buffer = { 0 };
@@ -723,19 +726,16 @@ int glob_regex_flags = REG_EXTENDED;
 char GLOB_REGEX[4096] = { 0 };
 int EXITVAL = 0;
 int g_PID = 0;
-int loop_interval = 1;
+int loop_interval = 0;
 int loop_times = 0;
 char *NUKESTR = NULL;
-
 #define MAX_EXEC_STR 0x200000
-
 char *exec_str = NULL;
-
 char b_glob[MAX_EXEC_STR] = { 0 };
-
 int glob_reg_i_m = 0;
-
 mda glconf = { 0 };
+
+mda l_mdo_1 = { 0 };
 
 char *hpd_up =
 		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
@@ -880,10 +880,7 @@ int opt_g_update(void *arg, int m) {
 int opt_g_loop(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 	loop_interval = (int) strtol(buffer, NULL, 10);
-
-	if (loop_interval) {
-		gfl |= F_OPT_LOOP;
-	}
+	gfl |= F_OPT_LOOP;
 	return 0;
 }
 
@@ -1228,7 +1225,9 @@ int ref_to_val_lastonlog(void *, char *, char *, size_t);
 int ref_to_val_oneliners(void *, char *, char *, size_t);
 int ref_to_val_online(void *, char *, char *, size_t);
 int ref_to_val_generic(void *, char *, char *, size_t);
+char *ref_to_val_get_cfgval(char *, char *, char *);
 int g_do_exec(void *, void *, char*);
+int is_char_uppercase(char);
 size_t exec_and_wait_for_output(char*, char*);
 void sig_handler(int);
 void child_sig_handler(int, siginfo_t*, void*);
@@ -1248,8 +1247,9 @@ int oneliner_format_block(char *, ear *, char *);
 int online_format_block(char *, ear *, char *);
 int shmap(struct g_handle *, key_t);
 int g_map_shm(key_t, struct g_handle *);
-char *build_data_path(char *, char *);
+char *build_data_path(char *, char *, char *);
 void free_cfg(pmda);
+int g_cleanup(struct g_handle *);
 
 void *f_ref[] = { "--loglevel", opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime,
 		(void*) 0, "--logfile", opt_log_file, (void*) 0, "--log", opt_logging,
@@ -1480,14 +1480,10 @@ int setup_sighandlers(void) {
 }
 
 int g_shutdown(void *arg) {
-	md_g_free(&actdl.buffer);
-	if (actdl.data) {
-		g_free(actdl.data);
-	}
-	md_g_free(&actdl.w_buffer);
-	md_g_free(&actnl.buffer);
-	md_g_free(&actnl.w_buffer);
+	g_cleanup(&g_act_1);
+	g_cleanup(&g_act_2);
 	free_cfg(&glconf);
+	free_cfg(&l_mdo_1);
 	if (NUKESTR) {
 		g_free(NUKESTR);
 	}
@@ -1499,7 +1495,25 @@ int g_shutdown(void *arg) {
 	exit(EXITVAL);
 }
 
-char *build_data_path(char *file, char *path) {
+int g_cleanup(struct g_handle *hdl) {
+	int r = 0;
+
+	r += md_g_free(&hdl->buffer);
+	r += md_g_free(&hdl->w_buffer);
+	if (!(hdl->flags & F_GH_SHM) && hdl->data) {
+		g_free(hdl->data);
+	} else if ((hdl->flags & F_GH_SHM) && hdl->shmid && hdl->data) {
+		shmctl(hdl->shmid, IPC_STAT, &hdl->ipcbuf);
+		if (hdl->ipcbuf.shm_nattch <= 1) {
+			shmctl(hdl->shmid, IPC_RMID, 0);
+		}
+		shmdt(hdl->data);
+	}
+	bzero(hdl, sizeof(struct g_handle));
+	return r;
+}
+
+char *build_data_path(char *file, char *path, char *sd) {
 	remove_repeating_chars(path, 0x2F);
 
 	if (strlen(path) && !file_exists(path)) {
@@ -1508,7 +1522,7 @@ char *build_data_path(char *file, char *path) {
 
 	char buffer[4096] = { 0 };
 
-	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS, file);
+	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
 
 	remove_repeating_chars(buffer, 0x2F);
 
@@ -1555,7 +1569,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (gfl & F_OPT_PS_LOGGING) {
-		build_data_path(DEFF_DULOG, LOGFILE);
+		build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
 		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
 			gfl ^= F_OPT_PS_LOGGING;
 			print_str(
@@ -1564,9 +1578,11 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	print_str("INIT: dirupdate %d.%d-%d%s-%s starting..\n", VER_MAJOR,
-	VER_MINOR,
-	VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
+	if (updmode != UPD_MODE_NOOP) {
+		print_str("INIT: dirupdate %d.%d-%d%s-%s starting..\n", VER_MAJOR,
+		VER_MINOR,
+		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
+	}
 
 #ifdef GLCONF
 	if ((r = load_cfg(GLCONF, &glconf))) {
@@ -1644,11 +1660,11 @@ int main(int argc, char *argv[]) {
 		return 2;
 	}
 
-	build_data_path(DEFF_DIRLOG, DIRLOG);
-	build_data_path(DEFF_NUKELOG, NUKELOG);
-	build_data_path(DEFF_LASTONLOG, LASTONLOG);
-	build_data_path(DEFF_DUPEFILE, DUPEFILE);
-	build_data_path(DEFF_ONELINERS, ONELINERS);
+	build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
+	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
+	build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
 
 	bzero(SITEROOT, 255);
 	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
@@ -1761,6 +1777,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if ((gfl & F_OPT_LOOP) && !(gfl & F_OPT_KILL_GLOBAL)) {
+		g_cleanup(&g_act_1);
+		g_cleanup(&g_act_2);
+		free_cfg(&l_mdo_1);
 		sleep(loop_interval);
 		if (gfl & F_OPT_LOOPEXEC) {
 			g_do_exec(NULL, ref_to_val_generic, LOOPEXEC);
@@ -1827,23 +1846,24 @@ int dirlog_check_dupe(void) {
 	struct dirlog *d_ptr = NULL, *dd_ptr = NULL;
 	char *s_buffer, *ss_buffer, *s_pb, *ss_pb;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &actdl)) {
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
 		return 2;
 	}
 	off_t st1, st2;
 	p_md_obj pmd_st1 = NULL, pmd_st2 = NULL;
 
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)", NULL,
 			NULL);
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
-			if (actdl.buffer.pos && (actdl.buffer.pos->flags & F_MD_NOREAD)) {
+			if (g_act_1.buffer.pos
+					&& (g_act_1.buffer.pos->flags & F_MD_NOREAD)) {
 				continue;
 			}
-			if (g_bmatch(d_ptr, &actdl)) {
+			if (g_bmatch(d_ptr, &g_act_1)) {
 				continue;
 			}
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)", NULL,
@@ -1854,20 +1874,20 @@ int dirlog_check_dupe(void) {
 			if (s_pb_l < 4) {
 				goto end_loop1;
 			}
-			st1 = actdl.offset;
-			actdl.offset = 0;
-			if (actdl.buffer_count) {
-				st2 = actdl.buffer_count;
-				pmd_st1 = actdl.buffer.r_pos;
-				pmd_st2 = actdl.buffer.pos;
+			st1 = g_act_1.offset;
+			g_act_1.offset = 0;
+			if (g_act_1.buffer_count) {
+				st2 = g_act_1.buffer_count;
+				pmd_st1 = g_act_1.buffer.r_pos;
+				pmd_st2 = g_act_1.buffer.pos;
 			} else {
-				st2 = (off_t) ftello(actdl.fh);
+				st2 = (off_t) ftello(g_act_1.fh);
 			}
-			gh_rewind(&actdl);
+			gh_rewind(&g_act_1);
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)", NULL,
 			NULL);
 			int ch = 0;
-			while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &actdl,
+			while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1,
 			DL_SZ))) {
 				if (gfl & F_OPT_KILL_GLOBAL) {
 					break;
@@ -1879,8 +1899,8 @@ int dirlog_check_dupe(void) {
 				if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)
 						&& strncmp(d_ptr->dirname, dd_ptr->dirname,
 								strlen(d_ptr->dirname))) {
-					if (actdl.buffer_count && actdl.buffer.pos) {
-						actdl.buffer.pos->flags |= F_MD_NOREAD;
+					if (g_act_1.buffer_count && g_act_1.buffer.pos) {
+						g_act_1.buffer.pos->flags |= F_MD_NOREAD;
 					}
 					if (!ch) {
 						print_str("DUPE %s\n", d_ptr->dirname);
@@ -1891,13 +1911,13 @@ int dirlog_check_dupe(void) {
 				g_free(ss_buffer);
 			}
 
-			actdl.offset = st1;
-			if (actdl.buffer_count) {
-				actdl.buffer.offset = st2;
-				actdl.buffer.r_pos = pmd_st1;
-				actdl.buffer.pos = pmd_st2;
+			g_act_1.offset = st1;
+			if (g_act_1.buffer_count) {
+				g_act_1.buffer.offset = st2;
+				g_act_1.buffer.r_pos = pmd_st1;
+				g_act_1.buffer.pos = pmd_st2;
 			} else {
-				fseeko(actdl.fh, (off_t) st2, SEEK_SET);
+				fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
 			}
 			end_loop1:
 
@@ -1982,7 +2002,7 @@ int dirlog_update_record(char *argv) {
 			mode = "r+";
 		}
 
-		if (g_fopen(DIRLOG, mode, 0, &actdl)) {
+		if (g_fopen(DIRLOG, mode, 0, &g_act_1)) {
 			goto r_end;
 		}
 
@@ -2010,7 +2030,7 @@ int dirlog_update_record(char *argv) {
 
 		end:
 
-		g_close(&actdl);
+		g_close(&g_act_1);
 		ptr = ptr->next;
 	}
 	r_end: md_g_free(&dirchain);
@@ -2098,11 +2118,11 @@ int dirlog_check_records(void) {
 		data_backup_records(DIRLOG);
 	}
 
-	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &actdl)) {
+	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return 2;
 	}
 
-	if (!actdl.buffer_count && (gfl & F_OPT_FIX)) {
+	if (!g_act_1.buffer_count && (gfl & F_OPT_FIX)) {
 		print_str(
 				"ERROR: internal buffering must be enabled when fixing, increase limit with --memlimit (see --help)\n");
 	}
@@ -2110,7 +2130,7 @@ int dirlog_check_records(void) {
 	struct dirlog *d_ptr = NULL;
 	int ir;
 
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_records(loop)", NULL,
 			NULL);
@@ -2118,7 +2138,7 @@ int dirlog_check_records(void) {
 				break;
 			}
 			sprintf(s_buffer, "%s%s", GLROOT, d_ptr->dirname);
-			//g_do_exec(d_ptr, &actdl);
+			//g_do_exec(d_ptr, &g_act_1);
 			struct nukelog n_buffer;
 			ir = r;
 			if (d_ptr->status == 1 || d_ptr->status == 2) {
@@ -2145,7 +2165,7 @@ int dirlog_check_records(void) {
 						"WARNING: %s: listed in dirlog but does not exist in filesystem\n",
 						s_buffer);
 				if (gfl & F_OPT_FIX) {
-					if (!md_unlink(&actdl.buffer, actdl.buffer.pos)) {
+					if (!md_unlink(&g_act_1.buffer, g_act_1.buffer.pos)) {
 						print_str("ERROR: %s: unlinking ghost record failed\n",
 								s_buffer);
 					}
@@ -2242,12 +2262,12 @@ int dirlog_check_records(void) {
 	}
 
 	if (!(gfl & F_OPT_KILL_GLOBAL) && (gfl & F_OPT_FIX) && r) {
-		if (rebuild_data_file(DIRLOG, &actdl)) {
+		if (rebuild_data_file(DIRLOG, &g_act_1)) {
 			print_str(MSG_GEN_DFRFAIL, DIRLOG);
 		}
 	}
 
-	g_close(&actdl);
+	g_close(&g_act_1);
 
 	return r;
 }
@@ -2314,24 +2334,22 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 	g_setjmp(0, "g_print_stats", NULL, NULL);
 
-	struct g_handle hdl = { 0 };
-
 	if (block_sz) {
-		hdl.block_sz = block_sz;
+		g_act_1.block_sz = block_sz;
 	}
 
-	if (g_fopen(file, "r", F_DL_FOPEN_BUFFER | flags, &hdl)) {
+	if (g_fopen(file, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return 2;
 	}
 
 	void *ptr;
-	void *buffer = calloc(1, hdl.block_sz);
+	void *buffer = calloc(1, g_act_1.block_sz);
 	char sbuffer[4096], *ns_ptr;
 	int c = 0;
 	ear e;
 	int re_c, r;
 
-	while ((ptr = g_read(buffer, &hdl, hdl.block_sz))) {
+	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
 			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL, NULL);
 
@@ -2339,7 +2357,7 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 				break;
 			}
 
-			if ((r = g_bmatch(ptr, &hdl))) {
+			if ((r = g_bmatch(ptr, &g_act_1))) {
 				if (r == -1) {
 					break;
 				}
@@ -2347,11 +2365,11 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 			}
 			c++;
 			if (gfl & F_OPT_MODE_RAWDUMP) {
-				g_fwrite((void*) ptr, hdl.block_sz, 1, stdout);
+				g_fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
 			} else {
 				re_c = 0;
 				ns_ptr = "UNKNOWN";
-				switch (hdl.flags & F_GH_ISTYPE) {
+				switch (g_act_1.flags & F_GH_ISTYPE) {
 				case F_GH_ISDIRLOG:
 					e.dirlog = (struct dirlog*) ptr;
 					ns_ptr = e.dirlog->dirname;
@@ -2408,12 +2426,12 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)
-			&& !(gfl & F_OPT_FORMAT_COMP) && !(hdl.flags & F_GH_ISONLINE)) {
+			&& !(gfl & F_OPT_FORMAT_COMP) && !(g_act_1.flags & F_GH_ISONLINE)) {
 		print_str("STATS: %s: read %d records\n", file, c);
 	}
 
 	g_free(buffer);
-	g_close(&hdl);
+	g_close(&g_act_1);
 
 	return 0;
 }
@@ -2426,12 +2444,12 @@ int dirlog_print_stats(void) {
 	int c = 0;
 	ear e;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &actdl))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1))
 		return 2;
 
 	struct dirlog *d_ptr = NULL;
 
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_print_stats(loop)", NULL,
 			NULL);
@@ -2440,7 +2458,7 @@ int dirlog_print_stats(void) {
 				break;
 			}
 
-			if (g_bmatch(d_ptr, &actdl)) {
+			if (g_bmatch(d_ptr, &g_act_1)) {
 				continue;
 			}
 
@@ -2474,7 +2492,7 @@ int dirlog_print_stats(void) {
 		print_str("STATS: %s: read %d records\n", DIRLOG, c);
 	}
 
-	g_close(&actdl);
+	g_close(&g_act_1);
 
 	return 0;
 }
@@ -2502,21 +2520,21 @@ int rebuild_dirlog(void) {
 	}
 
 	if (gfl & F_OPT_WBUFFER) {
-		g_strncpy(actdl.mode, "r", 1);
-		md_init(&actdl.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
-		actdl.block_sz = DL_SZ;
-		actdl.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
+		g_strncpy(g_act_1.mode, "r", 1);
+		md_init(&g_act_1.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
+		g_act_1.block_sz = DL_SZ;
+		g_act_1.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
 				| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
-		actdl.w_buffer.flags |= F_MDA_REUSE;
+		g_act_1.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s: explicit write pre-caching enabled\n",
 					DIRLOG);
 		}
 	} else {
-		g_strncpy(actdl.mode, mode, strlen(mode));
+		g_strncpy(g_act_1.mode, mode, strlen(mode));
 		data_backup_records(DIRLOG);
 	}
-	actdl.block_sz = DL_SZ;
+	g_act_1.block_sz = DL_SZ;
 
 	int dfex = file_exists(DIRLOG);
 
@@ -2528,15 +2546,15 @@ int rebuild_dirlog(void) {
 		flags ^= F_DL_FOPEN_BUFFER;
 	}
 
-	if (!strncmp(actdl.mode, "r", 1) && dfex) {
+	if (!strncmp(g_act_1.mode, "r", 1) && dfex) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str(
 					"WARNING: %s: requested read mode access but file not there\n",
 					DIRLOG);
 		}
-	} else if (g_fopen(DIRLOG, actdl.mode, flags, &actdl)) {
+	} else if (g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1)) {
 		print_str("ERROR: could not open dirlog, mode '%s', flags %u\n",
-				actdl.mode, flags);
+				g_act_1.mode, flags);
 		return errno;
 	}
 
@@ -2628,8 +2646,8 @@ int rebuild_dirlog(void) {
 		ptr = ptr->next;
 	}
 
-	if (actdl.flags & F_GH_FFBUFFER) {
-		rebuild_data_file(DIRLOG, &actdl);
+	if (g_act_1.flags & F_GH_FFBUFFER) {
+		rebuild_data_file(DIRLOG, &g_act_1);
 	}
 
 	r_end:
@@ -2638,7 +2656,7 @@ int rebuild_dirlog(void) {
 
 	end:
 
-	g_close(&actdl);
+	g_close(&g_act_1);
 
 	print_str("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
 			dl_stats.rw);
@@ -2858,7 +2876,7 @@ int proc_section(char *name, unsigned char type, void *arg) {
 				goto end;
 			}
 
-			if (g_bmatch(iarg->dirlog, &actdl)) {
+			if (g_bmatch(iarg->dirlog, &g_act_1)) {
 				goto end;
 			}
 
@@ -2869,15 +2887,15 @@ int proc_section(char *name, unsigned char type, void *arg) {
 				basename(iarg->buffer));
 			}
 
-			if (actdl.flags & F_GH_FFBUFFER) {
-				if ((r = g_load_record(&actdl, (const void*) iarg->dirlog))) {
+			if (g_act_1.flags & F_GH_FFBUFFER) {
+				if ((r = g_load_record(&g_act_1, (const void*) iarg->dirlog))) {
 					print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
-							(ULLONG) actdl.w_buffer.offset, "wbuffer");
+							(ULLONG) g_act_1.w_buffer.offset, "wbuffer");
 				}
 			} else {
 				if ((r = dirlog_write_record(iarg->dirlog, 0, SEEK_END))) {
 					print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
-							(ULLONG) actdl.offset - 1, "w");
+							(ULLONG) g_act_1.offset - 1, "w");
 					goto end;
 				}
 			}
@@ -3314,7 +3332,7 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
 		return MAX_ULLONG;
 
 	int r;
@@ -3330,7 +3348,7 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 
 	struct dirlog *d_ptr = NULL;
 
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 
 		if (!strncmp(buffer_s, d_ptr->dirname, d_l)) {
 			goto match;
@@ -3345,7 +3363,7 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 		g_free(dup);
 		g_free(dup2);
 		if (!strncmp(buffer_s3, buffer_s, d_l)) {
-			match: ur = actdl.offset - 1;
+			match: ur = g_act_1.offset - 1;
 			if (mode == 2 && callback) {
 				if (callback_f(&buffer)) {
 					break;
@@ -3358,7 +3376,7 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 	}
 
 	if (mode != 1)
-		g_close(&actdl);
+		g_close(&g_act_1);
 
 	return ur;
 }
@@ -3368,7 +3386,7 @@ ULLONG dirlog_find_old(char *dirn, int mode, unsigned int flags, void *callback)
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
 		return MAX_ULLONG;
 
 	int r;
@@ -3385,7 +3403,7 @@ ULLONG dirlog_find_old(char *dirn, int mode, unsigned int flags, void *callback)
 
 	struct dirlog *d_ptr = NULL;
 
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		dup = strdup(d_ptr->dirname);
 		base = basename(dup);
 		gi1 = strlen(base);
@@ -3394,7 +3412,7 @@ ULLONG dirlog_find_old(char *dirn, int mode, unsigned int flags, void *callback)
 		if (!strncmp(&buffer_s[gi2 - gi1], base, gi1)
 				&& !strncmp(buffer_s, d_ptr->dirname, strlen(dir))) {
 
-			ur = actdl.offset - 1;
+			ur = g_act_1.offset - 1;
 			if (mode == 2 && callback) {
 				if (callback_f(&buffer)) {
 					g_free(dup);
@@ -3413,7 +3431,7 @@ ULLONG dirlog_find_old(char *dirn, int mode, unsigned int flags, void *callback)
 	}
 
 	if (mode != 1)
-		g_close(&actdl);
+		g_close(&g_act_1);
 
 	return ur;
 }
@@ -3457,7 +3475,7 @@ ULLONG dirlog_find_simple(char *dirn, int mode, unsigned int flags,
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &actdl)) {
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return MAX_ULLONG;
 	}
 
@@ -3473,11 +3491,11 @@ ULLONG dirlog_find_simple(char *dirn, int mode, unsigned int flags,
 
 	struct dirlog *d_ptr = NULL;
 
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &actdl, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		d_ptr_blen = strlen(d_ptr->dirname);
 		if (d_ptr_blen == s_blen
 				&& !strncmp(buffer_s, d_ptr->dirname, d_ptr_blen)) {
-			ur = actdl.offset - 1;
+			ur = g_act_1.offset - 1;
 			if (mode == 2 && callback) {
 				if (callback_f(&buffer)) {
 					break;
@@ -3490,7 +3508,7 @@ ULLONG dirlog_find_simple(char *dirn, int mode, unsigned int flags,
 	}
 
 	if (mode != 1) {
-		g_close(&actdl);
+		g_close(&g_act_1);
 	}
 
 	return ur;
@@ -3503,7 +3521,7 @@ ULLONG nukelog_find(char *dirn, int mode, struct nukelog *output) {
 	ULLONG r = MAX_ULLONG;
 	char *dup, *dup2, *base, *dir;
 
-	if (g_fopen(NUKELOG, "r", F_DL_FOPEN_BUFFER, &actnl)) {
+	if (g_fopen(NUKELOG, "r", F_DL_FOPEN_BUFFER, &g_act_2)) {
 		goto r_end;
 	}
 
@@ -3512,7 +3530,7 @@ ULLONG nukelog_find(char *dirn, int mode, struct nukelog *output) {
 
 	struct nukelog *n_ptr = NULL;
 
-	while ((n_ptr = (struct nukelog *) g_read(&buffer, &actnl, NL_SZ))) {
+	while ((n_ptr = (struct nukelog *) g_read(&buffer, &g_act_2, NL_SZ))) {
 		dup = strdup(n_ptr->dirname);
 		base = basename(dup);
 		gi1 = strlen(base);
@@ -3528,7 +3546,7 @@ ULLONG nukelog_find(char *dirn, int mode, struct nukelog *output) {
 			if (output) {
 				g_memcpy(output, n_ptr, NL_SZ);
 			}
-			r = actnl.offset - 1;
+			r = g_act_2.offset - 1;
 			if (mode != 2) {
 				g_free(dup);
 				g_free(dup2);
@@ -3540,7 +3558,7 @@ ULLONG nukelog_find(char *dirn, int mode, struct nukelog *output) {
 	}
 
 	if (mode != 1) {
-		g_close(&actnl);
+		g_close(&g_act_2);
 	}
 
 	r_end:
@@ -3930,7 +3948,7 @@ int g_map_shm(key_t ipc, struct g_handle *hdl) {
 	int r = load_data_md(&hdl->buffer, NULL, hdl);
 
 	if (!hdl->buffer_count) {
-		if ((gfl & F_OPT_VERBOSE) || r != 1002) {
+		if ((gfl & F_OPT_VERBOSE) && r != 1002) {
 			print_str(
 					"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
 					MSG_DEF_SHM, (unsigned int) hdl->buffer_count,
@@ -4123,6 +4141,8 @@ int g_close(struct g_handle *hdl) {
 			shmctl(hdl->shmid, IPC_RMID, 0);
 		}
 		shmdt(hdl->data);
+		hdl->data = NULL;
+		hdl->shmid = 0;
 	}
 
 	if (hdl->buffer_count) {
@@ -4262,31 +4282,32 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 		return 2;
 	}
 
-	if (!actdl.fh) {
+	if (!g_act_1.fh) {
 		print_str("ERROR: dirlog handle is not open\n");
 		return 1;
 	}
 
-	if (whence == SEEK_SET && fseeko(actdl.fh, offset * DL_SZ, SEEK_SET) < 0) {
+	if (whence == SEEK_SET
+			&& fseeko(g_act_1.fh, offset * DL_SZ, SEEK_SET) < 0) {
 		print_str("ERROR: seeking dirlog failed!\n");
 		return 1;
 	}
 
 	int fw;
 
-	if ((fw = g_fwrite(buffer, 1, DL_SZ, actdl.fh)) < DL_SZ) {
+	if ((fw = g_fwrite(buffer, 1, DL_SZ, g_act_1.fh)) < DL_SZ) {
 		print_str("ERROR: could not write dirlog record! %d/%d\n", fw,
 				(int) DL_SZ);
 		return 1;
 	}
 
-	actdl.bw += (off_t) fw;
-	actdl.rw++;
+	g_act_1.bw += (off_t) fw;
+	g_act_1.rw++;
 
 	if (whence == SEEK_SET)
-		actdl.offset = offset;
+		g_act_1.offset = offset;
 	else
-		actdl.offset++;
+		g_act_1.offset++;
 
 	return 0;
 }
@@ -4615,6 +4636,31 @@ ULLONG file_crc32(char *file, uLong *crc_out) {
 	return read;
 }
 
+char *ref_to_val_get_cfgval(char *username, char *key, char *defpath) {
+	char buffer[4096];
+
+	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, defpath, username);
+
+	if (load_cfg(buffer, &l_mdo_1)) {
+		return NULL;
+	}
+
+	p_md_obj ptr;
+
+	if ((ptr = get_cfg_opt(key, &l_mdo_1))) {
+		return (char*) ptr->ptr;
+	}
+
+	return NULL;
+}
+
+int is_char_uppercase(char c) {
+	if (c >= 0x41 && c <= 0x5A) {
+		return 0;
+	}
+	return 1;
+}
+
 int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	g_setjmp(0, "ref_to_val_generic", NULL, NULL);
 
@@ -4787,6 +4833,18 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 		sprintf(output, "%u", (unsigned int) data->upload);
 	} else if (!strcmp(match, "download")) {
 		sprintf(output, "%u", (unsigned int) data->download);
+	} else if (!is_char_uppercase(match[0])) {
+		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS);
+		if (ptr) {
+			sprintf(output, ptr);
+			return 0;
+		}
+		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS);
+		if (ptr) {
+			sprintf(output, ptr);
+			return 0;
+		}
+
 	} else {
 		return 1;
 	}
@@ -4871,6 +4929,12 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 			kbps = data->bytes_xfer / tdiff;
 		}
 		sprintf(output, "%u", kbps);
+	} else if (!is_char_uppercase(match[0])) {
+		void *ptr = ref_to_val_get_cfgval(data->username, match, DEFPATH_USERS);
+		if (ptr) {
+			sprintf(output, ptr);
+			return 0;
+		}
 	} else {
 		return 1;
 	}
@@ -5020,7 +5084,7 @@ int load_cfg(char *file, pmda md) {
 	FILE *fh;
 
 	if (md_init(md, 256)) {
-		return 1;
+		return 0;
 	}
 
 	size_t f_sz = get_file_size(file);
