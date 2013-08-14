@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.1-5
+ * Version     : 1.2
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -30,8 +30,8 @@
 #endif
 
 /*
- * Set this to enable logging by default,
- * or use --logfile from command line
+ * log file path
+ * setting this variable enables logging (default is off)
  */
 #ifndef log_file
 #define log_file ""
@@ -111,8 +111,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 1
-#define VER_REVISION 5
+#define VER_MINOR 2
+#define VER_REVISION 0
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -286,6 +286,9 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define UPD_MODE_DUMP_ONEL	0xA
 #define UPD_MODE_DUMP_ONL	0xB
 #define UPD_MODE_NOOP		0xC
+#define UPD_MODE_MACRO		0xD
+
+#define PRIO_UPD_MODE_MACRO 0x1001
 
 #define F_OPT_FORCE 		0x1
 #define F_OPT_VERBOSE 		0x2
@@ -311,6 +314,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_PS_SILENT		0x200000
 #define F_OPT_PS_TIME		0x400000
 #define F_OPT_PS_LOGGING	0x800000
+#define F_OPT_TERM_ENUM		0x1000000
 
 #define F_MD_NOREAD			0x1
 
@@ -737,6 +741,11 @@ mda glconf = { 0 };
 
 mda l_mdo_1 = { 0 };
 
+char b_spec1[PATH_MAX];
+
+void *_p_macro_argv = NULL;
+int _p_macro_argc = 0;
+
 char *hpd_up =
 		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
 				"\n"
@@ -761,7 +770,7 @@ char *hpd_up =
 				"  -e <dirlog|nukelog|dupefile|lastonlog>\n"
 				"                         Rebuilds existing data file, based on filtering rules (see --exec\n"
 				"                           and --(i)regex(i))\n"
-				"\n"
+				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
@@ -793,6 +802,7 @@ char *hpd_up =
 				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute command each loop\n"
 				"  --loglevel <1-6>      Log verbosity level (1: exception only..6: everything)\n"
+				"                           Level 0 turns logging off\n"
 				"  --silent              Silent mode\n"
 				"  --ftime               Prepend formatted timestamps to output\n"
 				"  --log                 Force logging enabled\n"
@@ -829,6 +839,14 @@ void *g_pg(void *arg, int m) {
 		return (char *) arg;
 	}
 	return ((char **) arg)[0];
+}
+
+void *prio_argv_off = NULL;
+
+int prio_opt_g_macro(void *arg, int m) {
+	prio_argv_off = g_pg(arg, m);
+	updmode = PRIO_UPD_MODE_MACRO;
+	return 0;
 }
 
 int opt_g_loglvl(void *arg, int m) {
@@ -1172,63 +1190,75 @@ int opt_membuffer_limit(void *arg, int m) {
 	return 0;
 }
 
+/* generic types */
+typedef int _d_ag_handle_i(struct g_handle *);
+typedef int _d_achar_i(char *);
+typedef int _d_avoid_i(void);
+
+/* specific types */
+typedef int __d_enum_cb(char *, unsigned char, void *);
+typedef int __d_ref_to_val(void *, char *, char *, size_t);
+typedef int __d_format_block(char *, ear *, char *);
+typedef ULLONG __d_dlfind(char *, int, unsigned int, void *);
+
+_d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
+_d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog;
+_d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
+		dirlog_update_record;
+
+__d_enum_cb proc_section, proc_release, ssd_4macro;
+
+__d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
+		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
+		ref_to_val_generic, ref_to_val_macro;
+__d_format_block lastonlog_format_block, dupefile_format_block,
+		oneliner_format_block, online_format_block, nukelog_format_block,
+		dirlog_format_block;
+__d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
+
 ULLONG file_crc32(char *, uLong *);
-int rebuild_dirlog(void);
+
 int data_backup_records(char*);
 ssize_t file_copy(char *, char *, char *, unsigned int);
 int dirlog_check_records(void);
-int self_get_path(char *);
-int dirlog_print_stats(void);
-int dirlog_format_block(char *, ear *, char *);
-int proc_section(char *, unsigned char, void *);
-int proc_release(char *, unsigned char, void *);
+
 int split_string(char *, char, pmda);
 int release_generate_block(char *, ear *);
 long get_file_size(char *);
+char **process_macro(void *, char **);
 char *generate_chars(size_t, char, char*);
 time_t get_file_creation_time(struct stat *);
 int dirlog_write_record(struct dirlog *, off_t, int);
-ULLONG dirlog_find(char *, int, unsigned int, void *);
-ULLONG dirlog_find_old(char *, int, unsigned int, void *);
-ULLONG dirlog_find_simple(char *, int, unsigned int, void *);
-size_t str_match(char *, char *);
+
 char *string_replace(char *, char *, char *, char *, size_t);
 int enum_dir(char *, void *, void *, int);
-int file_exists(char *);
 int update_records(char *, int);
 off_t read_file(char *, void *, size_t, off_t);
 int option_crc32(void *, int);
-int write_file_text(char *, char *);
+
 int reg_match(char *, char *, int);
 int delete_file(char *, unsigned char, void *);
-int get_file_type(char *);
+
+int write_file_text(char *, char *);
+
+size_t str_match(char *, char *);
+size_t exec_and_wait_for_output(char*, char*);
+
 p_md_obj get_cfg_opt(char *, pmda);
 int load_cfg(char *, pmda);
-int nukelog_format_block(char *, ear *, char *);
+
 ULLONG nukelog_find(char *, int, struct nukelog *);
-int parse_args(int argc, char *argv[]);
-int get_relative_path(char *, char *, char *);
+int parse_args(int argc, char **argv, void*fref_t[]);
+
 int process_opt(char *, void *, void *, int);
-int dir_exists(char *);
-int dirlog_update_record(char *);
-int dirlog_check_dupe(void);
-int gh_rewind(struct g_handle *);
+
 int g_fopen(char *, char *, unsigned int, struct g_handle *);
-int determine_datatype(struct g_handle *);
-int g_close(struct g_handle *);
 void *g_read(void *buffer, struct g_handle *, size_t);
 int process_exec_string(char *, char *, void *, void*);
-int ref_to_val_dirlog(void *, char *, char *, size_t);
-int ref_to_val_nukelog(void *, char *, char *, size_t);
-int ref_to_val_dupefile(void *, char *, char *, size_t);
-int ref_to_val_lastonlog(void *, char *, char *, size_t);
-int ref_to_val_oneliners(void *, char *, char *, size_t);
-int ref_to_val_online(void *, char *, char *, size_t);
-int ref_to_val_generic(void *, char *, char *, size_t);
-char *ref_to_val_get_cfgval(char *, char *, char *);
+
 int g_do_exec(void *, void *, char*);
 int is_char_uppercase(char);
-size_t exec_and_wait_for_output(char*, char*);
+
 void sig_handler(int);
 void child_sig_handler(int, siginfo_t*, void*);
 int flush_data_md(struct g_handle *, char *);
@@ -1241,19 +1271,31 @@ int remove_repeating_chars(char *string, char c);
 p_md_obj md_first(pmda md);
 int g_buffer_into_memory(char *, struct g_handle *);
 int g_print_stats(char *, unsigned int, size_t);
-int lastonlog_format_block(char *, ear *, char *);
-int dupefile_format_block(char *, ear *, char *);
-int oneliner_format_block(char *, ear *, char *);
-int online_format_block(char *, ear *, char *);
-int shmap(struct g_handle *, key_t);
-int g_map_shm(key_t, struct g_handle *);
-char *build_data_path(char *, char *, char *);
-void free_cfg(pmda);
-int g_cleanup(struct g_handle *);
 
-void *f_ref[] = { "--loglevel", opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime,
-		(void*) 0, "--logfile", opt_log_file, (void*) 0, "--log", opt_logging,
-		(void*) 0, "--silent", opt_silent, (void*) 0, "--loopexec",
+int shmap(struct g_handle *, key_t);
+int g_map_shm(struct g_handle *, key_t);
+
+char *build_data_path(char *, char *, char *);
+char *ref_to_val_get_cfgval(char *, char *, char *);
+
+int get_relative_path(char *, char *, char *);
+
+void free_cfg(pmda);
+
+int g_init(int argc, char **argv);
+
+char **build_argv(char *args, size_t max, int *c);
+
+void *prio_f_ref[] = { "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
+		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
+		opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
+		NULL };
+
+void *f_ref[] = { "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
+		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
+		(void*) 0, "--loglevel", opt_g_loglvl, (void*) 1, "--ftime",
+		opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0, "--log",
+		opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0, "--loopexec",
 		opt_g_loopexec, (void*) 1, "--loop", opt_g_loop, (void*) 1, "--daemon",
 		opt_g_daemonize, (void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc",
 		opt_shmipc, (void*) 1, "-l", opt_lastonlog_dump, (void*) 0,
@@ -1283,11 +1325,9 @@ void *f_ref[] = { "--loglevel", opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime,
 		(void*) 0, "--sfv", opt_g_sfv, (void*) 0, "--crc32", option_crc32,
 		(void*) 1, "--backup", NULL, (void*) 1, "-c", opt_dirlog_check,
 		(void*) 0, "--check", opt_dirlog_check, (void*) 0, "--dump",
-		opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0, "-vvvv",
-		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
-		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "-f",
+		opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0, "-f",
 		opt_g_force, (void*) 0, "-s", opt_update_single_record, (void*) 1, "-r",
-		opt_recursive_update_records, (void*) 0, NULL };
+		opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (md->objects) {
@@ -1495,6 +1535,12 @@ int g_shutdown(void *arg) {
 		g_fclose(fd_log);
 	}
 
+	if (_p_macro_argv) {
+		g_free(_p_macro_argv);
+	}
+
+	_p_macro_argc = 0;
+
 	exit(EXITVAL);
 }
 
@@ -1549,11 +1595,9 @@ char *build_data_path(char *file, char *path, char *sd) {
 	return path;
 }
 
-int main(int argc, char *argv[]) {
-	g_setjmp(0, "main", NULL, NULL);
+int g_init(int argc, char **argv) {
+	g_setjmp(0, "g_init", NULL, NULL);
 	int r;
-
-	g_PID = getpid();
 
 	if (strlen(LOGFILE)) {
 		gfl |= F_OPT_PS_LOGGING;
@@ -1565,7 +1609,7 @@ int main(int argc, char *argv[]) {
 		sleep(5);
 	}
 
-	r = parse_args(argc, argv);
+	r = parse_args(argc, argv, f_ref);
 	if (r == -2 || r == -1) {
 		print_help(NULL, 0);
 		return 4;
@@ -1797,10 +1841,198 @@ int main(int argc, char *argv[]) {
 
 	g_shutdown(NULL);
 
-	exit(EXITVAL);
+	return EXITVAL;
+}
+
+int main(int argc, char *argv[]) {
+	char **p_argv = (char**) argv;
+	g_PID = getpid();
+
+	_p_macro_argc = argc;
+
+	if (!parse_args(argc, argv, prio_f_ref)) {
+		switch (updmode) {
+		case PRIO_UPD_MODE_MACRO:
+			;
+			char **ptr;
+			ptr = process_macro(prio_argv_off, NULL);
+			if (ptr) {
+				_p_macro_argv = p_argv = ptr;
+				gfl = F_OPT_WBUFFER;
+			} else {
+				g_shutdown(NULL);
+			}
+			break;
+		}
+	}
+
+	updmode = 0;
+
+
+	return g_init(_p_macro_argc, p_argv);
+}
+
+#define F_AV_RETURN_STRING 	0x1
+
+typedef struct ___si_argv0 {
+	int ret;
+	unsigned int flags;
+	char p_buf_1[4096];
+	char p_buf_2[PATH_MAX];
+	char s_ret[262144];
+} _si_argv0, *__si_argv0;
+
+char **process_macro(void * arg, char **out) {
+	g_setjmp(0, "process_macro", NULL, NULL);
+	if (!arg) {
+		print_str("ERROR: missing data type argument (-m <macro name>)\n");
+		return NULL;
+	}
+
+	char *a_ptr = (char*) arg;
+
+	char buffer[PATH_MAX] = { 0 };
+
+	if (self_get_path(buffer)) {
+		print_str("ERROR: could not get own path\n");
+		return NULL;
+	}
+
+	char *dirn = dirname(buffer);
+
+	_si_argv0 av = { 0 };
+
+	av.ret = -1;
+
+	g_strncpy(av.p_buf_1, a_ptr, strlen(a_ptr));
+
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("MACRO: '%s': searching for macro inside '%s/' (recursive)\n",
+				av.p_buf_1, dirn);
+	}
+
+	if (enum_dir(dirn, ssd_4macro, &av, 0) < 0) {
+		print_str("ERROR: %s: recursion failed (macro not found)\n",
+				av.p_buf_1);
+		return NULL;
+	}
+
+	if (av.ret == -1) {
+		print_str("ERROR: %s: could not find macro\n", av.p_buf_1);
+		return NULL;
+	}
+
+	g_strncpy(b_spec1, av.p_buf_2, strlen(av.p_buf_2));
+
+	char s_buffer[262144] = { 0 };
+	int r;
+
+	if ((r = process_exec_string(av.s_ret, s_buffer, ref_to_val_macro,
+	NULL))) {
+		print_str("ERROR: [%d]: could not process exec string: '%s'\n", r,
+				av.s_ret);
+		return NULL;
+	}
+
+	int c = 0;
+	char **s_ptr = build_argv(s_buffer, 4096, &c);
+
+	if (!c) {
+		print_str("ERROR: %s: macro was declared, but no arguments found\n",
+				av.p_buf_1);
+	}
+
+	_p_macro_argc = c;
+
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("MACRO: '%s': built argument string array with %d elements\n",
+				av.p_buf_1, c);
+	}
+
+	print_str("MACRO: '%s': EXECUTING: '%s'\n", av.p_buf_1, s_buffer);
+
+	return s_ptr;
+}
+
+char **build_argv(char *args, size_t max, int *c) {
+	char **ptr = (char **) calloc(max, sizeof(char **));
+
+	size_t args_l = strlen(args);
+	int i_0, l_p = 0, b_c = 0;
+	char sp_1 = 0x20, sp_2 = 0x22;
+
+	*c = 0;
+
+	for (i_0 = 0; i_0 < args_l && b_c < max; i_0++) {
+		if (i_0 == 0) {
+			while (args[i_0] == sp_1) {
+				i_0++;
+			}
+			if (args[i_0] == sp_2) {
+				while (args[i_0] == sp_2) {
+					i_0++;
+				}
+				sp_1 = sp_2;
+				l_p = i_0;
+			}
+		}
+		if (((args[i_0] == sp_1 || args[i_0] == sp_2) || i_0 == args_l - 1)
+				&& i_0 > l_p) {
+
+			if (i_0 == args_l - 1) {
+				if (!(args[i_0] == sp_1 || args[i_0] == sp_2)) {
+					i_0++;
+				}
+
+			}
+
+			ptr[b_c] = (char*) calloc(255, 1);
+			g_strncpy(ptr[b_c], &args[l_p], (i_0 - l_p));
+			b_c++;
+			*c += 1;
+			//printf(":: %s\n", ptr[b_c]);
+			int ii_l = 1;
+			while (args[i_0] == sp_1 || args[i_0] == sp_2) {
+
+				if (sp_1 != sp_2) {
+					if (args[i_0] == sp_2) {
+						i_0++;
+						break;
+					}
+				}
+				i_0++;
+			}
+			l_p = i_0;
+			if (sp_1 == sp_2) {
+				//printf("::--:: %x|-|%x|%x\n", args[i_0 - 1], sp_1, sp_2);
+				sp_1 = 0x20;
+				sp_2 = 0x22;
+				while (args[i_0] == sp_1 || args[i_0] == sp_2) {
+					i_0++;
+				}
+				l_p = i_0;
+			} else {
+				//printf("--:: %x|-|%x|%x\n", args[i_0 - 1], sp_1, sp_2);
+				if (args[i_0 - ii_l] == 0x22) {
+					sp_1 = 0x22;
+					sp_2 = 0x22;
+					while (args[i_0] == sp_1 || args[i_0] == sp_2) {
+						i_0++;
+					}
+					l_p = i_0;
+				}
+
+			}
+
+		}
+
+	}
+
+	return ptr;
 }
 
 int rebuild(void *arg) {
+	g_setjmp(0, "rebuild", NULL, NULL);
 	if (!arg) {
 		print_str("ERROR: missing data type argument (-e <dirlog|nukelog>)\n");
 		return 1;
@@ -1874,7 +2106,8 @@ int dirlog_check_dupe(void) {
 			if (g_bmatch(d_ptr, &g_act_1)) {
 				continue;
 			}
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)", NULL,
+			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)",
+			NULL,
 			NULL);
 			s_buffer = strdup(d_ptr->dirname);
 			s_pb = basename(s_buffer);
@@ -1892,7 +2125,8 @@ int dirlog_check_dupe(void) {
 				st2 = (off_t) ftello(g_act_1.fh);
 			}
 			gh_rewind(&g_act_1);
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)", NULL,
+			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)",
+			NULL,
 			NULL);
 			int ch = 0;
 			while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1,
@@ -2070,7 +2304,8 @@ int option_crc32(void *arg, int m) {
 	if (read)
 		print_str("%.8X\n", (unsigned int) crc32);
 	else {
-		print_str("ERROR: %s: [%d] could not get CRC32\n", buffer, errno);
+		print_str("ERROR: %s: [%d] could not get CRC32\n", buffer,
+		errno);
 		EXITVAL = 1;
 	}
 
@@ -2092,7 +2327,7 @@ int data_backup_records(char *file) {
 		print_str("NOTICE: %s: creating data backup: %s ..\n", file, buffer);
 	}
 
-	if ((r = (int) file_copy(file, buffer, "w", F_FC_MSET_SRC)) < 1) {
+	if ((r = (int) file_copy(file, buffer, "wb", F_FC_MSET_SRC)) < 1) {
 		print_str("ERROR: %s: [%d] failed to create backup %s\n", file, r,
 				buffer);
 		return r;
@@ -2140,7 +2375,8 @@ int dirlog_check_records(void) {
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_records(loop)", NULL,
+			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_records(loop)",
+			NULL,
 			NULL);
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
@@ -2359,7 +2595,8 @@ int g_print_stats(char *file, unsigned int flags, size_t block_sz) {
 
 	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL, NULL);
+			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
+			NULL);
 
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
@@ -2459,7 +2696,8 @@ int dirlog_print_stats(void) {
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_print_stats(loop)", NULL,
+			g_setjmp(F_SIGERR_CONTINUE, "dirlog_print_stats(loop)",
+			NULL,
 			NULL);
 
 			if (gfl & F_OPT_KILL_GLOBAL) {
@@ -2605,7 +2843,8 @@ int rebuild_dirlog(void) {
 
 	while (ptr) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "rebuild_dirlog(loop)", NULL, NULL);
+			g_setjmp(F_SIGERR_CONTINUE, "rebuild_dirlog(loop)", NULL,
+			NULL);
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
@@ -2672,14 +2911,14 @@ int rebuild_dirlog(void) {
 	return 0;
 }
 
-int parse_args(int argc, char *argv[]) {
+int parse_args(int argc, char **argv, void*fref_t[]) {
 	g_setjmp(0, "parse_args", NULL, NULL);
 	int i, oi, vi, ret, r, c = 0;
 	void *buffer = NULL;
 	char *c_arg;
 	mda cmd_lt = { 0 };
 
-	p_ora ora = (p_ora) f_ref;
+	p_ora ora = (p_ora) fref_t;
 
 	for (i = 1, ret = 0; i < argc; i++, r = 0) {
 		c_arg = argv[i];
@@ -2690,15 +2929,17 @@ int parse_args(int argc, char *argv[]) {
 			c_arg = (char*) cmd_lt.objects->ptr;
 		}
 
-		if ((vi = process_opt(c_arg, NULL, f_ref, 1)) < 0) {
-			print_str("CMDLINE: [%d] invalid argument '%s'\n", vi, c_arg);
+		if ((vi = process_opt(c_arg, NULL, fref_t, 1)) < 0) {
+			if (fref_t != prio_f_ref) {
+				print_str("CMDLINE: [%d] invalid argument '%s'\n", vi, c_arg);
+			}
 			ret = -2;
 			goto end;
 		}
 
 		if (r == 2) {
 			ret += process_opt(c_arg, ((p_md_obj) cmd_lt.objects->next)->ptr,
-					f_ref, 2);
+					fref_t, 2);
 
 			c++;
 		} else {
@@ -2707,16 +2948,18 @@ int parse_args(int argc, char *argv[]) {
 
 			if ((vp = (AAINT) ora[vi].arg_cnt)) {
 				if (i + vp > argc - 1) {
-					print_str(
-							"CMDLINE: '%s' missing argument parameters [%llu]\n",
-							argv[i], (ULLONG) ((i + vp) - (argc - 1)));
+					if (fref_t != prio_f_ref) {
+						print_str(
+								"CMDLINE: '%s' missing argument parameters [%llu]\n",
+								argv[i], (ULLONG) ((i + vp) - (argc - 1)));
+					}
 					c = 0;
 					goto end;
 				}
 				buffer = &argv[i + 1];
 				i += vp;
 			}
-			ret += process_opt(argv[oi], buffer, f_ref, 0);
+			ret += process_opt(argv[oi], buffer, fref_t, 0);
 
 			c++;
 		}
@@ -3338,7 +3581,7 @@ ULLONG dirlog_find(char *dirn, int mode, unsigned int flags, void *callback) {
 	}
 
 	struct dirlog buffer;
-	int (*callback_f)(struct dirlog *data) = callback;
+	int (*callback_f)(struct dirlog *) = callback;
 
 	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
 		return MAX_ULLONG;
@@ -3737,7 +3980,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		g_setjmp(0, "rebuild_data_file(7)", NULL, NULL);
 
 		if (!strncmp(hdl->mode, "a", 1) || (hdl->flags & F_GH_WAPPEND)) {
-			if ((r = (int) file_copy(hdl->s_buffer, file, "a",
+			if ((r = (int) file_copy(hdl->s_buffer, file, "ab",
 			F_FC_MSET_SRC)) < 1) {
 				print_str("ERROR: %s: [%d] merging temp file failed!\n",
 						hdl->s_buffer, r);
@@ -3866,7 +4109,7 @@ size_t g_load_data(void *output, size_t max, char *file) {
 	size_t fr, c_fr = 0;
 	FILE *fh;
 
-	if (!(fh = gg_fopen(file, "r"))) {
+	if (!(fh = gg_fopen(file, "rb"))) {
 		return 0;
 	}
 
@@ -3939,7 +4182,7 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 
 #define MSG_DEF_SHM "SHARED MEMORY"
 
-int g_map_shm(key_t ipc, struct g_handle *hdl) {
+int g_map_shm(struct g_handle *hdl, key_t ipc) {
 	hdl->flags |= F_GH_SHM;
 
 	if (hdl->buffer.count) {
@@ -4068,7 +4311,7 @@ int g_fopen(char *file, char *mode, unsigned int flags, struct g_handle *hdl) {
 	g_setjmp(0, "g_fopen", NULL, NULL);
 
 	if (flags & F_DL_FOPEN_SHM) {
-		if (g_map_shm(SHM_IPC, hdl)) {
+		if (g_map_shm(hdl, SHM_IPC)) {
 			return 12;
 		}
 		return 0;
@@ -4322,7 +4565,7 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 
 int enum_dir(char *dir, void *cb, void *arg, int f) {
 	g_setjmp(0, "enum_dir", NULL, NULL);
-	int (*callback_f)(char *data, unsigned char type, void *arg) = NULL;
+	int (*callback_f)(char *, unsigned char, void *) = NULL;
 	struct dirent *dirp;
 	int r = 0, ir;
 
@@ -4342,8 +4585,15 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 	int d_type;
 
 	while ((dirp = readdir(dp))) {
-		if (gfl & F_OPT_KILL_GLOBAL) {
+		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
 			break;
+		}
+
+		size_t d_name_l = strlen(dirp->d_name);
+
+		if ((d_name_l == 1 && !strncmp(dirp->d_name, ".", 1))
+				|| (d_name_l == 2 && !strncmp(dirp->d_name, "..", 2))) {
+			continue;
 		}
 
 		sprintf(buf, "%s/%s", dir, dirp->d_name);
@@ -4355,6 +4605,10 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 				return ir;
 			} else {
 				r++;
+			}
+		} else {
+			if (f == 2) {
+				return ir;
 			}
 		}
 	}
@@ -4512,7 +4766,7 @@ off_t read_file(char *file, void *buffer, size_t read_max, off_t offset) {
 		read_max = a_fsz;
 	}
 
-	if ((fp = gg_fopen(file, "r")) == NULL)
+	if ((fp = gg_fopen(file, "rb")) == NULL)
 		return 0;
 
 	if (offset)
@@ -4535,7 +4789,7 @@ int file_exists(char *file) {
 	int r;
 
 	errno = 0;
-	FILE *fd = gg_fopen(file, "r");
+	FILE *fd = gg_fopen(file, "rb");
 
 	r = errno;
 
@@ -4566,7 +4820,7 @@ ssize_t file_copy(char *source, char *dest, char *mode, unsigned int flags) {
 		return -1;
 	}
 
-	FILE *fh_s = gg_fopen(source, "r");
+	FILE *fh_s = gg_fopen(source, "rb");
 
 	if (!fh_s) {
 		return -2;
@@ -4622,7 +4876,7 @@ ULLONG file_crc32(char *file, uLong *crc_out) {
 
 	*crc_out = 0x0;
 
-	if ((fp = gg_fopen((char*) &file[0], "r")) == NULL) {
+	if ((fp = gg_fopen((char*) &file[0], "rb")) == NULL) {
 		g_free(buffer);
 		return 0;
 	}
@@ -4671,6 +4925,44 @@ int is_char_uppercase(char c) {
 	return 1;
 }
 
+int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_macro", NULL, NULL);
+
+	if (!output) {
+		return 2;
+	}
+
+	if (!strcmp(match, "m:exe")) {
+		char buffer[PATH_MAX] = { 0 };
+		if (!self_get_path(buffer)) {
+			size_t blen = strlen(buffer);
+			if (blen > 254) {
+				blen = 254;
+			}
+			g_strncpy(output, buffer, blen);
+		} else {
+			sprintf(output, "UNKNOWN");
+		}
+	} else if (!strcmp(match, "m:glroot")) {
+		sprintf(output, GLROOT);
+	} else if (!strcmp(match, "m:siteroot")) {
+		sprintf(output, SITEROOT);
+	} else if (!strcmp(match, "m:ftpdata")) {
+		sprintf(output, FTPDATA);
+	} else if (!strcmp(match, "m:logfile")) {
+		sprintf(output, LOGFILE);
+	} else if (!strcmp(match, "m:PID")) {
+		sprintf(output, "%d", g_PID);
+	} else if (!strcmp(match, "m:IPC")) {
+		sprintf(output, "%.8X", (unsigned int) SHM_IPC);
+	} else if (!strcmp(match, "m:spec1")) {
+		sprintf(output, "%s", b_spec1);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
 int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	g_setjmp(0, "ref_to_val_generic", NULL, NULL);
 
@@ -4701,6 +4993,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, "%d", g_PID);
 	} else if (!strcmp(match, "IPC")) {
 		sprintf(output, "%.8X", (unsigned int) SHM_IPC);
+	} else if (!strcmp(match, "spec1")) {
+		sprintf(output, "%s", b_spec1);
 	} else {
 		return 1;
 	}
@@ -4844,7 +5138,8 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	} else if (!strcmp(match, "download")) {
 		sprintf(output, "%u", (unsigned int) data->download);
 	} else if (!is_char_uppercase(match[0])) {
-		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS);
+		void *ptr = ref_to_val_get_cfgval(data->uname, match,
+		DEFPATH_USERS);
 		if (ptr) {
 			sprintf(output, ptr);
 			return 0;
@@ -4940,7 +5235,8 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		}
 		sprintf(output, "%u", kbps);
 	} else if (!is_char_uppercase(match[0])) {
-		void *ptr = ref_to_val_get_cfgval(data->username, match, DEFPATH_USERS);
+		void *ptr = ref_to_val_get_cfgval(data->username, match,
+		DEFPATH_USERS);
 		if (ptr) {
 			sprintf(output, ptr);
 			return 0;
@@ -4975,25 +5271,31 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 	if (blenmax > MAX_EXEC_STR) {
 		return 5;
 	}
-
+	size_t b_l_1;
 	char buffer[1024] = { 0 }, buffer2[1024] = { 0 }, *buffer_o = calloc(
 	MAX_EXEC_STR, 1);
-	int i, i2, pi;
+	int i, i2, pi, r;
 
 	for (i = 0, pi = 0; i < blen2; i++, pi++) {
 		if (input[i] == 0x7B) {
 			bzero(buffer, 255);
-			for (i2 = 0, i++; i < blen2 && i2 < 255; i++, i2++) {
+			for (i2 = 0, i++, r = 0; i < blen2 && i2 < 255; i++, i2++) {
 				if (input[i] == 0x7D) {
 					if (!i2 || strlen(buffer) > 255
-							|| call(data, buffer, buffer2, 255)) {
+							|| (r = call(data, buffer, buffer2, 255))) {
+						if (r) {
+							b_l_1 = strlen(buffer);
+							sprintf(&buffer_o[pi],"%c%s%c", 0x7B, buffer, 0x7D);
+
+							pi += b_l_1+2;
+						}
 						i++;
 						break;
 					}
-					//free_cfg(&l_mdo_1);
-					g_memcpy(&buffer_o[pi], buffer2, strlen(buffer2));
+					b_l_1 = strlen(buffer2);
+					g_memcpy(&buffer_o[pi], buffer2, b_l_1);
 
-					pi += strlen(buffer2);
+					pi += b_l_1;
 					i++;
 					break;
 				}
@@ -5200,6 +5502,98 @@ int self_get_path(char *out) {
 	if (readlink(path, out, PATH_MAX) == -1) {
 		return 2;
 	}
+	return 0;
+}
+
+int is_ascii_text(char in) {
+	if ((in >= 0x0 && in <= 0x7F)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+char *replace_char(char w, char r, char *string) {
+	int s_len = strlen(string), i;
+	for (i = 0; i < s_len + 100 && string[i] != 0; i++) {
+		if (string[i] == w) {
+			string[i] = r;
+		}
+	}
+
+	return string;
+}
+
+#define SSD_MAX_LINE_SIZE 	262144
+#define SSD_MAX_LINE_PROC 	30000
+
+int ssd_4macro(char *name, unsigned char type, void *arg) {
+	g_setjmp(0, "ssd_4macro", NULL, NULL);
+
+	off_t name_sz;
+	switch (type) {
+	case DT_REG:
+		name_sz = get_file_size(name);
+		if (!name_sz) {
+			break;
+		}
+		char *buffer = calloc(1, SSD_MAX_LINE_SIZE);
+
+		FILE *fh = gg_fopen(name, "r");
+		size_t b_len, lc = 0;
+		int hit = 0, i;
+
+		while (fgets(buffer, SSD_MAX_LINE_SIZE, fh) && lc < SSD_MAX_LINE_PROC) {
+			lc++;
+			b_len = strlen(buffer);
+			if (b_len < 8) {
+				continue;
+			}
+
+			for (i = 0; i < b_len && i < SSD_MAX_LINE_SIZE; i++) {
+				if (is_ascii_text(buffer[i])) {
+					goto fin_l;
+				}
+			}
+
+			if (strncmp(buffer, "#@MACRO:", 8)) {
+				continue;
+			}
+
+			__si_argv0 ptr = (__si_argv0 ) arg;
+
+			char buffer2[4096] = { 0 };
+			sprintf(buffer2, "%s:", ptr->p_buf_1);
+
+			size_t pb_l = strlen(buffer2);
+
+			if (!strncmp(buffer2, &buffer[8], pb_l)) {
+				buffer = replace_char(0xA, 0x0, buffer);
+				buffer = replace_char(0xD, 0x0, buffer);
+				b_len = strlen(buffer);
+				size_t d_len = b_len - 8 - pb_l;
+				if (d_len > sizeof(ptr->s_ret)) {
+					d_len = sizeof(ptr->s_ret);
+				}
+				bzero(ptr->s_ret, sizeof(ptr->s_ret));
+				g_strncpy(ptr->s_ret, &buffer[8 + pb_l], d_len);
+				g_strncpy(ptr->p_buf_2, name, strlen(name));
+				ptr->ret = d_len;
+				gfl |= F_OPT_TERM_ENUM;
+				break;
+			}
+			hit++;
+		}
+
+		fin_l:
+
+		g_free(buffer);
+		break;
+	case DT_DIR:
+		enum_dir(name, ssd_4macro, arg, 0);
+		break;
+	}
+
 	return 0;
 }
 
