@@ -1,3 +1,8 @@
+ * v1.2
+ *
+ *   - It's now possible to define macros, command execution templates for scripts 
+ *        and easily execute them with -m <macro>
+ * 
  * v1.1
  *
  *   - Added --loglevel, --logfile, --silent, --ftime (see --help)
