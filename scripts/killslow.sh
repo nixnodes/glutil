@@ -1,12 +1,18 @@
 #!/bin/bash
-#
+# DO NOT EDIT BELOW LINE
 #@MACRO:killslow:{m:exe} -w --loop=3 --daemon --loglevel 3 --silent -exec "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
 #
 ## Kills any transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
 ## Usage: /glroot/bin/dirupdate -w --loop=3 --daemon --loglevel 3 --silent -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
 #
-## See ./dirupdate --help for more info
+##  Usage (macro): ./dirupdate -m incomplete
+#
+##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
+#
+## See ./dirupdate --help for more info about options
+#
+###########################[ BEGIN OPTIONS ]#############################
 #
 ## Minimum allowed transfer rate (bytes per second)
 MINRATE=512000
@@ -20,7 +26,7 @@ WAIT=3
 ## File to log to
 LOG="/var/log/killslow.log"
 #
-#########################################################################
+############################[ END OPTIONS ]##############################
 
 [ -z "$1" ] && exit 1
 [ -z "$2" ] && exit 1
