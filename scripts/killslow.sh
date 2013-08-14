@@ -6,7 +6,7 @@
 #
 ## Usage: /glroot/bin/dirupdate -w --loop=3 --daemon --loglevel 3 --silent -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
 #
-##  Usage (macro): ./dirupdate -m incomplete
+##  Usage (macro): ./dirupdate -m killslow
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
 #
