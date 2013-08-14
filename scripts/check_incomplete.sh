@@ -12,13 +12,15 @@
 #
 ## See ./dirupdate --help for more info about options
 #
+###########################[ BEGIN OPTIONS ]#############################
+#
 ## Verbose output
 VERBOSE=0
 #
 ## Optional corruption checking
 CHECK_CORRUPT=0
 #
-#########################################################################
+############################[ END OPTIONS ]##############################
 
 
 [ -z "$1" ] && exit 1
