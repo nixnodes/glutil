@@ -1,4 +1,5 @@
 #!/bin/bash
+#@MACRO:incomplete:{m:exe} -d -exec "'{m:spec1}' '{dir}' '{exe}' '{glroot}'"
 #
 ## Checks a release for incomplete/corrupt files by comparing SFV data with filesystem
 #
