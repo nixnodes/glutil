@@ -1,10 +1,16 @@
 #!/bin/bash
+# DO NOT EDIT BELOW LINE
 #@MACRO:incomplete:{m:exe} -d -exec "'{m:spec1}' '{dir}' '{exe}' '{glroot}'"
 #
 ## Checks a release for incomplete/corrupt files by comparing SFV data with filesystem
 #
-## Usage: /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
+## Usage (manual): /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
 #
+##  Usage (macro): ./dirupdate -m incomplete
+#
+##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
+#
+## See ./dirupdate --help for more info about options
 #
 ## Verbose output
 VERBOSE=0
