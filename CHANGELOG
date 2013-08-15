@@ -7,7 +7,8 @@
  *   - Added --arg<1-3> <argument> (used only with -m, fills variables 
  *        {m:arg<1-3>}) (rev. 3)
  *   - Bugfix: priority commands processing failed when non-prio arguments were
- *        given (rev. 3)   
+ *        given (rev. 3)
+ *   - Bugfix: getting own path was broken (not zero terminated) (rev. 3)
  * 
  * v1.1
  *
