@@ -4,6 +4,10 @@
  *        and easily execute them with -m <macro>
  *   - Added --fork (rev. 1)
  *   - Added --match and --imatch (normal text matches) (rev. 2)
+ *   - Added --arg<1-3> <argument> (used only with -m, fills variables 
+ *        {m:arg<1-3>}) (rev. 3)
+ *   - Bugfix: priority commands processing failed when non-prio arguments were
+ *        given (rev. 3)   
  * 
  * v1.1
  *
