@@ -9,6 +9,9 @@
  *   - Bugfix: priority commands processing failed when non-prio arguments were
  *        given (rev. 3)
  *   - Bugfix: getting own path was broken (not zero terminated) (rev. 3)
+ *   - Bugfix: priority flags were not always selected first (rev. 5)
+ *   - Added --sleep <seconds> (rev. 5)
+ *   - Added --preexec and --postexec (see --help) (rev. 6)
  * 
  * v1.1
  *
