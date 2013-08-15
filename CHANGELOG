@@ -12,6 +12,7 @@
  *   - Bugfix: priority flags were not always selected first (rev. 5)
  *   - Added --sleep <seconds> (rev. 5)
  *   - Added --preexec and --postexec (see --help) (rev. 6)
+ *   - Optimized memory usage (rev. 7)
  * 
  * v1.1
  *
