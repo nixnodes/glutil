@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-6
+ * Version     : 1.2-7
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -387,6 +387,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 	536870912   /* max file size allowed to load into memory */
+#define MAX_EXEC_STR 	262144
 
 #define	PIPE_READ_MAX	0x2000
 
@@ -754,9 +755,12 @@ int EXITVAL = 0;
 int loop_interval = 0;
 int loop_times = 0;
 char *NUKESTR = NULL;
-#define MAX_EXEC_STR 0x200000
+
+
+
 char *exec_str = NULL;
 char b_glob[MAX_EXEC_STR] = { 0 };
+
 int glob_reg_i_m = 0;
 int glob_match_i_m = 0;
 mda glconf = { 0 };
@@ -829,7 +833,7 @@ char *hpd_up =
 				"                           This is usefull when running yourown scripts (--exec)\n"
 				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute command each loop\n"
-				"  --loglevel <1-6>      Log verbosity level (1: exception only..6: everything)\n"
+				"  --loglevel <0-6>      Log verbosity level (1: exception only..6: everything)\n"
 				"                           Level 0 turns logging off\n"
 				"  --silent              Silent mode\n"
 				"  --ftime               Prepend formatted timestamps to output\n"
@@ -1074,18 +1078,35 @@ int opt_g_arg1(void *arg, int m) {
 	return 0;
 }
 
-char GLOBAL_PREEXEC[MAX_EXEC_STR];
-char GLOBAL_POSTEXEC[MAX_EXEC_STR];
+char *GLOBAL_PREEXEC = NULL;
+char *GLOBAL_POSTEXEC = NULL;
 
 int opt_g_preexec(void *arg, int m) {
-	g_cpg(arg, GLOBAL_PREEXEC, m, MAX_EXEC_STR);
-	gfl |= F_OPT_PREEXEC;
+	char *buffer = (char*) g_pg(arg, m);
+	size_t a_len = strlen(buffer);
+	if (a_len >= MAX_EXEC_STR) {
+		return 0;
+	}
+	if (a_len) {
+		GLOBAL_PREEXEC = (char*) calloc(a_len + 10, 1);
+		g_strncpy(GLOBAL_PREEXEC, buffer, a_len);
+		gfl |= F_OPT_PREEXEC;
+	}
 	return 0;
 }
 
 int opt_g_postexec(void *arg, int m) {
-	g_cpg(arg, GLOBAL_POSTEXEC, m, MAX_EXEC_STR);
-	gfl |= F_OPT_POSTEXEC;
+	char *buffer = (char*) g_pg(arg, m);
+	size_t a_len = strlen(buffer);
+	if (a_len >= MAX_EXEC_STR) {
+		return 0;
+	}
+	if (a_len) {
+		GLOBAL_POSTEXEC = (char*) calloc(a_len + 10, 1);
+		g_strncpy(GLOBAL_POSTEXEC, buffer, a_len);
+		gfl |= F_OPT_POSTEXEC;
+	}
+
 	return 0;
 }
 
@@ -1639,6 +1660,14 @@ int g_shutdown(void *arg) {
 		g_free(_p_macro_argv);
 	}
 
+	if (GLOBAL_PREEXEC) {
+		g_free(GLOBAL_PREEXEC);
+	}
+
+	if (GLOBAL_POSTEXEC) {
+		g_free(GLOBAL_POSTEXEC);
+	}
+
 	_p_macro_argc = 0;
 
 	exit(EXITVAL);
@@ -2051,18 +2080,18 @@ char **process_macro(void * arg, char **out) {
 
 	g_strncpy(b_spec1, av.p_buf_2, strlen(av.p_buf_2));
 
-	char s_buffer[262144] = { 0 };
+	char *s_buffer = (char*) calloc(262144, 1), **s_ptr = NULL;
 	int r;
 
 	if ((r = process_exec_string(av.s_ret, s_buffer, ref_to_val_macro,
 	NULL))) {
 		print_str("ERROR: [%d]: could not process exec string: '%s'\n", r,
 				av.s_ret);
-		return NULL;
+		goto end;
 	}
 
 	int c = 0;
-	char **s_ptr = build_argv(s_buffer, 4096, &c);
+	s_ptr = build_argv(s_buffer, 4096, &c);
 
 	if (!c) {
 		print_str("ERROR: %s: macro was declared, but no arguments found\n",
@@ -2077,6 +2106,10 @@ char **process_macro(void * arg, char **out) {
 	}
 
 	print_str("MACRO: '%s': EXECUTING: '%s'\n", av.p_buf_1, s_buffer);
+
+	end:
+
+	g_free(s_buffer);
 
 	return s_ptr;
 }
@@ -2118,10 +2151,9 @@ char **build_argv(char *args, size_t max, int *c) {
 			g_strncpy(ptr[b_c], &args[l_p], ptr_b_l);
 			b_c++;
 			*c += 1;
-			//printf(":: %s\n", ptr[b_c]);
+
 			int ii_l = 1;
 			while (args[i_0] == sp_1 || args[i_0] == sp_2) {
-
 				if (sp_1 != sp_2) {
 					if (args[i_0] == sp_2) {
 						i_0++;
@@ -3059,7 +3091,7 @@ int rebuild_dirlog(void) {
 int parse_args(int argc, char **argv, void*fref_t[]) {
 	g_setjmp(0, "parse_args", NULL, NULL);
 	int i, oi, vi, ret, r, c = 0;
-	void *buffer = NULL;
+
 	char *c_arg;
 	mda cmd_lt = { 0 };
 
@@ -3091,6 +3123,7 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 		} else {
 			oi = i;
 			AAINT vp;
+			void *buffer = NULL;
 
 			if ((vp = (AAINT) ora[vi].arg_cnt)) {
 				if (i + vp > argc - 1) {
@@ -5415,8 +5448,8 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 		return 5;
 	}
 	size_t b_l_1;
-	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o = calloc(
-	MAX_EXEC_STR, 1);
+	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
+			(char*) calloc(MAX_EXEC_STR, 1);
 	int i, i2, pi, r;
 
 	for (i = 0, pi = 0; i < blen2; i++, pi++) {
@@ -5679,9 +5712,15 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 		if (!name_sz) {
 			break;
 		}
-		char *buffer = calloc(1, SSD_MAX_LINE_SIZE);
 
 		FILE *fh = gg_fopen(name, "r");
+
+		if (!fh) {
+			break;
+		}
+
+		char *buffer = calloc(1, SSD_MAX_LINE_SIZE);
+
 		size_t b_len, lc = 0;
 		int hit = 0, i;
 
@@ -5694,7 +5733,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 
 			for (i = 0; i < b_len && i < SSD_MAX_LINE_SIZE; i++) {
 				if (is_ascii_text(buffer[i])) {
-					goto fin_l;
+					break;
 				}
 			}
 
@@ -5727,8 +5766,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 			hit++;
 		}
 
-		fin_l:
-
+		g_fclose(fh);
 		g_free(buffer);
 		break;
 	case DT_DIR:
