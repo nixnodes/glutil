@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-5
+ * Version     : 1.2-6
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -792,8 +792,8 @@ char *hpd_up =
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog>\n"
-				"                         Rebuilds existing data file, based on filtering rules (see --exec\n"
-				"                           and --(i)regex(i))\n"
+				"                         Rebuilds existing data file, based on filtering rules (see --exec,\n"
+				"                           --[i]regex[i] and --[i]match\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
@@ -811,7 +811,9 @@ char *hpd_up =
 				"                         While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
-				"  -y, --followlinks     Follows symbolic links (default is to skip)\n"
+				"  --preexec <command>   Execute shell <command> before starting main procedure\n"
+				"  --postexec <command>  Execute shell <command> after main procedure finishes\n"
+				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
 				"  --imatch <match>      Inverted --match\n"
 				"  --regex <match>       Regex filter string, used during various operations\n"
@@ -1882,6 +1884,13 @@ int g_init(int argc, char **argv) {
 		print_str("NOTICE: performing dry run, no writing will be done\n");
 	}
 
+	if (gfl & F_OPT_PREEXEC) {
+		print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
+		if (system(GLOBAL_PREEXEC) == -1) {
+			print_str("ERROR: POSTEXEC failed: '%s'\n", GLOBAL_PREEXEC);
+		}
+	}
+
 	if (gfl & F_OPT_DAEMONIZE) {
 
 		if (!(gfl & F_OPT_MODE_RAWDUMP)) {
@@ -1950,6 +1959,13 @@ int g_init(int argc, char **argv) {
 			g_do_exec(NULL, ref_to_val_generic, LOOPEXEC);
 		}
 		goto enter;
+	}
+
+	if (gfl & F_OPT_POSTEXEC) {
+		print_str("POSTEXEC: running: '%s'\n", GLOBAL_POSTEXEC);
+		if (system(GLOBAL_POSTEXEC) == -1) {
+			print_str("ERROR: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
+		}
 	}
 
 	g_shutdown(NULL);
