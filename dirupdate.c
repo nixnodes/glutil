@@ -816,6 +816,8 @@ char *hpd_up =
 				"  --ftime               Prepend formatted timestamps to output\n"
 				"  --log                 Force logging enabled\n"
 				"  --fork <command>      Fork process into background and execute <command>\n"
+				"  --arg[1-3] <argument> Set values that fill {m:arg[1-3]} variables\n"
+				"                           Used only with when running macros (-m)\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
