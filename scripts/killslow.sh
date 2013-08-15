@@ -1,12 +1,12 @@
 #!/bin/bash
-# DO NOT EDIT BELOW LINE
-#@MACRO:killslow:{m:exe} -w --loop=3 --daemon --loglevel 3 --silent -exec "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
+# DO NOT EDIT THESE LINES
+#@MACRO:killslow:{m:exe} -w --loop=3 --daemon --loglevel 3 --silent -exec "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {m:arg2}" {m:arg1}
 #
 ## Kills any transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage: /glroot/bin/dirupdate -w --loop=3 --daemon --loglevel 3 --silent -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
+## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --daemon --loglevel 3 --silent -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
 #
-##  Usage (macro): ./dirupdate -m killslow
+## Usage (macro): ./dirupdate -m killslow
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
 #
@@ -26,6 +26,9 @@ WAIT=3
 ## File to log to
 LOG="/var/log/killslow.log"
 #
+## Verbose output
+VERBOSE=0
+#
 ############################[ END OPTIONS ]##############################
 
 [ -z "$1" ] && exit 1
@@ -34,6 +37,8 @@ LOG="/var/log/killslow.log"
 [ -z "$4" ] && exit 1
 [ -z "$5" ] && exit 1
 [ -z "$6" ] && exit 1
+[ -z "$7" ] && exit 1
+[ -z "$8" ] && exit 1
 
 ! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
 
@@ -61,8 +66,8 @@ SLOW=0
 SHOULDKILL=0
 KILLED=0
 
-[ $DIFFT -gt $WAIT ] && [ $DRATE -lt $MINRATE ] && 
-        O="WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" && echo $O && SLOW=1
+[ $DIFFT -gt $WAIT ] && [ $DRATE -lt $MINRATE ] && SLOW=1 && [ $VERBOSE -gt 0 ] && 
+        O="WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" && echo $O 
 
 if [ $SLOW -eq 1 ] && [ -d /tmp/du-ks/$4 ]; then
 	MT1=$(stat -c %Y /tmp/du-ks/$4) 
