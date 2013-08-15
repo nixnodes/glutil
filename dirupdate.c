@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-3
+ * Version     : 1.2-4
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -735,7 +735,7 @@ int glob_regex_flags = REG_EXTENDED;
 char GLOB_REGEX[4096] = { 0 };
 char GLOB_MATCH[4096] = { 0 };
 int EXITVAL = 0;
-int g_PID = 0;
+
 int loop_interval = 0;
 int loop_times = 0;
 char *NUKESTR = NULL;
@@ -1690,7 +1690,7 @@ int g_init(int argc, char **argv) {
 		print_str("INIT: dirupdate %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
-		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686", g_PID);
+		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686", getpid());
 	}
 
 #ifdef GLCONF
@@ -1840,10 +1840,11 @@ int g_init(int argc, char **argv) {
 	}
 
 	if (gfl & F_OPT_DAEMONIZE) {
+
 		if (!(gfl & F_OPT_MODE_RAWDUMP)) {
-			print_str("NOTICE: forking into background.. [PID: %d]\n", g_PID);
+			print_str("NOTICE: forking into background.. [PID: %d - %d]\n", getpid());
 		}
-		daemon(1, 0);
+		daemon(0, 0);
 	}
 
 	enter:
@@ -1914,7 +1915,6 @@ int g_init(int argc, char **argv) {
 
 int main(int argc, char *argv[]) {
 	char **p_argv = (char**) argv;
-	g_PID = getpid();
 
 	_p_macro_argc = argc;
 
@@ -5023,14 +5023,8 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	}
 
 	if (!strcmp(match, "m:exe")) {
-		char buffer[PATH_MAX] = { 0 };
-		if (!self_get_path(buffer)) {
-			size_t blen = strlen(buffer);
-			if (blen > 254) {
-				blen = 254;
-			}
-			g_strncpy(output, buffer, blen);
-		} else {
+
+		if (self_get_path(output)) {
 			sprintf(output, "UNKNOWN");
 		}
 	} else if (!strcmp(match, "m:glroot")) {
@@ -5042,7 +5036,7 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	} else if ((gfl & F_OPT_PS_LOGGING) && !strcmp(match, "m:logfile")) {
 		sprintf(output, LOGFILE);
 	} else if (!strcmp(match, "m:PID")) {
-		sprintf(output, "%d", g_PID);
+		sprintf(output, "%d", getpid());
 	} else if (!strcmp(match, "m:IPC")) {
 		sprintf(output, "%.8X", (unsigned int) SHM_IPC);
 	} else if (!strcmp(match, "m:spec1")) {
@@ -5067,14 +5061,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	}
 
 	if (!strcmp(match, "exe")) {
-		char buffer[PATH_MAX] = { 0 };
-		if (!self_get_path(buffer)) {
-			size_t blen = strlen(buffer);
-			if (blen > 254) {
-				blen = 254;
-			}
-			g_strncpy(output, buffer, blen);
-		} else {
+		if (self_get_path(output)) {
 			sprintf(output, "UNKNOWN");
 		}
 	} else if (!strcmp(match, "glroot")) {
@@ -5086,7 +5073,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "logfile")) {
 		sprintf(output, LOGFILE);
 	} else if (!strcmp(match, "PID")) {
-		sprintf(output, "%d", g_PID);
+		sprintf(output, "%d", getpid());
 	} else if (!strcmp(match, "IPC")) {
 		sprintf(output, "%.8X", (unsigned int) SHM_IPC);
 	} else if (!strcmp(match, "spec1")) {
@@ -5368,7 +5355,7 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 		return 5;
 	}
 	size_t b_l_1;
-	char buffer[1024] = { 0 }, buffer2[1024] = { 0 }, *buffer_o = calloc(
+	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o = calloc(
 	MAX_EXEC_STR, 1);
 	int i, i2, pi, r;
 
@@ -5589,16 +5576,14 @@ p_md_obj get_cfg_opt(char *key, pmda md) {
 int self_get_path(char *out) {
 	g_setjmp(0, "self_get_path", NULL, NULL);
 
-	if (!g_PID) {
-		return 1;
-	}
-
 	char path[PATH_MAX];
+	int r;
 
-	sprintf(path, "/proc/%d/exe", g_PID);
-	if (readlink(path, out, PATH_MAX) == -1) {
+	sprintf(path, "/proc/%d/exe", getpid());
+	if ((r = readlink(path, out, PATH_MAX)) == -1) {
 		return 2;
 	}
+	out[r] = 0x0;
 	return 0;
 }
 
