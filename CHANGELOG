@@ -2,6 +2,8 @@
  *
  *   - It's now possible to define macros, command execution templates for scripts 
  *        and easily execute them with -m <macro>
+ *   - Added --fork (rev. 1)
+ *   - Added --match and --imatch (normal text matches) (rev. 2)
  * 
  * v1.1
  *
