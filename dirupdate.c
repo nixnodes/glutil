@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2
+ * Version     : 1.2-2
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 0
+#define VER_REVISION 2
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -287,6 +287,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define UPD_MODE_DUMP_ONL	0xB
 #define UPD_MODE_NOOP		0xC
 #define UPD_MODE_MACRO		0xD
+#define UPD_MODE_FORK		0xE
 
 #define PRIO_UPD_MODE_MACRO 0x1001
 
@@ -315,6 +316,7 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_PS_TIME		0x400000
 #define F_OPT_PS_LOGGING	0x800000
 #define F_OPT_TERM_ENUM		0x1000000
+#define F_OPT_HAS_G_MATCH	0x2000000
 
 #define F_MD_NOREAD			0x1
 
@@ -728,6 +730,7 @@ long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = REG_EXTENDED;
 char GLOB_REGEX[4096] = { 0 };
+char GLOB_MATCH[4096] = { 0 };
 int EXITVAL = 0;
 int g_PID = 0;
 int loop_interval = 0;
@@ -737,6 +740,7 @@ char *NUKESTR = NULL;
 char *exec_str = NULL;
 char b_glob[MAX_EXEC_STR] = { 0 };
 int glob_reg_i_m = 0;
+int glob_match_i_m = 0;
 mda glconf = { 0 };
 
 mda l_mdo_1 = { 0 };
@@ -788,7 +792,9 @@ char *hpd_up =
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  -y, --followlinks     Follows symbolic links (default is to skip)\n"
-				"  --regex <match>       Regex match filter string, used during various operations\n"
+				"  --match <match>       Regular filter string (exact matches)\n"
+				"  --imatch <match>      Inverted --match\n"
+				"  --regex <match>       Regex filter string, used during various operations\n"
 				"                           Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
@@ -806,6 +812,7 @@ char *hpd_up =
 				"  --silent              Silent mode\n"
 				"  --ftime               Prepend formatted timestamps to output\n"
 				"  --log                 Force logging enabled\n"
+				"  --fork <command>      Fork process into background and execute <command>\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -832,6 +839,7 @@ int g_cpg(void *arg, void *out, int m, size_t sz) {
 		return 1;
 	bzero(out, sz);
 	g_strncpy(out, buffer, strlen(buffer));
+
 	return 0;
 }
 void *g_pg(void *arg, int m) {
@@ -1085,6 +1093,18 @@ int opt_g_regexi(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_match(void *arg, int m) {
+	g_cpg(arg, GLOB_MATCH, m, 4096);
+	glob_match_i_m = 0;
+	return 0;
+}
+
+int opt_g_imatch(void *arg, int m) {
+	g_cpg(arg, GLOB_MATCH, m, 4096);
+	glob_match_i_m = 1;
+	return 0;
+}
+
 int opt_g_regex(void *arg, int m) {
 	g_cpg(arg, GLOB_REGEX, m, 4096);
 	return 0;
@@ -1160,6 +1180,13 @@ int print_help(void *arg, int m) {
 	print_str(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
 	VER_STR, ARCH ? "x86_64" : "i686");
 	updmode = UPD_MODE_NOOP;
+	return 0;
+}
+
+int opt_g_ex_fork(void *arg, int m) {
+	p_argv_off = g_pg(arg, m);
+	updmode = UPD_MODE_FORK;
+	gfl |= F_OPT_DAEMONIZE;
 	return 0;
 }
 
@@ -1291,34 +1318,35 @@ void *prio_f_ref[] = { "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
 		opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
-		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
-		(void*) 0, "--loglevel", opt_g_loglvl, (void*) 1, "--ftime",
-		opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0, "--log",
-		opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0, "--loopexec",
-		opt_g_loopexec, (void*) 1, "--loop", opt_g_loop, (void*) 1, "--daemon",
-		opt_g_daemonize, (void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc",
-		opt_shmipc, (void*) 1, "-l", opt_lastonlog_dump, (void*) 0,
-		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
-		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
-		opt_dupefile_dump, (void*) 0, "--dupefile", opt_dupefile, (void*) 1,
-		"--nowbuffer", opt_g_buffering, (void*) 0, "--raw", opt_raw_dump,
-		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
-		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
-		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
-		opt_compact_output_formatting, (void*) 0, "--batch",
-		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
-		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
-		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
-		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
-		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
-		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
-		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
-		(void*) 0, "-b", opt_g_nobuffering, (void*) 0, "--nobuffer",
-		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
-		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
-		print_help, (void*) 0, "--version", print_version, (void*) 0,
-		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+void *f_ref[] = { "--imatch", opt_g_imatch, (void*) 1, "--match", opt_g_match,
+		(void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4,
+		(void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2,
+		(void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl,
+		(void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file,
+		(void*) 0, "--log", opt_logging, (void*) 0, "--silent", opt_silent,
+		(void*) 0, "--loopexec", opt_g_loopexec, (void*) 1, "--loop",
+		opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
+		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+		opt_lastonlog_dump, (void*) 0, "--oneliners", opt_oneliner, (void*) 1,
+		"-o", opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog,
+		(void*) 1, "-i", opt_dupefile_dump, (void*) 0, "--dupefile",
+		opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering, (void*) 0,
+		"--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi, (void*) 1,
+		"--iregex", opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi,
+		(void*) 1, "--regex", opt_g_regex, (void*) 1, "-e", opt_rebuild,
+		(void*) 1, "--comp", opt_compact_output_formatting, (void*) 0,
+		"--batch", opt_batch_output_formatting, (void*) 0, "-y",
+		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
+		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
+		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
+		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
+		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
+		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
+		opt_dirlog_chk_dupe, (void*) 0, "-b", opt_g_nobuffering, (void*) 0,
+		"--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
+		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
+		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
+		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
 		(void*) 1, "-k", opt_g_nowrite, (void*) 0, "--nowrite", opt_g_nowrite,
@@ -1726,6 +1754,10 @@ int g_init(int argc, char **argv) {
 		gfl |= F_OPT_HAS_G_REGEX;
 	}
 
+	if (strlen(GLOB_MATCH)) {
+		gfl |= F_OPT_HAS_G_MATCH;
+	}
+
 	if (!updmode && (gfl & F_OPT_SFV)) {
 		updmode = UPD_MODE_RECURSIVE;
 		if (!(gfl & F_OPT_NOWRITE)) {
@@ -1821,6 +1853,11 @@ int g_init(int argc, char **argv) {
 	case UPD_MODE_DUMP_ONL:
 		g_print_stats("ONLINE USERS", F_DL_FOPEN_SHM, ON_SZ);
 		break;
+	case UPD_MODE_FORK:
+		if (p_argv_off) {
+			system(p_argv_off);
+		}
+		break;
 	case UPD_MODE_NOOP:
 		break;
 	default:
@@ -1867,7 +1904,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	updmode = 0;
-
 
 	return g_init(_p_macro_argc, p_argv);
 }
@@ -1944,7 +1980,7 @@ char **process_macro(void * arg, char **out) {
 
 	_p_macro_argc = c;
 
-	if (gfl & F_OPT_VERBOSE) {
+	if (gfl & F_OPT_VERBOSE2) {
 		print_str("MACRO: '%s': built argument string array with %d elements\n",
 				av.p_buf_1, c);
 	}
@@ -1986,8 +2022,9 @@ char **build_argv(char *args, size_t max, int *c) {
 
 			}
 
-			ptr[b_c] = (char*) calloc(255, 1);
-			g_strncpy(ptr[b_c], &args[l_p], (i_0 - l_p));
+			size_t ptr_b_l = i_0 - l_p;
+			ptr[b_c] = (char*) calloc(ptr_b_l + 1, 1);
+			g_strncpy(ptr[b_c], &args[l_p], ptr_b_l);
 			b_c++;
 			*c += 1;
 			//printf(":: %s\n", ptr[b_c]);
@@ -2563,15 +2600,33 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		return 1;
 	}
 
+	if ((gfl & F_OPT_HAS_G_MATCH) && mstr) {
+		size_t mstr_l = strlen(mstr);
+
+		int irl = strlen(GLOB_MATCH) != mstr_l, ir = strncmp(mstr, GLOB_MATCH,
+				mstr_l);
+
+		if ((glob_match_i_m && (ir || irl))
+				|| (!glob_match_i_m && (!ir && !irl))) {
+			if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+				print_str("WARNING: %s: match positive, ignoring this record\n",
+						mstr);
+			}
+			return 2;
+		}
+
+	}
+
 	if ((gfl & F_OPT_HAS_G_REGEX) && mstr
 			&& reg_match(GLOB_REGEX, mstr, glob_regex_flags) == glob_reg_i_m) {
 		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str(
-					"WARNING: %s: regex match positive, ignoring this record\n",
+					"WARNING: %s: REGEX match positive, ignoring this record\n",
 					mstr);
 		}
-		return 2;
+		return 3;
 	}
+
 	return 0;
 }
 
@@ -3836,7 +3891,9 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	sprintf(hdl->s_buffer, "%s.dtm", file);
 	sprintf(buffer, "%s.bk", file);
 
-	if (hdl->buffer_count && (exec_str || (gfl & F_OPT_HAS_G_REGEX))
+	if (hdl->buffer_count
+			&& (exec_str || (gfl & F_OPT_HAS_G_REGEX)
+					|| (gfl & F_OPT_HAS_G_MATCH))
 			&& updmode != UPD_MODE_RECURSIVE) {
 		g_setjmp(0, "rebuild_data_file(2)", NULL, NULL);
 		if (gfl & F_OPT_VERBOSE2) {
@@ -5285,9 +5342,10 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 							|| (r = call(data, buffer, buffer2, 255))) {
 						if (r) {
 							b_l_1 = strlen(buffer);
-							sprintf(&buffer_o[pi],"%c%s%c", 0x7B, buffer, 0x7D);
+							sprintf(&buffer_o[pi], "%c%s%c", 0x7B, buffer,
+									0x7D);
 
-							pi += b_l_1+2;
+							pi += b_l_1 + 2;
 						}
 						i++;
 						break;
