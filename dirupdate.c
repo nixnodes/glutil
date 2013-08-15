@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-2
+ * Version     : 1.2-3
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 typedef unsigned long long int ULLONG;
@@ -317,6 +317,9 @@ uLong crc32(uLong crc32, BYTE *buf, size_t len) {
 #define F_OPT_PS_LOGGING	0x800000
 #define F_OPT_TERM_ENUM		0x1000000
 #define F_OPT_HAS_G_MATCH	0x2000000
+#define F_OPT_HAS_M_ARG1	0x4000000
+#define F_OPT_HAS_M_ARG2	0x8000000
+#define F_OPT_HAS_M_ARG3	0x10000000
 
 #define F_MD_NOREAD			0x1
 
@@ -1039,6 +1042,28 @@ int opt_log_file(void *arg, int m) {
 	return 0;
 }
 
+char MACRO_ARG1[255] = { 0 };
+char MACRO_ARG2[255] = { 0 };
+char MACRO_ARG3[255] = { 0 };
+
+int opt_g_arg1(void *arg, int m) {
+	g_cpg(arg, MACRO_ARG1, m, 255);
+	gfl |= F_OPT_HAS_M_ARG1;
+	return 0;
+}
+
+int opt_g_arg2(void *arg, int m) {
+	g_cpg(arg, MACRO_ARG2, m, 255);
+	gfl |= F_OPT_HAS_M_ARG2;
+	return 0;
+}
+
+int opt_g_arg3(void *arg, int m) {
+	g_cpg(arg, MACRO_ARG3, m, 255);
+	gfl |= F_OPT_HAS_M_ARG3;
+	return 0;
+}
+
 int opt_glroot(void *arg, int m) {
 	g_cpg(arg, GLROOT, m, 255);
 	ofl |= F_OVRR_GLROOT;
@@ -1313,19 +1338,23 @@ int g_init(int argc, char **argv);
 
 char **build_argv(char *args, size_t max, int *c);
 
-void *prio_f_ref[] = { "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
-		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
-		opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
+void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
+		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "--arg3", opt_g_arg3,
+		(void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
+		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
+		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--imatch", opt_g_imatch, (void*) 1, "--match", opt_g_match,
-		(void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4,
-		(void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2,
-		(void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl,
-		(void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file,
-		(void*) 0, "--log", opt_logging, (void*) 0, "--silent", opt_silent,
-		(void*) 0, "--loopexec", opt_g_loopexec, (void*) 1, "--loop",
-		opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
+void *f_ref[] = { "--arg1", NULL, (void*) 1, "--arg2", NULL, (void*) 1,
+		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
+		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
+		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
+		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
+		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
+		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
+		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
+		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
 		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
 		opt_lastonlog_dump, (void*) 0, "--oneliners", opt_oneliner, (void*) 1,
 		"-o", opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog,
@@ -1887,20 +1916,20 @@ int main(int argc, char *argv[]) {
 
 	_p_macro_argc = argc;
 
-	if (!parse_args(argc, argv, prio_f_ref)) {
-		switch (updmode) {
-		case PRIO_UPD_MODE_MACRO:
-			;
-			char **ptr;
-			ptr = process_macro(prio_argv_off, NULL);
-			if (ptr) {
-				_p_macro_argv = p_argv = ptr;
-				gfl = F_OPT_WBUFFER;
-			} else {
-				g_shutdown(NULL);
-			}
-			break;
+	parse_args(argc, argv, prio_f_ref);
+
+	switch (updmode) {
+	case PRIO_UPD_MODE_MACRO:
+		;
+		char **ptr;
+		ptr = process_macro(prio_argv_off, NULL);
+		if (ptr) {
+			_p_macro_argv = p_argv = ptr;
+			gfl = F_OPT_WBUFFER;
+		} else {
+			g_shutdown(NULL);
 		}
+		break;
 	}
 
 	updmode = 0;
@@ -3044,10 +3073,12 @@ int process_opt(char *opt, void *arg, void *reference_array, int m) {
 			else {
 				if (ora->function) {
 					proc_opt_generic = ora->function;
-					if (proc_opt_generic)
+					if (proc_opt_generic) {
 						return proc_opt_generic(arg, m);
-				} else
+					}
+				} else {
 					return -4;
+				}
 			}
 		}
 
@@ -5006,7 +5037,7 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, SITEROOT);
 	} else if (!strcmp(match, "m:ftpdata")) {
 		sprintf(output, FTPDATA);
-	} else if (!strcmp(match, "m:logfile")) {
+	} else if ((gfl & F_OPT_PS_LOGGING) && !strcmp(match, "m:logfile")) {
 		sprintf(output, LOGFILE);
 	} else if (!strcmp(match, "m:PID")) {
 		sprintf(output, "%d", g_PID);
@@ -5014,6 +5045,12 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, "%.8X", (unsigned int) SHM_IPC);
 	} else if (!strcmp(match, "m:spec1")) {
 		sprintf(output, "%s", b_spec1);
+	} else if (!strcmp(match, "m:arg1")) {
+		sprintf(output, "%s", MACRO_ARG1);
+	} else if (!strcmp(match, "m:arg2")) {
+		sprintf(output, "%s", MACRO_ARG2);
+	} else if (!strcmp(match, "m:arg3")) {
+		sprintf(output, "%s", MACRO_ARG3);
 	} else {
 		return 1;
 	}
