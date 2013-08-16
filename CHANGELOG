@@ -17,7 +17,7 @@
  *   - Fixed --[pre|post]exec to process variables in command string (rev. 8)
  *   - Various fixes and improvements (rev. 8)
  *   - Users data (/users/*) fecthing with argument variables works fully (rev. 9)
- * 
+ *
  * v1.1
  *
  *   - Added --loglevel, --logfile, --silent, --ftime (see --help)
