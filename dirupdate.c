@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-8
+ * Version     : 1.2-9
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -206,6 +206,11 @@ struct g_handle {
 	int shmid;
 	struct shmid_ds ipcbuf;
 };
+
+typedef struct g_cfg_ref {
+	mda cfg;
+	char file[PATH_MAX];
+} cfg_r, *p_cfg_r;
 
 typedef struct sig_jmp_buf {
 	sigjmp_buf env, p_env;
@@ -691,7 +696,7 @@ int print_str(const char * volatile buf, ...) {
 	va_list al;
 	va_start(al, buf);
 
-	if ((gfl & F_OPT_PS_TIME) || (gfl & F_OPT_PS_LOGGING)) {
+	if ((gfl & F_OPT_PS_LOGGING) || (gfl & F_OPT_PS_TIME)) {
 		struct tm tm = *get_localtime();
 		sprintf(d_buffer_2, "[%.2u-%.2u-%.2u %.2u:%.2u:%.2u] %s",
 				(tm.tm_year + 1900) % 100, tm.tm_mon + 1, tm.tm_mday,
@@ -764,8 +769,6 @@ int glob_reg_i_m = 0;
 int glob_match_i_m = 0;
 mda glconf = { 0 };
 
-mda l_mdo_1 = { 0 };
-
 char b_spec1[PATH_MAX];
 
 void *_p_macro_argv = NULL;
@@ -776,6 +779,8 @@ uint32_t g_usleep = 0;
 
 void *p_argv_off = NULL;
 void *prio_argv_off = NULL;
+
+mda cfg_rf = { 0 };
 
 char *hpd_up =
 		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
@@ -1309,6 +1314,7 @@ typedef int __d_enum_cb(char *, unsigned char, void *);
 typedef int __d_ref_to_val(void *, char *, char *, size_t);
 typedef int __d_format_block(char *, ear *, char *);
 typedef uint64_t __d_dlfind(char *, int, uint32_t, void *);
+typedef pmda __d_cfg(pmda md, char * file);
 
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
 _d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog;
@@ -1324,6 +1330,7 @@ __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
 		dirlog_format_block;
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
+__d_cfg search_cfg_rf, register_cfg_rf;
 
 uint64_t file_crc32(char *, uint32_t *);
 
@@ -1345,6 +1352,9 @@ int update_records(char *, int);
 off_t read_file(char *, void *, size_t, off_t);
 int option_crc32(void *, int);
 
+int load_cfg(pmda md, char * file, uint32_t flags, pmda *res);
+int free_cfg_rf(pmda md);
+
 int reg_match(char *, char *, int);
 int delete_file(char *, unsigned char, void *);
 
@@ -1354,7 +1364,6 @@ size_t str_match(char *, char *);
 size_t exec_and_wait_for_output(char*, char*);
 
 p_md_obj get_cfg_opt(char *, pmda);
-int load_cfg(char *, pmda);
 
 uint64_t nukelog_find(char *, int, struct nukelog *);
 int parse_args(int argc, char **argv, void*fref_t[]);
@@ -1644,8 +1653,7 @@ int setup_sighandlers(void) {
 int g_shutdown(void *arg) {
 	g_cleanup(&g_act_1);
 	g_cleanup(&g_act_2);
-	free_cfg(&glconf);
-	free_cfg(&l_mdo_1);
+	free_cfg_rf(&cfg_rf);
 	if (NUKESTR) {
 		g_free(NUKESTR);
 	}
@@ -1730,6 +1738,8 @@ char *build_data_path(char *file, char *path, char *sd) {
 	return path;
 }
 
+#define F_LCONF_NORF 	0x1
+
 int g_init(int argc, char **argv) {
 	g_setjmp(0, "g_init", NULL, NULL);
 	int r;
@@ -1771,7 +1781,8 @@ int g_init(int argc, char **argv) {
 	}
 
 #ifdef GLCONF
-	if ((r = load_cfg(GLCONF, &glconf))) {
+
+	if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))) {
 		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
@@ -2004,7 +2015,7 @@ int g_init(int argc, char **argv) {
 	if ((gfl & F_OPT_LOOP) && !(gfl & F_OPT_KILL_GLOBAL)) {
 		g_cleanup(&g_act_1);
 		g_cleanup(&g_act_2);
-		free_cfg(&l_mdo_1);
+		free_cfg_rf(&cfg_rf);
 		sleep(loop_interval);
 		if (gfl & F_OPT_LOOPEXEC) {
 			g_do_exec(NULL, ref_to_val_generic, LOOPEXEC);
@@ -5133,13 +5144,15 @@ char *ref_to_val_get_cfgval(char *username, char *key, char *defpath) {
 
 	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, defpath, username);
 
-	if (load_cfg(buffer, &l_mdo_1)) {
+	pmda ret;
+
+	if (load_cfg(&cfg_rf, buffer, 0, &ret)) {
 		return NULL;
 	}
 
 	p_md_obj ptr;
 
-	if ((ptr = get_cfg_opt(key, &l_mdo_1))) {
+	if ((ptr = get_cfg_opt(key, ret))) {
 		return (char*) ptr->ptr;
 	}
 
@@ -5359,18 +5372,17 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	} else if (!strcmp(match, "download")) {
 		sprintf(output, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
-		void *ptr = ref_to_val_get_cfgval(data->uname, match,
-		DEFPATH_USERS);
-		if (ptr) {
-			sprintf(output, ptr);
-			return 0;
-		}
-		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS);
+		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS);
 		if (ptr) {
 			sprintf(output, ptr);
 			return 0;
 		}
 
+		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS);
+		if (ptr) {
+			sprintf(output, ptr);
+			return 0;
+		}
 	} else {
 		return 1;
 	}
@@ -5613,13 +5625,77 @@ int shmap(struct g_handle *hdl, key_t ipc) {
 	return 0;
 }
 
-int load_cfg(char *file, pmda md) {
+pmda search_cfg_rf(pmda md, char * file) {
+	g_setjmp(0, "search_cfg_rf", NULL, NULL);
+	p_md_obj ptr = md_first(md);
+	p_cfg_r ptr_c;
+	size_t fn_len = strlen(file);
+	while (ptr) {
+		ptr_c = (p_cfg_r) ptr->ptr;
+		if (ptr_c && !strncmp(ptr_c->file, file, fn_len)) {
+			return &ptr_c->cfg;
+		}
+		ptr = ptr->next;
+	}
+	return NULL;
+}
+
+pmda register_cfg_rf(pmda md, char *file) {
+	g_setjmp(0, "register_cfg_rf", NULL, NULL);
+	if (!md->count) {
+		if (md_init(md, 128)) {
+			return NULL;
+		}
+	}
+
+	pmda pmd = search_cfg_rf(md, file);
+
+	if (pmd) {
+		return pmd;
+	}
+
+	size_t fn_len = strlen(file);
+
+	if (fn_len >= PATH_MAX) {
+		return NULL;
+	}
+
+	p_cfg_r ptr_c = md_alloc(md, sizeof(cfg_r));
+
+	g_strncpy(ptr_c->file, file, fn_len);
+	md_init(&ptr_c->cfg, 256);
+
+	return &ptr_c->cfg;
+}
+
+int free_cfg_rf(pmda md) {
+	g_setjmp(0, "free_cfg_rf", NULL, NULL);
+	p_md_obj ptr = md_first(md);
+	p_cfg_r ptr_c;
+	while (ptr) {
+		ptr_c = (p_cfg_r) ptr->ptr;
+		free_cfg(&ptr_c->cfg);
+		ptr = ptr->next;
+	}
+
+	return md_g_free(md);
+}
+
+int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 	g_setjmp(0, "load_cfg", NULL, NULL);
 	int r = 0;
 	FILE *fh;
+	pmda md;
 
-	if (md_init(md, 256)) {
-		return 0;
+	if (flags & F_LCONF_NORF) {
+		md_init(pmd, 256);
+		md = pmd;
+	} else {
+		md = register_cfg_rf(pmd, file);
+	}
+
+	if (!md) {
+		return 1;
 	}
 
 	size_t f_sz = get_file_size(file);
@@ -5649,7 +5725,7 @@ int load_cfg(char *file, pmda md) {
 		}
 
 		pce = md_alloc(md, sizeof(cfg_h));
-		md_init(&pce->data, 8);
+		md_init(&pce->data, 32);
 		if ((rd = split_string_sp_tab(buffer, &pce->data)) < 1) {
 			md_g_free(&pce->data);
 			continue;
@@ -5660,6 +5736,10 @@ int load_cfg(char *file, pmda md) {
 
 	g_fclose(fh);
 	g_free(buffer);
+
+	if (res) {
+		*res = md;
+	}
 
 	return r;
 }
