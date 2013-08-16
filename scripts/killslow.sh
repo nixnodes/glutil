@@ -1,10 +1,10 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:killslow:{m:exe} -w --loop=3 --silent --daemon --loglevel=3 -exec "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} '{status}' '{exe}' {FLAGS}"
+#@MACRO:killslow:{m:exe} -w --loop=3 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}'"
 #
 ## Kills any transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --silent  --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} '{status}' '{exe}' {FLAGS}"
+## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}'"
 #
 ## Usage (macro): ./dirupdate -m killslow
 #
@@ -31,17 +31,6 @@ VERBOSE=0
 #
 ############################[ END OPTIONS ]##############################
 
-[ -z "$1" ] && exit 1
-[ -z "$2" ] && exit 1
-[ -z "$3" ] && exit 1
-[ -z "$4" ] && exit 1
-[ -z "$5" ] && exit 1
-[ -z "$6" ] && exit 1
-[ -z "$7" ] && exit 1
-[ -z "$8" ] && exit 1
-
-EXE=$7
-
 ! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
 
 ! [ -d "/tmp/du-ks" ] && mkdir -p /tmp/du-ks
@@ -49,7 +38,7 @@ EXE=$7
 BXFER=$1
 
 if [ $BXFER -lt 1 ]; then
-	[ -d /tmp/du-ks/$4 ] && rmdir /tmp/du-ks/$4 
+	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4 
 	exit 1
 fi
 
@@ -69,27 +58,38 @@ SHOULDKILL=0
 KILLED=0
 
 [ $DIFFT -gt $WAIT ] && [ $DRATE -lt $MINRATE ] && SLOW=1 && [ $VERBOSE -gt 0 ] && 
-        O="WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" && echo $O 
+        O="[$(date "+%T %D")] WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]\n"  
 
-if [ $SLOW -eq 1 ] && [ -d /tmp/du-ks/$4 ]; then
+if [ $SLOW -eq 1 ] && [ -f /tmp/du-ks/$4 ]; then
 	MT1=$(stat -c %Y /tmp/du-ks/$4) 
 	UNDERTIME=$[CT-MT1]
 	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
-		O="KILLING: Below speed limit for too long ($UNDERTIME secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" &&  
-		echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 &&  rmdir /tmp/du-ks/$4
+		O="[$(date "+%T %D")] KILLING: [PID: $4]: Below speed limit for too long ($UNDERTIME secs): $GLUSER [Rate: $DRATE/$MINRATE B/s]\n" &&  
+		SHOULDKILL=1 && kill $4 && KILLED=1 &&  rm /tmp/du-ks/$4
 	if [ $KILLED -eq 1 ]; then 
-    	g_FILE=$(echo $6 | cut -f 2- -d " ")
-    	[ -n "$g_FILE" ] && sleep 1 && $EXE -e dupefile --match "$g_FILE" --loglevel=6 -vvv
-    fi    	
+		FORCEKILL=0
+
+		i=0
+		while [ -n "$(ps -p $4 -o comm=)" ] && [ $i -lt 4 ]; do
+			i=$[i+1]
+			sleep 1
+		done
+
+		[ -n "$(ps -p $4 -o comm=)" ] && O="$O[$(date "+%T %D")] WARNING: process still running after $i seconds, killing by force\n" &&
+				kill -9 $4 && FORCEKILL=1
+
+    		g_FILE=$(echo $6 | cut -f 2- -d " ")
+    		[ -n "$g_FILE" ]  && $7 -e dupefile --match "$g_FILE" --loglevel=6 -vvv
+    	fi    	
 elif [ $SLOW -eq 1 ]; then
-	mkdir /tmp/du-ks/$4
-elif [ $SLOW -eq 0 ] && [ -d /tmp/du-ks/$4 ]; then
- 	rmdir /tmp/du-ks/$4
+	touch /tmp/du-ks/$4
+elif [ $SLOW -eq 0 ] && [ -f /tmp/du-ks/$4 ]; then
+ 	rm /tmp/du-ks/$4
 fi
 
-[ -n "$O" ] && [ -n "$LOG" ] && echo $O >> $LOG
+[ -n "$O" ] && echo -en $O && [ -n "$LOG" ] && echo -en $O >> $LOG
 
-[ $SHOULDKILL -eq 1 ] && [ $KILLED -eq 0 ] && echo "Sending SIGTERM to PID $4 ($GLUSER) failed!" && 
-	[ -d /tmp/du-ks/$4 ] && rmdir /tmp/du-ks/$4
+[ $SHOULDKILL -eq 1 ] && [ $KILLED -eq 0 ] && echo "[$(date "+%T %D")] ERROR: Sending SIGTERM to PID $4 ($GLUSER) failed!" && 
+	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
 
 exit 1
