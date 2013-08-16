@@ -19,6 +19,7 @@
  *   - Users data (/users/*) fecthing with argument variables works fully (rev. 9)
  *   - Bugfix: temp file was not unique, causing collisions when multiple
  *        processes running  at once in rebuild mode (rev. 10)
+ *   - Added {usroot} and {logroot} argument variables (rev. 11)
  *
  * v1.1
  *
