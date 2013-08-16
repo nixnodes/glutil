@@ -1,10 +1,10 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:killslow:{m:exe} -w --loop=3 --daemon --loglevel 3 --silent -exec "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {m:arg2}" {m:arg1}
+#@MACRO:killslow:{m:exe} -w --loop=3 --silent --daemon --loglevel=3 -exec "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} '{status}' '{exe}' {FLAGS}"
 #
 ## Kills any transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --daemon --loglevel 3 --silent -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS}"
+## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --silent  --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh {bxfer} {lupdtime} {user} {pid} {rate} '{status}' '{exe}' {FLAGS}"
 #
 ## Usage (macro): ./dirupdate -m killslow
 #
@@ -40,6 +40,8 @@ VERBOSE=0
 [ -z "$7" ] && exit 1
 [ -z "$8" ] && exit 1
 
+EXE=$7
+
 ! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
 
 ! [ -d "/tmp/du-ks" ] && mkdir -p /tmp/du-ks
@@ -74,7 +76,11 @@ if [ $SLOW -eq 1 ] && [ -d /tmp/du-ks/$4 ]; then
 	UNDERTIME=$[CT-MT1]
 	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
 		O="KILLING: Below speed limit for too long ($UNDERTIME secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" &&  
-		echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 && rmdir /tmp/du-ks/$4
+		echo $O && SHOULDKILL=1 && kill $4 && KILLED=1 &&  rmdir /tmp/du-ks/$4
+	if [ $KILLED -eq 1 ]; then 
+    	g_FILE=$(echo $6 | cut -f 2- -d " ")
+    	[ -n "$g_FILE" ] && sleep 1 && $EXE -e dupefile --match "$g_FILE" --loglevel=6 -vvv
+    fi    	
 elif [ $SLOW -eq 1 ]; then
 	mkdir /tmp/du-ks/$4
 elif [ $SLOW -eq 0 ] && [ -d /tmp/du-ks/$4 ]; then
