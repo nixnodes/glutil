@@ -4069,7 +4069,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	bzero(hdl->s_buffer, 4096);
-	sprintf(hdl->s_buffer, "%s.dtm", file);
+	sprintf(hdl->s_buffer, "%s.%d.dtm", file, getpid());
 	sprintf(buffer, "%s.bk", file);
 
 	if (hdl->buffer_count
