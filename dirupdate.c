@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-9
+ * Version     : 1.2-11
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 9
+#define VER_REVISION 11
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -807,25 +807,27 @@ char *hpd_up =
 				"                         Rebuilds existing data file, based on filtering rules (see --exec,\n"
 				"                           --[i]regex[i] and --[i]match\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
+				"\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
 				"  -k, --nowrite         Perform a dry run, executing normally except no writing is done\n"
 				"  -b, --nobuffer        Disable data file memory buffering\n"
+				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
 				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
 				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
 				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
-				"                           Used by itself, it goes into -r (fs rebuild) dry run (does not modify dirlog)\n"
+				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
-				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..>\n"
-				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{exe}|{glroot}\n"
+				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..\n"
+				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
+				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  --preexec <command>   Execute shell <command> before starting main procedure\n"
 				"  --postexec <command>  Execute shell <command> after main procedure finishes\n"
-				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
 				"  --imatch <match>      Inverted --match\n"
 				"  --regex <match>       Regex filter string, used during various operations\n"
@@ -839,8 +841,8 @@ char *hpd_up =
 				"  --loop <interval>     Loops the given 'Main option' operation\n"
 				"                           Use caution, some operations might fail when looped\n"
 				"                           This is usefull when running yourown scripts (--exec)\n"
-				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{ftpdata}|{PID}|{IPC}>\n"
-				"                        Execute command each loop\n"
+				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"                         Execute command each loop\n"
 				"  --loglevel <0-6>      Log verbosity level (1: exception only..6: everything)\n"
 				"                           Level 0 turns logging off\n"
 				"  --silent              Silent mode\n"
@@ -849,7 +851,7 @@ char *hpd_up =
 				"  --fork <command>      Fork process into background and execute <command>\n"
 				"  --arg[1-3] <argument> Set values that fill {m:arg[1-3]} variables\n"
 				"                           Used only with when running macros (-m)\n"
-				"  --sleep <seconds>     Wait <seconds> before running\n"
+				"  --[u]sleep <timeout>  Wait <seconds> before running\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -5229,6 +5231,12 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, "%.8X", (uint32_t) SHM_IPC);
 	} else if (!strcmp(match, "spec1")) {
 		sprintf(output, "%s", b_spec1);
+	} else if (!strcmp(match, "usroot")) {
+		sprintf(output, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_USERS);
+		remove_repeating_chars(output, 0x2F);
+	} else if (!strcmp(match, "logroot")) {
+		sprintf(output, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
+		remove_repeating_chars(output, 0x2F);
 	} else {
 		return 1;
 	}
