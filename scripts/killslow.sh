@@ -1,10 +1,10 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:killslow:{m:exe} -w --loop=3 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}'"
+#@MACRO:killslow:{m:exe} -w --loop=3 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
 ## Kills any transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}'"
+## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
 ## Usage (macro): ./dirupdate -m killslow
 #
@@ -29,7 +29,42 @@ LOG="/var/log/killslow.log"
 ## Verbose output
 VERBOSE=0
 #
+## Ban user after violating minimum speed limit (seconds)
+BANUSER=15 
 ############################[ END OPTIONS ]##############################
+
+ban_user() {	
+
+	[ -z "$1" ] && return 0	
+	[ -z "$4" ] && return 0	
+	if [ $2 -eq 0 ]; then
+		[ -z "$5" ] && return 0	
+		[ -z "$6" ] && return 0		
+		[ $BANUSER -lt 1 ] && return 0			
+		cat $4/$1 | grep -P "^FLAGS " | grep 6 > /dev/null && return 0	
+		[ -n "$LOG" ] && echo "[$(date "+%T %D")] DISABLE USER: $1 for $BANUSER seconds.." >> $LOG
+		cat $4/$1 | sed -r 's/^FLAGS .*$/&6/' > /tmp/ks.$1.$$.dtm &&	
+			cat /tmp/ks.$1.$$.dtm > $4/$1 &&			
+			$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"
+		rm /tmp/ks.$1.$$.dtm
+		
+		return 0
+	elif [ $2 -eq 1 ]; then
+		! cat $4/$1 | grep -P "^FLAGS " | grep 6 > /dev/null && return 0
+		[ -n "$LOG" ] && echo "[$(date "+%T %D")] ENABLE USER: $1" >> $LOG
+		g_FLAGS=$(cat $4/$1 | grep -P "^FLAGS " | tr -d '6') && 
+			cat $4/$1 | sed  "s/^FLAGS .*$/$g_FLAGS/" > /tmp/ks.$1.$$.dtm &&
+			cat /tmp/ks.$1.$$.dtm > $4/$1 &&
+			rm /tmp/ks.$1.$$.dtm	
+		
+	fi
+	return 0
+}
+if [[ "$1" == "ban" ]];then
+	ban_user $2 0 $3 $4 $5 $0 && exit 1
+elif [[ "$1" == "unban" ]];then
+	ban_user $2 1 $3 $4 && exit 1
+fi
 
 ! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
 
@@ -51,11 +86,12 @@ DIFFT=$[CT-LUPDT];
 
 #[ $DIFFT -lt 1 ] && exit 1
 
-echo "$GLUSER @ $DRATE B/s for $DIFFT seconds"
+#echo "$GLUSER @ $DRATE B/s for $DIFFT seconds"
 
 SLOW=0
 SHOULDKILL=0
 KILLED=0
+
 
 [ $DIFFT -gt $WAIT ] && [ $DRATE -lt $MINRATE ] && SLOW=1 && [ $VERBOSE -gt 0 ] && 
         O="[$(date "+%T %D")] WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]\n"  
@@ -65,10 +101,9 @@ if [ $SLOW -eq 1 ] && [ -f /tmp/du-ks/$4 ]; then
 	UNDERTIME=$[CT-MT1]
 	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
 		O="[$(date "+%T %D")] KILLING: [PID: $4]: Below speed limit for too long ($UNDERTIME secs): $GLUSER [Rate: $DRATE/$MINRATE B/s]\n" &&  
-		SHOULDKILL=1 && kill $4 && KILLED=1 &&  rm /tmp/du-ks/$4
+		SHOULDKILL=1 && ban_user $GLUSER 0 $8 ${10} $7 $0  && kill $4 && KILLED=1 &&  rm /tmp/du-ks/$4
 	if [ $KILLED -eq 1 ]; then 
-		FORCEKILL=0
-
+		FORCEKILL=0		
 		i=0
 		while [ -n "$(ps -p $4 -o comm=)" ] && [ $i -lt 4 ]; do
 			i=$[i+1]
@@ -78,9 +113,9 @@ if [ $SLOW -eq 1 ] && [ -f /tmp/du-ks/$4 ]; then
 		[ -n "$(ps -p $4 -o comm=)" ] && O="$O[$(date "+%T %D")] WARNING: process still running after $i seconds, killing by force\n" &&
 				kill -9 $4 && FORCEKILL=1
 
-    		g_FILE=$(echo $6 | cut -f 2- -d " ")
-    		[ -n "$g_FILE" ]  && $7 -e dupefile --match "$g_FILE" --loglevel=6 -vvv
-    	fi    	
+    	g_FILE=$(echo $6 | cut -f 2- -d " ")
+    	[ -n "$g_FILE" ]  && $7 -e dupefile --match "$g_FILE" --loglevel=6 -vvv
+    fi    	
 elif [ $SLOW -eq 1 ]; then
 	touch /tmp/du-ks/$4
 elif [ $SLOW -eq 0 ] && [ -f /tmp/du-ks/$4 ]; then
@@ -93,3 +128,4 @@ fi
 	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
 
 exit 1
+
