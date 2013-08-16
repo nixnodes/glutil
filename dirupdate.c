@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-7
+ * Version     : 1.2-8
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 2
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -301,6 +301,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_NOOP		0xC
 #define UPD_MODE_MACRO		0xD
 #define UPD_MODE_FORK		0xE
+#define UPD_MODE_BACKUP		0xF
 
 #define PRIO_UPD_MODE_MACRO 0x1001
 
@@ -335,6 +336,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_HAS_M_ARG3	0x10000000
 #define F_OPT_PREEXEC		0x20000000
 #define F_OPT_POSTEXEC		0x40000000
+#define F_OPT_NOBACKUP		0x80000000
 
 #define F_MD_NOREAD			0x1
 
@@ -744,7 +746,7 @@ char DUPEFILE[255] = { dupe_file };
 char LASTONLOG[255] = { last_on_log };
 char ONELINERS[255] = { oneliner_file };
 char FTPDATA[255] = { ftp_data };
-char LOOPEXEC[255] = { 0 };
+char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = REG_EXTENDED;
@@ -756,10 +758,7 @@ int loop_interval = 0;
 int loop_times = 0;
 char *NUKESTR = NULL;
 
-
-
 char *exec_str = NULL;
-char b_glob[MAX_EXEC_STR] = { 0 };
 
 int glob_reg_i_m = 0;
 int glob_match_i_m = 0;
@@ -773,6 +772,10 @@ void *_p_macro_argv = NULL;
 int _p_macro_argc = 0;
 
 uint32_t g_sleep = 0;
+uint32_t g_usleep = 0;
+
+void *p_argv_off = NULL;
+void *prio_argv_off = NULL;
 
 char *hpd_up =
 		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
@@ -878,7 +881,19 @@ void *g_pg(void *arg, int m) {
 	return ((char **) arg)[0];
 }
 
-void *prio_argv_off = NULL;
+char *g_pd(void *arg, int m, size_t l) {
+	char *buffer = (char*) g_pg(arg, m);
+	char *ptr = NULL;
+	size_t a_len = strlen(buffer);
+	if (!a_len || a_len >= l) {
+		return NULL;
+	}
+	if (a_len) {
+		ptr = (char*) calloc(a_len + 10, 1);
+		g_strncpy(ptr, buffer, a_len);
+	}
+	return ptr;
+}
 
 int prio_opt_g_macro(void *arg, int m) {
 	prio_argv_off = g_pg(arg, m);
@@ -940,9 +955,8 @@ int opt_g_loop(void *arg, int m) {
 }
 
 int opt_g_loopexec(void *arg, int m) {
-	g_cpg(arg, LOOPEXEC, m, 255);
-
-	if (strlen(LOOPEXEC)) {
+	LOOPEXEC = g_pd(arg, m, MAX_EXEC_STR);
+	if (LOOPEXEC) {
 		gfl |= F_OPT_LOOPEXEC;
 	}
 	return 0;
@@ -1024,27 +1038,23 @@ int opt_logging(void *arg, int m) {
 	return 0;
 }
 
+int opt_nobackup(void *arg, int m) {
+	gfl |= F_OPT_NOBACKUP;
+	return 0;
+}
+
+int opt_backup(void *arg, int m) {
+	p_argv_off = g_pg(arg, m);
+	updmode = UPD_MODE_BACKUP;
+	return 0;
+}
+
 int opt_exec(void *arg, int m) {
-	char *buffer;
-	if (m == 2) {
-		buffer = (char *) arg;
-	} else {
-		buffer = ((char **) arg)[0];
-	}
-	size_t blen = strlen(buffer);
-
-	if (!blen || blen + 1 > MAX_EXEC_STR) {
-		return 1;
-	}
-
-	blen++;
-	exec_str = calloc(blen, 1);
-	g_strncpy(exec_str, buffer, blen);
+	exec_str = g_pd(arg, m, MAX_EXEC_STR);
 	return 0;
 }
 
 int opt_shmipc(void *arg, int m) {
-
 	char *buffer = g_pg(arg, m);
 
 	if (!strlen(buffer)) {
@@ -1078,38 +1088,6 @@ int opt_g_arg1(void *arg, int m) {
 	return 0;
 }
 
-char *GLOBAL_PREEXEC = NULL;
-char *GLOBAL_POSTEXEC = NULL;
-
-int opt_g_preexec(void *arg, int m) {
-	char *buffer = (char*) g_pg(arg, m);
-	size_t a_len = strlen(buffer);
-	if (a_len >= MAX_EXEC_STR) {
-		return 0;
-	}
-	if (a_len) {
-		GLOBAL_PREEXEC = (char*) calloc(a_len + 10, 1);
-		g_strncpy(GLOBAL_PREEXEC, buffer, a_len);
-		gfl |= F_OPT_PREEXEC;
-	}
-	return 0;
-}
-
-int opt_g_postexec(void *arg, int m) {
-	char *buffer = (char*) g_pg(arg, m);
-	size_t a_len = strlen(buffer);
-	if (a_len >= MAX_EXEC_STR) {
-		return 0;
-	}
-	if (a_len) {
-		GLOBAL_POSTEXEC = (char*) calloc(a_len + 10, 1);
-		g_strncpy(GLOBAL_POSTEXEC, buffer, a_len);
-		gfl |= F_OPT_POSTEXEC;
-	}
-
-	return 0;
-}
-
 int opt_g_arg2(void *arg, int m) {
 	g_cpg(arg, MACRO_ARG2, m, 255);
 	gfl |= F_OPT_HAS_M_ARG2;
@@ -1119,6 +1097,25 @@ int opt_g_arg2(void *arg, int m) {
 int opt_g_arg3(void *arg, int m) {
 	g_cpg(arg, MACRO_ARG3, m, 255);
 	gfl |= F_OPT_HAS_M_ARG3;
+	return 0;
+}
+
+char *GLOBAL_PREEXEC = NULL;
+char *GLOBAL_POSTEXEC = NULL;
+
+int opt_g_preexec(void *arg, int m) {
+	GLOBAL_PREEXEC = g_pd(arg, m, MAX_EXEC_STR);
+	if (GLOBAL_PREEXEC) {
+		gfl |= F_OPT_PREEXEC;
+	}
+	return 0;
+}
+
+int opt_g_postexec(void *arg, int m) {
+	GLOBAL_POSTEXEC = g_pd(arg, m, MAX_EXEC_STR);
+	if (GLOBAL_POSTEXEC) {
+		gfl |= F_OPT_POSTEXEC;
+	}
 	return 0;
 }
 
@@ -1152,14 +1149,8 @@ int opt_oneliner(void *arg, int m) {
 	return 0;
 }
 
-void *p_argv_off = NULL;
-
 int opt_rebuild(void *arg, int m) {
-	if (m == 2) {
-		p_argv_off = arg;
-	} else {
-		p_argv_off = (void*) ((char **) arg)[0];
-	}
+	p_argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_REBUILD;
 	return 0;
 }
@@ -1178,6 +1169,11 @@ int opt_g_regexi(void *arg, int m) {
 
 int opt_g_sleep(void *arg, int m) {
 	g_sleep = atoi(g_pg(arg, m));
+	return 0;
+}
+
+int opt_g_usleep(void *arg, int m) {
+	g_usleep = atoi(g_pg(arg, m));
 	return 0;
 }
 
@@ -1267,7 +1263,9 @@ int opt_oneliner_dump(void *arg, int m) {
 int print_help(void *arg, int m) {
 	print_str(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
 	VER_STR, ARCH ? "x86_64" : "i686");
-	updmode = UPD_MODE_NOOP;
+	if (m != -1) {
+		updmode = UPD_MODE_NOOP;
+	}
 	return 0;
 }
 
@@ -1284,14 +1282,10 @@ int opt_dirlog_chk_dupe(void *arg, int m) {
 }
 
 int opt_membuffer_limit(void *arg, int m) {
-	char *buffer;
-	if (m == 2) {
-		buffer = (char *) arg;
-	} else {
-		buffer = ((char **) arg)[0];
-	}
-	if (!buffer)
+	char *buffer = g_pg(arg, m);
+	if (!buffer) {
 		return 1;
+	}
 	long long int l_buffer = atoll(buffer);
 	if (l_buffer > 1024) {
 		db_max_size = l_buffer;
@@ -1401,6 +1395,8 @@ int g_init(int argc, char **argv);
 
 char **build_argv(char *args, size_t max, int *c);
 
+char *g_dgetf(char *str);
+
 void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
 		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "--arg3", opt_g_arg3,
 		(void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
@@ -1408,47 +1404,49 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
 		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--postexec", opt_g_postexec, (void*) 1, "--preexec",
-		opt_g_preexec, (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "--arg1",
-		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "--arg3", NULL, (void*) 1,
-		"-m", NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
-		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
-		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
-		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
-		opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
-		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "--silent",
-		opt_silent, (void*) 0, "--loopexec", opt_g_loopexec, (void*) 1,
-		"--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0,
-		"-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
-		opt_lastonlog_dump, (void*) 0, "--oneliners", opt_oneliner, (void*) 1,
-		"-o", opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog,
-		(void*) 1, "-i", opt_dupefile_dump, (void*) 0, "--dupefile",
-		opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering, (void*) 0,
-		"--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi, (void*) 1,
-		"--iregex", opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi,
-		(void*) 1, "--regex", opt_g_regex, (void*) 1, "-e", opt_rebuild,
-		(void*) 1, "--comp", opt_compact_output_formatting, (void*) 0,
-		"--batch", opt_batch_output_formatting, (void*) 0, "-y",
-		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
-		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
-		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
-		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
-		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
-		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
-		opt_dirlog_chk_dupe, (void*) 0, "-b", opt_g_nobuffering, (void*) 0,
-		"--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
-		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
-		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
-		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+void *f_ref[] = { "--backup", opt_backup, (void*) 1, "--postexec",
+		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
+		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
+		"--arg1", NULL, (void*) 1, "--arg2", NULL, (void*) 1, "--arg3", NULL,
+		(void*) 1, "-m", NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1,
+		"--match", opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1,
+		"-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0,
+		"-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0,
+		"--loglevel", opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime,
+		(void*) 0, "--logfile", opt_log_file, (void*) 0, "--log", opt_logging,
+		(void*) 0, "--silent", opt_silent, (void*) 0, "--loopexec",
+		opt_g_loopexec, (void*) 1, "--loop", opt_g_loop, (void*) 1, "--daemon",
+		opt_g_daemonize, (void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc",
+		opt_shmipc, (void*) 1, "-l", opt_lastonlog_dump, (void*) 0,
+		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
+		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
+		opt_dupefile_dump, (void*) 0, "--dupefile", opt_dupefile, (void*) 1,
+		"--nowbuffer", opt_g_buffering, (void*) 0, "--raw", opt_raw_dump,
+		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
+		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
+		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
+		opt_compact_output_formatting, (void*) 0, "--batch",
+		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
+		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
+		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
+		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
+		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
+		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
+		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
+		(void*) 0, "-b", opt_g_nobuffering, (void*) 0, "--nobuffer",
+		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
+		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
+		print_help, (void*) 0, "--version", print_version, (void*) 0,
+		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
 		(void*) 1, "-k", opt_g_nowrite, (void*) 0, "--nowrite", opt_g_nowrite,
 		(void*) 0, "--sfv", opt_g_sfv, (void*) 0, "--crc32", option_crc32,
-		(void*) 1, "--backup", NULL, (void*) 1, "-c", opt_dirlog_check,
-		(void*) 0, "--check", opt_dirlog_check, (void*) 0, "--dump",
-		opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0, "-f",
-		opt_g_force, (void*) 0, "-s", opt_update_single_record, (void*) 1, "-r",
-		opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
+		(void*) 1, "--nobackup", opt_nobackup, (void*) 0, "-c",
+		opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
+		"--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
+		"-f", opt_g_force, (void*) 0, "-s", opt_update_single_record, (void*) 1,
+		"-r", opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (md->objects) {
@@ -1668,6 +1666,14 @@ int g_shutdown(void *arg) {
 		g_free(GLOBAL_POSTEXEC);
 	}
 
+	if (LOOPEXEC) {
+		g_free(LOOPEXEC);
+	}
+
+	if (exec_str) {
+		g_free(exec_str);
+	}
+
 	_p_macro_argc = 0;
 
 	exit(EXITVAL);
@@ -1740,7 +1746,7 @@ int g_init(int argc, char **argv) {
 
 	r = parse_args(argc, argv, f_ref);
 	if (r == -2 || r == -1) {
-		print_help(NULL, 0);
+		print_help(NULL, -1);
 		return 4;
 	}
 
@@ -1756,11 +1762,8 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	if (g_sleep) {
-		sleep(g_sleep);
-	}
-
-	if (updmode != UPD_MODE_NOOP && !(gfl & F_OPT_MODE_RAWDUMP)) {
+	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_MODE_RAWDUMP)
+			&& !(gfl & F_OPT_FORMAT_COMP)) {
 		print_str("INIT: dirupdate %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
@@ -1913,15 +1916,14 @@ int g_init(int argc, char **argv) {
 		print_str("NOTICE: performing dry run, no writing will be done\n");
 	}
 
-	if (gfl & F_OPT_PREEXEC) {
+	if (updmode && (gfl & F_OPT_PREEXEC)) {
 		print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
-		if (system(GLOBAL_PREEXEC) == -1) {
+		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC) == -1) {
 			print_str("ERROR: POSTEXEC failed: '%s'\n", GLOBAL_PREEXEC);
 		}
 	}
 
 	if (gfl & F_OPT_DAEMONIZE) {
-
 		if (!(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str("NOTICE: forking into background.. [PID: %d]\n",
 					getpid());
@@ -1929,9 +1931,25 @@ int g_init(int argc, char **argv) {
 		daemon(0, 0);
 	}
 
-	enter:
+	if (g_usleep) {
+		usleep(g_usleep);
+	} else if (g_sleep) {
+		sleep(g_sleep);
+	}
+
+	uint64_t mloop_c = 0;
+	char m_b1[128];
+	int m_f = 0x1;
 
 	g_setjmp(0, "main(start)", NULL, NULL);
+
+	enter:
+
+	if ((m_f & 0x1)) {
+		sprintf(m_b1, "main(loop) [c:%llu]", (long long unsigned int) mloop_c);
+		g_setjmp(0, m_b1, NULL, NULL);
+		m_f ^= 0x1;
+	}
 
 	switch (updmode) {
 	case UPD_MODE_RECURSIVE:
@@ -1972,10 +1990,14 @@ int g_init(int argc, char **argv) {
 			system(p_argv_off);
 		}
 		break;
+	case UPD_MODE_BACKUP:
+		data_backup_records(g_dgetf(p_argv_off));
+		break;
 	case UPD_MODE_NOOP:
 		break;
 	default:
-		print_str("ERROR: no mode specified (see --help)\n");
+		print_str("ERROR: no mode specified\n");
+		print_help(NULL, -1);
 		break;
 	}
 
@@ -1987,12 +2009,13 @@ int g_init(int argc, char **argv) {
 		if (gfl & F_OPT_LOOPEXEC) {
 			g_do_exec(NULL, ref_to_val_generic, LOOPEXEC);
 		}
+		mloop_c++;
 		goto enter;
 	}
 
-	if (gfl & F_OPT_POSTEXEC) {
+	if (updmode && (gfl & F_OPT_POSTEXEC)) {
 		print_str("POSTEXEC: running: '%s'\n", GLOBAL_POSTEXEC);
-		if (system(GLOBAL_POSTEXEC) == -1) {
+		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_POSTEXEC) == -1) {
 			print_str("ERROR: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
 		}
 	}
@@ -2025,7 +2048,10 @@ int main(int argc, char *argv[]) {
 
 	updmode = 0;
 
-	return g_init(_p_macro_argc, p_argv);
+	g_init(_p_macro_argc, p_argv);
+	g_shutdown(NULL);
+
+	return EXITVAL;
 }
 
 #define F_AV_RETURN_STRING 	0x1
@@ -2164,7 +2190,6 @@ char **build_argv(char *args, size_t max, int *c) {
 			}
 			l_p = i_0;
 			if (sp_1 == sp_2) {
-				//printf("::--:: %x|-|%x|%x\n", args[i_0 - 1], sp_1, sp_2);
 				sp_1 = 0x20;
 				sp_2 = 0x22;
 				while (args[i_0] == sp_1 || args[i_0] == sp_2) {
@@ -2172,7 +2197,6 @@ char **build_argv(char *args, size_t max, int *c) {
 				}
 				l_p = i_0;
 			} else {
-				//printf("--:: %x|-|%x|%x\n", args[i_0 - 1], sp_1, sp_2);
 				if (args[i_0 - ii_l] == 0x22) {
 					sp_1 = 0x22;
 					sp_2 = 0x22;
@@ -2191,6 +2215,24 @@ char **build_argv(char *args, size_t max, int *c) {
 	return ptr;
 }
 
+char *g_dgetf(char *str) {
+	if (!str) {
+		return NULL;
+	}
+	if (!strncmp(str, "dirlog", 6)) {
+		return DIRLOG;
+	} else if (!strncmp(str, "nukelog", 7)) {
+		return NUKELOG;
+	} else if (!strncmp(str, "dupefile", 8)) {
+		return DUPEFILE;
+	} else if (!strncmp(str, "lastonlog", 9)) {
+		return LASTONLOG;
+	} else if (!strncmp(str, "oneliners", 9)) {
+		return ONELINERS;
+	}
+	return NULL;
+}
+
 int rebuild(void *arg) {
 	g_setjmp(0, "rebuild", NULL, NULL);
 	if (!arg) {
@@ -2199,20 +2241,8 @@ int rebuild(void *arg) {
 	}
 
 	char *a_ptr = (char*) arg;
-	char *datafile = NULL;
+	char *datafile = g_dgetf(a_ptr);
 	struct g_handle hdl = { 0 };
-
-	if (!strncmp(a_ptr, "dirlog", 6)) {
-		datafile = DIRLOG;
-	} else if (!strncmp(a_ptr, "nukelog", 7)) {
-		datafile = NUKELOG;
-	} else if (!strncmp(a_ptr, "dupefile", 8)) {
-		datafile = DUPEFILE;
-	} else if (!strncmp(a_ptr, "lastonlog", 9)) {
-		datafile = LASTONLOG;
-	} else if (!strncmp(a_ptr, "oneliners", 9)) {
-		datafile = ONELINERS;
-	}
 
 	if (datafile) {
 		if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &hdl)) {
@@ -2476,8 +2506,24 @@ int data_backup_records(char *file) {
 	g_setjmp(0, "data_backup_records", NULL, NULL);
 	int r;
 
-	if ((gfl & F_OPT_NOWRITE) || !get_file_size(file))
+	if (!file) {
+		print_str("ERROR: null argument passed (this is likely a bug)\n");
+		return -1;
+	}
+
+	if ((gfl & F_OPT_NOWRITE) || (gfl & F_OPT_NOBACKUP)) {
 		return 0;
+	}
+
+	if (file_exists(file)) {
+		print_str("WARNING: %s: data file doesn't exist\n", file);
+		return 0;
+	}
+
+	if (!(r = get_file_size(file)) && (gfl & F_OPT_VERBOSE)) {
+		print_str("WARNING: %s: refusing to backup 0-byte data file\n", file);
+		return 0;
+	}
 
 	char buffer[255];
 
@@ -2516,8 +2562,6 @@ int dirlog_check_records(void) {
 	}
 
 	if (gfl & F_OPT_FIX) {
-		/*mode = "r+";
-		 flags = F_DL_FOPEN_FILE;*/
 		data_backup_records(DIRLOG);
 	}
 
@@ -4381,7 +4425,7 @@ int g_map_shm(struct g_handle *hdl, key_t ipc) {
 	int r = load_data_md(&hdl->buffer, NULL, hdl);
 
 	if (!hdl->buffer_count) {
-		if ((gfl & F_OPT_VERBOSE) && r != 1002) {
+		if (((gfl & F_OPT_VERBOSE) && r != 1002) || (gfl & F_OPT_VERBOSE4)) {
 			print_str(
 					"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
 					MSG_DEF_SHM, (uint32_t) hdl->buffer_count,
@@ -4603,12 +4647,13 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 	g_setjmp(0, "g_do_exec", NULL, NULL);
 
 	if (callback) {
+		char b_glob[MAX_EXEC_STR] = { 0 };
 		char *e_str;
 		if (ex_str) {
 			e_str = ex_str;
 		} else {
 			if (!exec_str) {
-				return 5;
+				return -1;
 			}
 			e_str = exec_str;
 		}
@@ -4621,11 +4666,11 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 		return system(b_glob);
 	} else if (ex_str) {
 		if (strlen(ex_str) > MAX_EXEC_STR) {
-			return 3;
+			return -1;
 		}
 		return system(ex_str);
 	} else {
-		return 4;
+		return -1;
 	}
 }
 
@@ -5449,7 +5494,8 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 	}
 	size_t b_l_1;
 	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
-			(char*) calloc(MAX_EXEC_STR, 1);
+			(char*) calloc(
+			MAX_EXEC_STR, 1);
 	int i, i2, pi, r;
 
 	for (i = 0, pi = 0; i < blen2; i++, pi++) {
