@@ -1396,7 +1396,7 @@ int shmap(struct g_handle *, key_t);
 int g_map_shm(struct g_handle *, key_t);
 
 char *build_data_path(char *, char *, char *);
-char *ref_to_val_get_cfgval(char *, char *, char *);
+void *ref_to_val_get_cfgval(char *, char *, char *, int, char *, size_t);
 
 int get_relative_path(char *, char *, char *);
 
@@ -2283,6 +2283,37 @@ int rebuild(void *arg) {
 	return 0;
 }
 
+typedef struct ___ch_dp {
+	int nres;
+	char **res;
+} _ch_dp, *__ch_dp;
+/*
+ int dirlog_check_dupe2(void) {
+ if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
+ return 1;
+ }
+
+ if (!g_act_1.buffer.count) {
+ return 2;
+ }
+
+ __ch_dp res_d = calloc(g_act_1.buffer.count, sizeof(_ch_dp));
+
+ int res_d_i = 0;
+ p_md_obj ptr = NULL;
+ struct dirlog *d_ptr = NULL;
+
+ while (ptr) {
+ d_ptr = (struct dirlog *) ptr->ptr;
+
+
+
+ ptr = ptr->next;
+ }
+
+ return 0;
+ }
+ */
 int dirlog_check_dupe(void) {
 	g_setjmp(0, "dirlog_check_dupe", NULL, NULL);
 	struct dirlog buffer, buffer2;
@@ -2294,82 +2325,80 @@ int dirlog_check_dupe(void) {
 	}
 	off_t st1, st2;
 	p_md_obj pmd_st1 = NULL, pmd_st2 = NULL;
-
+	g_setjmp(0, "dirlog_check_dupe(loop)", NULL, NULL);
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
-		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)", NULL,
-			NULL);
+		//if (!sigsetjmp(g_sigjmp.env, 1)) {
+
+		if (gfl & F_OPT_KILL_GLOBAL) {
+			break;
+		}
+		if (g_act_1.buffer.pos && (g_act_1.buffer.pos->flags & F_MD_NOREAD)) {
+			continue;
+		}
+		if (g_bmatch(d_ptr, &g_act_1)) {
+			continue;
+		}
+		g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)",
+		NULL,
+		NULL);
+		s_buffer = strdup(d_ptr->dirname);
+		s_pb = basename(s_buffer);
+		size_t s_pb_l = strlen(s_pb);
+		if (s_pb_l < 4) {
+			goto end_loop1;
+		}
+		st1 = g_act_1.offset;
+		//g_act_1.offset = 0;
+		if (g_act_1.buffer_count) {
+			st2 = g_act_1.buffer_count;
+			pmd_st1 = g_act_1.buffer.r_pos;
+			pmd_st2 = g_act_1.buffer.pos;
+		} else {
+			st2 = (off_t) ftello(g_act_1.fh);
+		}
+		//gh_rewind(&g_act_1);
+		g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)",
+		NULL,
+		NULL);
+		int ch = 0;
+		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1,
+		DL_SZ))) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
-			if (g_act_1.buffer.pos
-					&& (g_act_1.buffer.pos->flags & F_MD_NOREAD)) {
-				continue;
-			}
-			if (g_bmatch(d_ptr, &g_act_1)) {
-				continue;
-			}
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)",
-			NULL,
-			NULL);
-			s_buffer = strdup(d_ptr->dirname);
-			s_pb = basename(s_buffer);
-			size_t s_pb_l = strlen(s_pb);
-			if (s_pb_l < 4) {
-				goto end_loop1;
-			}
-			st1 = g_act_1.offset;
-			g_act_1.offset = 0;
-			if (g_act_1.buffer_count) {
-				st2 = g_act_1.buffer_count;
-				pmd_st1 = g_act_1.buffer.r_pos;
-				pmd_st2 = g_act_1.buffer.pos;
-			} else {
-				st2 = (off_t) ftello(g_act_1.fh);
-			}
-			gh_rewind(&g_act_1);
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)",
-			NULL,
-			NULL);
-			int ch = 0;
-			while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1,
-			DL_SZ))) {
-				if (gfl & F_OPT_KILL_GLOBAL) {
-					break;
+			ss_buffer = strdup(dd_ptr->dirname);
+			ss_pb = basename(ss_buffer);
+			size_t ss_pb_l = strlen(ss_pb);
+
+			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)
+					&& strncmp(d_ptr->dirname, dd_ptr->dirname,
+							strlen(d_ptr->dirname))) {
+				if (g_act_1.buffer_count && g_act_1.buffer.pos) {
+					g_act_1.buffer.pos->flags |= F_MD_NOREAD;
 				}
-				ss_buffer = strdup(dd_ptr->dirname);
-				ss_pb = basename(ss_buffer);
-				size_t ss_pb_l = strlen(ss_pb);
-
-				if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)
-						&& strncmp(d_ptr->dirname, dd_ptr->dirname,
-								strlen(d_ptr->dirname))) {
-					if (g_act_1.buffer_count && g_act_1.buffer.pos) {
-						g_act_1.buffer.pos->flags |= F_MD_NOREAD;
-					}
-					if (!ch) {
-						print_str("DUPE %s\n", d_ptr->dirname);
-					}
-					print_str("DUPE %s\n", dd_ptr->dirname);
-					ch++;
+				if (!ch) {
+					print_str("DUPE %s\n", d_ptr->dirname);
 				}
-				g_free(ss_buffer);
+				print_str("DUPE %s\n", dd_ptr->dirname);
+				ch++;
 			}
-
-			g_act_1.offset = st1;
-			if (g_act_1.buffer_count) {
-				g_act_1.buffer.offset = st2;
-				g_act_1.buffer.r_pos = pmd_st1;
-				g_act_1.buffer.pos = pmd_st2;
-			} else {
-				fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
-			}
-			end_loop1:
-
-			g_free(s_buffer);
+			g_free(ss_buffer);
 		}
 
+		g_act_1.offset = st1;
+		if (g_act_1.buffer_count) {
+			g_act_1.buffer.offset = st2;
+			g_act_1.buffer.r_pos = pmd_st1;
+			g_act_1.buffer.pos = pmd_st2;
+		} else {
+			fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
+		}
+		end_loop1:
+
+		g_free(s_buffer);
 	}
+
+	//}
 	return 0;
 }
 
@@ -5141,7 +5170,13 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 	return read;
 }
 
-char *ref_to_val_get_cfgval(char *username, char *key, char *defpath) {
+#define F_CFGV_BUILD_FULL_STRING	0x1
+#define F_CFGV_RETURN_MDA_OBJECT	0x2
+
+#define MAX_CFGV_RES_LENGTH			50000
+
+void *ref_to_val_get_cfgval(char *username, char *key, char *defpath, int flags,
+		char *out, size_t max) {
 	char buffer[4096];
 
 	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, defpath, username);
@@ -5155,6 +5190,27 @@ char *ref_to_val_get_cfgval(char *username, char *key, char *defpath) {
 	p_md_obj ptr;
 
 	if ((ptr = get_cfg_opt(key, ret))) {
+		if (flags & F_CFGV_RETURN_MDA_OBJECT) {
+			return ptr;
+		}
+		if (flags & F_CFGV_BUILD_FULL_STRING) {
+			size_t o_w = 0, w;
+			while (ptr) {
+				w = strlen((char*) ptr->ptr);
+				if (o_w + w + 1 < max) {
+					g_memcpy(&out[o_w], ptr->ptr, w);
+					o_w += w;
+					if (ptr->next) {
+						memset(&out[o_w], 0x20, 1);
+						o_w++;
+					}
+				} else {
+					break;
+				}
+				ptr = ptr->next;
+			}
+			return out;
+		}
 		return (char*) ptr->ptr;
 	}
 
@@ -5380,17 +5436,24 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	} else if (!strcmp(match, "download")) {
 		sprintf(output, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
-		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS);
+		char *buffer = calloc(max_size, 1);
+		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS,
+		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr) {
-			sprintf(output, ptr);
+			sprintf(output, (char*) ptr);
+			g_free(buffer);
 			return 0;
 		}
 
-		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS);
+		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS,
+		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr) {
-			sprintf(output, ptr);
+			sprintf(output, (char*) ptr);
+			g_free(buffer);
 			return 0;
 		}
+		g_free(buffer);
+		return 1;
 	} else {
 		return 1;
 	}
@@ -5476,12 +5539,14 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		}
 		sprintf(output, "%u", kbps);
 	} else if (!is_char_uppercase(match[0])) {
+		char *buffer = calloc(max_size + 10, 1);
 		void *ptr = ref_to_val_get_cfgval(data->username, match,
-		DEFPATH_USERS);
+				DEFPATH_USERS, F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr) {
 			sprintf(output, ptr);
-			return 0;
 		}
+		g_free(buffer);
+		return 0;
 	} else {
 		return 1;
 	}
