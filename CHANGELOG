@@ -2,6 +2,8 @@
  *
  *   - Renamed project to 'glutil'
  *   - Can extract tokens from user/group files (e.g. {WKUP:3} {ALLUP:1} etc..)
+ *   - Prints users (-t) / groups (-g), extracts any data from users
+ *       as --exec vars, filters apply (rev. 1)
  *
  * v1.2
  *
