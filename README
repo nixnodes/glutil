@@ -26,20 +26,20 @@
  *
  *  - Compile:
  *
- *      cp dirupdate.c /<glroot>/bin/sources
+ *      cp glutil.c /<glroot>/bin/sources
  *      cd /<glroot>/bin/sources
- *      vi dirupdate.c  (set proper paths in upper variables)
- *      cc dirupdate.c -o ../dirupdate -Wall -O3
+ *      vi glutil.c  (set proper paths in upper variables)
+ *      cc glutil.c -o ../glutil -Wall -O3
  *
  *      Some warnings might pop up (should be safe)
  *      glconf.h (found in /bin/sources) is needed to compile properly,
  *       make sure it is in the same folder or change it's location in 
- *       dirupdate.c 
+ *       glutil.c 
  *
- * 'dirupdate.folders' file (filesystem based rebuild only):
+ * 'glutil.folders' file (filesystem based rebuild only):
  *
  *  To avoid importing junk data into dirlog, a file defined by 'du_fld' macro
- *  in dirupdate.c (or at runtime with --folders argument) can be used when 
+ *  in glutil.c (or at runtime with --folders argument) can be used when 
  *  running in recursive mode (-r).
  *  Each line should contain a relative to site root PATH (no / in front or
  *  back required) and depth to scan at, separated by space.
