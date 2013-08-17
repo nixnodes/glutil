@@ -20,6 +20,7 @@
  *   - Bugfix: temp file was not unique, causing collisions when multiple
  *        processes running  at once in rebuild mode (rev. 10)
  *   - Added {usroot} and {logroot} argument variables (rev. 11)
+ *   - Fixed user/group file processing to dump whole lines (argument variables) (rev. 12)
  *
  * v1.1
  *
