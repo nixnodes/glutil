@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : dirupdate
  * Authors     : nymfo, siska
- * Version     : 1.2-11
+ * Version     : 1.3
  * Description : glFTPd binary log tool
  * ============================================================================
  */
@@ -111,8 +111,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 2
-#define VER_REVISION 11
+#define VER_MINOR 3
+#define VER_REVISION 0
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1365,7 +1365,7 @@ int write_file_text(char *, char *);
 size_t str_match(char *, char *);
 size_t exec_and_wait_for_output(char*, char*);
 
-p_md_obj get_cfg_opt(char *, pmda);
+p_md_obj get_cfg_opt(char *, pmda, pmda*);
 
 uint64_t nukelog_find(char *, int, struct nukelog *);
 int parse_args(int argc, char **argv, void*fref_t[]);
@@ -1793,13 +1793,13 @@ int g_init(int argc, char **argv) {
 				(int) glconf.offset);
 	}
 
-	p_md_obj ptr = get_cfg_opt("ipc_key", &glconf);
+	p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
 
 	if (ptr && !(ofl & F_OVRR_IPC)) {
 		SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
 	}
 
-	ptr = get_cfg_opt("rootpath", &glconf);
+	ptr = get_cfg_opt("rootpath", &glconf, NULL);
 
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
 		bzero(GLROOT, 255);
@@ -1809,7 +1809,7 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	ptr = get_cfg_opt("min_homedir", &glconf);
+	ptr = get_cfg_opt("min_homedir", &glconf, NULL);
 
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
 		bzero(SITEROOT_N, 255);
@@ -1819,7 +1819,7 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	ptr = get_cfg_opt("ftp-data", &glconf);
+	ptr = get_cfg_opt("ftp-data", &glconf, NULL);
 
 	if (ptr) {
 		bzero(FTPDATA, 255);
@@ -1829,7 +1829,7 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	ptr = get_cfg_opt("nukedir_style", &glconf);
+	ptr = get_cfg_opt("nukedir_style", &glconf, NULL);
 
 	if (ptr) {
 		NUKESTR = calloc(255, 1);
@@ -2287,33 +2287,31 @@ typedef struct ___ch_dp {
 	int nres;
 	char **res;
 } _ch_dp, *__ch_dp;
-/*
- int dirlog_check_dupe2(void) {
- if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
- return 1;
- }
 
- if (!g_act_1.buffer.count) {
- return 2;
- }
+int dirlog_check_dupe2(void) {
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
+		return 1;
+	}
 
- __ch_dp res_d = calloc(g_act_1.buffer.count, sizeof(_ch_dp));
+	if (!g_act_1.buffer.count) {
+		return 2;
+	}
 
- int res_d_i = 0;
- p_md_obj ptr = NULL;
- struct dirlog *d_ptr = NULL;
+	__ch_dp res_d = calloc(g_act_1.buffer.count, sizeof(_ch_dp));
 
- while (ptr) {
- d_ptr = (struct dirlog *) ptr->ptr;
+	int res_d_i = 0;
+	p_md_obj ptr = NULL;
+	struct dirlog *d_ptr = NULL;
 
+	while (ptr) {
+		d_ptr = (struct dirlog *) ptr->ptr;
 
+		ptr = ptr->next;
+	}
 
- ptr = ptr->next;
- }
+	return 0;
+}
 
- return 0;
- }
- */
 int dirlog_check_dupe(void) {
 	g_setjmp(0, "dirlog_check_dupe", NULL, NULL);
 	struct dirlog buffer, buffer2;
@@ -2328,7 +2326,6 @@ int dirlog_check_dupe(void) {
 	g_setjmp(0, "dirlog_check_dupe(loop)", NULL, NULL);
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		//if (!sigsetjmp(g_sigjmp.env, 1)) {
-
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			break;
 		}
@@ -5172,11 +5169,15 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 
 #define F_CFGV_BUILD_FULL_STRING	0x1
 #define F_CFGV_RETURN_MDA_OBJECT	0x2
+#define F_CFGV_RETURN_TOKEN_EX		0x4
+
+#define F_CFGV_MODES				(F_CFGV_BUILD_FULL_STRING|F_CFGV_RETURN_MDA_OBJECT|F_CFGV_RETURN_TOKEN_EX)
 
 #define MAX_CFGV_RES_LENGTH			50000
 
 void *ref_to_val_get_cfgval(char *username, char *key, char *defpath, int flags,
 		char *out, size_t max) {
+	g_setjmp(0, "ref_to_val_get_cfgval", NULL, NULL);
 	char buffer[4096];
 
 	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, defpath, username);
@@ -5187,13 +5188,34 @@ void *ref_to_val_get_cfgval(char *username, char *key, char *defpath, int flags,
 		return NULL;
 	}
 
-	p_md_obj ptr;
+	mda s_tk = { 0 };
+	int r;
+	size_t c_token = -1;
+	char *s_key = key;
 
-	if ((ptr = get_cfg_opt(key, ret))) {
-		if (flags & F_CFGV_RETURN_MDA_OBJECT) {
-			return ptr;
-		}
-		if (flags & F_CFGV_BUILD_FULL_STRING) {
+	md_init(&s_tk, 4);
+
+	if ((r = split_string(key, 0x3A, &s_tk)) == 2) {
+		p_md_obj s_tk_ptr = s_tk.objects->next;
+		flags ^= F_CFGV_BUILD_FULL_STRING;
+		flags |= F_CFGV_RETURN_TOKEN_EX;
+		c_token = atoi(s_tk_ptr->ptr);
+		s_key = s_tk.objects->ptr;
+
+	}
+
+
+	p_md_obj ptr;
+	pmda s_ret = NULL;
+	void *p_ret = NULL;
+
+	if ((ptr = get_cfg_opt(s_key, ret, &s_ret))) {
+		switch (flags & F_CFGV_MODES) {
+		case F_CFGV_RETURN_MDA_OBJECT:
+			p_ret = (void*) ptr;
+			break;
+		case F_CFGV_BUILD_FULL_STRING:
+			;
 			size_t o_w = 0, w;
 			while (ptr) {
 				w = strlen((char*) ptr->ptr);
@@ -5209,12 +5231,24 @@ void *ref_to_val_get_cfgval(char *username, char *key, char *defpath, int flags,
 				}
 				ptr = ptr->next;
 			}
-			return out;
-		}
-		return (char*) ptr->ptr;
-	}
+			p_ret = (void*) out;
+			break;
 
-	return NULL;
+		case F_CFGV_RETURN_TOKEN_EX:
+			if (c_token < 0 || c_token >= s_ret->count) {
+				return NULL;
+			}
+			p_ret = (void*) (&s_ret->objects[c_token])->ptr;
+			break;
+		default:
+			p_ret = ptr->ptr;
+			break;
+		}
+
+
+	}
+	md_g_free(&s_tk);
+	return p_ret;
 }
 
 int is_char_uppercase(char c) {
@@ -5541,7 +5575,7 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = calloc(max_size + 10, 1);
 		void *ptr = ref_to_val_get_cfgval(data->username, match,
-				DEFPATH_USERS, F_CFGV_BUILD_FULL_STRING, buffer, max_size);
+		DEFPATH_USERS, F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr) {
 			sprintf(output, ptr);
 		}
@@ -5838,7 +5872,7 @@ void free_cfg(pmda md) {
 	md_g_free(md);
 }
 
-p_md_obj get_cfg_opt(char *key, pmda md) {
+p_md_obj get_cfg_opt(char *key, pmda md, pmda *ret) {
 	g_setjmp(0, "get_cfg_opt", NULL, NULL);
 	if (!md->count) {
 		return NULL;
@@ -5854,6 +5888,9 @@ p_md_obj get_cfg_opt(char *key, pmda md) {
 		if (pce_key_sz == key_sz && !strncmp(pce->key, key, pce_key_sz)) {
 			p_md_obj r_ptr = md_first(&pce->data);
 			if (r_ptr) {
+				if (ret) {
+					*ret = &pce->data;
+				}
 				return (p_md_obj) r_ptr->next;
 			} else {
 				return NULL;
