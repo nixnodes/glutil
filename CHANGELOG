@@ -1,3 +1,8 @@
+ * v1.3
+ *
+ *   - Renamed project to 'glutil'
+ *   - Can extract tokens from user/group files (e.g. {WKUP:3} {ALLUP:1} etc..
+ *
  * v1.2
  *
  *   - It's now possible to define macros, command execution templates for scripts 
