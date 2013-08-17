@@ -1,6 +1,6 @@
 /*
  * ============================================================================
- * Name        : dirupdate
+ * Name        : glutil
  * Authors     : nymfo, siska
  * Version     : 1.3
  * Description : glFTPd binary log tool
@@ -64,7 +64,7 @@
 
 /* see README file about this */
 #ifndef du_fld
-#define du_fld "/glftpd/bin/dirupdate.folders"
+#define du_fld "/glftpd/bin/glutil.folders"
 #endif
 
 /* folders to skip during fs rebuild (-r) */
@@ -412,7 +412,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define DEFF_LASTONLOG  "laston.log"
 #define DEFF_DUPEFILE 	"dupefile"
 #define DEFF_ONELINERS 	"oneliners.log"
-#define DEFF_DULOG	 	"dirupdate.log"
+#define DEFF_DULOG	 	"glutil.log"
 
 #define F_SIGERR_CONTINUE 	0x1  /* continue after exception */
 
@@ -1226,7 +1226,7 @@ int opt_dirlog_sections_file(void *arg, int m) {
 }
 
 int print_version(void *arg, int m) {
-	print_str("dirupdate-%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
+	print_str("glutil-%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
 	VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
 	updmode = UPD_MODE_NOOP;
 	return 0;
@@ -1776,7 +1776,7 @@ int g_init(int argc, char **argv) {
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_MODE_RAWDUMP)
 			&& !(gfl & F_OPT_FORMAT_COMP)) {
-		print_str("INIT: dirupdate %d.%d-%d%s-%s starting [PID: %d]\n",
+		print_str("INIT: glutil %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
 		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686", getpid());
