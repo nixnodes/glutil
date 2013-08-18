@@ -5,6 +5,7 @@
  *   - Prints users (-t) / groups (-g), extracts any data from users
  *       as --exec vars, filters apply (rev. 1)
  *   - Bugfix: empty config lines weren't properly handled causing segfaults (rev. 2)
+ *   - Bugfix: BSD compatibility (rev. 3)
  *
  * v1.2
  *
