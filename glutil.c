@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-5
+ * Version     : 1.3-6
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2470,10 +2470,9 @@ int dirlog_check_dupe(void) {
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
 			st3 = g_act_1.offset;
-			float diff = (float)(e_t - s_t);
-			float rate = ((float) st3 / diff);
+			float rate = ((float) st3 / (float)(e_t - s_t));
 			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s | ETA: %.1f s\r", st3,
-					g_act_1.buffer_count, 100 / (g_act_1.buffer_count / st3),
+					g_act_1.buffer_count, st3 / (g_act_1.buffer_count / 100),
 					rate, (float) g_act_1.buffer_count / rate);
 		}
 
