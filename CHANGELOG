@@ -6,6 +6,11 @@
  *       as --exec vars, filters apply (rev. 1)
  *   - Bugfix: empty config lines weren't properly handled causing segfaults (rev. 2)
  *   - Bugfix: BSD compatibility (rev. 3)
+ *   - Bugfix: --check was not detecting nuked dirs properly (rev. 4)
+ *   - Added --ghost (rev. 4)
+ *   - Added stats & progress report for -p (dupecheck) (rev. 5)
+ *   - Bugfix: Progress percentage stats were broken (-p -v) (rev. 6)
+ *   - Bugfix: division by zero (-p -v) (rev. 7)
  *
  * v1.2
  *
