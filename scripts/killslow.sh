@@ -31,6 +31,13 @@ VERBOSE=0
 #
 ## Ban user after violating minimum speed limit (seconds)
 BANUSER=15 
+#
+## Exempt users list
+EXEMPTUSERS="user1|user2"
+#
+## Do not enforce limit on siteops
+EXEMPTSITEOPS=1
+#
 ############################[ END OPTIONS ]##############################
 
 ban_user() {	
@@ -67,6 +74,9 @@ elif [[ "$1" == "unban" ]];then
 fi
 
 ! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
+
+[ -n "$EXEMPTUSERS" ] && echo $3 | grep -P "^($EXEMPTUSERS)\$" > /dev/null && exit 1
+[ $EXEMPTSITEOPS -eq 1 ] && echo $8 | grep 1 > /dev/null && exit 1
 
 ! [ -d "/tmp/du-ks" ] && mkdir -p /tmp/du-ks
 
