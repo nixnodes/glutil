@@ -2,10 +2,17 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-7
+ * Version     : 1.3-8
  * Description : glFTPd binary log utility
  * ============================================================================
  */
+
+#define _GNU_SOURCE
+#define _LARGEFILE64_SOURCE 1
+#define _LARGEFILE_SOURCE 1
+#define _FILE_OFFSET_BITS 64
+
+#include <stdio.h>
 
 #include "glconf.h"
 
@@ -83,9 +90,6 @@
 
 /* -------------------------- */
 
-#define _FILE_OFFSET_BITS 64
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -112,7 +116,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -774,7 +778,7 @@ char FTPDATA[255] = { ftp_data };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
-int glob_regex_flags = REG_EXTENDED;
+int glob_regex_flags = 0;
 char GLOB_REGEX[4096] = { 0 };
 char GLOB_MATCH[4096] = { 0 };
 int EXITVAL = 0;
@@ -1397,7 +1401,7 @@ ssize_t file_copy(char *, char *, char *, uint32_t);
 
 int split_string(char *, char, pmda);
 int release_generate_block(char *, ear *);
-long get_file_size(char *);
+off_t get_file_size(char *);
 char **process_macro(void *, char **);
 char *generate_chars(size_t, char, char*);
 time_t get_file_creation_time(struct stat *);
@@ -2445,7 +2449,7 @@ int dirlog_check_dupe(void) {
 	off_t st1, st2 = 0, st3 = 0;
 	p_md_obj pmd_st1 = NULL, pmd_st2 = NULL;
 	g_setjmp(0, "dirlog_check_dupe(loop)", NULL, NULL);
-	time_t s_t = time(NULL), e_t = time(NULL);
+	time_t s_t = time(NULL), e_t = time(NULL), d_t = time(NULL);
 
 	off_t nrec = g_act_1.total_sz / g_act_1.block_sz;
 
@@ -2455,6 +2459,7 @@ int dirlog_check_dupe(void) {
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		//if (!sigsetjmp(g_sigjmp.env, 1)) {
+		st3++;
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			break;
 		}
@@ -2476,13 +2481,20 @@ int dirlog_check_dupe(void) {
 
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
-			st3 = g_act_1.offset;
-			float diff = (float) (e_t - s_t), rate = 0.0;
-			if (diff && st3) {
-				rate = ((float) st3 / (float) (e_t - s_t));
+
+
+
+			if (e_t - d_t) {
+				d_t = time(NULL);
+				float diff = (float) (e_t - s_t);
+				float rate = ((float) st3 / diff);
+
+				print_str(
+						"PROCESSING: %llu/%llu [%.2f\%] | %.2f r/s | ETA: %.1f s\r",
+						(uint64_t) st3, (uint64_t) nrec,
+						((float) st3 / ((float) nrec / 100.0)), rate,
+						(float) nrec / rate);
 			}
-			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s | ETA: %.1f s\r",
-					st3, nrec, st3 / (nrec / 100), rate, (float) nrec / rate);
 		}
 
 		st1 = g_act_1.offset;
@@ -2536,8 +2548,7 @@ int dirlog_check_dupe(void) {
 		g_free(s_buffer);
 	}
 	if (gfl & F_OPT_VERBOSE) {
-		print_str("\nSTATS: processed %llu/%llu records\n", st3,
-				g_act_1.buffer_count);
+		print_str("\nSTATS: processed %llu/%llu records\n", st3, nrec);
 	}
 
 	//}
@@ -2689,6 +2700,7 @@ int option_crc32(void *arg, int m) {
 int data_backup_records(char *file) {
 	g_setjmp(0, "data_backup_records", NULL, NULL);
 	int r;
+	off_t r_sz;
 
 	if (!file) {
 		print_str("ERROR: null argument passed (this is likely a bug)\n");
@@ -2704,7 +2716,7 @@ int data_backup_records(char *file) {
 		return 0;
 	}
 
-	if (!(r = get_file_size(file)) && (gfl & F_OPT_VERBOSE)) {
+	if (!(r_sz = get_file_size(file)) && (gfl & F_OPT_VERBOSE)) {
 		print_str("WARNING: %s: refusing to backup 0-byte data file\n", file);
 		return 0;
 	}
@@ -3571,7 +3583,7 @@ int proc_section(char *name, unsigned char type, void *arg) {
 			}
 
 			if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)) {
-				iarg->dirlog->bytes += get_file_size(iarg->buffer);
+				iarg->dirlog->bytes += (uint64_t) get_file_size(iarg->buffer);
 				iarg->dirlog->files++;
 				print_str("SFV: succesfully generated '%s'\n",
 				basename(iarg->buffer));
@@ -5081,10 +5093,10 @@ int reg_match(char *expression, char *match, int flags) {
 	size_t r;
 	regmatch_t pmatch[REG_MATCHES_MAX];
 
-	if ((r = regcomp(&preg, expression, flags | REG_EXTENDED)))
+	if ((r = regcomp(&preg, expression, (flags | REG_EXTENDED))))
 		return r;
 
-	r = regexec(&preg, match, REG_MATCHES_MAX, pmatch, REG_EXTENDED);
+	r = regexec(&preg, match, REG_MATCHES_MAX, pmatch, 0);
 
 	regfree(&preg);
 
@@ -6009,7 +6021,7 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 		return 1;
 	}
 
-	size_t f_sz = get_file_size(file);
+	off_t f_sz = get_file_size(file);
 
 	if (!f_sz) {
 		return 2;
