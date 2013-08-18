@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-3
+ * Version     : 1.3-4
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -173,7 +173,7 @@ struct d_stats {
 
 typedef struct mda_object {
 	void *ptr, *next, *prev;
-	unsigned char flags;
+//	unsigned char flags;
 }*p_md_obj, md_obj;
 
 #define F_MDA_REFPTR		0x1
@@ -357,6 +357,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_PREEXEC		0x20000000
 #define F_OPT_POSTEXEC		0x40000000
 #define F_OPT_NOBACKUP		0x80000000
+#define F_OPT_C_GHOSTONLY	0x100000000
 
 #define F_MD_NOREAD			0x1
 
@@ -822,8 +823,10 @@ char *hpd_up =
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
 				"  -t                    Print all user files inside /ftp-data/users\n"
 				"  -g                    Print all group files inside /ftp-data/groups\n"
-				"  -c, --check [--fix]   Compare dirlog and filesystem records and warn on differences\n"
+				"  -c, --check [--fix] [--ghost]\n"
+				"                         Compare dirlog and filesystem records and warn on differences\n"
 				"                           --fix attempts to correct dirlog\n"
+				"                           --ghost only looks for dirlog records with missing directories on filesystem\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog>\n"
@@ -1274,6 +1277,11 @@ int opt_dirlog_check(void *arg, int m) {
 	return 0;
 }
 
+int opt_check_ghost(void *arg, int m) {
+	gfl |= F_OPT_C_GHOSTONLY;
+	return 0;
+}
+
 int opt_dirlog_dump(void *arg, int m) {
 	updmode = UPD_MODE_DUMP;
 	return 0;
@@ -1366,7 +1374,8 @@ typedef uint64_t __d_dlfind(char *, int, uint32_t, void *);
 typedef pmda __d_cfg(pmda md, char * file);
 
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
-_d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog;
+_d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog,
+		dirlog_check_records;
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
 		dirlog_update_record, g_dump_ug, g_dump_cfg;
 
@@ -1385,7 +1394,6 @@ uint64_t file_crc32(char *, uint32_t *);
 
 int data_backup_records(char*);
 ssize_t file_copy(char *, char *, char *, uint32_t);
-int dirlog_check_records(void);
 
 int split_string(char *, char, pmda);
 int release_generate_block(char *, ear *);
@@ -1467,12 +1475,13 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
 		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "-x", opt_g_udc, (void*) 1, "--recursive", opt_g_recursive,
-		(void*) 0, "-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users,
-		(void*) 0, "--backup", opt_backup, (void*) 1, "--postexec",
-		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
-		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
-		"--arg1", NULL, (void*) 1, "--arg2",
+void *f_ref[] = { "--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc,
+		(void*) 1, "--recursive", opt_g_recursive, (void*) 0, "-g",
+		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
+		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
+		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
+		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "--arg1", NULL, (void*) 1,
+		"--arg2",
 		NULL, (void*) 1, "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1,
 		"--imatch", opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1,
 		"--fork", opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0,
@@ -2433,33 +2442,43 @@ int dirlog_check_dupe(void) {
 	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
 		return 2;
 	}
-	off_t st1, st2;
+	off_t st1, st2 = 0, st3 = 0;
 	p_md_obj pmd_st1 = NULL, pmd_st2 = NULL;
 	g_setjmp(0, "dirlog_check_dupe(loop)", NULL, NULL);
+	time_t s_t = time(NULL), e_t = time(NULL);
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		//if (!sigsetjmp(g_sigjmp.env, 1)) {
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			break;
 		}
-		if (g_act_1.buffer.pos && (g_act_1.buffer.pos->flags & F_MD_NOREAD)) {
-			continue;
-		}
+		/*if (g_act_1.buffer.pos && (g_act_1.buffer.pos->flags & F_MD_NOREAD)) {
+		 continue;
+		 }*/
 		if (g_bmatch(d_ptr, &g_act_1)) {
 			continue;
 		}
-		g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)",
-		NULL,
-		NULL);
+
+		g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)", NULL, NULL);
+
 		s_buffer = strdup(d_ptr->dirname);
 		s_pb = basename(s_buffer);
 		size_t s_pb_l = strlen(s_pb);
 		if (s_pb_l < 4) {
 			goto end_loop1;
 		}
+
+		if (gfl & F_OPT_VERBOSE) {
+			e_t = time(NULL);
+			st3 = g_act_1.offset;
+			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s\r", st3,
+					g_act_1.buffer_count, 100 / (g_act_1.buffer_count / st3),
+					(float) ((float) st3 / (float) (e_t - s_t)));
+		}
+
 		st1 = g_act_1.offset;
 		//g_act_1.offset = 0;
 		if (g_act_1.buffer_count) {
-			st2 = g_act_1.buffer_count;
+			//st2 = g_act_1.buffer_count;
 			pmd_st1 = g_act_1.buffer.r_pos;
 			pmd_st2 = g_act_1.buffer.pos;
 		} else {
@@ -2470,8 +2489,7 @@ int dirlog_check_dupe(void) {
 		NULL,
 		NULL);
 		int ch = 0;
-		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1,
-		DL_SZ))) {
+		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1, DL_SZ))) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
@@ -2482,9 +2500,10 @@ int dirlog_check_dupe(void) {
 			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)
 					&& strncmp(d_ptr->dirname, dd_ptr->dirname,
 							strlen(d_ptr->dirname))) {
-				if (g_act_1.buffer_count && g_act_1.buffer.pos) {
-					g_act_1.buffer.pos->flags |= F_MD_NOREAD;
-				}
+				/*if (g_act_1.buffer_count && g_act_1.buffer.pos) {
+				 g_act_1.buffer.pos->flags |= F_MD_NOREAD;
+				 }*/
+
 				if (!ch) {
 					print_str("DUPE %s\n", d_ptr->dirname);
 				}
@@ -2496,7 +2515,7 @@ int dirlog_check_dupe(void) {
 
 		g_act_1.offset = st1;
 		if (g_act_1.buffer_count) {
-			g_act_1.buffer.offset = st2;
+			//g_act_1.buffer.offset = st2;
 			g_act_1.buffer.r_pos = pmd_st1;
 			g_act_1.buffer.pos = pmd_st2;
 		} else {
@@ -2505,6 +2524,10 @@ int dirlog_check_dupe(void) {
 		end_loop1:
 
 		g_free(s_buffer);
+	}
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("STATS: processed %llu/%llu records\n", st3,
+				g_act_1.buffer_count);
 	}
 
 	//}
@@ -2699,7 +2722,7 @@ int dirlog_check_records(void) {
 	g_setjmp(0, "dirlog_check_records", NULL, NULL);
 	struct dirlog buffer, buffer4;
 	ear buffer3 = { 0 };
-	char s_buffer[255];
+	char s_buffer[255], s_buffer2[255], s_buffer3[255] = { 0 };
 	buffer3.dirlog = &buffer4;
 	int r = 0, r2;
 	char *mode = "r";
@@ -2712,9 +2735,9 @@ int dirlog_check_records(void) {
 		return -1;
 	}
 
-	if (gfl & F_OPT_FIX) {
-		data_backup_records(DIRLOG);
-	}
+	/*if (gfl & F_OPT_FIX) {
+	 data_backup_records(DIRLOG);
+	 }*/
 
 	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return 2;
@@ -2733,10 +2756,45 @@ int dirlog_check_records(void) {
 			g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_records(loop)",
 			NULL,
 			NULL);
+
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
 			sprintf(s_buffer, "%s%s", GLROOT, d_ptr->dirname);
+
+			if (d_ptr->status == 1) {
+				char *c_nb, *base, *c_nd, *dir;
+				c_nb = strdup(d_ptr->dirname);
+				base = basename(c_nb);
+				c_nd = strdup(d_ptr->dirname);
+				dir = dirname(c_nd);
+
+				sprintf(s_buffer2, NUKESTR, base);
+				sprintf(s_buffer3, "%s/%s/%s", GLROOT, dir, s_buffer2);
+				remove_repeating_chars(s_buffer3, 0x2F);
+				g_free(c_nb);
+				g_free(c_nd);
+			}
+
+			if ((d_ptr->status == 0 && dir_exists(s_buffer))
+					|| (d_ptr->status == 1 && dir_exists(s_buffer3))) {
+				print_str(
+						"WARNING: %s: listed in dirlog but does not exist in filesystem\n",
+						s_buffer);
+				if (gfl & F_OPT_FIX) {
+					if (!md_unlink(&g_act_1.buffer, g_act_1.buffer.pos)) {
+						print_str("ERROR: %s: unlinking ghost record failed\n",
+								s_buffer);
+					}
+					r++;
+				}
+				continue;
+			}
+
+			if (gfl & F_OPT_C_GHOSTONLY) {
+				continue;
+			}
+
 			//g_do_exec(d_ptr, &g_act_1);
 			struct nukelog n_buffer;
 			ir = r;
@@ -2758,20 +2816,6 @@ int dirlog_check_records(void) {
 				continue;
 			}
 			buffer3.flags |= F_EAR_NOVERB;
-
-			if (dir_exists(s_buffer)) {
-				print_str(
-						"WARNING: %s: listed in dirlog but does not exist in filesystem\n",
-						s_buffer);
-				if (gfl & F_OPT_FIX) {
-					if (!md_unlink(&g_act_1.buffer, g_act_1.buffer.pos)) {
-						print_str("ERROR: %s: unlinking ghost record failed\n",
-								s_buffer);
-					}
-					r++;
-				}
-				continue;
-			}
 
 			if ((r2 = release_generate_block(s_buffer, &buffer3))) {
 				if (r2 == 5) {
@@ -2863,6 +2907,9 @@ int dirlog_check_records(void) {
 	if (!(gfl & F_OPT_KILL_GLOBAL) && (gfl & F_OPT_FIX) && r) {
 		if (rebuild_data_file(DIRLOG, &g_act_1)) {
 			print_str(MSG_GEN_DFRFAIL, DIRLOG);
+		} else {
+			print_str("STATS: %s: wrote %llu bytes in %llu records\n", DIRLOG,
+					(ulint64_t) g_act_1.bw, (ulint64_t) g_act_1.rw);
 		}
 	}
 
@@ -5455,7 +5502,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, (char*) arg);
 	} else if (arg && !strncmp(match, "c:", 2)) {
 		char *buffer = calloc(max_size, 1);
-		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2], DEFPATH_USERS,
+		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2],
+		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			sprintf(output, (char*) ptr);
