@@ -847,18 +847,21 @@ char *hpd_up =
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
 				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
-				"                            Used with -r, -e, -p, -d, -i, -l, -t, -g and -n\n"
+				"                            Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
-				"  --preexec <command>   Execute shell <command> before starting main procedure\n"
-				"  --postexec <command>  Execute shell <command> after main procedure finishes\n"
+				"  --preexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"                         Execute shell <command> before starting main procedure\n"
+				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"                         Execute shell <command> after main procedure finishes\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
+				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g and -n\n"
 				"  --imatch <match>      Inverted --match\n"
 				"  --regex <match>       Regex filter string, used during various operations\n"
-				"                           Used with -r, -e, -p, -d, -i, -l, -t, -g and -n\n"
+				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
-				"  --batch               Prints dirlog data non-formatted\n"
+				"  --batch               Prints with simple formatting\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --daemon              Fork process into background\n"
 				"  --loop <interval>     Loops the given 'Main option' operation\n"
@@ -6112,7 +6115,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 			}
 
 			for (i = 0; i < b_len && i < SSD_MAX_LINE_SIZE; i++) {
-				if (is_ascii_text((unsigned char)buffer[i])) {
+				if (is_ascii_text((unsigned char) buffer[i])) {
 					break;
 				}
 			}
