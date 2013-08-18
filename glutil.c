@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-2
+ * Version     : 1.3-3
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -143,7 +143,11 @@ char ARCH = 0;
 #endif
 
 #define MAX_uint64_t 		0xFFFFFFFFFFFFFFFF
-#define MAX_ULONG 		0xFFFFFFFF
+#define MAX_ULONG 			0xFFFFFFFF
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 typedef struct e_arg {
 	int depth;
@@ -1444,6 +1448,8 @@ void *ref_to_val_get_cfgval(char *, char *, char *, int, char *, size_t);
 int get_relative_path(char *, char *, char *);
 
 void free_cfg(pmda);
+
+int is_ascii_text(uint8_t in);
 
 int g_init(int argc, char **argv);
 
@@ -6054,8 +6060,8 @@ int self_get_path(char *out) {
 	return 0;
 }
 
-int is_ascii_text(char in) {
-	if ((in >= 0x0 && in <= 0x7F)) {
+int is_ascii_text(uint8_t in_c) {
+	if (in_c >= 0x0 && in_c <= 0x7F) {
 		return 0;
 	}
 
@@ -6106,7 +6112,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 			}
 
 			for (i = 0; i < b_len && i < SSD_MAX_LINE_SIZE; i++) {
-				if (is_ascii_text(buffer[i])) {
+				if (is_ascii_text((unsigned char)buffer[i])) {
 					break;
 				}
 			}
