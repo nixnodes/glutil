@@ -1,13 +1,26 @@
- * Features:
+ * General purpose glFTPd binary logs utility *
+ *
+ *  This tool aims to provide:
+ *
+ *    - A way to clean up ANY glFTPd binary log and rebuild dirlog based on 
+ *        filesystem data
+ *    - Ability to pass along data from binary logs (and other sources) to the 
+ *        shell for further processing
+ *  
+ *  See /scripts folder for examples on how this tool can be used.
+ *
+ ** Main features:
  *
  *  - Import individual/missing records or rebuild entire dirlog based 
  *      on file-system and nukelog data (read below)
  *  - Rebuild existing binary glFTPd logs (see full list below) 
  *      using regex/custom filtering methods
  *  - Display various binary glFTPd logs in human readable formats
- *  - Execute external tools/scripts for each log record found, passing 
- *      along data from the binary log as an argument string (see --exec
+ *  - Execute external tools/scripts for each data record found, passing 
+ *      along binary data as argument strings to shell (see --exec
  *      in --help)
+ *  - Extract relevant data from config/users/groups files and pass along
+ *      as argument strings to shell
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
  *      fix them
  *  - Search for duplicates in dirlog
@@ -22,7 +35,7 @@
  *  - Oneliners file   (/ftp-data/logs/oneliners.log)
  *  - Online users     (shared memory segment)
  *
- * Installation:
+ ** Installation:
  *
  *  - Compile:
  *
@@ -36,7 +49,8 @@
  *       make sure it is in the same folder or change it's location in 
  *       glutil.c 
  *
- * 'glutil.folders' file (filesystem based rebuild only):
+ *
+ ** 'glutil.folders' file (filesystem based rebuild only):
  *
  *  To avoid importing junk data into dirlog, a file defined by 'du_fld' macro
  *  in glutil.c (or at runtime with --folders argument) can be used when 
