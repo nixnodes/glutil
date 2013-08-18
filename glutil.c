@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-1
+ * Version     : 1.3-2
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -317,6 +317,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_BACKUP		0xF
 #define UPD_MODE_DUMP_USERS	0x10
 #define UPD_MODE_DUMP_GRPS	0x11
+#define UPD_MODE_DUMP_GEN	0x12
 
 #define PRIO_UPD_MODE_MACRO 0x1001
 
@@ -391,6 +392,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_NUKESTR		0x100
 
 #define F_AV_RETURN_STRING 	0x1
+
+#define F_PD_RECURSIVE 		0x1
 
 /* these bits determine file type */
 #define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
@@ -794,6 +797,8 @@ void *prio_argv_off = NULL;
 
 mda cfg_rf = { 0 };
 
+uint32_t flags_udcfg = 0;
+
 char *hpd_up =
 		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
 				"\n"
@@ -811,6 +816,8 @@ char *hpd_up =
 				"  -l, [--raw]           Print last-on log to stdout\n"
 				"  -o, [--raw]           Print oneliners to stdout\n"
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
+				"  -t                    Print all user files inside /ftp-data/users\n"
+				"  -g                    Print all group files inside /ftp-data/groups\n"
 				"  -c, --check [--fix]   Compare dirlog and filesystem records and warn on differences\n"
 				"                           --fix attempts to correct dirlog\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
@@ -836,14 +843,14 @@ char *hpd_up =
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
 				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
-				"                            Used with -r, -e, -p, -d, -i, -l and -n\n"
+				"                            Used with -r, -e, -p, -d, -i, -l, -t, -g and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  --preexec <command>   Execute shell <command> before starting main procedure\n"
 				"  --postexec <command>  Execute shell <command> after main procedure finishes\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
 				"  --imatch <match>      Inverted --match\n"
 				"  --regex <match>       Regex filter string, used during various operations\n"
-				"                           Used with -r, -e, -p, -d, -i, -l and -n\n"
+				"                           Used with -r, -e, -p, -d, -i, -l, -t, -g and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
@@ -970,6 +977,17 @@ int opt_g_loop(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 	loop_interval = (int) strtol(buffer, NULL, 10);
 	gfl |= F_OPT_LOOP;
+	return 0;
+}
+
+int opt_g_udc(void *arg, int m) {
+	p_argv_off = g_pg(arg, m);
+	updmode = UPD_MODE_DUMP_GEN;
+	return 0;
+}
+
+int opt_g_recursive(void *arg, int m) {
+	flags_udcfg |= F_PD_RECURSIVE;
 	return 0;
 }
 
@@ -1343,7 +1361,7 @@ typedef pmda __d_cfg(pmda md, char * file);
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
 _d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog;
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
-		dirlog_update_record, g_dump_ug;
+		dirlog_update_record, g_dump_ug, g_dump_cfg;
 
 __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 
@@ -1410,7 +1428,7 @@ int rebuild_data_file(char *, struct g_handle *);
 int g_bmatch(void *, struct g_handle *);
 int do_match(char *, void *, void *);
 
-size_t g_load_data(void *, size_t, char *);
+size_t g_load_data_md(void *, size_t, char *);
 int g_load_record(struct g_handle *, const void *);
 int remove_repeating_chars(char *string, char c);
 p_md_obj md_first(pmda md);
@@ -1440,7 +1458,8 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
 		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users,
+void *f_ref[] = { "-x", opt_g_udc, (void*) 1, "--recursive", opt_g_recursive,
+		(void*) 0, "-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users,
 		(void*) 0, "--backup", opt_backup, (void*) 1, "--postexec",
 		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
 		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
@@ -2032,13 +2051,16 @@ int g_init(int argc, char **argv) {
 	case UPD_MODE_BACKUP:
 		data_backup_records(g_dgetf(p_argv_off));
 		break;
-	case UPD_MODE_NOOP:
-		break;
 	case UPD_MODE_DUMP_USERS:
 		g_dump_ug(DEFPATH_USERS);
 		break;
 	case UPD_MODE_DUMP_GRPS:
 		g_dump_ug(DEFPATH_GROUPS);
+		break;
+	case UPD_MODE_DUMP_GEN:
+		g_dump_cfg(p_argv_off);
+		break;
+	case UPD_MODE_NOOP:
 		break;
 	default:
 		print_str("ERROR: no mode specified\n");
@@ -2305,10 +2327,9 @@ int rebuild(void *arg) {
 	return 0;
 }
 
-#define F_PD_RECURSIVE 	0x1
-
 int g_dump_ug(char *ug) {
-	uint32_t flags = 0;
+	g_setjmp(0, "g_dump_ug", NULL, NULL);
+	uint32_t flags = flags_udcfg;
 	char buffer[PATH_MAX] = { 0 };
 
 	sprintf(buffer, "%s/%s/%s", GLROOT, FTPDATA, ug);
@@ -2318,7 +2339,27 @@ int g_dump_ug(char *ug) {
 	return enum_dir(buffer, g_process_directory, &flags, 0);
 }
 
+int g_dump_cfg(char *root) {
+	g_setjmp(0, "g_dump_cfg", NULL, NULL);
+	if (!root) {
+		return 1;
+	}
+
+	uint32_t flags = flags_udcfg;
+
+	if (!file_exists(root)) {
+		g_process_directory(root, DT_REG, &flags);
+	}
+
+	char buffer[PATH_MAX] = { 0 };
+	sprintf(buffer, "%s", root);
+	remove_repeating_chars(buffer, 0x2F);
+
+	return enum_dir(buffer, g_process_directory, &flags, 0);
+}
+
 int g_process_directory(char *name, unsigned char type, void *arg) {
+	g_setjmp(0, "g_process_directory", NULL, NULL);
 	uint32_t flags = 0;
 
 	if (arg) {
@@ -2327,10 +2368,11 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 
 	switch (type) {
 	case DT_REG:
+		print_str("FILE: %s\n", name);
 		if (do_match(name, name, ref_to_val_generic)) {
 			break;
 		}
-		print_str("FILE: %s\n", name);
+
 		break;
 	case DT_DIR:
 		if (flags & F_PD_RECURSIVE) {
@@ -4436,7 +4478,8 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 	return ret;
 }
 
-size_t g_load_data(void *output, size_t max, char *file) {
+size_t g_load_data_md(void *output, size_t max, char *file) {
+	g_setjmp(0, "g_load_data_md", NULL, NULL);
 	size_t fr, c_fr = 0;
 	FILE *fh;
 
@@ -4484,7 +4527,7 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 	md->flags |= F_MDA_REFPTR;
 
 	if (!(hdl->flags & F_GH_SHM)) {
-		if ((b_read = g_load_data(hdl->data, hdl->total_sz, file))
+		if ((b_read = g_load_data_md(hdl->data, hdl->total_sz, file))
 				!= hdl->total_sz) {
 			md_g_free(md);
 			return -9;
@@ -4823,13 +4866,13 @@ void *g_read(void *buffer, struct g_handle *hdl, size_t size) {
 }
 
 size_t read_from_pipe(char *buffer, FILE *pipe) {
-	size_t read = 0;
+	size_t read = 0, r;
 
 	while (!feof(pipe)) {
-		if ((read += g_fread(&buffer[read], 1, PIPE_READ_MAX - read, pipe))
-				<= 0) {
+		if ((r = g_fread(&buffer[read], 1, PIPE_READ_MAX - read, pipe)) <= 0) {
 			break;
 		}
+		read += r;
 	}
 
 	return read;
@@ -5318,7 +5361,6 @@ void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 			p_ret = ptr->ptr;
 			break;
 		}
-
 	}
 	md_g_free(&s_tk);
 	return p_ret;
@@ -5400,9 +5442,11 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "logroot")) {
 		sprintf(output, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
-	} else if (arg && !is_char_uppercase(match[0])) {
+	} else if (arg && !strcmp(match, "arg")) {
+		sprintf(output, (char*) arg);
+	} else if (arg && !strncmp(match, "c:", 2)) {
 		char *buffer = calloc(max_size, 1);
-		void *ptr = ref_to_val_get_cfgval((char*) arg, match, DEFPATH_USERS,
+		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2], DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			sprintf(output, (char*) ptr);
@@ -5410,7 +5454,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 			return 0;
 		}
 
-		ptr = ref_to_val_get_cfgval((char*) arg, match, DEFPATH_GROUPS,
+		ptr = ref_to_val_get_cfgval((char*) arg, &match[2], DEFPATH_GROUPS,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			sprintf(output, (char*) ptr);
@@ -5419,8 +5463,6 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		}
 		g_free(buffer);
 		return 1;
-	} else if (arg && !strcmp(match, "arg")) {
-		sprintf(output, (char*) arg);
 	} else {
 		return 1;
 	}
@@ -5926,10 +5968,11 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 			continue;
 		}
 
-		pce = md_alloc(md, sizeof(cfg_h));
+		pce = (p_cfg_h) md_alloc(md, sizeof(cfg_h));
 		md_init(&pce->data, 32);
 		if ((rd = split_string_sp_tab(buffer, &pce->data)) < 1) {
 			md_g_free(&pce->data);
+			md_unlink(md, md->pos);
 			continue;
 		}
 
