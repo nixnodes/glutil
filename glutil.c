@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-6
+ * Version     : 1.3-7
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2446,6 +2446,13 @@ int dirlog_check_dupe(void) {
 	p_md_obj pmd_st1 = NULL, pmd_st2 = NULL;
 	g_setjmp(0, "dirlog_check_dupe(loop)", NULL, NULL);
 	time_t s_t = time(NULL), e_t = time(NULL);
+
+	off_t nrec = g_act_1.total_sz / g_act_1.block_sz;
+
+	if (g_act_1.buffer_count) {
+		nrec = g_act_1.buffer_count;
+	}
+
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		//if (!sigsetjmp(g_sigjmp.env, 1)) {
 		if (gfl & F_OPT_KILL_GLOBAL) {
@@ -2470,10 +2477,12 @@ int dirlog_check_dupe(void) {
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
 			st3 = g_act_1.offset;
-			float rate = ((float) st3 / (float)(e_t - s_t));
-			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s | ETA: %.1f s\r", st3,
-					g_act_1.buffer_count, st3 / (g_act_1.buffer_count / 100),
-					rate, (float) g_act_1.buffer_count / rate);
+			float diff = (float) (e_t - s_t), rate = 0.0;
+			if (diff && st3) {
+				rate = ((float) st3 / (float) (e_t - s_t));
+			}
+			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s | ETA: %.1f s\r",
+					st3, nrec, st3 / (nrec / 100), rate, (float) nrec / rate);
 		}
 
 		st1 = g_act_1.offset;
@@ -2527,7 +2536,7 @@ int dirlog_check_dupe(void) {
 		g_free(s_buffer);
 	}
 	if (gfl & F_OPT_VERBOSE) {
-		print_str("STATS: processed %llu/%llu records\n", st3,
+		print_str("\nSTATS: processed %llu/%llu records\n", st3,
 				g_act_1.buffer_count);
 	}
 
