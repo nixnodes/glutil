@@ -2,10 +2,11 @@
  *
  *  This tool aims to provide:
  *
- *    - A way to clean up ANY glFTPd binary log and rebuild dirlog based on 
+ *    - A way to clean up any glFTPd binary log and rebuild dirlog based on 
  *        filesystem data
  *    - Ability to pass along data from binary logs (and other sources) to the 
  *        shell for further processing
+ *    - Display data from any supported binary log in various formats
  *  
  *  See /scripts folder for examples on how this tool can be used.
  *
@@ -26,7 +27,7 @@
  *  - Search for duplicates in dirlog
  *  - Generate SFV files inside respective folders
  *
- * Supported glFTPd data logs (with default paths):
+ * Supported glFTPd binary logs (with default paths):
  *
  *  - Directory log    (/ftp-data/logs/dirlog)
  *  - Nuke log         (/ftp-data/logs/nukelog)
