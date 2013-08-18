@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-4
+ * Version     : 1.3-5
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -112,7 +112,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2470,9 +2470,11 @@ int dirlog_check_dupe(void) {
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
 			st3 = g_act_1.offset;
-			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s\r", st3,
+			float diff = (float)(e_t - s_t);
+			float rate = ((float) st3 / diff);
+			print_str("PROCESSING: %llu/%llu [%d\%] | %.2f r/s | ETA: %.1f s\r", st3,
 					g_act_1.buffer_count, 100 / (g_act_1.buffer_count / st3),
-					(float) ((float) st3 / (float) (e_t - s_t)));
+					rate, (float) g_act_1.buffer_count / rate);
 		}
 
 		st1 = g_act_1.offset;
@@ -5501,7 +5503,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (arg && !strcmp(match, "arg")) {
 		sprintf(output, (char*) arg);
 	} else if (arg && !strncmp(match, "c:", 2)) {
-		char *buffer = calloc(max_size, 1);
+		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2],
 		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
@@ -5663,7 +5665,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	} else if (!strcmp(match, "download")) {
 		sprintf(output, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
-		char *buffer = calloc(max_size, 1);
+		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
@@ -5766,7 +5768,7 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		}
 		sprintf(output, "%u", kbps);
 	} else if (!is_char_uppercase(match[0])) {
-		char *buffer = calloc(max_size + 10, 1);
+		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval(data->username, match,
 		DEFPATH_USERS, F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH,
 				buffer, max_size);
