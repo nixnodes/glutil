@@ -46,6 +46,9 @@
  *   - Bugfix: more mem leaks (rev. 3)
  *   - Bugfix: some file handles weren't getting cleaned up (rev. 4)
  *   - Bugfix: formatted strings were printing in main on raw dump (rev. 5) 
+ *   - Bugfix: Progress percentage stats were broken (-p -v) (rev. 6)
+ *   - Bugfix: division by zero (-p -v) (rev. 7)
+ *   - Bugfix: regex matching was ignoring match-beginning-of-line operator (^) (rev. 8)
  *
  * v1.0
  *
