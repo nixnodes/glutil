@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-8
+ * Version     : 1.3-9
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -116,7 +116,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -403,6 +403,10 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_AV_RETURN_STRING 	0x1
 
 #define F_PD_RECURSIVE 		0x1
+#define F_PD_MATCHDIR		0x2
+#define F_PD_MATCHREG		0x4
+
+#define F_PD_MATCHTYPES		(F_PD_MATCHDIR|F_PD_MATCHREG)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
@@ -784,7 +788,7 @@ char GLOB_MATCH[4096] = { 0 };
 int EXITVAL = 0;
 
 int loop_interval = 0;
-int loop_times = 0;
+int loop_max = 0;
 char *NUKESTR = NULL;
 
 char *exec_str = NULL;
@@ -827,6 +831,10 @@ char *hpd_up =
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
 				"  -t                    Print all user files inside /ftp-data/users\n"
 				"  -g                    Print all group files inside /ftp-data/groups\n"
+				"  -x <root dir> [--recursive] [--dir] [--file]\n"
+				"                         Parses filesystem and processes each item found with internal filters/hooks\n"
+				"                         --dir scans directories only\n"
+				"                         --file scans files only (default is both dirs and files)\n"
 				"  -c, --check [--fix] [--ghost]\n"
 				"                         Compare dirlog and filesystem records and warn on differences\n"
 				"                           --fix attempts to correct dirlog\n"
@@ -994,6 +1002,12 @@ int opt_g_loop(void *arg, int m) {
 	return 0;
 }
 
+int opt_loop_max(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	loop_max = (int) strtol(buffer, NULL, 10);
+	return 0;
+}
+
 int opt_g_udc(void *arg, int m) {
 	p_argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_DUMP_GEN;
@@ -1002,6 +1016,16 @@ int opt_g_udc(void *arg, int m) {
 
 int opt_g_recursive(void *arg, int m) {
 	flags_udcfg |= F_PD_RECURSIVE;
+	return 0;
+}
+
+int opt_g_udc_dir(void *arg, int m) {
+	flags_udcfg |= F_PD_MATCHDIR;
+	return 0;
+}
+
+int opt_g_udc_f(void *arg, int m) {
+	flags_udcfg |= F_PD_MATCHREG;
 	return 0;
 }
 
@@ -1479,18 +1503,19 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
 		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc,
-		(void*) 1, "--recursive", opt_g_recursive, (void*) 0, "-g",
-		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
-		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
-		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
-		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "--arg1", NULL, (void*) 1,
-		"--arg2",
-		NULL, (void*) 1, "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1,
-		"--imatch", opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1,
-		"--fork", opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0,
-		"-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0,
-		"-v", opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+void *f_ref[] = { "--file", opt_g_udc_f, (void*) 0, "--dir", opt_g_udc_dir,
+		(void*) 0, "--loopmax", opt_loop_max, (void*) 1, "--ghost",
+		opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1, "--recursive",
+		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
+		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1,
+		"--postexec", opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec,
+		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
+		(void*) 1, "--arg1", NULL, (void*) 1, "--arg2", NULL, (void*) 1,
+		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
+		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
+		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
+		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
+		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
 		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
 		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
 		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
@@ -2090,7 +2115,8 @@ int g_init(int argc, char **argv) {
 		break;
 	}
 
-	if ((gfl & F_OPT_LOOP) && !(gfl & F_OPT_KILL_GLOBAL)) {
+	if ((gfl & F_OPT_LOOP) && !(gfl & F_OPT_KILL_GLOBAL)
+			&& (!loop_max || mloop_c < loop_max - 1)) {
 		g_cleanup(&g_act_1);
 		g_cleanup(&g_act_2);
 		free_cfg_rf(&cfg_rf);
@@ -2351,7 +2377,7 @@ int rebuild(void *arg) {
 
 int g_dump_ug(char *ug) {
 	g_setjmp(0, "g_dump_ug", NULL, NULL);
-	uint32_t flags = flags_udcfg;
+	uint32_t flags = flags_udcfg | F_PD_MATCHREG;
 	char buffer[PATH_MAX] = { 0 };
 
 	sprintf(buffer, "%s/%s/%s", GLROOT, FTPDATA, ug);
@@ -2369,8 +2395,18 @@ int g_dump_cfg(char *root) {
 
 	uint32_t flags = flags_udcfg;
 
+	if (!(flags & F_PD_MATCHTYPES)) {
+		flags |= F_PD_MATCHTYPES;
+	}
+
 	if (!file_exists(root)) {
+		flags ^= F_PD_MATCHTYPES;
+		flags |= F_PD_MATCHREG;
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("NOTICE: %s is a file\n", root);
+		}
 		g_process_directory(root, DT_REG, &flags);
+		return 0;
 	}
 
 	char buffer[PATH_MAX] = { 0 };
@@ -2390,13 +2426,20 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 
 	switch (type) {
 	case DT_REG:
-		print_str("FILE: %s\n", name);
-		if (do_match(name, name, ref_to_val_generic)) {
-			break;
+		if (flags & F_PD_MATCHREG) {
+			print_str("FILE: %s\n", name);
+			if (do_match(name, name, ref_to_val_generic)) {
+				break;
+			}
 		}
-
 		break;
 	case DT_DIR:
+		if (flags & F_PD_MATCHDIR) {
+			print_str("DIR: %s\n", name);
+			if (do_match(name, name, ref_to_val_generic)) {
+				break;
+			}
+		}
 		if (flags & F_PD_RECURSIVE) {
 			enum_dir(name, g_process_directory, arg, 0);
 		}
@@ -2482,17 +2525,17 @@ int dirlog_check_dupe(void) {
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
 
-
-
 			if (e_t - d_t) {
 				d_t = time(NULL);
 				float diff = (float) (e_t - s_t);
 				float rate = ((float) st3 / diff);
 
-				print_str(
-						"PROCESSING: %llu/%llu [%.2f\%] | %.2f r/s | ETA: %.1f s\r",
-						(uint64_t) st3, (uint64_t) nrec,
-						((float) st3 / ((float) nrec / 100.0)), rate,
+				fprintf(stderr,
+
+				"PROCESSING: %llu/%llu [ %.2f%s ] | %.2f r/s | ETA: %.1f s\r",
+						(long long unsigned int) st3,
+						(long long unsigned int) nrec,
+						((float) st3 / ((float) nrec / 100.0)), "%", rate,
 						(float) nrec / rate);
 			}
 		}
@@ -2941,18 +2984,6 @@ int dirlog_check_records(void) {
 }
 
 int do_match(char *mstr, void *d_ptr, void *callback) {
-
-	int r_e = g_do_exec(d_ptr, callback, NULL);
-
-	if (exec_str && WEXITSTATUS(r_e)) {
-		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-			print_str(
-					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
-					WEXITSTATUS(r_e));
-		}
-		return 1;
-	}
-
 	if ((gfl & F_OPT_HAS_G_MATCH) && mstr) {
 		size_t mstr_l = strlen(mstr);
 
@@ -2978,6 +3009,17 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 					mstr);
 		}
 		return 3;
+	}
+
+	int r_e = g_do_exec(d_ptr, callback, NULL);
+
+	if (exec_str && WEXITSTATUS(r_e)) {
+		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+			print_str(
+					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
+					WEXITSTATUS(r_e));
+		}
+		return 1;
 	}
 
 	return 0;
@@ -3036,7 +3078,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	void *ptr;
 	void *buffer = calloc(1, g_act_1.block_sz);
 	char sbuffer[4096], *ns_ptr;
-	int c = 0;
+	off_t c = 0;
 	ear e;
 	int re_c, r;
 
@@ -3115,11 +3157,16 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	end:
 
+	if (gfl & F_OPT_MODE_RAWDUMP) {
+		fflush(stdout);
+	}
+
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)
 			&& !(gfl & F_OPT_FORMAT_COMP) && !(g_act_1.flags & F_GH_ISONLINE)) {
-		print_str("STATS: %s: read %d records\n", file, c);
+		print_str("STATS: %s: read %llu records\n", file,
+				(unsigned long long int) c);
 	}
 
 	g_free(buffer);
@@ -5240,18 +5287,14 @@ off_t read_file(char *file, void *buffer, size_t read_max, off_t offset) {
 
 int file_exists(char *file) {
 	g_setjmp(0, "file_exists", NULL, NULL);
-	int r;
 
-	errno = 0;
-	FILE *fd = gg_fopen(file, "rb");
+	int r = get_file_type(file);
 
-	r = errno;
-
-	if (fd) {
-		g_fclose(fd);
+	if (r == DT_REG) {
+		return 0;
 	}
 
-	return r;
+	return 1;
 }
 
 ssize_t file_copy(char *source, char *dest, char *mode, uint32_t flags) {
