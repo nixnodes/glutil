@@ -4,6 +4,10 @@
 #
 ## Retrieves game info using giantbomb API (XML)
 #
+## Usage (macro): ./dirupdate -m getscore --arg=/games/path
+#
+##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
+#
 CURL="/usr/bin/curl"
 CURL_FLAGS="--silent"
 XMLLINT="/usr/bin/xmllint"
@@ -12,12 +16,14 @@ XMLLINT="/usr/bin/xmllint"
 ! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
 
 ###########################[ BEGIN OPTIONS ]#############################
-
+#
 URL="http://www.giantbomb.com/api"
-API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
-
+#
+## Get it from giantbomb website (registration required)
+API_KEY=""
+#
 INPUT_CLEAN_REGEX="([._-\(\)]{,1}(MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
-
+#
 ############################[ END OPTIONS ]##############################
 
 QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
