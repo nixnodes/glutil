@@ -1,6 +1,6 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:getscore:{m:exe} -x {m:arg1} --silent --dir -vvvv --exec "{m:spec1} $(basename {arg}) score"
+#@MACRO:getscore:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) score"
 #
 ## Retrieves game info using giantbomb API (XML)
 #
@@ -15,12 +15,15 @@ XMLLINT="/usr/bin/xmllint"
 ! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
 ! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
 
+[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
+[ -z "$CURL" ] && echo "Could not find curl" && exit 1
+
 ###########################[ BEGIN OPTIONS ]#############################
 #
 URL="http://www.giantbomb.com/api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY=""
+API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
 INPUT_CLEAN_REGEX="([._-\(\)]{,1}(MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
 #
