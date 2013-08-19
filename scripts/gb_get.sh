@@ -26,11 +26,12 @@ URL="$BURL""api"
 ## Get it from giantbomb website (registration required)
 API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
-INPUT_CLEAN_REGEX="([._-\(\)]{,1}(MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
+INPUT_CLEAN_REGEX="(LINUX|ISO[._-\(\)]|MAC[._-\(\)]|NFOFIX|DEVELOPERS[._-\(\)]CUT|READNFO|[._-\(\)]{,1}(DLC|INCL|v[0-9][._-\(\)][0-9]|INSTALL[._-\(\)]FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
 #
 ############################[ END OPTIONS ]##############################
 
 QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+
 
 WHAT=$2
 
@@ -43,14 +44,16 @@ APIKEY_STR="?api_key=$API_KEY"
 
 G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -)
 
-[ -z "$G_ID" ] && echo "ERROR: Failed getting game ID"
+#echo "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY"
+
+[ -z "$G_ID" ] && echo "ERROR: '$QUERY': Failed getting game ID" && exit 1
 
 RES=$($CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//')
 
-[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result '$WHAT' from @$BURL""game/3030-$G_ID/user-reviews/" && exit 1
+[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result '$WHAT' from $BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
 [ "$WHAT" = "score" ] && { 
     echo "SCORE: '$QUERY': $RES"
 }
 
-
+exit 0
