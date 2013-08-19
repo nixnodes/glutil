@@ -26,7 +26,7 @@ URL="$BURL""api"
 ## Get it from giantbomb website (registration required)
 API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
-INPUT_CLEAN_REGEX="(LINUX|ISO[._-\(\)]|MAC[._-\(\)]|NFOFIX|DEVELOPERS[._-\(\)]CUT|READNFO|[._-\(\)]{,1}(DLC|INCL|v[0-9][._-\(\)][0-9]|INSTALL[._-\(\)]FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
+INPUT_CLEAN_REGEX="((KOREAN|LINUX|ISO[._-\(\)]|MAC[._-\(\)]|NFOFIX|DEVELOPERS[._-\(\)]CUT|READNFO|[._-\(\)]{,1}DLC|INCL|v[0-9][._-\(\)][0-9]|INSTALL[._-\(\)]FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
 #
 ############################[ END OPTIONS ]##############################
 
