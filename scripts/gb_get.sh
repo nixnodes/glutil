@@ -20,7 +20,8 @@ XMLLINT="/usr/bin/xmllint"
 
 ###########################[ BEGIN OPTIONS ]#############################
 #
-URL="http://www.giantbomb.com/api"
+BURL="http://www.giantbomb.com/"
+URL="$BURL""api"
 #
 ## Get it from giantbomb website (registration required)
 API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
@@ -40,21 +41,15 @@ WHAT=$2
 
 APIKEY_STR="?api_key=$API_KEY"
 
-API_DETAIL_URL=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&query=$QUERY" | $XMLLINT --xpath "string((/response/results/game/api_detail_url)[1])" -)
+G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -)
 
-[ -z "$API_DETAIL_URL" ] && echo "PARSE: '$QUERY': could not find [@$URL/search/?api_key=$API_KEY&query=$QUERY]" && exit 1
+[ -z "$G_ID" ] && echo "ERROR: Failed getting game ID"
 
-API_DETAIL_URL2=$($CURL $CURL_FLAGS "$API_DETAIL_URL$APIKEY_STR&field_list=$FIELD" | $XMLLINT --xpath "string((/response/results/$FIELD//api_detail_url[1]))" -)
+RES=$($CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//')
 
-[ -z "$API_DETAIL_URL2" ] && echo "PARSE: '$QUERY': could not parse $API_DETAIL_URL$APIKEY_STR&field_list=$FIELD" && exit 1
-
-RES=$($CURL $CURL_FLAGS "$API_DETAIL_URL2$APIKEY_STR&field_list=$WHAT" | $XMLLINT --xpath "string((/response/results/$WHAT)[1])" -)
-
-[ -z "$RES" ] && echo "PARSE: '$QUERY': could not get result '$WHAT' from @$API_DETAIL_URL2" && exit 1
+[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result '$WHAT' from @$BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
 [ "$WHAT" = "score" ] && { 
- 	[ $RES -gt -1 ] || exit 1
-    [ $RES -lt 11 ] || exit 1
     echo "SCORE: '$QUERY': $RES"
 }
 
