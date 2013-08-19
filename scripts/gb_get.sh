@@ -20,7 +20,7 @@ XMLLINT="/usr/bin/xmllint"
 URL="http://www.giantbomb.com/api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
+API_KEY=""
 #
 INPUT_CLEAN_REGEX="([._-\(\)]{,1}(MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
 #
