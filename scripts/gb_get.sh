@@ -4,7 +4,7 @@
 #
 ## Retrieves game info using giantbomb API (XML)
 #
-## Usage (macro): ./dirupdate -m getscore --arg=/games/path
+## Usage (macro): ./dirupdate -m getscore --arg1=/path/to/games
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
 #
@@ -20,7 +20,7 @@ XMLLINT="/usr/bin/xmllint"
 URL="http://www.giantbomb.com/api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY=""
+API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
 INPUT_CLEAN_REGEX="([._-\(\)]{,1}(MULTI|Crack|DOX).*)|(-[A-Z0-9a-z_-]*)$"
 #
