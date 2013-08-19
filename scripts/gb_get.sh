@@ -40,9 +40,9 @@ WHAT=$2
 
 APIKEY_STR="?api_key=$API_KEY"
 
-API_DETAIL_URL=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&query=\"$QUERY\"&limit=1" | $XMLLINT --xpath "string((/response/results/game/api_detail_url)[1])" -)
+API_DETAIL_URL=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&query=$QUERY&limit=1" | $XMLLINT --xpath "string((/response/results/game/api_detail_url)[1])" -)
 
-[ -z "$API_DETAIL_URL" ] && echo "PARSE: '$QUERY': could not find [@$URL/search/?api_key=$API_KEY&query=\"$QUERY\"&limit=1]" && exit 1
+[ -z "$API_DETAIL_URL" ] && echo "PARSE: '$QUERY': could not find [@$URL/search/?api_key=$API_KEY&query=$QUERY&limit=1]" && exit 1
 
 API_DETAIL_URL2=$($CURL $CURL_FLAGS "$API_DETAIL_URL$APIKEY_STR&field_list=$FIELD" | $XMLLINT --xpath "string((/response/results/$FIELD//api_detail_url[1]))" -)
 
