@@ -4,9 +4,9 @@
 #
 ## Checks a release for incomplete/corrupt files by comparing SFV data with filesystem
 #
-## Usage (manual): /glroot/bin/dirupdate -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
+## Usage (manual): /glroot/bin/glutil -d -exec "/glftpd/bin/scripts/check_incomplete.sh '{dir}' '{exe}' '{glroot}'"
 #
-## Usage (macro): ./dirupdate -m incomplete
+## Usage (macro): ./glutil -m incomplete
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
 #
