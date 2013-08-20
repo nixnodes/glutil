@@ -6,9 +6,9 @@
 ## Retrieves iMDB info using omdbapi (XML)
 #
 ## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies
-##                ./glutil -m imdb-d -arg1 "\/xvid\/[^,]{3,}"
+##                ./glutil -m imdb-d --arg1 "\/xvid\/[^,]{3,}"
 #
-##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
+##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
 CURL="/usr/bin/curl"
 CURL_FLAGS="--silent"
