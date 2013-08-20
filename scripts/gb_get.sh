@@ -4,7 +4,7 @@
 #
 ## Retrieves game info using giantbomb API (XML)
 #
-## Usage (macro): ./dirupdate -m getscore --arg1=/path/to/games
+## Usage (macro): ./glutil -m getscore --arg1=/path/to/games
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
 #
