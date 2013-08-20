@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg})"
-#@MACRO:imdb-d:{m:exe} -d --silent -exec "{m:spec1} {basedir}" --iregex "{m:arg1}" 
+#@MACRO:imdb-d:{m:exe} -d --silent --loglevel=5 -exec "{m:spec1} {basedir}" --iregex "{m:arg1}" 
 #
 ## Retrieves iMDB info using omdbapi (XML)
 #
@@ -39,8 +39,8 @@ YEAR=$2
 
 iid=$($CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY" | xmllint --xpath "(/IMDbResults//ImdbEntity[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|(\s)|[\"]//g')
 
-[ -z "$iid" ] && echo "WARNING: $QUERY: $IMDBURLxml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | xmllint --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
-[ -z "$iid" ] && echo "ERROR: $1: $QUERY: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
+[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURLxml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | xmllint --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
+[ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
 get_field()
 {
@@ -49,11 +49,11 @@ get_field()
 
 DDT=$($CURL $CURL_FLAGS "$URL/?r=XML&i=$iid")
 
-[ -z "$DDT" ] && echo "ERROR: $1: $QUERY: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
 RATING=$(get_field imdbRating)
 
-[ -z "$RATING" ] && echo "ERROR: $1: $QUERY: could not extract movie data" && exit 1
+[ -z "$RATING" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
 echo "IMDB: $(echo $QUERY | tr '+' ' ') : $IMDBURL""title/$iid : $(get_field imdbRating) $(echo $(get_field imdbVotes) | tr -d ',') $(get_field genre) "
 
