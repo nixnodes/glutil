@@ -2,12 +2,14 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-9
+ * Version     : 1.3-10
  * Description : glFTPd binary log utility
  * ============================================================================
  */
 
+#define _BSD_SOURCE
 #define _GNU_SOURCE
+
 #define _LARGEFILE64_SOURCE 1
 #define _LARGEFILE_SOURCE 1
 #define _FILE_OFFSET_BITS 64
@@ -116,7 +118,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -362,6 +364,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_POSTEXEC		0x40000000
 #define F_OPT_NOBACKUP		0x80000000
 #define F_OPT_C_GHOSTONLY	0x100000000
+#define F_OPT_XDEV			0x200000000
+#define F_OPT_XBLK			0x400000000
 
 #define F_MD_NOREAD			0x1
 
@@ -862,20 +866,24 @@ char *hpd_up =
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
 				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
-				"                            Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g and -n\n"
+				"                            Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  --preexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         Execute shell <command> before starting main procedure\n"
 				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         Execute shell <command> after main procedure finishes\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
-				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g and -n\n"
+				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"  --imatch <match>      Inverted --match\n"
 				"  --regex <match>       Regex filter string, used during various operations\n"
-				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g and -n\n"
+				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
+				"  --xdev                Ignores files/dirs on other filesystems\n"
+				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
+				"  --xblk                Ignores files/dirs on non-block devices\n"
+				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
 				"  --batch               Prints with simple formatting\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --daemon              Fork process into background\n"
@@ -892,7 +900,7 @@ char *hpd_up =
 				"  --fork <command>      Fork process into background and execute <command>\n"
 				"  --arg[1-3] <argument> Set values that fill {m:arg[1-3]} variables\n"
 				"                           Used only with when running macros (-m)\n"
-				"  --[u]sleep <timeout>  Wait <seconds> before running\n"
+				"  --[u]sleep <timeout>  Wait for <timeout> before running\n"
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
@@ -1310,6 +1318,16 @@ int opt_check_ghost(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_xdev(void *arg, int m) {
+	gfl |= F_OPT_XDEV;
+	return 0;
+}
+
+int opt_g_xblk(void *arg, int m) {
+	gfl |= F_OPT_XBLK;
+	return 0;
+}
+
 int opt_dirlog_dump(void *arg, int m) {
 	updmode = UPD_MODE_DUMP;
 	return 0;
@@ -1405,7 +1423,7 @@ _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
 _d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog,
 		dirlog_check_records;
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
-		dirlog_update_record, g_dump_ug, g_dump_cfg;
+		dirlog_update_record, g_dump_ug, g_dump_gen;
 
 __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 
@@ -1447,6 +1465,8 @@ int write_file_text(char *, char *);
 
 size_t str_match(char *, char *);
 size_t exec_and_wait_for_output(char*, char*);
+
+int get_file_type_no(struct stat *sb);
 
 p_md_obj get_cfg_opt(char *, pmda, pmda*);
 
@@ -1496,31 +1516,38 @@ char **build_argv(char *args, size_t max, int *c);
 
 char *g_dgetf(char *str);
 
-void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "--arg1", opt_g_arg1,
-		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "--arg3", opt_g_arg3,
-		(void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
-		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
-		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, NULL, NULL,
+void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
+		(void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2", opt_g_arg2,
+		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3", opt_g_arg3,
+		(void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvv", opt_g_verbose4,
+		(void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2,
+		(void*) 0, "-v", opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro,
+		(void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--file", opt_g_udc_f, (void*) 0, "--dir", opt_g_udc_dir,
+void *f_ref[] = { "-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev,
+		(void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk,
+		(void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f,
+		(void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir,
 		(void*) 0, "--loopmax", opt_loop_max, (void*) 1, "--ghost",
-		opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1, "--recursive",
-		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1,
-		"--postexec", opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec,
-		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
-		(void*) 1, "--arg1", NULL, (void*) 1, "--arg2", NULL, (void*) 1,
-		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
-		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
-		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
-		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
-		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
-		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
-		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
-		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
-		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
-		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+		opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive",
+		opt_g_recursive, (void*) 0, "--recursive", opt_g_recursive, (void*) 0,
+		"-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0,
+		"--backup", opt_backup, (void*) 1, "--postexec", opt_g_postexec,
+		(void*) 1, "--preexec", opt_g_preexec, (void*) 1, "--usleep",
+		opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1",
+		NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
+		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
+		"--arg3", NULL, (void*) 1, "-m",
+		NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
+		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
+		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
+		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
+		opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
+		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "--silent",
+		opt_silent, (void*) 0, "--loopexec", opt_g_loopexec, (void*) 1,
+		"--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0,
+		"-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
 		opt_lastonlog_dump, (void*) 0, "--oneliners", opt_oneliner, (void*) 1,
 		"-o", opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog,
 		(void*) 1, "-i", opt_dupefile_dump, (void*) 0, "--dupefile",
@@ -2105,7 +2132,7 @@ int g_init(int argc, char **argv) {
 		g_dump_ug(DEFPATH_GROUPS);
 		break;
 	case UPD_MODE_DUMP_GEN:
-		g_dump_cfg(p_argv_off);
+		g_dump_gen(p_argv_off);
 		break;
 	case UPD_MODE_NOOP:
 		break;
@@ -2375,37 +2402,46 @@ int rebuild(void *arg) {
 	return 0;
 }
 
+typedef struct ___std_rh_0 {
+	uint32_t flags;
+	uint64_t st_1, st_2;
+} _std_rh, *__std_rh;
+
 int g_dump_ug(char *ug) {
 	g_setjmp(0, "g_dump_ug", NULL, NULL);
-	uint32_t flags = flags_udcfg | F_PD_MATCHREG;
+	_std_rh ret = { 0 };
 	char buffer[PATH_MAX] = { 0 };
+
+	ret.flags = flags_udcfg | F_PD_MATCHREG;
 
 	sprintf(buffer, "%s/%s/%s", GLROOT, FTPDATA, ug);
 
 	remove_repeating_chars(buffer, 0x2F);
 
-	return enum_dir(buffer, g_process_directory, &flags, 0);
+	return enum_dir(buffer, g_process_directory, &ret, 0);
 }
 
-int g_dump_cfg(char *root) {
-	g_setjmp(0, "g_dump_cfg", NULL, NULL);
+int g_dump_gen(char *root) {
+	g_setjmp(0, "g_dump_gen", NULL, NULL);
 	if (!root) {
 		return 1;
 	}
 
-	uint32_t flags = flags_udcfg;
+	_std_rh ret = { 0 };
 
-	if (!(flags & F_PD_MATCHTYPES)) {
-		flags |= F_PD_MATCHTYPES;
+	ret.flags = flags_udcfg;
+
+	if (!(ret.flags & F_PD_MATCHTYPES)) {
+		ret.flags |= F_PD_MATCHTYPES;
 	}
 
 	if (!file_exists(root)) {
-		flags ^= F_PD_MATCHTYPES;
-		flags |= F_PD_MATCHREG;
+		ret.flags ^= F_PD_MATCHTYPES;
+		ret.flags |= F_PD_MATCHREG;
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a file\n", root);
 		}
-		g_process_directory(root, DT_REG, &flags);
+		g_process_directory(root, DT_REG, &ret);
 		return 0;
 	}
 
@@ -2413,34 +2449,40 @@ int g_dump_cfg(char *root) {
 	sprintf(buffer, "%s", root);
 	remove_repeating_chars(buffer, 0x2F);
 
-	return enum_dir(buffer, g_process_directory, &flags, 0);
+	int r = enum_dir(buffer, g_process_directory, &ret, 0);
+
+	print_str("STATS: %s: OK: %llu/%llu\n", root,
+			(unsigned long long int) ret.st_1,
+			(unsigned long long int) ret.st_1 + ret.st_2);
+
+	return r;
 }
 
 int g_process_directory(char *name, unsigned char type, void *arg) {
 	g_setjmp(0, "g_process_directory", NULL, NULL);
-	uint32_t flags = 0;
-
-	if (arg) {
-		flags = *((uint32_t*) arg);
-	}
+	__std_rh aa_rh = (__std_rh) arg;
 
 	switch (type) {
 	case DT_REG:
-		if (flags & F_PD_MATCHREG) {
+		if (aa_rh->flags & F_PD_MATCHREG) {
 			print_str("FILE: %s\n", name);
 			if (do_match(name, name, ref_to_val_generic)) {
+				aa_rh->st_2++;
 				break;
 			}
+			aa_rh->st_1++;
 		}
 		break;
 	case DT_DIR:
-		if (flags & F_PD_MATCHDIR) {
+		if (aa_rh->flags & F_PD_MATCHDIR) {
 			print_str("DIR: %s\n", name);
 			if (do_match(name, name, ref_to_val_generic)) {
+				aa_rh->st_2++;
 				break;
 			}
+			aa_rh->st_1++;
 		}
-		if (flags & F_PD_RECURSIVE) {
+		if (aa_rh->flags & F_PD_RECURSIVE) {
 			enum_dir(name, g_process_directory, arg, 0);
 		}
 		break;
@@ -2480,6 +2522,18 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
  }
  */
 
+void g_progress_stats(time_t s_t, time_t e_t, off_t total, off_t done) {
+	float diff = (float) (e_t - s_t);
+	float rate = ((float) done / diff);
+
+	fprintf(stderr,
+			"PROCESSING: %llu/%llu [ %.2f%s ] | %.2f r/s | ETA: %.1f s\r",
+			(long long unsigned int) done, (long long unsigned int) total,
+			((float) done / ((float) total / 100.0)), "%", rate,
+			(float) total / rate);
+
+}
+
 int dirlog_check_dupe(void) {
 	g_setjmp(0, "dirlog_check_dupe", NULL, NULL);
 	struct dirlog buffer, buffer2;
@@ -2499,7 +2553,7 @@ int dirlog_check_dupe(void) {
 	if (g_act_1.buffer_count) {
 		nrec = g_act_1.buffer_count;
 	}
-
+	g_progress_stats(s_t, e_t, nrec, st3);
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		//if (!sigsetjmp(g_sigjmp.env, 1)) {
 		st3++;
@@ -2527,16 +2581,7 @@ int dirlog_check_dupe(void) {
 
 			if (e_t - d_t) {
 				d_t = time(NULL);
-				float diff = (float) (e_t - s_t);
-				float rate = ((float) st3 / diff);
-
-				fprintf(stderr,
-
-				"PROCESSING: %llu/%llu [ %.2f%s ] | %.2f r/s | ETA: %.1f s\r",
-						(long long unsigned int) st3,
-						(long long unsigned int) nrec,
-						((float) st3 / ((float) nrec / 100.0)), "%", rate,
-						(float) nrec / rate);
+				g_progress_stats(s_t, e_t, nrec, st3);
 			}
 		}
 
@@ -2570,9 +2615,9 @@ int dirlog_check_dupe(void) {
 				 }*/
 
 				if (!ch) {
-					print_str("DUPE %s\n", d_ptr->dirname);
+					print_str("\rDUPE %s\n", d_ptr->dirname);
 				}
-				print_str("DUPE %s\n", dd_ptr->dirname);
+				print_str("\rDUPE %s\n", dd_ptr->dirname);
 				ch++;
 			}
 			g_free(ss_buffer);
@@ -2591,6 +2636,7 @@ int dirlog_check_dupe(void) {
 		g_free(s_buffer);
 	}
 	if (gfl & F_OPT_VERBOSE) {
+		g_progress_stats(s_t, e_t, nrec, st3);
 		print_str("\nSTATS: processed %llu/%llu records\n", st3, nrec);
 	}
 
@@ -3365,7 +3411,7 @@ int rebuild_dirlog(void) {
 				print_str("ERROR: could not get depth from line %d\n", i);
 				goto lend;
 			}
-			if (file_exists(s_buffer)) {
+			if (dir_exists(s_buffer)) {
 				print_str("ERROR: %s: directory doesn't exist (line %d)\n",
 						s_buffer, i);
 				goto lend;
@@ -5064,6 +5110,9 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 	return 0;
 }
 
+#define F_ENUMD_ENDFIRSTOK		0x1
+#define F_ENUMD_BREAKONBAD		0x2
+
 int enum_dir(char *dir, void *cb, void *arg, int f) {
 	g_setjmp(0, "enum_dir", NULL, NULL);
 	int (*callback_f)(char *, unsigned char, void *) = NULL;
@@ -5082,8 +5131,13 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 		return -2;
 	}
 
-	char buf[1024] = { 0 };
+	char buf[1024];
 	int d_type;
+	struct stat st;
+
+	stat(dir, &st);
+
+	unsigned int i_minor = minor(st.st_dev);
 
 	while ((dirp = readdir(dp))) {
 		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
@@ -5098,18 +5152,32 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 		}
 
 		sprintf(buf, "%s/%s", dir, dirp->d_name);
+		remove_repeating_chars(buf, 0x2F);
 
-		d_type = get_file_type(buf);
+		stat(buf, &st);
+
+		if ((gfl & F_OPT_XBLK) && major(st.st_dev) != 8) {
+			continue;
+		}
+
+		d_type = get_file_type_no(&st);
+
+		if ((gfl & F_OPT_XDEV) && d_type == DT_DIR
+				&& minor(st.st_dev) != i_minor) {
+			continue;
+		}
+
 		if (!(ir = callback_f(buf, d_type, arg))) {
-			if (f == 1) {
-				closedir(dp);
-				return ir;
+			if (f & F_ENUMD_ENDFIRSTOK) {
+				r = ir;
+				break;
 			} else {
 				r++;
 			}
 		} else {
-			if (f == 2) {
-				return ir;
+			if (f & F_ENUMD_BREAKONBAD) {
+				r = ir;
+				break;
 			}
 		}
 	}
@@ -5129,6 +5197,11 @@ int dir_exists(char *dir) {
 
 	if (dd) {
 		closedir(dd);
+	}
+	else {
+		if ( !r ) {
+			r++;
+		}
 	}
 
 	return r;
@@ -6280,6 +6353,27 @@ int get_file_type(char *file) {
 		return errno;
 
 	switch (sb.st_mode & S_IFMT) {
+	case S_IFBLK:
+		return DT_BLK;
+	case S_IFCHR:
+		return DT_CHR;
+	case S_IFDIR:
+		return DT_DIR;
+	case S_IFIFO:
+		return DT_FIFO;
+	case S_IFLNK:
+		return DT_LNK;
+	case S_IFREG:
+		return DT_REG;
+	case S_IFSOCK:
+		return DT_SOCK;
+	default:
+		return 0;
+	}
+}
+
+int get_file_type_no(struct stat *sb) {
+	switch (sb->st_mode & S_IFMT) {
 	case S_IFBLK:
 		return DT_BLK;
 	case S_IFCHR:
