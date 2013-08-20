@@ -8,7 +8,7 @@
 #
 ## Usage (macro): ./glutil -m incomplete
 #
-##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
+##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
 ## See ./dirupdate --help for more info about options
 #
