@@ -14,7 +14,7 @@
  *   - Bugfix: regex matching was ignoring match-beginning-of-line operator (^) (rev. 8)
  *   - Added -x, directory/file parser with --exec (and filter) hooks (rev. 9)
  *   - Bugfix: -r failed to detect root directories (rev. 10)
- *   - Added --xdev, --xblk (see --help)
+ *   - Added --xdev, --xblk (see --help) (rev. 10)
  *
  * v1.2
  *
