@@ -1,0 +1,5 @@
+## generic macros
+#
+## run with: ./glutil -m <macro name>
+#
+#@MACRO:dirlog-update:{m:exe} -r -u -v --postexec "{exe} --check --fix --ghost -v"
