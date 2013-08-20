@@ -4,9 +4,9 @@
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage (manual): /glroot/bin/dirupdate -w --loop=3 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
+## Usage (manual): /glroot/bin/glutil -w --loop=3 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
-## Usage (macro): ./dirupdate -m killslow
+## Usage (macro): ./glutil -m killslow
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
 #
