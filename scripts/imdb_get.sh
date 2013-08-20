@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg})"
-#@MACRO:imdb-d:{m:exe} -d --silent -exec "{m:spec1} {basedir}" --iregex "\/xvid\/[^,]{3,}" 
+#@MACRO:imdb-d:{m:exe} -d --silent -exec "{m:spec1} {basedir}" --iregex "{m:arg1}" 
 #
 ## Retrieves iMDB info using omdbapi (XML)
 #
@@ -37,7 +37,7 @@ YEAR=$2
 
 iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | xmllint --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
 
-[ -z "$iid" ] && echo "ERROR: $1: $QUERY: unable to get iMDB ID [$URL?r=xml&s=$QUERY]" && exit 1
+[ -z "$iid" ] && echo "ERROR: $1: $QUERY: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
 get_field()
 {
