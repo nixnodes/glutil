@@ -26,11 +26,15 @@ URL="http://www.omdbapi.com/"
 #
 IMDBURL="http://www.imdb.com/"
 #
+INPUT_SKIP="\/( complete |sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3})$"
+#
 INPUT_CLEAN_REGEX="([._-\(\)](OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)[._-\(\)].*)|(-[A-Z0-9a-z_-]*)$"
 #
 ############################[ END OPTIONS ]##############################
 
-QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+echo $1 | grep -P "$INPUT_SKIP" > /dev/null && exit 1
+
+QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 [ -z "$QUERY" ] && exit 1
 
@@ -52,10 +56,12 @@ DDT=$($CURL $CURL_FLAGS "$URL/?r=XML&i=$iid")
 [ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
 RATING=$(get_field imdbRating)
+GENRE=$(get_field genre)
+VOTES=$(echo $(get_field imdbVotes) | tr -d ',')
 
-[ -z "$RATING" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
+( [ -z "$RATING" ] || [ -z "$VOTES" ] ) && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
-echo "IMDB: $(echo $QUERY | tr '+' ' ') : $IMDBURL""title/$iid : $(get_field imdbRating) $(echo $(get_field imdbVotes) | tr -d ',') $(get_field genre) "
+echo "IMDB: $(echo $QUERY | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
 
 exit 0
