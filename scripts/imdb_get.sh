@@ -3,7 +3,7 @@
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg})"
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=5 -exec "{m:spec1} {basedir}" --iregex "{m:arg1}" 
 #
-## Retrieves iMDB info using omdbapi (XML)
+## Gets movie info using IMDB native API and omdbapi (XML)
 #
 ## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies
 ##                ./glutil -m imdb-d --arg1 "\/xvid\/[^,]{3,}"
