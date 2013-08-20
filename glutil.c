@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-10
+ * Version     : 1.3-11
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -118,7 +118,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 3
-#define VER_REVISION 10
+#define VER_REVISION 11
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2846,10 +2846,6 @@ int dirlog_check_records(void) {
 		return -1;
 	}
 
-	/*if (gfl & F_OPT_FIX) {
-	 data_backup_records(DIRLOG);
-	 }*/
-
 	if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return 2;
 	}
@@ -2871,7 +2867,8 @@ int dirlog_check_records(void) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
-			sprintf(s_buffer, "%s%s", GLROOT, d_ptr->dirname);
+			sprintf(s_buffer, "%s/%s", GLROOT, d_ptr->dirname);
+			remove_repeating_chars(s_buffer, 0x2F);
 
 			if (d_ptr->status == 1) {
 				char *c_nb, *base, *c_nd, *dir;
@@ -2887,10 +2884,10 @@ int dirlog_check_records(void) {
 				g_free(c_nd);
 			}
 
-			if ((d_ptr->status == 0 && dir_exists(s_buffer))
+			if ((d_ptr->status != 1 && dir_exists(s_buffer))
 					|| (d_ptr->status == 1 && dir_exists(s_buffer3))) {
 				print_str(
-						"WARNING: %s: listed in dirlog but does not exist in filesystem\n",
+						"WARNING: %s: listed in dirlog but does not exist on filesystem\n",
 						s_buffer);
 				if (gfl & F_OPT_FIX) {
 					if (!md_unlink(&g_act_1.buffer, g_act_1.buffer.pos)) {
@@ -3060,7 +3057,7 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 	int r_e = g_do_exec(d_ptr, callback, NULL);
 
 	if (exec_str && WEXITSTATUS(r_e)) {
-		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str(
 					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
 					WEXITSTATUS(r_e));
@@ -4360,6 +4357,8 @@ uint64_t nukelog_find(char *dirn, int mode, struct nukelog *output) {
 	return r;
 }
 
+#define MSG_REDF_ABORT "WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n"
+
 int rebuild_data_file(char *file, struct g_handle *hdl) {
 	g_setjmp(0, "rebuild_data_file", NULL, NULL);
 	int ret = 0, r;
@@ -4417,6 +4416,13 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		}
 	}
 
+	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
+
+	if (gfl & F_OPT_KILL_GLOBAL) {
+		print_str( MSG_REDF_ABORT, file);
+		return 0;
+	}
+
 	if (gfl & F_OPT_VERBOSE) {
 		print_str("NOTICE: %s: flushing data to disk..\n", hdl->s_buffer);
 	}
@@ -4456,25 +4462,23 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		goto end;
 	}
 
-	if (gfl & F_OPT_VERBOSE2) {
-		print_str("NOTICE: %s: flushed %llu records, %llu bytes\n",
-				hdl->s_buffer, (ulint64_t) (hdl->rw - rw_o),
-				(ulint64_t) (hdl->bw - bw_o));
-	}
-
-	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
+	g_setjmp(0, "rebuild_data_file(4)", NULL, NULL);
 
 	if (gfl & F_OPT_KILL_GLOBAL) {
-		print_str(
-				"WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n",
-				file);
+		print_str( MSG_REDF_ABORT, file);
 		if (!(gfl & F_OPT_NOWRITE)) {
 			remove(hdl->s_buffer);
 		}
 		return 0;
 	}
 
-	g_setjmp(0, "rebuild_data_file(4)", NULL, NULL);
+	if (gfl & F_OPT_VERBOSE2) {
+		print_str("NOTICE: %s: flushed %llu records, %llu bytes\n",
+				hdl->s_buffer, (ulint64_t) (hdl->rw - rw_o),
+				(ulint64_t) (hdl->bw - bw_o));
+	}
+
+	g_setjmp(0, "rebuild_data_file(5)", NULL, NULL);
 
 	if (!(gfl & F_OPT_FORCE) && !(gfl & F_OPT_NOWRITE)
 			&& (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz) {
@@ -4488,7 +4492,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		goto end;
 	}
 
-	g_setjmp(0, "rebuild_data_file(5)", NULL, NULL);
+	g_setjmp(0, "rebuild_data_file(6)", NULL, NULL);
 
 	if (!(gfl & F_OPT_NOWRITE)
 			&& !((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED))) {
@@ -4501,7 +4505,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		}
 	}
 
-	g_setjmp(0, "rebuild_data_file(6)", NULL, NULL);
+	g_setjmp(0, "rebuild_data_file(7)", NULL, NULL);
 
 	if (!(gfl & F_OPT_NOWRITE)) {
 
@@ -4521,7 +4525,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			hdl->flags |= F_GH_DFWASWIPED;
 		}
 
-		g_setjmp(0, "rebuild_data_file(7)", NULL, NULL);
+		g_setjmp(0, "rebuild_data_file(8)", NULL, NULL);
 
 		if (!strncmp(hdl->mode, "a", 1) || (hdl->flags & F_GH_WAPPEND)) {
 			if ((r = (int) file_copy(hdl->s_buffer, file, "ab",
@@ -5197,9 +5201,8 @@ int dir_exists(char *dir) {
 
 	if (dd) {
 		closedir(dd);
-	}
-	else {
-		if ( !r ) {
+	} else {
+		if (!r) {
 			r++;
 		}
 	}
