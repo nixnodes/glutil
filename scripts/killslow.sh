@@ -8,7 +8,7 @@
 #
 ## Usage (macro): ./glutil -m killslow
 #
-##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is located
+##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
 ##  NOTE: this macro forks glutil into background, executing this every --loop=<x> seconds - if necessary, 
 ##        change interval on the third line (one starting with "#@MACRO:..")
