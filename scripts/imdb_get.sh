@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg})"
-#@MACRO:imdb-d:{m:exe} -d --silent --loglevel=5 -exec "{m:spec1} {basedir}" --iregex "{m:arg1}" 
+#@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 -exec "{m:spec1} {basedir}" --iregex "{m:arg1}" 
 #
 ## Gets movie info using IMDB native API and omdbapi (XML)
 #
@@ -28,7 +28,7 @@ IMDBURL="http://www.imdb.com/"
 #
 INPUT_SKIP="\/( complete |sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3})$"
 #
-INPUT_CLEAN_REGEX="([._-\(\)](OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)[._-\(\)].*)|(-[A-Z0-9a-z_-]*)$"
+INPUT_CLEAN_REGEX="([._-\(\)](RERIP|UNRATED|DVDSCR|TC|TS|CAM|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)[._-\(\)].*)|(-[A-Z0-9a-z_-]*)$"
 #
 ############################[ END OPTIONS ]##############################
 
@@ -59,7 +59,7 @@ RATING=$(get_field imdbRating)
 GENRE=$(get_field genre)
 VOTES=$(echo $(get_field imdbVotes) | tr -d ',')
 
-( [ -z "$RATING" ] || [ -z "$VOTES" ] ) && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
+( [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] ) && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
 echo "IMDB: $(echo $QUERY | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
