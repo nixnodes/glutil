@@ -6,7 +6,7 @@
  *        filesystem data
  *    - Ability to pass along data from binary logs (and other sources) to the 
  *        shell for further processing
- *    - Ability to write any type of binary log data from an ASCII formatted 
+ *    - Ability to write any type of binary log data using an ASCII formatted 
  *        text source
  *    - Display data from any supported binary log in various formats
  *  
