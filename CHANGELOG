@@ -6,6 +6,7 @@
  *   - Added -a, -z <log>, --[i]matchq, --dirc (see --help)
  *   - Various behaviour changes and improvements + minor bugfixes
  *   - Writing records works with dirlog, nukelog and imdblog (rev. 1)
+ *   - Bugfix: some return values were always 0 (rev. 2)
  *
  * v1.3
  *
