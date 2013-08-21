@@ -1,3 +1,12 @@
+ * v1.4
+ *
+ *   - Now possible to write binary records, using only ASCII format input (scripts not
+ *       only recieve binary data, but can write it back to log too)
+ *   - Created new data format (iMDB log)
+ *   - Added -a, -z <log>, --[i]matchq, --dirc (see --help)
+ *   - Various behaviour changes and improvements + minor bugfixes
+ *   - Writing records works with dirlog, nukelog and imdblog (rev. 1)
+ *
  * v1.3
  *
  *   - Renamed project to 'glutil'
