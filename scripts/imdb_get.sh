@@ -59,7 +59,7 @@ RATING=$(get_field imdbRating)
 GENRE=$(get_field genre)
 VOTES=$(echo $(get_field imdbVotes) | tr -d ',')
 
-( [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] ) && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
+[ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
 echo "IMDB: $(echo $QUERY | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
