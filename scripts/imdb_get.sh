@@ -46,14 +46,14 @@ iid=$($CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY" | xmllint
 [ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURLxml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | xmllint --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
 [ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
+DDT=$($CURL $CURL_FLAGS "$URL/?r=XML&i=$iid")
+
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+
 get_field()
 {
 	echo $DDT | xmllint --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|([ ])|[\"]//g" 
 }
-
-DDT=$($CURL $CURL_FLAGS "$URL/?r=XML&i=$iid")
-
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
 RATING=$(get_field imdbRating)
 GENRE=$(get_field genre)
