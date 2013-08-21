@@ -6,6 +6,8 @@
  *        filesystem data
  *    - Ability to pass along data from binary logs (and other sources) to the 
  *        shell for further processing
+ *    - Ability to write any type of binary log data from an ASCII formatted 
+ *        text source
  *    - Display data from any supported binary log in various formats
  *  
  *  Check /scripts folder in this repo for examples on how glutil supplies 
@@ -26,12 +28,13 @@
  *      in --help)
  *  - Extract relevant data from config/users/groups files and pass along
  *      as argument strings to shell
+ *  - Write to any binary log, using an ASCII formatted text source (read below)
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
  *      fix them
  *  - Search for duplicates in dirlog
  *  - Generate SFV files inside respective folders
  *
- * Supported glFTPd binary logs (with default paths):
+ ** Supported glFTPd binary logs (with default paths):
  *
  *  - Directory log    (/ftp-data/logs/dirlog)
  *  - Nuke log         (/ftp-data/logs/nukelog)
@@ -39,6 +42,51 @@
  *  - Last-online log  (/ftp-data/logs/laston.log)
  *  - Oneliners file   (/ftp-data/logs/oneliners.log)
  *  - Online users     (shared memory segment)
+ *
+ ** Extracting binary log records as strings:
+ *
+ *   ANY binary log record can easily be extracted as ASCII string and passed 
+ *   to the shell using --exec, --postexec or --preexec (see --help)
+ *   
+ *
+ *   Let's assume, you want to get the path, number of files and directory  
+ *   creation time out of dirlog, passing these three values for each record 
+ *   to your script:
+ *
+ *   ./glutil  -d --silent -exec "/path/to/myscript.sh {dir} {files} {time}"
+ *
+ *   -------------------------------------------------------------------
+ *
+ *   /* myscript.sh: */
+ *
+ *   #/bin/bash
+ *
+ *   echo $1 $2 $3
+ *
+ *   exit 0
+ *
+ *   -------------------------------------------------------------------
+ *
+ *   Output:
+ *
+ *    [x@y bin]$ ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}"
+ *    ...
+ *    /site/archive/tv-../Sky.Special... 16 1277037362
+ *    /site/archive/tv-.../The.Simpsons.20th.Anniversary.Special... 22 1277037472
+ *    /site/archive/tv-dvdrip/P/Prison.Break/Prison.Break.S02.. 28 1277065247
+ *    ...
+ *   
+ *
+ *   Now do the same, but apply a regex filter (--iregex) to the directory names 
+ *   to -exec ONLY what is matched and quit after first match (--imatchq):
+ *
+ *   ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
+ *   "\/The\.Simpsons" --imatchq
+ *
+ *   Output:
+ *
+ *    /site/archive/tv-.../The.Simpsons.20th.Anniversary.Special... 22 1277037472
+ *
  *
  ** Installation:
  *
