@@ -2158,8 +2158,10 @@ int g_init(int argc, char **argv) {
 	if (updmode && (gfl & F_OPT_PREEXEC)) {
 		print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
 		int r_e = 0;
-		if ((r_e=g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC)) == -1 || WEXITSTATUS(r_e)) {
-			print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n", WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+		if ((r_e = g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC))
+				== -1|| WEXITSTATUS(r_e)) {
+			print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
+			WEXITSTATUS(r_e), GLOBAL_PREEXEC);
 			return 1;
 		}
 	}
@@ -2810,7 +2812,10 @@ int dirlog_check_dupe(void) {
 	if (g_act_1.buffer_count) {
 		nrec = g_act_1.buffer_count;
 	}
-	g_progress_stats(s_t, e_t, nrec, st3);
+
+	if (gfl & F_OPT_VERBOSE) {
+		g_progress_stats(s_t, e_t, nrec, st3);
+	}
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
 		//if (!sigsetjmp(g_sigjmp.env, 1)) {
 		st3++;
@@ -2824,22 +2829,22 @@ int dirlog_check_dupe(void) {
 			continue;
 		}
 
-		g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)", NULL, NULL);
+		//g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)", NULL, NULL);
 
 		s_buffer = strdup(d_ptr->dirname);
 		s_pb = basename(s_buffer);
 		size_t s_pb_l = strlen(s_pb);
 		if (s_pb_l < 4) {
-			goto end_loop1;
+			continue;
 		}
 
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
 
-			if (e_t - d_t) {
-				d_t = time(NULL);
-				g_progress_stats(s_t, e_t, nrec, st3);
-			}
+				if (e_t - d_t) {
+					d_t = time(NULL);
+			g_progress_stats(s_t, e_t, nrec, st3);
+				}
 		}
 
 		st1 = g_act_1.offset;
@@ -2852,21 +2857,20 @@ int dirlog_check_dupe(void) {
 			st2 = (off_t) ftello(g_act_1.fh);
 		}
 		//gh_rewind(&g_act_1);
-		g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(3)",
-		NULL,
-		NULL);
+
 		int ch = 0;
+
 		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1, DL_SZ))) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
+
+
 			ss_buffer = strdup(dd_ptr->dirname);
 			ss_pb = basename(ss_buffer);
 			size_t ss_pb_l = strlen(ss_pb);
 
-			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)
-					&& strncmp(d_ptr->dirname, dd_ptr->dirname,
-							strlen(d_ptr->dirname))) {
+			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)	) {
 				/*if (g_act_1.buffer_count && g_act_1.buffer.pos) {
 				 g_act_1.buffer.pos->flags |= F_MD_NOREAD;
 				 }*/
@@ -2877,7 +2881,7 @@ int dirlog_check_dupe(void) {
 				print_str("\rDUPE %s\n", dd_ptr->dirname);
 				ch++;
 			}
-			g_free(ss_buffer);
+			free(ss_buffer);
 		}
 
 		g_act_1.offset = st1;
@@ -2888,9 +2892,9 @@ int dirlog_check_dupe(void) {
 		} else {
 			fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
 		}
-		end_loop1:
+		//end_loop1:
 
-		g_free(s_buffer);
+		free(s_buffer);
 	}
 	if (gfl & F_OPT_VERBOSE) {
 		g_progress_stats(s_t, e_t, nrec, st3);
@@ -5318,7 +5322,7 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 }
 
 void *g_read(void *buffer, struct g_handle *hdl, size_t size) {
-	g_setjmp(0, "g_read", NULL, NULL);
+	//g_setjmp(0, "g_read", NULL, NULL);
 	if (hdl->buffer_count) {
 		hdl->buffer.pos = hdl->buffer.r_pos;
 		if (!hdl->buffer.pos) {
