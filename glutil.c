@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-1
+ * Version     : 1.4-2
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -123,7 +123,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3371,7 +3371,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	}
 
 	int r = do_match(mstr, d_ptr, callback);
-
+	EXITVAL = 1;
 	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
 		EXITVAL = 1;
 		gfl |= F_OPT_KILL_GLOBAL;
@@ -3396,7 +3396,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	char sbuffer[4096], *ns_ptr;
 	off_t c = 0;
 	ear e;
-	int re_c, r;
+	int re_c, r, rt = 0;
 
 	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
@@ -3404,12 +3404,13 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			NULL);
 
 			if (gfl & F_OPT_KILL_GLOBAL) {
+				rt = EXITVAL;
 				break;
 			}
 
 			if ((r = g_bmatch(ptr, &g_act_1))) {
-
 				if (r == -1) {
+					rt = 5;
 					break;
 				}
 				continue;
@@ -3495,14 +3496,14 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	g_free(buffer);
 	g_close(&g_act_1);
 
-	return 0;
+	return rt;
 }
 
 int dirlog_print_stats(void) {
 	g_setjmp(0, "dirlog_print_stats", NULL, NULL);
 	struct dirlog buffer;
 	char sbuffer[2048];
-
+	int rt = 0;
 	int c = 0;
 	ear e;
 
@@ -3518,6 +3519,7 @@ int dirlog_print_stats(void) {
 			NULL);
 
 			if (gfl & F_OPT_KILL_GLOBAL) {
+				rt = EXITVAL;
 				break;
 			}
 
@@ -3557,7 +3559,7 @@ int dirlog_print_stats(void) {
 
 	g_close(&g_act_1);
 
-	return 0;
+	return rt;
 }
 
 #define 	ACT_WRITE_BUFFER_MEMBERS	10000
@@ -3566,6 +3568,7 @@ int rebuild_dirlog(void) {
 	g_setjmp(0, "rebuild_dirlog", NULL, NULL);
 	char mode[255] = { 0 };
 	uint32_t flags = 0;
+	int rt = 0;
 
 	if (!(ofl & F_OVRR_NUKESTR)) {
 		print_str(
@@ -3645,6 +3648,7 @@ int rebuild_dirlog(void) {
 
 	if ((r = split_string(buffer, 0x13, &dirchain)) < 1) {
 		print_str("ERROR: [%d] could not parse input from %s\n", r, DU_FLD);
+		rt = 5;
 		goto r_end;
 	}
 
@@ -3662,6 +3666,7 @@ int rebuild_dirlog(void) {
 			g_setjmp(F_SIGERR_CONTINUE, "rebuild_dirlog(loop)", NULL,
 			NULL);
 			if (gfl & F_OPT_KILL_GLOBAL) {
+				rt = EXITVAL;
 				break;
 			}
 
@@ -3724,7 +3729,7 @@ int rebuild_dirlog(void) {
 	print_str("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
 			dl_stats.rw);
 
-	return 0;
+	return rt;
 }
 
 int parse_args(int argc, char **argv, void*fref_t[]) {
