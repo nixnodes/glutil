@@ -1,0 +1,7 @@
+### generic macros
+#
+### run with: ./glutil -m <macro name>
+#
+## Update directory log with new records and remove records that are
+## missing from filesystem 
+#@MACRO:dirlog-update:{m:exe} -r -u -v --postexec "{exe} --check --fix --ghost -v"
