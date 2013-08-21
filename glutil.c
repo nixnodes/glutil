@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.3-11
+ * Version     : 1.4-1
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -71,6 +71,11 @@
 #define oneliner_file "/glftpd/ftp-data/logs/oneliners.log"
 #endif
 
+/* imdb file path */
+#ifndef imdb_file
+#define imdb_file "/glftpd/ftp-data/logs/imdb.log"
+#endif
+
 /* see README file about this */
 #ifndef du_fld
 #define du_fld "/glftpd/bin/glutil.folders"
@@ -117,8 +122,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 3
-#define VER_REVISION 11
+#define VER_MINOR 4
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -155,6 +160,26 @@ char ARCH = 0;
 #define PATH_MAX 4096
 #endif
 
+/* ------------------------------------------- */
+
+#pragma pack(push, 4)
+
+typedef struct ___d_imdb {
+	char dirname[255];
+	int32_t timestamp;
+	char imdb_id[64]; /* IMDB ID */
+	float rating; /* IMDB Rating */
+	uint32_t votes; /* IMDB Votes */
+	char genres[255]; /* List of genres (comma delimited) */
+	/* ------------- */
+	char _d_unused[576]; /* Reserved for future use */
+
+} _d_imdb, *__d_imdb;
+
+#pragma pack(pop)
+
+/* ------------------------------------------- */
+
 typedef struct e_arg {
 	int depth;
 	uint32_t flags;
@@ -165,6 +190,7 @@ typedef struct e_arg {
 	struct lastonlog *lastonlog;
 	struct oneliner *oneliner;
 	struct ONLINE *online;
+	__d_imdb imdb;
 	time_t t_stor;
 } ear;
 
@@ -215,6 +241,8 @@ struct g_handle {
 	struct ONLINE *ol;
 	int shmid;
 	struct shmid_ds ipcbuf;
+	int (*gcb_proc0)(void *, char *, char *);
+	int d_memb;
 };
 
 typedef struct g_cfg_ref {
@@ -328,6 +356,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_DUMP_USERS	0x10
 #define UPD_MODE_DUMP_GRPS	0x11
 #define UPD_MODE_DUMP_GEN	0x12
+#define UPD_MODE_WRITE		0x13
+#define UPD_MODE_DUMP_IMDB	0x14
 
 #define PRIO_UPD_MODE_MACRO 0x1001
 
@@ -366,6 +396,9 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_C_GHOSTONLY	0x100000000
 #define F_OPT_XDEV			0x200000000
 #define F_OPT_XBLK			0x400000000
+#define F_OPT_MATCHQ		0x800000000
+#define F_OPT_IMATCHQ		0x1000000000
+#define F_OPT_CDIRONLY		0x2000000000
 
 #define F_MD_NOREAD			0x1
 
@@ -393,6 +426,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISONELINERS	0x400
 #define F_GH_SHM			0x800
 #define F_GH_ISONLINE		0x1000
+#define F_GH_ISIMDB			0x2000
 
 #define F_OVRR_IPC			0x1
 #define F_OVRR_GLROOT		0x2
@@ -403,6 +437,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_DIRLOG		0x40
 #define F_OVRR_NUKELOG		0x80
 #define F_OVRR_NUKESTR		0x100
+#define F_OVRR_IMDBLOG		0x200
 
 #define F_AV_RETURN_STRING 	0x1
 
@@ -413,38 +448,41 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_PD_MATCHTYPES		(F_PD_MATCHDIR|F_PD_MATCHREG)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE)
+#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB)
 
 #define V_MB				0x100000
 
-#define DL_SZ sizeof(struct dirlog)
-#define NL_SZ sizeof(struct nukelog)
-#define DF_SZ sizeof(struct dupefile)
-#define LO_SZ sizeof(struct lastonlog)
-#define OL_SZ sizeof(struct oneliner)
-#define ON_SZ sizeof(struct ONLINE)
+#define DL_SZ 				sizeof(struct dirlog)
+#define NL_SZ 				sizeof(struct nukelog)
+#define DF_SZ 				sizeof(struct dupefile)
+#define LO_SZ 				sizeof(struct lastonlog)
+#define OL_SZ 				sizeof(struct oneliner)
+#define ON_SZ 				sizeof(struct ONLINE)
+#define ID_SZ 				sizeof(_d_imdb)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
-#define	DB_MAX_SIZE 	536870912   /* max file size allowed to load into memory */
-#define MAX_EXEC_STR 	262144
+#define	DB_MAX_SIZE 		536870912   /* max file size allowed to load into memory */
+#define MAX_EXEC_STR 		262144
 
-#define	PIPE_READ_MAX	0x2000
+#define	PIPE_READ_MAX		0x2000
 
-#define MSG_GEN_NODFILE "ERROR: %s: could not open data file: %s\n"
-#define MSG_GEN_DFWRITE "ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
-#define MSG_GEN_DFCORRU "ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
-#define MSG_GEN_DFRFAIL "ERROR: %s: rebuilding data file failed!\n"
+#define MSG_GEN_NODFILE 	"ERROR: %s: could not open data file: %s\n"
+#define MSG_GEN_DFWRITE 	"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
+#define MSG_GEN_DFCORRU 	"ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
+#define MSG_GEN_DFRFAIL 	"ERROR: %s: rebuilding data file failed!\n"
+#define MSG_BAD_DATATYPE 	"ERROR: %s: could not determine data type\n"
 
-#define DEFPATH_LOGS 	"/logs"
-#define DEFPATH_USERS 	"/users"
-#define DEFPATH_GROUPS 	"/groups"
+#define DEFPATH_LOGS 		"/logs"
+#define DEFPATH_USERS 		"/users"
+#define DEFPATH_GROUPS 		"/groups"
 
-#define DEFF_DIRLOG 	"dirlog"
-#define DEFF_NUKELOG 	"nukelog"
-#define DEFF_LASTONLOG  "laston.log"
-#define DEFF_DUPEFILE 	"dupefile"
-#define DEFF_ONELINERS 	"oneliners.log"
-#define DEFF_DULOG	 	"glutil.log"
+#define DEFF_DIRLOG 		"dirlog"
+#define DEFF_NUKELOG 		"nukelog"
+#define DEFF_LASTONLOG  	"laston.log"
+#define DEFF_DUPEFILE 		"dupefile"
+#define DEFF_ONELINERS 		"oneliners.log"
+#define DEFF_DULOG	 		"glutil.log"
+#define DEFF_IMDB	 		"imdb.log"
 
 #define F_SIGERR_CONTINUE 	0x1  /* continue after exception */
 
@@ -783,6 +821,7 @@ char DUPEFILE[255] = { dupe_file };
 char LASTONLOG[255] = { last_on_log };
 char ONELINERS[255] = { oneliner_file };
 char FTPDATA[255] = { ftp_data };
+char IMDBLOG[255] = { imdb_file };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
@@ -832,22 +871,27 @@ char *hpd_up =
 				"  -i, [--raw]           Print dupe file to stdout\n"
 				"  -l, [--raw]           Print last-on log to stdout\n"
 				"  -o, [--raw]           Print oneliners to stdout\n"
+				"  -a, [--raw]           Print iMDB log to stdout\n"
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
 				"  -t                    Print all user files inside /ftp-data/users\n"
 				"  -g                    Print all group files inside /ftp-data/groups\n"
-				"  -x <root dir> [--recursive] [--dir] [--file]\n"
+				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir])\n"
 				"                         Parses filesystem and processes each item found with internal filters/hooks\n"
 				"                         --dir scans directories only\n"
 				"                         --file scans files only (default is both dirs and files)\n"
+				"                         --cdir processes only the root directory itself\n"
 				"  -c, --check [--fix] [--ghost]\n"
 				"                         Compare dirlog and filesystem records and warn on differences\n"
 				"                           --fix attempts to correct dirlog\n"
 				"                           --ghost only looks for dirlog records with missing directories on filesystem\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
-				"  -e <dirlog|nukelog|dupefile|lastonlog>\n"
+				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb>\n"
 				"                         Rebuilds existing data file, based on filtering rules (see --exec,\n"
 				"                           --[i]regex[i] and --[i]match\n"
+				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb> [--infile=/path/file]\n"
+				"                         Creates a binary record from ASCII data, inserting it into the specified log\n"
+				"                         Captures input from stdin, unless --infile is set\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
 				"\n"
 				"Options:\n"
@@ -884,6 +928,8 @@ char *hpd_up =
 				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
 				"  --xblk                Ignores files/dirs on non-block devices\n"
 				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
+				"  --matchq              Exit on first match (--exec, --[i]regex[i], --[i]match)\n"
+				"  --imatchq             Exit on first non-match (--exec, --[i]regex[i], --[i]match)\n"
 				"  --batch               Prints with simple formatting\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --daemon              Fork process into background\n"
@@ -911,6 +957,7 @@ char *hpd_up =
 				"  --dupefile=FILE       Override default path to dupe file\n"
 				"  --lastonlog=FILE      Override default path to last-on log\n"
 				"  --oneliners=FILE      Override default path to oneliners file\n"
+				"  --imdblog=FILE        Override default path to iMDB log\n"
 				"  --folders=FILE        Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
 				"  --logfile=FILE        Override default log file path\n"
@@ -1095,6 +1142,16 @@ int opt_g_ftime(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_matchq(void *arg, int m) {
+	gfl |= F_OPT_MATCHQ;
+	return 0;
+}
+
+int opt_g_imatchq(void *arg, int m) {
+	gfl |= F_OPT_IMATCHQ;
+	return 0;
+}
+
 int opt_update_single_record(void *arg, int m) {
 	argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_SINGLE;
@@ -1134,6 +1191,14 @@ int opt_backup(void *arg, int m) {
 
 int opt_exec(void *arg, int m) {
 	exec_str = g_pd(arg, m, MAX_EXEC_STR);
+	return 0;
+}
+
+FILE *pf_infile = NULL;
+
+int opt_g_infile(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	pf_infile = gg_fopen(buffer, "rb");
 	return 0;
 }
 
@@ -1229,6 +1294,12 @@ int opt_lastonlog(void *arg, int m) {
 int opt_oneliner(void *arg, int m) {
 	g_cpg(arg, ONELINERS, m, 255);
 	ofl |= F_OVRR_ONELINERS;
+	return 0;
+}
+
+int opt_imdblog(void *arg, int m) {
+	g_cpg(arg, IMDBLOG, m, 255);
+	ofl |= F_OVRR_IMDBLOG;
 	return 0;
 }
 
@@ -1328,6 +1399,11 @@ int opt_g_xblk(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_cdironly(void *arg, int m) {
+	gfl |= F_OPT_CDIRONLY;
+	return 0;
+}
+
 int opt_dirlog_dump(void *arg, int m) {
 	updmode = UPD_MODE_DUMP;
 	return 0;
@@ -1360,6 +1436,17 @@ int opt_dump_grps(void *arg, int m) {
 
 int opt_dirlog_dump_nukelog(void *arg, int m) {
 	updmode = UPD_MODE_DUMP_NUKE;
+	return 0;
+}
+
+int opt_g_write(void *arg, int m) {
+	updmode = UPD_MODE_WRITE;
+	p_argv_off = g_pg(arg, m);
+	return 0;
+}
+
+int opt_g_dump_imdb(void *arg, int m) {
+	updmode = UPD_MODE_DUMP_IMDB;
 	return 0;
 }
 
@@ -1418,23 +1505,25 @@ typedef int __d_ref_to_val(void *, char *, char *, size_t);
 typedef int __d_format_block(char *, ear *, char *);
 typedef uint64_t __d_dlfind(char *, int, uint32_t, void *);
 typedef pmda __d_cfg(pmda md, char * file);
+typedef int __d_mlref(void *buffer, char *key, char *val);
 
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
 _d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog,
 		dirlog_check_records;
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
-		dirlog_update_record, g_dump_ug, g_dump_gen;
+		dirlog_update_record, g_dump_ug, g_dump_gen, d_write;
 
 __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
 		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
-		ref_to_val_generic, ref_to_val_macro;
+		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb;
 __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
-		dirlog_format_block;
+		dirlog_format_block, imdb_format_block;
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
+__d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh;
 
 uint64_t file_crc32(char *, uint32_t *);
 
@@ -1452,7 +1541,7 @@ int dirlog_write_record(struct dirlog *, off_t, int);
 char *string_replace(char *, char *, char *, char *, size_t);
 int enum_dir(char *, void *, void *, int);
 int update_records(char *, int);
-off_t read_file(char *, void *, size_t, off_t);
+off_t read_file(char *, void *, size_t, off_t, FILE *);
 int option_crc32(void *, int);
 
 int load_cfg(pmda md, char * file, uint32_t flags, pmda *res);
@@ -1516,6 +1605,11 @@ char **build_argv(char *args, size_t max, int *c);
 
 char *g_dgetf(char *str);
 
+int m_load_input(struct g_handle *hdl, char *input);
+off_t s_string(char *input, char *m, off_t offset);
+
+int g_bin_compare(const void *p1, const void *p2, off_t size);
+
 void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		(void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2", opt_g_arg2,
 		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3", opt_g_arg3,
@@ -1525,49 +1619,53 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		(void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev,
-		(void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk,
-		(void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f,
-		(void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir,
-		(void*) 0, "--loopmax", opt_loop_max, (void*) 1, "--ghost",
-		opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive",
-		opt_g_recursive, (void*) 0, "--recursive", opt_g_recursive, (void*) 0,
-		"-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0,
-		"--backup", opt_backup, (void*) 1, "--postexec", opt_g_postexec,
-		(void*) 1, "--preexec", opt_g_preexec, (void*) 1, "--usleep",
-		opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1",
-		NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
+void *f_ref[] = { "--cdir", opt_g_cdironly, (void*) 0, "--imatchq",
+		opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq, (void*) 0, "-a",
+		opt_g_dump_imdb, (void*) 0, "-z", opt_g_write, (void*) 1, "--infile",
+		opt_g_infile, (void*) 1, "-xdev", opt_g_xdev, (void*) 0, "--xdev",
+		opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk",
+		opt_g_xblk, (void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file",
+		opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir",
+		opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max, (void*) 1,
+		"--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1,
+		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
+		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
+		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1,
+		"--postexec", opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec,
+		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
+		(void*) 1, "-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
-		"--arg3", NULL, (void*) 1, "-m",
-		NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
-		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
-		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
-		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
-		opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
-		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "--silent",
-		opt_silent, (void*) 0, "--loopexec", opt_g_loopexec, (void*) 1,
-		"--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0,
-		"-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
-		opt_lastonlog_dump, (void*) 0, "--oneliners", opt_oneliner, (void*) 1,
-		"-o", opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog,
-		(void*) 1, "-i", opt_dupefile_dump, (void*) 0, "--dupefile",
-		opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering, (void*) 0,
-		"--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi, (void*) 1,
-		"--iregex", opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi,
-		(void*) 1, "--regex", opt_g_regex, (void*) 1, "-e", opt_rebuild,
-		(void*) 1, "--comp", opt_compact_output_formatting, (void*) 0,
-		"--batch", opt_batch_output_formatting, (void*) 0, "-y",
-		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
-		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
-		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
-		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
-		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
-		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
-		opt_dirlog_chk_dupe, (void*) 0, "-b", opt_g_nobuffering, (void*) 0,
-		"--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
-		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
-		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
-		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
+		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
+		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
+		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
+		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
+		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
+		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
+		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
+		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+		opt_lastonlog_dump, (void*) 0, "--imdblog", opt_imdblog, (void*) 1,
+		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
+		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
+		opt_dupefile_dump, (void*) 0, "--dupefile", opt_dupefile, (void*) 1,
+		"--nowbuffer", opt_g_buffering, (void*) 0, "--raw", opt_raw_dump,
+		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
+		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
+		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
+		opt_compact_output_formatting, (void*) 0, "--batch",
+		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
+		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
+		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
+		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
+		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
+		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
+		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
+		(void*) 0, "-b", opt_g_nobuffering, (void*) 0, "--nobuffer",
+		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
+		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
+		print_help, (void*) 0, "--version", print_version, (void*) 0,
+		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
 		(void*) 1, "-k", opt_g_nowrite, (void*) 0, "--nowrite", opt_g_nowrite,
@@ -1579,7 +1677,7 @@ void *f_ref[] = { "-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev,
 		"-r", opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
-	if (md->objects) {
+	if (!md || md->objects) {
 		return 1;
 	}
 	bzero(md, sizeof(mda));
@@ -1803,6 +1901,10 @@ int g_shutdown(void *arg) {
 		g_free(exec_str);
 	}
 
+	if (pf_infile) {
+		g_fclose(pf_infile);
+	}
+
 	_p_macro_argc = 0;
 
 	exit(EXITVAL);
@@ -1860,6 +1962,7 @@ char *build_data_path(char *file, char *path, char *sd) {
 }
 
 #define F_LCONF_NORF 	0x1
+#define MSG_INIT_PATH_OVERR 	"NOTICE: %s path set to '%s'\n"
 
 int g_init(int argc, char **argv) {
 	g_setjmp(0, "g_init", NULL, NULL);
@@ -1893,8 +1996,8 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_MODE_RAWDUMP)
-			&& !(gfl & F_OPT_FORMAT_COMP)) {
+	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
+			&& !(gfl & F_OPT_MODE_RAWDUMP) && !(gfl & F_OPT_FORMAT_COMP)) {
 		print_str("INIT: glutil %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
@@ -1985,6 +2088,7 @@ int g_init(int argc, char **argv) {
 	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
 	build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
 	build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
+	build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
 
 	bzero(SITEROOT, 255);
 	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
@@ -2018,25 +2122,28 @@ int g_init(int argc, char **argv) {
 			print_str("NOTICE: IPC key set to '0x%.8X'\n", SHM_IPC);
 		}
 		if (ofl & F_OVRR_GLROOT) {
-			print_str("NOTICE: GLROOT path set to '%s'\n", GLROOT);
+			print_str(MSG_INIT_PATH_OVERR, "GLROOT", GLROOT);
 		}
 		if (ofl & F_OVRR_SITEROOT) {
-			print_str("NOTICE: SITEROOT path set to '%s'\n", SITEROOT);
+			print_str(MSG_INIT_PATH_OVERR, "SITEROOT", SITEROOT);
 		}
 		if (ofl & F_OVRR_DIRLOG) {
-			print_str("NOTICE: DIRLOG path set to '%s'\n", DIRLOG);
+			print_str(MSG_INIT_PATH_OVERR, "DIRLOG", DIRLOG);
 		}
 		if (ofl & F_OVRR_NUKELOG) {
-			print_str("NOTICE: NUKELOG path set to '%s'\n", NUKELOG);
+			print_str(MSG_INIT_PATH_OVERR, "NUKELOG", NUKELOG);
 		}
 		if (ofl & F_OVRR_DUPEFILE) {
-			print_str("NOTICE: DUPEFILE path set to '%s'\n", DUPEFILE);
+			print_str(MSG_INIT_PATH_OVERR, "DUPEFILE", DUPEFILE);
 		}
 		if (ofl & F_OVRR_LASTONLOG) {
-			print_str("NOTICE: LASTONLOG path set to '%s'\n", LASTONLOG);
+			print_str(MSG_INIT_PATH_OVERR, "LASTONLOG", LASTONLOG);
 		}
 		if (ofl & F_OVRR_ONELINERS) {
-			print_str("NOTICE: ONELINERS path set to '%s'\n", ONELINERS);
+			print_str(MSG_INIT_PATH_OVERR, "ONELINERS", ONELINERS);
+		}
+		if (ofl & F_OVRR_IMDBLOG) {
+			print_str(MSG_INIT_PATH_OVERR, "IMDBLOG", IMDBLOG);
 		}
 		if ((gfl & F_OPT_VERBOSE2) && (gfl & F_OPT_PS_LOGGING)) {
 			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
@@ -2050,8 +2157,10 @@ int g_init(int argc, char **argv) {
 
 	if (updmode && (gfl & F_OPT_PREEXEC)) {
 		print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
-		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC) == -1) {
-			print_str("ERROR: POSTEXEC failed: '%s'\n", GLOBAL_PREEXEC);
+		int r_e = 0;
+		if ((r_e=g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC)) == -1 || WEXITSTATUS(r_e)) {
+			print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n", WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+			return 1;
 		}
 	}
 
@@ -2085,37 +2194,40 @@ int g_init(int argc, char **argv) {
 
 	switch (updmode) {
 	case UPD_MODE_RECURSIVE:
-		rebuild_dirlog();
+		EXITVAL = rebuild_dirlog();
 		break;
 	case UPD_MODE_SINGLE:
-		dirlog_update_record(argv_off);
+		EXITVAL = dirlog_update_record(argv_off);
 		break;
 	case UPD_MODE_CHECK:
-		dirlog_check_records();
+		EXITVAL = dirlog_check_records();
 		break;
 	case UPD_MODE_DUMP:
-		dirlog_print_stats();
+		EXITVAL = dirlog_print_stats();
 		break;
 	case UPD_MODE_DUMP_NUKE:
-		g_print_stats(NUKELOG, 0, 0);
+		EXITVAL = g_print_stats(NUKELOG, 0, 0);
 		break;
 	case UPD_MODE_DUMP_DUPEF:
-		g_print_stats(DUPEFILE, 0, 0);
+		EXITVAL = g_print_stats(DUPEFILE, 0, 0);
 		break;
 	case UPD_MODE_DUMP_LON:
-		g_print_stats(LASTONLOG, 0, 0);
+		EXITVAL = g_print_stats(LASTONLOG, 0, 0);
 		break;
 	case UPD_MODE_DUMP_ONEL:
-		g_print_stats(ONELINERS, 0, 0);
+		EXITVAL = g_print_stats(ONELINERS, 0, 0);
+		break;
+	case UPD_MODE_DUMP_IMDB:
+		EXITVAL = g_print_stats(IMDBLOG, 0, 0);
 		break;
 	case UPD_MODE_DUPE_CHK:
-		dirlog_check_dupe();
+		EXITVAL = dirlog_check_dupe();
 		break;
 	case UPD_MODE_REBUILD:
-		rebuild(p_argv_off);
+		EXITVAL = rebuild(p_argv_off);
 		break;
 	case UPD_MODE_DUMP_ONL:
-		g_print_stats("ONLINE USERS", F_DL_FOPEN_SHM, ON_SZ);
+		EXITVAL = g_print_stats("ONLINE USERS", F_DL_FOPEN_SHM, ON_SZ);
 		break;
 	case UPD_MODE_FORK:
 		if (p_argv_off) {
@@ -2123,16 +2235,19 @@ int g_init(int argc, char **argv) {
 		}
 		break;
 	case UPD_MODE_BACKUP:
-		data_backup_records(g_dgetf(p_argv_off));
+		EXITVAL = data_backup_records(g_dgetf(p_argv_off));
 		break;
 	case UPD_MODE_DUMP_USERS:
-		g_dump_ug(DEFPATH_USERS);
+		EXITVAL = g_dump_ug(DEFPATH_USERS);
 		break;
 	case UPD_MODE_DUMP_GRPS:
-		g_dump_ug(DEFPATH_GROUPS);
+		EXITVAL = g_dump_ug(DEFPATH_GROUPS);
 		break;
 	case UPD_MODE_DUMP_GEN:
-		g_dump_gen(p_argv_off);
+		EXITVAL = g_dump_gen(p_argv_off);
+		break;
+	case UPD_MODE_WRITE:
+		EXITVAL = d_write((char*) p_argv_off);
 		break;
 	case UPD_MODE_NOOP:
 		break;
@@ -2158,11 +2273,9 @@ int g_init(int argc, char **argv) {
 	if (updmode && (gfl & F_OPT_POSTEXEC)) {
 		print_str("POSTEXEC: running: '%s'\n", GLOBAL_POSTEXEC);
 		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_POSTEXEC) == -1) {
-			print_str("ERROR: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
+			print_str("WARNING: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
 		}
 	}
-
-	g_shutdown(NULL);
 
 	return EXITVAL;
 }
@@ -2191,6 +2304,7 @@ int main(int argc, char *argv[]) {
 	updmode = 0;
 
 	g_init(_p_macro_argc, p_argv);
+
 	g_shutdown(NULL);
 
 	return EXITVAL;
@@ -2361,9 +2475,13 @@ char *g_dgetf(char *str) {
 		return LASTONLOG;
 	} else if (!strncmp(str, "oneliners", 9)) {
 		return ONELINERS;
+	} else if (!strncmp(str, "imdb", 4)) {
+		return IMDBLOG;
 	}
 	return NULL;
 }
+
+#define MSG_UNRECOGNIZED_DATA_TYPE 	"ERROR: [%s] unrecognized data type\n"
 
 int rebuild(void *arg) {
 	g_setjmp(0, "rebuild", NULL, NULL);
@@ -2376,30 +2494,159 @@ int rebuild(void *arg) {
 	char *datafile = g_dgetf(a_ptr);
 	struct g_handle hdl = { 0 };
 
-	if (datafile) {
-		if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &hdl)) {
-			return 3;
-		}
-
-		if (!hdl.buffer_count) {
-			print_str(
-					"ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
-			return 4;
-		}
-
-		if (rebuild_data_file(datafile, &hdl)) {
-			print_str(MSG_GEN_DFRFAIL, datafile);
-			return 5;
-		}
-
-		print_str("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
-				(ulint64_t) hdl.bw, (ulint64_t) hdl.rw);
-	} else {
-		print_str("ERROR: [%s] unrecognized data type\n", a_ptr);
+	if (!datafile) {
+		print_str(MSG_UNRECOGNIZED_DATA_TYPE, a_ptr);
 		return 2;
 	}
 
+	if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &hdl)) {
+		return 3;
+	}
+
+	if (!hdl.buffer_count) {
+		print_str(
+				"ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
+		return 4;
+	}
+
+	if (rebuild_data_file(datafile, &hdl)) {
+		print_str(MSG_GEN_DFRFAIL, datafile);
+		return 5;
+	}
+
+	print_str("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
+			(ulint64_t) hdl.bw, (ulint64_t) hdl.rw);
+
+	g_cleanup(&hdl);
+
 	return 0;
+}
+
+#define MAX_DATAIN_F		(V_MB*512)
+
+int d_write(char *arg) {
+	g_setjmp(0, "d_write", NULL, NULL);
+
+	int ret = 0;
+
+	if (!arg) {
+		print_str("ERROR: missing data type argument\n");
+		return 1;
+	}
+
+	char *a_ptr = (char*) arg;
+	char *datafile = g_dgetf(a_ptr);
+
+	if (!datafile) {
+		print_str(MSG_UNRECOGNIZED_DATA_TYPE, a_ptr);
+		return 2;
+	}
+
+	struct g_handle g_act_1 = { 0 };
+
+	g_act_1.flags |= F_GH_FFBUFFER | F_GH_WAPPEND | F_GH_DFNOWIPE;
+
+	g_strncpy(g_act_1.file, datafile, strlen(datafile));
+
+	if (determine_datatype(&g_act_1)) {
+		print_str(MSG_BAD_DATATYPE, datafile);
+		return 3;
+	}
+
+	char *buffer = malloc(MAX_DATAIN_F);
+
+	FILE *in = (pf_infile ? pf_infile : stdin);
+
+	if (!read_file(NULL, buffer, MAX_DATAIN_F, 0, in)) {
+		print_str("ERROR: %s: could not read input data\n", datafile);
+		ret = 4;
+		goto end;
+	}
+
+	int r;
+
+	if ((r = m_load_input(&g_act_1, buffer))) {
+		print_str("ERROR: %s: [%d]: could not load input data\n", datafile, r);
+		ret = 5;
+		goto end;
+	}
+
+	if (!g_act_1.w_buffer.offset) {
+		print_str("ERROR: %s: no records were loaded, aborting..\n", datafile);
+		ret = 15;
+		goto end;
+	}
+
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("NOTICE: '%s': parsed and loaded %llu records\n", a_ptr,
+				(unsigned long long int) g_act_1.w_buffer.offset);
+	}
+
+	if (!(gfl & F_OPT_FORCE) && !file_exists(IMDBLOG)
+			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
+			&& g_act_1.buffer_count) {
+		p_md_obj ptr_w = md_first(&g_act_1.w_buffer), ptr_r;
+
+		while (ptr_w) {
+			ptr_r = md_first(&g_act_1.buffer);
+			int m = 1;
+			while (ptr_r) {
+				if (!(m = g_bin_compare(ptr_r->ptr, ptr_w->ptr,
+						(off_t) g_act_1.block_sz))) {
+					break;
+				}
+				ptr_r = ptr_r->next;
+			}
+
+			if (!m) {
+				if (gfl & F_OPT_VERBOSE2) {
+					print_str(
+							"NOTICE: record @0x%.16X already exists, unlinking..\n",
+							(unsigned long long int) (AAINT) ptr_w);
+				}
+				if (!md_unlink(&g_act_1.w_buffer, ptr_w)) {
+					print_str("%s: %s: [%llu]: %s, aborting build..\n",
+							g_act_1.w_buffer.offset ? "ERROR" : "WARNING",
+							datafile,
+							(unsigned long long int) g_act_1.w_buffer.offset,
+							g_act_1.w_buffer.offset ?
+									"could not unlink existing record" :
+									"all records already exist (nothing to do)");
+					goto end;
+				}
+			}
+
+			ptr_w = ptr_w->next;
+		}
+	}
+
+	if (rebuild_data_file(datafile, &g_act_1)) {
+		print_str(MSG_GEN_DFRFAIL, datafile);
+		ret = 7;
+		goto end;
+	}
+
+	end:
+
+	g_free(buffer);
+	return ret;
+}
+
+int g_bin_compare(const void *p1, const void *p2, off_t size) {
+	unsigned char *b_ptr1 = (unsigned char *) p1,
+			*b_ptr2 = (unsigned char *) p2, *ptr1, *ptr2;
+
+	ptr1 = b_ptr1 + (size - 1);
+	ptr2 = b_ptr2 + (size - 1);
+
+	while (ptr1[0] == ptr2[0] && ptr1 >= b_ptr1) {
+		ptr1--;
+		ptr2--;
+	}
+	if (ptr1 < b_ptr1) {
+		return 0;
+	}
+	return 1;
 }
 
 typedef struct ___std_rh_0 {
@@ -2441,8 +2688,14 @@ int g_dump_gen(char *root) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a file\n", root);
 		}
-		g_process_directory(root, DT_REG, &ret);
-		return 0;
+		return g_process_directory(root, DT_REG, &ret);
+	} else if ((gfl & F_OPT_CDIRONLY) && !dir_exists(root)) {
+		ret.flags ^= F_PD_MATCHTYPES;
+		ret.flags |= F_PD_MATCHDIR;
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("NOTICE: %s is a directory\n", root);
+		}
+		return g_process_directory(root, DT_DIR, &ret);;
 	}
 
 	char buffer[PATH_MAX] = { 0 };
@@ -2465,20 +2718,24 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 	switch (type) {
 	case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			print_str("FILE: %s\n", name);
 			if (do_match(name, name, ref_to_val_generic)) {
 				aa_rh->st_2++;
 				break;
+			}
+			if (gfl & F_OPT_VERBOSE) {
+				print_str("FILE: %s\n", name);
 			}
 			aa_rh->st_1++;
 		}
 		break;
 	case DT_DIR:
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			print_str("DIR: %s\n", name);
 			if (do_match(name, name, ref_to_val_generic)) {
 				aa_rh->st_2++;
 				break;
+			}
+			if (gfl & F_OPT_VERBOSE) {
+				print_str("DIR: %s\n", name);
 			}
 			aa_rh->st_1++;
 		}
@@ -2640,7 +2897,7 @@ int dirlog_check_dupe(void) {
 		print_str("\nSTATS: processed %llu/%llu records\n", st3, nrec);
 	}
 
-	//}
+//}
 	return 0;
 }
 
@@ -2801,7 +3058,9 @@ int data_backup_records(char *file) {
 	}
 
 	if (file_exists(file)) {
-		print_str("WARNING: %s: data file doesn't exist\n", file);
+		if (gfl & F_OPT_VERBOSE3) {
+			print_str("WARNING: BACKUP: %s: data file doesn't exist\n", file);
+		}
 		return 0;
 	}
 
@@ -3102,9 +3361,23 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		}
 		callback = ref_to_val_online;
 		break;
+	case F_GH_ISIMDB:
+		mstr = (char*) ((__d_imdb) d_ptr)->dirname;
+		if (!strlen(mstr)) {
+			return -1;
+		}
+		callback = ref_to_val_imdb;
+		break;
 	}
 
-	return do_match(mstr, d_ptr, callback);
+	int r = do_match(mstr, d_ptr, callback);
+
+	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
+		EXITVAL = 1;
+		gfl |= F_OPT_KILL_GLOBAL;
+	}
+
+	return r;
 }
 
 int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
@@ -3135,6 +3408,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			}
 
 			if ((r = g_bmatch(ptr, &g_act_1))) {
+
 				if (r == -1) {
 					break;
 				}
@@ -3185,7 +3459,13 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
 					}
 					break;
+				case F_GH_ISIMDB:
+					e.imdb = (__d_imdb) ptr;
+					ns_ptr = e.imdb->dirname;
+					re_c += imdb_format_block(ns_ptr, &e, sbuffer);
+					break;
 				}
+
 				if (re_c) {
 					print_str(sbuffer);
 				} else {
@@ -3308,7 +3588,6 @@ int rebuild_dirlog(void) {
 		g_act_1.block_sz = DL_SZ;
 		g_act_1.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
 				| ((gfl & F_OPT_UPDATE) ? F_GH_DFNOWIPE : 0);
-		g_act_1.w_buffer.flags |= F_MDA_REUSE;
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s: explicit write pre-caching enabled\n",
 					DIRLOG);
@@ -3318,6 +3597,7 @@ int rebuild_dirlog(void) {
 		data_backup_records(DIRLOG);
 	}
 	g_act_1.block_sz = DL_SZ;
+	g_act_1.flags |= F_GH_ISDIRLOG;
 
 	int dfex = file_exists(DIRLOG);
 
@@ -3350,7 +3630,7 @@ int rebuild_dirlog(void) {
 	char buffer[V_MB + 1] = { 0 };
 	mda dirchain = { 0 }, buffer2 = { 0 };
 
-	if (read_file(DU_FLD, buffer, V_MB, 0) < 1) {
+	if (read_file(DU_FLD, buffer, V_MB, 0, NULL) < 1) {
 		print_str(
 				"WARNING: unable to read folders file, doing full siteroot recursion in '%s'..\n",
 				SITEROOT);
@@ -4083,6 +4363,31 @@ int online_format_block(char *name, ear *iarg, char *output) {
 	return c;
 }
 
+int imdb_format_block(char *name, ear *iarg, char *output) {
+	g_setjmp(0, "imdb_format_block", NULL, NULL);
+	char buffer2[255] = { 0 };
+
+	time_t t_t = (time_t) iarg->imdb->timestamp;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+
+	int c;
+	if (gfl & F_OPT_FORMAT_BATCH) {
+		c = sprintf(output, "IMDB;%s;%u;%s;%.1f;%u;%s\n", iarg->imdb->dirname,
+				(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
+				iarg->imdb->rating, iarg->imdb->votes, iarg->imdb->genres);
+	} else {
+		c =
+				sprintf(output,
+						"IMDB: %s: created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s\n",
+						iarg->imdb->dirname, buffer2, iarg->imdb->imdb_id,
+						iarg->imdb->rating, iarg->imdb->votes,
+						iarg->imdb->genres);
+	}
+
+	return c;
+}
+
 char *generate_chars(size_t num, char chr, char*buffer) {
 	g_setjmp(0, "generate_chars", NULL, NULL);
 	bzero(buffer, 255);
@@ -4603,7 +4908,7 @@ int flush_data_md(struct g_handle *hdl, char *outfile) {
 				return 1;
 			}
 		} else {
-			if (!hdl->buffer_count) {
+			if (!hdl->buffer.count) {
 				return 1;
 			}
 		}
@@ -4803,7 +5108,7 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 	g_strncpy(hdl->file, file, strlen(file));
 
 	if (determine_datatype(hdl)) {
-		print_str("ERROR: %s: could not determine data type\n", file);
+		print_str(MSG_BAD_DATATYPE, file);
 		return 6;
 	}
 
@@ -4838,9 +5143,13 @@ int determine_datatype(struct g_handle *hdl) {
 	if (!strncmp(hdl->file, DIRLOG, strlen(DIRLOG))) {
 		hdl->flags |= F_GH_ISDIRLOG;
 		hdl->block_sz = DL_SZ;
+		hdl->d_memb = 7;
+		hdl->gcb_proc0 = gcb_dirlog;
 	} else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG))) {
 		hdl->flags |= F_GH_ISNUKELOG;
 		hdl->block_sz = NL_SZ;
+		hdl->d_memb = 9;
+		hdl->gcb_proc0 = gcb_nukelog;
 	} else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE))) {
 		hdl->flags |= F_GH_ISDUPEFILE;
 		hdl->block_sz = DF_SZ;
@@ -4850,9 +5159,15 @@ int determine_datatype(struct g_handle *hdl) {
 	} else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS))) {
 		hdl->flags |= F_GH_ISONELINERS;
 		hdl->block_sz = OL_SZ;
+	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
+		hdl->flags |= F_GH_ISIMDB;
+		hdl->block_sz = ID_SZ;
+		hdl->d_memb = 6;
+		hdl->gcb_proc0 = gcb_imdbh;
 	} else {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -5328,23 +5643,25 @@ int delete_file(char *name, unsigned char type, void *arg) {
 	return 2;
 }
 
-off_t read_file(char *file, void *buffer, size_t read_max, off_t offset) {
+off_t read_file(char *file, void *buffer, size_t read_max, off_t offset,
+		FILE *_fp) {
 	g_setjmp(0, "read_file", NULL, NULL);
 	size_t read;
 	int r;
-	FILE *fp;
+	FILE *fp = _fp;
 
-	off_t a_fsz = get_file_size(file);
+	if (!_fp) {
+		off_t a_fsz = get_file_size(file);
 
-	if (!a_fsz)
-		return 0;
+		if (!a_fsz)
+			return 0;
 
-	if (read_max > a_fsz) {
-		read_max = a_fsz;
+		if (read_max > a_fsz) {
+			read_max = a_fsz;
+		}
+		if ((fp = gg_fopen(file, "rb")) == NULL)
+			return 0;
 	}
-
-	if ((fp = gg_fopen(file, "rb")) == NULL)
-		return 0;
 
 	if (offset)
 		fseeko(fp, (off_t) offset, SEEK_SET);
@@ -5356,7 +5673,9 @@ off_t read_file(char *file, void *buffer, size_t read_max, off_t offset) {
 		read += r;
 	}
 
-	g_fclose(fp);
+	if (!_fp) {
+		g_fclose(fp);
+	}
 
 	return read;
 }
@@ -5544,7 +5863,6 @@ void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 			}
 			p_ret = (void*) out;
 			break;
-
 		case F_CFGV_RETURN_TOKEN_EX:
 			if (c_token < 0 || c_token >= s_ret->count) {
 				return NULL;
@@ -5623,10 +5941,14 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, GLROOT);
 	} else if (!strcmp(match, "siteroot")) {
 		sprintf(output, SITEROOT);
+	} else if (!strcmp(match, "siterootn")) {
+		sprintf(output, SITEROOT_N);
 	} else if (!strcmp(match, "ftpdata")) {
 		sprintf(output, FTPDATA);
 	} else if (!strcmp(match, "logfile")) {
 		sprintf(output, LOGFILE);
+	} else if (!strcmp(match, "imdbfile")) {
+		sprintf(output, IMDBLOG);
 	} else if (!strcmp(match, "PID")) {
 		sprintf(output, "%d", getpid());
 	} else if (!strcmp(match, "IPC")) {
@@ -5638,6 +5960,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strcmp(match, "logroot")) {
 		sprintf(output, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
+		remove_repeating_chars(output, 0x2F);
 		remove_repeating_chars(output, 0x2F);
 	} else if (arg && !strcmp(match, "arg")) {
 		sprintf(output, (char*) arg);
@@ -5922,6 +6245,38 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
+int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_imdb", NULL, NULL);
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
+
+	__d_imdb data = (__d_imdb) arg;
+
+	if (!strcmp(match, "dir")) {
+		sprintf(output, data->dirname);
+	} else if (!strcmp(match, "time")) {
+		sprintf(output, "%u", (uint32_t) data->timestamp);
+	} else if (!strcmp(match, "imdbid")) {
+		sprintf(output, data->imdb_id);
+	} else if (!strcmp(match, "score")) {
+		sprintf(output, "%.1f", data->rating);
+	} else if (!strcmp(match, "votes")) {
+		sprintf(output, "%u", (uint32_t) data->votes);
+	} else if (!strcmp(match, "genres")) {
+		sprintf(output, data->genres);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
 int process_exec_string(char *input, char *output, void *callback, void *data) {
 	g_setjmp(0, "process_exec_string", NULL, NULL);
 
@@ -6121,6 +6476,279 @@ int free_cfg_rf(pmda md) {
 	}
 
 	return md_g_free(md);
+}
+
+off_t s_string(char *input, char *m, off_t offset) {
+	off_t i, m_l = strlen(m), i_l = strlen(input);
+	for (i = offset; i <= i_l - m_l; i++) {
+		if (!strncmp(&input[i], m, m_l)) {
+			return i;
+		}
+	}
+	return offset;
+}
+
+#define MAX_SDENTRY_LEN		20000
+
+int m_load_input(struct g_handle *hdl, char *input) {
+	g_setjmp(0, "m_load_input", NULL, NULL);
+
+	if (!hdl->w_buffer.objects) {
+		md_init(&hdl->w_buffer, 256);
+	}
+
+	if (!hdl->gcb_proc0) {
+		return -1;
+	}
+
+	if (!hdl->d_memb) {
+		return -2;
+	}
+
+	off_t p_c = 0, p_n, p_l;
+	char *buffer = malloc(MAX_SDENTRY_LEN + 1);
+
+	mda md_s = { 0 };
+	p_md_obj ptr;
+
+	int i, rs, rf = 0;
+
+	while ((p_n = s_string(input, "\n\n", p_c)) > p_c) {
+		p_l = p_n - p_c;
+
+		if (p_l < 2) {
+			goto e_loop;
+		}
+
+		if (p_l > MAX_SDENTRY_LEN) {
+
+			rf++;
+			continue;
+		}
+
+		g_strncpy(buffer, &input[p_c], p_l);
+		bzero(&buffer[p_l], 1);
+
+		p_c = p_n + 2;
+
+		md_init(&md_s, 32);
+
+		if ((rs = split_string(buffer, 0xA, &md_s)) != hdl->d_memb) {
+			rf++;
+			goto e_loop;
+		}
+
+		ptr = md_s.objects;
+		char *s_ptr;
+		uint32_t rw = 0;
+		void *st_buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
+
+		if (!st_buffer) {
+			rf++;
+			goto e_loop;
+		}
+
+		while (ptr) {
+			s_ptr = (char*) ptr->ptr;
+			i = 0;
+			while (s_ptr[i] && s_ptr[i] != 0x20) {
+				i++;
+			}
+
+			memset(&s_ptr[i], 0x0, 1);
+			char *s_p1 = &s_ptr[i + 1];
+
+			int bd = hdl->gcb_proc0(st_buffer, s_ptr, s_p1);
+			if (!bd && (gfl & F_OPT_VERBOSE)) {
+				print_str("WARNING: DATA IMPORT: failed extracting '%s'\n",
+						s_ptr);
+			}
+			//printf("%s - %s: %d\n", s_ptr, s_p1, bd);
+			rw += (uint32_t) bd;
+			ptr = ptr->next;
+		}
+
+		if (rw != hdl->d_memb) {
+			md_unlink(&hdl->w_buffer, hdl->w_buffer.pos);
+			rf++;
+		}
+
+		e_loop:
+
+		md_g_free(&md_s);
+	}
+
+	g_free(buffer);
+
+	return rf;
+}
+
+int gcb_dirlog(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l, v_i;
+	uint32_t k_ui;
+	struct dirlog * ptr = (struct dirlog *) buffer;
+	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "user", 4)) {
+		v_i = (int) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->uploader = v_i;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "group", 5)) {
+		v_i = (int) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->group = v_i;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "files", 5)) {
+		k_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->files = k_ui;
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "size", 4)) {
+		ulint64_t k_uli = (ulint64_t) strtoll(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->bytes = k_uli;
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+		k_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->uptime = k_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "status", 6)) {
+		uint16_t k_us = (uint16_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->status = k_us;
+		return 1;
+	}
+	return 0;
+}
+
+int gcb_nukelog(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+
+	struct nukelog* ptr = (struct nukelog*) buffer;
+	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "reason", 6)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->reason, val, v_l > 59 ? 59 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "bytes", 5)) {
+		float v_f = strtof(val, NULL);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->bytes = v_f;
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "mult", 4)) {
+		uint16_t v_ui = (uint16_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->mult = v_ui;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "nukee", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->nukee, val, v_l > 12 ? 12 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "nuker", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->nuker, val, v_l > 12 ? 12 : v_l);
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "unnuker", 7)) {
+		if (!(v_l = strlen(val))) {
+			return 1;
+		}
+		g_memcpy(ptr->unnuker, val, v_l > 12 ? 12 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+		uint32_t k_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->nuketime = k_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "status", 6)) {
+		uint16_t k_us = (uint16_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->status = k_us;
+		return 1;
+	}
+	return 0;
+}
+
+int gcb_imdbh(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	__d_imdb ptr = (__d_imdb) buffer;
+	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->timestamp = v_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "imdbid", 6)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->imdb_id, val, v_l > 63 ? 63 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "score", 5)) {
+		float v_f = strtof(val, NULL);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->rating = v_f;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "votes", 5)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->votes = v_ui;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "genre", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->genres, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	}
+	return 0;
 }
 
 int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
