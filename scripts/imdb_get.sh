@@ -41,7 +41,7 @@ QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s
 YEAR=$2
 
 
-iid=$($CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY" | xmllint --xpath "(/IMDbResults//ImdbEntity[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|(\s)|[\"]//g')
+iid=$($CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY" | xmllint --xpath "(/IMDbResults/ImdbEntity[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|(\s)|[\"]//g')
 
 [ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURLxml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | xmllint --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
 [ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
