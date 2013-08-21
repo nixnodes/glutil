@@ -71,8 +71,8 @@ VOTES=$(echo $(get_field imdbVotes) | tr -d ',')
 [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
-	GLR_E=$(echo $4 | sed 's/\//\\\//g')	
-    
+	trap "rm /tmp/glutil.img.$$.tmp" SIGINT SIGTERM SIGKILL SIGABRT
+	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
 	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
 	$2 -a --iregex "$DIR_E" --imatchq > /dev/null || $2 -e imdb --match "$DIR_E" > /dev/null
 	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\n\n" > /tmp/glutil.img.$$.tmp
