@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-2
+ * Version     : 1.4-4
  * Description : glFTPd binary log utility
  * ============================================================================
  */
@@ -123,7 +123,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 2
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2841,10 +2841,10 @@ int dirlog_check_dupe(void) {
 		if (gfl & F_OPT_VERBOSE) {
 			e_t = time(NULL);
 
-				if (e_t - d_t) {
-					d_t = time(NULL);
-			g_progress_stats(s_t, e_t, nrec, st3);
-				}
+			if (e_t - d_t) {
+				d_t = time(NULL);
+				g_progress_stats(s_t, e_t, nrec, st3);
+			}
 		}
 
 		st1 = g_act_1.offset;
@@ -2865,12 +2865,11 @@ int dirlog_check_dupe(void) {
 				break;
 			}
 
-
 			ss_buffer = strdup(dd_ptr->dirname);
 			ss_pb = basename(ss_buffer);
 			size_t ss_pb_l = strlen(ss_pb);
 
-			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)	) {
+			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)) {
 				/*if (g_act_1.buffer_count && g_act_1.buffer.pos) {
 				 g_act_1.buffer.pos->flags |= F_MD_NOREAD;
 				 }*/
@@ -4803,7 +4802,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		if (!(gfl & F_OPT_NOWRITE)) {
 			remove(hdl->s_buffer);
 		}
-		goto end;
+		goto cleanup;
 	}
 
 	g_setjmp(0, "rebuild_data_file(6)", NULL, NULL);
@@ -4815,7 +4814,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			if (!(gfl & F_OPT_NOWRITE)) {
 				remove(hdl->s_buffer);
 			}
-			goto end;
+			goto cleanup;
 		}
 	}
 
@@ -4834,7 +4833,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 			if (remove(file)) {
 				print_str("ERROR: %s: could not clean old data file\n", file);
 				ret = 9;
-				goto end;
+				goto cleanup;
 			}
 			hdl->flags |= F_GH_DFWASWIPED;
 		}
@@ -4856,7 +4855,19 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 						errno);
 				ret = 4;
 			}
+			goto end;
 		}
+
+		cleanup:
+
+		if ((r = remove(hdl->s_buffer))) {
+			print_str(
+					"WARNING: %s: [%d] removing temporary file failed (do it manually)\n",
+					hdl->s_buffer,
+					errno);
+			ret = 5;
+		}
+
 	}
 	end:
 
