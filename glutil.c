@@ -1607,6 +1607,7 @@ char *g_dgetf(char *str);
 
 int m_load_input(struct g_handle *hdl, char *input);
 off_t s_string(char *input, char *m, off_t offset);
+off_t s_string_r(char *input, char *m);
 
 int g_bin_compare(const void *p1, const void *p2, off_t size);
 
@@ -2789,7 +2790,7 @@ void g_progress_stats(time_t s_t, time_t e_t, off_t total, off_t done) {
 			"PROCESSING: %llu/%llu [ %.2f%s ] | %.2f r/s | ETA: %.1f s\r",
 			(long long unsigned int) done, (long long unsigned int) total,
 			((float) done / ((float) total / 100.0)), "%", rate,
-			(float) total / rate);
+			(float) (total - done) / rate);
 
 }
 
@@ -2797,7 +2798,7 @@ int dirlog_check_dupe(void) {
 	g_setjmp(0, "dirlog_check_dupe", NULL, NULL);
 	struct dirlog buffer, buffer2;
 	struct dirlog *d_ptr = NULL, *dd_ptr = NULL;
-	char *s_buffer, *ss_buffer, *s_pb, *ss_pb;
+	char *s_pb, *ss_pb;
 
 	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
 		return 2;
@@ -2816,24 +2817,21 @@ int dirlog_check_dupe(void) {
 	if (gfl & F_OPT_VERBOSE) {
 		g_progress_stats(s_t, e_t, nrec, st3);
 	}
+	off_t rtt;
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
-		//if (!sigsetjmp(g_sigjmp.env, 1)) {
 		st3++;
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			break;
 		}
-		/*if (g_act_1.buffer.pos && (g_act_1.buffer.pos->flags & F_MD_NOREAD)) {
-		 continue;
-		 }*/
+
 		if (g_bmatch(d_ptr, &g_act_1)) {
 			continue;
 		}
 
-		//g_setjmp(F_SIGERR_CONTINUE, "dirlog_check_dupe(loop)(2)", NULL, NULL);
-
-		s_buffer = strdup(d_ptr->dirname);
-		s_pb = basename(s_buffer);
+		rtt = s_string_r(d_ptr->dirname, "/");
+		s_pb = &d_ptr->dirname[rtt + 1];
 		size_t s_pb_l = strlen(s_pb);
+
 		if (s_pb_l < 4) {
 			continue;
 		}
@@ -2848,59 +2846,45 @@ int dirlog_check_dupe(void) {
 		}
 
 		st1 = g_act_1.offset;
-		//g_act_1.offset = 0;
-		if (g_act_1.buffer_count) {
-			//st2 = g_act_1.buffer_count;
+
+		if (!g_act_1.buffer_count) {
+			st2 = (off_t) ftello(g_act_1.fh);
+		} else {
+
 			pmd_st1 = g_act_1.buffer.r_pos;
 			pmd_st2 = g_act_1.buffer.pos;
-		} else {
-			st2 = (off_t) ftello(g_act_1.fh);
 		}
-		//gh_rewind(&g_act_1);
 
 		int ch = 0;
 
 		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1, DL_SZ))) {
-			if (gfl & F_OPT_KILL_GLOBAL) {
-				break;
-			}
-
-			ss_buffer = strdup(dd_ptr->dirname);
-			ss_pb = basename(ss_buffer);
+			rtt = s_string_r(dd_ptr->dirname, "/");
+			ss_pb = &dd_ptr->dirname[rtt + 1];
 			size_t ss_pb_l = strlen(ss_pb);
 
 			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)) {
-				/*if (g_act_1.buffer_count && g_act_1.buffer.pos) {
-				 g_act_1.buffer.pos->flags |= F_MD_NOREAD;
-				 }*/
-
 				if (!ch) {
-					print_str("\rDUPE %s\n", d_ptr->dirname);
+					print_str("\rDUPE %s               \n", d_ptr->dirname);
 				}
-				print_str("\rDUPE %s\n", dd_ptr->dirname);
+				print_str("\rDUPE %s               \n", dd_ptr->dirname);
 				ch++;
 			}
-			free(ss_buffer);
 		}
 
 		g_act_1.offset = st1;
-		if (g_act_1.buffer_count) {
-			//g_act_1.buffer.offset = st2;
+		if (!g_act_1.buffer_count) {
+			fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
+		} else {
 			g_act_1.buffer.r_pos = pmd_st1;
 			g_act_1.buffer.pos = pmd_st2;
-		} else {
-			fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
 		}
-		//end_loop1:
 
-		free(s_buffer);
 	}
 	if (gfl & F_OPT_VERBOSE) {
+		d_t = time(NULL);
 		g_progress_stats(s_t, e_t, nrec, st3);
 		print_str("\nSTATS: processed %llu/%llu records\n", st3, nrec);
 	}
-
-//}
 	return 0;
 }
 
@@ -6506,6 +6490,17 @@ off_t s_string(char *input, char *m, off_t offset) {
 		}
 	}
 	return offset;
+}
+
+off_t s_string_r(char *input, char *m) {
+	off_t i, m_l = strlen(m), i_l = strlen(input);
+
+	for (i = i_l - 1 - m_l; i >= 0; i--) {
+		if (!strncmp(&input[i], m, m_l)) {
+			return i;
+		}
+	}
+	return (off_t) -1;
 }
 
 #define MAX_SDENTRY_LEN		20000
