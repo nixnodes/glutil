@@ -28,7 +28,7 @@
  *      in --help)
  *  - Extract relevant data from config/users/groups files and pass along
  *      as argument strings to shell
- *  - Write to any binary log, using an ASCII formatted text source (read below)
+ *  - Write to any binary log, using an ASCII formatted text source
  *  - Compare dirlog data against filesystem/nukelog to spot differences and
  *      fix them
  *  - Search for duplicates in dirlog
@@ -49,7 +49,7 @@
  *   to the shell using --exec, --postexec or --preexec (see --help)
  *   
  *
- *   Let's assume, you want to get the path, number of files and directory  
+ *   Let's assume we want to get the path, number of files and directory  
  *   creation time out of dirlog, passing these three values for each record 
  *   to your script:
  *
