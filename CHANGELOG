@@ -30,7 +30,7 @@
  *   - Added -x, directory/file parser with --exec (and filter) hooks (rev. 9)
  *   - Bugfix: -r failed to detect root directories (rev. 10)
  *   - Added --xdev, --xblk (see --help) (rev. 10)
- *
+ * 
  * v1.2
  *
  *   - It's now possible to define macros, command execution templates for scripts 
