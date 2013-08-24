@@ -243,8 +243,5 @@
   If folders file is missing, it automatically does full siteroot
   recursion (same as '-f').
 
- Examples:
 
-
-
-  Credits : Bsugar for the original idea, design and beta testing
+ Credits : Bsugar for the original idea, design and beta testing
