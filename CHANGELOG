@@ -12,6 +12,9 @@
  *   - Dupe check optimized for speed more (rev. 5)
  *   - Added write support for dupelog, lastonlog and oneliners (-z) (rev. 6)
  *   - Added title, year, rated, released, runtime, actors and director fields to imdb log (rev. 7)
+ *   - Get self path BSD compatibility (rev. 8)
+ *   - Created new data format (game log) (rev. 9)
+ *   - Added -k (gamelog print) and -b (alias for --backup) (rev. 9)
  *
  * v1.3
  *
