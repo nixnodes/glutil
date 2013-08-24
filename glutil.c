@@ -2405,7 +2405,7 @@ char **build_argv(char *args, size_t max, int *c) {
 
 	size_t args_l = strlen(args);
 	int i_0, l_p = 0, b_c = 0;
-	char sp_1 = 0x20, sp_2 = 0x22;
+	char sp_1 = 0x20, sp_2 = 0x22, sp_3 = 0x60;
 
 	*c = 0;
 
@@ -2414,19 +2414,20 @@ char **build_argv(char *args, size_t max, int *c) {
 			while (args[i_0] == sp_1) {
 				i_0++;
 			}
-			if (args[i_0] == sp_2) {
-				while (args[i_0] == sp_2) {
+			if (args[i_0] == sp_2 || args[i_0] == sp_3) {
+				while (args[i_0] == sp_2 || args[i_0] == sp_3) {
 					i_0++;
 				}
 				sp_1 = sp_2;
 				l_p = i_0;
 			}
 		}
-		if ((((args[i_0] == sp_1 || args[i_0] == sp_2) && args[i_0-1] != 0x5C) || i_0 == args_l - 1)
-				&& i_0 > l_p) {
+		if ((((args[i_0] == sp_1 || (args[i_0] == sp_2 || args[i_0] == sp_3))
+				&& args[i_0 - 1] != 0x5C && args[i_0] != 0x5C)
+				|| i_0 == args_l - 1) && i_0 > l_p) {
 
 			if (i_0 == args_l - 1) {
-				if (!(args[i_0] == sp_1 || args[i_0] == sp_2)) {
+				if (!(args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3)) {
 					i_0++;
 				}
 
@@ -2434,14 +2435,14 @@ char **build_argv(char *args, size_t max, int *c) {
 
 			size_t ptr_b_l = i_0 - l_p;
 			ptr[b_c] = (char*) calloc(ptr_b_l + 1, 1);
-			g_strncpy(ptr[b_c], &args[l_p], ptr_b_l);
+			g_strncpy((char*)ptr[b_c], &args[l_p], ptr_b_l);
 			b_c++;
 			*c += 1;
 
 			int ii_l = 1;
-			while (args[i_0] == sp_1 || args[i_0] == sp_2) {
-				if (sp_1 != sp_2) {
-					if (args[i_0] == sp_2) {
+			while (args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3) {
+				if (sp_1 != sp_2 && sp_1 != sp_3) {
+					if (args[i_0] == sp_2 || args[i_0] == sp_3) {
 						i_0++;
 						break;
 					}
@@ -2449,18 +2450,20 @@ char **build_argv(char *args, size_t max, int *c) {
 				i_0++;
 			}
 			l_p = i_0;
-			if (sp_1 == sp_2) {
+			if (sp_1 == sp_2 || sp_1 == sp_3) {
 				sp_1 = 0x20;
 				sp_2 = 0x22;
-				while (args[i_0] == sp_1 || args[i_0] == sp_2) {
+				sp_3 = 0x60;
+				while (args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3) {
 					i_0++;
 				}
 				l_p = i_0;
 			} else {
-				if (args[i_0 - ii_l] == 0x22) {
-					sp_1 = 0x22;
-					sp_2 = 0x22;
-					while (args[i_0] == sp_1 || args[i_0] == sp_2) {
+				if (args[i_0 - ii_l] == 0x22 || args[i_0 - ii_l] == 0x60) {
+					sp_1 = args[i_0 - ii_l];
+					sp_2 = args[i_0 - ii_l];
+					sp_3 = args[i_0 - ii_l];
+					while (args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3) {
 						i_0++;
 					}
 					l_p = i_0;
@@ -5332,7 +5335,6 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 		if (process_exec_string(e_str, b_glob, callback, buffer)) {
 			return 2;
 		}
-
 		return system(b_glob);
 	} else if (ex_str) {
 		if (strlen(ex_str) > MAX_EXEC_STR) {
