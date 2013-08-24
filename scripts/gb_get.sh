@@ -1,6 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:getscore:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) score"
+#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent --dir -exec "{m:spec1} $(basename {arg}) score"
+#@MACRO:gamescore-d:{m:exe} -d --silent --iregex "{m:arg1}" -exec "{m:spec1} {basedir} score"
 #
 ## Retrieves game info using giantbomb API (XML)
 #
@@ -10,6 +11,8 @@
 #
 CURL="/usr/bin/curl"
 CURL_FLAGS="--silent"
+
+# libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
 
 ! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
@@ -26,12 +29,15 @@ URL="$BURL""api"
 ## Get it from giantbomb website (registration required)
 API_KEY=""
 #
+INPUT_SKIP="^(.* complete .*|sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*)$"
+#
 INPUT_CLEAN_REGEX="([._-\(\)](MACOSX|EUR|Creators[._-\(\)]Edition|PATCH|DATAPACK|GAMEFIX|READ[._-\(\)]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[._-\(\)]CUT|READNFO|DLC|INCL[._-\(\)]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX)[._-\(\)].*)|(-[A-Z0-9a-z_-]*)$"
 #
 ############################[ END OPTIONS ]##############################
 
-QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 
+QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 WHAT=$2
 
