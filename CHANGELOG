@@ -9,6 +9,7 @@
  *   - Bugfix: some return values were always 0 (rev. 2)
  *   - Optimized -p for speed (rev. 3)
  *   - Bugfix: Temp file wasn't removed after rebuild (rev. 4)
+ *   - Dupe check optimized for speed more (rev. 5)
  *
  * v1.3
  *
