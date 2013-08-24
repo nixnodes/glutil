@@ -43,7 +43,11 @@
  *  - Oneliners file   (/ftp-data/logs/oneliners.log)
  *  - Online users     (shared memory segment)
  *
- ** Extracting binary log records as strings:
+ ** glutil specific binary logs:
+ *
+ *  - Internet Movie Data Base log   (/ftp-data/logs/imdb.log)
+ *
+ ** Extracting binary logs records as strings:
  *
  *   ANY binary log record can easily be extracted as ASCII string and passed 
  *   to the shell using --exec, --postexec or --preexec (see --help)
@@ -55,9 +59,9 @@
  *
  *   ./glutil  -d --silent -exec "/path/to/myscript.sh {dir} {files} {time}"
  *
- *   -------------------------------------------------------------------
+ *   --/* myscript.sh: */-----------------------------------------------
  *
- *   /* myscript.sh: */
+ *  
  *
  *   #/bin/bash
  *
@@ -72,7 +76,7 @@
  *    [x@y bin]$ ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}"
  *    ...
  *    /site/archive/tv-../Sky.Special... 16 1277037362
- *    /site/archive/tv-.../The.Simpsons.20th.Anniversary.Special... 22 1277037472
+ *    /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
  *    /site/archive/tv-dvdrip/P/Prison.Break/Prison.Break.S02.. 28 1277065247
  *    ...
  *   
@@ -80,13 +84,81 @@
  *   Now do the same, but apply a regex filter (--iregex) to dirnames 
  *   to -exec ONLY what is matched and quit after first match (--imatchq):
  *
- *   ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
- *   "\/The\.Simpsons" --imatchq
+ *    ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
+ *    "\/The\.Simpsons" --imatchq
  *
  *   Output:
  *
- *    /site/archive/tv-.../The.Simpsons.20th.Anniversary.Special... 22 1277037472
+ *    /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
+ *    /site/archive/tv-.../The.Simpsons.S04E05... 21 1277137472
  *
+ *
+ ** Writing strings to binary logs:
+ *
+ *   Any binary log can be built, using only proper ASCII formated input
+ *
+ *   For this example, let's assume we want to add three new records to
+ *   the dirlog.
+ *
+ *  Write records in ASCII form to a temporary file:
+ *  
+ *   --/* adatafile.tmp: */----------------------------------------------
+ *
+ *   dir /site/x264/Avengers.1080p.x264-GRP
+ *   user 101
+ *   group 101
+ *   files 49
+ *   size 9437184000
+ *   time 1377307789
+ *   status 0
+ *
+ *   dir /site/xvid/Die.Hard.DVDRIP.XViD-GRP
+ *   user 104
+ *   group 105
+ *   files 21
+ *   size 734003200
+ *   time 1377307789
+ *   status 0
+ *
+ *   dir /site/xvid/Fast.and.Furious.BRRIP.XViD-GRP
+ *   user 102
+ *   group 103
+ *   files 22
+ *   size 733103100
+ *   time 1377301789
+ *   status 1
+ *
+ *   -------------------------------------------------------------------
+ *
+ *   Write info held in 'adatafile.tmp' to the dirlog:
+ *
+ *    ./glutil -z dirlog < adatafile.tmp
+ *
+ *   Assuming there's no ERROR, 3 new records are appended to the data
+ *   file. 
+ *   If you don't want to write to existing dirlog, use path overrides:
+ *
+ *    ./glutil -z dirlog --dirlog=/path/to/dirlog.new < adatafile.tmp
+ *
+ *   Value names will usually be the same as variables in glconf.h
+ *
+ *
+ *   Besides support for glFTPd log types, glutil introduces new log
+ *   types, see /scripts folder for working examples.
+ 
+ *   For instance, 'imdb_get.sh' scrapes iMDB info off the web and
+ *   constructs iMDB binary data log, writing movie rating/scores/..
+ *   and the directory path to it.
+ *
+ *   iMDB log example usage:
+ *
+ *   Say we want to do something with releases (in this case just 'echo'), 
+ *   with a score lower than 5.0, but higher than 0
+ *
+ *    ./glutil -a --exec "echo '{score} > 0 && {score} < 5.0' | bc -l | grep '0' > /dev/null || echo '{dir} is below the score limit {score}/5.0'" --silent
+ *
+ *   If you have an idea about what sort of log type may be usefull,
+ *   write to io@nixnodes.net
  *
  ** Installation:
  *
@@ -157,7 +229,7 @@
  *    But in this particular case, having dated folders in there likely
  *    poses no advantage.
  *
- *    But maybe you'd want to have individual CD/DVD dirs some section:
+ *    But maybe you'd want to have individual CD/DVD dirs:
  *
  *    	XVID 1
  *    	XVID 2
