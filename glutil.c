@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-6
+ * Version     : 1.4-7
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -123,7 +123,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2422,7 +2422,7 @@ char **build_argv(char *args, size_t max, int *c) {
 				l_p = i_0;
 			}
 		}
-		if (((args[i_0] == sp_1 || args[i_0] == sp_2) || i_0 == args_l - 1)
+		if ((((args[i_0] == sp_1 || args[i_0] == sp_2) && args[i_0-1] != 0x5C) || i_0 == args_l - 1)
 				&& i_0 > l_p) {
 
 			if (i_0 == args_l - 1) {
@@ -6349,13 +6349,13 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 	}
 	size_t b_l_1;
 	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
-			(char*) calloc(
-			MAX_EXEC_STR, 1);
+			(char*) malloc(
+			MAX_EXEC_STR);
 	int i, i2, pi, r;
 
 	for (i = 0, pi = 0; i < blen2; i++, pi++) {
 		if (input[i] == 0x7B) {
-			bzero(buffer, 255);
+			bzero(buffer, 256);
 			for (i2 = 0, i++, r = 0; i < blen2 && i2 < 255; i++, i2++) {
 				if (input[i] == 0x7D) {
 					if (!i2 || strlen(buffer) > 255
