@@ -153,11 +153,11 @@
  *
  *    ./glutil -z dirlog --dirlog=/path/to/dirlog.new < adatafile.tmp
  *
- *
+ ** Additional log types
  *
  *   Besides support for glFTPd log types, glutil introduces new log
  *   types, see /scripts folder for working examples.
- 
+ *
  *   For instance, 'imdb_get.sh' scrapes iMDB info off the web and
  *   constructs iMDB binary data log, writing movie rating/scores/..
  *   and the directory path to it.
