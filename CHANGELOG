@@ -11,6 +11,7 @@
  *   - Bugfix: Temp file wasn't removed after rebuild (rev. 4)
  *   - Dupe check optimized for speed more (rev. 5)
  *   - Added write support for dupelog, lastonlog and oneliners (-z) (rev. 6)
+ *   - Added title, year, rated, released, runtime, actors and director fields to imdb log (rev. 7)
  *
  * v1.3
  *
