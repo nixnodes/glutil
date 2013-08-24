@@ -77,7 +77,7 @@
  *    ...
  *   
  *
- *   Now do the same, but apply a regex filter (--iregex) to the directory names 
+ *   Now do the same, but apply a regex filter (--iregex) to dirnames 
  *   to -exec ONLY what is matched and quit after first match (--imatchq):
  *
  *   ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
