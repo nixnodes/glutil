@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-7
+ * Version     : 1.4-8
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -123,7 +123,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -7105,6 +7105,11 @@ int self_get_path(char *out) {
 	int r;
 
 	sprintf(path, "/proc/%d/exe", getpid());
+
+	if ( file_exists(path)) {
+		sprintf(path, "/compat/linux/proc/%d/exe", getpid());
+	}
+
 	if ((r = readlink(path, out, PATH_MAX)) == -1) {
 		return 2;
 	}
