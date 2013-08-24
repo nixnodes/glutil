@@ -1,250 +1,250 @@
- * General purpose glFTPd binary logs utility *
- *
- *  This tool aims to provide:
- *
- *    - A way to clean up any glFTPd binary log and rebuild dirlog based on 
- *        filesystem data
- *    - Ability to pass along data from binary logs (and other sources) to the 
- *        shell for further processing
- *    - Ability to write any type of binary log data using an ASCII formatted 
- *        text source
- *    - Display data from any supported binary log in various formats
- *  
- *  Check /scripts folder in this repo for examples on how glutil supplies 
- *    scripts with data.
- *
- *  There's no manual (yet), see ./glutil --help for full list of options with  
- *    short descriptions.
- *
- ** Installation:
- *
- *  - Compile:
- *
- *      cp glutil.c /<glroot>/bin/sources
- *      cd /<glroot>/bin/sources
- *      cc glutil.c -o ../glutil -Wall -O3
- *
- *      Some warnings might pop up (should be safe)
- *      glconf.h (found in /bin/sources) is needed to compile properly,
- *       make sure it is in the same folder or change it's location in 
- *       glutil.c 
- *
- ** Main features:
- *
- *  - Import individual/missing records or rebuild entire dirlog based 
- *      on file-system and nukelog data (read below)
- *  - Rebuild existing binary glFTPd logs (see full list below) 
- *      using regex/custom filtering methods
- *  - Display various binary glFTPd logs in human readable formats
- *  - Execute external tools/scripts for each data record found, passing 
- *      along binary data as argument strings to shell (see --exec
- *      in --help)
- *  - Extract relevant data from config/users/groups files and pass along
- *      as argument strings to shell
- *  - Write to any binary log, using an ASCII formatted text source
- *  - Compare dirlog data against filesystem/nukelog to spot differences and
- *      fix them
- *  - Search for duplicates in dirlog
- *  - Generate SFV files inside respective folders
- *
- ** Supported glFTPd binary logs (with default paths):
- *
- *  - Directory log    (/ftp-data/logs/dirlog)
- *  - Nuke log         (/ftp-data/logs/nukelog)
- *  - Dupe file        (/ftp-data/logs/dupefile)
- *  - Last-online log  (/ftp-data/logs/laston.log)
- *  - Oneliners file   (/ftp-data/logs/oneliners.log)
- *  - Online users     (shared memory segment)
- *
- ** glutil specific binary logs:
- *
- *  - Internet Movie Data Base log   (/ftp-data/logs/imdb.log)
- *
- ** Extracting binary logs records as strings:
- *
- *   ANY binary log record can easily be extracted as ASCII string and passed 
- *   to the shell using --exec, --postexec or --preexec (see --help)
- *   
- *
- *   Let's assume we want to get the path, number of files and directory  
- *   creation time out of dirlog, passing these three values for each record 
- *   to your script:
- *
- *   ./glutil  -d --silent -exec "/path/to/myscript.sh {dir} {files} {time}"
- *
- *   --/* myscript.sh: */-----------------------------------------------
- *
- *   #/bin/bash
- *
- *   echo $1 $2 $3
- *
- *   exit 0
- *
- *   -------------------------------------------------------------------
- *
- *   Output:
- *
- *    [x@y bin]$ ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}"
- *    ...
- *    /site/archive/tv-../Sky.Special... 16 1277037362
- *    /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
- *    /site/archive/tv-dvdrip/P/Prison.Break/Prison.Break.S02.. 28 1277065247
- *    ...
- *   
- *
- *   Now do the same, but apply a regex filter (--iregex) to dirnames 
- *   to -exec ONLY what is matched and quit after first match (--imatchq):
- *
- *    ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
- *    "\/The\.Simpsons" --imatchq
- *
- *   Output:
- *
- *    /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
- *    /site/archive/tv-.../The.Simpsons.S04E05... 21 1277137472
- *
- *
- ** Writing strings to binary logs:
- *
- *   Any binary log can be built, using only proper ASCII formated input
- *
- *   For this example, let's assume we want to add three new records to
- *   the dirlog.
- *
- *  Write records in ASCII form to a temporary file:
- *  
- *   --/* adatafile.tmp: */----------------------------------------------
- *
- *   dir /site/x264/Avengers.1080p.x264-GRP
- *   user 101
- *   group 101
- *   files 49
- *   size 9437184000
- *   time 1377307789
- *   status 0
- *
- *   dir /site/xvid/Die.Hard.DVDRIP.XViD-GRP
- *   user 104
- *   group 105
- *   files 21
- *   size 734003200
- *   time 1377307789
- *   status 0
- *
- *   dir /site/xvid/Fast.and.Furious.BRRIP.XViD-GRP
- *   user 102
- *   group 103
- *   files 22
- *   size 733103100
- *   time 1377301789
- *   status 1
- *
- *   -------------------------------------------------------------------
- *
- *   Value names will usually be the same as variables in glconf.h
- *
- *   Write info held in 'adatafile.tmp' to the dirlog:
- *
- *    ./glutil -z dirlog < adatafile.tmp
- *
- *   Assuming there's no ERROR, 3 new records are appended to the data
- *   file. 
- *   If you don't want to write to existing dirlog, use path overrides:
- *
- *    ./glutil -z dirlog --dirlog=/path/to/dirlog.new < adatafile.tmp
- *
- ** Additional log types
- *
- *   Besides support for glFTPd log types, glutil introduces new log
- *   types, see /scripts folder for working examples.
- *
- *   For instance, 'imdb_get.sh' scrapes iMDB info off the web and
- *   constructs iMDB binary data log, writing movie rating/scores/..
- *   and the directory path to it.
- *
- *   iMDB log example usage:
- *
- *   Say we want to do something with releases (in this case just 'echo'), 
- *   with a score lower than 5.0, but higher than 0
- *
- *    ./glutil -a --exec "echo '{score} > 0 && {score} < 5.0' | bc -l | grep '0' > /dev/null || echo '{dir} is below the score limit {score}/5.0'" --silent
- *
- *   If you have an idea about what sort of log type may be usefull,
- *   write to io@nixnodes.net
- *
- *
- ** 'glutil.folders' file (filesystem based rebuild only):
- *
- *  To avoid importing junk data into dirlog, a file defined by 'du_fld' macro
- *  in glutil.c (or at runtime with --folders argument) can be used when 
- *  running in recursive mode (-r).
- *  Each line should contain a relative to site root PATH (no / in front or
- *  back required) and depth to scan at, separated by space.
- *
- *  Example:
- *
- *    MP3 2
- *    TV-XVID 1
- *    XVID 1
- *    0DAY 2
- *    APPS 1
- *    ARCHIVE/APPS 2
- *    ARCHIVE/TV-XVID 3
- *
- *
- *  Depth value defines the exact level of a folder's directory tree, at 
- *  which the tool imports folders to dirlog, this way, avoiding irrelevant
- *  entries.
- *
- * 	For example:
- *
- *    A daily/weekly sorted release dir structure usually looks like:
- *
- *     /mp3/0601/some-album-1-la
- *     /mp3/0601/some-album-2-la
- *     /mp3/0602/some-other-album-1-la
- *     ..
- *
- *    We want to avoid importing /mp3/0602 folder itself into dirlog and
- *    import only what is inside it.
- *
- *      MP3 2
- *
- *    This would NOT import 'mp3/0601/' and 'mp3/0602/' folders, but would 
- *    import 'some-album-1-la/', 'some-album-2-la/' and 
- *    'some-other-album-1-la/' .Folders inside 'some-album-..' folders 
- *    are not imported.
- *
- *      MP3 1
- *
- *    This would import '0601/' and '0602/' only, scanning all content
- *      inside it.
- *
- *    There's no reason you can't do this:
- *
- *      MP3 1
- *      MP3 2
- *
- *    But in this particular case, having dated folders in there likely
- *    poses no advantage.
- *
- *    But maybe you'd want to have individual CD/DVD dirs:
- *
- *    	XVID 1
- *    	XVID 2
- *
- *    This does two passes, one on each directory tree level, 1 does the,
- *    releases 2 the folders inside them.
- *
- *  Using -f (force) when recursing ignores the folders file and imports
- *  every single folder inside gl's site root into your dirlog (scanning
- *  it for sizes/file counts).
- *
- *  If folders file is missing, it automatically does full siteroot
- *  recursion (same as '-f').
- *
- * Examples:
- *
- *
- *
- *  Credits : Bsugar for the original idea, design and beta testing
+ General purpose glFTPd binary logs utility *
+
+  This tool aims to provide:
+
+    - A way to clean up any glFTPd binary log and rebuild dirlog based on 
+        filesystem data
+    - Ability to pass along data from binary logs (and other sources) to the 
+        shell for further processing
+    - Ability to write any type of binary log data using an ASCII formatted 
+        text source
+    - Display data from any supported binary log in various formats
+  
+  Check /scripts folder in this repo for examples on how glutil supplies 
+    scripts with data.
+
+  There's no manual (yet), see ./glutil --help for full list of options with  
+    short descriptions.
+
+ INSTALLATION:
+
+  - Compile:
+
+      cp glutil.c /<glroot>/bin/sources
+      cd /<glroot>/bin/sources
+      cc glutil.c -o ../glutil -Wall -O3
+
+      Some warnings might pop up (should be safe)
+      glconf.h (found in /bin/sources) is needed to compile properly,
+       make sure it is in the same folder or change it's location in 
+       glutil.c 
+
+ MAIN FEATURES:
+
+  - Import individual/missing records or rebuild entire dirlog based 
+      on file-system and nukelog data (read below)
+  - Rebuild existing binary glFTPd logs (see full list below) 
+      using regex/custom filtering methods
+  - Display various binary glFTPd logs in human readable formats
+  - Execute external tools/scripts for each data record found, passing 
+      along binary data as argument strings to shell (see --exec
+      in --help)
+  - Extract relevant data from config/users/groups files and pass along
+      as argument strings to shell
+  - Write to any binary log, using an ASCII formatted text source
+  - Compare dirlog data against filesystem/nukelog to spot differences and
+      fix them
+  - Search for duplicates in dirlog
+  - Generate SFV files inside respective folders
+
+ SUPPORTED glFTPd BINARY LOGS (with default paths):
+
+  - Directory log    (/ftp-data/logs/dirlog)
+  - Nuke log         (/ftp-data/logs/nukelog)
+  - Dupe file        (/ftp-data/logs/dupefile)
+  - Last-online log  (/ftp-data/logs/laston.log)
+  - Oneliners file   (/ftp-data/logs/oneliners.log)
+  - Online users     (shared memory segment)
+
+ glutil specific binary logs:
+
+  - Internet Movie Data Base log   (/ftp-data/logs/imdb.log)
+
+ EXTRACTING BINARY LOGS RECORDS AS STRINGS:
+
+   ANY binary log record can easily be extracted as ASCII string and passed 
+   to the shell using --exec, --postexec or --preexec (see --help)
+   
+
+   Let's assume we want to get the path, number of files and directory  
+   creation time out of dirlog, passing these three values for each record 
+   to your script:
+
+   ./glutil  -d --silent -exec "/path/to/myscript.sh {dir} {files} {time}"
+
+   --/* myscript.sh: */-----------------------------------------------
+
+   #/bin/bash
+
+   echo $1 $2 $3
+
+   exit 0
+
+   -------------------------------------------------------------------
+
+   Output:
+
+    [x@y bin]$ ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}"
+    ...
+    /site/archive/tv-../Sky.Special... 16 1277037362
+    /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
+    /site/archive/tv-dvdrip/P/Prison.Break/Prison.Break.S02.. 28 1277065247
+    ...
+   
+
+   Now do the same, but apply a regex filter (--iregex) to dirnames 
+   to -exec ONLY what is matched and quit after first match (--imatchq):
+
+    ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
+    "\/The\.Simpsons" --imatchq
+
+   Output:
+
+    /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
+    /site/archive/tv-.../The.Simpsons.S04E05... 21 1277137472
+
+
+ WRITING RECORDS TO BINARY LOGS:
+
+   ANY binary log can be built, using only proper ASCII formated input
+
+   For this example, let's assume we want to add three new records to
+   the dirlog.
+
+  Write records in ASCII form to a temporary file:
+  
+   --/* adatafile.tmp: */----------------------------------------------
+
+   dir /site/x264/Avengers.1080p.x264-GRP
+   user 101
+   group 101
+   files 49
+   size 9437184000
+   time 1377307789
+   status 0
+
+   dir /site/xvid/Die.Hard.DVDRIP.XViD-GRP
+   user 104
+   group 105
+   files 21
+   size 734003200
+   time 1377307789
+   status 0
+
+   dir /site/xvid/Fast.and.Furious.BRRIP.XViD-GRP
+   user 102
+   group 103
+   files 22
+   size 733103100
+   time 1377301789
+   status 1
+
+   -------------------------------------------------------------------
+
+   Value names will usually be the same as variables in glconf.h
+
+   Write info held in 'adatafile.tmp' to the dirlog:
+
+    ./glutil -z dirlog < adatafile.tmp
+
+   Assuming there's no ERROR, 3 new records are appended to the data
+   file. 
+   If you don't want to write to existing dirlog, use path overrides:
+
+    ./glutil -z dirlog --dirlog=/path/to/dirlog.new < adatafile.tmp
+
+ ADDITIONAL LOG TYPES
+
+   Besides support for glFTPd log types, glutil introduces new log
+   types, see /scripts folder for working examples.
+
+   For instance, 'imdb_get.sh' scrapes iMDB info off the web and
+   constructs iMDB binary data log, writing movie rating/scores/..
+   and the directory path to it.
+
+   iMDB log example usage:
+
+   Say we want to do something with releases (in this case just 'echo'), 
+   with a score lower than 5.0, but higher than 0
+
+    ./glutil -a --exec "echo '{score} > 0 && {score} < 5.0' | bc -l | grep '0' > /dev/null || echo '{dir} is below the score limit {score}/5.0'" --silent
+
+   If you have an idea about what sort of log type may be usefull,
+   write to io@nixnodes.net
+
+
+ FOLDERS FILE (filesystem based rebuild only):
+
+  To avoid importing junk data into dirlog, a file defined by 'du_fld' macro
+  in glutil.c (or at runtime with --folders argument) can be used when 
+  running in recursive mode (-r).
+  Each line should contain a relative to site root PATH (no / in front or
+  back required) and depth to scan at, separated by space.
+
+  Example:
+
+    MP3 2
+    TV-XVID 1
+    XVID 1
+    0DAY 2
+    APPS 1
+    ARCHIVE/APPS 2
+    ARCHIVE/TV-XVID 3
+
+
+  Depth value defines the exact level of a folder's directory tree, at 
+  which the tool imports folders to dirlog, this way, avoiding irrelevant
+  entries.
+
+ 	For example:
+
+    A daily/weekly sorted release dir structure usually looks like:
+
+     /mp3/0601/some-album-1-la
+     /mp3/0601/some-album-2-la
+     /mp3/0602/some-other-album-1-la
+     ..
+
+    We want to avoid importing /mp3/0602 folder itself into dirlog and
+    import only what is inside it.
+
+      MP3 2
+
+    This would NOT import 'mp3/0601/' and 'mp3/0602/' folders, but would 
+    import 'some-album-1-la/', 'some-album-2-la/' and 
+    'some-other-album-1-la/' .Folders inside 'some-album-..' folders 
+    are not imported.
+
+      MP3 1
+
+    This would import '0601/' and '0602/' only, scanning all content
+      inside it.
+
+    There's no reason you can't do this:
+
+      MP3 1
+      MP3 2
+
+    But in this particular case, having dated folders in there likely
+    poses no advantage.
+
+    But maybe you'd want to have individual CD/DVD dirs:
+
+    	XVID 1
+    	XVID 2
+
+    This does two passes, one on each directory tree level, 1 does the,
+    releases 2 the folders inside them.
+
+  Using -f (force) when recursing ignores the folders file and imports
+  every single folder inside gl's site root into your dirlog (scanning
+  it for sizes/file counts).
+
+  If folders file is missing, it automatically does full siteroot
+  recursion (same as '-f').
+
+ Examples:
+
+
+
+  Credits : Bsugar for the original idea, design and beta testing
