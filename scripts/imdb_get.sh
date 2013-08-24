@@ -14,6 +14,8 @@
 #
 CURL="/usr/bin/curl"
 CURL_FLAGS="--silent"
+
+# libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
 
 ! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
