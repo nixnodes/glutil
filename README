@@ -16,6 +16,19 @@
  *  There's no manual (yet), see ./glutil --help for full list of options with  
  *    short descriptions.
  *
+ ** Installation:
+ *
+ *  - Compile:
+ *
+ *      cp glutil.c /<glroot>/bin/sources
+ *      cd /<glroot>/bin/sources
+ *      cc glutil.c -o ../glutil -Wall -O3
+ *
+ *      Some warnings might pop up (should be safe)
+ *      glconf.h (found in /bin/sources) is needed to compile properly,
+ *       make sure it is in the same folder or change it's location in 
+ *       glutil.c 
+ *
  ** Main features:
  *
  *  - Import individual/missing records or rebuild entire dirlog based 
@@ -160,19 +173,6 @@
  *
  *   If you have an idea about what sort of log type may be usefull,
  *   write to io@nixnodes.net
- *
- ** Installation:
- *
- *  - Compile:
- *
- *      cp glutil.c /<glroot>/bin/sources
- *      cd /<glroot>/bin/sources
- *      cc glutil.c -o ../glutil -Wall -O3
- *
- *      Some warnings might pop up (should be safe)
- *      glconf.h (found in /bin/sources) is needed to compile properly,
- *       make sure it is in the same folder or change it's location in 
- *       glutil.c 
  *
  *
  ** 'glutil.folders' file (filesystem based rebuild only):
