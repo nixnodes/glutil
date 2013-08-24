@@ -130,6 +130,8 @@
  *
  *   -------------------------------------------------------------------
  *
+ *   Value names will usually be the same as variables in glconf.h
+ *
  *   Write info held in 'adatafile.tmp' to the dirlog:
  *
  *    ./glutil -z dirlog < adatafile.tmp
@@ -140,7 +142,6 @@
  *
  *    ./glutil -z dirlog --dirlog=/path/to/dirlog.new < adatafile.tmp
  *
- *   Value names will usually be the same as variables in glconf.h
  *
  *
  *   Besides support for glFTPd log types, glutil introduces new log
