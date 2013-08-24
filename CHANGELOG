@@ -10,6 +10,7 @@
  *   - Optimized -p for speed (rev. 3)
  *   - Bugfix: Temp file wasn't removed after rebuild (rev. 4)
  *   - Dupe check optimized for speed more (rev. 5)
+ *   - Added write support for dupelog, lastonlog and oneliners (-z) (rev. 6)
  *
  * v1.3
  *
