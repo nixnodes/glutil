@@ -1,13 +1,13 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'"
+#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" --regex "{m:arg2}"
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -exec "{m:spec1} {basedir} '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
-## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies
+## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]
 ##                ./glutil -m imdb-d --arg1 "\/xvid\/[^,]{3,}"
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
@@ -49,12 +49,12 @@ QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s
 
 imdb_search()
 {
-	$CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$1" | xmllint --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|( )|["]//g'
+	$CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$1" | $XMLLINT --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|( )|["]//g'
 }
 
 iid=$(imdb_search "$QUERY""&ex=1")
 [ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=$(imdb_search "$QUERY")
-[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | xmllint --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
+[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
 [ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
 DDT=$($CURL $CURL_FLAGS "$URL""?r=XML&i=$iid")
@@ -63,7 +63,7 @@ DDT=$($CURL $CURL_FLAGS "$URL""?r=XML&i=$iid")
 
 get_field()
 {
-	echo $DDT | xmllint --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g" 
+	echo $DDT | $XMLLINT --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g" 
 }
 
 RATING=$(get_field imdbRating)
