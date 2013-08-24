@@ -1,10 +1,10 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:killslow:{m:exe} -w --loop=3 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
+#@MACRO:killslow:{m:exe} -w --loop=2 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Usage (manual): /glroot/bin/glutil -w --loop=3 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{c:FLAGS}' '{dir}' '{usroot}'"
+## Usage (manual): /glroot/bin/glutil -w --loop=2 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{c:FLAGS}' '{dir}' '{usroot}'"
 #
 ## Usage (macro): ./glutil -m killslow
 #
@@ -41,6 +41,14 @@ EXEMPTUSERS="user1|user2"
 ## Do not enforce limit on siteops
 EXEMPTSITEOPS=1
 #
+## Enforce only on files matching this expression
+#
+FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi|nfo|jp(e|)g)$"
+#
+## Do NOT enforce paths matching this expression
+#
+PATHS_FILTERED="\/(sample|cover(s|)|proof)(($)|\/)"
+#
 ############################[ END OPTIONS ]##############################
 
 ban_user() {	
@@ -76,7 +84,10 @@ elif [[ "$1" == "unban" ]];then
 	ban_user $2 1 $3 $4 && exit 1
 fi
 
-! echo $6 | grep -P "STOR|RETR" > /dev/null && exit 1
+! echo $6 | grep -P "^STOR" > /dev/null && exit 1
+
+! echo $6 | grep -P $FILES_ENFORCED > /dev/null && exit 1
+echo $9 | grep -P $PATHS_FILTERED > /dev/null && exit 1
 
 [ -n "$EXEMPTUSERS" ] && echo $3 | grep -P "^($EXEMPTUSERS)\$" > /dev/null && exit 1
 [ $EXEMPTSITEOPS -eq 1 ] && echo $8 | grep 1 > /dev/null && exit 1
