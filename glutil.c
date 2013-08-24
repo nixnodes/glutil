@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-5
+ * Version     : 1.4-6
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -123,7 +123,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -471,6 +471,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MSG_GEN_DFCORRU 	"ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
 #define MSG_GEN_DFRFAIL 	"ERROR: %s: rebuilding data file failed!\n"
 #define MSG_BAD_DATATYPE 	"ERROR: %s: could not determine data type\n"
+#define MSG_GEN_WROTE		"STATS: %s: wrote %llu bytes in %llu records\n"
 
 #define DEFPATH_LOGS 		"/logs"
 #define DEFPATH_USERS 		"/users"
@@ -894,17 +895,7 @@ char *hpd_up =
 				"                         Captures input from stdin, unless --infile is set\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
 				"\n"
-				"Options:\n"
-				"  -f                    Force operation where it applies\n"
-				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
-				"  -k, --nowrite         Perform a dry run, executing normally except no writing is done\n"
-				"  -b, --nobuffer        Disable data file memory buffering\n"
-				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
-				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
-				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
-				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
-				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
-				"                           Avoid using this if doing a full recursive rebuild\n"
+				"Filtering and hooks:\n"
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
 				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..\n"
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
@@ -916,6 +907,7 @@ char *hpd_up =
 				"                         Execute shell <command> before starting main procedure\n"
 				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         Execute shell <command> after main procedure finishes\n"
+				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
 				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"  --imatch <match>      Inverted --match\n"
@@ -924,6 +916,18 @@ char *hpd_up =
 				"  --regexi <match>      Case insensitive variant of --regex\n"
 				"  --iregex <match>      Same as --regex with inverted match\n"
 				"  --iregexi <match>     Same as --regexi with inverted match\n"
+				"\n"
+				"Options:\n"
+				"  -f                    Force operation where it applies\n"
+				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
+				"  -k, --nowrite         Perform a dry run, executing normally except no writing is done\n"
+				"  -b, --nobuffer        Disable data file memory buffering\n"
+				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
+				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
+				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
+				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
+				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
+				"                           Avoid using this if doing a full recursive rebuild\n"
 				"  --xdev                Ignores files/dirs on other filesystems\n"
 				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
 				"  --xblk                Ignores files/dirs on non-block devices\n"
@@ -933,10 +937,9 @@ char *hpd_up =
 				"  --batch               Prints with simple formatting\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --daemon              Fork process into background\n"
-				"  --loop <interval>     Loops the given 'Main option' operation\n"
+				"  --loop <interval>     Loops the given operation\n"
 				"                           Use caution, some operations might fail when looped\n"
 				"                           This is usefull when running yourown scripts (--exec)\n"
-				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                         Execute command each loop\n"
 				"  --loglevel <0-6>      Log verbosity level (1: exception only..6: everything)\n"
 				"                           Level 0 turns logging off\n"
@@ -1523,7 +1526,8 @@ __d_format_block lastonlog_format_block, dupefile_format_block,
 		dirlog_format_block, imdb_format_block;
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
-__d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh;
+__d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
+		gcb_lastonlog;
 
 uint64_t file_crc32(char *, uint32_t *);
 
@@ -2517,7 +2521,7 @@ int rebuild(void *arg) {
 		return 5;
 	}
 
-	print_str("STATS: %s: wrote %llu bytes in %llu records\n", datafile,
+	print_str(MSG_GEN_WROTE, datafile,
 			(ulint64_t) hdl.bw, (ulint64_t) hdl.rw);
 
 	g_cleanup(&hdl);
@@ -2627,6 +2631,9 @@ int d_write(char *arg) {
 		print_str(MSG_GEN_DFRFAIL, datafile);
 		ret = 7;
 		goto end;
+	}
+	else {
+		print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
 	}
 
 	end:
@@ -2997,7 +3004,7 @@ int dirlog_update_record(char *argv) {
 	}
 	r_end: md_g_free(&dirchain);
 
-	print_str("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
+	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw,
 			dl_stats.rw);
 
 	return ret;
@@ -3264,7 +3271,7 @@ int dirlog_check_records(void) {
 		if (rebuild_data_file(DIRLOG, &g_act_1)) {
 			print_str(MSG_GEN_DFRFAIL, DIRLOG);
 		} else {
-			print_str("STATS: %s: wrote %llu bytes in %llu records\n", DIRLOG,
+			print_str(MSG_GEN_WROTE, DIRLOG,
 					(ulint64_t) g_act_1.bw, (ulint64_t) g_act_1.rw);
 		}
 	}
@@ -3715,7 +3722,7 @@ int rebuild_dirlog(void) {
 
 	g_close(&g_act_1);
 
-	print_str("STATS: wrote %llu bytes in %llu records\n", dl_stats.bw,
+	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw,
 			dl_stats.rw);
 
 	return rt;
@@ -5159,12 +5166,18 @@ int determine_datatype(struct g_handle *hdl) {
 	} else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE))) {
 		hdl->flags |= F_GH_ISDUPEFILE;
 		hdl->block_sz = DF_SZ;
+		hdl->d_memb = 3;
+		hdl->gcb_proc0 = gcb_dupefile;
 	} else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG))) {
 		hdl->flags |= F_GH_ISLASTONLOG;
 		hdl->block_sz = LO_SZ;
+		hdl->d_memb = 8;
+		hdl->gcb_proc0 = gcb_lastonlog;
 	} else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS))) {
 		hdl->flags |= F_GH_ISONELINERS;
 		hdl->block_sz = OL_SZ;
+		hdl->d_memb = 5;
+		hdl->gcb_proc0 = gcb_oneliner;
 	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
 		hdl->flags |= F_GH_ISIMDB;
 		hdl->block_sz = ID_SZ;
@@ -6717,6 +6730,134 @@ int gcb_nukelog(void *buffer, char *key, char *val) {
 			return 0;
 		}
 		ptr->status = k_us;
+		return 1;
+	}
+	return 0;
+}
+
+int gcb_oneliner(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	struct oneliner* ptr = (struct oneliner*) buffer;
+
+	if (k_l == 5 && !strncmp(key, "uname", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->uname, val, v_l > 23 ? 23 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "gname", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->gname, val, v_l > 23 ? 23 : v_l);
+		return 1;
+
+	} else if (k_l == 7 && !strncmp(key, "tagline", 7)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->tagline, val, v_l > 63 ? 63 : v_l);
+		return 1;
+	} else if (k_l == 9 && !strncmp(key, "timestamp", 9)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->timestamp = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "message", 7)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->message, val, v_l > 99 ? 99 : v_l);
+		return 1;
+	}
+	return 0;
+}
+
+int gcb_dupefile(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	struct dupefile* ptr = (struct dupefile*) buffer;
+
+	if (k_l == 8 && !strncmp(key, "filename", 8)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->filename, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 8 && !strncmp(key, "uploader", 8)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->uploader, val, v_l > 23 ? 23 : v_l);
+		return 1;
+
+	} else if (k_l == 6 && !strncmp(key, "timeup", 6)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->timeup = v_ui;
+		return 1;
+	}
+	return 0;
+}
+
+int gcb_lastonlog(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	struct lastonlog* ptr = (struct lastonlog*) buffer;
+
+	if (k_l == 5 && !strncmp(key, "uname", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->uname, val, v_l > 23 ? 23 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "gname", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->gname, val, v_l > 23 ? 23 : v_l);
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "tagline", 7)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->tagline, val, v_l > 63 ? 63 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "logon", 5)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->logon = v_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "logoff", 6)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->logoff = v_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "upload", 6)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->upload = v_ui;
+		return 1;
+	} else if (k_l == 8 && !strncmp(key, "download", 8)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->download = v_ui;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "stats", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->stats, val, v_l > 6 ? 6 : v_l);
 		return 1;
 	}
 	return 0;
