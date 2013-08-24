@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-8
+ * Version     : 1.4-9
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -71,9 +71,14 @@
 #define oneliner_file "/glftpd/ftp-data/logs/oneliners.log"
 #endif
 
-/* imdb file path */
+/* imdb log file path */
 #ifndef imdb_file
 #define imdb_file "/glftpd/ftp-data/logs/imdb.log"
+#endif
+
+/* imdb log file path */
+#ifndef game_log
+#define game_log "/glftpd/ftp-data/logs/game.log"
 #endif
 
 /* see README file about this */
@@ -123,7 +128,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -183,6 +188,15 @@ typedef struct ___d_imdb {
 
 } _d_imdb, *__d_imdb;
 
+typedef struct ___d_game {
+	char dirname[255];
+	uint32_t timestamp;
+	float rating;
+	/* ------------- */
+	char _d_unused[512]; /* Reserved for future use */
+
+} _d_game, *__d_game;
+
 #pragma pack(pop)
 
 /* ------------------------------------------- */
@@ -198,6 +212,7 @@ typedef struct e_arg {
 	struct oneliner *oneliner;
 	struct ONLINE *online;
 	__d_imdb imdb;
+	__d_game game;
 	time_t t_stor;
 } ear;
 
@@ -365,6 +380,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_DUMP_GEN	0x12
 #define UPD_MODE_WRITE		0x13
 #define UPD_MODE_DUMP_IMDB	0x14
+#define UPD_MODE_DUMP_GAME	0x15
 
 #define PRIO_UPD_MODE_MACRO 0x1001
 
@@ -434,6 +450,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_SHM			0x800
 #define F_GH_ISONLINE		0x1000
 #define F_GH_ISIMDB			0x2000
+#define F_GH_ISGAME			0x4000
 
 #define F_OVRR_IPC			0x1
 #define F_OVRR_GLROOT		0x2
@@ -455,7 +472,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_PD_MATCHTYPES		(F_PD_MATCHDIR|F_PD_MATCHREG)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB)
+#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
 
 #define V_MB				0x100000
 
@@ -466,6 +483,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define OL_SZ 				sizeof(struct oneliner)
 #define ON_SZ 				sizeof(struct ONLINE)
 #define ID_SZ 				sizeof(_d_imdb)
+#define GM_SZ 				sizeof(_d_game)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 		536870912   /* max file size allowed to load into memory */
@@ -491,6 +509,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define DEFF_ONELINERS 		"oneliners.log"
 #define DEFF_DULOG	 		"glutil.log"
 #define DEFF_IMDB	 		"imdb.log"
+#define DEFF_GAMELOG 		"game.log"
 
 #define F_SIGERR_CONTINUE 	0x1  /* continue after exception */
 
@@ -830,6 +849,7 @@ char LASTONLOG[255] = { last_on_log };
 char ONELINERS[255] = { oneliner_file };
 char FTPDATA[255] = { ftp_data };
 char IMDBLOG[255] = { imdb_file };
+char GAMELOG[255] = { game_log };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
@@ -880,6 +900,7 @@ char *hpd_up =
 				"  -l, [--raw]           Print last-on log to stdout\n"
 				"  -o, [--raw]           Print oneliners to stdout\n"
 				"  -a, [--raw]           Print iMDB log to stdout\n"
+				"  -k, [--raw]           Print game log to stdout\n"
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
 				"  -t                    Print all user files inside /ftp-data/users\n"
 				"  -g                    Print all group files inside /ftp-data/groups\n"
@@ -894,10 +915,12 @@ char *hpd_up =
 				"                           --ghost only looks for dirlog records with missing directories on filesystem\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
-				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb>\n"
+				"  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game>\n"
+				"                         Perform backup on specified log\n"
+				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game>\n"
 				"                         Rebuilds existing data file, based on filtering rules (see --exec,\n"
 				"                           --[i]regex[i] and --[i]match\n"
-				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb> [--infile=/path/file]\n"
+				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game> [--infile=/path/file]\n"
 				"                         Creates a binary record from ASCII data, inserting it into the specified log\n"
 				"                         Captures input from stdin, unless --infile is set\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
@@ -906,7 +929,8 @@ char *hpd_up =
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
 				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..\n"
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
-				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}..\n"
+				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|{year}>\n"
 				"                         While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
@@ -1460,6 +1484,11 @@ int opt_g_dump_imdb(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_dump_game(void *arg, int m) {
+	updmode = UPD_MODE_DUMP_GAME;
+	return 0;
+}
+
 int opt_oneliner_dump(void *arg, int m) {
 	updmode = UPD_MODE_DUMP_ONEL;
 	return 0;
@@ -1527,14 +1556,14 @@ __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
 		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
-		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb;
+		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game;
 __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
-		dirlog_format_block, imdb_format_block;
+		dirlog_format_block, imdb_format_block, game_format_block;
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
 __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
-		gcb_lastonlog;
+		gcb_lastonlog, gcb_game;
 
 uint64_t file_crc32(char *, uint32_t *);
 
@@ -1631,22 +1660,23 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		(void*) 1, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--cdir", opt_g_cdironly, (void*) 0, "--imatchq",
-		opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq, (void*) 0, "-a",
-		opt_g_dump_imdb, (void*) 0, "-z", opt_g_write, (void*) 1, "--infile",
-		opt_g_infile, (void*) 1, "-xdev", opt_g_xdev, (void*) 0, "--xdev",
-		opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk",
-		opt_g_xblk, (void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file",
-		opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir",
-		opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max, (void*) 1,
-		"--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1,
-		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
-		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1,
-		"--postexec", opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec,
-		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
-		(void*) 1, "-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
-		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
+void *f_ref[] = { "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
+		(void*) 0, "--imatchq", opt_g_imatchq, (void*) 0, "--matchq",
+		opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z",
+		opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev",
+		opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk",
+		opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file",
+		opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir",
+		opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
+		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
+		(void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
+		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
+		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
+		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
+		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
+		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
+		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2", NULL,
+		(void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
 		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
@@ -1673,11 +1703,10 @@ void *f_ref[] = { "--cdir", opt_g_cdironly, (void*) 0, "--imatchq",
 		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
 		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
 		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
-		(void*) 0, "-b", opt_g_nobuffering, (void*) 0, "--nobuffer",
-		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
-		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
-		print_help, (void*) 0, "--version", print_version, (void*) 0,
-		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
+		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
+		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
+		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
 		(void*) 1, "-k", opt_g_nowrite, (void*) 0, "--nowrite", opt_g_nowrite,
@@ -2101,6 +2130,7 @@ int g_init(int argc, char **argv) {
 	build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
 	build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
 	build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
 
 	bzero(SITEROOT, 255);
 	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
@@ -2233,6 +2263,9 @@ int g_init(int argc, char **argv) {
 		break;
 	case UPD_MODE_DUMP_IMDB:
 		EXITVAL = g_print_stats(IMDBLOG, 0, 0);
+		break;
+	case UPD_MODE_DUMP_GAME:
+		EXITVAL = g_print_stats(GAMELOG, 0, 0);
 		break;
 	case UPD_MODE_DUPE_CHK:
 		EXITVAL = dirlog_check_dupe();
@@ -2427,7 +2460,8 @@ char **build_argv(char *args, size_t max, int *c) {
 				|| i_0 == args_l - 1) && i_0 > l_p) {
 
 			if (i_0 == args_l - 1) {
-				if (!(args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3)) {
+				if (!(args[i_0] == sp_1 || args[i_0] == sp_2
+						|| args[i_0] == sp_3)) {
 					i_0++;
 				}
 
@@ -2435,7 +2469,7 @@ char **build_argv(char *args, size_t max, int *c) {
 
 			size_t ptr_b_l = i_0 - l_p;
 			ptr[b_c] = (char*) calloc(ptr_b_l + 1, 1);
-			g_strncpy((char*)ptr[b_c], &args[l_p], ptr_b_l);
+			g_strncpy((char*) ptr[b_c], &args[l_p], ptr_b_l);
 			b_c++;
 			*c += 1;
 
@@ -2454,7 +2488,8 @@ char **build_argv(char *args, size_t max, int *c) {
 				sp_1 = 0x20;
 				sp_2 = 0x22;
 				sp_3 = 0x60;
-				while (args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3) {
+				while (args[i_0] == sp_1 || args[i_0] == sp_2
+						|| args[i_0] == sp_3) {
 					i_0++;
 				}
 				l_p = i_0;
@@ -2463,7 +2498,8 @@ char **build_argv(char *args, size_t max, int *c) {
 					sp_1 = args[i_0 - ii_l];
 					sp_2 = args[i_0 - ii_l];
 					sp_3 = args[i_0 - ii_l];
-					while (args[i_0] == sp_1 || args[i_0] == sp_2 || args[i_0] == sp_3) {
+					while (args[i_0] == sp_1 || args[i_0] == sp_2
+							|| args[i_0] == sp_3) {
 						i_0++;
 					}
 					l_p = i_0;
@@ -2494,6 +2530,8 @@ char *g_dgetf(char *str) {
 		return ONELINERS;
 	} else if (!strncmp(str, "imdb", 4)) {
 		return IMDBLOG;
+	} else if (!strncmp(str, "game", 4)) {
+		return GAMELOG;
 	}
 	return NULL;
 }
@@ -3371,6 +3409,13 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		}
 		callback = ref_to_val_imdb;
 		break;
+		case F_GH_ISGAME:
+		mstr = (char*) ((__d_game) d_ptr)->dirname;
+		if (!strlen(mstr)) {
+			return -1;
+		}
+		callback = ref_to_val_game;
+		break;
 	}
 
 	int r = do_match(mstr, d_ptr, callback);
@@ -3467,6 +3512,11 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 					e.imdb = (__d_imdb) ptr;
 					ns_ptr = e.imdb->dirname;
 					re_c += imdb_format_block(ns_ptr, &e, sbuffer);
+					break;
+					case F_GH_ISGAME:
+					e.game = (__d_game) ptr;
+					ns_ptr = e.game->dirname;
+					re_c += game_format_block(ns_ptr, &e, sbuffer);
 					break;
 				}
 
@@ -4405,6 +4455,26 @@ int imdb_format_block(char *name, ear *iarg, char *output) {
 	return c;
 }
 
+int game_format_block(char *name, ear *iarg, char *output) {
+	g_setjmp(0, "game_format_block", NULL, NULL);
+	char buffer2[255] = { 0 };
+
+	time_t t_t = (time_t) iarg->game->timestamp;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+
+	int c;
+	if (gfl & F_OPT_FORMAT_BATCH) {
+		c = sprintf(output, "GAMELOG;%s;%u;%.1f\n", iarg->game->dirname,
+				iarg->game->timestamp, iarg->game->rating);
+	} else {
+		c = sprintf(output, "GAMELOG: %s: created: %s - rating: %.1f\n",
+				iarg->game->dirname, buffer2, iarg->game->rating);
+	}
+
+	return c;
+}
+
 char *generate_chars(size_t num, char chr, char*buffer) {
 	g_setjmp(0, "generate_chars", NULL, NULL);
 	bzero(buffer, 255);
@@ -5199,6 +5269,11 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->block_sz = ID_SZ;
 		hdl->d_memb = 13;
 		hdl->gcb_proc0 = gcb_imdbh;
+	} else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG))) {
+		hdl->flags |= F_GH_ISGAME;
+		hdl->block_sz = GM_SZ;
+		hdl->d_memb = 3;
+		hdl->gcb_proc0 = gcb_game;
 	} else {
 		return 1;
 	}
@@ -6325,6 +6400,32 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
+int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
+	g_setjmp(0, "ref_to_val_game", NULL, NULL);
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
+
+	__d_game data = (__d_game) arg;
+
+	if (!strcmp(match, "dir")) {
+		sprintf(output, data->dirname);
+	} else if (!strcmp(match, "score")) {
+		sprintf(output, "%.1f", data->rating);
+	} else if (!strcmp(match, "time")) {
+		sprintf(output, "%u", data->timestamp);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
 int process_exec_string(char *input, char *output, void *callback, void *data) {
 	g_setjmp(0, "process_exec_string", NULL, NULL);
 
@@ -6892,6 +6993,33 @@ int gcb_lastonlog(void *buffer, char *key, char *val) {
 	return 0;
 }
 
+int gcb_game(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	__d_game ptr = (__d_game) buffer;
+	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->timestamp = v_ui;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "score", 5)) {
+		float v_f = strtof(val, NULL);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->rating = v_f;
+		return 1;
+	}
+	return 0;
+}
+
 int gcb_imdbh(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	__d_imdb ptr = (__d_imdb) buffer;
@@ -7106,7 +7234,7 @@ int self_get_path(char *out) {
 
 	sprintf(path, "/proc/%d/exe", getpid());
 
-	if ( file_exists(path)) {
+	if (file_exists(path)) {
 		sprintf(path, "/compat/linux/proc/%d/exe", getpid());
 	}
 
