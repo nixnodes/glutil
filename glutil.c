@@ -171,8 +171,15 @@ typedef struct ___d_imdb {
 	float rating; /* IMDB Rating */
 	uint32_t votes; /* IMDB Votes */
 	char genres[255]; /* List of genres (comma delimited) */
+	char year[6];
+	char title[128];
+	int32_t released;
+	int32_t runtime;
+	char rated[8];
+	char actors[128];
+	char director[64];
 	/* ------------- */
-	char _d_unused[576]; /* Reserved for future use */
+	char _d_unused[230]; /* Reserved for future use */
 
 } _d_imdb, *__d_imdb;
 
@@ -2521,8 +2528,7 @@ int rebuild(void *arg) {
 		return 5;
 	}
 
-	print_str(MSG_GEN_WROTE, datafile,
-			(ulint64_t) hdl.bw, (ulint64_t) hdl.rw);
+	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) hdl.bw, (ulint64_t) hdl.rw);
 
 	g_cleanup(&hdl);
 
@@ -2631,8 +2637,7 @@ int d_write(char *arg) {
 		print_str(MSG_GEN_DFRFAIL, datafile);
 		ret = 7;
 		goto end;
-	}
-	else {
+	} else {
 		print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
 	}
 
@@ -3004,8 +3009,7 @@ int dirlog_update_record(char *argv) {
 	}
 	r_end: md_g_free(&dirchain);
 
-	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw,
-			dl_stats.rw);
+	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
 
 	return ret;
 }
@@ -3271,8 +3275,8 @@ int dirlog_check_records(void) {
 		if (rebuild_data_file(DIRLOG, &g_act_1)) {
 			print_str(MSG_GEN_DFRFAIL, DIRLOG);
 		} else {
-			print_str(MSG_GEN_WROTE, DIRLOG,
-					(ulint64_t) g_act_1.bw, (ulint64_t) g_act_1.rw);
+			print_str(MSG_GEN_WROTE, DIRLOG, (ulint64_t) g_act_1.bw,
+					(ulint64_t) g_act_1.rw);
 		}
 	}
 
@@ -3722,8 +3726,7 @@ int rebuild_dirlog(void) {
 
 	g_close(&g_act_1);
 
-	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw,
-			dl_stats.rw);
+	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
 
 	return rt;
 }
@@ -4364,26 +4367,36 @@ int online_format_block(char *name, ear *iarg, char *output) {
 	return c;
 }
 
+#define STD_FMT_DATE_STR  	"%d %b %Y"
+
 int imdb_format_block(char *name, ear *iarg, char *output) {
 	g_setjmp(0, "imdb_format_block", NULL, NULL);
-	char buffer2[255] = { 0 };
+	char buffer2[255] = { 0 }, buffer3[255] = { 0 };
 
-	time_t t_t = (time_t) iarg->imdb->timestamp;
+	time_t t_t = (time_t) iarg->imdb->timestamp, t_t2 =
+			(time_t) iarg->imdb->released;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+	strftime(buffer3, 255, STD_FMT_DATE_STR, localtime(&t_t2));
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "IMDB;%s;%u;%s;%.1f;%u;%s\n", iarg->imdb->dirname,
+		c = sprintf(output, "IMDB;%s;%s;%u;%s;%.1f;%u;%s;%s;%u;%u;%s;%s;%s\n",
+				iarg->imdb->dirname, iarg->imdb->title,
 				(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
-				iarg->imdb->rating, iarg->imdb->votes, iarg->imdb->genres);
+				iarg->imdb->rating, iarg->imdb->votes, iarg->imdb->genres,
+				iarg->imdb->year, iarg->imdb->released, iarg->imdb->runtime,
+				iarg->imdb->rated, iarg->imdb->actors, iarg->imdb->director);
 	} else {
 		c =
 				sprintf(output,
-						"IMDB: %s: created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s\n",
-						iarg->imdb->dirname, buffer2, iarg->imdb->imdb_id,
+						"IMDB: %s: %s (%s): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
+						iarg->imdb->dirname, iarg->imdb->title,
+						iarg->imdb->year, buffer2, iarg->imdb->imdb_id,
 						iarg->imdb->rating, iarg->imdb->votes,
-						iarg->imdb->genres);
+						iarg->imdb->genres, buffer3, iarg->imdb->runtime,
+						iarg->imdb->rated, iarg->imdb->actors,
+						iarg->imdb->director);
 	}
 
 	return c;
@@ -5181,7 +5194,7 @@ int determine_datatype(struct g_handle *hdl) {
 	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
 		hdl->flags |= F_GH_ISIMDB;
 		hdl->block_sz = ID_SZ;
-		hdl->d_memb = 6;
+		hdl->d_memb = 13;
 		hdl->gcb_proc0 = gcb_imdbh;
 	} else {
 		return 1;
@@ -6290,6 +6303,20 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, "%u", (uint32_t) data->votes);
 	} else if (!strcmp(match, "genres")) {
 		sprintf(output, data->genres);
+	} else if (!strcmp(match, "rated")) {
+		sprintf(output, data->rated);
+	} else if (!strcmp(match, "title")) {
+		sprintf(output, data->title);
+	} else if (!strcmp(match, "director")) {
+		sprintf(output, data->director);
+	} else if (!strcmp(match, "actors")) {
+		sprintf(output, data->actors);
+	} else if (!strcmp(match, "runtime")) {
+		sprintf(output, "%u", data->runtime);
+	} else if (!strcmp(match, "released")) {
+		sprintf(output, "%u", data->released);
+	} else if (!strcmp(match, "year")) {
+		sprintf(output, data->year);
 	} else {
 		return 1;
 	}
@@ -6905,7 +6932,52 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 		}
 		g_memcpy(ptr->genres, val, v_l > 254 ? 254 : v_l);
 		return 1;
+	} else if (k_l == 4 && !strncmp(key, "year", 4)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->year, val, v_l > 4 ? 4 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "title", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->title, val, v_l > 127 ? 127 : v_l);
+		return 1;
+	} else if (k_l == 8 && !strncmp(key, "released", 8)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->released = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "runtime", 7)) {
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->runtime = v_ui;
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "rated", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->rated, val, v_l > 7 ? 7 : v_l);
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "actors", 6)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->actors, val, v_l > 127 ? 127 : v_l);
+		return 1;
+	} else if (k_l == 8 && !strncmp(key, "director", 8)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->director, val, v_l > 63 ? 63 : v_l);
+		return 1;
 	}
+
 	return 0;
 }
 
