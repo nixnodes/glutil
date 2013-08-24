@@ -2,8 +2,8 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-4
- * Description : glFTPd binary log utility
+ * Version     : 1.4-5
+ * Description : glFTPd binary logs utility
  * ============================================================================
  */
 
@@ -123,7 +123,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -856,7 +856,7 @@ mda cfg_rf = { 0 };
 uint32_t flags_udcfg = 0;
 
 char *hpd_up =
-		"glFTPd binary log tool, version %d.%d-%d%s-%s\n"
+		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
 				"\n"
 				"Main options:\n"
 				"  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
@@ -2865,9 +2865,11 @@ int dirlog_check_dupe(void) {
 			if (ss_pb_l == s_pb_l && !strncmp(s_pb, ss_pb, s_pb_l)) {
 				if (!ch) {
 					print_str("\rDUPE %s               \n", d_ptr->dirname);
+					ch++;
 				}
 				print_str("\rDUPE %s               \n", dd_ptr->dirname);
-				ch++;
+				e_t = time(NULL);
+				g_progress_stats(s_t, e_t, nrec, st3);
 			}
 		}
 
