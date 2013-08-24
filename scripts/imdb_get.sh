@@ -61,12 +61,22 @@ DDT=$($CURL $CURL_FLAGS "$URL""?r=XML&i=$iid")
 
 get_field()
 {
-	echo $DDT | xmllint --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|([ ])|[\"]//g" 
+	echo $DDT | xmllint --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g" 
 }
 
 RATING=$(get_field imdbRating)
 GENRE=$(get_field genre)
-VOTES=$(echo $(get_field imdbVotes) | tr -d ',')
+VOTES=$(echo $(get_field imdbVotes ) | tr -d ',')
+YEAR=$(get_field year | tr -d ' ')
+TITLE=$(get_field title)
+RATED=$(get_field rated)
+ACTORS=$(get_field actors)
+DIRECTOR=$(get_field director)
+RELEASED=`date --date="$(D_g=$(get_field released); [ "$D_g" != "N/A" ] && echo "$D_g" || echo "")" +"%s"`
+RUNTIME=$(get_field runtime)
+RUNTIME_h=$(echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g')
+RUNTIME_m=$(echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g')
+[ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=$[RUNTIME_h*RUNTIME_m]
 
 [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
@@ -75,7 +85,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
 	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
 	$2 -a --iregex "$DIR_E" --imatchq > /dev/null || $2 -e imdb --match "$DIR_E" > /dev/null
-	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\n\n" > /tmp/glutil.img.$$.tmp
+	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
 	$2 -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 fi
