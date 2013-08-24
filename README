@@ -10,11 +10,10 @@
         text source
     - Display data from any supported binary log in various formats
   
-  Check /scripts folder in this repo for examples on how glutil supplies 
-    scripts with data.
+  Check /scripts folder in this repo for examples on how glutil passes 
+    binary log data data to scripts (and vice versa)
 
-  There's no manual (yet), see ./glutil --help for full list of options with  
-    short descriptions.
+  See ./glutil --help for full list of flags with short descriptions.
 
  INSTALLATION:
 
@@ -28,6 +27,9 @@
       glconf.h (found in /bin/sources) is needed to compile properly,
        make sure it is in the same folder or change it's location in 
        glutil.c 
+       
+  - Placed in /<glroot>/bin/sources, 'installgl.sh' will compile it, 
+      since no additional headers are required.
 
  MAIN FEATURES:
 
