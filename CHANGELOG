@@ -1,3 +1,8 @@
+ * v1.5
+ *
+ *   - Now possible to match against specific binary log fields 
+ *       (--[i]regex[i] only, see --help) 
+ *
  * v1.4
  *
  *   - Now possible to write binary records, using only ASCII format input (scripts not
@@ -19,6 +24,9 @@
  *   - Minor code fixes (rev. 10)
  *   - Replaced sprintf with more secure snprintf (rev. 11)
  *   - FreeBSD compatibility (compiles with default glconf.h now) (rev. 12)
+ *   - FreeBSD get self path was still broken (rev. 13)
+ *   - Intercept stupid siteroot config and adapt (rev. 13)
+ *   - Bugfix: buffer overflows in g_handle->path(rev. 14)
  *
  * v1.3
  *
