@@ -7,8 +7,8 @@
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
-## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]    (filesystem based)
-##                ./glutil -m imdb-d --arg1 "\/xvid\/[^,]{3,}"                      (dirlog based)
+## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]        (filesystem based)
+##                ./glutil -m imdb-d --arg1 "\/(xvid|x264)\/[^,]{3,}"                   (dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
@@ -37,13 +37,13 @@ UPDATE_IMDBLOG=1
 #
 INPUT_SKIP="^(.* complete .*|sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*)$"
 #
-INPUT_CLEAN_REGEX="([._-\(\)](FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)[._-\(\)].*)|(-[A-Z0-9a-z_-]*)$"
+INPUT_CLEAN_REGEX="([._-\(\)](BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)[._-\(\)].*)|([A-Z0-9a-z_-]*$)"
 #
 ############################[ END OPTIONS ]##############################
 
 echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 
-QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 [ -z "$QUERY" ] && exit 1
 
@@ -65,6 +65,10 @@ get_field()
 {
 	echo $DDT | $XMLLINT --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g" 
 }
+
+TYPE=$(get_field type)
+
+! echo $TYPE | grep "movie" > /dev/null && echo "ERROR: $QUERY: $1: invalid match (type is $TYPE)" && exit 1
 
 RATING=$(get_field imdbRating)
 GENRE=$(get_field genre)
