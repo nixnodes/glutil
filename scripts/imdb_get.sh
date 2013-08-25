@@ -99,7 +99,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "IMDB: $(echo "$TITLE : $QUERY" | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
+echo "IMDB: $(echo "Q:'$TITLE' | A:'$QUERY'" | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
 
 exit 0
