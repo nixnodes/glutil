@@ -37,7 +37,10 @@ UPDATE_IMDBLOG=1
 #
 INPUT_SKIP="^(.* complete .*|sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*)$"
 #
-INPUT_CLEAN_REGEX="([._-\(\)](BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)[._-\(\)].*)|([A-Z0-9a-z_-]*$)"
+INPUT_CLEAN_REGEX="([._-\(\)](BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|OVA|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#
+## This might cause mis-matches
+LOOSE_SEARCH=0
 #
 ############################[ END OPTIONS ]##############################
 
@@ -53,7 +56,7 @@ imdb_search()
 }
 
 iid=$(imdb_search "$QUERY""&ex=1")
-[ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=$(imdb_search "$QUERY")
+[ $LOOSE_SEARCH -eq 1 ] &&[ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=$(imdb_search "$QUERY")
 [ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
 [ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
@@ -96,7 +99,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "IMDB: $(echo $QUERY | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
+echo "IMDB: $(echo "$TITLE : $QUERY" | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
 
 exit 0
