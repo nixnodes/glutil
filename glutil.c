@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-11
+ * Version     : 1.4-12
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -15,6 +15,10 @@
 #define _FILE_OFFSET_BITS 64
 
 #include <stdio.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <inttypes.h>
+#include <time.h>
 
 #include "glconf.h"
 
@@ -108,15 +112,12 @@
 #include <libgen.h>
 #include <time.h>
 #include <utime.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
 #include <regex.h>
 #include <fcntl.h>
-#include <stdint.h>
-#include <inttypes.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <sys/ipc.h>
@@ -128,7 +129,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 10
+#define VER_REVISION 12
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -261,7 +262,7 @@ struct g_handle {
 	void *data;
 	size_t buffer_count;
 	void *last;
-	char s_buffer[4096], file[4096], mode[32];
+	char s_buffer[PATH_MAX], file[PATH_MAX], mode[32];
 	mode_t st_mode;
 	struct ONLINE *ol;
 	int shmid;
@@ -852,15 +853,15 @@ char *argv_off = NULL;
 char GLROOT[255] = { glroot };
 char SITEROOT_N[255] = { siteroot };
 char SITEROOT[255] = { 0 };
-char DIRLOG[255] = { dir_log };
-char NUKELOG[255] = { nuke_log };
-char DU_FLD[255] = { du_fld };
-char DUPEFILE[255] = { dupe_file };
-char LASTONLOG[255] = { last_on_log };
-char ONELINERS[255] = { oneliner_file };
-char FTPDATA[255] = { ftp_data };
-char IMDBLOG[255] = { imdb_file };
-char GAMELOG[255] = { game_log };
+char DIRLOG[PATH_MAX] = { dir_log };
+char NUKELOG[PATH_MAX] = { nuke_log };
+char DU_FLD[PATH_MAX] = { du_fld };
+char DUPEFILE[PATH_MAX] = { dupe_file };
+char LASTONLOG[PATH_MAX] = { last_on_log };
+char ONELINERS[PATH_MAX] = { oneliner_file };
+char FTPDATA[PATH_MAX] = { ftp_data };
+char IMDBLOG[PATH_MAX] = { imdb_file };
+char GAMELOG[PATH_MAX] = { game_log };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
@@ -870,7 +871,7 @@ char GLOB_MATCH[4096] = { 0 };
 int EXITVAL = 0;
 
 int loop_interval = 0;
-int loop_max = 0;
+uint64_t loop_max = 0;
 char *NUKESTR = NULL;
 
 char *exec_str = NULL;
@@ -1015,10 +1016,16 @@ int g_cpg(void *arg, void *out, int m, size_t sz) {
 	} else {
 		buffer = ((char **) arg)[0];
 	}
-	if (!buffer)
+	if (!buffer) {
 		return 1;
-	bzero(out, sz);
-	g_strncpy(out, buffer, strlen(buffer));
+	}
+
+	size_t a_l = strlen(buffer);
+
+	a_l > sz ? a_l = sz : sz;
+
+	bzero(out, a_l);
+	g_strncpy(out, buffer, a_l);
 
 	return 0;
 }
@@ -1032,13 +1039,17 @@ void *g_pg(void *arg, int m) {
 char *g_pd(void *arg, int m, size_t l) {
 	char *buffer = (char*) g_pg(arg, m);
 	char *ptr = NULL;
-	size_t a_len = strlen(buffer);
-	if (!a_len || a_len >= l) {
+	size_t a_l = strlen(buffer);
+
+	if (!a_l) {
 		return NULL;
 	}
-	if (a_len) {
-		ptr = (char*) calloc(a_len + 10, 1);
-		g_strncpy(ptr, buffer, a_len);
+
+	a_l > l ? a_l = l : l;
+
+	if (a_l) {
+		ptr = (char*) calloc(a_l + 10, 1);
+		g_strncpy(ptr, buffer, a_l);
 	}
 	return ptr;
 }
@@ -1102,9 +1113,17 @@ int opt_g_loop(void *arg, int m) {
 	return 0;
 }
 
+#include <limits.h>
+
 int opt_loop_max(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
-	loop_max = (int) strtol(buffer, NULL, 10);
+	errno = 0;
+	loop_max = (uint64_t) strtol(buffer, NULL, 10);
+	if ((errno == ERANGE && (loop_max == LONG_MAX || loop_max == LONG_MIN))
+			|| (errno != 0 && loop_max == 0)) {
+		return errno;
+	}
+
 	return 0;
 }
 
@@ -1325,25 +1344,25 @@ int opt_siteroot(void *arg, int m) {
 }
 
 int opt_dupefile(void *arg, int m) {
-	g_cpg(arg, DUPEFILE, m, 255);
+	g_cpg(arg, DUPEFILE, m, PATH_MAX);
 	ofl |= F_OVRR_DUPEFILE;
 	return 0;
 }
 
 int opt_lastonlog(void *arg, int m) {
-	g_cpg(arg, LASTONLOG, m, 255);
+	g_cpg(arg, LASTONLOG, m, PATH_MAX);
 	ofl |= F_OVRR_LASTONLOG;
 	return 0;
 }
 
 int opt_oneliner(void *arg, int m) {
-	g_cpg(arg, ONELINERS, m, 255);
+	g_cpg(arg, ONELINERS, m, PATH_MAX);
 	ofl |= F_OVRR_ONELINERS;
 	return 0;
 }
 
 int opt_imdblog(void *arg, int m) {
-	g_cpg(arg, IMDBLOG, m, 255);
+	g_cpg(arg, IMDBLOG, m, PATH_MAX);
 	ofl |= F_OVRR_IMDBLOG;
 	return 0;
 }
@@ -1355,7 +1374,7 @@ int opt_rebuild(void *arg, int m) {
 }
 
 int opt_dirlog_file(void *arg, int m) {
-	g_cpg(arg, DIRLOG, m, 255);
+	g_cpg(arg, DIRLOG, m, PATH_MAX);
 	ofl |= F_OVRR_DIRLOG;
 	return 0;
 }
@@ -3724,7 +3743,8 @@ int rebuild_dirlog(void) {
 				goto lend;
 			}
 			bzero(s_buffer, PATH_MAX);
-			snprintf(s_buffer,PATH_MAX, "%s/%s", SITEROOT, (char*) buffer2.objects->ptr);
+			snprintf(s_buffer, PATH_MAX, "%s/%s", SITEROOT,
+					(char*) buffer2.objects->ptr);
 			remove_repeating_chars(s_buffer, 0x2F);
 
 			size_t s_buf_len = strlen(s_buffer);
@@ -4196,7 +4216,7 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"DIRLOG;%s;%llu;%hu;%u;%hu;%hu;%hu\n", base,
 				(ulint64_t) iarg->dirlog->bytes, iarg->dirlog->files,
-				iarg->dirlog->uptime, iarg->dirlog->uploader,
+				(uint32_t) iarg->dirlog->uptime, iarg->dirlog->uploader,
 				iarg->dirlog->group, iarg->dirlog->status);
 	} else {
 		c =
@@ -4233,7 +4253,7 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 				iarg->nukelog->bytes,
 				!iarg->nukelog->status ?
 						iarg->nukelog->nuker : iarg->nukelog->unnuker,
-				iarg->nukelog->nukee, iarg->nukelog->nuketime);
+				iarg->nukelog->nukee, (uint32_t) iarg->nukelog->nuketime);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -4262,7 +4282,7 @@ int dupefile_format_block(char *name, ear *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "DUPEFILE;%s;%s;%u\n",
 				iarg->dupefile->filename, iarg->dupefile->uploader,
-				iarg->dupefile->timeup);
+				(uint32_t) iarg->dupefile->timeup);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"DUPEFILE: %s - uploader: %s, time: %s\n",
@@ -7248,7 +7268,7 @@ int self_get_path(char *out) {
 }
 
 int is_ascii_text(uint8_t in_c) {
-	if (in_c >= 0x0 && in_c <= 0x7F) {
+	if ((in_c >= 0x0 && in_c <= 0x7F)) {
 		return 0;
 	}
 
@@ -7286,7 +7306,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 			break;
 		}
 
-		char *buffer = calloc(1, SSD_MAX_LINE_SIZE);
+		char *buffer = calloc(1, SSD_MAX_LINE_SIZE + 16);
 
 		size_t b_len, lc = 0;
 		int hit = 0, i;
