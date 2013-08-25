@@ -17,6 +17,7 @@
  *   - Added -k (gamelog print) and -b (alias for --backup) (rev. 9)
  *   - Priority operations processing logging (rev. 10)
  *   - Minor code fixes (rev. 10)
+ *   - Replaced sprintf with more secure snprintf (rev. 11)
  *
  * v1.3
  *
