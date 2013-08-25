@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent --dir -exec "{m:spec1} $(basename {arg}) score"
-#@MACRO:gamescore-d:{m:exe} -d --silent --iregex "{m:arg1}" -exec "{m:spec1} {basedir} score"
+#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec "{m:spec1} $(basename {arg}) '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'"
+#@MACRO:gamescore-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -exec "{m:spec1} '{basedir}' '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
 ## Retrieves game info using giantbomb API (XML)
 #
@@ -27,9 +27,12 @@ BURL="http://www.giantbomb.com/"
 URL="$BURL""api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY=""
+API_KEY=e0c8aa999e45d61f9ada46be9d983f24fdd5e288""
 #
 INPUT_SKIP="^(.* complete .*|sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*)$"
+#
+## Updates gamelog
+UPDATE_GAMELOG=1
 #
 INPUT_CLEAN_REGEX="([._-\(\)](MACOSX|EUR|Creators[._-\(\)]Edition|PATCH|DATAPACK|GAMEFIX|READ[._-\(\)]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[._-\(\)]CUT|READNFO|DLC|INCL[._-\(\)]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX)[._-\(\)].*)|(-[A-Z0-9a-z_-]*)$"
 #
@@ -39,11 +42,9 @@ echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 
 QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
-WHAT=$2
 
-[ "$WHAT" = "score" ] && FIELD="reviews"
+FIELD="reviews"
 
-[ -z "$FIELD" ] && exit 1
 [ -z "$QUERY" ] && exit 2
 
 APIKEY_STR="?api_key=$API_KEY"
@@ -56,10 +57,20 @@ G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$
 
 RES=$($CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//')
 
-[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result '$WHAT' from $BURL""game/3030-$G_ID/user-reviews/" && exit 1
+[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result score from $BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
-[ "$WHAT" = "score" ] && { 
-    echo "SCORE: '$QUERY': $RES"
-}
+
+echo "SCORE: '$QUERY': $RES"
+
+
+if [ $UPDATE_GAMELOG -eq 1 ]; then
+	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" SIGINT SIGTERM SIGKILL SIGABRT
+	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
+	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
+	$2 -k --iregex "$DIR_E" --imatchq > /dev/null || $2 -e game --match "$DIR_E" > /dev/null
+	echo -en "dir $DIR_E\ntime $(date +%s)\nscore $RES\n\n" > /tmp/glutil.gg.$$.tmp
+	$2 -z game --nobackup --silent < /tmp/glutil.gg.$$.tmp || echo "ERROR: failed writing to gamelog!!"
+	rm /tmp/glutil.gg.$$.tmp
+fi
 
 exit 0
