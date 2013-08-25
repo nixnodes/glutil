@@ -15,6 +15,8 @@
  *   - Get self path BSD compatibility (rev. 8)
  *   - Created new data format (game log) (rev. 9)
  *   - Added -k (gamelog print) and -b (alias for --backup) (rev. 9)
+ *   - Priority operations processing logging (rev. 10)
+ *   - Minor code fixes (rev. 10)
  *
  * v1.3
  *
