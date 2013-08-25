@@ -42,6 +42,14 @@ INPUT_CLEAN_REGEX="([._-\(\)](BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSC
 ## This might cause mis-matches
 LOOSE_SEARCH=0
 #
+## Set to 0, imdblog directory path fields are set to glroot  
+##  relative path
+## Set to 1, imdblog directory path fields are set to title 
+##  extracted from query
+## Existing records are always overwritten
+#
+DATABASE_TYPE=1
+#
 ############################[ END OPTIONS ]##############################
 
 echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
@@ -91,11 +99,17 @@ RUNTIME_m=$(echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g')
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" SIGINT SIGTERM SIGKILL SIGABRT
-	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
-	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
+	if [ $DATABASE_TYPE -eq 0 ]; then
+		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
+		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
+	elif [ $DATABASE_TYPE -eq 1 ]; then
+		[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
+		DIR_E=$TITLE
+	fi
+	
 	$2 -a --iregex "$DIR_E" --imatchq > /dev/null || $2 -e imdb --match "$DIR_E" > /dev/null
 	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
-	$2 -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: failed writing to imdblog!!"
+	$2 -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
