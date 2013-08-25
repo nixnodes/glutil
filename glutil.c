@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-10
+ * Version     : 1.4-11
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -2036,13 +2036,6 @@ int g_init(int argc, char **argv) {
 	g_setjmp(0, "g_init", NULL, NULL);
 	int r;
 
-	char bla[1] = { 0 };
-
-	sprintf(bla,
-			"fdsfsdfwegfihewgi340ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddggreigegjdfkbdflgjdflkgjdfklgjeigrjegke\n");
-
-	printf("%s\n", bla);
-
 	if (strlen(LOGFILE)) {
 		gfl |= F_OPT_PS_LOGGING;
 	}
@@ -2830,37 +2823,6 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 
 	return 0;
 }
-
-/*
- typedef struct ___ch_dp {
- int nres;
- char **res;
- } _ch_dp, *__ch_dp;
-
- int dirlog_check_dupe2(void) {
- if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
- return 1;
- }
-
- if (!g_act_1.buffer.count) {
- return 2;
- }
-
- __ch_dp res_d = calloc(g_act_1.buffer.count, sizeof(_ch_dp));
-
- int res_d_i = 0;
- p_md_obj ptr = NULL;
- struct dirlog *d_ptr = NULL;
-
- while (ptr) {
- d_ptr = (struct dirlog *) ptr->ptr;
-
- ptr = ptr->next;
- }
-
- return 0;
- }
- */
 
 void g_progress_stats(time_t s_t, time_t e_t, off_t total, off_t done) {
 	float diff = (float) (e_t - s_t);
