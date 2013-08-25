@@ -834,6 +834,8 @@ int print_str(const char * volatile buf, ...) {
 
 	}
 
+	va_end(al);
+
 	fflush(stdout);
 
 	return 0;
@@ -2749,7 +2751,7 @@ int d_write(char *arg) {
 				(unsigned long long int) g_act_1.w_buffer.offset);
 	}
 
-	if (!(gfl & F_OPT_FORCE) && !file_exists(IMDBLOG)
+	if (!(gfl & F_OPT_FORCE) && !file_exists(datafile)
 			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
 			&& g_act_1.buffer_count) {
 		p_md_obj ptr_w = md_first(&g_act_1.w_buffer), ptr_r;
@@ -2771,6 +2773,7 @@ int d_write(char *arg) {
 							"NOTICE: record @0x%.16X already exists, unlinking..\n",
 							(unsigned long long int) (uintaa_t) ptr_w);
 				}
+
 				if (!md_unlink(&g_act_1.w_buffer, ptr_w)) {
 					print_str("%s: %s: [%llu]: %s, aborting build..\n",
 							g_act_1.w_buffer.offset ? "ERROR" : "WARNING",
@@ -2792,7 +2795,7 @@ int d_write(char *arg) {
 		ret = 7;
 		goto end;
 	} else {
-		print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
+		//print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
 	}
 
 	end:
@@ -4849,9 +4852,9 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	int ret = 0, r;
 	off_t sz_r;
 	struct stat st;
-	char buffer[4096] = { 0 };
+	char buffer[PATH_MAX] = { 0 };
 
-	if (strlen(file) + 4 > 4096) {
+	if (strlen(file) + 4 > PATH_MAX) {
 		return 1;
 	}
 
@@ -4859,9 +4862,9 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		return 0;
 	}
 
-	bzero(hdl->s_buffer, 4096);
-	snprintf(hdl->s_buffer, 4095, "%s.%d.dtm", file, getpid());
-	snprintf(buffer, 4095, "%s.bk", file);
+	bzero(hdl->s_buffer, PATH_MAX - 1);
+	snprintf(hdl->s_buffer, PATH_MAX - 1, "%s.%d.dtm", file, getpid());
+	snprintf(buffer, PATH_MAX - 1, "%s.bk", file);
 
 	if (hdl->buffer_count
 			&& (exec_str || (gfl & F_OPT_HAS_G_REGEX)
@@ -5296,7 +5299,7 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 
 	hdl->total_sz = st.st_size;
 
-	bzero(hdl->file, 4096);
+	bzero(hdl->file, PATH_MAX);
 	g_strncpy(hdl->file, file, strlen(file));
 
 	if (determine_datatype(hdl)) {
@@ -5405,7 +5408,7 @@ int g_fopen(char *file, char *mode, uint32_t flags, struct g_handle *hdl) {
 		return 0;
 	}
 
-	if (strlen(file) > 4096) {
+	if (strlen(file) > PATH_MAX) {
 		print_str(MSG_GEN_NODFILE, file, "file path too large");
 		return 2;
 	}
@@ -5416,7 +5419,7 @@ int g_fopen(char *file, char *mode, uint32_t flags, struct g_handle *hdl) {
 		print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
 	}
 
-	bzero(hdl->file, 4096);
+	bzero(hdl->file, PATH_MAX);
 	g_strncpy(hdl->file, file, strlen(file));
 
 	if (determine_datatype(hdl)) {
