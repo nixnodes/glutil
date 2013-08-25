@@ -802,8 +802,8 @@ int w_log(char *w, char *ow) {
 
 int print_str(const char * volatile buf, ...) {
 	g_setjmp(0, "print_str", NULL, NULL);
-
-	char d_buffer_2[PSTR_MAX];
+	;
+	char d_buffer_2[PSTR_MAX+1];
 	va_list al;
 	va_start(al, buf);
 
@@ -815,7 +815,7 @@ int print_str(const char * volatile buf, ...) {
 	}
 
 	if ((gfl & F_OPT_PS_LOGGING) && fd_log) {
-		char wl_buffer[PSTR_MAX];
+		char wl_buffer[PSTR_MAX+1];
 		vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
 		w_log(wl_buffer, (char*) buf);
 	}
@@ -1010,6 +1010,9 @@ char *hpd_up =
 				"                           used on recursive imports)\n"
 				"  --logfile=FILE        Override default log file path\n"
 				"\n";
+
+int md_init(pmda md, int nm);
+int split_string(char *line, char dl, pmda output_t);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1401,15 +1404,15 @@ int g_cprg(void *arg, int m) {
 
 	g_cpg(arg, buffer, m, 4096);
 
-	md_init(&MD_GLOB_REGEX, 3);
+	/*md_init(&MD_GLOB_REGEX, 3);
 
-	//split_string(buffer, )
+	split_string(buffer, )*/
 
 	return 0;
 }
 
 int opt_g_regexi(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4096);
+	g_cpg(arg, GLOB_REGEX, m, 4095);
 	glob_regex_flags |= REG_ICASE;
 	return 0;
 }
@@ -2652,31 +2655,28 @@ int rebuild(void *arg) {
 
 	char *a_ptr = (char*) arg;
 	char *datafile = g_dgetf(a_ptr);
-	struct g_handle hdl = { 0 };
 
 	if (!datafile) {
 		print_str(MSG_UNRECOGNIZED_DATA_TYPE, a_ptr);
 		return 2;
 	}
 
-	if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &hdl)) {
+	if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &g_act_1)) {
 		return 3;
 	}
 
-	if (!hdl.buffer_count) {
+	if (!g_act_1.buffer_count) {
 		print_str(
 				"ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
 		return 4;
 	}
 
-	if (rebuild_data_file(datafile, &hdl)) {
+	if (rebuild_data_file(datafile, &g_act_1)) {
 		print_str(MSG_GEN_DFRFAIL, datafile);
 		return 5;
 	}
 
-	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) hdl.bw, (ulint64_t) hdl.rw);
-
-	g_cleanup(&hdl);
+	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw, (ulint64_t) g_act_1.rw);
 
 	return 0;
 }
@@ -4852,8 +4852,8 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	bzero(hdl->s_buffer, 4096);
-	snprintf(hdl->s_buffer, 4096, "%s.%d.dtm", file, getpid());
-	snprintf(buffer, 4096, "%s.bk", file);
+	snprintf(hdl->s_buffer, 4095, "%s.%d.dtm", file, getpid());
+	snprintf(buffer, 4095, "%s.bk", file);
 
 	if (hdl->buffer_count
 			&& (exec_str || (gfl & F_OPT_HAS_G_REGEX)
