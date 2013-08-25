@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-9
+ * Version     : 1.4-10
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -128,7 +128,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -164,6 +164,9 @@ char ARCH = 0;
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
+
+#define a64					(uint64_t) 1
+#define a32					(uint32_t) 1
 
 /* ------------------------------------------- */
 
@@ -384,44 +387,46 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 
 #define PRIO_UPD_MODE_MACRO 0x1001
 
-#define F_OPT_FORCE 		0x1
-#define F_OPT_VERBOSE 		0x2
-#define F_OPT_VERBOSE2 		0x4
-#define F_OPT_VERBOSE3 		0x8
-#define F_OPT_SFV	 		0x10
-#define F_OPT_NOWRITE		0x20
-#define F_OPT_NOBUFFER		0x40
-#define F_OPT_UPDATE		0x80
-#define F_OPT_FIX			0x100
-#define F_OPT_FOLLOW_LINKS	0x200
-#define F_OPT_FORMAT_BATCH	0x400
-#define F_OPT_KILL_GLOBAL	0x800
-#define F_OPT_MODE_RAWDUMP  0x1000
-#define F_OPT_HAS_G_REGEX	0x2000
-#define F_OPT_VERBOSE4 		0x4000
-#define F_OPT_WBUFFER		0x8000
-#define F_OPT_FORCEWSFV		0x10000
-#define F_OPT_FORMAT_COMP   0x20000
-#define F_OPT_DAEMONIZE		0x40000
-#define F_OPT_LOOP			0x80000
-#define F_OPT_LOOPEXEC		0x100000
-#define F_OPT_PS_SILENT		0x200000
-#define F_OPT_PS_TIME		0x400000
-#define F_OPT_PS_LOGGING	0x800000
-#define F_OPT_TERM_ENUM		0x1000000
-#define F_OPT_HAS_G_MATCH	0x2000000
-#define F_OPT_HAS_M_ARG1	0x4000000
-#define F_OPT_HAS_M_ARG2	0x8000000
-#define F_OPT_HAS_M_ARG3	0x10000000
-#define F_OPT_PREEXEC		0x20000000
-#define F_OPT_POSTEXEC		0x40000000
-#define F_OPT_NOBACKUP		0x80000000
-#define F_OPT_C_GHOSTONLY	0x100000000
-#define F_OPT_XDEV			0x200000000
-#define F_OPT_XBLK			0x400000000
-#define F_OPT_MATCHQ		0x800000000
-#define F_OPT_IMATCHQ		0x1000000000
-#define F_OPT_CDIRONLY		0x2000000000
+/* -- flags -- */
+
+#define F_OPT_FORCE 		(a64 << 1)
+#define F_OPT_VERBOSE 		(a64 << 2)
+#define F_OPT_VERBOSE2 		(a64 << 3)
+#define F_OPT_VERBOSE3 		(a64 << 4)
+#define F_OPT_SFV	 		(a64 << 5)
+#define F_OPT_NOWRITE		(a64 << 6)
+#define F_OPT_NOBUFFER		(a64 << 7)
+#define F_OPT_UPDATE		(a64 << 8)
+#define F_OPT_FIX			(a64 << 9)
+#define F_OPT_FOLLOW_LINKS	(a64 << 10)
+#define F_OPT_FORMAT_BATCH	(a64 << 11)
+#define F_OPT_KILL_GLOBAL	(a64 << 12)
+#define F_OPT_MODE_RAWDUMP  (a64 << 13)
+#define F_OPT_HAS_G_REGEX	(a64 << 14)
+#define F_OPT_VERBOSE4 		(a64 << 15)
+#define F_OPT_WBUFFER		(a64 << 16)
+#define F_OPT_FORCEWSFV		(a64 << 17)
+#define F_OPT_FORMAT_COMP   (a64 << 18)
+#define F_OPT_DAEMONIZE		(a64 << 19)
+#define F_OPT_LOOP			(a64 << 20)
+#define F_OPT_LOOPEXEC		(a64 << 21)
+#define F_OPT_PS_SILENT		(a64 << 22)
+#define F_OPT_PS_TIME		(a64 << 23)
+#define F_OPT_PS_LOGGING	(a64 << 24)
+#define F_OPT_TERM_ENUM		(a64 << 25)
+#define F_OPT_HAS_G_MATCH	(a64 << 26)
+#define F_OPT_HAS_M_ARG1	(a64 << 27)
+#define F_OPT_HAS_M_ARG2	(a64 << 28)
+#define F_OPT_HAS_M_ARG3	(a64 << 29)
+#define F_OPT_PREEXEC		(a64 << 30)
+#define F_OPT_POSTEXEC		(a64 << 31)
+#define F_OPT_NOBACKUP		(a64 << 32)
+#define F_OPT_C_GHOSTONLY	(a64 << 33)
+#define F_OPT_XDEV			(a64 << 34)
+#define F_OPT_XBLK			(a64 << 35)
+#define F_OPT_MATCHQ		(a64 << 36)
+#define F_OPT_IMATCHQ		(a64 << 37)
+#define F_OPT_CDIRONLY		(a64 << 38)
 
 #define F_MD_NOREAD			0x1
 
@@ -436,32 +441,32 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_FC_MSET_SRC		0x1
 #define F_FC_MSET_DEST		0x2
 
-#define F_GH_NOMEM  		0x1
-#define F_GH_ISDIRLOG		0x2
-#define F_GH_EXEC			0x4
-#define F_GH_ISNUKELOG		0x8
-#define F_GH_FFBUFFER		0x10
-#define F_GH_WAPPEND		0x20
-#define F_GH_DFWASWIPED		0x40
-#define F_GH_DFNOWIPE		0x80
-#define F_GH_ISDUPEFILE		0x100
-#define F_GH_ISLASTONLOG	0x200
-#define F_GH_ISONELINERS	0x400
-#define F_GH_SHM			0x800
-#define F_GH_ISONLINE		0x1000
-#define F_GH_ISIMDB			0x2000
-#define F_GH_ISGAME			0x4000
+#define F_GH_NOMEM  		(a32 << 1)
+#define F_GH_ISDIRLOG		(a32 << 2)
+#define F_GH_EXEC			(a32 << 3)
+#define F_GH_ISNUKELOG		(a32 << 4)
+#define F_GH_FFBUFFER		(a32 << 5)
+#define F_GH_WAPPEND		(a32 << 6)
+#define F_GH_DFWASWIPED		(a32 << 7)
+#define F_GH_DFNOWIPE		(a32 << 8)
+#define F_GH_ISDUPEFILE		(a32 << 9)
+#define F_GH_ISLASTONLOG	(a32 << 10)
+#define F_GH_ISONELINERS	(a32 << 11)
+#define F_GH_SHM			(a32 << 12)
+#define F_GH_ISONLINE		(a32 << 13)
+#define F_GH_ISIMDB			(a32 << 14)
+#define F_GH_ISGAME			(a32 << 15)
 
-#define F_OVRR_IPC			0x1
-#define F_OVRR_GLROOT		0x2
-#define F_OVRR_SITEROOT		0x4
-#define F_OVRR_DUPEFILE		0x8
-#define F_OVRR_LASTONLOG	0x10
-#define F_OVRR_ONELINERS	0x20
-#define F_OVRR_DIRLOG		0x40
-#define F_OVRR_NUKELOG		0x80
-#define F_OVRR_NUKESTR		0x100
-#define F_OVRR_IMDBLOG		0x200
+#define F_OVRR_IPC			(a32 << 1)
+#define F_OVRR_GLROOT		(a32 << 2)
+#define F_OVRR_SITEROOT		(a32 << 3)
+#define F_OVRR_DUPEFILE		(a32 << 4)
+#define F_OVRR_LASTONLOG	(a32 << 5)
+#define F_OVRR_ONELINERS	(a32 << 6)
+#define F_OVRR_DIRLOG		(a32 << 7)
+#define F_OVRR_NUKELOG		(a32 << 8)
+#define F_OVRR_NUKESTR		(a32 << 9)
+#define F_OVRR_IMDBLOG		(a32 << 10)
 
 #define F_AV_RETURN_STRING 	0x1
 
@@ -473,6 +478,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 
 /* these bits determine file type */
 #define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
+
+/* -- end flags -- */
 
 #define V_MB				0x100000
 
@@ -490,6 +497,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MAX_EXEC_STR 		262144
 
 #define	PIPE_READ_MAX		0x2000
+#define MAX_VAR_LEN			255
 
 #define MSG_GEN_NODFILE 	"ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE 	"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
@@ -755,6 +763,9 @@ uint32_t get_msg_type(char *msg) {
 		return F_MSG_TYPE_WARNING;
 	}
 	if (!strncmp(msg, "NOTICE:", 7)) {
+		return F_MSG_TYPE_NOTICE;
+	}
+	if (!strncmp(msg, "MACRO:", 6)) {
 		return F_MSG_TYPE_NOTICE;
 	}
 	if (!strncmp(msg, "STATS:", 6)) {
@@ -1657,7 +1668,8 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		(void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvv", opt_g_verbose4,
 		(void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2,
 		(void*) 0, "-v", opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro,
-		(void*) 1, NULL, NULL,
+		(void*) 1, "--loglevel", opt_g_loglvl, (void*) 1, "--logfile",
+		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, NULL, NULL,
 		NULL };
 
 void *f_ref[] = { "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
@@ -2002,12 +2014,34 @@ char *build_data_path(char *file, char *path, char *sd) {
 	return path;
 }
 
+void enable_logging(void) {
+	if ((gfl & F_OPT_PS_LOGGING) && !fd_log) {
+		build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
+		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
+			gfl ^= F_OPT_PS_LOGGING;
+			if (!(gfl & F_OPT_MODE_RAWDUMP)) {
+				print_str(
+						"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
+						LOGFILE, errno);
+			}
+		}
+	}
+	return;
+}
+
 #define F_LCONF_NORF 	0x1
 #define MSG_INIT_PATH_OVERR 	"NOTICE: %s path set to '%s'\n"
 
 int g_init(int argc, char **argv) {
 	g_setjmp(0, "g_init", NULL, NULL);
 	int r;
+
+	char bla[1] = { 0 };
+
+	sprintf(bla,
+			"fdsfsdfwegfihewgi340ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddggreigegjdfkbdflgjdflkgjdfklgjeigrjegke\n");
+
+	printf("%s\n", bla);
 
 	if (strlen(LOGFILE)) {
 		gfl |= F_OPT_PS_LOGGING;
@@ -2025,17 +2059,7 @@ int g_init(int argc, char **argv) {
 		return 4;
 	}
 
-	if (gfl & F_OPT_PS_LOGGING) {
-		build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
-		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
-			gfl ^= F_OPT_PS_LOGGING;
-			if (!(gfl & F_OPT_MODE_RAWDUMP)) {
-				print_str(
-						"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
-						LOGFILE, errno);
-			}
-		}
-	}
+	enable_logging();
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
 			&& !(gfl & F_OPT_MODE_RAWDUMP) && !(gfl & F_OPT_FORMAT_COMP)) {
@@ -2334,6 +2358,8 @@ int main(int argc, char *argv[]) {
 
 	parse_args(argc, argv, prio_f_ref);
 
+	enable_logging();
+
 	switch (updmode) {
 	case PRIO_UPD_MODE_MACRO:
 		;
@@ -2341,7 +2367,8 @@ int main(int argc, char *argv[]) {
 		ptr = process_macro(prio_argv_off, NULL);
 		if (ptr) {
 			_p_macro_argv = p_argv = ptr;
-			gfl = F_OPT_WBUFFER;
+			gfl = F_OPT_WBUFFER
+					| (gfl & F_OPT_PS_LOGGING ? F_OPT_PS_LOGGING : 0);
 		} else {
 			g_shutdown(NULL);
 		}
@@ -5997,6 +6024,7 @@ int is_char_uppercase(char c) {
 	return 1;
 }
 
+
 int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	g_setjmp(0, "ref_to_val_macro", NULL, NULL);
 
@@ -6005,7 +6033,6 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	}
 
 	if (!strcmp(match, "m:exe")) {
-
 		if (self_get_path(output)) {
 			sprintf(output, "UNKNOWN");
 		}
@@ -6058,6 +6085,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		sprintf(output, LOGFILE);
 	} else if (!strcmp(match, "imdbfile")) {
 		sprintf(output, IMDBLOG);
+	} else if (!strcmp(match, "gamefile")) {
+		sprintf(output, GAMELOG);
 	} else if (!strcmp(match, "PID")) {
 		sprintf(output, "%d", getpid());
 	} else if (!strcmp(match, "IPC")) {
@@ -6452,17 +6481,17 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 	}
 	size_t b_l_1;
 	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
-			(char*) malloc(
-			MAX_EXEC_STR);
+			(char*) calloc(
+			MAX_EXEC_STR, 1);
 	int i, i2, pi, r;
 
 	for (i = 0, pi = 0; i < blen2; i++, pi++) {
 		if (input[i] == 0x7B) {
-			bzero(buffer, 256);
-			for (i2 = 0, i++, r = 0; i < blen2 && i2 < 255; i++, i2++) {
+			bzero(buffer, MAX_VAR_LEN + 1);
+			for (i2 = 0, i++, r = 0; i < blen2 && i2 < MAX_VAR_LEN; i++, i2++) {
 				if (input[i] == 0x7D) {
-					if (!i2 || strlen(buffer) > 255
-							|| (r = call(data, buffer, buffer2, 255))) {
+					if (!i2 || strlen(buffer) > MAX_VAR_LEN
+							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
 						if (r) {
 							b_l_1 = strlen(buffer);
 							sprintf(&buffer_o[pi], "%c%s%c", 0x7B, buffer,
