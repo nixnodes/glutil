@@ -7,8 +7,8 @@
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
-## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]
-##                ./glutil -m imdb-d --arg1 "\/xvid\/[^,]{3,}"
+## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]    (filesystem based)
+##                ./glutil -m imdb-d --arg1 "\/xvid\/[^,]{3,}"                      (dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
