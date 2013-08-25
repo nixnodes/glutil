@@ -43,7 +43,7 @@ EXEMPTSITEOPS=1
 #
 ## Enforce only on files matching this expression
 #
-FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi|nfo|jp(e|)g)$"
+FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi)$"
 #
 ## Do NOT enforce paths matching this expression
 #
@@ -106,7 +106,7 @@ LUPDT=$2
 GLUSER=$3
 CT=$(date +%s)
 
-DIFFT=$[CT-LUPDT];
+DIFFT=$(expr $CT - $LUPDT);
 
 #[ $DIFFT -lt 1 ] && exit 1
 
@@ -122,7 +122,7 @@ KILLED=0
 
 if [ $SLOW -eq 1 ] && [ -f /tmp/du-ks/$4 ]; then
 	MT1=$(stat -c %Y /tmp/du-ks/$4) 
-	UNDERTIME=$[CT-MT1]
+	UNDERTIME=$(expr $CT - $MT1)
 	[ $UNDERTIME -gt $MAXSLOWTIME ] && 
 		O="[$(date "+%T %D")] KILLING: [PID: $4]: Below speed limit for too long ($UNDERTIME secs): $GLUSER [Rate: $DRATE/$MINRATE B/s]\n" &&  
 		SHOULDKILL=1 && ban_user $GLUSER 0 $8 ${10} $7 $0  && kill $4 && KILLED=1 &&  rm /tmp/du-ks/$4
@@ -130,7 +130,7 @@ if [ $SLOW -eq 1 ] && [ -f /tmp/du-ks/$4 ]; then
 		FORCEKILL=0		
 		i=0
 		while [ -n "$(ps -p $4 -o comm=)" ] && [ $i -lt 4 ]; do
-			i=$[i+1]
+			i=$(expr $i + 1)
 			sleep 1
 		done
 
