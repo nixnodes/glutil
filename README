@@ -58,9 +58,10 @@
   - Oneliners file   (/ftp-data/logs/oneliners.log)
   - Online users     (shared memory segment)
 
- glutil specific binary logs:
+  glutil specific binary logs:
 
   - Internet Movie Data Base log   (/ftp-data/logs/imdb.log)
+  - Game info log                  (/ftp-data/logs/game.log)
 
  EXTRACTING BINARY LOGS RECORDS AS STRINGS:
 
