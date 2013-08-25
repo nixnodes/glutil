@@ -2196,6 +2196,14 @@ int g_init(int argc, char **argv) {
 	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
 	remove_repeating_chars(SITEROOT, 0x2F);
 
+	if ( dir_exists(SITEROOT) && !dir_exists(SITEROOT_N)) {
+		snprintf(SITEROOT, 254, "%s", SITEROOT_N);
+	}
+
+	if ( dir_exists(SITEROOT) ) {
+		print_str("WARNING: no valid siteroot!\n");
+	}
+
 	if (strlen(GLOB_REGEX)) {
 		gfl |= F_OPT_HAS_G_REGEX;
 	}
