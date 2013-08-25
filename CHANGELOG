@@ -18,6 +18,7 @@
  *   - Priority operations processing logging (rev. 10)
  *   - Minor code fixes (rev. 10)
  *   - Replaced sprintf with more secure snprintf (rev. 11)
+ *   - FreeBSD compatibility (compiles with default glconf.h now) (rev. 12)
  *
  * v1.3
  *
