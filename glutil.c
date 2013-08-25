@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-12
+ * Version     : 1.4-13
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -122,6 +122,7 @@
 #include <setjmp.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <limits.h>
 
 #ifndef WEXITSTATUS
 #define	WEXITSTATUS(status)	(((status) & 0xff00) >> 8)
@@ -129,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 4
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -150,24 +151,26 @@ typedef unsigned long long int uint64_t;
 typedef unsigned long long int ulint64_t;
 
 #if __x86_64__ || __ppc64__
-#define AAINT uint64_t
+#define uintaa_t uint64_t
 #define ENV_64
-char ARCH = 1;
+#define __STR_ARCH	"x86_64"
+#define __AA_SPFH 	"%.16X"
 #else
-#define AAINT uint32_t
+#define uintaa_t uint32_t
 #define ENV_32
-char ARCH = 0;
+#define __STR_ARCH	"i686"
+#define __AA_SPFH 	"%.8X"
 #endif
 
-#define MAX_uint64_t 		0xFFFFFFFFFFFFFFFF
-#define MAX_ULONG 			0xFFFFFFFF
+#define MAX_uint64_t 		((uint64_t) -1)
+#define MAX_uint32_t 		((uint32_t) -1)
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-#define a64					(uint64_t) 1
-#define a32					(uint32_t) 1
+#define a64					((uint64_t) 1)
+#define a32					((uint32_t) 1)
 
 /* ------------------------------------------- */
 
@@ -350,7 +353,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 	if (crc32) {
 		oldcrc32 = crc32;
 	} else {
-		oldcrc32 = MAX_ULONG;
+		oldcrc32 = MAX_uint32_t;
 	}
 
 	for (; len; len--, buf++) {
@@ -387,6 +390,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_DUMP_GAME	0x15
 
 #define PRIO_UPD_MODE_MACRO 0x1001
+#define PRIO_UPD_MODE_INFO 	0x1002
 
 /* -- flags -- */
 
@@ -429,18 +433,16 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_IMATCHQ		(a64 << 37)
 #define F_OPT_CDIRONLY		(a64 << 38)
 
-#define F_MD_NOREAD			0x1
+#define F_DL_FOPEN_BUFFER	(a32 << 1)
+#define F_DL_FOPEN_FILE		(a32 << 2)
+#define F_DL_FOPEN_REWIND	(a32 << 3)
+#define F_DL_FOPEN_SHM		(a32 << 4)
 
-#define F_DL_FOPEN_BUFFER	0x1
-#define F_DL_FOPEN_FILE		0x2
-#define F_DL_FOPEN_REWIND	0x4
-#define F_DL_FOPEN_SHM		0x8
+#define F_EARG_SFV 			(a32 << 1)
+#define F_EAR_NOVERB		(a32 << 2)
 
-#define F_EARG_SFV 			0x1
-#define F_EAR_NOVERB		0x2
-
-#define F_FC_MSET_SRC		0x1
-#define F_FC_MSET_DEST		0x2
+#define F_FC_MSET_SRC		(a32 << 1)
+#define F_FC_MSET_DEST		(a32 << 2)
 
 #define F_GH_NOMEM  		(a32 << 1)
 #define F_GH_ISDIRLOG		(a32 << 2)
@@ -458,6 +460,9 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISIMDB			(a32 << 14)
 #define F_GH_ISGAME			(a32 << 15)
 
+/* these bits determine file type */
+#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
+
 #define F_OVRR_IPC			(a32 << 1)
 #define F_OVRR_GLROOT		(a32 << 2)
 #define F_OVRR_SITEROOT		(a32 << 3)
@@ -471,14 +476,11 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 
 #define F_AV_RETURN_STRING 	0x1
 
-#define F_PD_RECURSIVE 		0x1
-#define F_PD_MATCHDIR		0x2
-#define F_PD_MATCHREG		0x4
+#define F_PD_RECURSIVE 		(a32 << 1)
+#define F_PD_MATCHDIR		(a32 << 2)
+#define F_PD_MATCHREG		(a32 << 3)
 
 #define F_PD_MATCHTYPES		(F_PD_MATCHDIR|F_PD_MATCHREG)
-
-/* these bits determine file type */
-#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
 
 /* -- end flags -- */
 
@@ -686,7 +688,7 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 	}
 
 	snprintf(buffer1, 4096, ", fault address: 0x%.16llX",
-			(ulint64_t) (AAINT) siginfo->si_addr);
+			(ulint64_t) (uintaa_t) siginfo->si_addr);
 
 	switch (g_sigjmp.id) {
 	case ID_SIGERR_MEMCPY:
@@ -738,13 +740,13 @@ struct tm *get_localtime(void) {
 	return localtime(&t);
 }
 
-#define F_MSG_TYPE_ANY		 	0xFFFFFFFF
-#define F_MSG_TYPE_EXCEPTION 	0x1
-#define F_MSG_TYPE_ERROR 		0x2
-#define F_MSG_TYPE_WARNING 		0x4
-#define F_MSG_TYPE_NOTICE		0x8
-#define F_MSG_TYPE_STATS		0x10
-#define F_MSG_TYPE_NORMAL		0x20
+#define F_MSG_TYPE_ANY		 	MAX_uint32_t
+#define F_MSG_TYPE_EXCEPTION 	(a32 << 1)
+#define F_MSG_TYPE_ERROR 		(a32 << 2)
+#define F_MSG_TYPE_WARNING 		(a32 << 3)
+#define F_MSG_TYPE_NOTICE		(a32 << 4)
+#define F_MSG_TYPE_STATS		(a32 << 5)
+#define F_MSG_TYPE_NORMAL		(a32 << 6)
 
 #define F_MSG_TYPE_EEW 			(F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING)
 
@@ -1060,6 +1062,11 @@ int prio_opt_g_macro(void *arg, int m) {
 	return 0;
 }
 
+int prio_opt_g_pinfo(void *arg, int m) {
+	updmode = PRIO_UPD_MODE_INFO;
+	return 0;
+}
+
 int opt_g_loglvl(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 	int lvl = atoi(buffer), i;
@@ -1112,8 +1119,6 @@ int opt_g_loop(void *arg, int m) {
 	gfl |= F_OPT_LOOP;
 	return 0;
 }
-
-#include <limits.h>
 
 int opt_loop_max(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
@@ -1290,24 +1295,24 @@ int opt_log_file(void *arg, int m) {
 	return 0;
 }
 
-char MACRO_ARG1[255] = { 0 };
-char MACRO_ARG2[255] = { 0 };
-char MACRO_ARG3[255] = { 0 };
+char MACRO_ARG1[4096] = { 0 };
+char MACRO_ARG2[4096] = { 0 };
+char MACRO_ARG3[4096] = { 0 };
 
 int opt_g_arg1(void *arg, int m) {
-	g_cpg(arg, MACRO_ARG1, m, 255);
+	g_cpg(arg, MACRO_ARG1, m, 4095);
 	gfl |= F_OPT_HAS_M_ARG1;
 	return 0;
 }
 
 int opt_g_arg2(void *arg, int m) {
-	g_cpg(arg, MACRO_ARG2, m, 255);
+	g_cpg(arg, MACRO_ARG2, m, 4095);
 	gfl |= F_OPT_HAS_M_ARG2;
 	return 0;
 }
 
 int opt_g_arg3(void *arg, int m) {
-	g_cpg(arg, MACRO_ARG3, m, 255);
+	g_cpg(arg, MACRO_ARG3, m, 4095);
 	gfl |= F_OPT_HAS_M_ARG3;
 	return 0;
 }
@@ -1379,12 +1384,6 @@ int opt_dirlog_file(void *arg, int m) {
 	return 0;
 }
 
-int opt_g_regexi(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4096);
-	glob_regex_flags |= REG_ICASE;
-	return 0;
-}
-
 int opt_g_sleep(void *arg, int m) {
 	g_sleep = atoi(g_pg(arg, m));
 	return 0;
@@ -1395,14 +1394,34 @@ int opt_g_usleep(void *arg, int m) {
 	return 0;
 }
 
+mda MD_GLOB_REGEX = { 0 };
+
+int g_cprg(void *arg, int m) {
+	char buffer[4096];
+
+	g_cpg(arg, buffer, m, 4096);
+
+	md_init(&MD_GLOB_REGEX, 3);
+
+	//split_string(buffer, )
+
+	return 0;
+}
+
+int opt_g_regexi(void *arg, int m) {
+	g_cpg(arg, GLOB_REGEX, m, 4096);
+	glob_regex_flags |= REG_ICASE;
+	return 0;
+}
+
 int opt_g_match(void *arg, int m) {
-	g_cpg(arg, GLOB_MATCH, m, 4096);
+	g_cpg(arg, GLOB_MATCH, m, 4095);
 	glob_match_i_m = 0;
 	return 0;
 }
 
 int opt_g_imatch(void *arg, int m) {
-	g_cpg(arg, GLOB_MATCH, m, 4096);
+	g_cpg(arg, GLOB_MATCH, m, 4095);
 	glob_match_i_m = 1;
 	return 0;
 }
@@ -1413,7 +1432,7 @@ int opt_g_regex(void *arg, int m) {
 }
 
 int opt_g_iregexi(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4096);
+	g_cpg(arg, GLOB_REGEX, m, 4095);
 	glob_regex_flags |= REG_ICASE;
 	glob_reg_i_m = REG_NOMATCH;
 	return 0;
@@ -1438,8 +1457,15 @@ int opt_dirlog_sections_file(void *arg, int m) {
 
 int print_version(void *arg, int m) {
 	print_str("glutil-%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
-	VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686");
+	VER_REVISION, VER_STR, __STR_ARCH);
 	updmode = UPD_MODE_NOOP;
+	return 0;
+}
+
+int print_version_long(void *arg, int m) {
+	print_str("* glutil-%d.%d-%d%s-%s - glFTPd binary logs tool *\n", VER_MAJOR,
+	VER_MINOR,
+	VER_REVISION, VER_STR, __STR_ARCH);
 	return 0;
 }
 
@@ -1526,7 +1552,7 @@ int opt_oneliner_dump(void *arg, int m) {
 
 int print_help(void *arg, int m) {
 	print_str(hpd_up, VER_MAJOR, VER_MINOR, VER_REVISION,
-	VER_STR, ARCH ? "x86_64" : "i686");
+	VER_STR, __STR_ARCH);
 	if (m != -1) {
 		updmode = UPD_MODE_NOOP;
 	}
@@ -1578,7 +1604,7 @@ typedef int __d_mlref(void *buffer, char *key, char *val);
 
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
 _d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog,
-		dirlog_check_records;
+		dirlog_check_records, g_print_info;
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
 		dirlog_update_record, g_dump_ug, g_dump_gen, d_write;
 
@@ -1687,8 +1713,9 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		(void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvv", opt_g_verbose4,
 		(void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2,
 		(void*) 0, "-v", opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro,
-		(void*) 1, "--loglevel", opt_g_loglvl, (void*) 1, "--logfile",
-		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, NULL, NULL,
+		(void*) 1, "--pinfo", prio_opt_g_pinfo, (void*) 0, "--loglevel",
+		opt_g_loglvl, (void*) 1, "--logfile", opt_log_file, (void*) 0, "--log",
+		opt_logging, (void*) 0, NULL, NULL,
 		NULL };
 
 void *f_ref[] = { "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
@@ -1782,7 +1809,7 @@ int md_g_free(pmda md) {
 	return 0;
 }
 
-AAINT md_relink(pmda md) {
+uintaa_t md_relink(pmda md) {
 	off_t off, l = 1;
 
 	p_md_obj last = NULL, cur = md->objects;
@@ -1823,7 +1850,7 @@ void *md_alloc(pmda md, int b) {
 		if (gfl & F_OPT_VERBOSE3) {
 			print_str(
 					"NOTICE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
-					(ulint64_t) (AAINT) md->objects, (ulint64_t) md->count);
+					(ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count);
 		}
 		md->objects = realloc(md->objects, (md->count * sizeof(md_obj)) * 2);
 		md->pos = md->objects;
@@ -1831,18 +1858,18 @@ void *md_alloc(pmda md, int b) {
 		bzero(md->pos, md->count * sizeof(md_obj));
 
 		md->count *= 2;
-		AAINT rlc = md_relink(md);
+		uintaa_t rlc = md_relink(md);
 		flags |= MDA_MDALLOC_RE;
 		if (gfl & F_OPT_VERBOSE3) {
 			print_str(
 					"NOTICE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
-					(ulint64_t) (AAINT) md->objects, (ulint64_t) md->count,
+					(ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count,
 					(ulint64_t) rlc);
 		}
 	}
 
 	p_md_obj prev = md->pos;
-	AAINT pcntr = 0;
+	uintaa_t pcntr = 0;
 	while (md->pos->ptr
 			&& (pcntr = ((md->pos - md->objects) / sizeof(md_obj))) < md->count) {
 		md->pos++;
@@ -2059,12 +2086,6 @@ int g_init(int argc, char **argv) {
 		gfl |= F_OPT_PS_LOGGING;
 	}
 
-	if (setup_sighandlers()) {
-		print_str(
-				"WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!)\n");
-		sleep(5);
-	}
-
 	r = parse_args(argc, argv, f_ref);
 	if (r == -2 || r == -1) {
 		print_help(NULL, -1);
@@ -2078,7 +2099,7 @@ int g_init(int argc, char **argv) {
 		print_str("INIT: glutil %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
-		VER_REVISION, VER_STR, ARCH ? "x86_64" : "i686", getpid());
+		VER_REVISION, VER_STR, __STR_ARCH, getpid());
 	}
 
 #ifdef GLCONF
@@ -2365,7 +2386,14 @@ int g_init(int argc, char **argv) {
 }
 
 int main(int argc, char *argv[]) {
+	g_setjmp(0, "main", NULL, NULL);
 	char **p_argv = (char**) argv;
+
+	if (setup_sighandlers()) {
+		print_str(
+				"WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!)\n");
+		sleep(5);
+	}
 
 	_p_macro_argc = argc;
 
@@ -2386,6 +2414,10 @@ int main(int argc, char *argv[]) {
 			g_shutdown(NULL);
 		}
 		break;
+	case PRIO_UPD_MODE_INFO:
+		g_print_info();
+		g_shutdown(NULL);
+		break;
 	}
 
 	updmode = 0;
@@ -2395,6 +2427,39 @@ int main(int argc, char *argv[]) {
 	g_shutdown(NULL);
 
 	return EXITVAL;
+}
+
+#define MSG_NL 	"\n"
+
+int g_print_info(void) {
+	char buffer[4096];
+	print_version_long(NULL, 0);
+	print_str(MSG_NL);
+	snprintf(buffer, 4095, "EP: @0x%s\n", __AA_SPFH);
+	print_str(buffer, (uintaa_t) main);
+	print_str(MSG_NL);
+	print_str(" DATA SRC   BLOCK SIZE(B)   \n"
+			"--------------------------\n");
+	print_str(" DIRLOG          %d        \n", DL_SZ);
+	print_str(" NUKELOG         %d        \n", NL_SZ);
+	print_str(" DUPEFILE        %d        \n", DF_SZ);
+	print_str(" LASTONLOG       %d        \n", LO_SZ);
+	print_str(" ONELINERS       %d        \n", LO_SZ);
+	print_str(" IMDBLOG         %d        \n", ID_SZ);
+	print_str(" GAMELOG         %d        \n", GM_SZ);
+	print_str(" ONLINE(S)       %d        \n", OL_SZ);
+	print_str(MSG_NL);
+	if (gfl & F_OPT_VERBOSE) {
+		print_str(" DATA TYPE     SIZE(B)   \n"
+				"-------------------------\n");
+		print_str(" uintaa_t         %d      \n", (sizeof(uintaa_t)));
+		print_str(" uint8_t          %d      \n", (sizeof(uint8_t)));
+		print_str(" uint16_t         %d      \n", (sizeof(uint16_t)));
+		print_str(" uint32_t         %d      \n", (sizeof(uint32_t)));
+		print_str(" uint64_t         %d      \n", (sizeof(uint64_t)));
+		print_str(MSG_NL);
+	}
+	return 0;
 }
 
 char **process_macro(void * arg, char **out) {
@@ -2696,7 +2761,7 @@ int d_write(char *arg) {
 				if (gfl & F_OPT_VERBOSE2) {
 					print_str(
 							"NOTICE: record @0x%.16X already exists, unlinking..\n",
-							(unsigned long long int) (AAINT) ptr_w);
+							(unsigned long long int) (uintaa_t) ptr_w);
 				}
 				if (!md_unlink(&g_act_1.w_buffer, ptr_w)) {
 					print_str("%s: %s: [%llu]: %s, aborting build..\n",
@@ -3831,10 +3896,10 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 			c++;
 		} else {
 			oi = i;
-			AAINT vp;
+			uintaa_t vp;
 			void *buffer = NULL;
 
-			if ((vp = (AAINT) ora[vi].arg_cnt)) {
+			if ((vp = (uintaa_t) ora[vi].arg_cnt)) {
 				if (i + vp > argc - 1) {
 					if (fref_t != prio_f_ref) {
 						print_str(
@@ -5902,7 +5967,7 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 		return 0;
 	}
 
-	uint32_t crc = MAX_ULONG;
+	uint32_t crc = MAX_uint32_t;
 
 	for (read = 0, r = 0; !feof(fp);) {
 		if ((r = g_fread(buffer, 1, CRC_FILE_READ_BUFFER_SIZE, fp)) < 1)
@@ -7259,6 +7324,12 @@ int self_get_path(char *out) {
 	if (file_exists(path)) {
 		snprintf(path, PATH_MAX, "/compat/linux/proc/%d/exe", getpid());
 	}
+
+	if (file_exists(path)) {
+		snprintf(path, PATH_MAX, "/proc/%d/file", getpid());
+	}
+
+	printf("%s\n", path);
 
 	if ((r = readlink(path, out, PATH_MAX)) == -1) {
 		return 2;
