@@ -684,7 +684,7 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 		s_ptr1 = "UNKNOWN EXCEPTION";
 	}
 
-	sprintf(buffer1, ", fault address: 0x%.16llX",
+	snprintf(buffer1, 4096, ", fault address: 0x%.16llX",
 			(ulint64_t) (AAINT) siginfo->si_addr);
 
 	switch (g_sigjmp.id) {
@@ -718,7 +718,7 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 	printf("EXCEPTION: %s: [%s] [%s] [%d]%s%s\n", s_ptr1, g_sigjmp.type, s_ptr2,
 			siginfo->si_errno, buffer1, s_ptr3);
 
-	usleep(250000);
+	usleep(450000);
 
 	g_sigjmp.ci++;
 
@@ -806,14 +806,14 @@ int print_str(const char * volatile buf, ...) {
 
 	if ((gfl & F_OPT_PS_LOGGING) || (gfl & F_OPT_PS_TIME)) {
 		struct tm tm = *get_localtime();
-		sprintf(d_buffer_2, "[%.2u-%.2u-%.2u %.2u:%.2u:%.2u] %s",
+		snprintf(d_buffer_2, PSTR_MAX, "[%.2u-%.2u-%.2u %.2u:%.2u:%.2u] %s",
 				(tm.tm_year + 1900) % 100, tm.tm_mon + 1, tm.tm_mday,
 				tm.tm_hour, tm.tm_min, tm.tm_sec, buf);
 	}
 
 	if ((gfl & F_OPT_PS_LOGGING) && fd_log) {
 		char wl_buffer[PSTR_MAX];
-		vsprintf(wl_buffer, d_buffer_2, al);
+		vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
 		w_log(wl_buffer, (char*) buf);
 	}
 
@@ -1988,9 +1988,9 @@ char *build_data_path(char *file, char *path, char *sd) {
 		return path;
 	}
 
-	char buffer[4096] = { 0 };
+	char buffer[PATH_MAX] = { 0 };
 
-	sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
+	snprintf(buffer, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
 
 	remove_repeating_chars(buffer, 0x2F);
 
@@ -2150,7 +2150,7 @@ int g_init(int argc, char **argv) {
 	build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
 
 	bzero(SITEROOT, 255);
-	sprintf(SITEROOT, "%s%s", GLROOT, SITEROOT_N);
+	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
 	remove_repeating_chars(SITEROOT, 0x2F);
 
 	if (strlen(GLOB_REGEX)) {
@@ -2248,7 +2248,8 @@ int g_init(int argc, char **argv) {
 	enter:
 
 	if ((m_f & 0x1)) {
-		sprintf(m_b1, "main(loop) [c:%llu]", (long long unsigned int) mloop_c);
+		snprintf(m_b1, 127, "main(loop) [c:%llu]",
+				(long long unsigned int) mloop_c);
 		g_setjmp(0, m_b1, NULL, NULL);
 		m_f ^= 0x1;
 	}
@@ -2737,7 +2738,7 @@ int g_dump_ug(char *ug) {
 
 	ret.flags = flags_udcfg | F_PD_MATCHREG;
 
-	sprintf(buffer, "%s/%s/%s", GLROOT, FTPDATA, ug);
+	snprintf(buffer, PATH_MAX, "%s/%s/%s", GLROOT, FTPDATA, ug);
 
 	remove_repeating_chars(buffer, 0x2F);
 
@@ -2775,7 +2776,7 @@ int g_dump_gen(char *root) {
 	}
 
 	char buffer[PATH_MAX] = { 0 };
-	sprintf(buffer, "%s", root);
+	snprintf(buffer, PATH_MAX, "%s", root);
 	remove_repeating_chars(buffer, 0x2F);
 
 	int r = enum_dir(buffer, g_process_directory, &ret, 0);
@@ -2975,10 +2976,10 @@ int dirlog_update_record(char *argv) {
 
 	data_backup_records(DIRLOG);
 
-	char s_buffer[2048];
+	char s_buffer[PATH_MAX];
 	ptr = dirchain.objects;
 	while (ptr) {
-		sprintf(s_buffer, "%s/%s", SITEROOT, (char*) ptr->ptr);
+		snprintf(s_buffer, PATH_MAX, "%s/%s", SITEROOT, (char*) ptr->ptr);
 		remove_repeating_chars(s_buffer, 0x2F);
 		size_t s_buf_len = strlen(s_buffer);
 		if (s_buffer[s_buf_len - 1] == 0x2F) {
@@ -3099,9 +3100,9 @@ int data_backup_records(char *file) {
 		return 0;
 	}
 
-	char buffer[255];
+	char buffer[PATH_MAX];
 
-	sprintf(buffer, "%s.bk", file);
+	snprintf(buffer, PATH_MAX, "%s.bk", file);
 
 	if (gfl & F_OPT_VERBOSE2) {
 		print_str("NOTICE: %s: creating data backup: %s ..\n", file, buffer);
@@ -3122,7 +3123,7 @@ int dirlog_check_records(void) {
 	g_setjmp(0, "dirlog_check_records", NULL, NULL);
 	struct dirlog buffer, buffer4;
 	ear buffer3 = { 0 };
-	char s_buffer[255], s_buffer2[255], s_buffer3[255] = { 0 };
+	char s_buffer[PATH_MAX], s_buffer2[PATH_MAX], s_buffer3[PATH_MAX] = { 0 };
 	buffer3.dirlog = &buffer4;
 	int r = 0, r2;
 	char *mode = "r";
@@ -3156,7 +3157,7 @@ int dirlog_check_records(void) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
-			sprintf(s_buffer, "%s/%s", GLROOT, d_ptr->dirname);
+			snprintf(s_buffer, PATH_MAX, "%s/%s", GLROOT, d_ptr->dirname);
 			remove_repeating_chars(s_buffer, 0x2F);
 
 			if (d_ptr->status == 1) {
@@ -3166,8 +3167,9 @@ int dirlog_check_records(void) {
 				c_nd = strdup(d_ptr->dirname);
 				dir = dirname(c_nd);
 
-				sprintf(s_buffer2, NUKESTR, base);
-				sprintf(s_buffer3, "%s/%s/%s", GLROOT, dir, s_buffer2);
+				snprintf(s_buffer2, PATH_MAX, NUKESTR, base);
+				snprintf(s_buffer3, PATH_MAX, "%s/%s/%s", GLROOT, dir,
+						s_buffer2);
 				remove_repeating_chars(s_buffer3, 0x2F);
 				g_free(c_nb);
 				g_free(c_nd);
@@ -3417,6 +3419,8 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	return r;
 }
 
+#define MAX_G_PRINT_STATS_BUFFER	8192
+
 int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	g_setjmp(0, "g_print_stats", NULL, NULL);
 
@@ -3430,7 +3434,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	void *ptr;
 	void *buffer = calloc(1, g_act_1.block_sz);
-	char sbuffer[4096], *ns_ptr;
+	char sbuffer[MAX_G_PRINT_STATS_BUFFER], *ns_ptr;
 	off_t c = 0;
 	ear e;
 	int re_c, r, rt = 0;
@@ -3700,7 +3704,7 @@ int rebuild_dirlog(void) {
 	}
 
 	int i = 0, ib;
-	char s_buffer[2048] = { 0 };
+	char s_buffer[PATH_MAX] = { 0 };
 	p_md_obj ptr = dirchain.objects;
 
 	while (ptr) {
@@ -3719,8 +3723,8 @@ int rebuild_dirlog(void) {
 						i, DU_FLD);
 				goto lend;
 			}
-			bzero(s_buffer, 2048);
-			sprintf(s_buffer, "%s/%s", SITEROOT, (char*) buffer2.objects->ptr);
+			bzero(s_buffer, PATH_MAX);
+			snprintf(s_buffer,PATH_MAX, "%s/%s", SITEROOT, (char*) buffer2.objects->ptr);
 			remove_repeating_chars(s_buffer, 0x2F);
 
 			size_t s_buf_len = strlen(s_buffer);
@@ -3888,7 +3892,7 @@ int proc_release(char *name, unsigned char type, void *arg) {
 	g_setjmp(0, "proc_release", NULL, NULL);
 	ear *iarg = (ear*) arg;
 	uint32_t crc32 = 0;
-	char buffer[255] = { 0 };
+	char buffer[PATH_MAX] = { 0 };
 	char *fn, *fn2, *fn3, *base;
 
 	if (!reg_match("\\/[.]{1,2}$", name, 0))
@@ -3911,9 +3915,9 @@ int proc_release(char *name, unsigned char type, void *arg) {
 			char *dn = basename(dirname(fn));
 			g_free(fn2);
 			fn2 = strdup(name);
-			sprintf(buffer, "%s/%s.sfv", dirname(fn2), dn);
+			snprintf(buffer, PATH_MAX, "%s/%s.sfv", dirname(fn2), dn);
 			char buffer2[1024];
-			sprintf(buffer2, "%s %.8X\n", base, (uint32_t) crc32);
+			snprintf(buffer2, 1024, "%s %.8X\n", base, (uint32_t) crc32);
 			if (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)) {
 				if (!write_file_text(buffer2, buffer)) {
 					print_str("ERROR: %s: failed writing to SFV file: '%s'\n",
@@ -3922,7 +3926,7 @@ int proc_release(char *name, unsigned char type, void *arg) {
 			}
 			iarg->flags |= F_EARG_SFV;
 			g_strncpy(iarg->buffer, buffer, strlen(buffer));
-			sprintf(buffer, "  %.8X", (uint32_t) crc32);
+			snprintf(buffer, PATH_MAX, "  %.8X", (uint32_t) crc32);
 			g_free(fn);
 		}
 		off_t fs = get_file_size(name);
@@ -4189,13 +4193,14 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 	int c;
 
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "DIRLOG;%s;%llu;%hu;%u;%hu;%hu;%hu\n", base,
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"DIRLOG;%s;%llu;%hu;%u;%hu;%hu;%hu\n", base,
 				(ulint64_t) iarg->dirlog->bytes, iarg->dirlog->files,
 				iarg->dirlog->uptime, iarg->dirlog->uploader,
 				iarg->dirlog->group, iarg->dirlog->status);
 	} else {
 		c =
-				sprintf(output,
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"DIRLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
 						base, (ulint64_t) (iarg->dirlog->bytes / 1024 / 1024),
 						iarg->dirlog->files, buffer2, iarg->dirlog->uploader,
@@ -4222,7 +4227,8 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "NUKELOG;%s;%s;%hu;%.2f;%s;%s;%u\n", base,
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"NUKELOG;%s;%s;%hu;%.2f;%s;%s;%u\n", base,
 				iarg->nukelog->reason, iarg->nukelog->mult,
 				iarg->nukelog->bytes,
 				!iarg->nukelog->status ?
@@ -4230,7 +4236,7 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 				iarg->nukelog->nukee, iarg->nukelog->nuketime);
 	} else {
 		c =
-				sprintf(output,
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, creator: %s - %s\n",
 						base, !iarg->nukelog->status ? "NUKED" : "UNNUKED",
 						iarg->nukelog->reason, iarg->nukelog->bytes,
@@ -4254,10 +4260,12 @@ int dupefile_format_block(char *name, ear *iarg, char *output) {
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "DUPEFILE;%s;%s;%u\n", iarg->dupefile->filename,
-				iarg->dupefile->uploader, iarg->dupefile->timeup);
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "DUPEFILE;%s;%s;%u\n",
+				iarg->dupefile->filename, iarg->dupefile->uploader,
+				iarg->dupefile->timeup);
 	} else {
-		c = sprintf(output, "DUPEFILE: %s - uploader: %s, time: %s\n",
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"DUPEFILE: %s - uploader: %s, time: %s\n",
 				iarg->dupefile->filename, iarg->dupefile->uploader, buffer2);
 	}
 
@@ -4278,15 +4286,16 @@ int lastonlog_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "LASTONLOG;%s;%s;%s;%u;%u;%u;%u;%s\n",
-				iarg->lastonlog->uname, iarg->lastonlog->gname,
-				iarg->lastonlog->tagline, (uint32_t) iarg->lastonlog->logon,
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"LASTONLOG;%s;%s;%s;%u;%u;%u;%u;%s\n", iarg->lastonlog->uname,
+				iarg->lastonlog->gname, iarg->lastonlog->tagline,
+				(uint32_t) iarg->lastonlog->logon,
 				(uint32_t) iarg->lastonlog->logoff,
 				(uint32_t) iarg->lastonlog->upload,
 				(uint32_t) iarg->lastonlog->download, buffer4);
 	} else {
 		c =
-				sprintf(output,
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %u/%u B, changes: %s\n",
 						iarg->lastonlog->uname, iarg->lastonlog->gname,
 						iarg->lastonlog->tagline, buffer2, buffer3,
@@ -4307,11 +4316,12 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "ONELINER;%s;%s;%s;%u;%s\n", iarg->oneliner->uname,
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"ONELINER;%s;%s;%s;%u;%s\n", iarg->oneliner->uname,
 				iarg->oneliner->gname, iarg->oneliner->tagline,
 				(uint32_t) iarg->oneliner->timestamp, iarg->oneliner->message);
 	} else {
-		c = sprintf(output,
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
 				iarg->oneliner->uname, iarg->oneliner->gname,
 				iarg->oneliner->tagline, buffer2, iarg->oneliner->message);
@@ -4349,7 +4359,7 @@ int online_format_block(char *name, ear *iarg, char *output) {
 
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output,
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%llu;%s;%s\n",
 				iarg->online->username, iarg->online->host,
 				(uint32_t) iarg->online->groupid,
@@ -4363,9 +4373,9 @@ int online_format_block(char *name, ear *iarg, char *output) {
 		if (gfl & F_OPT_FORMAT_COMP) {
 			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
 			char d_buffer[255] = { 0 };
-			sprintf(d_buffer, "%u", (uint32_t) ltime);
+			snprintf(d_buffer, 255, "%u", (uint32_t) ltime);
 			size_t d_len1 = strlen(d_buffer);
-			sprintf(d_buffer, "%.2f", kbps);
+			snprintf(d_buffer, 255, "%.2f", kbps);
 			size_t d_len2 = strlen(d_buffer);
 			generate_chars(
 					54
@@ -4374,13 +4384,13 @@ int online_format_block(char *name, ear *iarg, char *output) {
 					sp_buffer);
 			generate_chars(10 - d_len1, 0x20, sp_buffer2);
 			generate_chars(13 - d_len2, 0x20, sp_buffer3);
-			c = sprintf(output,
+			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 					"| %s!%s%s |        %us%s |     %.2fKB/s%s |  %s\n",
 					iarg->online->username, iarg->online->host, sp_buffer,
 					(uint32_t) ltime, sp_buffer2, kbps, sp_buffer3,
 					iarg->online->status);
 		} else {
-			c = sprintf(output, "[ONLINE]\n"
+			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "[ONLINE]\n"
 					"    User:            %s\n"
 					"    Host:            %s\n"
 					"    GID:             %u\n"
@@ -4423,7 +4433,8 @@ int imdb_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "IMDB;%s;%s;%u;%s;%.1f;%u;%s;%s;%u;%u;%s;%s;%s\n",
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"IMDB;%s;%s;%u;%s;%.1f;%u;%s;%s;%u;%u;%s;%s;%s\n",
 				iarg->imdb->dirname, iarg->imdb->title,
 				(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
 				iarg->imdb->rating, iarg->imdb->votes, iarg->imdb->genres,
@@ -4431,7 +4442,7 @@ int imdb_format_block(char *name, ear *iarg, char *output) {
 				iarg->imdb->rated, iarg->imdb->actors, iarg->imdb->director);
 	} else {
 		c =
-				sprintf(output,
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"IMDB: %s: %s (%s): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
 						iarg->imdb->dirname, iarg->imdb->title,
 						iarg->imdb->year, buffer2, iarg->imdb->imdb_id,
@@ -4454,10 +4465,11 @@ int game_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = sprintf(output, "GAMELOG;%s;%u;%.1f\n", iarg->game->dirname,
-				iarg->game->timestamp, iarg->game->rating);
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "GAMELOG;%s;%u;%.1f\n",
+				iarg->game->dirname, iarg->game->timestamp, iarg->game->rating);
 	} else {
-		c = sprintf(output, "GAMELOG: %s: created: %s - rating: %.1f\n",
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"GAMELOG: %s: created: %s - rating: %.1f\n",
 				iarg->game->dirname, buffer2, iarg->game->rating);
 	}
 
@@ -4510,7 +4522,7 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 	int r;
 	uint64_t ur = MAX_uint64_t;
 
-	char buffer_s[255] = { 0 }, buffer_s2[255], buffer_s3[255];
+	char buffer_s[512] = { 0 }, buffer_s2[512], buffer_s3[512];
 	char *dup, *dup2, *base, *dir;
 
 	if ((r = get_relative_path(dirn, GLROOT, buffer_s)))
@@ -4521,7 +4533,6 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 	struct dirlog *d_ptr = NULL;
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
-
 		if (!strncmp(buffer_s, d_ptr->dirname, d_l)) {
 			goto match;
 		}
@@ -4529,8 +4540,8 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 		base = basename(dup);
 		dup2 = strdup(d_ptr->dirname);
 		dir = dirname(dup2);
-		sprintf(buffer_s2, NUKESTR, base);
-		sprintf(buffer_s3, "%s/%s", dir, buffer_s2);
+		snprintf(buffer_s2, 512, NUKESTR, base);
+		snprintf(buffer_s3, 512, "%s/%s", dir, buffer_s2);
 		remove_repeating_chars(buffer_s3, 0x2F);
 		g_free(dup);
 		g_free(dup2);
@@ -4756,8 +4767,8 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	bzero(hdl->s_buffer, 4096);
-	sprintf(hdl->s_buffer, "%s.%d.dtm", file, getpid());
-	sprintf(buffer, "%s.bk", file);
+	snprintf(hdl->s_buffer, 4096, "%s.%d.dtm", file, getpid());
+	snprintf(buffer, 4096, "%s.bk", file);
 
 	if (hdl->buffer_count
 			&& (exec_str || (gfl & F_OPT_HAS_G_REGEX)
@@ -5548,7 +5559,7 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 		return -2;
 	}
 
-	char buf[1024];
+	char buf[PATH_MAX];
 	int d_type;
 	struct stat st;
 
@@ -5568,7 +5579,7 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 			continue;
 		}
 
-		sprintf(buf, "%s/%s", dir, dirp->d_name);
+		snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
 		remove_repeating_chars(buf, 0x2F);
 
 		stat(buf, &st);
@@ -5906,9 +5917,10 @@ void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 	char buffer[PATH_MAX];
 
 	if (flags & F_CFGV_BUILD_DATA_PATH) {
-		sprintf(buffer, "%s/%s/%s/%s", GLROOT, FTPDATA, defpath, cfg);
+		snprintf(buffer, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, defpath,
+				cfg);
 	} else {
-		sprintf(buffer, "%s", cfg);
+		snprintf(buffer, PATH_MAX, "%s", cfg);
 	}
 
 	pmda ret;
@@ -5986,7 +5998,6 @@ int is_char_uppercase(char c) {
 	return 1;
 }
 
-
 int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	g_setjmp(0, "ref_to_val_macro", NULL, NULL);
 
@@ -5996,28 +6007,28 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 
 	if (!strcmp(match, "m:exe")) {
 		if (self_get_path(output)) {
-			sprintf(output, "UNKNOWN");
+			snprintf(output, max_size, "UNKNOWN");
 		}
 	} else if (!strcmp(match, "m:glroot")) {
-		sprintf(output, GLROOT);
+		snprintf(output, max_size, GLROOT);
 	} else if (!strcmp(match, "m:siteroot")) {
-		sprintf(output, SITEROOT);
+		snprintf(output, max_size, SITEROOT);
 	} else if (!strcmp(match, "m:ftpdata")) {
-		sprintf(output, FTPDATA);
+		snprintf(output, max_size, FTPDATA);
 	} else if ((gfl & F_OPT_PS_LOGGING) && !strcmp(match, "m:logfile")) {
-		sprintf(output, LOGFILE);
+		snprintf(output, max_size, LOGFILE);
 	} else if (!strcmp(match, "m:PID")) {
-		sprintf(output, "%d", getpid());
+		snprintf(output, max_size, "%d", getpid());
 	} else if (!strcmp(match, "m:IPC")) {
-		sprintf(output, "%.8X", (uint32_t) SHM_IPC);
+		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
 	} else if (!strcmp(match, "m:spec1")) {
-		sprintf(output, "%s", b_spec1);
+		snprintf(output, max_size, "%s", b_spec1);
 	} else if (!strcmp(match, "m:arg1")) {
-		sprintf(output, "%s", MACRO_ARG1);
+		snprintf(output, max_size, "%s", MACRO_ARG1);
 	} else if (!strcmp(match, "m:arg2")) {
-		sprintf(output, "%s", MACRO_ARG2);
+		snprintf(output, max_size, "%s", MACRO_ARG2);
 	} else if (!strcmp(match, "m:arg3")) {
-		sprintf(output, "%s", MACRO_ARG3);
+		snprintf(output, max_size, "%s", MACRO_ARG3);
 	} else {
 		return 1;
 	}
@@ -6033,44 +6044,44 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 
 	if (!strcmp(match, "exe")) {
 		if (self_get_path(output)) {
-			sprintf(output, "UNKNOWN");
+			snprintf(output, max_size, "UNKNOWN");
 		}
 	} else if (!strcmp(match, "glroot")) {
-		sprintf(output, GLROOT);
+		snprintf(output, max_size, GLROOT);
 	} else if (!strcmp(match, "siteroot")) {
-		sprintf(output, SITEROOT);
+		snprintf(output, max_size, SITEROOT);
 	} else if (!strcmp(match, "siterootn")) {
-		sprintf(output, SITEROOT_N);
+		snprintf(output, max_size, SITEROOT_N);
 	} else if (!strcmp(match, "ftpdata")) {
-		sprintf(output, FTPDATA);
+		snprintf(output, max_size, FTPDATA);
 	} else if (!strcmp(match, "logfile")) {
-		sprintf(output, LOGFILE);
+		snprintf(output, max_size, LOGFILE);
 	} else if (!strcmp(match, "imdbfile")) {
-		sprintf(output, IMDBLOG);
+		snprintf(output, max_size, IMDBLOG);
 	} else if (!strcmp(match, "gamefile")) {
-		sprintf(output, GAMELOG);
+		snprintf(output, max_size, GAMELOG);
 	} else if (!strcmp(match, "PID")) {
-		sprintf(output, "%d", getpid());
+		snprintf(output, max_size, "%d", getpid());
 	} else if (!strcmp(match, "IPC")) {
-		sprintf(output, "%.8X", (uint32_t) SHM_IPC);
+		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
 	} else if (!strcmp(match, "spec1")) {
-		sprintf(output, "%s", b_spec1);
+		snprintf(output, max_size, "%s", b_spec1);
 	} else if (!strcmp(match, "usroot")) {
-		sprintf(output, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_USERS);
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_USERS);
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strcmp(match, "logroot")) {
-		sprintf(output, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
 		remove_repeating_chars(output, 0x2F);
 	} else if (arg && !strcmp(match, "arg")) {
-		sprintf(output, (char*) arg);
+		snprintf(output, max_size, (char*) arg);
 	} else if (arg && !strncmp(match, "c:", 2)) {
 		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2],
 		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			sprintf(output, (char*) ptr);
+			snprintf(output, max_size, (char*) ptr);
 			g_free(buffer);
 			return 0;
 		}
@@ -6078,7 +6089,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		ptr = ref_to_val_get_cfgval((char*) arg, &match[2], DEFPATH_GROUPS,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			sprintf(output, (char*) ptr);
+			snprintf(output, max_size, (char*) ptr);
 			g_free(buffer);
 			return 0;
 		}
@@ -6105,23 +6116,23 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	struct dirlog *data = (struct dirlog *) arg;
 
 	if (!strcmp(match, "dir")) {
-		sprintf(output, data->dirname);
+		snprintf(output, max_size, data->dirname);
 	} else if (!strcmp(match, "basedir")) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		sprintf(output, base);
+		snprintf(output, max_size, base);
 		g_free(s_buffer);
 	} else if (!strcmp(match, "user")) {
-		sprintf(output, "%d", data->uploader);
+		snprintf(output, max_size, "%d", data->uploader);
 	} else if (!strcmp(match, "group")) {
-		sprintf(output, "%d", data->group);
+		snprintf(output, max_size, "%d", data->group);
 	} else if (!strcmp(match, "files")) {
-		sprintf(output, "%u", (uint32_t) data->files);
+		snprintf(output, max_size, "%u", (uint32_t) data->files);
 	} else if (!strcmp(match, "size")) {
-		sprintf(output, "%llu", (ulint64_t) data->bytes);
+		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes);
 	} else if (!strcmp(match, "status")) {
-		sprintf(output, "%d", (int) data->status);
+		snprintf(output, max_size, "%d", (int) data->status);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", (uint32_t) data->uptime);
+		snprintf(output, max_size, "%u", (uint32_t) data->uptime);
 	} else {
 		return 1;
 	}
@@ -6143,27 +6154,27 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	struct nukelog *data = (struct nukelog *) arg;
 
 	if (!strcmp(match, "dir")) {
-		sprintf(output, data->dirname);
+		snprintf(output, max_size, data->dirname);
 	} else if (!strcmp(match, "basedir")) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
 		g_strncpy(output, base, strlen(base));
 		g_free(s_buffer);
 	} else if (!strcmp(match, "nuker")) {
-		sprintf(output, data->nuker);
+		snprintf(output, max_size, data->nuker);
 	} else if (!strcmp(match, "nukee")) {
-		sprintf(output, data->nukee);
+		snprintf(output, max_size, data->nukee);
 	} else if (!strcmp(match, "unnuker")) {
-		sprintf(output, data->unnuker);
+		snprintf(output, max_size, data->unnuker);
 	} else if (!strcmp(match, "reason")) {
-		sprintf(output, data->reason);
+		snprintf(output, max_size, data->reason);
 	} else if (!strcmp(match, "size")) {
-		sprintf(output, "%llu", (ulint64_t) data->bytes);
+		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", (uint32_t) data->nuketime);
+		snprintf(output, max_size, "%u", (uint32_t) data->nuketime);
 	} else if (!strcmp(match, "status")) {
-		sprintf(output, "%d", (int) data->status);
+		snprintf(output, max_size, "%d", (int) data->status);
 	} else if (!strcmp(match, "mult")) {
-		sprintf(output, "%d", (int) data->mult);
+		snprintf(output, max_size, "%d", (int) data->mult);
 	} else {
 		return 1;
 	}
@@ -6187,9 +6198,9 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 	if (!strcmp(match, "file")) {
 		g_strncpy(output, data->filename, sizeof(data->filename));
 	} else if (!strcmp(match, "user")) {
-		sprintf(output, "%s", data->uploader);
+		snprintf(output, max_size, "%s", data->uploader);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", (uint32_t) data->timeup);
+		snprintf(output, max_size, "%u", (uint32_t) data->timeup);
 	} else {
 		return 1;
 	}
@@ -6211,27 +6222,27 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	struct lastonlog *data = (struct lastonlog *) arg;
 
 	if (!strcmp(match, "user")) {
-		sprintf(output, data->uname);
+		snprintf(output, max_size, data->uname);
 	} else if (!strcmp(match, "group")) {
-		sprintf(output, data->gname);
+		snprintf(output, max_size, data->gname);
 	} else if (!strcmp(match, "stats")) {
-		sprintf(output, data->stats);
+		snprintf(output, max_size, data->stats);
 	} else if (!strcmp(match, "tag")) {
-		sprintf(output, data->tagline);
+		snprintf(output, max_size, data->tagline);
 	} else if (!strcmp(match, "logon")) {
-		sprintf(output, "%u", (uint32_t) data->logon);
+		snprintf(output, max_size, "%u", (uint32_t) data->logon);
 	} else if (!strcmp(match, "logoff")) {
-		sprintf(output, "%u", (uint32_t) data->logoff);
+		snprintf(output, max_size, "%u", (uint32_t) data->logoff);
 	} else if (!strcmp(match, "upload")) {
-		sprintf(output, "%u", (uint32_t) data->upload);
+		snprintf(output, max_size, "%u", (uint32_t) data->upload);
 	} else if (!strcmp(match, "download")) {
-		sprintf(output, "%u", (uint32_t) data->download);
+		snprintf(output, max_size, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			sprintf(output, (char*) ptr);
+			snprintf(output, max_size, (char*) ptr);
 			g_free(buffer);
 			return 0;
 		}
@@ -6239,7 +6250,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			sprintf(output, (char*) ptr);
+			snprintf(output, max_size, (char*) ptr);
 			g_free(buffer);
 			return 0;
 		}
@@ -6266,15 +6277,15 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 	struct oneliner *data = (struct oneliner *) arg;
 
 	if (!strcmp(match, "user")) {
-		sprintf(output, data->uname);
+		snprintf(output, max_size, data->uname);
 	} else if (!strcmp(match, "group")) {
-		sprintf(output, data->gname);
+		snprintf(output, max_size, data->gname);
 	} else if (!strcmp(match, "tag")) {
-		sprintf(output, data->tagline);
+		snprintf(output, max_size, data->tagline);
 	} else if (!strcmp(match, "msg")) {
-		sprintf(output, data->message);
+		snprintf(output, max_size, data->message);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", (uint32_t) data->timestamp);
+		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
 	} else {
 		return 1;
 	}
@@ -6296,31 +6307,31 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	struct ONLINE *data = (struct ONLINE *) arg;
 
 	if (!strcmp(match, "user")) {
-		sprintf(output, data->username);
+		snprintf(output, max_size, data->username);
 	} else if (!strcmp(match, "tag")) {
-		sprintf(output, data->tagline);
+		snprintf(output, max_size, data->tagline);
 	} else if (!strcmp(match, "status")) {
-		sprintf(output, data->status);
+		snprintf(output, max_size, data->status);
 	} else if (!strcmp(match, "host")) {
-		sprintf(output, data->host);
+		snprintf(output, max_size, data->host);
 	} else if (!strcmp(match, "dir")) {
-		sprintf(output, data->currentdir);
+		snprintf(output, max_size, data->currentdir);
 	} else if (!strcmp(match, "ssl")) {
-		sprintf(output, "%u", (uint32_t) data->ssl_flag);
+		snprintf(output, max_size, "%u", (uint32_t) data->ssl_flag);
 	} else if (!strcmp(match, "group")) {
-		sprintf(output, "%u", (uint32_t) data->groupid);
+		snprintf(output, max_size, "%u", (uint32_t) data->groupid);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", (uint32_t) data->login_time);
+		snprintf(output, max_size, "%u", (uint32_t) data->login_time);
 	} else if (!strcmp(match, "lupdtime")) {
-		sprintf(output, "%u", (uint32_t) data->tstart.tv_sec);
+		snprintf(output, max_size, "%u", (uint32_t) data->tstart.tv_sec);
 	} else if (!strcmp(match, "lxfertime")) {
-		sprintf(output, "%u", (uint32_t) data->txfer.tv_sec);
+		snprintf(output, max_size, "%u", (uint32_t) data->txfer.tv_sec);
 	} else if (!strcmp(match, "bxfer")) {
-		sprintf(output, "%llu", (ulint64_t) data->bytes_xfer);
+		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_xfer);
 	} else if (!strcmp(match, "btxfer")) {
-		sprintf(output, "%llu", (ulint64_t) data->bytes_txfer);
+		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_txfer);
 	} else if (!strcmp(match, "pid")) {
-		sprintf(output, "%u", (uint32_t) data->procid);
+		snprintf(output, max_size, "%u", (uint32_t) data->procid);
 	} else if (!strcmp(match, "rate")) {
 		int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
 		uint32_t kbps = 0;
@@ -6328,14 +6339,14 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		if (tdiff > 0 && data->bytes_xfer > 0) {
 			kbps = data->bytes_xfer / tdiff;
 		}
-		sprintf(output, "%u", kbps);
+		snprintf(output, max_size, "%u", kbps);
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval(data->username, match,
 		DEFPATH_USERS, F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH,
 				buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			sprintf(output, ptr);
+			snprintf(output, max_size, ptr);
 		}
 		g_free(buffer);
 		return 0;
@@ -6360,31 +6371,31 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	__d_imdb data = (__d_imdb) arg;
 
 	if (!strcmp(match, "dir")) {
-		sprintf(output, data->dirname);
+		snprintf(output, max_size, data->dirname);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", (uint32_t) data->timestamp);
+		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
 	} else if (!strcmp(match, "imdbid")) {
-		sprintf(output, data->imdb_id);
+		snprintf(output, max_size, data->imdb_id);
 	} else if (!strcmp(match, "score")) {
-		sprintf(output, "%.1f", data->rating);
+		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strcmp(match, "votes")) {
-		sprintf(output, "%u", (uint32_t) data->votes);
+		snprintf(output, max_size, "%u", (uint32_t) data->votes);
 	} else if (!strcmp(match, "genres")) {
-		sprintf(output, data->genres);
+		snprintf(output, max_size, data->genres);
 	} else if (!strcmp(match, "rated")) {
-		sprintf(output, data->rated);
+		snprintf(output, max_size, data->rated);
 	} else if (!strcmp(match, "title")) {
-		sprintf(output, data->title);
+		snprintf(output, max_size, data->title);
 	} else if (!strcmp(match, "director")) {
-		sprintf(output, data->director);
+		snprintf(output, max_size, data->director);
 	} else if (!strcmp(match, "actors")) {
-		sprintf(output, data->actors);
+		snprintf(output, max_size, data->actors);
 	} else if (!strcmp(match, "runtime")) {
-		sprintf(output, "%u", data->runtime);
+		snprintf(output, max_size, "%u", data->runtime);
 	} else if (!strcmp(match, "released")) {
-		sprintf(output, "%u", data->released);
+		snprintf(output, max_size, "%u", data->released);
 	} else if (!strcmp(match, "year")) {
-		sprintf(output, data->year);
+		snprintf(output, max_size, data->year);
 	} else {
 		return 1;
 	}
@@ -6406,11 +6417,11 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	__d_game data = (__d_game) arg;
 
 	if (!strcmp(match, "dir")) {
-		sprintf(output, data->dirname);
+		snprintf(output, max_size, data->dirname);
 	} else if (!strcmp(match, "score")) {
-		sprintf(output, "%.1f", data->rating);
+		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strcmp(match, "time")) {
-		sprintf(output, "%u", data->timestamp);
+		snprintf(output, max_size, "%u", data->timestamp);
 	} else {
 		return 1;
 	}
@@ -6456,8 +6467,8 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
 						if (r) {
 							b_l_1 = strlen(buffer);
-							sprintf(&buffer_o[pi], "%c%s%c", 0x7B, buffer,
-									0x7D);
+							snprintf(&buffer_o[pi], MAX_EXEC_STR - pi - 2,
+									"%c%s%c", 0x7B, buffer, 0x7D);
 
 							pi += b_l_1 + 2;
 						}
@@ -7223,10 +7234,10 @@ int self_get_path(char *out) {
 	char path[PATH_MAX];
 	int r;
 
-	sprintf(path, "/proc/%d/exe", getpid());
+	snprintf(path, PATH_MAX, "/proc/%d/exe", getpid());
 
 	if (file_exists(path)) {
-		sprintf(path, "/compat/linux/proc/%d/exe", getpid());
+		snprintf(path, PATH_MAX, "/compat/linux/proc/%d/exe", getpid());
 	}
 
 	if ((r = readlink(path, out, PATH_MAX)) == -1) {
@@ -7300,7 +7311,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 			__si_argv0 ptr = (__si_argv0 ) arg;
 
 			char buffer2[4096] = { 0 };
-			sprintf(buffer2, "%s:", ptr->p_buf_1);
+			snprintf(buffer2, 4096, "%s:", ptr->p_buf_1);
 
 			size_t pb_l = strlen(buffer2);
 
