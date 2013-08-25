@@ -7329,8 +7329,6 @@ int self_get_path(char *out) {
 		snprintf(path, PATH_MAX, "/proc/%d/file", getpid());
 	}
 
-	printf("%s\n", path);
-
 	if ((r = readlink(path, out, PATH_MAX)) == -1) {
 		return 2;
 	}
