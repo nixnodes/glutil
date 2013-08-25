@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.4-14
+ * Version     : 1.5-0
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -129,8 +129,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 4
-#define VER_REVISION 14
+#define VER_MINOR 5
+#define VER_REVISION 0
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -271,6 +271,7 @@ struct g_handle {
 	int shmid;
 	struct shmid_ds ipcbuf;
 	int (*gcb_proc0)(void *, char *, char *);
+	int (*gcb_proc1)(void *, char *, char *, size_t);
 	int d_memb;
 };
 
@@ -803,7 +804,7 @@ int w_log(char *w, char *ow) {
 int print_str(const char * volatile buf, ...) {
 	g_setjmp(0, "print_str", NULL, NULL);
 	;
-	char d_buffer_2[PSTR_MAX+1];
+	char d_buffer_2[PSTR_MAX + 1];
 	va_list al;
 	va_start(al, buf);
 
@@ -815,7 +816,7 @@ int print_str(const char * volatile buf, ...) {
 	}
 
 	if ((gfl & F_OPT_PS_LOGGING) && fd_log) {
-		char wl_buffer[PSTR_MAX+1];
+		char wl_buffer[PSTR_MAX + 1];
 		vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
 		w_log(wl_buffer, (char*) buf);
 	}
@@ -870,7 +871,6 @@ char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
 int glob_regex_flags = 0;
-char GLOB_REGEX[4096] = { 0 };
 char GLOB_MATCH[4096] = { 0 };
 int EXITVAL = 0;
 
@@ -947,22 +947,27 @@ char *hpd_up =
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
 				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}..\n"
 				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|{year}>\n"
-				"                         While parsing data structure/filesystem, execute command for each record\n"
+				"                        While parsing data structure/filesystem, execute command for each record\n"
 				"                            Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"                            Operators {..} are overwritten with dirlog values\n"
 				"  --preexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
-				"                         Execute shell <command> before starting main procedure\n"
+				"                        Execute shell <command> before starting main procedure\n"
 				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
-				"                         Execute shell <command> after main procedure finishes\n"
+				"                        Execute shell <command> after main procedure finishes\n"
 				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
 				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
 				"  --imatch <match>      Inverted --match\n"
-				"  --regex <match>       Regex filter string, used during various operations\n"
+				"  --regex [<var>,]<match>\n"
+				"                        Regex filter string, used during various operations\n"
+				"                           It's possible to match against a specific <var> (see --exec for a list)\n"
 				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
-				"  --regexi <match>      Case insensitive variant of --regex\n"
-				"  --iregex <match>      Same as --regex with inverted match\n"
-				"  --iregexi <match>     Same as --regexi with inverted match\n"
+				"  --regexi [<var>,]<match>\n"
+				"                        Case insensitive variant of --regex\n"
+				"  --iregex [<var>,]<match> \n"
+				"                        Same as --regex with inverted match\n"
+				"  --iregexi [<var>,]<match>\n"
+				"                        Same as --regexi with inverted match\n"
 				"\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
@@ -1014,7 +1019,8 @@ char *hpd_up =
 				"\n";
 
 int md_init(pmda md, int nm);
-int split_string(char *line, char dl, pmda output_t);
+p_md_obj md_first(pmda md);
+int split_string(char *, char, pmda);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1399,24 +1405,38 @@ int opt_g_usleep(void *arg, int m) {
 	return 0;
 }
 
-mda MD_GLOB_REGEX = { 0 };
+mda _md_gregex = { 0 };
+char *g_regex_mtype = NULL;
+char *g_regex_match = NULL;
 
 int g_cprg(void *arg, int m) {
-	char buffer[4096];
+	char *buffer = g_pg(arg, m);
 
-	g_cpg(arg, buffer, m, 4096);
+	md_init(&_md_gregex, 32);
 
-	/*md_init(&MD_GLOB_REGEX, 3);
+	int r = split_string(buffer, 0x2C, &_md_gregex);
+	g_setjmp(0, "g_cprg", NULL, NULL);
+	p_md_obj ptr = NULL;
 
-	split_string(buffer, )*/
+	if (r > 0) {
+		ptr = md_first(&_md_gregex);
+	}
 
-	return 0;
+	if (ptr) {
+		if (r > 1) {
+			g_regex_mtype = (char*) ptr->ptr;
+			ptr = ptr->next;
+		}
+		g_regex_match = (char*) ptr->ptr;
+		return 0;
+	}
+
+	return 1;
 }
 
 int opt_g_regexi(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4095);
 	glob_regex_flags |= REG_ICASE;
-	return 0;
+	return g_cprg(arg, m);
 }
 
 int opt_g_match(void *arg, int m) {
@@ -1432,31 +1452,28 @@ int opt_g_imatch(void *arg, int m) {
 }
 
 int opt_g_regex(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4096);
-	return 0;
+	return g_cprg(arg, m);
 }
 
 int opt_g_iregexi(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4095);
 	glob_regex_flags |= REG_ICASE;
 	glob_reg_i_m = REG_NOMATCH;
-	return 0;
+	return g_cprg(arg, m);
 }
 
 int opt_g_iregex(void *arg, int m) {
-	g_cpg(arg, GLOB_REGEX, m, 4096);
 	glob_reg_i_m = REG_NOMATCH;
-	return 0;
+	return g_cprg(arg, m);
 }
 
 int opt_nukelog_file(void *arg, int m) {
-	g_cpg(arg, NUKELOG, m, 255);
+	g_cpg(arg, NUKELOG, m, PATH_MAX - 1);
 	ofl |= F_OVRR_NUKELOG;
 	return 0;
 }
 
 int opt_dirlog_sections_file(void *arg, int m) {
-	g_cpg(arg, DU_FLD, m, 255);
+	g_cpg(arg, DU_FLD, m, PATH_MAX - 1);
 	return 0;
 }
 
@@ -1631,7 +1648,6 @@ uint64_t file_crc32(char *, uint32_t *);
 int data_backup_records(char*);
 ssize_t file_copy(char *, char *, char *, uint32_t);
 
-int split_string(char *, char, pmda);
 int release_generate_block(char *, ear *);
 off_t get_file_size(char *);
 char **process_macro(void *, char **);
@@ -1684,7 +1700,7 @@ int do_match(char *, void *, void *);
 size_t g_load_data_md(void *, size_t, char *);
 int g_load_record(struct g_handle *, const void *);
 int remove_repeating_chars(char *string, char c);
-p_md_obj md_first(pmda md);
+
 int g_buffer_into_memory(char *, struct g_handle *);
 int g_print_stats(char *, uint32_t, size_t);
 
@@ -2009,6 +2025,8 @@ int g_shutdown(void *arg) {
 		g_fclose(pf_infile);
 	}
 
+	md_g_free(&_md_gregex);
+
 	_p_macro_argc = 0;
 
 	exit(EXITVAL);
@@ -2198,15 +2216,15 @@ int g_init(int argc, char **argv) {
 	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
 	remove_repeating_chars(SITEROOT, 0x2F);
 
-	if ( dir_exists(SITEROOT) && !dir_exists(SITEROOT_N)) {
+	if (dir_exists(SITEROOT) && !dir_exists(SITEROOT_N)) {
 		snprintf(SITEROOT, 254, "%s", SITEROOT_N);
 	}
 
-	if ( dir_exists(SITEROOT) ) {
+	if (dir_exists(SITEROOT)) {
 		print_str("WARNING: no valid siteroot!\n");
 	}
 
-	if (strlen(GLOB_REGEX)) {
+	if (g_regex_match && strlen(g_regex_match)) {
 		gfl |= F_OPT_HAS_G_REGEX;
 	}
 
@@ -2686,7 +2704,8 @@ int rebuild(void *arg) {
 		return 5;
 	}
 
-	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw, (ulint64_t) g_act_1.rw);
+	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
+			(ulint64_t) g_act_1.rw);
 
 	return 0;
 }
@@ -3431,7 +3450,8 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 	}
 
 	if ((gfl & F_OPT_HAS_G_REGEX) && mstr
-			&& reg_match(GLOB_REGEX, mstr, glob_regex_flags) == glob_reg_i_m) {
+			&& reg_match(g_regex_match, mstr, glob_regex_flags)
+					== glob_reg_i_m) {
 		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str(
 					"WARNING: %s: REGEX match positive, ignoring this record\n",
@@ -3454,57 +3474,66 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 	return 0;
 }
 
-int g_bmatch(void *d_ptr, struct g_handle *hdl) {
-	g_setjmp(0, "g_bmatch", NULL, NULL);
-
-	char *mstr = NULL;
-	void *callback = NULL;
-
+char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
+	char *ptr = NULL;
 	switch (hdl->flags & F_GH_ISTYPE) {
 	case F_GH_ISDIRLOG:
-		mstr = (char*) ((struct dirlog*) d_ptr)->dirname;
-		callback = ref_to_val_dirlog;
+		return (char*) ((struct dirlog*) d_ptr)->dirname;
+
 		break;
 	case F_GH_ISNUKELOG:
-		mstr = (char*) ((struct nukelog*) d_ptr)->dirname;
-		callback = ref_to_val_nukelog;
+		return (char*) ((struct nukelog*) d_ptr)->dirname;
+
 		break;
 	case F_GH_ISDUPEFILE:
-		mstr = (char*) ((struct dupefile*) d_ptr)->filename;
-		callback = ref_to_val_dupefile;
+		return (char*) ((struct dupefile*) d_ptr)->filename;
+
 		break;
 	case F_GH_ISLASTONLOG:
-		mstr = (char*) ((struct lastonlog*) d_ptr)->uname;
-		callback = ref_to_val_lastonlog;
+		return (char*) ((struct lastonlog*) d_ptr)->uname;
+
 		break;
 	case F_GH_ISONELINERS:
-		mstr = (char*) ((struct oneliner*) d_ptr)->uname;
-		callback = ref_to_val_oneliners;
+		return (char*) ((struct oneliner*) d_ptr)->uname;
+
 		break;
 	case F_GH_ISONLINE:
-		mstr = (char*) ((struct ONLINE*) d_ptr)->username;
-		if (!strlen(mstr)) {
-			return -1;
+		ptr = (char*) ((struct ONLINE*) d_ptr)->username;
+		if (!strlen(ptr)) {
+			return NULL;
 		}
-		callback = ref_to_val_online;
+
 		break;
 	case F_GH_ISIMDB:
-		mstr = (char*) ((__d_imdb) d_ptr)->dirname;
-		if (!strlen(mstr)) {
-			return -1;
+		ptr = (char*) ((__d_imdb) d_ptr)->dirname;
+		if (!strlen(ptr)) {
+			return NULL;
 		}
-		callback = ref_to_val_imdb;
 		break;
 		case F_GH_ISGAME:
-		mstr = (char*) ((__d_game) d_ptr)->dirname;
-		if (!strlen(mstr)) {
-			return -1;
+		ptr= (char*) ((__d_game) d_ptr)->dirname;
+		if (!strlen(ptr)) {
+			return NULL;
 		}
-		callback = ref_to_val_game;
 		break;
 	}
+	return ptr;
+}
 
-	int r = do_match(mstr, d_ptr, callback);
+int g_bmatch(void *d_ptr, struct g_handle *hdl) {
+	g_setjmp(0, "g_bmatch", NULL, NULL);
+	char buffer[255], *mstr = buffer;
+	if ((gfl & F_OPT_HAS_G_REGEX) && g_regex_mtype) {
+		buffer[0] = 0x0;
+		if (!hdl->gcb_proc1(d_ptr, g_regex_mtype, buffer, 254)) {
+			goto s_m;
+		}
+	}
+	mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
+
+	s_m:;
+
+	int r = do_match(mstr, d_ptr, (void*) hdl->gcb_proc1);
 	EXITVAL = 1;
 	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
 		EXITVAL = 1;
@@ -5340,36 +5369,43 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->block_sz = DL_SZ;
 		hdl->d_memb = 7;
 		hdl->gcb_proc0 = gcb_dirlog;
+		hdl->gcb_proc1 = ref_to_val_dirlog;
 	} else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG))) {
 		hdl->flags |= F_GH_ISNUKELOG;
 		hdl->block_sz = NL_SZ;
 		hdl->d_memb = 9;
 		hdl->gcb_proc0 = gcb_nukelog;
+		hdl->gcb_proc1 = ref_to_val_nukelog;
 	} else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE))) {
 		hdl->flags |= F_GH_ISDUPEFILE;
 		hdl->block_sz = DF_SZ;
 		hdl->d_memb = 3;
 		hdl->gcb_proc0 = gcb_dupefile;
+		hdl->gcb_proc1 = ref_to_val_dupefile;
 	} else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG))) {
 		hdl->flags |= F_GH_ISLASTONLOG;
 		hdl->block_sz = LO_SZ;
 		hdl->d_memb = 8;
 		hdl->gcb_proc0 = gcb_lastonlog;
+		hdl->gcb_proc1 = ref_to_val_lastonlog;
 	} else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS))) {
 		hdl->flags |= F_GH_ISONELINERS;
 		hdl->block_sz = OL_SZ;
 		hdl->d_memb = 5;
 		hdl->gcb_proc0 = gcb_oneliner;
+		hdl->gcb_proc1 = ref_to_val_oneliners;
 	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
 		hdl->flags |= F_GH_ISIMDB;
 		hdl->block_sz = ID_SZ;
 		hdl->d_memb = 13;
 		hdl->gcb_proc0 = gcb_imdbh;
+		hdl->gcb_proc1 = ref_to_val_imdb;
 	} else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG))) {
 		hdl->flags |= F_GH_ISGAME;
 		hdl->block_sz = GM_SZ;
 		hdl->d_memb = 3;
 		hdl->gcb_proc0 = gcb_game;
+		hdl->gcb_proc1 = ref_to_val_game;
 	} else {
 		return 1;
 	}
