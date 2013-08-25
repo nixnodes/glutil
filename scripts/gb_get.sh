@@ -40,6 +40,8 @@ INPUT_CLEAN_REGEX="([._-\(\)](MACOSX|EUR|Creators[._-\(\)]Edition|PATCH|DATAPACK
 
 echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 
+[ -z "$API_KEY" ] && echo "ERROR: set API_KEY first" && exit 1
+
 QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 
