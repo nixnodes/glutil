@@ -2909,6 +2909,10 @@ int g_dump_gen(char *root) {
 			(unsigned long long int) ret.st_1,
 			(unsigned long long int) ret.st_1 + ret.st_2);
 
+	if (r && !ret.rt_m) {
+		ret.rt_m++;
+	}
+
 	return ret.rt_m;
 }
 
@@ -3483,7 +3487,7 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 	}
 
 	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
-		EXITVAL = r;
+		EXITVAL = 1;
 		gfl |= F_OPT_KILL_GLOBAL;
 	}
 
