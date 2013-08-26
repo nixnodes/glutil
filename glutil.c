@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.5-2
+ * Version     : 1.5-3
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 5
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2848,6 +2848,7 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 }
 
 typedef struct ___std_rh_0 {
+	uint8_t rt_m;
 	uint32_t flags;
 	uint64_t st_1, st_2;
 } _std_rh, *__std_rh;
@@ -2886,14 +2887,16 @@ int g_dump_gen(char *root) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a file\n", root);
 		}
-		return g_process_directory(root, DT_REG, &ret);
+		g_process_directory(root, DT_REG, &ret);
+		return ret.rt_m;
 	} else if ((gfl & F_OPT_CDIRONLY) && !dir_exists(root)) {
 		ret.flags ^= F_PD_MATCHTYPES;
 		ret.flags |= F_PD_MATCHDIR;
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a directory\n", root);
 		}
-		return g_process_directory(root, DT_DIR, &ret);;
+		g_process_directory(root, DT_DIR, &ret);
+		return ret.rt_m;
 	}
 
 	char buffer[PATH_MAX] = { 0 };
@@ -2906,7 +2909,7 @@ int g_dump_gen(char *root) {
 			(unsigned long long int) ret.st_1,
 			(unsigned long long int) ret.st_1 + ret.st_2);
 
-	return r;
+	return ret.rt_m;
 }
 
 int g_process_directory(char *name, unsigned char type, void *arg) {
@@ -2916,7 +2919,7 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 	switch (type) {
 	case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			if (do_match(name, name, ref_to_val_generic)) {
+			if ((aa_rh->rt_m = do_match(name, name, ref_to_val_generic))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -2928,7 +2931,7 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 		break;
 	case DT_DIR:
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			if (do_match(name, name, ref_to_val_generic)) {
+			if ((aa_rh->rt_m = do_match(name, name, ref_to_val_generic))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3439,6 +3442,7 @@ int dirlog_check_records(void) {
 }
 
 int do_match(char *mstr, void *d_ptr, void *callback) {
+	int r = 0;
 	if ((gfl & F_OPT_HAS_G_MATCH) && mstr) {
 		size_t mstr_l = strlen(mstr);
 
@@ -3451,7 +3455,7 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 				print_str("WARNING: %s: match positive, ignoring this record\n",
 						mstr);
 			}
-			return 2;
+			r = 2;
 		}
 
 	}
@@ -3464,7 +3468,7 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 					"WARNING: %s: REGEX match positive, ignoring this record\n",
 					mstr);
 		}
-		return 3;
+		r = 3;
 	}
 
 	int r_e = g_do_exec(d_ptr, callback, NULL);
@@ -3475,10 +3479,15 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
 					WEXITSTATUS(r_e));
 		}
-		return 1;
+		r = 1;
 	}
 
-	return 0;
+	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
+		EXITVAL = r;
+		gfl |= F_OPT_KILL_GLOBAL;
+	}
+
+	return r;
 }
 
 char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
@@ -3540,14 +3549,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 
 	s_m: ;
 
-	int r = do_match(mstr, d_ptr, (void*) hdl->gcb_proc1);
-	EXITVAL = 1;
-	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
-		EXITVAL = 1;
-		gfl |= F_OPT_KILL_GLOBAL;
-	}
-
-	return r;
+	return do_match(mstr, d_ptr, (void*) hdl->gcb_proc1);
 }
 
 #define MAX_G_PRINT_STATS_BUFFER	8192
@@ -3570,90 +3572,91 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	ear e;
 	int re_c, r, rt = 0;
 
-	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
-		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
-			NULL);
+	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
 
-			if (gfl & F_OPT_KILL_GLOBAL) {
-				rt = EXITVAL;
+	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
+		/*if (!sigsetjmp(g_sigjmp.env, 1)) {
+		 g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
+		 NULL);*/
+
+		if (gfl & F_OPT_KILL_GLOBAL) {
+			rt = EXITVAL;
+			break;
+		}
+
+		if ((r = g_bmatch(ptr, &g_act_1))) {
+			if (r == -1) {
+				rt = 5;
+				break;
+			}
+			continue;
+		}
+		c++;
+		if (gfl & F_OPT_MODE_RAWDUMP) {
+			g_fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
+		} else {
+			re_c = 0;
+			ns_ptr = "UNKNOWN";
+			switch (g_act_1.flags & F_GH_ISTYPE) {
+			case F_GH_ISDIRLOG:
+				e.dirlog = (struct dirlog*) ptr;
+				ns_ptr = e.dirlog->dirname;
+				re_c += dirlog_format_block(ns_ptr, &e, sbuffer);
+				break;
+			case F_GH_ISNUKELOG:
+				e.nukelog = (struct nukelog*) ptr;
+				ns_ptr = e.dirlog->dirname;
+				re_c += nukelog_format_block(ns_ptr, &e, sbuffer);
+				break;
+			case F_GH_ISDUPEFILE:
+				e.dupefile = (struct dupefile*) ptr;
+				ns_ptr = e.dupefile->filename;
+				re_c += dupefile_format_block(ns_ptr, &e, sbuffer);
+				break;
+			case F_GH_ISLASTONLOG:
+				e.lastonlog = (struct lastonlog*) ptr;
+				ns_ptr = e.lastonlog->uname;
+				re_c += lastonlog_format_block(ns_ptr, &e, sbuffer);
+				break;
+			case F_GH_ISONELINERS:
+				e.oneliner = (struct oneliner*) ptr;
+				ns_ptr = e.oneliner->uname;
+				re_c += oneliner_format_block(ns_ptr, &e, sbuffer);
+				break;
+			case F_GH_ISONLINE:
+				e.online = (struct ONLINE*) ptr;
+				ns_ptr = e.online->username;
+				if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
+					goto end;
+				}
+				if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
+					print_str(
+							"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
+									"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
+									"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+				}
+				break;
+			case F_GH_ISIMDB:
+				e.imdb = (__d_imdb) ptr;
+				ns_ptr = e.imdb->dirname;
+				re_c += imdb_format_block(ns_ptr, &e, sbuffer);
+				break;
+				case F_GH_ISGAME:
+				e.game = (__d_game) ptr;
+				ns_ptr = e.game->dirname;
+				re_c += game_format_block(ns_ptr, &e, sbuffer);
 				break;
 			}
 
-			if ((r = g_bmatch(ptr, &g_act_1))) {
-				if (r == -1) {
-					rt = 5;
-					break;
-				}
+			if (re_c) {
+				print_str(sbuffer);
+			} else {
+				print_str("ERROR: %s: zero-length formatted result\n", ns_ptr);
 				continue;
 			}
-			c++;
-			if (gfl & F_OPT_MODE_RAWDUMP) {
-				g_fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
-			} else {
-				re_c = 0;
-				ns_ptr = "UNKNOWN";
-				switch (g_act_1.flags & F_GH_ISTYPE) {
-				case F_GH_ISDIRLOG:
-					e.dirlog = (struct dirlog*) ptr;
-					ns_ptr = e.dirlog->dirname;
-					re_c += dirlog_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISNUKELOG:
-					e.nukelog = (struct nukelog*) ptr;
-					ns_ptr = e.dirlog->dirname;
-					re_c += nukelog_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISDUPEFILE:
-					e.dupefile = (struct dupefile*) ptr;
-					ns_ptr = e.dupefile->filename;
-					re_c += dupefile_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISLASTONLOG:
-					e.lastonlog = (struct lastonlog*) ptr;
-					ns_ptr = e.lastonlog->uname;
-					re_c += lastonlog_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISONELINERS:
-					e.oneliner = (struct oneliner*) ptr;
-					ns_ptr = e.oneliner->uname;
-					re_c += oneliner_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISONLINE:
-					e.online = (struct ONLINE*) ptr;
-					ns_ptr = e.online->username;
-					if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
-						goto end;
-					}
-					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
-						print_str(
-								"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
-										"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
-										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
-					}
-					break;
-				case F_GH_ISIMDB:
-					e.imdb = (__d_imdb) ptr;
-					ns_ptr = e.imdb->dirname;
-					re_c += imdb_format_block(ns_ptr, &e, sbuffer);
-					break;
-					case F_GH_ISGAME:
-					e.game = (__d_game) ptr;
-					ns_ptr = e.game->dirname;
-					re_c += game_format_block(ns_ptr, &e, sbuffer);
-					break;
-				}
-
-				if (re_c) {
-					print_str(sbuffer);
-				} else {
-					print_str("ERROR: %s: zero-length formatted result\n",
-							ns_ptr);
-					continue;
-				}
-			}
-
 		}
+
+		//}
 	}
 
 	end:
@@ -4392,9 +4395,9 @@ int dupefile_format_block(char *name, ear *iarg, char *output) {
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "DUPEFILE\x9%s\x9%s\x9%u\n",
-				iarg->dupefile->filename, iarg->dupefile->uploader,
-				(uint32_t) iarg->dupefile->timeup);
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"DUPEFILE\x9%s\x9%s\x9%u\n", iarg->dupefile->filename,
+				iarg->dupefile->uploader, (uint32_t) iarg->dupefile->timeup);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"DUPEFILE: %s - uploader: %s, time: %s\n",
@@ -4419,9 +4422,9 @@ int lastonlog_format_block(char *name, ear *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"LASTONLOG\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%u\x9%s\n", iarg->lastonlog->uname,
-				iarg->lastonlog->gname, iarg->lastonlog->tagline,
-				(uint32_t) iarg->lastonlog->logon,
+				"LASTONLOG\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%u\x9%s\n",
+				iarg->lastonlog->uname, iarg->lastonlog->gname,
+				iarg->lastonlog->tagline, (uint32_t) iarg->lastonlog->logon,
 				(uint32_t) iarg->lastonlog->logoff,
 				(uint32_t) iarg->lastonlog->upload,
 				(uint32_t) iarg->lastonlog->download, buffer4);
@@ -4491,16 +4494,18 @@ int online_format_block(char *name, ear *iarg, char *output) {
 
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONLINE\x9%s\x9%s\x9%u\x9%u\x9%s\x9%u\x9%u\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
-				iarg->online->username, iarg->online->host,
-				(uint32_t) iarg->online->groupid,
-				(uint32_t) iarg->online->login_time, iarg->online->tagline,
-				(uint32_t) iarg->online->ssl_flag,
-				(uint32_t) iarg->online->procid,
-				(ulint64_t) iarg->online->bytes_xfer,
-				(ulint64_t) iarg->online->bytes_txfer, (ulint64_t) kbps,
-				iarg->online->status, iarg->online->currentdir);
+		c =
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+						"ONLINE\x9%s\x9%s\x9%u\x9%u\x9%s\x9%u\x9%u\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
+						iarg->online->username, iarg->online->host,
+						(uint32_t) iarg->online->groupid,
+						(uint32_t) iarg->online->login_time,
+						iarg->online->tagline,
+						(uint32_t) iarg->online->ssl_flag,
+						(uint32_t) iarg->online->procid,
+						(ulint64_t) iarg->online->bytes_xfer,
+						(ulint64_t) iarg->online->bytes_txfer, (ulint64_t) kbps,
+						iarg->online->status, iarg->online->currentdir);
 	} else {
 		if (gfl & F_OPT_FORMAT_COMP) {
 			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
@@ -4565,13 +4570,16 @@ int imdb_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\n",
-				iarg->imdb->dirname, iarg->imdb->title,
-				(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
-				iarg->imdb->rating, iarg->imdb->votes, iarg->imdb->genres,
-				iarg->imdb->year, iarg->imdb->released, iarg->imdb->runtime,
-				iarg->imdb->rated, iarg->imdb->actors, iarg->imdb->director);
+		c =
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+						"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\n",
+						iarg->imdb->dirname, iarg->imdb->title,
+						(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
+						iarg->imdb->rating, iarg->imdb->votes,
+						iarg->imdb->genres, iarg->imdb->year,
+						iarg->imdb->released, iarg->imdb->runtime,
+						iarg->imdb->rated, iarg->imdb->actors,
+						iarg->imdb->director);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -4597,8 +4605,9 @@ int game_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "GAMELOG\x9%s\x9%u\x9%.1f\n",
-				iarg->game->dirname, iarg->game->timestamp, iarg->game->rating);
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+				"GAMELOG\x9%s\x9%u\x9%.1f\n", iarg->game->dirname,
+				iarg->game->timestamp, iarg->game->rating);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"GAMELOG: %s: created: %s - rating: %.1f\n",
