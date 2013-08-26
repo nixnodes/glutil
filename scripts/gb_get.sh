@@ -38,6 +38,10 @@ INPUT_CLEAN_REGEX="([._-\(\)](MACOSX|EUR|Creators[._-\(\)]Edition|PATCH|DATAPACK
 #
 ############################[ END OPTIONS ]##############################
 
+BASEDIR=$(dirname $0)
+
+[ -f "$BASEDIR/config" ] && . $BASEDIR/config
+
 echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 
 [ -z "$API_KEY" ] && echo "ERROR: set API_KEY first" && exit 1
