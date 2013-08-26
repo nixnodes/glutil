@@ -1,5 +1,5 @@
 /*
- * If using FreeBSD, replace your glconf.h with this one
+ * If using FreeBSD 64 bit, replace your glconf.h with this one
  */
 
 #define GLCONF  "/glftpd/etc/glftpd.conf"
