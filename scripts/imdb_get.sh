@@ -33,9 +33,9 @@ URL="http://www.omdbapi.com/"
 # iMDB base url
 IMDBURL="http://www.imdb.com/"
 #
-INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
+#INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-INPUT_CLEAN_REGEX="([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_CLEAN_REGEX="([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## If set to 1, might cause mis-matches 
 ## Only runs if exact match fails
@@ -57,12 +57,16 @@ DATABASE_TYPE=0
 #
 DENY_IMDBID_DUPE=0
 #
-## Overwrite existing imdbid matched record, when it's atleast 
+## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
 #
 RECORD_MAX_AGE=0
 #
 ############################[ END OPTIONS ]##############################
+
+BASEDIR=$(dirname $0)
+
+[ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
 echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 
