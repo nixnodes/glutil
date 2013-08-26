@@ -29,7 +29,7 @@ URL="$BURL""api"
 ## Get it from giantbomb website (registration required)
 API_KEY=""
 #
-INPUT_SKIP="^(.* complete .*|sample|subs|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*)$"
+INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
 ## Updates gamelog
 UPDATE_GAMELOG=1
