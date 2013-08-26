@@ -1,7 +1,9 @@
  * v1.5
  *
  *   - Now possible to match against specific binary log fields 
- *       (--[i]regex[i] only, see --help) 
+ *       (--[i]regex[i] only, see --help)
+ *   - Bugfix: regex type/match delimiter was broken (rev. 1)
+ *   - Bugfix: --batch was using a conflicting delimiter (rev. 2)
  *
  * v1.4
  *
