@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.5-1
+ * Version     : 1.5-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 5
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -4326,7 +4326,7 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DIRLOG;%s;%llu;%hu;%u;%hu;%hu;%hu\n", base,
+				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n", base,
 				(ulint64_t) iarg->dirlog->bytes, iarg->dirlog->files,
 				(uint32_t) iarg->dirlog->uptime, iarg->dirlog->uploader,
 				iarg->dirlog->group, iarg->dirlog->status);
@@ -4360,7 +4360,7 @@ int nukelog_format_block(char *name, ear *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"NUKELOG;%s;%s;%hu;%.2f;%s;%s;%u\n", base,
+				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%u\n", base,
 				iarg->nukelog->reason, iarg->nukelog->mult,
 				iarg->nukelog->bytes,
 				!iarg->nukelog->status ?
@@ -4392,7 +4392,7 @@ int dupefile_format_block(char *name, ear *iarg, char *output) {
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "DUPEFILE;%s;%s;%u\n",
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "DUPEFILE\x9%s\x9%s\x9%u\n",
 				iarg->dupefile->filename, iarg->dupefile->uploader,
 				(uint32_t) iarg->dupefile->timeup);
 	} else {
@@ -4419,7 +4419,7 @@ int lastonlog_format_block(char *name, ear *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"LASTONLOG;%s;%s;%s;%u;%u;%u;%u;%s\n", iarg->lastonlog->uname,
+				"LASTONLOG\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%u\x9%s\n", iarg->lastonlog->uname,
 				iarg->lastonlog->gname, iarg->lastonlog->tagline,
 				(uint32_t) iarg->lastonlog->logon,
 				(uint32_t) iarg->lastonlog->logoff,
@@ -4449,7 +4449,7 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONELINER;%s;%s;%s;%u;%s\n", iarg->oneliner->uname,
+				"ONELINER\x9%s\x9%s\x9%s\x9%u\x9%s\n", iarg->oneliner->uname,
 				iarg->oneliner->gname, iarg->oneliner->tagline,
 				(uint32_t) iarg->oneliner->timestamp, iarg->oneliner->message);
 	} else {
@@ -4492,7 +4492,7 @@ int online_format_block(char *name, ear *iarg, char *output) {
 	int c = 0;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONLINE;%s;%s;%u;%u;%s;%u;%u;%llu;%llu;%llu;%s;%s\n",
+				"ONLINE\x9%s\x9%s\x9%u\x9%u\x9%s\x9%u\x9%u\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
 				iarg->online->username, iarg->online->host,
 				(uint32_t) iarg->online->groupid,
 				(uint32_t) iarg->online->login_time, iarg->online->tagline,
@@ -4566,7 +4566,7 @@ int imdb_format_block(char *name, ear *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"IMDB;%s;%s;%u;%s;%.1f;%u;%s;%s;%u;%u;%s;%s;%s\n",
+				"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\n",
 				iarg->imdb->dirname, iarg->imdb->title,
 				(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
 				iarg->imdb->rating, iarg->imdb->votes, iarg->imdb->genres,
@@ -4597,7 +4597,7 @@ int game_format_block(char *name, ear *iarg, char *output) {
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "GAMELOG;%s;%u;%.1f\n",
+		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "GAMELOG\x9%s\x9%u\x9%.1f\n",
 				iarg->game->dirname, iarg->game->timestamp, iarg->game->rating);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
