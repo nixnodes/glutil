@@ -136,7 +136,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	
 	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
 	$2 -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to imdblog!!"
-	#rm /tmp/glutil.img.$$.tmp
+	rm /tmp/glutil.img.$$.tmp
 fi
 
 echo "IMDB: $(echo "Q:'$QUERY' | A:'$TITLE'" | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
