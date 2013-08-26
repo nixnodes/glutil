@@ -50,12 +50,12 @@ UPDATE_IMDBLOG=1
 ##  query that was made
 ## Existing records are always overwritten, except if DENY_IMDBID_DUPE=1
 #
-DATABASE_TYPE=1
+DATABASE_TYPE=0
 #
 ## If set to 1 and DATABASE_TYPE=1, do not import records with same
 ## iMDB ID already in the database
 #
-DENY_IMDBID_DUPE=1
+DENY_IMDBID_DUPE=0
 #
 ## Overwrite existing imdbid matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
