@@ -170,7 +170,7 @@
    Say we want to do something with releases (in this case just 'echo'), 
    with a score lower than 5.0, but higher than 0
 
-./glutil -a --exec "echo '{score} > 0 && {score} < 5.0' | bc -l | grep '0' > /dev/null || echo '{dir} is below the score limit {score}/5.0'" --silent
+./glutil -a --exec "echo \"{score} > 0 && {score} < 5.0\" | bc -l | grep '0' > /dev/null || echo \">> {title} << is below the score limit {score}/5.0\"" --silent
 
    If you have an idea about what sort of log type may be usefull,
    write to io@nixnodes.net
