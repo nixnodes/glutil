@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.5-0
+ * Version     : 1.5-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 5
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1021,6 +1021,10 @@ char *hpd_up =
 int md_init(pmda md, int nm);
 p_md_obj md_first(pmda md);
 int split_string(char *, char, pmda);
+off_t s_string(char *input, char *m, off_t offset);
+int is_ascii_text(uint8_t in);
+int is_ascii_lowercase_text(uint8_t in);
+void *md_alloc(pmda md, int b);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1411,26 +1415,33 @@ char *g_regex_match = NULL;
 
 int g_cprg(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
+	size_t a_i = strlen(buffer);
 
-	md_init(&_md_gregex, 32);
+	a_i > 4096 ? a_i = 4096 : a_i;
 
-	int r = split_string(buffer, 0x2C, &_md_gregex);
-	g_setjmp(0, "g_cprg", NULL, NULL);
-	p_md_obj ptr = NULL;
+	md_init(&_md_gregex, 2);
 
-	if (r > 0) {
-		ptr = md_first(&_md_gregex);
+	char *ptr = (char*) md_alloc(&_md_gregex, a_i + 8);
+
+	g_strncpy(ptr, buffer, a_i);
+
+	off_t i = 0;
+
+	while (!is_ascii_lowercase_text((uint8_t) ptr[i]) && ptr[i] != 0x2C
+			&& i < (off_t) a_i) {
+		i++;
 	}
 
-	if (ptr) {
-		if (r > 1) {
-			g_regex_mtype = (char*) ptr->ptr;
-			ptr = ptr->next;
-		}
-		g_regex_match = (char*) ptr->ptr;
-		return 0;
+	if (ptr[i] == 0x2C && i != (off_t) a_i) {
+		ptr[i] = 0x0;
+		g_regex_mtype = ptr;
+		ptr = &ptr[i + 1];
 	}
 
+	g_regex_match = ptr;
+
+	printf("%s : %s\n", g_regex_match, g_regex_mtype);
+	exit(0);
 	return 1;
 }
 
@@ -1714,8 +1725,6 @@ int get_relative_path(char *, char *, char *);
 
 void free_cfg(pmda);
 
-int is_ascii_text(uint8_t in);
-
 int g_init(int argc, char **argv);
 
 char **build_argv(char *args, size_t max, int *c);
@@ -1723,7 +1732,7 @@ char **build_argv(char *args, size_t max, int *c);
 char *g_dgetf(char *str);
 
 int m_load_input(struct g_handle *hdl, char *input);
-off_t s_string(char *input, char *m, off_t offset);
+
 off_t s_string_r(char *input, char *m);
 
 int g_bin_compare(const void *p1, const void *p2, off_t size);
@@ -3531,7 +3540,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	}
 	mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
 
-	s_m:;
+	s_m: ;
 
 	int r = do_match(mstr, d_ptr, (void*) hdl->gcb_proc1);
 	EXITVAL = 1;
@@ -7385,6 +7394,14 @@ int self_get_path(char *out) {
 
 int is_ascii_text(uint8_t in_c) {
 	if ((in_c >= 0x0 && in_c <= 0x7F)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+int is_ascii_lowercase_text(uint8_t in_c) {
+	if ((in_c >= 0x61 && in_c <= 0x7A)) {
 		return 0;
 	}
 
