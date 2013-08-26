@@ -1440,8 +1440,6 @@ int g_cprg(void *arg, int m) {
 
 	g_regex_match = ptr;
 
-	printf("%s : %s\n", g_regex_match, g_regex_mtype);
-	exit(0);
 	return 1;
 }
 
