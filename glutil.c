@@ -2714,6 +2714,10 @@ int rebuild(void *arg) {
 	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
 			(ulint64_t) g_act_1.rw);
 
+	if ( g_act_1.bw == g_act_1.total_sz) {
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -3461,18 +3465,20 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 			}
 			r = 2;
 		}
-
+		goto end;
 	}
 
 	if ((gfl & F_OPT_HAS_G_REGEX) && mstr
 			&& reg_match(g_regex_match, mstr, glob_regex_flags)
 					== glob_reg_i_m) {
+
 		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str(
 					"WARNING: %s: REGEX match positive, ignoring this record\n",
 					mstr);
 		}
 		r = 3;
+		goto end;
 	}
 
 	int r_e = g_do_exec(d_ptr, callback, NULL);
@@ -3485,6 +3491,8 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 		}
 		r = 1;
 	}
+
+	end:
 
 	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
 		EXITVAL = 1;
