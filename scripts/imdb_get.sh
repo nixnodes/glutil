@@ -1,6 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" --regex "{m:arg2}"
+#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" --regex '{m:arg2}'
+#@MACRO:imdb-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" --regex '{m:arg2}'
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -exec "{m:spec1} {basedir} '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
@@ -36,13 +37,12 @@ INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd
 #
 INPUT_CLEAN_REGEX="([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
-## This might cause mis-matches
+## If set to 1, might cause mis-matches 
+## Only runs if exact match fails
 LOOSE_SEARCH=0
 #
 ## Updates imdblog
 UPDATE_IMDBLOG=1
-#
-#### WHEN UPDATE_IMDBLOG=1
 #
 ## Set to 0, imdblog directory path fields are set to glroot  
 ##  relative path
@@ -60,9 +60,7 @@ DENY_IMDBID_DUPE=0
 ## Overwrite existing imdbid matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
 #
-RECORD_MAX_AGE=7
-#
-####
+RECORD_MAX_AGE=0
 #
 ############################[ END OPTIONS ]##############################
 
@@ -127,11 +125,15 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	if [ $DATABASE_TYPE -eq 0 ]; then
 		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
 		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
-		$2 -a --iregex "$DIR_E" --imatchq > /dev/null || $2 -e imdb --match "$DIR_E" > /dev/null
+		$2 -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -e imdb --regex "$DIR_E" > /dev/null || { 
+			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
+		}
 	elif [ $DATABASE_TYPE -eq 1 ]; then
 		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
 		DIR_E=$QUERY		
-		$2 -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -e imdb --regex imdbid,"^$iid$" > /dev/null
+		$2 -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -e imdb --regex imdbid,"^$iid$" > /dev/null || {
+			echo "ERROR: $iid: Failed removing old record" && exit 1 
+		}
 	fi	
 	
 	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
