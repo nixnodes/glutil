@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # DO NOT EDIT THESE LINES
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
 #@MACRO:imdb-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
