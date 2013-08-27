@@ -3,6 +3,7 @@
  *   - Added --sort (see --help)
  *   - Bugfix: extracting fields was broken with -w
  *   - Layered matching; multiple --[i]regex[i] and --[i]match params can be used (rev. 1)
+ *   - --[i]match can match against specific log fields same way as --[i]regex[i] (rev. 1)
  *
  * v1.5
  *
