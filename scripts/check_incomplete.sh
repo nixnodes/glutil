@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # DO NOT EDIT THESE LINES
 #@MACRO:incomplete:{m:exe} -d -exec "'{m:spec1}' '{dir}' '{exe}' '{glroot}' {m:arg1}" {m:arg2}
 #
