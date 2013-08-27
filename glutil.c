@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.6-4
+ * Version     : 1.6-5
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 6
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -273,6 +273,7 @@ struct g_handle {
 	int (*g_proc0)(void *, char *, char *);
 	int (*g_proc1)(void *, char *, char *, size_t);
 	void *(*g_proc2)(void *, char *, size_t*);
+	int (*g_proc3)(void *, char *);
 	int d_memb;
 };
 
@@ -1747,7 +1748,7 @@ typedef int _d_avoid_i(void);
 typedef int __d_enum_cb(char *, unsigned char, void *);
 typedef int __d_ref_to_val(void *, char *, char *, size_t);
 typedef void *__d_ref_to_pval(void *arg, char *match, size_t *output);
-typedef int __d_format_block(char *, ear *, char *);
+typedef int __d_format_block(void *, char *);
 typedef uint64_t __d_dlfind(char *, int, uint32_t, void *);
 typedef pmda __d_cfg(pmda md, char * file);
 typedef int __d_mlref(void *buffer, char *key, char *val);
@@ -1755,8 +1756,8 @@ typedef uint64_t __g_t_ptr(void *base, size_t offset);
 
 __g_t_ptr g_t8_ptr, g_t16_ptr, g_t32_ptr, g_t64_ptr;
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
-_d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog,
-		dirlog_check_records, g_print_info;
+_d_avoid_i dirlog_check_dupe, rebuild_dirlog, dirlog_check_records,
+		g_print_info;
 
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
 		dirlog_update_record, g_dump_ug, g_dump_gen, d_write;
@@ -1875,36 +1876,39 @@ int do_sort(struct g_handle *hdl, char *field, uint32_t flags);
 
 int g_filter(struct g_handle *hdl, pmda md);
 
+char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl);
+
 void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
 		(void*) 0, "-arg1", opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1,
 		(void*) 1, "-arg2", opt_g_arg2, (void*) 1, "--arg2", opt_g_arg2,
 		(void*) 1, "-arg3", opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3,
 		(void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
 		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
-		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--pinfo",
+		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--info",
 		prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
 		"--logfile", opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0,
 		NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--sort", opt_g_sort, (void*) 1, "-k", opt_g_dump_game,
-		(void*) 0, "--cdir", opt_g_cdironly, (void*) 0, "--imatchq",
-		opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq, (void*) 0, "-a",
-		opt_g_dump_imdb, (void*) 0, "-z", opt_g_write, (void*) 1, "--infile",
-		opt_g_infile, (void*) 1, "-xdev", opt_g_xdev, (void*) 0, "--xdev",
-		opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk",
-		opt_g_xblk, (void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file",
-		opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir",
-		opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max, (void*) 1,
-		"--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1,
-		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
-		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
-		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
-		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
-		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
-		"--arg1", NULL, (void*) 1, "-arg2", NULL, (void*) 1, "--arg2", NULL,
-		(void*) 1, "-arg3", NULL, (void*) 1, "--arg3", NULL, (void*) 1, "-m",
+void *f_ref[] = { "--info", prio_opt_g_pinfo, (void*) 0, "--sort", opt_g_sort,
+		(void*) 1, "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
+		(void*) 0, "--imatchq", opt_g_imatchq, (void*) 0, "--matchq",
+		opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z",
+		opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev",
+		opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk",
+		opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file",
+		opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir",
+		opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
+		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
+		(void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
+		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
+		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
+		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
+		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
+		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
+		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2", NULL,
+		(void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
+		"--arg3", NULL, (void*) 1, "-m",
 		NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
 		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
 		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
@@ -2582,6 +2586,9 @@ int g_init(int argc, char **argv) {
 	case UPD_MODE_WRITE:
 		EXITVAL = d_write((char*) p_argv_off);
 		break;
+	case PRIO_UPD_MODE_INFO:
+		g_print_info();
+		break;
 	case UPD_MODE_NOOP:
 		break;
 	default:
@@ -2680,6 +2687,7 @@ int g_print_info(void) {
 	if (gfl & F_OPT_VERBOSE) {
 		print_str(" DATA TYPE     SIZE(B)   \n"
 				"-------------------------\n");
+		print_str(" off_t            %d      \n", (sizeof(off_t)));
 		print_str(" uintaa_t         %d      \n", (sizeof(uintaa_t)));
 		print_str(" uint8_t          %d      \n", (sizeof(uint8_t)));
 		print_str(" uint16_t         %d      \n", (sizeof(uint16_t)));
@@ -3357,7 +3365,7 @@ int dirlog_update_record(char *argv) {
 
 		char buffer[2048] = { 0 };
 
-		if (dirlog_format_block((char*) ptr->ptr, &arg, buffer) > 0)
+		if (dirlog_format_block(arg.dirlog, buffer) > 0)
 			print_str(buffer);
 
 		end:
@@ -3797,8 +3805,8 @@ int g_filter(struct g_handle *hdl, pmda md) {
 	}
 
 	if (gfl & F_OPT_VERBOSE) {
-		print_str("NOTICE: %s: passing %llu records through filters..\n", hdl->file,
-				(uint64_t) hdl->buffer.offset);
+		print_str("NOTICE: %s: passing %llu records through filters..\n",
+				hdl->file, (uint64_t) hdl->buffer.offset);
 	}
 
 	off_t s_offset = g_act_1.buffer.offset;
@@ -3899,9 +3907,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	void *ptr;
 
-	char sbuffer[MAX_G_PRINT_STATS_BUFFER], *ns_ptr;
+	char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8], *ns_ptr;
 	off_t c = 0;
-	ear e;
 	int re_c;
 
 	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
@@ -3928,50 +3935,10 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			if (gfl & F_OPT_MODE_RAWDUMP) {
 				g_fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
 			} else {
-				re_c = 0;
-				ns_ptr = "UNKNOWN";
-				switch (g_act_1.flags & F_GH_ISTYPE) {
-				case F_GH_ISDIRLOG:
-					e.dirlog = (struct dirlog*) ptr;
-					ns_ptr = e.dirlog->dirname;
-					re_c += dirlog_format_block(ns_ptr, &e, sbuffer);
-					if ((gfl & F_OPT_VERBOSE2)) {
-						struct nukelog n_buffer = { 0 };
-						if (nukelog_find(ns_ptr, 2, &n_buffer) < MAX_uint64_t) {
-							print_str(sbuffer);
-							e.nukelog = &n_buffer;
-							//bzero(sbuffer, 2048);
-							if (nukelog_format_block(ns_ptr, &e, sbuffer) > 0) {
-								print_str(sbuffer);
-							}
-							goto end_loop;
-						}
-					}
-					break;
-				case F_GH_ISNUKELOG:
-					e.nukelog = (struct nukelog*) ptr;
-					ns_ptr = e.dirlog->dirname;
-					re_c += nukelog_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISDUPEFILE:
-					e.dupefile = (struct dupefile*) ptr;
-					ns_ptr = e.dupefile->filename;
-					re_c += dupefile_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISLASTONLOG:
-					e.lastonlog = (struct lastonlog*) ptr;
-					ns_ptr = e.lastonlog->uname;
-					re_c += lastonlog_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISONELINERS:
-					e.oneliner = (struct oneliner*) ptr;
-					ns_ptr = e.oneliner->uname;
-					re_c += oneliner_format_block(ns_ptr, &e, sbuffer);
-					break;
-				case F_GH_ISONLINE:
-					e.online = (struct ONLINE*) ptr;
-					ns_ptr = e.online->username;
-					if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
+
+				if (g_act_1.flags & F_GH_ISONLINE) {
+
+					if (!(re_c = g_act_1.g_proc3(ptr, sbuffer))) {
 						goto end;
 					}
 					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
@@ -3979,27 +3946,32 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 								"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
 										"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
 										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+
 					}
-					break;
-				case F_GH_ISIMDB:
-					e.imdb = (__d_imdb) ptr;
-					ns_ptr = e.imdb->dirname;
-					re_c += imdb_format_block(ns_ptr, &e, sbuffer);
-					break;
-					case F_GH_ISGAME:
-					e.game = (__d_game) ptr;
-					ns_ptr = e.game->dirname;
-					re_c += game_format_block(ns_ptr, &e, sbuffer);
-					break;
+				} else {
+					re_c = g_act_1.g_proc3(ptr, sbuffer);
 				}
 
 				if (re_c) {
 					print_str(sbuffer);
 				} else {
 					print_str("ERROR: %s: zero-length formatted result\n",
-							ns_ptr);
+							g_act_1.file);
 					continue;
 				}
+				if (g_act_1.flags & F_GH_ISDIRLOG) {
+					if ((gfl & F_OPT_VERBOSE2)) {
+						ns_ptr = ((struct dirlog*) ptr)->dirname;
+						struct nukelog n_buffer = { 0 };
+						if (nukelog_find(ns_ptr, 2, &n_buffer) < MAX_uint64_t) {
+							if (nukelog_format_block(&n_buffer, sbuffer) > 0) {
+								print_str(sbuffer);
+							}
+							goto end_loop;
+						}
+					}
+				}
+
 			}
 		}
 		end_loop: ;
@@ -4447,7 +4419,7 @@ int proc_section(char *name, unsigned char type, void *arg) {
 			char buffer[2048] = { 0 };
 
 			if ((gfl & F_OPT_VERBOSE)
-					&& dirlog_format_block(name, iarg, buffer) > 0) {
+					&& dirlog_format_block(iarg->dirlog, buffer) > 0) {
 				print_str(buffer);
 			}
 
@@ -4598,17 +4570,20 @@ int get_relative_path(char *subject, char *root, char *output) {
 
 #define STD_FMT_TIME_STR  	"%d %b %Y %T"
 
-int dirlog_format_block(char *name, ear *iarg, char *output) {
+int dirlog_format_block(void *iarg, char *output) {
 	g_setjmp(0, "dirlog_format_block", NULL, NULL);
 	char buffer2[255];
-	char *ndup = strdup(iarg->dirlog->dirname), *base = NULL;
+
+	struct dirlog *data = (struct dirlog *) iarg;
+
+	char *ndup = strdup(data->dirname), *base = NULL;
 
 	if (gfl & F_OPT_VERBOSE)
-		base = iarg->dirlog->dirname;
+		base = data->dirname;
 	else
 		base = basename(ndup);
 
-	time_t t_t = (time_t) iarg->dirlog->uptime;
+	time_t t_t = (time_t) data->uptime;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
@@ -4617,16 +4592,15 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n", base,
-				(ulint64_t) iarg->dirlog->bytes, iarg->dirlog->files,
-				(uint32_t) iarg->dirlog->uptime, iarg->dirlog->uploader,
-				iarg->dirlog->group, iarg->dirlog->status);
+				(ulint64_t) data->bytes, data->files, (uint32_t) data->uptime,
+				data->uploader, data->group, data->status);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"DIRLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
-						base, (ulint64_t) (iarg->dirlog->bytes / 1024 / 1024),
-						iarg->dirlog->files, buffer2, iarg->dirlog->uploader,
-						iarg->dirlog->group, iarg->dirlog->status);
+						base, (ulint64_t) (data->bytes / 1024 / 1024),
+						data->files, buffer2, data->uploader, data->group,
+						data->status);
 	}
 
 	g_free(ndup);
@@ -4634,119 +4608,120 @@ int dirlog_format_block(char *name, ear *iarg, char *output) {
 	return c;
 }
 
-int nukelog_format_block(char *name, ear *iarg, char *output) {
+int nukelog_format_block(void *iarg, char *output) {
 	g_setjmp(0, "nukelog_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
-	char *ndup = strdup(iarg->nukelog->dirname), *base = NULL;
+
+	struct nukelog *data = (struct nukelog *) iarg;
+
+	char *ndup = strdup(data->dirname), *base = NULL;
 
 	if (gfl & F_OPT_VERBOSE)
-		base = iarg->nukelog->dirname;
+		base = data->dirname;
 	else
 		base = basename(ndup);
 
-	time_t t_t = (time_t) iarg->nukelog->nuketime;
+	time_t t_t = (time_t) data->nuketime;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%u\n", base,
-				iarg->nukelog->reason, iarg->nukelog->mult,
-				iarg->nukelog->bytes,
-				!iarg->nukelog->status ?
-						iarg->nukelog->nuker : iarg->nukelog->unnuker,
-				iarg->nukelog->nukee, (uint32_t) iarg->nukelog->nuketime);
+				data->reason, data->mult, data->bytes,
+				!data->status ? data->nuker : data->unnuker, data->nukee,
+				(uint32_t) data->nuketime);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, creator: %s - %s\n",
-						base, !iarg->nukelog->status ? "NUKED" : "UNNUKED",
-						iarg->nukelog->reason, iarg->nukelog->bytes,
-						iarg->nukelog->mult,
-						!iarg->nukelog->status ? "nuker" : "unnuker",
-						!iarg->nukelog->status ?
-								iarg->nukelog->nuker : iarg->nukelog->unnuker,
-						iarg->nukelog->nukee, buffer2);
+						base, !data->status ? "NUKED" : "UNNUKED", data->reason,
+						data->bytes, data->mult,
+						!data->status ? "nuker" : "unnuker",
+						!data->status ? data->nuker : data->unnuker,
+						data->nukee, buffer2);
 	}
 	g_free(ndup);
 
 	return c;
 }
 
-int dupefile_format_block(char *name, ear *iarg, char *output) {
+int dupefile_format_block(void *iarg, char *output) {
 	g_setjmp(0, "dupefile_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
-	time_t t_t = (time_t) iarg->dupefile->timeup;
+	struct dupefile *data = (struct dupefile *) iarg;
+
+	time_t t_t = (time_t) data->timeup;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DUPEFILE\x9%s\x9%s\x9%u\n", iarg->dupefile->filename,
-				iarg->dupefile->uploader, (uint32_t) iarg->dupefile->timeup);
+				"DUPEFILE\x9%s\x9%s\x9%u\n", data->filename, data->uploader,
+				(uint32_t) data->timeup);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DUPEFILE: %s - uploader: %s, time: %s\n",
-				iarg->dupefile->filename, iarg->dupefile->uploader, buffer2);
+				"DUPEFILE: %s - uploader: %s, time: %s\n", data->filename,
+				data->uploader, buffer2);
 	}
 
 	return c;
 }
 
-int lastonlog_format_block(char *name, ear *iarg, char *output) {
+int lastonlog_format_block(void *iarg, char *output) {
 	g_setjmp(0, "lastonlog_format_block", NULL, NULL);
 	char buffer2[255] = { 0 }, buffer3[255] = { 0 }, buffer4[12] = { 0 };
 
-	time_t t_t_ln = (time_t) iarg->lastonlog->logon;
-	time_t t_t_lf = (time_t) iarg->lastonlog->logoff;
+	struct lastonlog *data = (struct lastonlog *) iarg;
+
+	time_t t_t_ln = (time_t) data->logon;
+	time_t t_t_lf = (time_t) data->logoff;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t_ln));
 	strftime(buffer3, 255, STD_FMT_TIME_STR, localtime(&t_t_lf));
 
-	g_memcpy(buffer4, iarg->lastonlog->stats, sizeof(iarg->lastonlog->stats));
+	g_memcpy(buffer4, data->stats, sizeof(data->stats));
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"LASTONLOG\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%u\x9%s\n",
-				iarg->lastonlog->uname, iarg->lastonlog->gname,
-				iarg->lastonlog->tagline, (uint32_t) iarg->lastonlog->logon,
-				(uint32_t) iarg->lastonlog->logoff,
-				(uint32_t) iarg->lastonlog->upload,
-				(uint32_t) iarg->lastonlog->download, buffer4);
+				data->uname, data->gname, data->tagline, (uint32_t) data->logon,
+				(uint32_t) data->logoff, (uint32_t) data->upload,
+				(uint32_t) data->download, buffer4);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %u/%u B, changes: %s\n",
-						iarg->lastonlog->uname, iarg->lastonlog->gname,
-						iarg->lastonlog->tagline, buffer2, buffer3,
-						(uint32_t) iarg->lastonlog->upload,
-						(uint32_t) iarg->lastonlog->download, buffer4);
+						data->uname, data->gname, data->tagline, buffer2,
+						buffer3, (uint32_t) data->upload,
+						(uint32_t) data->download, buffer4);
 	}
 
 	return c;
 }
 
-int oneliner_format_block(char *name, ear *iarg, char *output) {
+int oneliner_format_block(void *iarg, char *output) {
 	g_setjmp(0, "oneliner_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
-	time_t t_t = (time_t) iarg->oneliner->timestamp;
+	struct oneliner *data = (struct oneliner *) iarg;
+
+	time_t t_t = (time_t) data->timestamp;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONELINER\x9%s\x9%s\x9%s\x9%u\x9%s\n", iarg->oneliner->uname,
-				iarg->oneliner->gname, iarg->oneliner->tagline,
-				(uint32_t) iarg->oneliner->timestamp, iarg->oneliner->message);
+				"ONELINER\x9%s\x9%s\x9%s\x9%u\x9%s\n", data->uname, data->gname,
+				data->tagline, (uint32_t) data->timestamp, data->message);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
-				iarg->oneliner->uname, iarg->oneliner->gname,
-				iarg->oneliner->tagline, buffer2, iarg->oneliner->message);
+				data->uname, data->gname, data->tagline, buffer2,
+				data->message);
 	}
 
 	return c;
@@ -4754,26 +4729,28 @@ int oneliner_format_block(char *name, ear *iarg, char *output) {
 
 #define FMT_SP_OFF 	30
 
-int online_format_block(char *name, ear *iarg, char *output) {
+int online_format_block(void *iarg, char *output) {
 	g_setjmp(0, "online_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
-	time_t t_t = (time_t) iarg->online->login_time;
+	struct ONLINE *data = (struct ONLINE *) iarg;
+
+	time_t t_t = (time_t) data->login_time;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
-	if (!strlen(iarg->online->username)) {
+	if (!strlen(data->username)) {
 		return 0;
 	}
 
-	int32_t tdiff = (int32_t) time(NULL) - iarg->online->tstart.tv_sec;
-	float kb = (iarg->online->bytes_xfer / 1024), kbps = 0.0;
+	int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
+	float kb = (data->bytes_xfer / 1024), kbps = 0.0;
 
 	if (tdiff > 0 && kb > 0) {
 		kbps = kb / (float) tdiff;
 	}
 
-	time_t ltime = time(NULL) - (time_t) iarg->online->login_time;
+	time_t ltime = time(NULL) - (time_t) data->login_time;
 
 	if (ltime < 0) {
 		ltime = 0;
@@ -4784,15 +4761,12 @@ int online_format_block(char *name, ear *iarg, char *output) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"ONLINE\x9%s\x9%s\x9%u\x9%u\x9%s\x9%u\x9%u\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
-						iarg->online->username, iarg->online->host,
-						(uint32_t) iarg->online->groupid,
-						(uint32_t) iarg->online->login_time,
-						iarg->online->tagline,
-						(uint32_t) iarg->online->ssl_flag,
-						(uint32_t) iarg->online->procid,
-						(ulint64_t) iarg->online->bytes_xfer,
-						(ulint64_t) iarg->online->bytes_txfer, (ulint64_t) kbps,
-						iarg->online->status, iarg->online->currentdir);
+						data->username, data->host, (uint32_t) data->groupid,
+						(uint32_t) data->login_time, data->tagline,
+						(uint32_t) data->ssl_flag, (uint32_t) data->procid,
+						(ulint64_t) data->bytes_xfer,
+						(ulint64_t) data->bytes_txfer, (ulint64_t) kbps,
+						data->status, data->currentdir);
 	} else {
 		if (gfl & F_OPT_FORMAT_COMP) {
 			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
@@ -4801,18 +4775,14 @@ int online_format_block(char *name, ear *iarg, char *output) {
 			size_t d_len1 = strlen(d_buffer);
 			snprintf(d_buffer, 255, "%.2f", kbps);
 			size_t d_len2 = strlen(d_buffer);
-			generate_chars(
-					54
-							- (strlen(iarg->online->username)
-									+ strlen(iarg->online->host)), 0x20,
-					sp_buffer);
+			generate_chars(54 - (strlen(data->username) + strlen(data->host)),
+					0x20, sp_buffer);
 			generate_chars(10 - d_len1, 0x20, sp_buffer2);
 			generate_chars(13 - d_len2, 0x20, sp_buffer3);
 			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 					"| %s!%s%s |        %us%s |     %.2fKB/s%s |  %s\n",
-					iarg->online->username, iarg->online->host, sp_buffer,
-					(uint32_t) ltime, sp_buffer2, kbps, sp_buffer3,
-					iarg->online->status);
+					data->username, data->host, sp_buffer, (uint32_t) ltime,
+					sp_buffer2, kbps, sp_buffer3, data->status);
 		} else {
 			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "[ONLINE]\n"
 					"    User:            %s\n"
@@ -4825,18 +4795,17 @@ int online_format_block(char *name, ear *iarg, char *output) {
 					"    XFER:            %lld Bytes\n"
 					"    Rate:            %.2f KB/s\n"
 					"    Status:          %s\n"
-					"    CWD:             %s\n\n", iarg->online->username,
-					iarg->online->host, (uint32_t) iarg->online->groupid,
-					buffer2, (uint32_t) ltime, iarg->online->tagline,
-					(!iarg->online->ssl_flag ?
+					"    CWD:             %s\n\n", data->username, data->host,
+					(uint32_t) data->groupid, buffer2, (uint32_t) ltime,
+					data->tagline,
+					(!data->ssl_flag ?
 							"NO" :
-							(iarg->online->ssl_flag == 1 ?
+							(data->ssl_flag == 1 ?
 									"YES" :
-									(iarg->online->ssl_flag == 2 ?
+									(data->ssl_flag == 2 ?
 											"YES (DATA)" : "UNKNOWN"))),
-					(uint32_t) iarg->online->procid,
-					(ulint64_t) iarg->online->bytes_xfer, kbps,
-					iarg->online->status, iarg->online->currentdir);
+					(uint32_t) data->procid, (ulint64_t) data->bytes_xfer, kbps,
+					data->status, data->currentdir);
 		}
 	}
 
@@ -4845,12 +4814,13 @@ int online_format_block(char *name, ear *iarg, char *output) {
 
 #define STD_FMT_DATE_STR  	"%d %b %Y"
 
-int imdb_format_block(char *name, ear *iarg, char *output) {
+int imdb_format_block(void *iarg, char *output) {
 	g_setjmp(0, "imdb_format_block", NULL, NULL);
 	char buffer2[255] = { 0 }, buffer3[255] = { 0 };
 
-	time_t t_t = (time_t) iarg->imdb->timestamp, t_t2 =
-			(time_t) iarg->imdb->released;
+	__d_imdb data = (__d_imdb) iarg;
+
+	time_t t_t = (time_t) data->timestamp, t_t2 = (time_t) data->released;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	strftime(buffer3, 255, STD_FMT_DATE_STR, localtime(&t_t2));
@@ -4860,45 +4830,42 @@ int imdb_format_block(char *name, ear *iarg, char *output) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\n",
-						iarg->imdb->dirname, iarg->imdb->title,
-						(uint32_t) iarg->imdb->timestamp, iarg->imdb->imdb_id,
-						iarg->imdb->rating, iarg->imdb->votes,
-						iarg->imdb->genres, iarg->imdb->year,
-						iarg->imdb->released, iarg->imdb->runtime,
-						iarg->imdb->rated, iarg->imdb->actors,
-						iarg->imdb->director);
+						data->dirname, data->title, (uint32_t) data->timestamp,
+						data->imdb_id, data->rating, data->votes, data->genres,
+						data->year, data->released, data->runtime, data->rated,
+						data->actors, data->director);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 						"IMDB: %s: %s (%s): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
-						iarg->imdb->dirname, iarg->imdb->title,
-						iarg->imdb->year, buffer2, iarg->imdb->imdb_id,
-						iarg->imdb->rating, iarg->imdb->votes,
-						iarg->imdb->genres, buffer3, iarg->imdb->runtime,
-						iarg->imdb->rated, iarg->imdb->actors,
-						iarg->imdb->director);
+						data->dirname, data->title, data->year, buffer2,
+						data->imdb_id, data->rating, data->votes, data->genres,
+						buffer3, data->runtime, data->rated, data->actors,
+						data->director);
 	}
 
 	return c;
 }
 
-int game_format_block(char *name, ear *iarg, char *output) {
+int game_format_block(void *iarg, char *output) {
 	g_setjmp(0, "game_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
-	time_t t_t = (time_t) iarg->game->timestamp;
+	__d_game data = (__d_game) iarg;
+
+	time_t t_t = (time_t) data->timestamp;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"GAMELOG\x9%s\x9%u\x9%.1f\n", iarg->game->dirname,
-				iarg->game->timestamp, iarg->game->rating);
+				"GAMELOG\x9%s\x9%u\x9%.1f\n", data->dirname, data->timestamp,
+				data->rating);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"GAMELOG: %s: created: %s - rating: %.1f\n",
-				iarg->game->dirname, buffer2, iarg->game->rating);
+				"GAMELOG: %s: created: %s - rating: %.1f\n", data->dirname,
+				buffer2, data->rating);
 	}
 
 	return c;
@@ -5603,6 +5570,7 @@ int g_map_shm(struct g_handle *hdl, key_t ipc) {
 
 	hdl->g_proc1 = ref_to_val_online;
 	hdl->g_proc2 = ref_to_val_ptr_online;
+	hdl->g_proc3 = online_format_block;
 
 	return 0;
 }
@@ -5681,6 +5649,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_dirlog;
 		hdl->g_proc1 = ref_to_val_dirlog;
 		hdl->g_proc2 = ref_to_val_ptr_dirlog;
+		hdl->g_proc3 = dirlog_format_block;
 	} else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG))) {
 		hdl->flags |= F_GH_ISNUKELOG;
 		hdl->block_sz = NL_SZ;
@@ -5688,6 +5657,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_nukelog;
 		hdl->g_proc1 = ref_to_val_nukelog;
 		hdl->g_proc2 = ref_to_val_ptr_nukelog;
+		hdl->g_proc3 = nukelog_format_block;
 	} else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE))) {
 		hdl->flags |= F_GH_ISDUPEFILE;
 		hdl->block_sz = DF_SZ;
@@ -5695,6 +5665,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_dupefile;
 		hdl->g_proc1 = ref_to_val_dupefile;
 		hdl->g_proc2 = ref_to_val_ptr_dupefile;
+		hdl->g_proc3 = dupefile_format_block;
 	} else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG))) {
 		hdl->flags |= F_GH_ISLASTONLOG;
 		hdl->block_sz = LO_SZ;
@@ -5702,6 +5673,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_lastonlog;
 		hdl->g_proc1 = ref_to_val_lastonlog;
 		hdl->g_proc2 = ref_to_val_ptr_lastonlog;
+		hdl->g_proc3 = lastonlog_format_block;
 	} else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS))) {
 		hdl->flags |= F_GH_ISONELINERS;
 		hdl->block_sz = OL_SZ;
@@ -5709,6 +5681,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_oneliner;
 		hdl->g_proc1 = ref_to_val_oneliners;
 		hdl->g_proc2 = ref_to_val_ptr_oneliners;
+		hdl->g_proc3 = oneliner_format_block;
 	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
 		hdl->flags |= F_GH_ISIMDB;
 		hdl->block_sz = ID_SZ;
@@ -5716,6 +5689,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_imdbh;
 		hdl->g_proc1 = ref_to_val_imdb;
 		hdl->g_proc2 = ref_to_val_ptr_imdb;
+		hdl->g_proc3 = imdb_format_block;
 	} else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG))) {
 		hdl->flags |= F_GH_ISGAME;
 		hdl->block_sz = GM_SZ;
@@ -5723,6 +5697,7 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc0 = gcb_game;
 		hdl->g_proc1 = ref_to_val_game;
 		hdl->g_proc2 = ref_to_val_ptr_game;
+		hdl->g_proc3 = game_format_block;
 	} else {
 		return 1;
 	}
@@ -7113,7 +7088,8 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 		snprintf(output, max_size, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = calloc(max_size + 1, 1);
-		void *ptr = ref_to_val_get_cfgval(data->uname, match, DEFPATH_USERS,
+		void *ptr = ref_to_val_get_cfgval(data->uname, match,
+		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			snprintf(output, max_size, (char*) ptr);
@@ -7217,8 +7193,8 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval(data->username, match,
-		DEFPATH_USERS, F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH,
-				buffer, max_size);
+		DEFPATH_USERS,
+		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			snprintf(output, max_size, ptr);
 		}
@@ -7328,8 +7304,9 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
 						if (r) {
 							b_l_1 = strlen(buffer);
-							snprintf(&buffer_o[pi], MAX_EXEC_STR - pi - 2,
-									"%c%s%c", 0x7B, buffer, 0x7D);
+							snprintf(&buffer_o[pi],
+							MAX_EXEC_STR - pi - 2, "%c%s%c", 0x7B, buffer,
+									0x7D);
 
 							pi += b_l_1 + 2;
 						}
