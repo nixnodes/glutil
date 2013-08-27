@@ -3654,9 +3654,8 @@ int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
 
 		if ((_gm->match_i_m && (ir || irl))
 				|| (!_gm->match_i_m && (!ir && !irl))) {
-			if ((gfl & F_OPT_VERBOSE3)) {
-				print_str("WARNING: %s: match positive, ignoring this record\n",
-						mstr);
+			if ((gfl & F_OPT_VERBOSE4)) {
+				print_str("WARNING: %s: match positive\n", mstr);
 			}
 			r = 2;
 		}
@@ -3666,10 +3665,8 @@ int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
 	if ((_gm->flags & F_GM_ISREGEX) && mstr
 			&& reg_match(_gm->match, mstr, _gm->regex_flags) == _gm->reg_i_m) {
 
-		if ((gfl & F_OPT_VERBOSE3)) {
-			print_str(
-					"WARNING: %s: REGEX match positive, ignoring this record\n",
-					mstr);
+		if ((gfl & F_OPT_VERBOSE4)) {
+			print_str("WARNING: %s: REGEX match positive\n", mstr);
 		}
 		r = 3;
 	}
@@ -3748,9 +3745,8 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 
 	if (exec_str && WEXITSTATUS(r_e)) {
 		if ((gfl & F_OPT_VERBOSE3)) {
-			print_str(
-					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
-					WEXITSTATUS(r_e));
+			print_str("WARNING: [%d] external call returned non-zero\n",
+			WEXITSTATUS(r_e));
 		}
 		r = 1;
 	}
@@ -3777,7 +3773,8 @@ int do_sort(struct g_handle *hdl, char *field, uint32_t flags) {
 	}
 
 	if ((gfl & F_OPT_VERBOSE)) {
-		print_str("NOTICE: %s: sorting..\n", hdl->file);
+		print_str("NOTICE: %s: sorting %llu records..\n", hdl->file,
+				(uint64_t) hdl->buffer.offset);
 	}
 
 	int r = g_sort(hdl, field, flags);
@@ -3799,6 +3796,13 @@ int g_filter(struct g_handle *hdl, pmda md) {
 		return 0;
 	}
 
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("NOTICE: %s: passing %llu records through filters..\n", hdl->file,
+				(uint64_t) hdl->buffer.offset);
+	}
+
+	off_t s_offset = g_act_1.buffer.offset;
+
 	p_md_obj ptr = md_first(md);
 	int r = 0;
 
@@ -3818,6 +3822,11 @@ int g_filter(struct g_handle *hdl, pmda md) {
 
 	if (!hdl->buffer.offset) {
 		return 1;
+	}
+
+	if (gfl & F_OPT_VERBOSE3) {
+		print_str("NOTICE: %s: filtered %llu records..\n", hdl->file,
+				(uint64_t) (s_offset - hdl->buffer.offset));
 	}
 
 	return r;
@@ -3849,6 +3858,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		}
 
 		char *s_exec_str = exec_str;
+
 		exec_str = NULL;
 
 		r = g_filter(&g_act_1, &g_act_1.buffer);
