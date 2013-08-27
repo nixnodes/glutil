@@ -8,7 +8,8 @@
         shell for further processing
     - Ability to write any type of binary log data using an ASCII formatted 
         text source
-    - Display data from any supported binary log in various formats
+    - Display data (filtered and sorted) from any supported binary log 
+        in various formats
   
   Check /scripts folder in this repo for examples on how glutil passes 
     binary log data data to scripts (and vice versa)
@@ -36,8 +37,9 @@
   - Import individual/missing records or rebuild entire dirlog based 
       on file-system and nukelog data (read below)
   - Rebuild existing binary glFTPd logs (see full list below) 
-      using regex/custom filtering methods
-  - Display various binary glFTPd logs in human readable formats
+      using regex/custom filtering methods and sorting
+  - Display various binary glFTPd logs (filtered/sorted) in human 
+      readable formats
   - Execute external tools/scripts for each data record found, passing 
       along binary data as argument strings to shell (see --exec
       in --help)
