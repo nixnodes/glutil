@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.6-2
+ * Version     : 1.6-4
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 6
-#define VER_REVISION 2
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -435,6 +435,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_IMATCHQ			(a64 << 37)
 #define F_OPT_CDIRONLY			(a64 << 38)
 #define F_OPT_SORT 				(a64 << 39)
+
+#define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH)
 
 #define F_DL_FOPEN_BUFFER		(a32 << 1)
 #define F_DL_FOPEN_FILE			(a32 << 2)
@@ -1272,6 +1274,7 @@ int opt_recursive_update_records(void *arg, int m) {
 
 int opt_raw_dump(void *arg, int m) {
 	gfl |= F_OPT_MODE_RAWDUMP;
+	gfl |= F_OPT_PS_SILENT;
 	return 0;
 }
 
@@ -1505,6 +1508,8 @@ typedef struct ___g_match_h {
 #define F_GM_ISREGEX		(a32 << 1)
 #define F_GM_ISMATCH		(a32 << 2)
 
+#define F_GM_TYPES			(F_GM_ISREGEX|F_GM_ISMATCH)
+
 int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 		uint32_t flags) {
 	char *buffer = g_pg(arg, m);
@@ -1548,8 +1553,17 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	pgm->regex_flags = regex_flags;
 	pgm->flags = flags;
 
-	if (!(gfl & F_OPT_HAS_G_REGEX)) {
-		gfl |= F_OPT_HAS_G_REGEX;
+	switch (flags & F_GM_TYPES) {
+	case F_GM_ISREGEX:
+		if (!(gfl & F_OPT_HAS_G_REGEX)) {
+			gfl |= F_OPT_HAS_G_REGEX;
+		}
+		break;
+	case F_GM_ISMATCH:
+		if (!(gfl & F_OPT_HAS_G_MATCH)) {
+			gfl |= F_OPT_HAS_G_MATCH;
+		}
+		break;
 	}
 
 	return 0;
@@ -1861,15 +1875,16 @@ int do_sort(struct g_handle *hdl, char *field, uint32_t flags);
 
 int g_filter(struct g_handle *hdl, pmda md);
 
-void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
-		(void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2", opt_g_arg2,
-		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3", opt_g_arg3,
-		(void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvv", opt_g_verbose4,
-		(void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2,
-		(void*) 0, "-v", opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro,
-		(void*) 1, "--pinfo", prio_opt_g_pinfo, (void*) 0, "--loglevel",
-		opt_g_loglvl, (void*) 1, "--logfile", opt_log_file, (void*) 0, "--log",
-		opt_logging, (void*) 0, NULL, NULL,
+void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
+		(void*) 0, "-arg1", opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1,
+		(void*) 1, "-arg2", opt_g_arg2, (void*) 1, "--arg2", opt_g_arg2,
+		(void*) 1, "-arg3", opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3,
+		(void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
+		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
+		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--pinfo",
+		prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+		"--logfile", opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0,
+		NULL, NULL,
 		NULL };
 
 void *f_ref[] = { "--sort", opt_g_sort, (void*) 1, "-k", opt_g_dump_game,
@@ -2278,11 +2293,9 @@ void enable_logging(void) {
 		build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
 		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
 			gfl ^= F_OPT_PS_LOGGING;
-			if (!(gfl & F_OPT_MODE_RAWDUMP)) {
-				print_str(
-						"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
-						LOGFILE, errno);
-			}
+			print_str(
+					"ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
+					LOGFILE, errno);
 		}
 	}
 	return;
@@ -2314,7 +2327,7 @@ int g_init(int argc, char **argv) {
 	enable_logging();
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
-			&& !(gfl & F_OPT_MODE_RAWDUMP) && !(gfl & F_OPT_FORMAT_COMP)) {
+			&& !(gfl & F_OPT_FORMAT_COMP)) {
 		print_str("INIT: glutil %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
@@ -2327,7 +2340,7 @@ int g_init(int argc, char **argv) {
 		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
-	if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP) && glconf.offset) {
+	if ((gfl & F_OPT_VERBOSE) && glconf.offset) {
 		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
 				(int) glconf.offset);
 	}
@@ -2343,7 +2356,7 @@ int g_init(int argc, char **argv) {
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
 		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE2)) {
 			print_str("GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
 	}
@@ -2353,7 +2366,7 @@ int g_init(int argc, char **argv) {
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
 		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE2)) {
 			print_str("GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
 	}
@@ -2363,7 +2376,7 @@ int g_init(int argc, char **argv) {
 	if (ptr) {
 		bzero(FTPDATA, 255);
 		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE2)) {
 			print_str("GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
 	}
@@ -2373,7 +2386,7 @@ int g_init(int argc, char **argv) {
 	if (ptr) {
 		NUKESTR = calloc(255, 1);
 		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-		if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE2)) {
 			print_str("GLCONF: using 'nukedir_style': %s\n", NUKESTR);
 		}
 		ofl |= F_OVRR_NUKESTR;
@@ -2382,9 +2395,7 @@ int g_init(int argc, char **argv) {
 
 	remove_repeating_chars(FTPDATA, 0x2F);
 #else
-	if ( && !(gfl & F_OPT_MODE_RAWDUMP) ) {
-		print_str("WARNING: GLCONF not defined in glconf.h");
-	}
+	print_str("WARNING: GLCONF not defined in glconf.h");
 #endif
 
 	remove_repeating_chars(GLROOT, 0x2F);
@@ -2426,13 +2437,13 @@ int g_init(int argc, char **argv) {
 			gfl |= F_OPT_FORCEWSFV | F_OPT_NOWRITE;
 		}
 
-		if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE)) {
 			print_str(
 					"NOTICE: switching to non-destructive filesystem rebuild mode\n");
 		}
 	}
 
-	if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+	if ((gfl & F_OPT_VERBOSE)) {
 		if (gfl & F_OPT_NOBUFFER) {
 			print_str("NOTICE: disabling memory buffering\n");
 		}
@@ -2468,8 +2479,7 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)
-			&& !(gfl & F_OPT_MODE_RAWDUMP)) {
+	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)) {
 		print_str("NOTICE: performing dry run, no writing will be done\n");
 	}
 
@@ -2485,10 +2495,9 @@ int g_init(int argc, char **argv) {
 	}
 
 	if (gfl & F_OPT_DAEMONIZE) {
-		if (!(gfl & F_OPT_MODE_RAWDUMP)) {
-			print_str("NOTICE: forking into background.. [PID: %d]\n",
-					getpid());
-		}
+
+		print_str("NOTICE: forking into background.. [PID: %d]\n", getpid());
+
 		daemon(0, 0);
 	}
 
@@ -3645,7 +3654,7 @@ int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
 
 		if ((_gm->match_i_m && (ir || irl))
 				|| (!_gm->match_i_m && (!ir && !irl))) {
-			if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+			if ((gfl & F_OPT_VERBOSE3)) {
 				print_str("WARNING: %s: match positive, ignoring this record\n",
 						mstr);
 			}
@@ -3657,7 +3666,7 @@ int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
 	if ((_gm->flags & F_GM_ISREGEX) && mstr
 			&& reg_match(_gm->match, mstr, _gm->regex_flags) == _gm->reg_i_m) {
 
-		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE3)) {
 			print_str(
 					"WARNING: %s: REGEX match positive, ignoring this record\n",
 					mstr);
@@ -3738,7 +3747,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	int r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL);
 
 	if (exec_str && WEXITSTATUS(r_e)) {
-		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+		if ((gfl & F_OPT_VERBOSE3)) {
 			print_str(
 					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
 					WEXITSTATUS(r_e));
@@ -3764,9 +3773,10 @@ int do_sort(struct g_handle *hdl, char *field, uint32_t flags) {
 	if (!field) {
 		print_str("ERROR: %s: sorting requested but no field was set\n",
 				hdl->file);
+		return 1;
 	}
 
-	if (gfl & F_OPT_VERBOSE) {
+	if ((gfl & F_OPT_VERBOSE)) {
 		print_str("NOTICE: %s: sorting..\n", hdl->file);
 	}
 
@@ -3784,6 +3794,11 @@ int do_sort(struct g_handle *hdl, char *field, uint32_t flags) {
 }
 
 int g_filter(struct g_handle *hdl, pmda md) {
+
+	if (!(exec_str || (gfl & F_OPT_HASMATCH))) {
+		return 0;
+	}
+
 	p_md_obj ptr = md_first(md);
 	int r = 0;
 
@@ -3988,8 +4003,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
-	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)
-			&& !(gfl & F_OPT_FORMAT_COMP) && !(g_act_1.flags & F_GH_ISONLINE)) {
+	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_FORMAT_COMP)
+			&& !(g_act_1.flags & F_GH_ISONLINE)) {
 		print_str("STATS: %s: read %llu records\n", file,
 				(unsigned long long int) c);
 	}
@@ -5173,9 +5188,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	snprintf(hdl->s_buffer, PATH_MAX - 1, "%s.%d.dtm", file, getpid());
 	snprintf(buffer, PATH_MAX - 1, "%s.bk", file);
 
-	if (hdl->buffer_count
-			&& (exec_str || (gfl & F_OPT_HAS_G_REGEX)
-					|| (gfl & F_OPT_HAS_G_MATCH))
+	if (hdl->buffer_count && (exec_str || (gfl & F_OPT_HASMATCH))
 			&& updmode != UPD_MODE_RECURSIVE) {
 		g_setjmp(0, "rebuild_data_file(2)", NULL, NULL);
 		if (gfl & F_OPT_VERBOSE2) {
@@ -6590,7 +6603,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 
 			t_b = g_t_ptr_c(ptr->ptr, off);
 			t_b_n = g_t_ptr_c(ptr_n->ptr, off);
-			//printf("%llu %llu\n", t_b, t_b_n);
+
 			if (!m_op(t_b, t_b_n)) {
 				ptr = md_swap(m_ptr, ptr, ptr_n);
 				if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
@@ -6600,7 +6613,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 				ptr = ptr->next;
 			}
 		}
-		//printf("\rpass: %llu", ml_i);
+
 		if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
 			break;
 		}
@@ -6649,7 +6662,7 @@ int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 				ptr = ptr->next;
 			}
 		}
-		//printf("\rpass: %llu", ml_i);
+
 		if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
 			break;
 		}
@@ -7563,7 +7576,7 @@ int m_load_input(struct g_handle *hdl, char *input) {
 				print_str("WARNING: DATA IMPORT: failed extracting '%s'\n",
 						s_ptr);
 			}
-			//printf("%s - %s: %d\n", s_ptr, s_p1, bd);
+
 			rw += (uint32_t) bd;
 			ptr = ptr->next;
 		}
