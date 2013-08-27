@@ -11,6 +11,7 @@
  *   - g_filter didn't check if match requested before starting (rev. 4)
  *   - Bugfix: --raw spat ASCII junk to stdout (rev. 4)
  *   - Optimized data record formatting functions (rev. 5)
+ *   - Bugfix: g_print_stats persisted nukelog searches after first failure (rev. 6)
  *
  * v1.5
  *
