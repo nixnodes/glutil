@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.6-1
+ * Version     : 1.6-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 6
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1499,6 +1499,10 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	char *buffer = g_pg(arg, m);
 
 	size_t a_i = strlen(buffer);
+
+	if (!a_i) {
+		return 0;
+	}
 
 	a_i > 4096 ? a_i = 4096 : a_i;
 
@@ -3209,8 +3213,10 @@ int dirlog_check_dupe(void) {
 					ch++;
 				}
 				print_str("\rDUPE %s               \n", dd_ptr->dirname);
-				e_t = time(NULL);
-				g_progress_stats(s_t, e_t, nrec, st3);
+				if (gfl & F_OPT_VERBOSE) {
+					e_t = time(NULL);
+					g_progress_stats(s_t, e_t, nrec, st3);
+				}
 			}
 		}
 
