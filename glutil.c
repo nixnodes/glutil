@@ -1435,6 +1435,14 @@ char *g_sort_field = NULL;
 int opt_g_sort(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 
+	if (gfl & F_OPT_SORT ) {
+		return 0;
+	}
+
+	if ( _md_gsort.offset >= 64 ) {
+		return (a32 << 7);
+	}
+
 	md_init(&_md_gsort, 3);
 
 	int r = split_string(buffer, 0x2C, &_md_gsort);
