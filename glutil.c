@@ -462,9 +462,10 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISONLINE			(a32 << 13)
 #define F_GH_ISIMDB				(a32 << 14)
 #define F_GH_ISGAME				(a32 << 15)
+#define F_GH_ISGENERIC			(a32 << 16)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
+#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISGENERIC)
 
 #define F_OVRR_IPC				(a32 << 1)
 #define F_OVRR_GLROOT			(a32 << 2)
@@ -1044,6 +1045,8 @@ int split_string(char *, char, pmda);
 off_t s_string(char *input, char *m, off_t offset);
 int is_ascii_text(uint8_t in);
 int is_ascii_lowercase_text(uint8_t in);
+int is_ascii_uppercase_text(uint8_t in);
+int is_ascii_alphanumeric(uint8_t in_c);
 void *md_alloc(pmda md, int b);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
@@ -1435,11 +1438,11 @@ char *g_sort_field = NULL;
 int opt_g_sort(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 
-	if (gfl & F_OPT_SORT ) {
+	if (gfl & F_OPT_SORT) {
 		return 0;
 	}
 
-	if ( _md_gsort.offset >= 64 ) {
+	if (_md_gsort.offset >= 64) {
 		return (a32 << 7);
 	}
 
@@ -1528,8 +1531,8 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	off_t i = 0;
 
-	while (!is_ascii_lowercase_text((uint8_t) ptr[i]) && ptr[i] != 0x2C
-			&& i < (off_t) a_i) {
+	while ((!is_ascii_alphanumeric((uint8_t) ptr[i]) || ptr[i] == 0x3A)
+			&& ptr[i] != 0x2C && i < (off_t) a_i) {
 		i++;
 	}
 
@@ -3033,6 +3036,7 @@ typedef struct ___std_rh_0 {
 	uint8_t rt_m;
 	uint32_t flags;
 	uint64_t st_1, st_2;
+	struct g_handle hdl;
 } _std_rh, *__std_rh;
 
 int g_dump_ug(char *ug) {
@@ -3058,6 +3062,8 @@ int g_dump_gen(char *root) {
 	_std_rh ret = { 0 };
 
 	ret.flags = flags_udcfg;
+	ret.hdl.flags |= F_GH_ISGENERIC;
+	ret.hdl.g_proc1 = ref_to_val_generic;
 
 	if (!(ret.flags & F_PD_MATCHTYPES)) {
 		ret.flags |= F_PD_MATCHTYPES;
@@ -3105,7 +3111,7 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 	switch (type) {
 	case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			if ((aa_rh->rt_m = do_match(name, name, NULL, ref_to_val_generic))) {
+			if ((aa_rh->rt_m = g_bmatch(name, &aa_rh->hdl))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3117,7 +3123,7 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 		break;
 	case DT_DIR:
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			if ((aa_rh->rt_m = do_match(name, name, NULL, ref_to_val_generic))) {
+			if ((aa_rh->rt_m = g_bmatch(name, &aa_rh->hdl))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3670,42 +3676,33 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
 	case F_GH_ISDIRLOG:
 		return (char*) ((struct dirlog*) d_ptr)->dirname;
 
-		break;
 	case F_GH_ISNUKELOG:
 		return (char*) ((struct nukelog*) d_ptr)->dirname;
 
-		break;
 	case F_GH_ISDUPEFILE:
 		return (char*) ((struct dupefile*) d_ptr)->filename;
 
-		break;
 	case F_GH_ISLASTONLOG:
 		return (char*) ((struct lastonlog*) d_ptr)->uname;
 
-		break;
 	case F_GH_ISONELINERS:
 		return (char*) ((struct oneliner*) d_ptr)->uname;
 
-		break;
 	case F_GH_ISONLINE:
 		ptr = (char*) ((struct ONLINE*) d_ptr)->username;
 		if (!strlen(ptr)) {
 			return NULL;
 		}
-
 		break;
 	case F_GH_ISIMDB:
-		ptr = (char*) ((__d_imdb) d_ptr)->dirname;
-		if (!strlen(ptr)) {
-			return NULL;
-		}
-		break;
+		return (char*) ((__d_imdb) d_ptr)->dirname;
+
 		case F_GH_ISGAME:
-		ptr= (char*) ((__d_game) d_ptr)->dirname;
-		if (!strlen(ptr)) {
-			return NULL;
-		}
-		break;
+		return (char*) ((__d_game) d_ptr)->dirname;
+
+		case F_GH_ISGENERIC:
+		return (char*) d_ptr;
+
 	}
 	return ptr;
 }
@@ -3752,9 +3749,6 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	end:
 
 	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
-		if (!r) {
-			r = 1;
-		}
 		EXITVAL = 1;
 		gfl |= F_OPT_KILL_GLOBAL;
 	}
@@ -6510,7 +6504,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (arg && !strncmp(match, "c:", 2)) {
 		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2],
-		DEFPATH_USERS,
+		NULL,
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			snprintf(output, max_size, (char*) ptr);
@@ -6518,14 +6512,6 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 			return 0;
 		}
 
-		ptr = ref_to_val_get_cfgval((char*) arg, &match[2], DEFPATH_GROUPS,
-		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
-		if (ptr && strlen(ptr) < max_size) {
-			snprintf(output, max_size, (char*) ptr);
-			g_free(buffer);
-			return 0;
-		}
-		g_free(buffer);
 		return 1;
 	} else {
 		return 1;
@@ -8113,6 +8099,23 @@ int is_ascii_text(uint8_t in_c) {
 
 int is_ascii_lowercase_text(uint8_t in_c) {
 	if ((in_c >= 0x61 && in_c <= 0x7A)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+int is_ascii_alphanumeric(uint8_t in_c) {
+	if ((in_c >= 0x61 && in_c <= 0x7A) || (in_c >= 0x41 && in_c <= 0x5A)
+			|| (in_c >= 0x30 && in_c <= 0x39)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+int is_ascii_uppercase_text(uint8_t in_c) {
+	if ((in_c >= 0x41 && in_c <= 0x5A)) {
 		return 0;
 	}
 
