@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.5-3
+ * Version     : 1.6-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -129,8 +129,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 5
-#define VER_REVISION 3
+#define VER_MINOR 6
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -882,8 +882,7 @@ char GAMELOG[PATH_MAX] = { game_log };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
-int glob_regex_flags = 0;
-char GLOB_MATCH[4096] = { 0 };
+
 int EXITVAL = 0;
 
 int loop_interval = 0;
@@ -892,8 +891,6 @@ char *NUKESTR = NULL;
 
 char *exec_str = NULL;
 
-int glob_reg_i_m = 0;
-int glob_match_i_m = 0;
 mda glconf = { 0 };
 
 char b_spec1[PATH_MAX];
@@ -969,12 +966,9 @@ char *hpd_up =
 				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute shell <command> after main procedure finishes\n"
 				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
-				"  --match <match>       Regular filter string (exact matches)\n"
-				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
-				"  --imatch <match>      Inverted --match\n"
 				"  --regex [<field>,]<match>\n"
 				"                        Regex filter string, used during various operations\n"
-				"                          If <var> is set, matching is performed against a specific data log field\n"
+				"                          If <field> is set, matching is performed against a specific data log field\n"
 				"                            (field names are the same as --exec variable names for logs)\n"
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
 				"  --regexi [<var>,]<match>\n"
@@ -983,6 +977,11 @@ char *hpd_up =
 				"                        Same as --regex with inverted match\n"
 				"  --iregexi [<var>,]<match>\n"
 				"                        Same as --regexi with inverted match\n"
+				"  --match [<field>,]<match>\n"
+				"                        Regular filter string (exact matches)\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
+				"  --imatch [<field>,]<match>\n"
+				"                        Inverted --match\n"
 				"  --sort <mode>,<order>,<field>\n"
 				"                        Sort data log entries before displaying\n"
 				"                          <mode> can only be 'num' (numeric)\n"
@@ -1162,7 +1161,7 @@ int opt_loop_max(void *arg, int m) {
 	loop_max = (uint64_t) strtol(buffer, NULL, 10);
 	if ((errno == ERANGE && (loop_max == LONG_MAX || loop_max == LONG_MIN))
 			|| (errno != 0 && loop_max == 0)) {
-		return errno;
+		return (a32 << 17);
 	}
 
 	return 0;
@@ -1311,7 +1310,7 @@ int opt_shmipc(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 
 	if (!strlen(buffer)) {
-		return 1;
+		return (a32 << 16);
 	}
 
 	SHM_IPC = (key_t) strtoul(buffer, NULL, 16);
@@ -1441,13 +1440,13 @@ int opt_g_sort(void *arg, int m) {
 	int r = split_string(buffer, 0x2C, &_md_gsort);
 
 	if (r != 3) {
-		return 1;
+		return (a32 << 10);
 	}
 
 	p_md_obj ptr = md_first(&_md_gsort);
 
 	if (!ptr) {
-		return 2;
+		return (a32 << 11);
 	}
 
 	char *s_ptr = (char*) ptr->ptr;
@@ -1455,7 +1454,7 @@ int opt_g_sort(void *arg, int m) {
 	if (!strncmp(s_ptr, "num", 3)) {
 		g_sort_flags |= F_GSORT_NUMERIC;
 	} else {
-		return 3;
+		return (a32 << 12);
 	}
 
 	ptr = ptr->next;
@@ -1466,14 +1465,14 @@ int opt_g_sort(void *arg, int m) {
 	} else if (!strncmp(s_ptr, "asc", 3)) {
 		g_sort_flags |= F_GSORT_ASC;
 	} else {
-		return 4;
+		return (a32 << 13);
 	}
 
 	ptr = ptr->next;
 	g_sort_field = (char*) ptr->ptr;
 
 	if (!strlen(g_sort_field)) {
-		return 5;
+		return (a32 << 14);
 	}
 
 	g_sort_flags |= F_GSORT_RESETPOS;
@@ -1483,19 +1482,35 @@ int opt_g_sort(void *arg, int m) {
 	return 0;
 }
 
-mda _md_gregex = { 0 };
-char *g_regex_mtype = NULL;
-char *g_regex_match = NULL;
+mda _match_rr = { 0 };
 
-int g_cprg(void *arg, int m) {
+typedef struct ___g_match_h {
+	uint32_t flags;
+	char *match, *field;
+	int reg_i_m, match_i_m, regex_flags;
+	char data[5120];
+} _g_match, *__g_match;
+
+#define F_GM_ISREGEX		(a32 << 1)
+#define F_GM_ISMATCH		(a32 << 2)
+
+int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
+		uint32_t flags) {
 	char *buffer = g_pg(arg, m);
+
 	size_t a_i = strlen(buffer);
 
 	a_i > 4096 ? a_i = 4096 : a_i;
 
-	md_init(&_md_gregex, 2);
+	md_init(&_match_rr, 32);
 
-	char *ptr = (char*) md_alloc(&_md_gregex, a_i + 8);
+	if (_match_rr.offset >= 8192) {
+		return (a32 << 8);
+	}
+
+	__g_match pgm = md_alloc(&_match_rr, sizeof(_g_match));
+
+	char *ptr = (char*) pgm->data;
 
 	g_strncpy(ptr, buffer, a_i);
 
@@ -1508,45 +1523,45 @@ int g_cprg(void *arg, int m) {
 
 	if (ptr[i] == 0x2C && i != (off_t) a_i) {
 		ptr[i] = 0x0;
-		g_regex_mtype = ptr;
+		pgm->field = ptr;
 		ptr = &ptr[i + 1];
 	}
 
-	g_regex_match = ptr;
+	pgm->match = ptr;
+	pgm->match_i_m = match_i_m;
+	pgm->reg_i_m = reg_i_m;
+	pgm->regex_flags = regex_flags;
+	pgm->flags = flags;
+
+	if (!(gfl & F_OPT_HAS_G_REGEX)) {
+		gfl |= F_OPT_HAS_G_REGEX;
+	}
 
 	return 0;
 }
 
 int opt_g_regexi(void *arg, int m) {
-	glob_regex_flags |= REG_ICASE;
-	return g_cprg(arg, m);
+	return g_cprg(arg, m, 0, 0, REG_ICASE, F_GM_ISREGEX);
 }
 
 int opt_g_match(void *arg, int m) {
-	g_cpg(arg, GLOB_MATCH, m, 4095);
-	glob_match_i_m = 0;
-	return 0;
+	return g_cprg(arg, m, 0, 0, 0, F_GM_ISMATCH);
 }
 
 int opt_g_imatch(void *arg, int m) {
-	g_cpg(arg, GLOB_MATCH, m, 4095);
-	glob_match_i_m = 1;
-	return 0;
+	return g_cprg(arg, m, 1, 0, 0, F_GM_ISMATCH);
 }
 
 int opt_g_regex(void *arg, int m) {
-	return g_cprg(arg, m);
+	return g_cprg(arg, m, 0, 0, 0, F_GM_ISREGEX);
 }
 
 int opt_g_iregexi(void *arg, int m) {
-	glob_regex_flags |= REG_ICASE;
-	glob_reg_i_m = REG_NOMATCH;
-	return g_cprg(arg, m);
+	return g_cprg(arg, m, 0, REG_NOMATCH, REG_ICASE, F_GM_ISREGEX);
 }
 
 int opt_g_iregex(void *arg, int m) {
-	glob_reg_i_m = REG_NOMATCH;
-	return g_cprg(arg, m);
+	return g_cprg(arg, m, 0, REG_NOMATCH, 0, F_GM_ISREGEX);
 }
 
 int opt_nukelog_file(void *arg, int m) {
@@ -1787,7 +1802,7 @@ int rebuild(void *);
 int rebuild_data_file(char *, struct g_handle *);
 
 int g_bmatch(void *, struct g_handle *);
-int do_match(char *, void *, void *);
+int do_match(char *, void *, __g_match, void *);
 
 size_t g_load_data_md(void *, size_t, char *);
 int g_load_record(struct g_handle *, const void *);
@@ -2184,7 +2199,7 @@ int g_shutdown(void *arg) {
 		g_fclose(pf_infile);
 	}
 
-	md_g_free(&_md_gregex);
+	md_g_free(&_match_rr);
 	md_g_free(&_md_gsort);
 
 	_p_macro_argc = 0;
@@ -2388,14 +2403,6 @@ int g_init(int argc, char **argv) {
 
 	if (dir_exists(SITEROOT)) {
 		print_str("WARNING: no valid siteroot!\n");
-	}
-
-	if (g_regex_match && strlen(g_regex_match)) {
-		gfl |= F_OPT_HAS_G_REGEX;
-	}
-
-	if (strlen(GLOB_MATCH)) {
-		gfl |= F_OPT_HAS_G_MATCH;
 	}
 
 	if (!updmode && (gfl & F_OPT_SFV)) {
@@ -3086,7 +3093,7 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 	switch (type) {
 	case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			if ((aa_rh->rt_m = do_match(name, name, ref_to_val_generic))) {
+			if ((aa_rh->rt_m = do_match(name, name, NULL, ref_to_val_generic))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3098,7 +3105,7 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 		break;
 	case DT_DIR:
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			if ((aa_rh->rt_m = do_match(name, name, ref_to_val_generic))) {
+			if ((aa_rh->rt_m = do_match(name, name, NULL, ref_to_val_generic))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3608,16 +3615,16 @@ int dirlog_check_records(void) {
 	return r;
 }
 
-int do_match(char *mstr, void *d_ptr, void *callback) {
+int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
 	int r = 0;
-	if ((gfl & F_OPT_HAS_G_MATCH) && mstr) {
+	if ((_gm->flags & F_GM_ISMATCH) && mstr) {
 		size_t mstr_l = strlen(mstr);
 
-		int irl = strlen(GLOB_MATCH) != mstr_l, ir = strncmp(mstr, GLOB_MATCH,
+		int irl = strlen(_gm->match) != mstr_l, ir = strncmp(mstr, _gm->match,
 				mstr_l);
 
-		if ((glob_match_i_m && (ir || irl))
-				|| (!glob_match_i_m && (!ir && !irl))) {
+		if ((_gm->match_i_m && (ir || irl))
+				|| (!_gm->match_i_m && (!ir && !irl))) {
 			if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 				print_str("WARNING: %s: match positive, ignoring this record\n",
 						mstr);
@@ -3627,9 +3634,8 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 		goto end;
 	}
 
-	if ((gfl & F_OPT_HAS_G_REGEX) && mstr
-			&& reg_match(g_regex_match, mstr, glob_regex_flags)
-					== glob_reg_i_m) {
+	if ((_gm->flags & F_GM_ISREGEX) && mstr
+			&& reg_match(_gm->match, mstr, _gm->regex_flags) == _gm->reg_i_m) {
 
 		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
 			print_str(
@@ -3637,26 +3643,9 @@ int do_match(char *mstr, void *d_ptr, void *callback) {
 					mstr);
 		}
 		r = 3;
-		goto end;
-	}
-
-	int r_e = g_do_exec(d_ptr, callback, NULL);
-
-	if (exec_str && WEXITSTATUS(r_e)) {
-		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-			print_str(
-					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
-					WEXITSTATUS(r_e));
-		}
-		r = 1;
 	}
 
 	end:
-
-	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
-		EXITVAL = 1;
-		gfl |= F_OPT_KILL_GLOBAL;
-	}
 
 	return r;
 }
@@ -3708,23 +3697,55 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
 }
 
 int g_bmatch(void *d_ptr, struct g_handle *hdl) {
-	//g_setjmp(0, "g_bmatch", NULL, NULL);
-	char buffer[255], *mstr = buffer;
-	if ((gfl & F_OPT_HAS_G_REGEX) && g_regex_mtype) {
-		buffer[0] = 0x0;
-		if (!hdl->g_proc1(d_ptr, g_regex_mtype, buffer, 254)) {
-			goto s_m;
+	p_md_obj ptr = md_first(&_match_rr);
+	int r = 0;
+	while (ptr) {
+		__g_match _gm = (__g_match) ptr->ptr;
+		char buffer[255], *mstr = buffer;
+		if (_gm->field) {
+			buffer[0] = 0x0;
+			if (!hdl->g_proc1(d_ptr, _gm->field, buffer, 254)) {
+				goto s_m;
+			}
 		}
+
+		mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
+
+		if (!mstr) {
+			return -1;
+		}
+
+		s_m:;
+
+		if ((r = do_match(mstr, d_ptr, _gm, (void*) hdl->g_proc1))) {
+			goto end;
+		}
+
+		ptr = ptr->next;
 	}
-	mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
 
-	if (!mstr) {
-		return -1;
+	int r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL);
+
+	if (exec_str && WEXITSTATUS(r_e)) {
+		if ((gfl & F_OPT_VERBOSE3) && !(gfl & F_OPT_MODE_RAWDUMP)) {
+			print_str(
+					"WARNING: [%d] external call returned non-zero, ignoring this record\n",
+					WEXITSTATUS(r_e));
+		}
+		r = 1;
 	}
 
-	s_m: ;
+	end:
 
-	return do_match(mstr, d_ptr, (void*) hdl->g_proc1);
+	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
+		if (!r) {
+			r = 1;
+		}
+		EXITVAL = 1;
+		gfl |= F_OPT_KILL_GLOBAL;
+	}
+
+	return r;
 }
 
 int do_sort(struct g_handle *hdl, char *field, uint32_t flags) {
@@ -3792,6 +3813,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		return 0;
 	}
 
+	void *buffer = calloc(1, g_act_1.block_sz);
+
 	int r;
 	uint64_t s_gfl = 0;
 
@@ -3842,7 +3865,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	}
 
 	void *ptr;
-	void *buffer = calloc(1, g_act_1.block_sz);
+
 	char sbuffer[MAX_G_PRINT_STATS_BUFFER], *ns_ptr;
 	off_t c = 0;
 	ear e;
@@ -4171,7 +4194,7 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 		}
 
 		if (r == 2) {
-			ret += process_opt(c_arg, ((p_md_obj) cmd_lt.objects->next)->ptr,
+			ret |= process_opt(c_arg, ((p_md_obj) cmd_lt.objects->next)->ptr,
 					fref_t, 2);
 
 			c++;
@@ -4194,7 +4217,7 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 				buffer = &argv[i + 1];
 				i += vp;
 			}
-			ret += process_opt(argv[oi], buffer, fref_t, 0);
+			ret |= process_opt(argv[oi], buffer, fref_t, 0);
 
 			c++;
 		}
@@ -7259,37 +7282,24 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 int process_exec_string(char *input, char *output, void *callback, void *data) {
 	g_setjmp(0, "process_exec_string", NULL, NULL);
 
-	if (!callback) {
-		return 1;
-	}
-
 	int (*call)(void *, char *, char *, size_t) = callback;
 
-	if (!output) {
-		return 3;
-	}
-
-	size_t blen = strlen(input), blen2 = strlen(input), blenmax = 0;
+	size_t blen = strlen(input);
 
 	if (!blen || blen > MAX_EXEC_STR) {
 		return 4;
 	}
 
-	blenmax = blen * 2;
-
-	if (blenmax > MAX_EXEC_STR) {
-		return 5;
-	}
 	size_t b_l_1;
 	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
 			(char*) calloc(
 			MAX_EXEC_STR, 1);
 	int i, i2, pi, r;
 
-	for (i = 0, pi = 0; i < blen2; i++, pi++) {
+	for (i = 0, pi = 0; i < blen; i++, pi++) {
 		if (input[i] == 0x7B) {
 			bzero(buffer, MAX_VAR_LEN + 1);
-			for (i2 = 0, i++, r = 0; i < blen2 && i2 < MAX_VAR_LEN; i++, i2++) {
+			for (i2 = 0, i++, r = 0; i < blen && i2 < MAX_VAR_LEN; i++, i2++) {
 				if (input[i] == 0x7D) {
 					if (!i2 || strlen(buffer) > MAX_VAR_LEN
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
