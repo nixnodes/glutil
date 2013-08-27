@@ -4,6 +4,8 @@
  *   - Bugfix: extracting fields was broken with -w
  *   - Layered matching; multiple --[i]regex[i] and --[i]match params can be used (rev. 1)
  *   - --[i]match can match against specific log fields same way as --[i]regex[i] (rev. 1)
+ *   - Progress stats showed when not requested (-p) (rev. 2)
+ *   - Bugfix: plugged memory leak when --sort given repeatedly (rev. 2) 
  *
  * v1.5
  *
