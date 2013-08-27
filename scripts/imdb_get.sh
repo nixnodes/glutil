@@ -6,6 +6,8 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
+## Requires glutil-1.5-2 or greater
+#
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
 ## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]        (filesystem based)
@@ -49,17 +51,14 @@ UPDATE_IMDBLOG=1
 ## Set to 1, imdblog directory path fields are set to exact 
 ##  query that was made
 ## Existing records are always overwritten, except if DENY_IMDBID_DUPE=1
-#
 DATABASE_TYPE=0
 #
-## If set to 1 and DATABASE_TYPE=1, do not import records with same
+## If set to 1, do not import records with same
 ## iMDB ID already in the database
-#
 DENY_IMDBID_DUPE=0
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
-#
 RECORD_MAX_AGE=0
 #
 ############################[ END OPTIONS ]##############################
