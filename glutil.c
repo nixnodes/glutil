@@ -245,7 +245,7 @@ typedef struct mda_object {
 #define F_MDA_FIRST_REUSED  0x20
 
 typedef struct mda_header {
-	p_md_obj objects, pos, r_pos, c_pos;
+	p_md_obj objects, pos, r_pos, c_pos, first, last;
 	off_t offset, r_offset, count;
 	uint32_t flags;
 	void *lref_ptr;
@@ -270,8 +270,9 @@ struct g_handle {
 	struct ONLINE *ol;
 	int shmid;
 	struct shmid_ds ipcbuf;
-	int (*gcb_proc0)(void *, char *, char *);
-	int (*gcb_proc1)(void *, char *, char *, size_t);
+	int (*g_proc0)(void *, char *, char *);
+	int (*g_proc1)(void *, char *, char *, size_t);
+	void *(*g_proc2)(void *, char *, size_t*);
 	int d_memb;
 };
 
@@ -368,172 +369,183 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 
 #define REG_MATCHES_MAX	 	4
 
-#define UPD_MODE_RECURSIVE 	0x1
-#define UPD_MODE_SINGLE		0x2
-#define UPD_MODE_CHECK		0x3
-#define UPD_MODE_DUMP		0x4
-#define UPD_MODE_DUMP_NUKE	0x5
-#define UPD_MODE_DUPE_CHK	0x6
-#define UPD_MODE_REBUILD	0x7
-#define UPD_MODE_DUMP_DUPEF 0x8
-#define UPD_MODE_DUMP_LON	0x9
-#define UPD_MODE_DUMP_ONEL	0xA
-#define UPD_MODE_DUMP_ONL	0xB
-#define UPD_MODE_NOOP		0xC
-#define UPD_MODE_MACRO		0xD
-#define UPD_MODE_FORK		0xE
-#define UPD_MODE_BACKUP		0xF
-#define UPD_MODE_DUMP_USERS	0x10
-#define UPD_MODE_DUMP_GRPS	0x11
-#define UPD_MODE_DUMP_GEN	0x12
-#define UPD_MODE_WRITE		0x13
-#define UPD_MODE_DUMP_IMDB	0x14
-#define UPD_MODE_DUMP_GAME	0x15
+#define UPD_MODE_RECURSIVE 		0x1
+#define UPD_MODE_SINGLE			0x2
+#define UPD_MODE_CHECK			0x3
+#define UPD_MODE_DUMP			0x4
+#define UPD_MODE_DUMP_NUKE		0x5
+#define UPD_MODE_DUPE_CHK		0x6
+#define UPD_MODE_REBUILD		0x7
+#define UPD_MODE_DUMP_DUPEF 	0x8
+#define UPD_MODE_DUMP_LON		0x9
+#define UPD_MODE_DUMP_ONEL		0xA
+#define UPD_MODE_DUMP_ONL		0xB
+#define UPD_MODE_NOOP			0xC
+#define UPD_MODE_MACRO			0xD
+#define UPD_MODE_FORK			0xE
+#define UPD_MODE_BACKUP			0xF
+#define UPD_MODE_DUMP_USERS		0x10
+#define UPD_MODE_DUMP_GRPS		0x11
+#define UPD_MODE_DUMP_GEN		0x12
+#define UPD_MODE_WRITE			0x13
+#define UPD_MODE_DUMP_IMDB		0x14
+#define UPD_MODE_DUMP_GAME		0x15
 
-#define PRIO_UPD_MODE_MACRO 0x1001
-#define PRIO_UPD_MODE_INFO 	0x1002
+#define PRIO_UPD_MODE_MACRO 	0x1001
+#define PRIO_UPD_MODE_INFO 		0x1002
 
 /* -- flags -- */
 
-#define F_OPT_FORCE 		(a64 << 1)
-#define F_OPT_VERBOSE 		(a64 << 2)
-#define F_OPT_VERBOSE2 		(a64 << 3)
-#define F_OPT_VERBOSE3 		(a64 << 4)
-#define F_OPT_SFV	 		(a64 << 5)
-#define F_OPT_NOWRITE		(a64 << 6)
-#define F_OPT_NOBUFFER		(a64 << 7)
-#define F_OPT_UPDATE		(a64 << 8)
-#define F_OPT_FIX			(a64 << 9)
-#define F_OPT_FOLLOW_LINKS	(a64 << 10)
-#define F_OPT_FORMAT_BATCH	(a64 << 11)
-#define F_OPT_KILL_GLOBAL	(a64 << 12)
-#define F_OPT_MODE_RAWDUMP  (a64 << 13)
-#define F_OPT_HAS_G_REGEX	(a64 << 14)
-#define F_OPT_VERBOSE4 		(a64 << 15)
-#define F_OPT_WBUFFER		(a64 << 16)
-#define F_OPT_FORCEWSFV		(a64 << 17)
-#define F_OPT_FORMAT_COMP   (a64 << 18)
-#define F_OPT_DAEMONIZE		(a64 << 19)
-#define F_OPT_LOOP			(a64 << 20)
-#define F_OPT_LOOPEXEC		(a64 << 21)
-#define F_OPT_PS_SILENT		(a64 << 22)
-#define F_OPT_PS_TIME		(a64 << 23)
-#define F_OPT_PS_LOGGING	(a64 << 24)
-#define F_OPT_TERM_ENUM		(a64 << 25)
-#define F_OPT_HAS_G_MATCH	(a64 << 26)
-#define F_OPT_HAS_M_ARG1	(a64 << 27)
-#define F_OPT_HAS_M_ARG2	(a64 << 28)
-#define F_OPT_HAS_M_ARG3	(a64 << 29)
-#define F_OPT_PREEXEC		(a64 << 30)
-#define F_OPT_POSTEXEC		(a64 << 31)
-#define F_OPT_NOBACKUP		(a64 << 32)
-#define F_OPT_C_GHOSTONLY	(a64 << 33)
-#define F_OPT_XDEV			(a64 << 34)
-#define F_OPT_XBLK			(a64 << 35)
-#define F_OPT_MATCHQ		(a64 << 36)
-#define F_OPT_IMATCHQ		(a64 << 37)
-#define F_OPT_CDIRONLY		(a64 << 38)
+#define F_OPT_FORCE 			(a64 << 1)
+#define F_OPT_VERBOSE 			(a64 << 2)
+#define F_OPT_VERBOSE2 			(a64 << 3)
+#define F_OPT_VERBOSE3 			(a64 << 4)
+#define F_OPT_SFV	 			(a64 << 5)
+#define F_OPT_NOWRITE			(a64 << 6)
+#define F_OPT_NOBUFFER			(a64 << 7)
+#define F_OPT_UPDATE			(a64 << 8)
+#define F_OPT_FIX				(a64 << 9)
+#define F_OPT_FOLLOW_LINKS		(a64 << 10)
+#define F_OPT_FORMAT_BATCH		(a64 << 11)
+#define F_OPT_KILL_GLOBAL		(a64 << 12)
+#define F_OPT_MODE_RAWDUMP  	(a64 << 13)
+#define F_OPT_HAS_G_REGEX		(a64 << 14)
+#define F_OPT_VERBOSE4 			(a64 << 15)
+#define F_OPT_WBUFFER			(a64 << 16)
+#define F_OPT_FORCEWSFV			(a64 << 17)
+#define F_OPT_FORMAT_COMP   	(a64 << 18)
+#define F_OPT_DAEMONIZE			(a64 << 19)
+#define F_OPT_LOOP				(a64 << 20)
+#define F_OPT_LOOPEXEC			(a64 << 21)
+#define F_OPT_PS_SILENT			(a64 << 22)
+#define F_OPT_PS_TIME			(a64 << 23)
+#define F_OPT_PS_LOGGING		(a64 << 24)
+#define F_OPT_TERM_ENUM			(a64 << 25)
+#define F_OPT_HAS_G_MATCH		(a64 << 26)
+#define F_OPT_HAS_M_ARG1		(a64 << 27)
+#define F_OPT_HAS_M_ARG2		(a64 << 28)
+#define F_OPT_HAS_M_ARG3		(a64 << 29)
+#define F_OPT_PREEXEC			(a64 << 30)
+#define F_OPT_POSTEXEC			(a64 << 31)
+#define F_OPT_NOBACKUP			(a64 << 32)
+#define F_OPT_C_GHOSTONLY		(a64 << 33)
+#define F_OPT_XDEV				(a64 << 34)
+#define F_OPT_XBLK				(a64 << 35)
+#define F_OPT_MATCHQ			(a64 << 36)
+#define F_OPT_IMATCHQ			(a64 << 37)
+#define F_OPT_CDIRONLY			(a64 << 38)
+#define F_OPT_SORT 				(a64 << 39)
 
-#define F_DL_FOPEN_BUFFER	(a32 << 1)
-#define F_DL_FOPEN_FILE		(a32 << 2)
-#define F_DL_FOPEN_REWIND	(a32 << 3)
-#define F_DL_FOPEN_SHM		(a32 << 4)
+#define F_DL_FOPEN_BUFFER		(a32 << 1)
+#define F_DL_FOPEN_FILE			(a32 << 2)
+#define F_DL_FOPEN_REWIND		(a32 << 3)
+#define F_DL_FOPEN_SHM			(a32 << 4)
 
-#define F_EARG_SFV 			(a32 << 1)
-#define F_EAR_NOVERB		(a32 << 2)
+#define F_EARG_SFV 				(a32 << 1)
+#define F_EAR_NOVERB			(a32 << 2)
 
-#define F_FC_MSET_SRC		(a32 << 1)
-#define F_FC_MSET_DEST		(a32 << 2)
+#define F_FC_MSET_SRC			(a32 << 1)
+#define F_FC_MSET_DEST			(a32 << 2)
 
-#define F_GH_NOMEM  		(a32 << 1)
-#define F_GH_ISDIRLOG		(a32 << 2)
-#define F_GH_EXEC			(a32 << 3)
-#define F_GH_ISNUKELOG		(a32 << 4)
-#define F_GH_FFBUFFER		(a32 << 5)
-#define F_GH_WAPPEND		(a32 << 6)
-#define F_GH_DFWASWIPED		(a32 << 7)
-#define F_GH_DFNOWIPE		(a32 << 8)
-#define F_GH_ISDUPEFILE		(a32 << 9)
-#define F_GH_ISLASTONLOG	(a32 << 10)
-#define F_GH_ISONELINERS	(a32 << 11)
-#define F_GH_SHM			(a32 << 12)
-#define F_GH_ISONLINE		(a32 << 13)
-#define F_GH_ISIMDB			(a32 << 14)
-#define F_GH_ISGAME			(a32 << 15)
+#define F_GH_NOMEM  			(a32 << 1)
+#define F_GH_ISDIRLOG			(a32 << 2)
+#define F_GH_EXEC				(a32 << 3)
+#define F_GH_ISNUKELOG			(a32 << 4)
+#define F_GH_FFBUFFER			(a32 << 5)
+#define F_GH_WAPPEND			(a32 << 6)
+#define F_GH_DFWASWIPED			(a32 << 7)
+#define F_GH_DFNOWIPE			(a32 << 8)
+#define F_GH_ISDUPEFILE			(a32 << 9)
+#define F_GH_ISLASTONLOG		(a32 << 10)
+#define F_GH_ISONELINERS		(a32 << 11)
+#define F_GH_SHM				(a32 << 12)
+#define F_GH_ISONLINE			(a32 << 13)
+#define F_GH_ISIMDB				(a32 << 14)
+#define F_GH_ISGAME				(a32 << 15)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE			(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
+#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME)
 
-#define F_OVRR_IPC			(a32 << 1)
-#define F_OVRR_GLROOT		(a32 << 2)
-#define F_OVRR_SITEROOT		(a32 << 3)
-#define F_OVRR_DUPEFILE		(a32 << 4)
-#define F_OVRR_LASTONLOG	(a32 << 5)
-#define F_OVRR_ONELINERS	(a32 << 6)
-#define F_OVRR_DIRLOG		(a32 << 7)
-#define F_OVRR_NUKELOG		(a32 << 8)
-#define F_OVRR_NUKESTR		(a32 << 9)
-#define F_OVRR_IMDBLOG		(a32 << 10)
+#define F_OVRR_IPC				(a32 << 1)
+#define F_OVRR_GLROOT			(a32 << 2)
+#define F_OVRR_SITEROOT			(a32 << 3)
+#define F_OVRR_DUPEFILE			(a32 << 4)
+#define F_OVRR_LASTONLOG		(a32 << 5)
+#define F_OVRR_ONELINERS		(a32 << 6)
+#define F_OVRR_DIRLOG			(a32 << 7)
+#define F_OVRR_NUKELOG			(a32 << 8)
+#define F_OVRR_NUKESTR			(a32 << 9)
+#define F_OVRR_IMDBLOG			(a32 << 10)
 
-#define F_AV_RETURN_STRING 	0x1
+#define F_PD_RECURSIVE 			(a32 << 1)
+#define F_PD_MATCHDIR			(a32 << 2)
+#define F_PD_MATCHREG			(a32 << 3)
 
-#define F_PD_RECURSIVE 		(a32 << 1)
-#define F_PD_MATCHDIR		(a32 << 2)
-#define F_PD_MATCHREG		(a32 << 3)
+#define F_PD_MATCHTYPES			(F_PD_MATCHDIR|F_PD_MATCHREG)
 
-#define F_PD_MATCHTYPES		(F_PD_MATCHDIR|F_PD_MATCHREG)
+#define F_GSORT_DESC			(a32 << 1)
+#define F_GSORT_ASC				(a32 << 2)
+#define F_GSORT_RESETPOS		(a32 << 3)
+#define F_GSORT_NUMERIC	    	(a32 << 4)
+
+#define F_GSORT_ORDER			(F_GSORT_DESC|F_GSORT_ASC)
+
+#define F_ENUMD_ENDFIRSTOK		(a32 << 1)
+#define F_ENUMD_BREAKONBAD		(a32 << 2)
+#define F_ENUMD_NOXDEV			(a32 << 3)
+#define F_ENUMD_NOXBLK			(a32 << 4)
 
 /* -- end flags -- */
 
-#define V_MB				0x100000
+#define V_MB					0x100000
 
-#define DL_SZ 				sizeof(struct dirlog)
-#define NL_SZ 				sizeof(struct nukelog)
-#define DF_SZ 				sizeof(struct dupefile)
-#define LO_SZ 				sizeof(struct lastonlog)
-#define OL_SZ 				sizeof(struct oneliner)
-#define ON_SZ 				sizeof(struct ONLINE)
-#define ID_SZ 				sizeof(_d_imdb)
-#define GM_SZ 				sizeof(_d_game)
+#define DL_SZ 					sizeof(struct dirlog)
+#define NL_SZ 					sizeof(struct nukelog)
+#define DF_SZ 					sizeof(struct dupefile)
+#define LO_SZ 					sizeof(struct lastonlog)
+#define OL_SZ 					sizeof(struct oneliner)
+#define ON_SZ 					sizeof(struct ONLINE)
+#define ID_SZ 					sizeof(_d_imdb)
+#define GM_SZ 					sizeof(_d_game)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
-#define	DB_MAX_SIZE 		536870912   /* max file size allowed to load into memory */
-#define MAX_EXEC_STR 		262144
+#define	DB_MAX_SIZE 			536870912   /* max file size allowed to load into memory */
+#define MAX_EXEC_STR 			262144
 
-#define	PIPE_READ_MAX		0x2000
-#define MAX_VAR_LEN			255
+#define	PIPE_READ_MAX			0x2000
+#define MAX_VAR_LEN				255
 
-#define MSG_GEN_NODFILE 	"ERROR: %s: could not open data file: %s\n"
-#define MSG_GEN_DFWRITE 	"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
-#define MSG_GEN_DFCORRU 	"ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
-#define MSG_GEN_DFRFAIL 	"ERROR: %s: rebuilding data file failed!\n"
-#define MSG_BAD_DATATYPE 	"ERROR: %s: could not determine data type\n"
-#define MSG_GEN_WROTE		"STATS: %s: wrote %llu bytes in %llu records\n"
+#define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
+#define MSG_GEN_DFWRITE 		"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
+#define MSG_GEN_DFCORRU 		"ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
+#define MSG_GEN_DFRFAIL 		"ERROR: %s: rebuilding data file failed!\n"
+#define MSG_BAD_DATATYPE 		"ERROR: %s: could not determine data type\n"
+#define MSG_GEN_WROTE			"STATS: %s: wrote %llu bytes in %llu records\n"
 
-#define DEFPATH_LOGS 		"/logs"
-#define DEFPATH_USERS 		"/users"
-#define DEFPATH_GROUPS 		"/groups"
+#define DEFPATH_LOGS 			"/logs"
+#define DEFPATH_USERS 			"/users"
+#define DEFPATH_GROUPS 			"/groups"
 
-#define DEFF_DIRLOG 		"dirlog"
-#define DEFF_NUKELOG 		"nukelog"
-#define DEFF_LASTONLOG  	"laston.log"
-#define DEFF_DUPEFILE 		"dupefile"
-#define DEFF_ONELINERS 		"oneliners.log"
-#define DEFF_DULOG	 		"glutil.log"
-#define DEFF_IMDB	 		"imdb.log"
-#define DEFF_GAMELOG 		"game.log"
+#define DEFF_DIRLOG 			"dirlog"
+#define DEFF_NUKELOG 			"nukelog"
+#define DEFF_LASTONLOG  		"laston.log"
+#define DEFF_DUPEFILE 			"dupefile"
+#define DEFF_ONELINERS 			"oneliners.log"
+#define DEFF_DULOG	 			"glutil.log"
+#define DEFF_IMDB	 			"imdb.log"
+#define DEFF_GAMELOG 			"game.log"
 
-#define F_SIGERR_CONTINUE 	0x1  /* continue after exception */
+#define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
-#define ID_SIGERR_UNSPEC 	0x0
-#define ID_SIGERR_MEMCPY 	0x1
-#define ID_SIGERR_STRCPY 	0x2
-#define ID_SIGERR_FREE 		0x3
-#define ID_SIGERR_FREAD 	0x4
-#define ID_SIGERR_FWRITE 	0x5
-#define ID_SIGERR_FOPEN 	0x6
-#define ID_SIGERR_FCLOSE 	0x7
-#define ID_SIGERR_MEMMOVE 	0x8
+#define ID_SIGERR_UNSPEC 		0x0
+#define ID_SIGERR_MEMCPY 		0x1
+#define ID_SIGERR_STRCPY 		0x2
+#define ID_SIGERR_FREE 			0x3
+#define ID_SIGERR_FREAD 		0x4
+#define ID_SIGERR_FWRITE 		0x5
+#define ID_SIGERR_FOPEN 		0x6
+#define ID_SIGERR_FCLOSE 		0x7
+#define ID_SIGERR_MEMMOVE 		0x8
 
 sigjmp g_sigjmp = { { { { 0 } } } };
 uint64_t gfl = F_OPT_WBUFFER;
@@ -899,6 +911,8 @@ mda cfg_rf = { 0 };
 
 uint32_t flags_udcfg = 0;
 
+uint32_t g_sort_flags = 0;
+
 char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
 				"\n"
@@ -948,26 +962,33 @@ char *hpd_up =
 				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}..\n"
 				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|{year}>\n"
 				"                        While parsing data structure/filesystem, execute command for each record\n"
-				"                            Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
-				"                            Operators {..} are overwritten with dirlog values\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
+				"                          Operators {..} are overwritten with dirlog values\n"
 				"  --preexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute shell <command> before starting main procedure\n"
 				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute shell <command> after main procedure finishes\n"
 				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"  --match <match>       Regular filter string (exact matches)\n"
-				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
 				"  --imatch <match>      Inverted --match\n"
-				"  --regex [<var>,]<match>\n"
+				"  --regex [<field>,]<match>\n"
 				"                        Regex filter string, used during various operations\n"
-				"                           It's possible to match against a specific <var> (see --exec for a list)\n"
-				"                           Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n\n"
+				"                          If <var> is set, matching is performed against a specific data log field\n"
+				"                            (field names are the same as --exec variable names for logs)\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
 				"  --regexi [<var>,]<match>\n"
 				"                        Case insensitive variant of --regex\n"
 				"  --iregex [<var>,]<match> \n"
 				"                        Same as --regex with inverted match\n"
 				"  --iregexi [<var>,]<match>\n"
 				"                        Same as --regexi with inverted match\n"
+				"  --sort <mode>,<order>,<field>\n"
+				"                        Sort data log entries before displaying\n"
+				"                          <mode> can only be 'num' (numeric)\n"
+				"                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
+				"                          Sorts by the specified data log <field>\n"
+				"                          Used with -e, -d, -i, -l, -o, -w, -a, -k and -n\n"
 				"\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
@@ -981,9 +1002,9 @@ char *hpd_up =
 				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
 				"  --xdev                Ignores files/dirs on other filesystems\n"
-				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
+				"                           Applies to -r, -t, -g, -x (can apply to other modes)\n"
 				"  --xblk                Ignores files/dirs on non-block devices\n"
-				"                           Applies to -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x and -n (can apply to other modes)\n"
+				"                           Applies to -r, -t, -g, -x (can apply to other modes)\n"
 				"  --matchq              Exit on first match (--exec, --[i]regex[i], --[i]match)\n"
 				"  --imatchq             Exit on first non-match (--exec, --[i]regex[i], --[i]match)\n"
 				"  --batch               Prints with simple formatting\n"
@@ -1409,6 +1430,59 @@ int opt_g_usleep(void *arg, int m) {
 	return 0;
 }
 
+mda _md_gsort = { 0 };
+char *g_sort_field = NULL;
+
+int opt_g_sort(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+
+	md_init(&_md_gsort, 3);
+
+	int r = split_string(buffer, 0x2C, &_md_gsort);
+
+	if (r != 3) {
+		return 1;
+	}
+
+	p_md_obj ptr = md_first(&_md_gsort);
+
+	if (!ptr) {
+		return 2;
+	}
+
+	char *s_ptr = (char*) ptr->ptr;
+
+	if (!strncmp(s_ptr, "num", 3)) {
+		g_sort_flags |= F_GSORT_NUMERIC;
+	} else {
+		return 3;
+	}
+
+	ptr = ptr->next;
+	s_ptr = (char*) ptr->ptr;
+
+	if (!strncmp(s_ptr, "desc", 4)) {
+		g_sort_flags |= F_GSORT_DESC;
+	} else if (!strncmp(s_ptr, "asc", 3)) {
+		g_sort_flags |= F_GSORT_ASC;
+	} else {
+		return 4;
+	}
+
+	ptr = ptr->next;
+	g_sort_field = (char*) ptr->ptr;
+
+	if (!strlen(g_sort_field)) {
+		return 5;
+	}
+
+	g_sort_flags |= F_GSORT_RESETPOS;
+
+	gfl |= F_OPT_SORT;
+
+	return 0;
+}
+
 mda _md_gregex = { 0 };
 char *g_regex_mtype = NULL;
 char *g_regex_match = NULL;
@@ -1440,7 +1514,7 @@ int g_cprg(void *arg, int m) {
 
 	g_regex_match = ptr;
 
-	return 1;
+	return 0;
 }
 
 int opt_g_regexi(void *arg, int m) {
@@ -1628,14 +1702,18 @@ typedef int _d_avoid_i(void);
 /* specific types */
 typedef int __d_enum_cb(char *, unsigned char, void *);
 typedef int __d_ref_to_val(void *, char *, char *, size_t);
+typedef void *__d_ref_to_pval(void *arg, char *match, size_t *output);
 typedef int __d_format_block(char *, ear *, char *);
 typedef uint64_t __d_dlfind(char *, int, uint32_t, void *);
 typedef pmda __d_cfg(pmda md, char * file);
 typedef int __d_mlref(void *buffer, char *key, char *val);
+typedef uint64_t __g_t_ptr(void *base, size_t offset);
 
+__g_t_ptr g_t8_ptr, g_t16_ptr, g_t32_ptr, g_t64_ptr;
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close;
 _d_avoid_i dirlog_check_dupe, dirlog_print_stats, rebuild_dirlog,
 		dirlog_check_records, g_print_info;
+
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
 		dirlog_update_record, g_dump_ug, g_dump_gen, d_write;
 
@@ -1644,6 +1722,11 @@ __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
 		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
 		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game;
+
+__d_ref_to_pval ref_to_val_ptr_dirlog, ref_to_val_ptr_nukelog,
+		ref_to_val_ptr_oneliners, ref_to_val_ptr_online, ref_to_val_ptr_imdb,
+		ref_to_val_ptr_game, ref_to_val_ptr_lastonlog, ref_to_val_ptr_dupefile;
+
 __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
 		dirlog_format_block, imdb_format_block, game_format_block;
@@ -1735,6 +1818,19 @@ off_t s_string_r(char *input, char *m);
 
 int g_bin_compare(const void *p1, const void *p2, off_t size);
 
+int g_is_higher(uint64_t s, uint64_t d);
+int g_is_lower(uint64_t s, uint64_t d);
+int g_is_higher_f(float s, float d);
+int g_is_lower_f(float s, float d);
+
+int g_sort(struct g_handle *hdl, char *field, uint32_t flags);
+int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
+int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
+
+int do_sort(struct g_handle *hdl, char *field, uint32_t flags);
+
+int g_filter(struct g_handle *hdl, pmda md);
+
 void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		(void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2", opt_g_arg2,
 		(void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3", opt_g_arg3,
@@ -1746,33 +1842,33 @@ void *prio_f_ref[] = { "--silent", opt_silent, (void*) 0, "-arg1", opt_g_arg1,
 		opt_logging, (void*) 0, NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
-		(void*) 0, "--imatchq", opt_g_imatchq, (void*) 0, "--matchq",
-		opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z",
-		opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev",
-		opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk",
-		opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file",
-		opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir",
-		opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
-		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
-		(void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
-		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
-		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
-		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
-		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
-		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
-		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2", NULL,
-		(void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
-		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
-		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
-		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
-		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
-		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
-		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
-		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
-		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
-		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
-		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+void *f_ref[] = { "--sort", opt_g_sort, (void*) 1, "-k", opt_g_dump_game,
+		(void*) 0, "--cdir", opt_g_cdironly, (void*) 0, "--imatchq",
+		opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq, (void*) 0, "-a",
+		opt_g_dump_imdb, (void*) 0, "-z", opt_g_write, (void*) 1, "--infile",
+		opt_g_infile, (void*) 1, "-xdev", opt_g_xdev, (void*) 0, "--xdev",
+		opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk",
+		opt_g_xblk, (void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file",
+		opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir",
+		opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max, (void*) 1,
+		"--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1,
+		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
+		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
+		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
+		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
+		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
+		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
+		"--arg1", NULL, (void*) 1, "-arg2", NULL, (void*) 1, "--arg2", NULL,
+		(void*) 1, "-arg3", NULL, (void*) 1, "--arg3", NULL, (void*) 1, "-m",
+		NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
+		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
+		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
+		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
+		opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
+		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "--silent",
+		opt_silent, (void*) 0, "--loopexec", opt_g_loopexec, (void*) 1,
+		"--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0,
+		"-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
 		opt_lastonlog_dump, (void*) 0, "--imdblog", opt_imdblog, (void*) 1,
 		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
 		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
@@ -1812,6 +1908,7 @@ int md_init(pmda md, int nm) {
 	md->count = nm;
 	md->pos = md->objects;
 	md->r_pos = md->objects;
+	md->first = md->objects;
 	return 0;
 }
 
@@ -1848,6 +1945,8 @@ uintaa_t md_relink(pmda md) {
 				last->next = cur;
 				cur->prev = last;
 				l++;
+			} else {
+				md->first = cur;
 			}
 			last = cur;
 		}
@@ -1857,6 +1956,13 @@ uintaa_t md_relink(pmda md) {
 }
 
 p_md_obj md_first(pmda md) {
+
+	if (md->first && md->first != md->objects) {
+		if (md->first->ptr) {
+			return md->first;
+		}
+	}
+
 	off_t off = 0;
 	p_md_obj ptr = md->objects;
 
@@ -1951,6 +2057,16 @@ void *md_unlink(pmda md, p_md_obj md_o) {
 		c_ptr = md_o->next;
 	}
 
+	if (md->first == md_o) {
+		if (md_o->prev) {
+			md->first = md_o->prev;
+		} else if (md_o->next) {
+			md->first = md_o->next;
+		} else {
+			md->first = md->objects;
+		}
+	}
+
 	md->offset--;
 	if (md->pos == md_o && c_ptr) {
 		md->pos = c_ptr;
@@ -1961,6 +2077,42 @@ void *md_unlink(pmda md, p_md_obj md_o) {
 	md_o->ptr = NULL;
 
 	return (void*) c_ptr;
+}
+
+void *md_swap(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
+	if (!md_o1 || !md_o2) {
+		return NULL;
+	}
+
+	void *ptr2_s;
+
+	ptr2_s = md_o1->prev;
+	md_o1->next = md_o2->next;
+	md_o1->prev = md_o2;
+	md_o2->next = md_o1;
+	md_o2->prev = ptr2_s;
+
+	if (md_o2->prev) {
+		((p_md_obj) md_o2->prev)->next = md_o2;
+	}
+
+	if (md_o1->next) {
+		((p_md_obj) md_o1->next)->prev = md_o1;
+	}
+
+	if (md->first == md_o1) {
+		md->first = md_o2;
+	}
+
+	/*if (md->pos == md_o1) {
+	 md->pos = md_o2;
+	 }
+
+	 if (md->pos == md_o2) {
+	 md->pos = md_o1;
+	 }*/
+
+	return md_o2->next;
 }
 
 int setup_sighandlers(void) {
@@ -2033,6 +2185,7 @@ int g_shutdown(void *arg) {
 	}
 
 	md_g_free(&_md_gregex);
+	md_g_free(&_md_gsort);
 
 	_p_macro_argc = 0;
 
@@ -2115,11 +2268,17 @@ int g_init(int argc, char **argv) {
 	if (strlen(LOGFILE)) {
 		gfl |= F_OPT_PS_LOGGING;
 	}
-
 	r = parse_args(argc, argv, f_ref);
+
 	if (r == -2 || r == -1) {
 		print_help(NULL, -1);
 		return 4;
+	}
+
+	if (r > 0) {
+		print_str("ERROR: [%d] processing command line arguments failed\n", r);
+		EXITVAL = 2;
+		return EXITVAL;
 	}
 
 	enable_logging();
@@ -2343,7 +2502,7 @@ int g_init(int argc, char **argv) {
 		EXITVAL = dirlog_check_records();
 		break;
 	case UPD_MODE_DUMP:
-		EXITVAL = dirlog_print_stats();
+		EXITVAL = g_print_stats(DIRLOG, 0, 0);
 		break;
 	case UPD_MODE_DUMP_NUKE:
 		EXITVAL = g_print_stats(NUKELOG, 0, 0);
@@ -2529,7 +2688,7 @@ char **process_macro(void * arg, char **out) {
 				av.p_buf_1, dirn);
 	}
 
-	if (enum_dir(dirn, ssd_4macro, &av, 0) < 0) {
+	if (enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK) < 0) {
 		print_str("ERROR: %s: recursion failed (macro not found)\n",
 				av.p_buf_1);
 		return NULL;
@@ -2714,7 +2873,7 @@ int rebuild(void *arg) {
 	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
 			(ulint64_t) g_act_1.rw);
 
-	if ( g_act_1.bw == g_act_1.total_sz) {
+	if (g_act_1.bw == g_act_1.total_sz) {
 		return -1;
 	}
 
@@ -3549,19 +3708,75 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
 }
 
 int g_bmatch(void *d_ptr, struct g_handle *hdl) {
-	g_setjmp(0, "g_bmatch", NULL, NULL);
+	//g_setjmp(0, "g_bmatch", NULL, NULL);
 	char buffer[255], *mstr = buffer;
 	if ((gfl & F_OPT_HAS_G_REGEX) && g_regex_mtype) {
 		buffer[0] = 0x0;
-		if (!hdl->gcb_proc1(d_ptr, g_regex_mtype, buffer, 254)) {
+		if (!hdl->g_proc1(d_ptr, g_regex_mtype, buffer, 254)) {
 			goto s_m;
 		}
 	}
 	mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
 
+	if (!mstr) {
+		return -1;
+	}
+
 	s_m: ;
 
-	return do_match(mstr, d_ptr, (void*) hdl->gcb_proc1);
+	return do_match(mstr, d_ptr, (void*) hdl->g_proc1);
+}
+
+int do_sort(struct g_handle *hdl, char *field, uint32_t flags) {
+	if (!(gfl & F_OPT_SORT)) {
+		return 0;
+	}
+
+	if (!field) {
+		print_str("ERROR: %s: sorting requested but no field was set\n",
+				hdl->file);
+	}
+
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("NOTICE: %s: sorting..\n", hdl->file);
+	}
+
+	int r = g_sort(hdl, field, flags);
+
+	if (r) {
+		print_str("ERROR: %s: [%d]: could not sort data\n", hdl->file, r);
+	} else {
+		if (gfl & F_OPT_VERBOSE4) {
+			print_str("NOTICE: %s: sorting done\n", hdl->file);
+		}
+	}
+
+	return r;
+}
+
+int g_filter(struct g_handle *hdl, pmda md) {
+	p_md_obj ptr = md_first(md);
+	int r = 0;
+
+	while (ptr) {
+		if (gfl & F_OPT_KILL_GLOBAL) {
+			break;
+		}
+		if (g_bmatch(ptr->ptr, hdl)) {
+			if (!(ptr = md_unlink(&hdl->buffer, ptr))) {
+				r = 2;
+				break;
+			}
+			continue;
+		}
+		ptr = ptr->next;
+	}
+
+	if (!hdl->buffer.offset) {
+		return 1;
+	}
+
+	return r;
 }
 
 #define MAX_G_PRINT_STATS_BUFFER	8192
@@ -3574,7 +3789,56 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	}
 
 	if (g_fopen(file, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
-		return 2;
+		return 0;
+	}
+
+	int r;
+	uint64_t s_gfl = 0;
+
+	if (gfl & F_OPT_SORT) {
+		if ((gfl & F_OPT_NOBUFFER)) {
+			print_str("ERROR: %s: unable to sort with buffering disabled\n",
+					g_act_1.file);
+			goto r_end;
+		}
+
+		char *s_exec_str = exec_str;
+		exec_str = NULL;
+
+		r = g_filter(&g_act_1, &g_act_1.buffer);
+
+		exec_str = s_exec_str;
+
+		if (gfl & F_OPT_KILL_GLOBAL) {
+			goto r_end;
+		}
+
+		if (r == 1) {
+			print_str("WARNING: %s: all records were filtered\n", g_act_1.file);
+			goto r_end;
+		} else if (r) {
+			print_str("ERROR: %s: [%d]: filtering failed\n", g_act_1.file, r);
+			goto r_end;
+		}
+
+		if (do_sort(&g_act_1, g_sort_field, g_sort_flags)) {
+			goto r_end;
+		}
+
+		if (gfl & F_OPT_KILL_GLOBAL) {
+			goto r_end;
+		}
+
+		if (gfl & F_OPT_HAS_G_REGEX) {
+			gfl ^= F_OPT_HAS_G_REGEX;
+			s_gfl |= F_OPT_HAS_G_REGEX;
+		}
+
+		if (gfl & F_OPT_HAS_G_MATCH) {
+			gfl ^= F_OPT_HAS_G_MATCH;
+			s_gfl |= F_OPT_HAS_G_MATCH;
+		}
+
 	}
 
 	void *ptr;
@@ -3582,93 +3846,107 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	char sbuffer[MAX_G_PRINT_STATS_BUFFER], *ns_ptr;
 	off_t c = 0;
 	ear e;
-	int re_c, r, rt = 0;
+	int re_c;
 
 	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
 
 	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
-		/*if (!sigsetjmp(g_sigjmp.env, 1)) {
-		 g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
-		 NULL);*/
+		if (!sigsetjmp(g_sigjmp.env, 1)) {
+			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
+			NULL);
 
-		if (gfl & F_OPT_KILL_GLOBAL) {
-			rt = EXITVAL;
-			break;
-		}
-
-		if ((r = g_bmatch(ptr, &g_act_1))) {
-			if (r == -1) {
-				rt = 5;
-				break;
-			}
-			continue;
-		}
-		c++;
-		if (gfl & F_OPT_MODE_RAWDUMP) {
-			g_fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
-		} else {
-			re_c = 0;
-			ns_ptr = "UNKNOWN";
-			switch (g_act_1.flags & F_GH_ISTYPE) {
-			case F_GH_ISDIRLOG:
-				e.dirlog = (struct dirlog*) ptr;
-				ns_ptr = e.dirlog->dirname;
-				re_c += dirlog_format_block(ns_ptr, &e, sbuffer);
-				break;
-			case F_GH_ISNUKELOG:
-				e.nukelog = (struct nukelog*) ptr;
-				ns_ptr = e.dirlog->dirname;
-				re_c += nukelog_format_block(ns_ptr, &e, sbuffer);
-				break;
-			case F_GH_ISDUPEFILE:
-				e.dupefile = (struct dupefile*) ptr;
-				ns_ptr = e.dupefile->filename;
-				re_c += dupefile_format_block(ns_ptr, &e, sbuffer);
-				break;
-			case F_GH_ISLASTONLOG:
-				e.lastonlog = (struct lastonlog*) ptr;
-				ns_ptr = e.lastonlog->uname;
-				re_c += lastonlog_format_block(ns_ptr, &e, sbuffer);
-				break;
-			case F_GH_ISONELINERS:
-				e.oneliner = (struct oneliner*) ptr;
-				ns_ptr = e.oneliner->uname;
-				re_c += oneliner_format_block(ns_ptr, &e, sbuffer);
-				break;
-			case F_GH_ISONLINE:
-				e.online = (struct ONLINE*) ptr;
-				ns_ptr = e.online->username;
-				if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
-					goto end;
-				}
-				if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
-					print_str(
-							"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
-									"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
-									"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
-				}
-				break;
-			case F_GH_ISIMDB:
-				e.imdb = (__d_imdb) ptr;
-				ns_ptr = e.imdb->dirname;
-				re_c += imdb_format_block(ns_ptr, &e, sbuffer);
-				break;
-				case F_GH_ISGAME:
-				e.game = (__d_game) ptr;
-				ns_ptr = e.game->dirname;
-				re_c += game_format_block(ns_ptr, &e, sbuffer);
+			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
 
-			if (re_c) {
-				print_str(sbuffer);
-			} else {
-				print_str("ERROR: %s: zero-length formatted result\n", ns_ptr);
+			if ((r = g_bmatch(ptr, &g_act_1))) {
+				if (r == -1) {
+					print_str("ERROR: %s: [%d] matching record failed\n",
+							g_act_1.file, r);
+					break;
+				}
 				continue;
 			}
-		}
 
-		//}
+			c++;
+			if (gfl & F_OPT_MODE_RAWDUMP) {
+				g_fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
+			} else {
+				re_c = 0;
+				ns_ptr = "UNKNOWN";
+				switch (g_act_1.flags & F_GH_ISTYPE) {
+				case F_GH_ISDIRLOG:
+					e.dirlog = (struct dirlog*) ptr;
+					ns_ptr = e.dirlog->dirname;
+					re_c += dirlog_format_block(ns_ptr, &e, sbuffer);
+					if ((gfl & F_OPT_VERBOSE2)) {
+						struct nukelog n_buffer = { 0 };
+						if (nukelog_find(ns_ptr, 2, &n_buffer) < MAX_uint64_t) {
+							print_str(sbuffer);
+							e.nukelog = &n_buffer;
+							//bzero(sbuffer, 2048);
+							if (nukelog_format_block(ns_ptr, &e, sbuffer) > 0) {
+								print_str(sbuffer);
+							}
+							goto end_loop;
+						}
+					}
+					break;
+				case F_GH_ISNUKELOG:
+					e.nukelog = (struct nukelog*) ptr;
+					ns_ptr = e.dirlog->dirname;
+					re_c += nukelog_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISDUPEFILE:
+					e.dupefile = (struct dupefile*) ptr;
+					ns_ptr = e.dupefile->filename;
+					re_c += dupefile_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISLASTONLOG:
+					e.lastonlog = (struct lastonlog*) ptr;
+					ns_ptr = e.lastonlog->uname;
+					re_c += lastonlog_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISONELINERS:
+					e.oneliner = (struct oneliner*) ptr;
+					ns_ptr = e.oneliner->uname;
+					re_c += oneliner_format_block(ns_ptr, &e, sbuffer);
+					break;
+				case F_GH_ISONLINE:
+					e.online = (struct ONLINE*) ptr;
+					ns_ptr = e.online->username;
+					if (!(re_c = online_format_block(ns_ptr, &e, sbuffer))) {
+						goto end;
+					}
+					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
+						print_str(
+								"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
+										"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
+										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+					}
+					break;
+				case F_GH_ISIMDB:
+					e.imdb = (__d_imdb) ptr;
+					ns_ptr = e.imdb->dirname;
+					re_c += imdb_format_block(ns_ptr, &e, sbuffer);
+					break;
+					case F_GH_ISGAME:
+					e.game = (__d_game) ptr;
+					ns_ptr = e.game->dirname;
+					re_c += game_format_block(ns_ptr, &e, sbuffer);
+					break;
+				}
+
+				if (re_c) {
+					print_str(sbuffer);
+				} else {
+					print_str("ERROR: %s: zero-length formatted result\n",
+							ns_ptr);
+					continue;
+				}
+			}
+		}
+		end_loop: ;
 	}
 
 	end:
@@ -3685,73 +3963,14 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				(unsigned long long int) c);
 	}
 
+	r_end:
+
+	gfl |= s_gfl;
+
 	g_free(buffer);
 	g_close(&g_act_1);
 
-	return rt;
-}
-
-int dirlog_print_stats(void) {
-	g_setjmp(0, "dirlog_print_stats", NULL, NULL);
-	struct dirlog buffer;
-	char sbuffer[2048];
-	int rt = 0;
-	int c = 0;
-	ear e;
-
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER, &g_act_1))
-		return 2;
-
-	struct dirlog *d_ptr = NULL;
-
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
-		if (!sigsetjmp(g_sigjmp.env, 1)) {
-			g_setjmp(F_SIGERR_CONTINUE, "dirlog_print_stats(loop)",
-			NULL,
-			NULL);
-
-			if (gfl & F_OPT_KILL_GLOBAL) {
-				rt = EXITVAL;
-				break;
-			}
-
-			if (g_bmatch(d_ptr, &g_act_1)) {
-				continue;
-			}
-
-			c++;
-			e.dirlog = d_ptr;
-			if (gfl & F_OPT_MODE_RAWDUMP) {
-				g_fwrite((void*) d_ptr, DL_SZ, 1, stdout);
-			} else {
-				if (dirlog_format_block(d_ptr->dirname, &e, sbuffer) > 0) {
-					print_str(sbuffer);
-				}
-			}
-
-			if ((gfl & F_OPT_VERBOSE2) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-				struct nukelog n_buffer = { 0 };
-				if (nukelog_find(d_ptr->dirname, 2, &n_buffer) < MAX_uint64_t) {
-					e.nukelog = &n_buffer;
-					bzero(sbuffer, 2048);
-					if (nukelog_format_block(d_ptr->dirname, &e, sbuffer) > 0) {
-						print_str(sbuffer);
-					}
-				}
-			}
-
-		}
-	}
-
-	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
-
-	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_MODE_RAWDUMP)) {
-		print_str("STATS: %s: read %d records\n", DIRLOG, c);
-	}
-
-	g_close(&g_act_1);
-
-	return rt;
+	return EXITVAL;
 }
 
 #define 	ACT_WRITE_BUFFER_MEMBERS	10000
@@ -4961,6 +5180,11 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 		}
 	}
 
+	if (do_sort(&g_act_1, g_sort_field, g_sort_flags)) {
+		ret = 11;
+		goto end;
+	}
+
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
 	if (gfl & F_OPT_KILL_GLOBAL) {
@@ -5321,6 +5545,10 @@ int g_map_shm(struct g_handle *hdl, key_t ipc) {
 	}
 
 	hdl->flags |= F_GH_ISONLINE;
+	hdl->d_memb = 3;
+
+	hdl->g_proc1 = ref_to_val_online;
+	hdl->g_proc2 = ref_to_val_ptr_online;
 
 	return 0;
 }
@@ -5396,44 +5624,51 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->flags |= F_GH_ISDIRLOG;
 		hdl->block_sz = DL_SZ;
 		hdl->d_memb = 7;
-		hdl->gcb_proc0 = gcb_dirlog;
-		hdl->gcb_proc1 = ref_to_val_dirlog;
+		hdl->g_proc0 = gcb_dirlog;
+		hdl->g_proc1 = ref_to_val_dirlog;
+		hdl->g_proc2 = ref_to_val_ptr_dirlog;
 	} else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG))) {
 		hdl->flags |= F_GH_ISNUKELOG;
 		hdl->block_sz = NL_SZ;
 		hdl->d_memb = 9;
-		hdl->gcb_proc0 = gcb_nukelog;
-		hdl->gcb_proc1 = ref_to_val_nukelog;
+		hdl->g_proc0 = gcb_nukelog;
+		hdl->g_proc1 = ref_to_val_nukelog;
+		hdl->g_proc2 = ref_to_val_ptr_nukelog;
 	} else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE))) {
 		hdl->flags |= F_GH_ISDUPEFILE;
 		hdl->block_sz = DF_SZ;
 		hdl->d_memb = 3;
-		hdl->gcb_proc0 = gcb_dupefile;
-		hdl->gcb_proc1 = ref_to_val_dupefile;
+		hdl->g_proc0 = gcb_dupefile;
+		hdl->g_proc1 = ref_to_val_dupefile;
+		hdl->g_proc2 = ref_to_val_ptr_dupefile;
 	} else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG))) {
 		hdl->flags |= F_GH_ISLASTONLOG;
 		hdl->block_sz = LO_SZ;
 		hdl->d_memb = 8;
-		hdl->gcb_proc0 = gcb_lastonlog;
-		hdl->gcb_proc1 = ref_to_val_lastonlog;
+		hdl->g_proc0 = gcb_lastonlog;
+		hdl->g_proc1 = ref_to_val_lastonlog;
+		hdl->g_proc2 = ref_to_val_ptr_lastonlog;
 	} else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS))) {
 		hdl->flags |= F_GH_ISONELINERS;
 		hdl->block_sz = OL_SZ;
 		hdl->d_memb = 5;
-		hdl->gcb_proc0 = gcb_oneliner;
-		hdl->gcb_proc1 = ref_to_val_oneliners;
+		hdl->g_proc0 = gcb_oneliner;
+		hdl->g_proc1 = ref_to_val_oneliners;
+		hdl->g_proc2 = ref_to_val_ptr_oneliners;
 	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
 		hdl->flags |= F_GH_ISIMDB;
 		hdl->block_sz = ID_SZ;
 		hdl->d_memb = 13;
-		hdl->gcb_proc0 = gcb_imdbh;
-		hdl->gcb_proc1 = ref_to_val_imdb;
+		hdl->g_proc0 = gcb_imdbh;
+		hdl->g_proc1 = ref_to_val_imdb;
+		hdl->g_proc2 = ref_to_val_ptr_imdb;
 	} else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG))) {
 		hdl->flags |= F_GH_ISGAME;
 		hdl->block_sz = GM_SZ;
 		hdl->d_memb = 3;
-		hdl->gcb_proc0 = gcb_game;
-		hdl->gcb_proc1 = ref_to_val_game;
+		hdl->g_proc0 = gcb_game;
+		hdl->g_proc1 = ref_to_val_game;
+		hdl->g_proc2 = ref_to_val_ptr_game;
 	} else {
 		return 1;
 	}
@@ -5582,7 +5817,7 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 }
 
 void *g_read(void *buffer, struct g_handle *hdl, size_t size) {
-	//g_setjmp(0, "g_read", NULL, NULL);
+//g_setjmp(0, "g_read", NULL, NULL);
 	if (hdl->buffer_count) {
 		hdl->buffer.pos = hdl->buffer.r_pos;
 		if (!hdl->buffer.pos) {
@@ -5698,9 +5933,6 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 	return 0;
 }
 
-#define F_ENUMD_ENDFIRSTOK		0x1
-#define F_ENUMD_BREAKONBAD		0x2
-
 int enum_dir(char *dir, void *cb, void *arg, int f) {
 	g_setjmp(0, "enum_dir", NULL, NULL);
 	int (*callback_f)(char *, unsigned char, void *) = NULL;
@@ -5744,7 +5976,8 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 
 		stat(buf, &st);
 
-		if ((gfl & F_OPT_XBLK) && major(st.st_dev) != 8) {
+		if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
+				&& major(st.st_dev) != 8) {
 			continue;
 		}
 
@@ -6227,10 +6460,12 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "spec1")) {
 		snprintf(output, max_size, "%s", b_spec1);
 	} else if (!strcmp(match, "usroot")) {
-		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_USERS);
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
+		DEFPATH_USERS);
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strcmp(match, "logroot")) {
-		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
+		DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
 		remove_repeating_chars(output, 0x2F);
 	} else if (arg && !strcmp(match, "arg")) {
@@ -6259,6 +6494,439 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		return 1;
 	}
 	return 0;
+}
+
+int g_is_higher(uint64_t s, uint64_t d) {
+	if (s > d) {
+		return 0;
+	}
+	return 1;
+}
+
+int g_is_lower(uint64_t s, uint64_t d) {
+	if (s < d) {
+		return 0;
+	}
+	return 1;
+}
+
+int g_is_higher_f(float s, float d) {
+	if (s > d) {
+		return 0;
+	}
+	return 1;
+}
+
+int g_is_lower_f(float s, float d) {
+	if (s < d) {
+		return 0;
+	}
+	return 1;
+}
+
+uint64_t g_t8_ptr(void *base, size_t offset) {
+	return (uint64_t) *((uint8_t*) (base + offset));
+}
+
+uint64_t g_t16_ptr(void *base, size_t offset) {
+	return (uint64_t) *((uint16_t*) (base + offset));
+}
+
+uint64_t g_t32_ptr(void *base, size_t offset) {
+	return (uint64_t) *((uint32_t*) (base + offset));
+}
+
+uint64_t g_t64_ptr(void *base, size_t offset) {
+	return *((uint64_t*) (base + offset));
+}
+
+float g_tf_ptr(void *base, size_t offset) {
+	return *((float*) (base + offset));
+}
+
+#define MAX_SORT_LOOPS				MAX_uint64_t
+
+#define F_INT_GSORT_LOOP_DID_SORT	(a32 << 1)
+#define F_INT_GSORT_DID_SORT		(a32 << 2)
+
+int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
+	int (*m_op)(uint64_t s, uint64_t d) = cb1;
+	uint64_t (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+
+	p_md_obj ptr, ptr_n;
+	int r = 0;
+	uint64_t t_b, t_b_n;
+	uint32_t ml_f = 0;
+	uint64_t ml_i;
+
+	for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++) {
+		ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
+		ptr = m_ptr->first;
+		while (ptr && ptr->next) {
+			ptr_n = (p_md_obj) ptr->next;
+
+			t_b = g_t_ptr_c(ptr->ptr, off);
+			t_b_n = g_t_ptr_c(ptr_n->ptr, off);
+			//printf("%llu %llu\n", t_b, t_b_n);
+			if (!m_op(t_b, t_b_n)) {
+				ptr = md_swap(m_ptr, ptr, ptr_n);
+				if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
+					ml_f |= F_INT_GSORT_LOOP_DID_SORT;
+				}
+			} else {
+				ptr = ptr->next;
+			}
+		}
+		//printf("\rpass: %llu", ml_i);
+		if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
+			break;
+		}
+
+		if (!(ml_f & F_INT_GSORT_DID_SORT)) {
+			ml_f |= F_INT_GSORT_DID_SORT;
+		}
+	}
+
+	if (!(ml_f & F_INT_GSORT_DID_SORT)) {
+		return -1;
+	}
+
+	if (!r && (flags & F_GSORT_RESETPOS)) {
+		m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
+	}
+
+	return r;
+}
+
+int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
+	int (*m_op)(float s, float d) = cb1;
+	float (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+
+	p_md_obj ptr, ptr_n;
+	int r = 0;
+	uint64_t ml_i;
+	uint32_t ml_f = 0;
+	float t_b, t_b_n;
+
+	for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++) {
+		ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
+		ptr = m_ptr->first;
+		while (ptr && ptr->next) {
+			ptr_n = (p_md_obj) ptr->next;
+
+			t_b = g_t_ptr_c(ptr->ptr, off);
+			t_b_n = g_t_ptr_c(ptr_n->ptr, off);
+
+			if (!m_op(t_b, t_b_n)) {
+				ptr = md_swap(m_ptr, ptr, ptr_n);
+				if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
+					ml_f |= F_INT_GSORT_LOOP_DID_SORT;
+				}
+			} else {
+				ptr = ptr->next;
+			}
+		}
+		//printf("\rpass: %llu", ml_i);
+		if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
+			break;
+		}
+
+		if (!(ml_f & F_INT_GSORT_DID_SORT)) {
+			ml_f |= F_INT_GSORT_DID_SORT;
+		}
+	}
+
+	if (!(ml_f & F_INT_GSORT_DID_SORT)) {
+		return -1;
+	}
+
+	if (!r && (flags & F_GSORT_RESETPOS)) {
+		m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
+	}
+
+	return r;
+}
+
+int g_sort(struct g_handle *hdl, char *field, uint32_t flags) {
+	g_setjmp(0, "g_sort", NULL, NULL);
+	void *m_op = NULL, *g_t_ptr_c = NULL;
+
+	int (*g_s_ex)(pmda, size_t, uint32_t, void *, void *) = NULL;
+	pmda m_ptr;
+
+	if (!(hdl->flags & F_GH_FFBUFFER)) {
+		m_ptr = &hdl->buffer;
+	} else {
+		m_ptr = &hdl->w_buffer;
+	}
+
+	if (!hdl) {
+		return 1;
+	}
+
+	if (!hdl->g_proc2) {
+		return 2;
+	}
+
+	switch (flags & F_GSORT_ORDER) {
+	case F_GSORT_DESC:
+		m_op = g_is_lower;
+		break;
+	case F_GSORT_ASC:
+		m_op = g_is_higher;
+		break;
+	}
+
+	if (!m_op) {
+		return 3;
+	}
+
+	p_md_obj ptr = md_first(m_ptr);
+
+	if (!ptr) {
+		return 11;
+	}
+
+	size_t vb = 0;
+
+	void *dptr_off = hdl->g_proc2(ptr->ptr, field, &vb);
+
+	if (!dptr_off) {
+		return 12;
+	}
+
+	if (!vb) {
+		return 13;
+	}
+
+	switch (vb) {
+	case -1:
+		switch (flags & F_GSORT_ORDER) {
+		case F_GSORT_DESC:
+			m_op = g_is_lower_f;
+			break;
+		case F_GSORT_ASC:
+			m_op = g_is_higher_f;
+			break;
+		}
+		g_t_ptr_c = g_tf_ptr;
+		g_s_ex = g_sortf_exec;
+		break;
+	case 1:
+		g_t_ptr_c = g_t8_ptr;
+		g_s_ex = g_sorti_exec;
+		break;
+	case 2:
+		g_t_ptr_c = g_t16_ptr;
+		g_s_ex = g_sorti_exec;
+		break;
+	case 4:
+		g_t_ptr_c = g_t32_ptr;
+		g_s_ex = g_sorti_exec;
+		break;
+	case 8:
+		g_t_ptr_c = g_t64_ptr;
+		g_s_ex = g_sorti_exec;
+		break;
+	default:
+		return 15;
+		break;
+	}
+
+	size_t off = (size_t) (dptr_off - ptr->ptr);
+
+	if (vb != 2 && vb != 4 && vb != 8 && vb != -1) {
+		return 14;
+	}
+
+	return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);
+
+}
+
+void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_dirlog", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	struct dirlog *data = (struct dirlog *) arg;
+
+	if (!strcmp(match, "time")) {
+		*output = sizeof(data->uptime);
+		return &data->uptime;
+	} else if (!strcmp(match, "user")) {
+		*output = sizeof(data->uploader);
+		return &data->uploader;
+	} else if (!strcmp(match, "group")) {
+		*output = sizeof(data->group);
+		return &data->group;
+	} else if (!strcmp(match, "files")) {
+		*output = sizeof(data->files);
+		return &data->files;
+	} else if (!strcmp(match, "size")) {
+		*output = sizeof(data->bytes);
+		return &data->bytes;
+	} else if (!strcmp(match, "status")) {
+		*output = sizeof(data->status);
+		return &data->status;
+	}
+	return NULL;
+}
+
+void *ref_to_val_ptr_nukelog(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_nukelog", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	struct nukelog *data = (struct nukelog *) arg;
+
+	if (!strcmp(match, "time")) {
+		*output = sizeof(data->nuketime);
+		return &data->nuketime;
+	} else if (!strcmp(match, "size")) {
+		*output = -1;
+		return &data->bytes;
+	} else if (!strcmp(match, "mult")) {
+		*output = sizeof(data->mult);
+		return &data->mult;
+	} else if (!strcmp(match, "status")) {
+		*output = sizeof(data->status);
+		return &data->status;
+	}
+	return NULL;
+}
+
+void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_dupefile", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	struct dupefile *data = (struct dupefile *) arg;
+
+	if (!strcmp(match, "time")) {
+		*output = sizeof(data->timeup);
+		return &data->timeup;
+	}
+	return NULL;
+}
+
+void *ref_to_val_ptr_lastonlog(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_lastonlog", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	struct lastonlog *data = (struct lastonlog *) arg;
+
+	if (!strcmp(match, "logon")) {
+		*output = sizeof(data->logon);
+		return &data->logon;
+	} else if (!strcmp(match, "logoff")) {
+		*output = sizeof(data->logoff);
+		return &data->logoff;
+	} else if (!strcmp(match, "download")) {
+		*output = sizeof(data->download);
+		return &data->download;
+	} else if (!strcmp(match, "upload")) {
+		*output = sizeof(data->upload);
+		return &data->upload;
+	}
+	return NULL;
+}
+
+void *ref_to_val_ptr_oneliners(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_oneliners", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	struct oneliner *data = (struct oneliner *) arg;
+
+	if (!strcmp(match, "timestamp")) {
+		*output = sizeof(data->timestamp);
+		return &data->timestamp;
+	}
+	return NULL;
+}
+
+void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_oneliners", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	struct ONLINE *data = (struct ONLINE *) arg;
+
+	if (!strcmp(match, "btxfer")) {
+		*output = sizeof(data->bytes_txfer);
+		return &data->bytes_txfer;
+	} else if (!strcmp(match, "bxfer")) {
+		*output = sizeof(data->bytes_xfer);
+		return &data->bytes_xfer;
+	} else if (!strcmp(match, "group")) {
+		*output = sizeof(data->groupid);
+		return &data->groupid;
+	} else if (!strcmp(match, "PID")) {
+		*output = sizeof(data->procid);
+		return &data->procid;
+	} else if (!strcmp(match, "ssl")) {
+		*output = sizeof(data->ssl_flag);
+		return &data->ssl_flag;
+	} else if (!strcmp(match, "time")) {
+		*output = sizeof(data->login_time);
+		return &data->login_time;
+	}
+
+	return NULL;
+}
+
+void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_imdb", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	__d_imdb data = (__d_imdb) arg;
+
+	if (!strcmp(match, "score")) {
+		*output = -1;
+		return &data->rating;
+	} else if (!strcmp(match, "released")) {
+		*output = sizeof(data->released);
+		return &data->released;
+	} else if (!strcmp(match, "runtime")) {
+		*output = sizeof(data->runtime);
+		return &data->runtime;
+	} else if (!strcmp(match, "time")) {
+		*output = sizeof(data->timestamp);
+		return &data->timestamp;
+	} else if (!strcmp(match, "votes")) {
+		*output = sizeof(data->votes);
+		return &data->votes;
+	}
+
+	return NULL;
+}
+
+void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
+	g_setjmp(0, "ref_to_val_ptr_game", NULL, NULL);
+	if (!output) {
+		return NULL;
+	}
+
+	__d_game data = (__d_game) arg;
+
+	if (!strcmp(match, "score")) {
+		*output = -1;
+		return &data->rating;
+	} else if (!strcmp(match, "time")) {
+		*output = sizeof(data->timestamp);
+		return &data->timestamp;
+	}
+
+	return NULL;
 }
 
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
@@ -6819,7 +7487,7 @@ int m_load_input(struct g_handle *hdl, char *input) {
 		md_init(&hdl->w_buffer, 256);
 	}
 
-	if (!hdl->gcb_proc0) {
+	if (!hdl->g_proc0) {
 		return -1;
 	}
 
@@ -6880,7 +7548,7 @@ int m_load_input(struct g_handle *hdl, char *input) {
 			memset(&s_ptr[i], 0x0, 1);
 			char *s_p1 = &s_ptr[i + 1];
 
-			int bd = hdl->gcb_proc0(st_buffer, s_ptr, s_p1);
+			int bd = hdl->g_proc0(st_buffer, s_ptr, s_p1);
 			if (!bd && (gfl & F_OPT_VERBOSE)) {
 				print_str("WARNING: DATA IMPORT: failed extracting '%s'\n",
 						s_ptr);
