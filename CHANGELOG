@@ -1,3 +1,9 @@
+ * v1.6
+ *
+ *   - Added --sort (see --help)
+ *   - Bugfix: extracting fields was broken with -w
+ *   - Layered matching; multiple --[i]regex[i] and --[i]match params can be used (rev. 1)
+ *
  * v1.5
  *
  *   - Now possible to match against specific binary log fields 
