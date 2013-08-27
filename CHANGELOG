@@ -10,6 +10,7 @@
  *   - Config lines (and tokens) can be passed as field to --[i]regex[i] and --[i]match (rev. 3) 
  *   - g_filter didn't check if match requested before starting (rev. 4)
  *   - Bugfix: --raw spat ASCII junk to stdout (rev. 4)
+ *   - Optimized data record formatting functions (rev. 5)
  *
  * v1.5
  *
