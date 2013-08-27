@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.6-5
+ * Version     : 1.6-6
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 6
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3842,6 +3842,8 @@ int g_filter(struct g_handle *hdl, pmda md) {
 
 #define MAX_G_PRINT_STATS_BUFFER	8192
 
+#define F_GPS_NONUKELOG				0x1
+
 int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	g_setjmp(0, "g_print_stats", NULL, NULL);
 
@@ -3856,6 +3858,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	void *buffer = calloc(1, g_act_1.block_sz);
 
 	int r;
+	uint32_t i_flags = 0;
 	uint64_t s_gfl = 0;
 
 	if (gfl & F_OPT_SORT) {
@@ -3959,7 +3962,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 							g_act_1.file);
 					continue;
 				}
-				if (g_act_1.flags & F_GH_ISDIRLOG) {
+				if (!(i_flags & F_GPS_NONUKELOG) && (g_act_1.flags & F_GH_ISDIRLOG)) {
 					if ((gfl & F_OPT_VERBOSE2)) {
 						ns_ptr = ((struct dirlog*) ptr)->dirname;
 						struct nukelog n_buffer = { 0 };
@@ -3968,6 +3971,9 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 								print_str(sbuffer);
 							}
 							goto end_loop;
+						}
+						else {
+							i_flags |= F_GPS_NONUKELOG;
 						}
 					}
 				}
