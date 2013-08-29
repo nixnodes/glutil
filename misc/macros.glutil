@@ -7,6 +7,6 @@
 #@MACRO:dirlog-update:{m:exe} -r -u -v --postexec "{exe} --check --fix --ghost -v"
 #
 ## Search for duplicates in dirlog, avoiding non-releases
-#@MACRO:dupe:{m:exe} -p --regexi "\/(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} 
+#@MACRO:dupe:{m:exe} -p --regexi "\/(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1}
 ## With progress stats
 #@MACRO:dupe-v:{m:exe} -p --regexi "\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
