@@ -4,6 +4,9 @@
  *   - -x can pass file {size} along to shell (rev. 1)
  *   - Bugfix: plugged memory leak when --[i]lom given repeatedly (rev. 1)
  *   - Bugfix: flag collision (removed -k alias for --nowrite) (rev. 2)
+ *   - Bugfix: LOM strings were getting processed when not requested (rev. 2)
+ *   - Bugfix: -z was not skipping missing log path detection as it should (rev. 3)
+ *   - --exec {basedir} while parsing imdblog (rev. 3)
  *
  * v1.6
  *
