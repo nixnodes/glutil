@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-1
+ * Version     : 1.7-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -376,7 +376,7 @@ static uint32_t crc_32_tab[] = { 0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
 #define UPDC32(octet,crc) (crc_32_tab[((crc) ^ ((uint8_t)octet)) & 0xff] ^ ((crc) >> 8))
 
 uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
-	register uint32_t oldcrc32;
+	uint32_t oldcrc32;
 
 	if (crc32) {
 		oldcrc32 = crc32;
@@ -1046,7 +1046,7 @@ char *hpd_up =
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
-				"  -k, --nowrite         Perform a dry run, executing normally except no writing is done\n"
+				"  --nowrite             Perform a dry run, executing normally except no writing is done\n"
 				"  -b, --nobuffer        Disable data file memory buffering\n"
 				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
 				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
@@ -2043,13 +2043,13 @@ void *f_ref[] = { "--lom", opt_g_lom_match, (void*) 1, "--ilom",
 		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
-		(void*) 1, "-k", opt_g_nowrite, (void*) 0, "--nowrite", opt_g_nowrite,
-		(void*) 0, "--sfv", opt_g_sfv, (void*) 0, "--crc32", option_crc32,
-		(void*) 1, "--nobackup", opt_nobackup, (void*) 0, "-c",
-		opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
-		"--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
-		"-f", opt_g_force, (void*) 0, "-s", opt_update_single_record, (void*) 1,
-		"-r", opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
+		(void*) 1, "--nowrite", opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv,
+		(void*) 0, "--crc32", option_crc32, (void*) 1, "--nobackup",
+		opt_nobackup, (void*) 0, "-c", opt_dirlog_check, (void*) 0, "--check",
+		opt_dirlog_check, (void*) 0, "--dump", opt_dirlog_dump, (void*) 0, "-d",
+		opt_dirlog_dump, (void*) 0, "-f", opt_g_force, (void*) 0, "-s",
+		opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
+		(void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -3263,8 +3263,8 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 }
 
 void g_progress_stats(time_t s_t, time_t e_t, off_t total, off_t done) {
-	float diff = (float) (e_t - s_t);
-	float rate = ((float) done / diff);
+	register float diff = (float) (e_t - s_t);
+	register float rate = ((float) done / diff);
 
 	fprintf(stderr,
 			"PROCESSING: %llu/%llu [ %.2f%s ] | %.2f r/s | ETA: %.1f s\r",
