@@ -6,7 +6,7 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires glutil-1.5-2 or greater
+## Requires glutil-1.6 or greater
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
@@ -15,18 +15,6 @@
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
-CURL="/usr/bin/curl"
-CURL_FLAGS="--silent"
-
-# libxml2 version 2.7.7 or above required
-XMLLINT="/usr/bin/xmllint"
-
-! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
-! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
-
-[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
-[ -z "$CURL" ] && echo "Could not find curl" && exit 1
-
 ###########################[ BEGIN OPTIONS ]#############################
 #
 # omdbapi base url
@@ -62,6 +50,18 @@ DENY_IMDBID_DUPE=0
 RECORD_MAX_AGE=0
 #
 ############################[ END OPTIONS ]##############################
+
+CURL="/usr/bin/curl"
+CURL_FLAGS="--silent"
+
+# libxml2 version 2.7.7 or above required
+XMLLINT="/usr/bin/xmllint"
+
+! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
+! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
+
+[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
+[ -z "$CURL" ] && echo "Could not find curl" && exit 1
 
 BASEDIR=$(dirname $0)
 
