@@ -25,7 +25,7 @@ IMDBURL="http://www.imdb.com/"
 #
 #INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-#INPUT_CLEAN_REGEX="([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|[1-2][0-9]{3,3}|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_CLEAN_REGEX="([1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## If set to 1, might cause mis-matches 
 ## Only runs if exact match fails
@@ -49,6 +49,8 @@ DENY_IMDBID_DUPE=0
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
 RECORD_MAX_AGE=0
 #
+## Work with unique database for each type
+TYPE_SPECIFIC_DB=1 
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -64,6 +66,8 @@ XMLLINT="/usr/bin/xmllint"
 [ -z "$CURL" ] && echo "Could not find curl" && exit 1
 
 BASEDIR=$(dirname $0)
+
+[ $TYPE_SPECIFIC_DB -eq 1 ] && [ $DATABASE_TYPE -gt 0 ] && LAPPEND="$DATABASE_TYPE"
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
@@ -84,13 +88,13 @@ iid=$(imdb_search "$QUERY""&ex=1")
 [ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-	RTIME=$($2 -a --iregex imdbid,"^$iid$" --imatchq -exec "echo {time}" --silent)
+	RTIME=$($2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq -exec "echo {time}" --silent)
 	CTIME=$(date +"%s")
 	[ -n "$RTIME" ] && DIFF1=$(expr $CTIME - $RTIME) && DIFF=$(expr $DIFF1 / 86400)
 	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
 	 	echo "NOTICE: $QUERY: $iid: Record too old ($DIFF days) updating.."
 	else
-		$2 -a --iregex imdbid,"^$iid$" --imatchq | grep "^IMDB:" &> /dev/null && echo "WARNING: $QUERY: $iid: ID already exists in database ($(expr $DIFF1 / 60) min old)" && exit 1
+		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq | grep "^IMDB:" &> /dev/null && echo "WARNING: $QUERY: $iid: ID already exists in database ($(expr $DIFF1 / 60) min old)" && exit 1
 	fi
 fi
 
@@ -128,19 +132,19 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	if [ $DATABASE_TYPE -eq 0 ]; then
 		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
 		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
-		$2 -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -e imdb --regex "$DIR_E" > /dev/null || { 
+		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 --imdblog="$3$LAPPEND" -e imdb --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
 	elif [ $DATABASE_TYPE -eq 1 ]; then
 		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
 		DIR_E=$QUERY		
-		$2 -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -e imdb --regex imdbid,"^$iid$" > /dev/null || {
+		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 --imdblog="$3$LAPPEND" -e imdb --regex imdbid,"^$iid$" > /dev/null || {
 			echo "ERROR: $iid: Failed removing old record" && exit 1 
 		}
 	fi	
 	
 	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
-	$2 -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to imdblog!!"
+	$2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
