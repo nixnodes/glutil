@@ -1620,6 +1620,10 @@ typedef struct ___lom_strings_header {
 int opt_g_lom(void *arg, int m, uint32_t flags) {
 	char *buffer = g_pg(arg, m);
 
+	if (_lom_strings.offset > 8100) {
+		return (a32 << 28);
+	}
+
 	md_init(&_lom_strings, 32);
 
 	size_t a_i = strlen(buffer);
