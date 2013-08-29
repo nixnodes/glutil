@@ -8074,6 +8074,10 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 
 	if (!strcmp(match, "dir")) {
 		snprintf(output, max_size, data->dirname);
+	} else if (!strcmp(match, "basedir")) {
+		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
+		snprintf(output, max_size, base);
+		g_free(s_buffer);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
 	} else if (!strcmp(match, "imdbid")) {
