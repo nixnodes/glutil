@@ -50,7 +50,7 @@ Types are:
    unnuker    S     The name of the unnuker
    nukee      S     The name of the nukee
    mult       I     The nuke multiplier
-   size       F      The number of bytes nuked
+   size       F     The number of bytes nuked
    reason     S     The nuke reason
    
  : DUPEFILE
