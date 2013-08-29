@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.6-6
+ * Version     : 1.7
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -129,8 +129,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 6
-#define VER_REVISION 6
+#define VER_MINOR 7
+#define VER_REVISION 0
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -299,6 +299,31 @@ typedef struct sig_jmp_buf {
 	void *callback, *arg;
 } sigjmp, *p_sigjmp;
 
+typedef struct ___g_match_h {
+	uint32_t flags;
+	char *match, *field;
+	int reg_i_m, match_i_m, regex_flags;
+	mda lom;
+	char data[5120];
+} _g_match, *__g_match;
+
+typedef struct ___g_lom {
+	int result;
+	/* --- */
+	uint32_t flags;
+	uint64_t (*g_t_ptr_left)(void *base, size_t offset);
+	uint64_t (*g_t_ptr_right)(void *base, size_t offset);
+	float (*g_tf_ptr_left)(void *base, size_t offset);
+	float (*g_tf_ptr_right)(void *base, size_t offset);
+	int (*g_icomp_ptr)(uint64_t s, uint64_t d);
+	int (*g_fcomp_ptr)(float s, float d);
+	int (*g_oper_ptr)(int s, int d);
+	uint64_t t_left, t_right;
+	float tf_left, tf_right;
+	/* --- */
+	size_t t_l_off, t_r_off;
+} _g_lom, *__g_lom;
+
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
  * see http://en.wikipedia.org/wiki/Cyclic_redundancy_check#Commonly_used_and_standardized_CRCs
@@ -436,8 +461,10 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_IMATCHQ			(a64 << 37)
 #define F_OPT_CDIRONLY			(a64 << 38)
 #define F_OPT_SORT 				(a64 << 39)
+#define F_OPT_HASLOM			(a64 << 40)
+#define F_OPT_HAS_G_LOM			(a64 << 41)
 
-#define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH)
+#define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM)
 
 #define F_DL_FOPEN_BUFFER		(a32 << 1)
 #define F_DL_FOPEN_FILE			(a32 << 2)
@@ -498,6 +525,22 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_ENUMD_BREAKONBAD		(a32 << 2)
 #define F_ENUMD_NOXDEV			(a32 << 3)
 #define F_ENUMD_NOXBLK			(a32 << 4)
+
+#define F_GM_ISREGEX			(a32 << 1)
+#define F_GM_ISMATCH			(a32 << 2)
+#define F_GM_ISLOM				(a32 << 3)
+#define F_GM_IMATCH				(a32 << 4)
+
+#define F_GM_TYPES				(F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
+
+#define F_LOM_LVAR_KNOWN		(a32 << 1)
+#define F_LOM_RVAR_KNOWN		(a32 << 2)
+#define F_LOM_FLOAT				(a32 << 3)
+#define F_LOM_INT				(a32 << 4)
+#define F_LOM_HASOPER			(a32 << 5)
+
+#define F_LOM_TYPES				(F_LOM_FLOAT|F_LOM_INT)
+#define F_LOM_VAR_KNOWN			(F_LOM_LVAR_KNOWN|F_LOM_RVAR_KNOWN)
 
 /* -- end flags -- */
 
@@ -956,7 +999,7 @@ char *hpd_up =
 				"                         Captures input from stdin, unless --infile is set\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
 				"\n"
-				"Filtering and hooks:\n"
+				"Matching and hooks:\n"
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
 				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..\n"
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
@@ -986,6 +1029,13 @@ char *hpd_up =
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
 				"  --imatch [<field>,]<match>\n"
 				"                        Inverted --match\n"
+				"  --lom <field1 > 5.0 && field2 != 0 || ..>\n"
+				"                        Compare values by logical and comparison/relational operators\n"
+				"                        Applies to any integer/floating point fields from data sources\n"
+				"                          Use quotation marks to avoid collisions with bash operators\n"
+				"                        Valid logical operators: && (and), || (or)\n"
+				"                        Valid comparison/relational operators: =, !=, >, <, <=, >=\n"
+				"  --ilom <expression>   Same as --lom with inverted match\n"
 				"  --sort <mode>,<order>,<field>\n"
 				"                        Sort data log entries before displaying\n"
 				"                          <mode> can only be 'num' (numeric)\n"
@@ -1051,6 +1101,7 @@ int is_ascii_lowercase_text(uint8_t in);
 int is_ascii_uppercase_text(uint8_t in);
 int is_ascii_alphanumeric(uint8_t in_c);
 void *md_alloc(pmda md, int b);
+__g_match g_global_register_match(void);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1499,18 +1550,6 @@ int opt_g_sort(void *arg, int m) {
 
 mda _match_rr = { 0 };
 
-typedef struct ___g_match_h {
-	uint32_t flags;
-	char *match, *field;
-	int reg_i_m, match_i_m, regex_flags;
-	char data[5120];
-} _g_match, *__g_match;
-
-#define F_GM_ISREGEX		(a32 << 1)
-#define F_GM_ISMATCH		(a32 << 2)
-
-#define F_GM_TYPES			(F_GM_ISREGEX|F_GM_ISMATCH)
-
 int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 		uint32_t flags) {
 	char *buffer = g_pg(arg, m);
@@ -1523,13 +1562,11 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	a_i > 4096 ? a_i = 4096 : a_i;
 
-	md_init(&_match_rr, 32);
+	__g_match pgm = g_global_register_match();
 
-	if (_match_rr.offset >= 8192) {
+	if (!pgm) {
 		return (a32 << 8);
 	}
-
-	__g_match pgm = md_alloc(&_match_rr, sizeof(_g_match));
 
 	char *ptr = (char*) pgm->data;
 
@@ -1568,6 +1605,51 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	}
 
 	return 0;
+}
+
+mda _lom_strings = { 0 };
+
+typedef struct ___lom_strings_header {
+	uint32_t flags;
+	char string[8192];
+} _lom_s_h, *__lom_s_h;
+
+#define G_MATCH		((int)0)
+#define G_NOMATCH	((int)1)
+
+int opt_g_lom(void *arg, int m, uint32_t flags) {
+	char *buffer = g_pg(arg, m);
+
+	md_init(&_lom_strings, 32);
+
+	size_t a_i = strlen(buffer);
+
+	if (!a_i) {
+		return 0;
+	}
+
+	a_i > 8190 ? a_i = 8190 : a_i;
+
+	__lom_s_h lsh = md_alloc(&_lom_strings, sizeof(_lom_s_h));
+
+	if (!lsh) {
+		return (a32 << 29);
+	}
+
+	lsh->flags |= flags;
+	gfl |= F_OPT_HAS_G_LOM;
+
+	g_cpg(arg, lsh->string, m, a_i);
+
+	return 0;
+}
+
+int opt_g_lom_match(void *arg, int m) {
+	return opt_g_lom(arg, m, 0);
+}
+
+int opt_g_lom_imatch(void *arg, int m) {
+	return opt_g_lom(arg, m, F_GM_IMATCH);
 }
 
 int opt_g_regexi(void *arg, int m) {
@@ -1832,7 +1914,7 @@ int rebuild(void *);
 int rebuild_data_file(char *, struct g_handle *);
 
 int g_bmatch(void *, struct g_handle *);
-int do_match(char *, void *, __g_match, void *);
+int do_match(struct g_handle *hdl, void *d_ptr, __g_match _gm, void *callback);
 
 size_t g_load_data_md(void *, size_t, char *);
 int g_load_record(struct g_handle *, const void *);
@@ -1863,10 +1945,15 @@ off_t s_string_r(char *input, char *m);
 
 int g_bin_compare(const void *p1, const void *p2, off_t size);
 
-int g_is_higher(uint64_t s, uint64_t d);
-int g_is_lower(uint64_t s, uint64_t d);
-int g_is_higher_f(float s, float d);
-int g_is_lower_f(float s, float d);
+typedef int __d_icomp(uint64_t s, uint64_t d);
+typedef int __d_fcomp(float s, float d);
+
+__d_icomp g_is_higher, g_is_lower, g_is_higherorequal, g_is_equal,
+		g_is_not_equal, g_is_lowerorequal, g_is_not, g_is, g_is_lower_2,
+		g_is_higher_2;
+__d_fcomp g_is_lower_f, g_is_higher_f, g_is_higherorequal_f, g_is_equal_f,
+		g_is_lower_f_2, g_is_higher_f_2, g_is_not_equal_f, g_is_lowerorequal_f,
+		g_is_f, g_is_not_f;
 
 int g_sort(struct g_handle *hdl, char *field, uint32_t flags);
 int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
@@ -1877,6 +1964,17 @@ int do_sort(struct g_handle *hdl, char *field, uint32_t flags);
 int g_filter(struct g_handle *hdl, pmda md);
 
 char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl);
+
+int g_build_lom_packet(struct g_handle *hdl, char *left, char *right,
+		char *comp, size_t comp_l, char *oper, size_t oper_l, __g_match match,
+		__g_lom *ret, uint32_t flags);
+
+int g_oper_and(int s, int d);
+int g_oper_or(int s, int d);
+
+int g_load_lom(struct g_handle *hdl);
+int g_process_lom_string(struct g_handle *hdl, char *string, __g_match _gm,
+		int *ret, uint32_t flags);
 
 void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
 		(void*) 0, "-arg1", opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1,
@@ -1890,24 +1988,25 @@ void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
 		NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--info", prio_opt_g_pinfo, (void*) 0, "--sort", opt_g_sort,
-		(void*) 1, "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
-		(void*) 0, "--imatchq", opt_g_imatchq, (void*) 0, "--matchq",
-		opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z",
-		opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev",
-		opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk",
-		opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file",
-		opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir",
-		opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
-		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
-		(void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
-		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
-		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
-		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
-		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
-		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
-		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2", NULL,
-		(void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
+void *f_ref[] = { "--lom", opt_g_lom_match, (void*) 1, "--ilom",
+		opt_g_lom_imatch, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
+		"--sort", opt_g_sort, (void*) 1, "-k", opt_g_dump_game, (void*) 0,
+		"--cdir", opt_g_cdironly, (void*) 0, "--imatchq", opt_g_imatchq,
+		(void*) 0, "--matchq", opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb,
+		(void*) 0, "-z", opt_g_write, (void*) 1, "--infile", opt_g_infile,
+		(void*) 1, "-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev,
+		(void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk,
+		(void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f,
+		(void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir,
+		(void*) 0, "--loopmax", opt_loop_max, (void*) 1, "--ghost",
+		opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive",
+		opt_g_recursive, (void*) 0, "--recursive", opt_g_recursive, (void*) 0,
+		"-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0,
+		"--backup", opt_backup, (void*) 1, "-b", opt_backup, (void*) 1,
+		"--postexec", opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec,
+		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
+		(void*) 1, "-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
+		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m",
 		NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
 		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
@@ -2235,6 +2334,7 @@ int g_shutdown(void *arg) {
 
 	md_g_free(&_match_rr);
 	md_g_free(&_md_gsort);
+	md_g_free(&_lom_strings);
 
 	_p_macro_argc = 0;
 
@@ -3652,9 +3752,23 @@ int dirlog_check_records(void) {
 	return r;
 }
 
-int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
+int do_match(struct g_handle *hdl, void *d_ptr, __g_match _gm, void *callback) {
+	char buffer[255], *mstr = NULL;
+
+	buffer[0] = 0x0;
+
+	if (_gm->field && !hdl->g_proc1(d_ptr, _gm->field, buffer, 254)) {
+		mstr = buffer;
+	} else {
+		mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
+	}
+
+	if (!mstr) {
+		return 0;
+	}
+
 	int r = 0;
-	if ((_gm->flags & F_GM_ISMATCH) && mstr) {
+	if ((_gm->flags & F_GM_ISMATCH)) {
 		size_t mstr_l = strlen(mstr);
 
 		int irl = strlen(_gm->match) != mstr_l, ir = strncmp(mstr, _gm->match,
@@ -3670,9 +3784,8 @@ int do_match(char *mstr, void *d_ptr, __g_match _gm, void *callback) {
 		goto end;
 	}
 
-	if ((_gm->flags & F_GM_ISREGEX) && mstr
+	if ((_gm->flags & F_GM_ISREGEX)
 			&& reg_match(_gm->match, mstr, _gm->regex_flags) == _gm->reg_i_m) {
-
 		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("WARNING: %s: REGEX match positive\n", mstr);
 		}
@@ -3721,28 +3834,132 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
 	return ptr;
 }
 
+int g_lom_var(void *d_ptr, __g_lom lom) {
+	g_setjmp(0, "g_lom_var", NULL, NULL);
+	uint64_t l_val, r_val;
+	float l_val_f, r_val_f;
+	switch (lom->flags & F_LOM_TYPES) {
+	case F_LOM_INT:
+		if (lom->flags & F_LOM_LVAR_KNOWN) {
+			l_val = lom->t_left;
+		} else {
+			if (!lom->g_t_ptr_left) {
+				l_val = lom->g_tf_ptr_left(d_ptr, lom->t_l_off);
+			} else {
+				l_val = lom->g_t_ptr_left(d_ptr, lom->t_l_off);
+			}
+
+		}
+		if (lom->flags & F_LOM_RVAR_KNOWN) {
+			r_val = lom->t_right;
+		} else {
+			if (!lom->g_t_ptr_right) {
+				r_val = lom->g_tf_ptr_right(d_ptr, lom->t_r_off);
+			} else {
+				r_val = lom->g_t_ptr_right(d_ptr, lom->t_r_off);
+			}
+
+		}
+		//printf("%d -- %d\n", l_val, r_val);
+		lom->result = lom->g_icomp_ptr(l_val, r_val);
+
+		break;
+	case F_LOM_FLOAT:
+
+		if (lom->flags & F_LOM_LVAR_KNOWN) {
+			l_val_f = lom->tf_left;
+		} else {
+			if (!lom->g_tf_ptr_left) {
+				l_val_f = lom->g_t_ptr_left(d_ptr, lom->t_l_off);
+			} else {
+				l_val_f = lom->g_tf_ptr_left(d_ptr, lom->t_l_off);
+			}
+		}
+		if (lom->flags & F_LOM_RVAR_KNOWN) {
+			r_val_f = lom->tf_right;
+		} else {
+			if (!lom->g_tf_ptr_right) {
+				r_val_f = lom->g_t_ptr_right(d_ptr, lom->t_r_off);
+			} else {
+				r_val_f = lom->g_tf_ptr_right(d_ptr, lom->t_r_off);
+			}
+		}
+		//printf("%.1f -- %.1f\n", l_val_f, r_val_f);
+
+		lom->result = lom->g_fcomp_ptr(l_val_f, r_val_f);
+
+		break;
+	default:
+		return 1;
+		break;
+	}
+	return 0;
+}
+
+int g_lom_match(struct g_handle *hdl, void *d_ptr, __g_match _gm) {
+	g_setjmp(0, "g_lom_match", NULL, NULL);
+	if (!(_gm->flags & F_GM_ISLOM)) {
+		return 1;
+	}
+
+	p_md_obj ptr = md_first(&_gm->lom);
+	__g_lom lom, p_lom = NULL;
+
+	int r_p = 1, i = 0;
+
+	while (ptr) {
+		lom = (__g_lom) ptr->ptr;
+		lom->result = 0;
+		//printf ("-?? [%d] -  %.1f - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
+		i++;
+		g_lom_var(d_ptr, lom);
+		g_setjmp(0, "g_lom_match(2)", NULL, NULL);
+		if (!p_lom && lom->result && !ptr->next) {
+			//printf ("-!! [%d] -  %.1f - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
+			return !lom->result;
+		}
+
+		if ( p_lom && p_lom->g_oper_ptr ) {
+			if (!(r_p = p_lom->g_oper_ptr(r_p, lom->result))) {
+				//printf ("failed r_p [%d] -  %d - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
+				if ( !ptr->next) {
+					return 1;
+				}
+			}
+			else {
+				if (!ptr->next) {
+					return !r_p;
+				}
+			}
+		}
+		else {
+			r_p = lom->result;
+		}
+
+		p_lom = lom;
+		ptr = ptr->next;
+	}
+
+	return 1;
+}
+
 int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	p_md_obj ptr = md_first(&_match_rr);
 	int r = 0;
 	while (ptr) {
 		__g_match _gm = (__g_match) ptr->ptr;
-		char buffer[255], *mstr = buffer;
-		if (_gm->field) {
-			buffer[0] = 0x0;
-			if (!hdl->g_proc1(d_ptr, _gm->field, buffer, 254)) {
-				goto s_m;
+
+		if ((gfl & F_OPT_HAS_G_LOM)) {
+			if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m ) {
+				r = 1;
+				if ((gfl & F_OPT_VERBOSE4)) {
+					print_str("WARNING: %s: LOM match positive\n", hdl->file);
+				}
+				goto end;
 			}
 		}
 
-		mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
-
-		if (!mstr) {
-			return -1;
-		}
-
-		s_m:;
-
-		if ((r = do_match(mstr, d_ptr, _gm, (void*) hdl->g_proc1))) {
+		if ((r = do_match(hdl, d_ptr, _gm, (void*) hdl->g_proc1))) {
 			goto end;
 		}
 
@@ -3855,6 +4072,34 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		return 0;
 	}
 
+	/*__g_match pp = g_global_register_match();
+	 __g_lom lr;
+
+	 int tt = g_build_lom_packet(&g_act_1, "files", "10", "<=", 2, "&&", 2, pp,
+	 &lr);
+
+	 g_setjmp(0, "g_print_stats(2)", NULL, NULL);
+	 printf("%d : %d\n", tt, lr ? (lr->flags & F_LOM_INT) != 0 : 0);
+	 if (tt) {
+	 return 44;
+	 }*/
+	/*
+	 printf("%X  :  %X\n", lr->g_fcomp_ptr, g_is_equal_f);
+	 printf("%X  :  %X\n", lr->g_icomp_ptr, g_is_equal_f);
+	 printf("%X  :  %X\n", lr->g_oper_ptr, g_oper_and);
+
+	 printf("%d\n", lr->t_l_off);
+	 printf("%d\n", lr->t_r_off);
+
+	 printf(":: %llu\n",
+	 lr->g_t_ptr_left(g_act_1.buffer.objects->ptr, lr->t_l_off));
+
+	 printf("%d\n",
+	 lr->g_fcomp_ptr(
+	 lr->g_t_ptr_left(g_act_1.buffer.objects->ptr, lr->t_l_off),
+	 15.9));
+	 //exit(0);
+	 */
 	void *buffer = calloc(1, g_act_1.block_sz);
 
 	int r;
@@ -3904,6 +4149,11 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		if (gfl & F_OPT_HAS_G_MATCH) {
 			gfl ^= F_OPT_HAS_G_MATCH;
 			s_gfl |= F_OPT_HAS_G_MATCH;
+		}
+
+		if (gfl & F_OPT_HAS_G_LOM) {
+			gfl ^= F_OPT_HAS_G_LOM;
+			s_gfl |= F_OPT_HAS_G_LOM;
 		}
 
 	}
@@ -3962,7 +4212,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 							g_act_1.file);
 					continue;
 				}
-				if (!(i_flags & F_GPS_NONUKELOG) && (g_act_1.flags & F_GH_ISDIRLOG)) {
+				if (!(i_flags & F_GPS_NONUKELOG)
+						&& (g_act_1.flags & F_GH_ISDIRLOG)) {
 					if ((gfl & F_OPT_VERBOSE2)) {
 						ns_ptr = ((struct dirlog*) ptr)->dirname;
 						struct nukelog n_buffer = { 0 };
@@ -3971,8 +4222,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 								print_str(sbuffer);
 							}
 							goto end_loop;
-						}
-						else {
+						} else {
 							i_flags |= F_GPS_NONUKELOG;
 						}
 					}
@@ -5728,6 +5978,9 @@ int g_fopen(char *file, char *mode, uint32_t flags, struct g_handle *hdl) {
 	if (!(gfl & F_OPT_NOBUFFER) && (flags & F_DL_FOPEN_BUFFER)
 			&& !(hdl->flags & F_GH_NOMEM)) {
 		if (!g_buffer_into_memory(file, hdl)) {
+			if (g_load_lom(hdl)) {
+				return 14;
+			}
 			if (!(flags & F_DL_FOPEN_FILE)) {
 				return 0;
 			}
@@ -6537,6 +6790,38 @@ int g_is_lower(uint64_t s, uint64_t d) {
 	return 1;
 }
 
+int g_is_higher_2(uint64_t s, uint64_t d) {
+	return (s > d);
+}
+
+int g_is_lower_2(uint64_t s, uint64_t d) {
+	return (s < d);
+}
+
+int g_is_equal(uint64_t s, uint64_t d) {
+	return (s == d);
+}
+
+int g_is_not_equal(uint64_t s, uint64_t d) {
+	return (s != d);
+}
+
+int g_is_higherorequal(uint64_t s, uint64_t d) {
+	return (s >= d);
+}
+
+int g_is_lowerorequal(uint64_t s, uint64_t d) {
+	return (s <= d);
+}
+
+int g_is(uint64_t s, uint64_t d) {
+	return s != 0;
+}
+
+int g_is_not(uint64_t s, uint64_t d) {
+	return s == 0;
+}
+
 int g_is_higher_f(float s, float d) {
 	if (s > d) {
 		return 0;
@@ -6549,6 +6834,46 @@ int g_is_lower_f(float s, float d) {
 		return 0;
 	}
 	return 1;
+}
+
+int g_is_higher_f_2(float s, float d) {
+	return (s > d);
+}
+
+int g_is_lower_f_2(float s, float d) {
+	return (s < d);
+}
+
+int g_is_equal_f(float s, float d) {
+	return (s == d);
+}
+
+int g_is_not_equal_f(float s, float d) {
+	return (s != d);
+}
+
+int g_is_higherorequal_f(float s, float d) {
+	return (s >= d);
+}
+
+int g_is_lowerorequal_f(float s, float d) {
+	return (s <= d);
+}
+
+int g_is_f(float s, float d) {
+	return s != 0;
+}
+
+int g_is_not_f(float s, float d) {
+	return s == 0;
+}
+
+int g_oper_and(int s, int d) {
+	return (s && d);
+}
+
+int g_oper_or(int s, int d) {
+	return (s || d);
 }
 
 uint64_t g_t8_ptr(void *base, size_t offset) {
@@ -6756,18 +7081,526 @@ int g_sort(struct g_handle *hdl, char *field, uint32_t flags) {
 		g_s_ex = g_sorti_exec;
 		break;
 	default:
-		return 15;
+		return 14;
 		break;
 	}
 
 	size_t off = (size_t) (dptr_off - ptr->ptr);
 
-	if (vb != 2 && vb != 4 && vb != 8 && vb != -1) {
-		return 14;
-	}
-
 	return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);
 
+}
+
+#define F_GLT_LEFT		(a32 << 1)
+#define F_GLT_RIGHT		(a32 << 2)
+
+#define F_GLT_DIRECT	(F_GLT_LEFT|F_GLT_RIGHT)
+
+int g_get_lom_g_t_ptr(struct g_handle *hdl, char *field, __g_lom lom,
+		uint32_t flags) {
+	g_setjmp(0, "g_get_lom_g_t_ptr", NULL, NULL);
+	pmda m_ptr;
+	if (!(hdl->flags & F_GH_FFBUFFER)) {
+		m_ptr = &hdl->buffer;
+	} else {
+		m_ptr = &hdl->w_buffer;
+	}
+	p_md_obj ptr = md_first(m_ptr);
+
+	if (!ptr) {
+		return 1;
+	}
+
+	size_t vb = 0;
+
+	void *dptr_off = hdl->g_proc2(ptr->ptr, field, &vb);
+	g_setjmp(0, "g_get_lom_g_t_ptr(2)", NULL, NULL);
+	if (!vb) {
+		errno = 0;
+		uint32_t t_f = 0;
+
+		if (!(lom->flags & F_LOM_TYPES)) {
+			if (s_string(field, ".", 0)) {
+				lom->flags |= F_LOM_FLOAT;
+			} else {
+				lom->flags |= F_LOM_INT;
+			}
+		}
+
+		switch (flags & F_GLT_DIRECT) {
+		case F_GLT_LEFT:
+			switch (lom->flags & F_LOM_TYPES) {
+			case F_LOM_INT:
+				lom->t_left = (uint64_t) strtol(field, NULL, 10);
+				break;
+			case F_LOM_FLOAT:
+				lom->tf_left = (float) strtof(field, NULL);
+				break;
+			}
+			t_f |= F_LOM_LVAR_KNOWN;
+			break;
+		case F_GLT_RIGHT:
+			switch (lom->flags & F_LOM_TYPES) {
+			case F_LOM_INT:
+				lom->t_right = (uint64_t) strtol(field, NULL, 10);
+				break;
+			case F_LOM_FLOAT:
+				lom->tf_right = (float) strtof(field, NULL);
+				break;
+			}
+			t_f |= F_LOM_RVAR_KNOWN;
+			break;
+		}
+
+		if (errno == ERANGE) {
+			return 4;
+		}
+
+		lom->flags |= t_f;
+
+		return 0;
+	}
+	g_setjmp(0, "g_get_lom_g_t_ptr(3)", NULL, NULL);
+	if (!dptr_off) {
+		return 2;
+	}
+
+	switch (vb) {
+	case -1:
+		switch (flags & F_GLT_DIRECT) {
+		case F_GLT_LEFT:
+			lom->g_tf_ptr_left = g_tf_ptr;
+			break;
+		case F_GLT_RIGHT:
+			lom->g_tf_ptr_right = g_tf_ptr;
+			break;
+		}
+		lom->flags |= F_LOM_FLOAT;
+		break;
+	case 1:
+		switch (flags & F_GLT_DIRECT) {
+		case F_GLT_LEFT:
+			lom->g_t_ptr_left = g_t8_ptr;
+			break;
+		case F_GLT_RIGHT:
+			lom->g_t_ptr_right = g_t8_ptr;
+			break;
+		}
+		lom->flags |= F_LOM_INT;
+		break;
+	case 2:
+		switch (flags & F_GLT_DIRECT) {
+		case F_GLT_LEFT:
+			lom->g_t_ptr_left = g_t16_ptr;
+			break;
+		case F_GLT_RIGHT:
+			lom->g_t_ptr_right = g_t16_ptr;
+			break;
+		}
+		lom->flags |= F_LOM_INT;
+		break;
+	case 4:
+		switch (flags & F_GLT_DIRECT) {
+		case F_GLT_LEFT:
+			lom->g_t_ptr_left = g_t32_ptr;
+			break;
+		case F_GLT_RIGHT:
+			lom->g_t_ptr_right = g_t32_ptr;
+			break;
+		}
+		lom->flags |= F_LOM_INT;
+		break;
+	case 8:
+		switch (flags & F_GLT_DIRECT) {
+		case F_GLT_LEFT:
+			lom->g_t_ptr_left = g_t64_ptr;
+			break;
+		case F_GLT_RIGHT:
+			lom->g_t_ptr_right = g_t64_ptr;
+			break;
+		}
+		lom->flags |= F_LOM_INT;
+		break;
+	default:
+		return 8;
+		break;
+	}
+
+	size_t off = (size_t) (dptr_off - ptr->ptr);
+
+	switch (flags & F_GLT_DIRECT) {
+	case F_GLT_LEFT:
+		lom->t_l_off = off;
+		break;
+	case F_GLT_RIGHT:
+		lom->t_r_off = off;
+		break;
+	}
+
+	return 0;
+
+}
+
+int g_build_lom_packet(struct g_handle *hdl, char *left, char *right,
+		char *comp, size_t comp_l, char *oper, size_t oper_l, __g_match match,
+		__g_lom *ret, uint32_t flags) {
+	g_setjmp(0, "g_build_lom_packet", NULL, NULL);
+	int rt = 0;
+	md_init(&match->lom, 16);
+
+	__g_lom lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
+
+	if (!lom) {
+		rt = 1;
+		goto end;
+	}
+
+	int r = 0;
+
+	if ((r = g_get_lom_g_t_ptr(hdl, left, lom, F_GLT_LEFT))) {
+		rt = 3;
+		goto end;
+	}
+
+	char *r_ptr = right;
+
+	if (!r_ptr) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			r_ptr = "1.0";
+			break;
+		case F_LOM_INT:
+			r_ptr = "1";
+			break;
+		}
+	}
+
+	if ((r = g_get_lom_g_t_ptr(hdl, r_ptr, lom, F_GLT_RIGHT))) {
+		rt = 4;
+		goto end;
+	}
+
+	g_setjmp(0, "g_build_lom_packet(2)", NULL, NULL);
+
+	if ((lom->flags & F_LOM_FLOAT) && (lom->flags & F_LOM_INT)) {
+		lom->flags ^= F_LOM_INT;
+	}
+
+	if (!(lom->flags & F_LOM_TYPES)) {
+		rt = 6;
+		goto end;
+	}
+
+	g_setjmp(0, "g_build_lom_packet(3)", NULL, NULL);
+	if (!comp) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_f;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is;
+			break;
+		}
+
+	} else if (comp_l == 2 && !strncmp(comp, "==", 1)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_equal_f;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_equal;
+			break;
+		}
+
+	} else if (comp_l == 1 && !strncmp(comp, "=", 1)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_equal_f;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_equal;
+			break;
+		}
+	} else if (comp_l == 1 && !strncmp(comp, "<", 1)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_lower_f_2;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_lower_2;
+			break;
+		}
+	} else if (comp_l == 1 && !strncmp(comp, ">", 1)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_higher_f_2;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_higher_2;
+			break;
+		}
+	} else if (comp_l == 2 && !strncmp(comp, "!=", 2)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_higherorequal_f;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_not_equal;
+			break;
+		}
+	} else if (comp_l == 2 && !strncmp(comp, ">=", 2)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_higherorequal_f;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_higherorequal;
+			break;
+		}
+	} else if (comp_l == 2 && !strncmp(comp, "<=", 2)) {
+		switch (lom->flags & F_LOM_TYPES) {
+		case F_LOM_FLOAT:
+			lom->g_fcomp_ptr = g_is_lowerorequal_f;
+			break;
+		case F_LOM_INT:
+			lom->g_icomp_ptr = g_is_lowerorequal;
+			break;
+		}
+
+	} else {
+		rt = 11;
+		goto end;
+	}
+
+	g_setjmp(0, "g_build_lom_packet(4)", NULL, NULL);
+
+	if (oper) {
+		if (oper_l == 2 && !strncmp(oper, "&&", 2)) {
+			lom->g_oper_ptr = g_oper_and;
+		} else if (oper_l == 2 && !strncmp(oper, "||", 2)) {
+			lom->g_oper_ptr = g_oper_or;
+		} else {
+			lom->g_oper_ptr = g_oper_and;
+		}
+		//lom->flags |= F_LOM_HASOPER;
+	}
+	g_setjmp(0, "g_build_lom_packet(5)", NULL, NULL);
+	if (ret) {
+		*ret = lom;
+	}
+	g_setjmp(0, "g_build_lom_packet(6)", NULL, NULL);
+
+	end:
+
+	if (rt) {
+		md_unlink(&match->lom, match->lom.pos);
+	} else {
+		match->flags |= F_GM_ISLOM;
+		match->flags |= flags;
+		if (match->flags & F_GM_IMATCH) {
+			match->match_i_m = G_NOMATCH;
+		} else {
+			match->match_i_m = G_MATCH;
+		}
+	}
+	g_setjmp(0, "g_build_lom_packet(7)", NULL, NULL);
+	return rt;
+}
+
+__g_match g_global_register_match(void) {
+	md_init(&_match_rr, 32);
+
+	if (_match_rr.offset >= 8192) {
+		return NULL;
+	}
+
+	return (__g_match ) md_alloc(&_match_rr, sizeof(_g_match));
+
+}
+
+int is_opr(char in) {
+	if (in == 0x21 || in == 0x26 || in == 0x3D || in == 0x3C || in == 0x3E
+			|| in == 0x7C) {
+		return 0;
+	}
+	return 1;
+}
+
+int get_opr(char *in) {
+	if (!strncmp(in, "&&", 2) || !strncmp(in, "||", 2)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int g_load_lom(struct g_handle *hdl) {
+
+	if (gfl & F_OPT_HASLOM) {
+		return 0;
+	}
+
+	__g_match m_ptr;
+
+	gfl |= F_OPT_HASLOM;
+
+	int rt = 0;
+
+	p_md_obj ptr = md_first(&_lom_strings);
+	__lom_s_h lsh_ptr;
+	int r, ret, c = 0;
+	while (ptr) {
+		m_ptr = g_global_register_match();
+		if (!m_ptr) {
+			rt = 2;
+			break;
+		}
+		lsh_ptr = (__lom_s_h) ptr->ptr;
+		if ((r = g_process_lom_string(hdl, lsh_ptr->string, m_ptr, &ret,
+				lsh_ptr->flags))) {
+			printf("ERROR: %s: [%d] [%d]: could not load LOM string\n",
+					hdl->file, r, ret);
+			rt = 1;
+			break;
+		}
+		c++;
+		ptr = ptr->next;
+	}
+
+	if (rt) {
+		gfl ^= F_OPT_HASLOM;
+	} else {
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("NOTICE: %s: loaded %d LOM matches\n", hdl->file, c);
+		}
+	}
+
+	return rt;
+}
+
+#define MAX_LOM_VLEN 	254
+
+int g_process_lom_string(struct g_handle *hdl, char *string, __g_match _gm,
+		int *ret, uint32_t flags) {
+	g_setjmp(0, "g_process_lom_string", NULL, NULL);
+	char *ptr = string, *w_ptr;
+	char left[MAX_LOM_VLEN + 1], right[MAX_LOM_VLEN + 1], comp[4], oper[4];
+	int i;
+	while (ptr[0]) {
+		bzero(left, MAX_LOM_VLEN + 1);
+		bzero(right, MAX_LOM_VLEN + 1);
+		bzero(comp, 4);
+		bzero(oper, 4);
+		while (is_ascii_alphanumeric((uint8_t) ptr[0])) {
+			ptr++;
+		}
+
+		w_ptr = ptr;
+		i = 0;
+		while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E) {
+			i++;
+			ptr++;
+		}
+
+		if (i > MAX_LOM_VLEN) {
+			return 1;
+		}
+
+		g_strncpy(left, w_ptr, i);
+
+		while (ptr[0] == 0x20) {
+			ptr++;
+		}
+
+		i = 0;
+
+		w_ptr = ptr;
+		while (!is_opr(ptr[0])) {
+			ptr++;
+			i++;
+		}
+
+		if (i > 2) {
+			return 2;
+		}
+
+		if (get_opr(w_ptr) == 1) {
+			g_strncpy(oper, w_ptr, i);
+			goto end_loop;
+		} else {
+			g_strncpy(comp, w_ptr, i);
+		}
+
+		while (ptr[0] == 0x20) {
+			ptr++;
+		}
+
+		w_ptr = ptr;
+		i = 0;
+		while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E) {
+			i++;
+			ptr++;
+		}
+
+		if (i > MAX_LOM_VLEN) {
+			return 3;
+		}
+
+		g_strncpy(right, w_ptr, i);
+
+		while (ptr[0] == 0x20) {
+			ptr++;
+		}
+
+		i = 0;
+
+		w_ptr = ptr;
+		while (!is_opr(ptr[0])) {
+			ptr++;
+			i++;
+		}
+
+		if (i > 2) {
+			return 4;
+		}
+
+		if (get_opr(w_ptr) == 1) {
+			g_strncpy(oper, w_ptr, i);
+		}
+
+		end_loop: ;
+
+		if (!strlen(left)) {
+			return 5;
+		}
+
+		char *r_ptr = (char*) right, *c_ptr = (char*) comp, *o_ptr =
+				(char*) oper;
+
+		if (!strlen(r_ptr)) {
+			r_ptr = NULL;
+		}
+
+		size_t comp_l = strlen(comp), oper_l = strlen(oper);
+
+		if (!strlen(c_ptr)) {
+			c_ptr = NULL;
+		}
+
+		if (!strlen(o_ptr)) {
+			o_ptr = NULL;
+		}
+
+		*ret = g_build_lom_packet(hdl, left, r_ptr, c_ptr, comp_l, o_ptr,
+				oper_l, _gm, NULL, flags);
+
+		if (*ret) {
+			return 6;
+		}
+
+	}
+
+	return 0;
 }
 
 void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
