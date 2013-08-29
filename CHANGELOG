@@ -1,3 +1,7 @@
+ * v1.7
+ *
+ *   - Added matching by comparison/relational and logical operators, --[i]lom <expression>
+ *
  * v1.6
  *
  *   - Added --sort (see --help)
@@ -7,7 +11,7 @@
  *   - Progress stats showed when not requested (-p) (rev. 2)
  *   - Bugfix: plugged memory leak when --sort given repeatedly (rev. 2)
  *   - Bugfix: -x was broken (since 1.6-2) (rev. 3)
- *   - Config lines (and tokens) can be passed as field to --[i]regex[i] and --[i]match (rev. 3) 
+ *   - Config lines (and tokens) can be passed as <field> to --[i]regex[i] and --[i]match (rev. 3) 
  *   - g_filter didn't check if match requested before starting (rev. 4)
  *   - Bugfix: --raw spat ASCII junk to stdout (rev. 4)
  *   - Optimized data record formatting functions (rev. 5)
