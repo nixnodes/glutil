@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7
+ * Version     : 1.7-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -6758,6 +6758,13 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		remove_repeating_chars(output, 0x2F);
 	} else if (arg && !strcmp(match, "arg")) {
 		snprintf(output, max_size, (char*) arg);
+	} else if (arg && !strcmp(match, "size")) {
+		struct stat st;
+
+		if (stat(arg, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%llu", (long long unsigned int) st.st_size);
 	} else if (arg && !strncmp(match, "c:", 2)) {
 		char *buffer = calloc(max_size + 1, 1);
 		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2],
