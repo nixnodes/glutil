@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-2
+ * Version     : 1.7-3
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2519,13 +2519,15 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
-	build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
-	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
-	build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
-	build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
+	if (updmode != UPD_MODE_WRITE) {
+		build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
+		build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
+		build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
+		build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
+	}
 
 	bzero(SITEROOT, 255);
 	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
