@@ -1,0 +1,122 @@
+glutil can perform IO operations on glFTPd binary logs (any vanilla 
+binary file you can find in /logs folder), based on advanced filtering 
+methods. Aside from that, it has 'hooks' which you can use to capture 
+data from binary logs and pass it to the shell. 
+
+Log's <field>'s are referenced using static variable names.
+
+Variable names are accepted by --[i]regex[i], --[i]match, --[i]lom, 
+ --sort and --[pre|post|loop]exec  (see --help)
+
+Mind, that whenever passing arguments to --[..]exec, {} needs to be
+used around variables ({dir}, {time}, ...) 
+
+Types are:
+ 
+  S = string
+  I = integer
+  F = float
+
+|  NAME  |  TYPE  | DESCRIPTION                                       |
++--------+--------+----------------------------------------------------+
+: Global (applies to most logs and to other stuff)
+
+   exe        S    exact path to self
+   procid     S    self process id
+   ipc        I    glFTPd's IPC key set in system (or glutil)
+   glroot     S    glFTPd root path
+   siteroot   S    glFTPd site root path
+   ftpdata    S    glFTPd data path
+   logfile    S    glutil log file path
+  
+  
+: Dirlog
+
+   dir        S     The name of the dir (fullpath)
+   basedir    S     The name of the dir (basepath)
+   status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
+   time       I     Creation time since epoch (man 2 time)
+   user       I     The userid of the creator
+   group      I     The groupid of the primary group of the creator
+   files      I     The number of files inside the dir
+   size       I     The number of bytes in the dir   
+   
+: NUKELOG
+
+   dir        S     The dirname (fullpath)
+   status     I     0 = NUKED, 1 = UNNUKED
+   time       I     The nuke time since epoch (man 2 time)
+   nuker      S     The name of the nuker
+   unnuker    S     The name of the unnuker
+   nukee      S     The name of the nukee
+   mult       I     The nuke multiplier
+   size       F      The number of bytes nuked
+   reason     S     The nuke reason
+   
+ : DUPEFILE
+ 
+   filename   S     The file name
+   time       I     Creation time since epoch (man 2 time)
+   user       S     The name of the uploader
+   
+ : LASTONLOG
+ 
+   user       S     Username
+   group      S     Users primary group
+   tag        S     Users tagline
+   logon      I     Users logon time
+   logoff     I     Users logoff time
+   upload     I     Bytes uploaded
+   download   I     Bytes downloaded
+   stats      S     What did the user do ?
+   
+ : ONLINER
+   
+   user       S     The user that added the oneliner
+   group      S     The primary group of the user who added the oneliner
+   tag        S     The tagline of the user who added the oneliner
+   time       I     The time the message was added (epoch)
+   msg        S     The message (oneliner)
+   
+ : ONLINE (shared mem)
+
+   user       S     The username of the user
+   tag        S     The users tagline
+   time       I     The login time since the epoch (man 2 time)
+   status     I     The status of the user, idle, RETR, etc
+   host       S     The host the user is comming from (with ident)
+   dir        S     The users current dir (fullpath)
+   ssl        I     0 = no ssl, 1 = ssl on control, 2 = ssl on control and data
+   group      I     The groupid of the users primary group
+   pid        I     The processor id of the process
+   lupdtime   I     Last update time since epoch (man 2 time)
+   lxfertime  I     The time of the last succesfull transfer
+   bxfer      I     Bytes transferred so far
+   btxfer     I     Bytes transferred in the last loop (speed limiting)
+   rate       I     Transfer rate in B/s, calculated from bxfer and lupdtime
+   
+--- glutil specific: ---
+ 
+ : IMDB
+ 
+   dir        S     The directory name related to record
+   basedir    S     The directory name related to record (basepath)
+   time       I     Creation time since epoch (man 2 time)
+   imdbid     S     iMDB object ID
+   score      F     iMDB score
+   votes      I     iMDB votes
+   genres     S     Listed genres
+   rated      S     Rating
+   title      S     Title
+   director   S     Director
+   actors     S     Actors
+   released   I     Released time since epoch (man 2 time)
+   runtime    I     Runtime 
+   year       S     Year of release
+   
+ : GAME
+ 
+   dir        S     The directory name related to record
+   time       I     Creation time since epoch (man 2 time)
+   score      F     Game score
+   
