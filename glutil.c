@@ -1003,8 +1003,8 @@ char *hpd_up =
 				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
 				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..\n"
 				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
-				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}..\n"
-				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|{year}>\n"
+				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{IPC}|{year}..\n"
+				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|>\n"
 				"                        While parsing data structure/filesystem, execute command for each record\n"
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
 				"                          Operators {..} are overwritten with dirlog values\n"
@@ -1972,6 +1972,9 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl);
 int g_build_lom_packet(struct g_handle *hdl, char *left, char *right,
 		char *comp, size_t comp_l, char *oper, size_t oper_l, __g_match match,
 		__g_lom *ret, uint32_t flags);
+
+int g_get_lom_g_t_ptr(struct g_handle *hdl, char *field, __g_lom lom,
+		uint32_t flags);
 
 int g_oper_and(int s, int d);
 int g_oper_or(int s, int d);
@@ -6747,9 +6750,9 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, IMDBLOG);
 	} else if (!strcmp(match, "gamefile")) {
 		snprintf(output, max_size, GAMELOG);
-	} else if (!strcmp(match, "PID")) {
+	} else if (!strcmp(match, "procid")) {
 		snprintf(output, max_size, "%d", getpid());
-	} else if (!strcmp(match, "IPC")) {
+	} else if (!strcmp(match, "ipc")) {
 		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
 	} else if (!strcmp(match, "spec1")) {
 		snprintf(output, max_size, "%s", b_spec1);
@@ -7869,7 +7872,7 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "reason")) {
 		snprintf(output, max_size, data->reason);
 	} else if (!strcmp(match, "size")) {
-		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes);
+		snprintf(output, max_size, "%.2f", (float) data->bytes);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->nuketime);
 	} else if (!strcmp(match, "status")) {
