@@ -1,6 +1,9 @@
  * v1.7
  *
  *   - Added matching by comparison/relational and logical operators, --[i]lom <expression>
+ *   - -x can pass file {size} along to shell (rev. 1)
+ *   - Bugfix: plugged memory leak when --[i]lom given repeatedly (rev. 1)
+ *   - Bugfix: flag collision (removed -k alias for --nowrite) (rev. 2)
  *
  * v1.6
  *
