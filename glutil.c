@@ -7447,7 +7447,7 @@ int get_opr(char *in) {
 
 int g_load_lom(struct g_handle *hdl) {
 
-	if (gfl & F_OPT_HASLOM) {
+	if ((gfl & F_OPT_HASLOM) || !(gfl & F_OPT_HAS_G_LOM)) {
 		return 0;
 	}
 
