@@ -5915,13 +5915,15 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 	int r;
 	if ((r = load_data_md(&hdl->buffer, file, hdl))) {
 		print_str(
-				"ERROR: %s: [%u] [%u] [%u] could not load data into memory! [%d]\n",
-				file, (uint32_t) (hdl->total_sz / hdl->block_sz),
+				"ERROR: %s: [%llu/%llu] [%u] [%u] could not load data into memory! [%d]\n",
+				file, (uint64_t) hdl->buffer.count,
+				(uint64_t) (hdl->total_sz / hdl->block_sz),
 				(uint32_t) hdl->total_sz, hdl->block_sz, r);
 		return 4;
 	} else {
 		if (gfl & F_OPT_VERBOSE2) {
-			print_str("NOTICE: %s: loaded %u records into memory\n", file, r);
+			print_str("NOTICE: %s: loaded %llu records into memory\n", file,
+					(uint64_t) hdl->buffer.count);
 		}
 	}
 	return 0;
