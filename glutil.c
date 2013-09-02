@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-3
+ * Version     : 1.7-4
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -263,7 +263,7 @@ struct g_handle {
 	uint32_t block_sz, flags;
 	mda buffer, w_buffer;
 	void *data;
-	size_t buffer_count;
+	off_t buffer_count;
 	void *last;
 	char s_buffer[PATH_MAX], file[PATH_MAX], mode[32];
 	mode_t st_mode;
@@ -1927,8 +1927,12 @@ int remove_repeating_chars(char *string, char c);
 int g_buffer_into_memory(char *, struct g_handle *);
 int g_print_stats(char *, uint32_t, size_t);
 
+int load_data_md(pmda md, char *file, struct g_handle *hdl);
 int shmap(struct g_handle *, key_t);
 int g_map_shm(struct g_handle *, key_t);
+int gen_md_data_ref(struct g_handle *hdl, pmda md, off_t count);
+int gen_md_data_ref_cnull(struct g_handle *hdl, pmda md, off_t count);
+int is_memregion_null(void *addr, size_t size);
 
 char *build_data_path(char *, char *, char *);
 void *ref_to_val_get_cfgval(char *, char *, char *, int, char *, size_t);
@@ -2014,16 +2018,16 @@ void *f_ref[] = { "--lom", opt_g_lom_match, (void*) 1, "--ilom",
 		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
 		(void*) 1, "-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
-		"--arg3", NULL, (void*) 1, "-m",
-		NULL, (void*) 1, "--imatch", opt_g_imatch, (void*) 1, "--match",
-		opt_g_match, (void*) 1, "--fork", opt_g_ex_fork, (void*) 1, "-vvvv",
-		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
-		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
-		opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
-		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "--silent",
-		opt_silent, (void*) 0, "--loopexec", opt_g_loopexec, (void*) 1,
-		"--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0,
-		"-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
+		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
+		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
+		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
+		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
+		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
+		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
+		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
+		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
 		opt_lastonlog_dump, (void*) 0, "--imdblog", opt_imdblog, (void*) 1,
 		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
 		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
@@ -4081,34 +4085,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		return 0;
 	}
 
-	/*__g_match pp = g_global_register_match();
-	 __g_lom lr;
-
-	 int tt = g_build_lom_packet(&g_act_1, "files", "10", "<=", 2, "&&", 2, pp,
-	 &lr);
-
-	 g_setjmp(0, "g_print_stats(2)", NULL, NULL);
-	 printf("%d : %d\n", tt, lr ? (lr->flags & F_LOM_INT) != 0 : 0);
-	 if (tt) {
-	 return 44;
-	 }*/
-	/*
-	 printf("%X  :  %X\n", lr->g_fcomp_ptr, g_is_equal_f);
-	 printf("%X  :  %X\n", lr->g_icomp_ptr, g_is_equal_f);
-	 printf("%X  :  %X\n", lr->g_oper_ptr, g_oper_and);
-
-	 printf("%d\n", lr->t_l_off);
-	 printf("%d\n", lr->t_r_off);
-
-	 printf(":: %llu\n",
-	 lr->g_t_ptr_left(g_act_1.buffer.objects->ptr, lr->t_l_off));
-
-	 printf("%d\n",
-	 lr->g_fcomp_ptr(
-	 lr->g_t_ptr_left(g_act_1.buffer.objects->ptr, lr->t_l_off),
-	 15.9));
-	 //exit(0);
-	 */
 	void *buffer = calloc(1, g_act_1.block_sz);
 
 	int r;
@@ -5738,11 +5714,62 @@ size_t g_load_data_md(void *output, size_t max, char *file) {
 	return c_fr;
 }
 
+int gen_md_data_ref(struct g_handle *hdl, pmda md, off_t count) {
+
+	unsigned char *w_ptr = (unsigned char*) hdl->data;
+
+	off_t i;
+
+	for (i = 0; i < count; i++) {
+		md->lref_ptr = (void*) w_ptr;
+		w_ptr += hdl->block_sz;
+		if (!md_alloc(md, hdl->block_sz)) {
+			md_g_free(md);
+			return -5;
+		}
+
+		hdl->buffer_count++;
+	}
+
+	return 0;
+}
+
+int is_memregion_null(void *addr, size_t size) {
+	size_t i = size - 1;
+	unsigned char *ptr = (unsigned char*) addr;
+	while (!ptr[i] && i) {
+		i--;
+	}
+	return i;
+}
+
+int gen_md_data_ref_cnull(struct g_handle *hdl, pmda md, off_t count) {
+
+	unsigned char *w_ptr = (unsigned char*) hdl->data;
+
+	off_t i;
+
+	for (i = 0; i < count; i++) {
+		if (is_memregion_null((void*) w_ptr, hdl->block_sz)) {
+			md->lref_ptr = (void*) w_ptr;
+			if (!md_alloc(md, hdl->block_sz)) {
+				md_g_free(md);
+				return -5;
+			}
+
+			hdl->buffer_count++;
+		}
+		w_ptr += hdl->block_sz;
+	}
+
+	return 0;
+}
+
 int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 	g_setjmp(0, "load_data_md", NULL, NULL);
 
 	int r = 0;
-	size_t count = 0;
+	off_t count = 0;
 
 	if (!hdl->block_sz) {
 		return -2;
@@ -5763,7 +5790,7 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 		return -4;
 	}
 
-	size_t i, b_read = 0;
+	size_t b_read = 0;
 
 	hdl->buffer_count = 0;
 	md->flags |= F_MDA_REFPTR;
@@ -5776,24 +5803,19 @@ int load_data_md(pmda md, char *file, struct g_handle *hdl) {
 		}
 	}
 
-	unsigned char *w_ptr = (unsigned char*) hdl->data;
-
-	for (i = 0; i < count; i++) {
-		md->lref_ptr = (void*) w_ptr;
-		w_ptr += hdl->block_sz;
-		if (!md_alloc(md, hdl->block_sz)) {
-			md_g_free(md);
-			return -5;
-		}
-
-		hdl->buffer_count++;
+	if (!(hdl->flags & F_GH_SHM)) {
+		gen_md_data_ref(hdl, md, count);
+	} else {
+		gen_md_data_ref_cnull(hdl, md, count);
 	}
 
 	g_setjmp(0, "load_data_md", NULL, NULL);
 
-	r = hdl->buffer_count;
+	if (!hdl->buffer_count) {
+		return -5;
+	}
 
-	return r;
+	return 0;
 }
 
 #define MSG_DEF_SHM "SHARED MEMORY"
@@ -5812,9 +5834,9 @@ int g_map_shm(struct g_handle *hdl, key_t ipc) {
 		return 1;
 	}
 
-	int r = load_data_md(&hdl->buffer, NULL, hdl);
+	int r;
 
-	if (!hdl->buffer_count) {
+	if ((r = load_data_md(&hdl->buffer, NULL, hdl))) {
 		if (((gfl & F_OPT_VERBOSE) && r != 1002) || (gfl & F_OPT_VERBOSE4)) {
 			print_str(
 					"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d]\n",
@@ -5891,12 +5913,11 @@ int g_buffer_into_memory(char *file, struct g_handle *hdl) {
 				(ulint64_t) hdl->total_sz);
 
 	int r;
-	if ((r = load_data_md(&hdl->buffer, file, hdl))
-			!= (hdl->total_sz / hdl->block_sz)) {
+	if ((r = load_data_md(&hdl->buffer, file, hdl))) {
 		print_str(
-				"ERROR: %s: [%d/%u] [%u] [%u] could not load data into memory!\n",
-				file, r, (uint32_t) (hdl->total_sz / hdl->block_sz),
-				(uint32_t) hdl->total_sz, hdl->block_sz);
+				"ERROR: %s: [%u] [%u] [%u] could not load data into memory! [%d]\n",
+				file, (uint32_t) (hdl->total_sz / hdl->block_sz),
+				(uint32_t) hdl->total_sz, hdl->block_sz, r);
 		return 4;
 	} else {
 		if (gfl & F_OPT_VERBOSE2) {
