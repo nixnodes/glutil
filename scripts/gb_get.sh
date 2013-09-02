@@ -5,7 +5,7 @@
 #
 ## Retrieves game info using giantbomb API (XML)
 #
-## Usage (macro): ./glutil -m getscore --arg1=/path/to/games
+## Usage (macro): ./glutil -m gamescore --arg1=/path/to/games
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
@@ -74,8 +74,8 @@ if [ $UPDATE_GAMELOG -eq 1 ]; then
 	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
 	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
 	$2 -k --iregex "$DIR_E" --imatchq > /dev/null || $2 -e game --match "$DIR_E" > /dev/null
-	echo -en "dir $DIR_E\ntime $(date +%s)\nscore $RES\n\n" > /tmp/glutil.gg.$$.tmp
-	$2 -z game --nobackup --silent < /tmp/glutil.gg.$$.tmp || echo "ERROR: failed writing to gamelog!!"
+	echo -en "dir $DIR_E\ntime $(date +%s)\nscore $RES\n\n" > "/tmp/glutil.gg.$$.tmp"
+	$2 -z game --nobackup --silent < "/tmp/glutil.gg.$$.tmp" || echo "ERROR: failed writing to gamelog!!"
 	rm /tmp/glutil.gg.$$.tmp
 fi
 
