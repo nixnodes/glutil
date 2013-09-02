@@ -70,7 +70,7 @@ echo "SCORE: '$QUERY': $RES"
 
 
 if [ $UPDATE_GAMELOG -eq 1 ]; then
-	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" SIGINT SIGTERM SIGKILL SIGABRT
+	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" 2 15 9 6
 	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
 	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
 	$2 -k --iregex "$DIR_E" --imatchq > /dev/null || $2 -e game --match "$DIR_E" > /dev/null
