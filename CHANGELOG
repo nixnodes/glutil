@@ -8,7 +8,8 @@
  *   - Bugfix: -z was not skipping missing log path detection as it should (rev. 3)
  *   - --exec {basedir} while parsing imdblog (rev. 3)
  *   - Bugfix: Shared memory segment weren't read properly (-w) (rev. 4)
- *   - Bugfix: verbose output loaded records always showed zero (rev. 4) 
+ *   - Bugfix: verbose output loaded records always showed zero (rev. 4)
+ *   - Added 'nukestr' global var (rev. 5)
  *
  * v1.6
  *
