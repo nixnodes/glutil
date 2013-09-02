@@ -172,7 +172,16 @@
    Say we want to do something with releases (in this case just 'echo'), 
    with a score lower than 5.0, but higher than 0
 
-./glutil -a --exec "echo \"{score} > 0 && {score} < 5.0\" | bc -l | grep '0' > /dev/null || echo \">> {title} << is below the score limit {score}/5.0\"" --silent
+./glutil -a --ilom="score < 5.0 && score" --exec "echo \">> {title} << is below the score limit {score}/5.0\""
+
+   Display all titles with score higher than 6.0, sort by score ascending:
+   
+./glutil -a --ilom="score > 6.0" --sort num,asc,score --batch | cut -f 3,6
+
+   Display all titles with score higher than 7.1 of genre Comedy,
+   sorted by score ascending:
+   
+./glutil -a --ilom="score > 7.1" --iregexi genres,".*Comedy.*" --sort num,asc,score --batch | cut -f 3,6
 
    If you have an idea about what sort of log type may be usefull,
    write to io@nixnodes.net
