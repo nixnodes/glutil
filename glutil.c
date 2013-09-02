@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-4
+ * Version     : 1.7-5
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -130,7 +130,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2597,7 +2597,7 @@ int g_init(int argc, char **argv) {
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)) {
-		print_str("NOTICE: performing dry run, no writing will be done\n");
+		print_str("WARNING: performing dry run, no writing will be done\n");
 	}
 
 	if (updmode && (gfl & F_OPT_PREEXEC)) {
@@ -6773,6 +6773,10 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, IMDBLOG);
 	} else if (!strcmp(match, "gamefile")) {
 		snprintf(output, max_size, GAMELOG);
+	} else if (!strcmp(match, "nukestr")) {
+		if (NUKESTR) {
+			snprintf(output, max_size, NUKESTR, "");
+		}
 	} else if (!strcmp(match, "procid")) {
 		snprintf(output, max_size, "%d", getpid());
 	} else if (!strcmp(match, "ipc")) {
