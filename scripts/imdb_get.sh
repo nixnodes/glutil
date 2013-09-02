@@ -25,7 +25,7 @@ IMDBURL="http://www.imdb.com/"
 #
 #INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-#INPUT_CLEAN_REGEX="([1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## If set to 1, might cause mis-matches 
 ## Only runs if exact match fails
@@ -50,7 +50,7 @@ DENY_IMDBID_DUPE=0
 RECORD_MAX_AGE=0
 #
 ## Work with unique database for each type
-TYPE_SPECIFIC_DB=1 
+TYPE_SPECIFIC_DB=0
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -128,7 +128,7 @@ RUNTIME_m=$(echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g')
 [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
-	trap "rm /tmp/glutil.img.$$.tmp; exit 2" SIGINT SIGTERM SIGKILL SIGABRT
+	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
 	if [ $DATABASE_TYPE -eq 0 ]; then
 		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
 		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
