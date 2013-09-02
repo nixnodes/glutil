@@ -13,7 +13,7 @@
 ##  NOTE: this macro forks glutil into background, executing this every --loop=<x> seconds - if necessary, 
 ##        change interval on the third line (one starting with "#@MACRO:..")
 #
-## See ./dirupdate --help for more info about options
+## See ./glutil --help for more info about options
 #
 ###########################[ BEGIN OPTIONS ]#############################
 #
