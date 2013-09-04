@@ -120,11 +120,15 @@ COUNTRY=$(get_field country)
 SEASONS=$(get_field seasons)
 CLASS=$(get_field classification)
 AIRTIME=$(get_field airtime)
+[ -z "$AIRTIME" ] && AIRTIME="N/A"
 AIRDAY=$(get_field airday)
+[ -z "$AIRDAY" ] && AIRDAY="N/A"
 RUNTIME=$(get_field runtime)
-
+[ -z "$RUNTIME" ] && RUNTIME=0
 LINK=$(get_field link)
-STARTED=$(date --date="$(get_field started | tr '/' ' ')" +"%s")
+[ -z "$LINK" ] && LINK="N/A"
+ZZ=$(get_field started)
+[ -n "$ZZ" ] && STARTED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || STARTED=0
 ZZ=$(get_field ended)
 [ -n "$ZZ" ] && ENDED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || ENDED=0
 GENRES=$(get_field_t '/genres//genre[.]')
