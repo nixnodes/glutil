@@ -23,9 +23,9 @@ URL="http://www.omdbapi.com/"
 # iMDB base url
 IMDBURL="http://www.imdb.com/"
 #
-#INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
+INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## If set to 1, might cause mis-matches 
 ## Only runs if exact match fails
