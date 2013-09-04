@@ -42,7 +42,7 @@ DENY_QUERY_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1 or DENY_QUERY_DUPE=1)
-RECORD_MAX_AGE=1
+RECORD_MAX_AGE=14
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=1
