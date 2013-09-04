@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # DO NOT EDIT THESE LINES
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
 #@MACRO:tvrage-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
