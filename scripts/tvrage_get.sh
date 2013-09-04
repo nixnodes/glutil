@@ -8,8 +8,8 @@
 #
 ## Requires glutil-1.7-6 or greater
 #
-## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]         (filesystem based)
-##                ./glutil -m tvrage-d --arg1 '\/tv\-(x264|xvid)\/.*\-[a-zA-Z0-9\-_]+$'   (dirlog based)
+## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 (filesystem based)
+##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid)\/.*\-[a-zA-Z0-9\-_]+$'   (dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
@@ -108,7 +108,7 @@ get_field_t()
 
 SHOWID=$(get_field showid)
 
-[ -z "$SHOWID" ] && echo "ERROR: could not get show id" && exit 1
+[ -z "$SHOWID" ] && echo "ERROR: $QUERY: $1: could not get show id" && exit 1
 
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "showid,^$SHOWID$" "$4"	
@@ -131,10 +131,10 @@ RUNTIME=$(get_field runtime)
 LINK=$(get_field link)
 [ -z "$LINK" ] && LINK="N/A"
 ZZ=$(get_field started)
-[ $(echo "$ZZ" | wc -w) -eq 2 ] && ZZ="1 $ZZ"
+[ $(echo "$ZZ" | tr '/' ' ' | wc -w) -eq 2 ] && ZZ="1 $ZZ"
 [ -n "$ZZ" ] && STARTED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || STARTED=0
 ZZ=$(get_field ended)
-[ $(echo "$ZZ" | wc -w) -eq 2 ] && ZZ="1 $ZZ"
+[ $(echo "$ZZ" | tr '/' ' ' | wc -w) -eq 2 ] && ZZ="1 $ZZ"
 [ -n "$ZZ" ] && ENDED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || ENDED=0
 GENRES=$(get_field_t '/genres//genre[.]')
 [ -z "$GENRES" ] && GENRES="N/A"
