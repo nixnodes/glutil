@@ -26,4 +26,4 @@
 ## Requires a tvlog built with DATABASE_TYPE=0 (see tvrage_get.sh)
 ##
 #@MACRO:make-tvrage-infolinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{glroot}{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
-#@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{glroot}{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} - {genres} ]"` {m:arg1}
+#@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{glroot}{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} votes - {genres} ]"` {m:arg1}
