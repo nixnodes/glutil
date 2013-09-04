@@ -18,9 +18,9 @@
 # tvrage services base url
 URL="http://services.tvrage.com"
 #
-INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
+#INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](S[0-9]{1,3}E[0-9]{1,3}|XVID|X264|REPACK|DVDRIP|(H|P)DTV|BRRIP)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](S[0-9]{1,3}E[0-9]{1,3}|XVID|X264|REPACK|DVDRIP|(H|P)DTV|BRRIP)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## Updates tvlog
 UPDATE_TVLOG=1
@@ -73,7 +73,7 @@ echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 [ -z "$QUERY" ] && exit 1
-
+echo $QUERY
 cad() {
 	RTIME=$($1 --tvlog="$4$LAPPEND" -h $2 "$3" --imatchq -exec "echo {time}" --silent)
 	CTIME=$(date +"%s")
@@ -116,8 +116,11 @@ fi
 
 NAME=$(get_field name)
 STATUS=$(get_field status)
+[ -z "$STATUS" ] && STATUS="N/A"
 COUNTRY=$(get_field country)
+[ -z "$COUNTRY" ] && COUNTRY="N/A"
 SEASONS=$(get_field seasons)
+[ -z "$SEASONS" ] && SEASONS=0
 CLASS=$(get_field classification)
 AIRTIME=$(get_field airtime)
 [ -z "$AIRTIME" ] && AIRTIME="N/A"
@@ -128,10 +131,13 @@ RUNTIME=$(get_field runtime)
 LINK=$(get_field link)
 [ -z "$LINK" ] && LINK="N/A"
 ZZ=$(get_field started)
+echo $ZZ | grep -P "^[0-9]" || ZZ="1 $ZZ"
 [ -n "$ZZ" ] && STARTED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || STARTED=0
 ZZ=$(get_field ended)
+echo $ZZ | grep -P "^[0-9]" || ZZ="1 $ZZ"
 [ -n "$ZZ" ] && ENDED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || ENDED=0
 GENRES=$(get_field_t '/genres//genre[.]')
+[ -z "$GENRES" ] && GENRES="N/A"
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
