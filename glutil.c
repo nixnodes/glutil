@@ -440,6 +440,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_WRITE			0x13
 #define UPD_MODE_DUMP_IMDB		0x14
 #define UPD_MODE_DUMP_GAME		0x15
+#define UPD_MODE_DUMP_TV		0x16
 
 #define PRIO_UPD_MODE_MACRO 	0x1001
 #define PRIO_UPD_MODE_INFO 		0x1002
@@ -1004,6 +1005,7 @@ char *hpd_up =
 				"  -o, [--raw]           Print oneliners to stdout\n"
 				"  -a, [--raw]           Print iMDB log to stdout\n"
 				"  -k, [--raw]           Print game log to stdout\n"
+				"  -h, [--raw]           Print tvrage log to stdout\n"
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
 				"  -t                    Print all user files inside /ftp-data/users\n"
 				"  -g                    Print all group files inside /ftp-data/groups\n"
@@ -1035,7 +1037,7 @@ char *hpd_up =
 				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{IPC}|{year}..\n"
 				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|{procid}>\n"
 				"                        While parsing data structure/filesystem, execute command for each record\n"
-				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n\n"
 				"                          Operators {..} are overwritten with dirlog values\n"
 				"  --preexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
 				"                        Execute shell <command> before starting main procedure\n"
@@ -1046,7 +1048,7 @@ char *hpd_up =
 				"                        Regex filter string, used during various operations\n"
 				"                          If <field> is set, matching is performed against a specific data log field\n"
 				"                            (field names are the same as --exec variable names for logs)\n"
-				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n\n"
 				"  --regexi [<var>,]<match>\n"
 				"                        Case insensitive variant of --regex\n"
 				"  --iregex [<var>,]<match> \n"
@@ -1055,7 +1057,7 @@ char *hpd_up =
 				"                        Same as --regexi with inverted match\n"
 				"  --match [<field>,]<match>\n"
 				"                        Regular filter string (exact matches)\n"
-				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -n\n"
+				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n\n"
 				"  --imatch [<field>,]<match>\n"
 				"                        Inverted --match\n"
 				"  --lom <field1 > 5.0 && field2 != 0 || ..>\n"
@@ -1070,7 +1072,7 @@ char *hpd_up =
 				"                          <mode> can only be 'num' (numeric)\n"
 				"                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
 				"                          Sorts by the specified data log <field>\n"
-				"                          Used with -e, -d, -i, -l, -o, -w, -a, -k and -n\n"
+				"                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n\n"
 				"\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
@@ -1816,6 +1818,11 @@ int opt_g_dump_game(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_dump_tv(void *arg, int m) {
+	updmode = UPD_MODE_DUMP_TV;
+	return 0;
+}
+
 int opt_oneliner_dump(void *arg, int m) {
 	updmode = UPD_MODE_DUMP_ONEL;
 	return 0;
@@ -2039,22 +2046,23 @@ void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
 
 void *f_ref[] = { "--lom", opt_g_lom_match, (void*) 1, "--ilom",
 		opt_g_lom_imatch, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
-		"--sort", opt_g_sort, (void*) 1, "-k", opt_g_dump_game, (void*) 0,
-		"--cdir", opt_g_cdironly, (void*) 0, "--imatchq", opt_g_imatchq,
-		(void*) 0, "--matchq", opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb,
-		(void*) 0, "-z", opt_g_write, (void*) 1, "--infile", opt_g_infile,
-		(void*) 1, "-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev,
-		(void*) 0, "-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk,
-		(void*) 0, "-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f,
-		(void*) 0, "-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir,
-		(void*) 0, "--loopmax", opt_loop_max, (void*) 1, "--ghost",
-		opt_check_ghost, (void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive",
-		opt_g_recursive, (void*) 0, "--recursive", opt_g_recursive, (void*) 0,
-		"-g", opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0,
-		"--backup", opt_backup, (void*) 1, "-b", opt_backup, (void*) 1,
-		"--postexec", opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec,
-		(void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep,
-		(void*) 1, "-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
+		"--sort", opt_g_sort, (void*) 1, "-h", opt_g_dump_tv, (void*) 0, "-k",
+		opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly, (void*) 0,
+		"--imatchq", opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq,
+		(void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z", opt_g_write,
+		(void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev", opt_g_xdev,
+		(void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk,
+		(void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file", opt_g_udc_f,
+		(void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir,
+		(void*) 0, "--dir", opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max,
+		(void*) 1, "--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc,
+		(void*) 1, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
+		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
+		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
+		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
+		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
+		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
+		"--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
@@ -2711,6 +2719,9 @@ int g_init(int argc, char **argv) {
 		break;
 	case UPD_MODE_DUMP_GAME:
 		EXITVAL = g_print_stats(GAMELOG, 0, 0);
+		break;
+	case UPD_MODE_DUMP_TV:
+		EXITVAL = g_print_stats(TVLOG, 0, 0);
 		break;
 	case UPD_MODE_DUPE_CHK:
 		EXITVAL = dirlog_check_dupe();
