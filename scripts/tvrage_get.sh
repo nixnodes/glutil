@@ -131,10 +131,10 @@ RUNTIME=$(get_field runtime)
 LINK=$(get_field link)
 [ -z "$LINK" ] && LINK="N/A"
 ZZ=$(get_field started)
-echo $ZZ | grep -P "^[0-9]" || ZZ="1 $ZZ"
+[ $(echo "$ZZ" | wc -w) -eq 2 ] && ZZ="1 $ZZ"
 [ -n "$ZZ" ] && STARTED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || STARTED=0
 ZZ=$(get_field ended)
-echo $ZZ | grep -P "^[0-9]" || ZZ="1 $ZZ"
+[ $(echo "$ZZ" | wc -w) -eq 2 ] && ZZ="1 $ZZ"
 [ -n "$ZZ" ] && ENDED=$(date --date="$(echo $ZZ | tr '/' ' ')" +"%s") || ENDED=0
 GENRES=$(get_field_t '/genres//genre[.]')
 [ -z "$GENRES" ] && GENRES="N/A"
