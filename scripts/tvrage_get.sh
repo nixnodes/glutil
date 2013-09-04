@@ -155,7 +155,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	fi	
 	
 	echo -en "dir $DIR_E\ntime $(date +%s)\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenres $GENRES\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to tvlog!!"
+	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to tvlog [$3$LAPPEND]"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
