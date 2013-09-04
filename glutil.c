@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-5
+ * Version     : 1.7-6
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -80,9 +80,14 @@
 #define imdb_file "/glftpd/ftp-data/logs/imdb.log"
 #endif
 
-/* imdb log file path */
+/* game log file path */
 #ifndef game_log
 #define game_log "/glftpd/ftp-data/logs/game.log"
+#endif
+
+/* tv log file path */
+#ifndef tv_log
+#define tv_log "/glftpd/ftp-data/logs/tv.log"
 #endif
 
 /* see README file about this */
@@ -130,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -203,6 +208,25 @@ typedef struct ___d_game {
 	char _d_unused[512]; /* Reserved for future use */
 
 } _d_game, *__d_game;
+
+typedef struct ___d_tvrage {
+	char dirname[255];
+	uint32_t timestamp;
+	uint32_t showid;
+	char name[128];
+	char link[128];
+	char country[24];
+	uint32_t started;
+	uint32_t ended;
+	uint16_t seasons;
+	char status[64];
+	uint32_t runtime;
+	char airtime[6];
+	char airday[32];
+	char class[64];
+	char genres[256];
+	char _d_unused[256]; /* Reserved for future use */
+} _d_tvrage, *__d_tvrage;
 
 #pragma pack(pop)
 
@@ -493,9 +517,10 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISIMDB				(a32 << 14)
 #define F_GH_ISGAME				(a32 << 15)
 #define F_GH_ISGENERIC			(a32 << 16)
+#define F_GH_ISTVRAGE			(a32 << 17)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISGENERIC)
+#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISGENERIC|F_GH_ISTVRAGE)
 
 #define F_OVRR_IPC				(a32 << 1)
 #define F_OVRR_GLROOT			(a32 << 2)
@@ -507,6 +532,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_NUKELOG			(a32 << 8)
 #define F_OVRR_NUKESTR			(a32 << 9)
 #define F_OVRR_IMDBLOG			(a32 << 10)
+#define F_OVRR_TVLOG			(a32 << 11)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -554,6 +580,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define ON_SZ 					sizeof(struct ONLINE)
 #define ID_SZ 					sizeof(_d_imdb)
 #define GM_SZ 					sizeof(_d_game)
+#define TV_SZ 					sizeof(_d_tvrage)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 			536870912   /* max file size allowed to load into memory */
@@ -581,6 +608,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define DEFF_DULOG	 			"glutil.log"
 #define DEFF_IMDB	 			"imdb.log"
 #define DEFF_GAMELOG 			"game.log"
+#define DEFF_TV 				"tv.log"
 
 #define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
@@ -926,6 +954,7 @@ char ONELINERS[PATH_MAX] = { oneliner_file };
 char FTPDATA[PATH_MAX] = { ftp_data };
 char IMDBLOG[PATH_MAX] = { imdb_file };
 char GAMELOG[PATH_MAX] = { game_log };
+char TVLOG[PATH_MAX] = { tv_log };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
@@ -1465,6 +1494,12 @@ int opt_imdblog(void *arg, int m) {
 	return 0;
 }
 
+int opt_tvlog(void *arg, int m) {
+	g_cpg(arg, TVLOG, m, PATH_MAX);
+	ofl |= F_OVRR_TVLOG;
+	return 0;
+}
+
 int opt_rebuild(void *arg, int m) {
 	p_argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_REBUILD;
@@ -1852,19 +1887,22 @@ __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
 		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
-		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game;
+		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game,
+		ref_to_val_tv;
 
 __d_ref_to_pval ref_to_val_ptr_dirlog, ref_to_val_ptr_nukelog,
 		ref_to_val_ptr_oneliners, ref_to_val_ptr_online, ref_to_val_ptr_imdb,
-		ref_to_val_ptr_game, ref_to_val_ptr_lastonlog, ref_to_val_ptr_dupefile;
+		ref_to_val_ptr_game, ref_to_val_ptr_lastonlog, ref_to_val_ptr_dupefile,
+		ref_to_val_ptr_tv;
 
 __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
-		dirlog_format_block, imdb_format_block, game_format_block;
+		dirlog_format_block, imdb_format_block, game_format_block,
+		tv_format_block;
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
 __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
-		gcb_lastonlog, gcb_game;
+		gcb_lastonlog, gcb_game, gcb_tv;
 
 uint64_t file_crc32(char *, uint32_t *);
 
@@ -2028,35 +2066,35 @@ void *f_ref[] = { "--lom", opt_g_lom_match, (void*) 1, "--ilom",
 		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
 		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
 		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
-		opt_lastonlog_dump, (void*) 0, "--imdblog", opt_imdblog, (void*) 1,
-		"--oneliners", opt_oneliner, (void*) 1, "-o", opt_oneliner_dump,
-		(void*) 0, "--lastonlog", opt_lastonlog, (void*) 1, "-i",
-		opt_dupefile_dump, (void*) 0, "--dupefile", opt_dupefile, (void*) 1,
-		"--nowbuffer", opt_g_buffering, (void*) 0, "--raw", opt_raw_dump,
-		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
-		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
-		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
-		opt_compact_output_formatting, (void*) 0, "--batch",
-		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
-		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
-		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
-		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
-		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
-		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
-		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
-		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
-		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
-		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
-		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
-		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
-		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
-		(void*) 1, "--nowrite", opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv,
-		(void*) 0, "--crc32", option_crc32, (void*) 1, "--nobackup",
-		opt_nobackup, (void*) 0, "-c", opt_dirlog_check, (void*) 0, "--check",
-		opt_dirlog_check, (void*) 0, "--dump", opt_dirlog_dump, (void*) 0, "-d",
-		opt_dirlog_dump, (void*) 0, "-f", opt_g_force, (void*) 0, "-s",
-		opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
-		(void*) 0, NULL, NULL, NULL };
+		opt_lastonlog_dump, (void*) 0, "--tvlog", opt_tvlog, (void*) 1,
+		"--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
+		(void*) 1, "-o", opt_oneliner_dump, (void*) 0, "--lastonlog",
+		opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
+		"--dupefile", opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering,
+		(void*) 0, "--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi,
+		(void*) 1, "--iregex", opt_g_iregex, (void*) 1, "--regexi",
+		opt_g_regexi, (void*) 1, "--regex", opt_g_regex, (void*) 1, "-e",
+		opt_rebuild, (void*) 1, "--comp", opt_compact_output_formatting,
+		(void*) 0, "--batch", opt_batch_output_formatting, (void*) 0, "-y",
+		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
+		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
+		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
+		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
+		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
+		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
+		opt_dirlog_chk_dupe, (void*) 0, "--nobuffer", opt_g_nobuffering,
+		(void*) 0, "--nukedump", opt_dirlog_dump_nukelog, (void*) 0, "-n",
+		opt_dirlog_dump_nukelog, (void*) 0, "--help", print_help, (void*) 0,
+		"--version", print_version, (void*) 0, "--folders",
+		opt_dirlog_sections_file, (void*) 1, "--dirlog", opt_dirlog_file,
+		(void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--siteroot",
+		opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1, "--nowrite",
+		opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv, (void*) 0, "--crc32",
+		option_crc32, (void*) 1, "--nobackup", opt_nobackup, (void*) 0, "-c",
+		opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
+		"--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
+		"-f", opt_g_force, (void*) 0, "-s", opt_update_single_record, (void*) 1,
+		"-r", opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -2534,6 +2572,7 @@ int g_init(int argc, char **argv) {
 		build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
 		build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
 		build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
+		build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
 	}
 
 	bzero(SITEROOT, 255);
@@ -2590,6 +2629,9 @@ int g_init(int argc, char **argv) {
 		}
 		if (ofl & F_OVRR_IMDBLOG) {
 			print_str(MSG_INIT_PATH_OVERR, "IMDBLOG", IMDBLOG);
+		}
+		if (ofl & F_OVRR_TVLOG) {
+			print_str(MSG_INIT_PATH_OVERR, "TVLOG", TVLOG);
 		}
 		if ((gfl & F_OPT_VERBOSE2) && (gfl & F_OPT_PS_LOGGING)) {
 			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
@@ -2986,6 +3028,8 @@ char *g_dgetf(char *str) {
 		return IMDBLOG;
 	} else if (!strncmp(str, "game", 4)) {
 		return GAMELOG;
+	} else if (!strncmp(str, "tvrage", 6)) {
+		return TVLOG;
 	}
 	return NULL;
 }
@@ -3839,6 +3883,8 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
 
 		case F_GH_ISGAME:
 		return (char*) ((__d_game) d_ptr)->dirname;
+		case F_GH_ISTVRAGE:
+		return (char*) ((__d_tvrage) d_ptr)->dirname;
 
 		case F_GH_ISGENERIC:
 		return (char*) d_ptr;
@@ -4812,7 +4858,6 @@ int get_relative_path(char *subject, char *root, char *output) {
 #define STD_FMT_TIME_STR  	"%d %b %Y %T"
 
 int dirlog_format_block(void *iarg, char *output) {
-	g_setjmp(0, "dirlog_format_block", NULL, NULL);
 	char buffer2[255];
 
 	struct dirlog *data = (struct dirlog *) iarg;
@@ -4850,7 +4895,6 @@ int dirlog_format_block(void *iarg, char *output) {
 }
 
 int nukelog_format_block(void *iarg, char *output) {
-	g_setjmp(0, "nukelog_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
 	struct nukelog *data = (struct nukelog *) iarg;
@@ -4888,7 +4932,6 @@ int nukelog_format_block(void *iarg, char *output) {
 }
 
 int dupefile_format_block(void *iarg, char *output) {
-	g_setjmp(0, "dupefile_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
 	struct dupefile *data = (struct dupefile *) iarg;
@@ -4911,7 +4954,6 @@ int dupefile_format_block(void *iarg, char *output) {
 }
 
 int lastonlog_format_block(void *iarg, char *output) {
-	g_setjmp(0, "lastonlog_format_block", NULL, NULL);
 	char buffer2[255] = { 0 }, buffer3[255] = { 0 }, buffer4[12] = { 0 };
 
 	struct lastonlog *data = (struct lastonlog *) iarg;
@@ -4944,7 +4986,6 @@ int lastonlog_format_block(void *iarg, char *output) {
 }
 
 int oneliner_format_block(void *iarg, char *output) {
-	g_setjmp(0, "oneliner_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
 	struct oneliner *data = (struct oneliner *) iarg;
@@ -4971,7 +5012,6 @@ int oneliner_format_block(void *iarg, char *output) {
 #define FMT_SP_OFF 	30
 
 int online_format_block(void *iarg, char *output) {
-	g_setjmp(0, "online_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
 	struct ONLINE *data = (struct ONLINE *) iarg;
@@ -5056,7 +5096,6 @@ int online_format_block(void *iarg, char *output) {
 #define STD_FMT_DATE_STR  	"%d %b %Y"
 
 int imdb_format_block(void *iarg, char *output) {
-	g_setjmp(0, "imdb_format_block", NULL, NULL);
 	char buffer2[255] = { 0 }, buffer3[255] = { 0 };
 
 	__d_imdb data = (__d_imdb) iarg;
@@ -5089,7 +5128,6 @@ int imdb_format_block(void *iarg, char *output) {
 }
 
 int game_format_block(void *iarg, char *output) {
-	g_setjmp(0, "game_format_block", NULL, NULL);
 	char buffer2[255] = { 0 };
 
 	__d_game data = (__d_game) iarg;
@@ -5107,6 +5145,36 @@ int game_format_block(void *iarg, char *output) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"GAMELOG: %s: created: %s - rating: %.1f\n", data->dirname,
 				buffer2, data->rating);
+	}
+
+	return c;
+}
+
+int tv_format_block(void *iarg, char *output) {
+	char buffer2[255] = { 0 };
+
+	__d_tvrage data = (__d_tvrage) iarg;
+
+	time_t t_t = (time_t) data->timestamp;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+
+	int c;
+	if (gfl & F_OPT_FORMAT_BATCH) {
+		c =
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+						"TVRAGE\x9%s\x9%u\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\n",
+						data->dirname, data->timestamp, data->name, data->class,
+						data->showid, data->link, data->status, data->airday,
+						data->airtime, data->runtime, data->started,
+						data->ended);
+	} else {
+		c =
+				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+						"TVRAGE: %s: created: %s - %s/%s [%u] - runtime: %u min - status: %s - country: %s\n",
+						data->dirname, buffer2, data->name, data->class,
+						data->showid, data->runtime, data->status,
+						data->country);
 	}
 
 	return c;
@@ -5986,6 +6054,14 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc1 = ref_to_val_game;
 		hdl->g_proc2 = ref_to_val_ptr_game;
 		hdl->g_proc3 = game_format_block;
+	} else if (!strncmp(hdl->file, TVLOG, strlen(TVLOG))) {
+		hdl->flags |= F_GH_ISTVRAGE;
+		hdl->block_sz = TV_SZ;
+		hdl->d_memb = 15;
+		hdl->g_proc0 = gcb_tv;
+		hdl->g_proc1 = ref_to_val_tv;
+		hdl->g_proc2 = ref_to_val_ptr_tv;
+		hdl->g_proc3 = tv_format_block;
 	} else {
 		return 1;
 	}
@@ -6773,6 +6849,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, IMDBLOG);
 	} else if (!strcmp(match, "gamefile")) {
 		snprintf(output, max_size, GAMELOG);
+	} else if (!strcmp(match, "tvragefile")) {
+		snprintf(output, max_size, TVLOG);
 	} else if (!strcmp(match, "nukestr")) {
 		if (NUKESTR) {
 			snprintf(output, max_size, NUKESTR, "");
@@ -7647,7 +7725,6 @@ int g_process_lom_string(struct g_handle *hdl, char *string, __g_match _gm,
 }
 
 void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_dirlog", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7677,7 +7754,6 @@ void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_nukelog(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_nukelog", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7701,7 +7777,6 @@ void *ref_to_val_ptr_nukelog(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_dupefile", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7716,7 +7791,6 @@ void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_lastonlog(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_lastonlog", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7740,7 +7814,6 @@ void *ref_to_val_ptr_lastonlog(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_oneliners(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_oneliners", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7755,7 +7828,6 @@ void *ref_to_val_ptr_oneliners(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_oneliners", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7786,7 +7858,6 @@ void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_imdb", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7814,7 +7885,6 @@ void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
-	g_setjmp(0, "ref_to_val_ptr_game", NULL, NULL);
 	if (!output) {
 		return NULL;
 	}
@@ -7832,8 +7902,37 @@ void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
 	return NULL;
 }
 
+void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
+	if (!output) {
+		return NULL;
+	}
+
+	__d_tvrage data = (__d_tvrage) arg;
+
+	if (!strcmp(match, "started")) {
+		*output = sizeof(data->started);
+		return &data->started;
+	} else if (!strcmp(match, "runtime")) {
+		*output = sizeof(data->runtime);
+		return &data->runtime;
+	} else if (!strcmp(match, "time")) {
+		*output = sizeof(data->timestamp);
+		return &data->timestamp;
+	} else if (!strcmp(match, "ended")) {
+		*output = sizeof(data->ended);
+		return &data->ended;
+	} else if (!strcmp(match, "showid")) {
+		*output = sizeof(data->showid);
+		return &data->showid;
+	} else if (!strcmp(match, "seasons")) {
+		*output = sizeof(data->seasons);
+		return &data->seasons;
+	}
+
+	return NULL;
+}
+
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_dirlog", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -7871,7 +7970,6 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 }
 
 int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_nukelog", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -7913,7 +8011,6 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 }
 
 int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_dupefile", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -7939,7 +8036,6 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 }
 
 int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_lastonlog", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -7995,7 +8091,6 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 }
 
 int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_oneliners", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -8025,7 +8120,6 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 }
 
 int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_online", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -8089,7 +8183,6 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 }
 
 int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_imdb", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -8139,7 +8232,6 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 }
 
 int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_game", NULL, NULL);
 	if (!output) {
 		return 2;
 	}
@@ -8158,6 +8250,55 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", data->timestamp);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
+int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	if (!ref_to_val_generic(arg, match, output, max_size)) {
+		return 0;
+	}
+
+	__d_tvrage data = (__d_tvrage) arg;
+
+	if (!strcmp(match, "dir")) {
+		snprintf(output, max_size, data->dirname);
+	} else if (!strcmp(match, "time")) {
+		snprintf(output, max_size, "%u", data->timestamp);
+	} else if (!strcmp(match, "airday")) {
+		snprintf(output, max_size, data->airday);
+	} else if (!strcmp(match, "airtime")) {
+		snprintf(output, max_size, data->airtime);
+	} else if (!strcmp(match, "country")) {
+		snprintf(output, max_size, data->country);
+	} else if (!strcmp(match, "link")) {
+		snprintf(output, max_size, data->link);
+	} else if (!strcmp(match, "name")) {
+		snprintf(output, max_size, data->name);
+	} else if (!strcmp(match, "status")) {
+		snprintf(output, max_size, data->status);
+	} else if (!strcmp(match, "ended")) {
+		snprintf(output, max_size, "%u", data->ended);
+	} else if (!strcmp(match, "started")) {
+		snprintf(output, max_size, "%u", data->started);
+	} else if (!strcmp(match, "seasons")) {
+		snprintf(output, max_size, "%u", data->seasons);
+	} else if (!strcmp(match, "showid")) {
+		snprintf(output, max_size, "%u", data->showid);
+	} else if (!strcmp(match, "runtime")) {
+		snprintf(output, max_size, "%u", data->runtime);
+	} else if (!strcmp(match, "class")) {
+		snprintf(output, max_size, data->class);
+	} else if (!strcmp(match, "genres")) {
+		snprintf(output, max_size, data->genres);
 	} else {
 		return 1;
 	}
@@ -8741,6 +8882,109 @@ int gcb_game(void *buffer, char *key, char *val) {
 			return 0;
 		}
 		ptr->rating = v_f;
+		return 1;
+	}
+	return 0;
+}
+
+int gcb_tv(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	__d_tvrage ptr = (__d_tvrage) buffer;
+	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->timestamp = v_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "airday", 6)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->airday, val, v_l > 31 ? 31 : v_l);
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "airtime", 7)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->airtime, val, v_l > 5 ? 5 : v_l);
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "country", 7)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->country, val, v_l > 23 ? 23 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "link", 4)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->link, val, v_l > 127 ? 127 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, "name", 4)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->name, val, v_l > 127 ? 127 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "ended", 5)) {
+		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->ended = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "started", 7)) {
+		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->started = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "runtime", 7)) {
+		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->runtime = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, "seasons", 7)) {
+		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->seasons = v_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "showid", 6)) {
+		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->showid = v_ui;
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "status", 6)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->status, val, v_l > 63 ? 63 : v_l);
+		return 1;
+	} else if (k_l == 5 && !strncmp(key, "class", 5)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->class, val, v_l > 63 ? 63 : v_l);
+		return 1;
+	} else if (k_l == 6 && !strncmp(key, "genres", 6)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->genres, val, v_l > 255 ? 255 : v_l);
 		return 1;
 	}
 	return 0;
