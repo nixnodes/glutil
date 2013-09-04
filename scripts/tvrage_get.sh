@@ -45,7 +45,7 @@ DENY_QUERY_DUPE=1
 RECORD_MAX_AGE=1
 #
 ## Work with unique database for each type
-TYPE_SPECIFIC_DB=0
+TYPE_SPECIFIC_DB=1
 #
 VERBOSE=0
 ############################[ END OPTIONS ]##############################
