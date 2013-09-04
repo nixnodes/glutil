@@ -63,6 +63,7 @@
   glutil specific binary logs:
 
   - Internet Movie Data Base log   (/ftp-data/logs/imdb.log)
+  - TVRAGE info log                (/ftp-data/logs/tv.log)
   - Game info log                  (/ftp-data/logs/game.log)
 
  EXTRACTING BINARY LOGS RECORDS AS STRINGS:
