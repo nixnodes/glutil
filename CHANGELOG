@@ -10,6 +10,8 @@
  *   - Bugfix: Shared memory segment weren't read properly (-w) (rev. 4)
  *   - Bugfix: verbose output loaded records always showed zero (rev. 4)
  *   - Added 'nukestr' global var (rev. 5)
+ *   - Created new data format (TVRAGE) (rev. 6)
+ *   - Added -h (see --help) (rev. 6)
  *
  * v1.6
  *
