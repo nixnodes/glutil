@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # DO NOT EDIT THESE LINES
 #@MACRO:killslow:{m:exe} -w --loop=2 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{c:FLAGS}' '{dir}' '{usroot}'"
 #
