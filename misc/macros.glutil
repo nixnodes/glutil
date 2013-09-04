@@ -15,10 +15,15 @@
 #@MACRO:dupe-v:{m:exe} -p --regexi "\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
 #
 ## [make-tvrage-dirlinks]
-## Creates symlinks in show folders, example:
+## Creates symlinks inside respective folders for every imdb/tv log record,
+## erasing any existing ones first; 
+##
+## Examples:
 ##
 ##  ../[ TVRAGE - Scripted - Comedy,Family ] 
+##  ../[ IMDB - 7.5/300415 - Action, Comedy, Adventure ] 
 ##
 ## Requires a tvlog built with DATABASE_TYPE=0 (see tvrage_get.sh)
 ##
-#@MACRO:make-tvrage-dirlinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{glroot}{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
+#@MACRO:make-tvrage-infolinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{glroot}{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
+#@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{glroot}{dir}" "{glroot}{dir}/[ IMDB - {score}/{votes} - {genres} ]"` {m:arg1}
