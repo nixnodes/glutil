@@ -73,7 +73,7 @@ echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
 QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 [ -z "$QUERY" ] && exit 1
-echo $QUERY
+
 cad() {
 	RTIME=$($1 --tvlog="$4$LAPPEND" -h $2 "$3" --imatchq -exec "echo {time}" --silent)
 	CTIME=$(date +"%s")
