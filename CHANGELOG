@@ -12,6 +12,7 @@
  *   - Added 'nukestr' global var (rev. 5)
  *   - Created new data format (TVRAGE) (rev. 6)
  *   - Added -h (see --help) (rev. 6)
+ *   - Bugfix: variable processing failed in certain cases (rev. 7)
  *
  * v1.6
  *
