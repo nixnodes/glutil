@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-6
+ * Version     : 1.7-7
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2501,7 +2501,7 @@ int g_init(int argc, char **argv) {
 		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
-	if ((gfl & F_OPT_VERBOSE) && glconf.offset) {
+	if ((gfl & F_OPT_VERBOSE3) && glconf.offset) {
 		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
 				(int) glconf.offset);
 	}
@@ -2848,6 +2848,7 @@ int g_print_info(void) {
 	print_str(" ONELINERS       %d        \n", LO_SZ);
 	print_str(" IMDBLOG         %d        \n", ID_SZ);
 	print_str(" GAMELOG         %d        \n", GM_SZ);
+	print_str(" TVLOG           %d        \n", TV_SZ);
 	print_str(" ONLINE(S)       %d        \n", OL_SZ);
 	print_str(MSG_NL);
 	if (gfl & F_OPT_VERBOSE) {
@@ -5182,10 +5183,10 @@ int tv_format_block(void *iarg, char *output) {
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"TVRAGE: %s: created: %s - %s/%s [%u] - runtime: %u min - status: %s - country: %s\n",
+						"TVRAGE: %s: created: %s - %s/%s [%u] - runtime: %u min - status: %s - country: %s - genres: %s\n",
 						data->dirname, buffer2, data->name, data->class,
 						data->showid, data->runtime, data->status,
-						data->country);
+						data->country, data->genres);
 	}
 
 	return c;
@@ -8331,12 +8332,13 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
 			(char*) calloc(
 			MAX_EXEC_STR, 1);
-	int i, i2, pi, r;
+	int i, i2, pi, r, f;
 
 	for (i = 0, pi = 0; i < blen; i++, pi++) {
 		if (input[i] == 0x7B) {
 			bzero(buffer, MAX_VAR_LEN + 1);
-			for (i2 = 0, i++, r = 0; i < blen && i2 < MAX_VAR_LEN; i++, i2++) {
+			for (i2 = 0, i++, r = 0, f = 0; i < blen && i2 < MAX_VAR_LEN;
+					i++, i2++) {
 				if (input[i] == 0x7D) {
 					if (!i2 || strlen(buffer) > MAX_VAR_LEN
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
@@ -8348,19 +8350,28 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 
 							pi += b_l_1 + 2;
 						}
-						i++;
+						f |= 0x1;
+						//i++;
 						break;
 					}
 					b_l_1 = strlen(buffer2);
 					g_memcpy(&buffer_o[pi], buffer2, b_l_1);
 
 					pi += b_l_1;
-					i++;
+					//i++;
+					f |= 0x1;
 					break;
 				}
 				buffer[i2] = input[i];
 			}
+
+			if ((f & 0x1)) {
+				//i-=1;
+				pi-=1;
+				continue;
+			}
 		}
+
 		buffer_o[pi] = input[i];
 
 	}
