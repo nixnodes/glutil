@@ -41,7 +41,8 @@ Types are:
    group      I     The groupid of the primary group of the creator
    files      I     The number of files inside the dir
    size       I     The number of bytes in the dir   
-   
+
+
 : NUKELOG
 
    dir        S     The dirname (fullpath)
@@ -53,13 +54,15 @@ Types are:
    mult       I     The nuke multiplier
    size       F     The number of bytes nuked
    reason     S     The nuke reason
-   
+
+
  : DUPEFILE
  
    filename   S     The file name
    time       I     Creation time since epoch (man 2 time)
    user       S     The name of the uploader
-   
+
+
  : LASTONLOG
  
    user       S     Username
@@ -70,7 +73,8 @@ Types are:
    upload     I     Bytes uploaded
    download   I     Bytes downloaded
    stats      S     What did the user do ?
-   
+
+
  : ONLINER
    
    user       S     The user that added the oneliner
@@ -78,7 +82,8 @@ Types are:
    tag        S     The tagline of the user who added the oneliner
    time       I     The time the message was added (epoch)
    msg        S     The message (oneliner)
-   
+
+
  : ONLINE (shared mem)
 
    user       S     The username of the user
@@ -114,7 +119,27 @@ Types are:
    released   I     Released time since epoch (man 2 time)
    runtime    I     Runtime 
    year       S     Year of release
-   
+
+
+ : TVRAGE
+ 
+   dir        S     The directory name related to record   
+   time       I     Creation time since epoch (man 2 time)
+   showid     I     TVRAGE show id
+   name       S     Show name
+   link       S     TVRAGE link to show
+   country    S     Country of origin
+   airtime    S     Airing time
+   airday     S     Air day of the week
+   runtime    I     Show runtime in minutes
+   started    I     Show starting time since epoch
+   ended      I     Show ended time since epoch         
+   seasons    I     Total number of seasons
+   class      S     Show classification
+   genres     S     Show genres
+   status     S     Show status
+
+
  : GAME
  
    dir        S     The directory name related to record
