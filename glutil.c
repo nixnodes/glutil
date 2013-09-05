@@ -1611,8 +1611,8 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	off_t i = 0;
 
-	while ((!is_ascii_alphanumeric((uint8_t) ptr[i]) || ptr[i] == 0x3A)
-			&& ptr[i] != 0x2C && i < (off_t) a_i) {
+	while ((ptr[i] != 0x2C || (ptr[i] == 0x2C && ptr[i - 1] == 0x5C))
+			&& i < (off_t) a_i) {
 		i++;
 	}
 
@@ -3277,15 +3277,13 @@ int g_dump_gen(char *root) {
 	snprintf(buffer, PATH_MAX, "%s", root);
 	remove_repeating_chars(buffer, 0x2F);
 
-	int r = enum_dir(buffer, g_process_directory, &ret, 0);
+	ret.rt_m = 1;
+
+	enum_dir(buffer, g_process_directory, &ret, 0);
 
 	print_str("STATS: %s: OK: %llu/%llu\n", root,
 			(unsigned long long int) ret.st_1,
 			(unsigned long long int) ret.st_1 + ret.st_2);
-
-	if (r && !ret.rt_m) {
-		ret.rt_m++;
-	}
 
 	return ret.rt_m;
 }
@@ -3297,29 +3295,35 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 	switch (type) {
 	case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			if ((aa_rh->rt_m = g_bmatch(name, &aa_rh->hdl))) {
+			if ((g_bmatch(name, &aa_rh->hdl))) {
 				aa_rh->st_2++;
 				break;
 			}
-			if (gfl & F_OPT_VERBOSE) {
+			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
 				print_str("FILE: %s\n", name);
+			} else if (gfl & F_OPT_FORMAT_BATCH) {
+				printf("%s\n", name);
 			}
+			aa_rh->rt_m = 0;
 			aa_rh->st_1++;
 		}
 		break;
 	case DT_DIR:
+		if (aa_rh->flags & F_PD_RECURSIVE) {
+			enum_dir(name, g_process_directory, arg, 0);
+		}
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			if ((aa_rh->rt_m = g_bmatch(name, &aa_rh->hdl))) {
+			if ((g_bmatch(name, &aa_rh->hdl))) {
 				aa_rh->st_2++;
 				break;
 			}
-			if (gfl & F_OPT_VERBOSE) {
+			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
 				print_str("DIR: %s\n", name);
+			} else if (gfl & F_OPT_FORMAT_BATCH) {
+				printf("%s\n", name);
 			}
+			aa_rh->rt_m = 0;
 			aa_rh->st_1++;
-		}
-		if (aa_rh->flags & F_PD_RECURSIVE) {
-			enum_dir(name, g_process_directory, arg, 0);
 		}
 		break;
 	}
@@ -6737,7 +6741,7 @@ void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 
 	md_init(&s_tk, 4);
 
-	if ((r = split_string(key, 0x3A, &s_tk)) == 2) {
+	if ((r = split_string(key, 0x40, &s_tk)) == 2) {
 		p_md_obj s_tk_ptr = s_tk.objects->next;
 		flags ^= F_CFGV_BUILD_FULL_STRING;
 		flags |= F_CFGV_RETURN_TOKEN_EX;
@@ -6898,11 +6902,9 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
 			snprintf(output, max_size, (char*) ptr);
-			g_free(buffer);
-			return 0;
 		}
+		g_free(buffer);
 
-		return 1;
 	} else {
 		return 1;
 	}
@@ -8367,7 +8369,7 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 
 			if ((f & 0x1)) {
 				//i-=1;
-				pi-=1;
+				pi -= 1;
 				continue;
 			}
 		}
