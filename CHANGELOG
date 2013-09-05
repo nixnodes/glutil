@@ -13,6 +13,8 @@
  *   - Created new data format (TVRAGE) (rev. 6)
  *   - Added -h (see --help) (rev. 6)
  *   - Bugfix: variable processing failed in certain cases (rev. 7)
+ *   - Bugfix: -x strange behaviour (rev. 8)
+ *   - Changed key/token delimiter (from : to @) when extracting config values (rev. 8)
  *
  * v1.6
  *
