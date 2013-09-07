@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-7
+ * Version     : 1.7-9
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 7
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -323,11 +323,16 @@ typedef struct sig_jmp_buf {
 	void *callback, *arg;
 } sigjmp, *p_sigjmp;
 
+typedef float (*g_tf_p)(void *base, size_t offset);
+typedef uint64_t (*g_t_p)(void *base, size_t offset);
+typedef int (*g_op)(int s, int d);
+
 typedef struct ___g_match_h {
 	uint32_t flags;
 	char *match, *field;
 	int reg_i_m, match_i_m, regex_flags;
 	mda lom;
+	g_op g_oper_ptr;
 	char data[5120];
 } _g_match, *__g_match;
 
@@ -335,13 +340,13 @@ typedef struct ___g_lom {
 	int result;
 	/* --- */
 	uint32_t flags;
-	uint64_t (*g_t_ptr_left)(void *base, size_t offset);
-	uint64_t (*g_t_ptr_right)(void *base, size_t offset);
-	float (*g_tf_ptr_left)(void *base, size_t offset);
-	float (*g_tf_ptr_right)(void *base, size_t offset);
+	g_t_p g_t_ptr_left;
+	g_t_p g_t_ptr_right;
+	g_tf_p g_tf_ptr_left;
+	g_tf_p g_tf_ptr_right;
 	int (*g_icomp_ptr)(uint64_t s, uint64_t d);
 	int (*g_fcomp_ptr)(float s, float d);
-	int (*g_oper_ptr)(int s, int d);
+	g_op g_oper_ptr;
 	uint64_t t_left, t_right;
 	float tf_left, tf_right;
 	/* --- */
@@ -557,6 +562,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GM_ISMATCH			(a32 << 2)
 #define F_GM_ISLOM				(a32 << 3)
 #define F_GM_IMATCH				(a32 << 4)
+#define F_GM_NAND				(a32 << 5)
+#define F_GM_NOR				(a32 << 6)
 
 #define F_GM_TYPES				(F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
 
@@ -1029,21 +1036,18 @@ char *hpd_up =
 				"                         Creates a binary record from ASCII data, inserting it into the specified log\n"
 				"                         Captures input from stdin, unless --infile is set\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
-				"\n"
-				"Matching and hooks:\n"
-				"  --exec <command {[base]dir}|{user}|{group}|{size}|{files}|{time}|{nuker}|{tag}|{msg}..\n"
-				"          ..|{unnuker}|{nukee}|{reason}|{logon}|{logoff}|{upload}|{download}|{file}|{host}..\n"
-				"          ..|{ssl}|{lupdtime}|{lxfertime}|{bxfer}|{btxfer}|{pid}|{rate}|{glroot}|{siteroot}..\n"
-				"          ..|{exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{IPC}|{year}..\n"
-				"          ..|{imdbid}|{score}|{votes}|{director}|{title}|{actors}|{runtime}|{released}|{procid}>\n"
+				"\n\n"
+				"Hooks:\n"
+				"  --exec <command [{field}..{field}..]>\n"
 				"                        While parsing data structure/filesystem, execute command for each record\n"
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n\n"
 				"                          Operators {..} are overwritten with dirlog values\n"
-				"  --preexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"  --preexec <command [{field}..{field}..]>\n"
 				"                        Execute shell <command> before starting main procedure\n"
-				"  --postexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"  --postexec <command [{field}..{field}..]>\n"
 				"                        Execute shell <command> after main procedure finishes\n"
-				"  --loopexec <command {exe}|{glroot}|{logfile}|{siteroot}|{usroot}|{logroot}|{ftpdata}|{PID}|{IPC}>\n"
+				"  --loopexec <command [{field}..{field}..]>\n"
+				"\nMatching:\n"
 				"  --regex [<field>,]<match>\n"
 				"                        Regex filter string, used during various operations\n"
 				"                          If <field> is set, matching is performed against a specific data log field\n"
@@ -1052,28 +1056,33 @@ char *hpd_up =
 				"  --regexi [<var>,]<match>\n"
 				"                        Case insensitive variant of --regex\n"
 				"  --iregex [<var>,]<match> \n"
-				"                        Same as --regex with inverted match\n"
+				"                        Same as --regex with negated match\n"
 				"  --iregexi [<var>,]<match>\n"
-				"                        Same as --regexi with inverted match\n"
+				"                        Same as --regexi with negated match\n"
 				"  --match [<field>,]<match>\n"
 				"                        Regular filter string (exact matches)\n"
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n\n"
 				"  --imatch [<field>,]<match>\n"
 				"                        Inverted --match\n"
-				"  --lom <field1 > 5.0 && field2 != 0 || ..>\n"
+				"  --lom <<field> > 5.0 && <field> != 0 || <field> ..>\n"
 				"                        Compare values by logical and comparison/relational operators\n"
 				"                        Applies to any integer/floating point fields from data sources\n"
 				"                          Use quotation marks to avoid collisions with bash operators\n"
 				"                        Valid logical operators: && (and), || (or)\n"
 				"                        Valid comparison/relational operators: =, !=, >, <, <=, >=\n"
-				"  --ilom <expression>   Same as --lom with inverted match\n"
+				"  --ilom <expression>   Same as --lom with negated match\n"
+				"\n"
+				"  In between match arguments, logical or|and operators apply:\n"
+				"  \".. --<argument1> <or|and> --<margument2> ..\"\n"
+				"\n"
+				"\nMisc:\n"
 				"  --sort <mode>,<order>,<field>\n"
 				"                        Sort data log entries before displaying\n"
 				"                          <mode> can only be 'num' (numeric)\n"
 				"                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
 				"                          Sorts by the specified data log <field>\n"
 				"                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n\n"
-				"\n"
+				"\n\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies\n"
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
@@ -1133,6 +1142,8 @@ int is_ascii_uppercase_text(uint8_t in);
 int is_ascii_alphanumeric(uint8_t in_c);
 void *md_alloc(pmda md, int b);
 __g_match g_global_register_match(void);
+int g_oper_and(int s, int d);
+int g_oper_or(int s, int d);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1586,6 +1597,28 @@ int opt_g_sort(void *arg, int m) {
 }
 
 mda _match_rr = { 0 };
+mda _lom_strings = { 0 };
+
+typedef struct ___lom_strings_header {
+	uint32_t flags;
+	g_op g_oper_ptr;
+	char string[8192];
+} _lom_s_h, *__lom_s_h;
+
+#define G_MATCH		((int)0)
+#define G_NOMATCH	((int)1)
+
+typedef struct ___last_match {
+	uint32_t flags;
+	void *ptr;
+} _l_match, *__l_match;
+
+#define F_LM_CPRG		(a32 << 1)
+#define F_LM_LOM		(a32 << 2)
+
+#define F_LM_TYPES		(F_LM_CPRG|F_LM_LOM)
+
+_l_match _match_rr_l = { 0 };
 
 int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 		uint32_t flags) {
@@ -1627,6 +1660,11 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	pgm->reg_i_m = reg_i_m;
 	pgm->regex_flags = regex_flags;
 	pgm->flags = flags;
+	pgm->g_oper_ptr = g_oper_or;
+
+	bzero(&_match_rr_l, sizeof(_match_rr_l));
+	_match_rr_l.ptr = (void *) pgm;
+	_match_rr_l.flags = F_LM_CPRG;
 
 	switch (flags & F_GM_TYPES) {
 	case F_GM_ISREGEX:
@@ -1643,16 +1681,6 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	return 0;
 }
-
-mda _lom_strings = { 0 };
-
-typedef struct ___lom_strings_header {
-	uint32_t flags;
-	char string[8192];
-} _lom_s_h, *__lom_s_h;
-
-#define G_MATCH		((int)0)
-#define G_NOMATCH	((int)1)
 
 int opt_g_lom(void *arg, int m, uint32_t flags) {
 	char *buffer = g_pg(arg, m);
@@ -1678,10 +1706,39 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 	}
 
 	lsh->flags |= flags;
+	lsh->g_oper_ptr = g_oper_or;
 	gfl |= F_OPT_HAS_G_LOM;
+
+	bzero(&_match_rr_l, sizeof(_match_rr_l));
+	_match_rr_l.ptr = (void *) lsh;
+	_match_rr_l.flags = F_LM_LOM;
 
 	g_cpg(arg, lsh->string, m, a_i);
 
+	return 0;
+}
+
+int opt_g_operator_or(void *arg, int m) {
+	switch (_match_rr_l.flags & F_LM_TYPES) {
+	if (!_match_rr_l.ptr) {
+		return (a32 << 26);
+	}
+case F_LM_CPRG:
+	;
+	__g_match pgm = (__g_match) _match_rr_l.ptr;
+	pgm->g_oper_ptr = g_oper_and;
+	break;
+	case F_LM_LOM:;
+	__lom_s_h lsh = (__lom_s_h) _match_rr_l.ptr;
+	lsh->g_oper_ptr = g_oper_and;
+	break;
+	default:
+	return (a32 << 27);
+}
+return 0;
+}
+
+int opt_g_operator_and(void *arg, int m) {
 	return 0;
 }
 
@@ -2025,9 +2082,6 @@ int g_build_lom_packet(struct g_handle *hdl, char *left, char *right,
 int g_get_lom_g_t_ptr(struct g_handle *hdl, char *field, __g_lom lom,
 		uint32_t flags);
 
-int g_oper_and(int s, int d);
-int g_oper_or(int s, int d);
-
 int g_load_lom(struct g_handle *hdl);
 int g_process_lom_string(struct g_handle *hdl, char *string, __g_match _gm,
 		int *ret, uint32_t flags);
@@ -2044,7 +2098,8 @@ void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
 		NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "--lom", opt_g_lom_match, (void*) 1, "--ilom",
+void *f_ref[] = { "and", opt_g_operator_and, (void*) 0, "or", opt_g_operator_or,
+		(void*) 0, "--lom", opt_g_lom_match, (void*) 1, "--ilom",
 		opt_g_lom_imatch, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
 		"--sort", opt_g_sort, (void*) 1, "-h", opt_g_dump_tv, (void*) 0, "-k",
 		opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly, (void*) 0,
@@ -2354,9 +2409,11 @@ int setup_sighandlers(void) {
 }
 
 int g_shutdown(void *arg) {
+	g_setjmp(0, "g_shutdown", NULL, NULL);
 	g_cleanup(&g_act_1);
 	g_cleanup(&g_act_2);
 	free_cfg_rf(&cfg_rf);
+	g_setjmp(0, "g_shutdown(2)", NULL, NULL);
 	if (NUKESTR) {
 		g_free(NUKESTR);
 	}
@@ -3988,7 +4045,7 @@ int g_lom_match(struct g_handle *hdl, void *d_ptr, __g_match _gm) {
 		//printf ("-?? [%d] -  %.1f - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
 		i++;
 		g_lom_var(d_ptr, lom);
-		g_setjmp(0, "g_lom_match(2)", NULL, NULL);
+
 		if (!p_lom && lom->result && !ptr->next) {
 			//printf ("-!! [%d] -  %.1f - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
 			return !lom->result;
@@ -4018,47 +4075,72 @@ int g_lom_match(struct g_handle *hdl, void *d_ptr, __g_match _gm) {
 	return 1;
 }
 
+int eval_cmatch(__g_match _gm, __g_match _p_gm, int r) {
+	if (_p_gm && _p_gm->g_oper_ptr) {
+
+		return 1;
+	}
+	return 0;
+}
+
 int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 	p_md_obj ptr = md_first(&_match_rr);
-	int r = 0;
+	int r, r_p = 0;
+	__g_match _gm, _p_gm = NULL;
+
 	while (ptr) {
-		__g_match _gm = (__g_match) ptr->ptr;
+		r = 0;
+		_gm = (__g_match) ptr->ptr;
 
 		if ((gfl & F_OPT_HAS_G_LOM)) {
-			if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m ) {
-				r = 1;
+			if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m) {
+				r = 4;
 				if ((gfl & F_OPT_VERBOSE4)) {
 					print_str("WARNING: %s: LOM match positive\n", hdl->file);
 				}
-				goto end;
+				goto l_end;
 			}
 		}
 
 		if ((r = do_match(hdl, d_ptr, _gm, (void*) hdl->g_proc1))) {
-			goto end;
+			goto l_end;
 		}
 
+		l_end:
+
+		if (_p_gm && _p_gm->g_oper_ptr) {
+			r_p = _p_gm->g_oper_ptr(r_p, r);
+		} else {
+			r_p = r;
+		}
+
+		_p_gm = _gm;
 		ptr = ptr->next;
 	}
 
-	int r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL);
+	if (r_p) {
+		goto end;
+	}
 
-	if (exec_str && WEXITSTATUS(r_e)) {
+	int r_e;
+
+	if (exec_str
+			&& WEXITSTATUS(r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL))) {
 		if ((gfl & F_OPT_VERBOSE3)) {
-			print_str("WARNING: [%d] external call returned non-zero\n",
+			print_str("WARNING: external call returned non-zero: [%d]\n",
 			WEXITSTATUS(r_e));
 		}
-		r = 1;
+		r_p = 1;
 	}
 
 	end:
 
-	if (((gfl & F_OPT_MATCHQ) && r) || ((gfl & F_OPT_IMATCHQ) && !r)) {
+	if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p)) {
 		EXITVAL = 1;
 		gfl |= F_OPT_KILL_GLOBAL;
 	}
 
-	return r;
+	return r_p;
 }
 
 int do_sort(struct g_handle *hdl, char *field, uint32_t flags) {
@@ -7591,6 +7673,7 @@ int g_load_lom(struct g_handle *hdl) {
 			break;
 		}
 		lsh_ptr = (__lom_s_h) ptr->ptr;
+		m_ptr->g_oper_ptr = lsh_ptr->g_oper_ptr;
 		if ((r = g_process_lom_string(hdl, lsh_ptr->string, m_ptr, &ret,
 				lsh_ptr->flags))) {
 			printf("ERROR: %s: [%d] [%d]: could not load LOM string\n",
