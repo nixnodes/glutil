@@ -1074,7 +1074,6 @@ char *hpd_up =
 				"\n"
 				"  In between match arguments, logical or|and operators apply:\n"
 				"  \".. --<argument1> <or|and> --<margument2> ..\"\n"
-				"\n"
 				"\nMisc:\n"
 				"  --sort <mode>,<order>,<field>\n"
 				"                        Sort data log entries before displaying\n"
