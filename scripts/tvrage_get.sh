@@ -47,7 +47,7 @@ RECORD_MAX_AGE=14
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=1
 #
-VERBOSE=1
+VERBOSE=0
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -89,8 +89,11 @@ cad() {
 }
 
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_QUERY_DUPE -eq 1 ]; then
-	cad $2 "--iregexi" "dir,^$QUERY$" "$4"
+	s_q=$(echo $QUERY | sed 's/\+/\\\0/g')
+	cad $2 "--iregexi" "dir,$s_q" "$4"
 fi
+
+[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $1"
 
 DDT=$($CURL $CURL_FLAGS "$URL""/feeds/full_search.php?show=$QUERY")
 
