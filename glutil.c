@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-12
+ * Version     : 1.7-13
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3187,7 +3187,9 @@ int rebuild(void *arg) {
 		return 4;
 	}
 
-	if (rebuild_data_file(datafile, &g_act_1)) {
+	int r;
+
+	if ((r=rebuild_data_file(datafile, &g_act_1))) {
 		print_str(MSG_GEN_DFRFAIL, datafile);
 		return 5;
 	}
@@ -3195,9 +3197,9 @@ int rebuild(void *arg) {
 	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
 			(ulint64_t) g_act_1.rw);
 
-	if (g_act_1.bw == g_act_1.total_sz) {
+	/*if (g_act_1.bw == g_act_1.total_sz) {
 		return -1;
-	}
+	}*/
 
 	return 0;
 }
