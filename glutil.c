@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-11
+ * Version     : 1.7-12
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 11
+#define VER_REVISION 12
 #define VER_STR ""
 
 #ifndef _STDINT_H
