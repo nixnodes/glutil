@@ -47,7 +47,7 @@ RECORD_MAX_AGE=14
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=1
 #
-VERBOSE=0
+VERBOSE=1
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -75,7 +75,7 @@ QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[
 [ -z "$QUERY" ] && exit 1
 
 cad() {
-	RTIME=$($1 --tvlog="$4$LAPPEND" -h $2 "$3" --imatchq -exec "echo {time}" --silent)
+	RTIME=$($1 --tvlog "$4$LAPPEND" -h $2 "$3" --imatchq -exec "echo {time}" --silent)
 	CTIME=$(date +"%s")
 	[ -n "$RTIME" ] && DIFF1=$(expr $CTIME - $RTIME) && DIFF=$(expr $DIFF1 / 86400)
 	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
@@ -90,7 +90,7 @@ cad() {
 
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_QUERY_DUPE -eq 1 ]; then
 	s_q=$(echo $QUERY | sed 's/\+/\\\0/g')
-	cad $2 "--iregexi" "dir,$s_q" "$4"
+	cad $2 "--iregexi" "dir,$s_q" "$3"
 fi
 
 [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $1"
@@ -117,7 +117,7 @@ if [ -z "$SHOWID" ]; then
 	exit 1
 fi
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
-	cad $2 "--iregex" "showid,^$SHOWID$" "$4"	
+	cad $2 "--iregex" "showid,^$SHOWID$" "$3"	
 fi
 
 NAME=$(get_field name)
@@ -150,12 +150,12 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	if [ $DATABASE_TYPE -eq 0 ]; then
 		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
 		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
-		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || { 
+		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
 	elif [ $DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
-		$2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
+		$2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
 			echo "ERROR: $SHOWID: Failed removing old record" && exit 1 
 		}
 	fi	
