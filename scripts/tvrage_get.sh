@@ -47,7 +47,7 @@ RECORD_MAX_AGE=14
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=1
 #
-VERBOSE=0
+VERBOSE=1
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -82,14 +82,14 @@ cad() {
 	 	echo "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
 	else
 		if [ -n "$RTIME" ]; then
-			[ $VERBOSE -gt 0 ] && echo "WARNING: $QUERY: [$3]: already exists in database ($(expr $DIFF1 / 60) min old)"
+			[ $VERBOSE -gt 0 ] && echo "WARNING: $QUERY: [$2 $3]: already exists in database ($(expr $DIFF1 / 60) min old)"
 			exit 1
 		fi
 	fi
 }
 
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_QUERY_DUPE -eq 1 ]; then
-	cad $2 "--imatch" "dir,$QUERY" "$4"
+	cad $2 "--iregexi" "dir,^$QUERY$" "$4"
 fi
 
 DDT=$($CURL $CURL_FLAGS "$URL""/feeds/full_search.php?show=$QUERY")
@@ -108,8 +108,11 @@ get_field_t()
 
 SHOWID=$(get_field showid)
 
-[ -z "$SHOWID" ] && echo "ERROR: $QUERY: $1: could not get show id" && exit 1
-
+if [ -z "$SHOWID" ]; then 
+	echo "ERROR: $QUERY: $1: could not get show id"
+	[ $VERBOSE -gt 0 ] && echo "$DDT"
+	exit 1
+fi
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "showid,^$SHOWID$" "$4"	
 fi
