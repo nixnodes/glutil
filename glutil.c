@@ -1718,7 +1718,8 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 
 	lsh->m_ref = pgm;
 	lsh->flags |= flags;
-	if (lsh->flags & F_GM_IMATCH) {
+	pgm->flags |= flags;
+	if (pgm->flags & F_GM_IMATCH) {
 		pgm->g_oper_ptr = g_oper_or;
 	} else {
 		pgm->g_oper_ptr = g_oper_and;
@@ -1727,7 +1728,7 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 	gfl |= F_OPT_HAS_G_LOM;
 
 	bzero(&_match_rr_l, sizeof(_match_rr_l));
-	_match_rr_l.ptr = (void *) lsh;
+	_match_rr_l.ptr = (void *) pgm;
 	_match_rr_l.flags = F_LM_LOM;
 
 	g_cpg(arg, lsh->string, m, a_i);
@@ -1736,65 +1737,65 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 }
 
 int opt_g_operator_or(void *arg, int m) {
-	switch (_match_rr_l.flags & F_LM_TYPES) {
-	if (!_match_rr_l.ptr) {
+	__g_match pgm = (__g_match) _match_rr_l.ptr;
+	if (!pgm) {
 		return (a32 << 26);
 	}
-case F_LM_CPRG:
-	;
-	__g_match pgm = (__g_match) _match_rr_l.ptr;
-	if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
-		pgm->g_oper_ptr = g_oper_and;
-	}
-	else {
-		pgm->g_oper_ptr = g_oper_or;
-	}
-	break;
-	case F_LM_LOM:;
-	__lom_s_h lsh = (__lom_s_h) _match_rr_l.ptr;
-	if ( lsh->flags & F_GM_IMATCH) {
-		lsh->g_oper_ptr = g_oper_and;
+	switch (_match_rr_l.flags & F_LM_TYPES) {
 
+		case F_LM_CPRG:
+		;
+		if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+			pgm->g_oper_ptr = g_oper_and;
+		}
+		else {
+			pgm->g_oper_ptr = g_oper_or;
+		}
+		break;
+		case F_LM_LOM:;
+		if (pgm->flags & F_GM_IMATCH) {
+			pgm->g_oper_ptr = g_oper_and;
+		}
+		else {
+			pgm->g_oper_ptr = g_oper_or;
+		}
+		break;
+		default:
+		return (a32 << 27);
+		break;
 	}
-	else {
-		lsh->g_oper_ptr = g_oper_or;
-	}
-	break;
-	default:
-	return (a32 << 27);
-}
-return 0;
+	return 0;
 }
 
 int opt_g_operator_and(void *arg, int m) {
-	switch (_match_rr_l.flags & F_LM_TYPES) {
-	if (!_match_rr_l.ptr) {
+	__g_match pgm = (__g_match) _match_rr_l.ptr;
+	if (!pgm) {
 		return (a32 << 26);
 	}
-case F_LM_CPRG:
-	;
-	__g_match pgm = (__g_match) _match_rr_l.ptr;
-	if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
-		pgm->g_oper_ptr = g_oper_or;
-	}
-	else {
-		pgm->g_oper_ptr = g_oper_and;
-	}
-	break;
-	case F_LM_LOM:;
-	__lom_s_h lsh = (__lom_s_h) _match_rr_l.ptr;
-	if ( lsh->flags & F_GM_IMATCH) {
-		lsh->g_oper_ptr = g_oper_or;
-	}
-	else {
-		lsh->g_oper_ptr = g_oper_and;
+	switch (_match_rr_l.flags & F_LM_TYPES) {
 
+		case F_LM_CPRG:
+		;
+		if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+			pgm->g_oper_ptr = g_oper_or;
+		}
+		else {
+			pgm->g_oper_ptr = g_oper_and;
+		}
+		break;
+		case F_LM_LOM:;
+		if (pgm->flags & F_GM_IMATCH) {
+			pgm->g_oper_ptr = g_oper_or;
+		}
+		else {
+			pgm->g_oper_ptr = g_oper_and;
+		}
+		break;
+		default:
+		return (a32 << 27);
+		break;
 	}
-	break;
-	default:
-	return (a32 << 27);
-}
-return 0;
+	return 0;
 }
 
 int opt_g_lom_match(void *arg, int m) {
@@ -3965,7 +3966,7 @@ int do_match(struct g_handle *hdl, void *d_ptr, __g_match _gm, void *callback) {
 			if ((gfl & F_OPT_VERBOSE4)) {
 				print_str("WARNING: %s: match positive\n", mstr);
 			}
-			r = 2;
+			r = 1;
 		}
 		goto end;
 	}
@@ -3975,7 +3976,7 @@ int do_match(struct g_handle *hdl, void *d_ptr, __g_match _gm, void *callback) {
 		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("WARNING: %s: REGEX match positive\n", mstr);
 		}
-		r = 3;
+		r = 1;
 	}
 
 	end:
@@ -4086,9 +4087,6 @@ int g_lom_var(void *d_ptr, __g_lom lom) {
 
 int g_lom_match(struct g_handle *hdl, void *d_ptr, __g_match _gm) {
 	g_setjmp(0, "g_lom_match", NULL, NULL);
-	if (!(_gm->flags & F_GM_ISLOM)) {
-		return 1;
-	}
 
 	p_md_obj ptr = md_first(&_gm->lom);
 	__g_lom lom, p_lom = NULL;
@@ -4148,7 +4146,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		r = 0;
 		_gm = (__g_match) ptr->ptr;
 
-		if ((gfl & F_OPT_HAS_G_LOM)) {
+		if ((_gm->flags & F_GM_ISLOM)) {
 			if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m) {
 				r = 1;
 				if ((gfl & F_OPT_VERBOSE4)) {
@@ -7728,7 +7726,7 @@ int g_load_lom(struct g_handle *hdl) {
 			rt = 5;
 			break;
 		}
-		lsh_ptr->m_ref->g_oper_ptr = lsh_ptr->g_oper_ptr;
+		//lsh_ptr->m_ref->g_oper_ptr = lsh_ptr->g_oper_ptr;
 		if ((r = g_process_lom_string(hdl, lsh_ptr->string, lsh_ptr->m_ref, &ret,
 								lsh_ptr->flags))) {
 			printf("ERROR: %s: [%d] [%d]: could not load LOM string\n",
