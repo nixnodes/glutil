@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-10
+ * Version     : 1.7-11
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 10
+#define VER_REVISION 11
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1601,6 +1601,7 @@ mda _lom_strings = { 0 };
 typedef struct ___lom_strings_header {
 	uint32_t flags;
 	g_op g_oper_ptr;
+	__g_match m_ref;
 	char string[8192];
 } _lom_s_h, *__lom_s_h;
 
@@ -1709,12 +1710,20 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 		return (a32 << 29);
 	}
 
+	__g_match pgm = g_global_register_match();
+
+	if (!pgm) {
+		return (a32 << 25);
+	}
+
+	lsh->m_ref = pgm;
 	lsh->flags |= flags;
 	if (lsh->flags & F_GM_IMATCH) {
-		lsh->g_oper_ptr = g_oper_or;
+		pgm->g_oper_ptr = g_oper_or;
 	} else {
-		lsh->g_oper_ptr = g_oper_and;
+		pgm->g_oper_ptr = g_oper_and;
 	}
+
 	gfl |= F_OPT_HAS_G_LOM;
 
 	bzero(&_match_rr_l, sizeof(_match_rr_l));
@@ -1745,6 +1754,7 @@ case F_LM_CPRG:
 	__lom_s_h lsh = (__lom_s_h) _match_rr_l.ptr;
 	if ( lsh->flags & F_GM_IMATCH) {
 		lsh->g_oper_ptr = g_oper_and;
+
 	}
 	else {
 		lsh->g_oper_ptr = g_oper_or;
@@ -1778,6 +1788,7 @@ case F_LM_CPRG:
 	}
 	else {
 		lsh->g_oper_ptr = g_oper_and;
+
 	}
 	break;
 	default:
@@ -4139,7 +4150,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 
 		if ((gfl & F_OPT_HAS_G_LOM)) {
 			if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m) {
-				r = 4;
+				r = 1;
 				if ((gfl & F_OPT_VERBOSE4)) {
 					print_str("WARNING: %s: LOM match positive\n", hdl->file);
 				}
@@ -4154,7 +4165,9 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		l_end:
 
 		if (_p_gm && _p_gm->g_oper_ptr) {
+			//printf("::%d, %d, %X, %X, %X\n", r_p, r, _p_gm->g_oper_ptr, g_oper_and,_gm->g_oper_ptr);
 			r_p = _p_gm->g_oper_ptr(r_p, r);
+			//printf("--%d, %d\n", r_p, r);
 		} else {
 			r_p = r;
 		}
@@ -7697,12 +7710,10 @@ int get_opr(char *in) {
 }
 
 int g_load_lom(struct g_handle *hdl) {
-
+	g_setjmp(0, "g_load_lom", NULL, NULL);
 	if ((gfl & F_OPT_HASLOM) || !(gfl & F_OPT_HAS_G_LOM)) {
 		return 0;
 	}
-
-	__g_match m_ptr;
 
 	gfl |= F_OPT_HASLOM;
 
@@ -7712,15 +7723,14 @@ int g_load_lom(struct g_handle *hdl) {
 	__lom_s_h lsh_ptr;
 	int r, ret, c = 0;
 	while (ptr) {
-		m_ptr = g_global_register_match();
-		if (!m_ptr) {
-			rt = 2;
+		lsh_ptr = (__lom_s_h) ptr->ptr;
+		if (!lsh_ptr->m_ref) {
+			rt = 5;
 			break;
 		}
-		lsh_ptr = (__lom_s_h) ptr->ptr;
-		m_ptr->g_oper_ptr = lsh_ptr->g_oper_ptr;
-		if ((r = g_process_lom_string(hdl, lsh_ptr->string, m_ptr, &ret,
-				lsh_ptr->flags))) {
+		lsh_ptr->m_ref->g_oper_ptr = lsh_ptr->g_oper_ptr;
+		if ((r = g_process_lom_string(hdl, lsh_ptr->string, lsh_ptr->m_ref, &ret,
+								lsh_ptr->flags))) {
 			printf("ERROR: %s: [%d] [%d]: could not load LOM string\n",
 					hdl->file, r, ret);
 			rt = 1;
