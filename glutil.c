@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-9
+ * Version     : 1.7-10
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1023,7 +1023,7 @@ char *hpd_up =
 				"                         --cdir processes only the root directory itself\n"
 				"  -c, --check [--fix] [--ghost]\n"
 				"                         Compare dirlog and filesystem records and warn on differences\n"
-				"                           --fix attempts to correct dirlog\n"
+				"                           --fix attempts to correct dirlog/filesystem\n"
 				"                           --ghost only looks for dirlog records with missing directories on filesystem\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
@@ -1659,7 +1659,12 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	pgm->reg_i_m = reg_i_m;
 	pgm->regex_flags = regex_flags;
 	pgm->flags = flags;
-	pgm->g_oper_ptr = g_oper_or;
+
+	if (pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+		pgm->g_oper_ptr = g_oper_or;
+	} else {
+		pgm->g_oper_ptr = g_oper_and;
+	}
 
 	bzero(&_match_rr_l, sizeof(_match_rr_l));
 	_match_rr_l.ptr = (void *) pgm;
@@ -1705,7 +1710,11 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 	}
 
 	lsh->flags |= flags;
-	lsh->g_oper_ptr = g_oper_or;
+	if (lsh->flags & F_GM_IMATCH) {
+		lsh->g_oper_ptr = g_oper_or;
+	} else {
+		lsh->g_oper_ptr = g_oper_and;
+	}
 	gfl |= F_OPT_HAS_G_LOM;
 
 	bzero(&_match_rr_l, sizeof(_match_rr_l));
@@ -1725,11 +1734,21 @@ int opt_g_operator_or(void *arg, int m) {
 case F_LM_CPRG:
 	;
 	__g_match pgm = (__g_match) _match_rr_l.ptr;
-	pgm->g_oper_ptr = g_oper_and;
+	if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+		pgm->g_oper_ptr = g_oper_and;
+	}
+	else {
+		pgm->g_oper_ptr = g_oper_or;
+	}
 	break;
 	case F_LM_LOM:;
 	__lom_s_h lsh = (__lom_s_h) _match_rr_l.ptr;
-	lsh->g_oper_ptr = g_oper_and;
+	if ( lsh->flags & F_GM_IMATCH) {
+		lsh->g_oper_ptr = g_oper_and;
+	}
+	else {
+		lsh->g_oper_ptr = g_oper_or;
+	}
 	break;
 	default:
 	return (a32 << 27);
@@ -1738,7 +1757,33 @@ return 0;
 }
 
 int opt_g_operator_and(void *arg, int m) {
-	return 0;
+	switch (_match_rr_l.flags & F_LM_TYPES) {
+	if (!_match_rr_l.ptr) {
+		return (a32 << 26);
+	}
+case F_LM_CPRG:
+	;
+	__g_match pgm = (__g_match) _match_rr_l.ptr;
+	if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+		pgm->g_oper_ptr = g_oper_or;
+	}
+	else {
+		pgm->g_oper_ptr = g_oper_and;
+	}
+	break;
+	case F_LM_LOM:;
+	__lom_s_h lsh = (__lom_s_h) _match_rr_l.ptr;
+	if ( lsh->flags & F_GM_IMATCH) {
+		lsh->g_oper_ptr = g_oper_or;
+	}
+	else {
+		lsh->g_oper_ptr = g_oper_and;
+	}
+	break;
+	default:
+	return (a32 << 27);
+}
+return 0;
 }
 
 int opt_g_lom_match(void *arg, int m) {
@@ -2553,7 +2598,8 @@ int g_init(int argc, char **argv) {
 
 #ifdef GLCONF
 
-	if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))) {
+	if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))
+			&& (gfl & F_OPT_VERBOSE)) {
 		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
@@ -2647,7 +2693,7 @@ int g_init(int argc, char **argv) {
 		snprintf(SITEROOT, 254, "%s", SITEROOT_N);
 	}
 
-	if (dir_exists(SITEROOT)) {
+	if ((gfl & F_OPT_VERBOSE) && dir_exists(SITEROOT)) {
 		print_str("WARNING: no valid siteroot!\n");
 	}
 
