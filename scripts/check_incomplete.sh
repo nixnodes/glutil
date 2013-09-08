@@ -10,7 +10,7 @@
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
-## See ./dirupdate --help for more info about options
+## See ./glutil --help for more info about options
 #
 ###########################[ BEGIN OPTIONS ]#############################
 #
