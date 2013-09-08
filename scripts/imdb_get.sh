@@ -132,13 +132,13 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	if [ $DATABASE_TYPE -eq 0 ]; then
 		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
 		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
-		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 --imdblog="$3$LAPPEND" -e imdb --regex "$DIR_E" > /dev/null || { 
+		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
 	elif [ $DATABASE_TYPE -eq 1 ]; then
 		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
 		DIR_E=$QUERY		
-		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 --imdblog="$3$LAPPEND" -e imdb --regex imdbid,"^$iid$" > /dev/null || {
+		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex imdbid,"^$iid$" > /dev/null || {
 			echo "ERROR: $iid: Failed removing old record" && exit 1 
 		}
 	fi	
