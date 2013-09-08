@@ -16,6 +16,7 @@
  *   - Bugfix: -x strange behaviour (rev. 8)
  *   - Changed key/token delimiter (from : to @) when extracting config values (rev. 8)
  *   - In between match arguments, logical or|and operators apply (rev. 9)
+ *   - Bugfix: logical operators between matches weren't taking inverted match into account (rev. 10)
  *
  * v1.6
  *
