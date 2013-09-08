@@ -18,6 +18,7 @@
  *   - In between match arguments, logical or|and operators apply (rev. 9)
  *   - Bugfix: logical operators between matches weren't taking inverted match into account (rev. 10)
  *   - Bugfix: logical operators between matches not processed properly (rev. 11)
+ *   - Bugfix: match argument processing matched LOM when not requested (rev. 12)
  *
  * v1.6
  *
