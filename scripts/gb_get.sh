@@ -1,6 +1,6 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec "{m:spec1} $(basename {arg}) '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'"
+#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec "{m:spec1} "$(basename '{arg}')" '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'"
 #@MACRO:gamescore-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -exec "{m:spec1} '{basedir}' '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
 ## Retrieves game info using giantbomb API (XML)
