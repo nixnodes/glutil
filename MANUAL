@@ -5,8 +5,8 @@ data from binary logs and pass it to the shell.
 
 Log's <field>'s are referenced using static variable names.
 
-Variable names are accepted by --[i]regex[i], --[i]match, --[i]lom, 
- --sort and --[pre|post|loop]exec  (see --help)
+<field> is accepted by --[i]regex[i], --[i]match, --[i]lom, 
+ --sort and --[pre|post|loop]exec (see --help)
 
 Mind, that whenever passing arguments to --[..]exec, {} needs to be
 used around variables ({dir}, {time}, ...) 
@@ -17,17 +17,20 @@ Types are:
   I = integer
   F = float
 
-|  NAME  |  TYPE  | DESCRIPTION                                       |
-+--------+--------+----------------------------------------------------+
+|  FIELD  | TYPE |  DESCRIPTION                                       |
++---------+------+----------------------------------------------------+
 : Global (applies to most logs and to other stuff)
 
-   exe        S     exact path to self
-   procid     S     self process id
+   exe        S     Absolute path to self
+   procid     S     Self process id
    ipc        I     glFTPd's IPC key set in system (or glutil)
    glroot     S     glFTPd root path
    siteroot   S     glFTPd site root path
    ftpdata    S     glFTPd data path
+   logroot    S     Absolute path to logs folder
    logfile    S     glutil log file path
+   imdbfile   S     iMDB log path
+   tvragefile S     TVRAGE log path
    nukestr    S     glFTPd nuke string extracted from glftpd.conf
   
   
