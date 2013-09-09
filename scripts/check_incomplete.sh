@@ -39,7 +39,7 @@ proc_dir() {
 	for i in $1/*; do
 		if [ -f "$i" ] && echo $i | grep -P "\.sfv$" > /dev/null; then
 			while read l; do
-				FFL=$(echo $l | sed 's/ [A-Fa-f0-9]*$//')
+				FFL=$(echo $l | sed 's/ [A-Fa-f0-9]*.*$//')
 				FCRC=$(echo $l | grep -o -P "[A-Fa-f0-9]*$")
 				FFT=$(dirname $i)/$FFL
 				! [ -f "$FFT" ] && echo "WARNING: $DIR: incomplete, missing file: $FFL" && continue
