@@ -23,7 +23,7 @@ Types are:
 
    exe        S     Absolute path to self
    procid     S     Self process id
-   ipc        I     glFTPd's IPC key set in system (or glutil)
+   ipc        S     glFTPd's IPC key set in system (or glutil)
    glroot     S     glFTPd root path
    siteroot   S     glFTPd site root path
    ftpdata    S     glFTPd data path
@@ -33,6 +33,11 @@ Types are:
    tvragefile S     TVRAGE log path
    nukestr    S     glFTPd nuke string extracted from glftpd.conf
   
+: Filesystem
+
+   path       S     Full path
+   size       S     Size of file, in bytes
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
   
 : Dirlog
 
