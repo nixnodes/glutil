@@ -42,6 +42,7 @@ Types are:
 : Dirlog
 
    dir        S     The name of the dir (fullpath)
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    basedir    S     The name of the dir (basepath)
    status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
    time       I     Creation time since epoch (man 2 time)
@@ -54,6 +55,7 @@ Types are:
 : NUKELOG
 
    dir        S     The dirname (fullpath)
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    status     I     0 = NUKED, 1 = UNNUKED
    time       I     The nuke time since epoch (man 2 time)
    nuker      S     The name of the nuker
@@ -67,6 +69,7 @@ Types are:
  : DUPEFILE
  
    filename   S     The file name
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    time       I     Creation time since epoch (man 2 time)
    user       S     The name of the uploader
 
@@ -114,6 +117,7 @@ Types are:
  : IMDB
  
    dir        S     The directory name related to record
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    basedir    S     The directory name related to record (basepath)
    time       I     Creation time since epoch (man 2 time)
    imdbid     S     iMDB object ID
@@ -131,7 +135,8 @@ Types are:
 
  : TVRAGE
  
-   dir        S     The directory name related to record   
+   dir        S     The directory name related to record
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    time       I     Creation time since epoch (man 2 time)
    showid     I     TVRAGE show id
    name       S     Show name
@@ -151,6 +156,7 @@ Types are:
  : GAME
  
    dir        S     The directory name related to record
+   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score
    
