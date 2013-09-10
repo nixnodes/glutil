@@ -6995,6 +6995,21 @@ int is_char_uppercase(char c) {
 	return 1;
 }
 
+int g_l_fmode(char *path, size_t max_size, char *output) {
+	struct stat st = { 0 };
+	char buffer[PATH_MAX + 1];
+	snprintf(buffer, PATH_MAX, "%s/%s", GLROOT, path);
+	remove_repeating_chars(buffer, 0x2F);
+	lstat(buffer, &st);
+	snprintf(output, max_size, "%d",
+			(st.st_mode & S_IFMT) == S_IFREG ? 1 :
+			(st.st_mode & S_IFMT) == S_IFDIR ? 2 :
+			(st.st_mode & S_IFMT) == S_IFLNK ? 3 :
+			(st.st_mode & S_IFMT) == S_IFBLK ? 4 :
+			(st.st_mode & S_IFMT) == S_IFIFO ? 5 : 0);
+	return 0;
+}
+
 int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	if (!strcmp(match, "m:exe")) {
 		if (self_get_path(output)) {
@@ -8155,19 +8170,6 @@ void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 	}
 
 	return NULL;
-}
-
-int g_l_fmode(char *path, size_t max_size, char *output) {
-	struct stat st = { 0 };
-	char buffer[PATH_MAX + 1];
-	snprintf(buffer, PATH_MAX, "%s/%s", GLROOT, path);
-	remove_repeating_chars(buffer, 0x2F);
-	lstat(buffer, &st);
-	snprintf(output, max_size, "%d",
-			(st.st_mode & S_IFMT) == S_IFLNK ? 1 :
-			(st.st_mode & S_IFMT) == S_IFREG ? 2 :
-			(st.st_mode & S_IFMT) == S_IFDIR ? 3 : 4);
-	return 0;
 }
 
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
