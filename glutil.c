@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-13
+ * Version     : 1.7-14
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -135,7 +135,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 7
-#define VER_REVISION 13
+#define VER_REVISION 14
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -353,6 +353,15 @@ typedef struct ___g_lom {
 	size_t t_l_off, t_r_off;
 } _g_lom, *__g_lom;
 
+typedef struct ___g_eds {
+	uint32_t flags;
+	uint32_t r_minor, r_major;
+	struct stat st;
+} _g_eds, *__g_eds;
+
+#define F_EDS_ROOTMINSET	(a32 << 1)
+#define F_EDS_KILL			(a32 << 2)
+
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
  * see http://en.wikipedia.org/wiki/Cyclic_redundancy_check#Commonly_used_and_standardized_CRCs
@@ -522,11 +531,11 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISONLINE			(a32 << 13)
 #define F_GH_ISIMDB				(a32 << 14)
 #define F_GH_ISGAME				(a32 << 15)
-#define F_GH_ISGENERIC			(a32 << 16)
+#define F_GH_ISFSX				(a32 << 16)
 #define F_GH_ISTVRAGE			(a32 << 17)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISGENERIC|F_GH_ISTVRAGE)
+#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
 
 #define F_OVRR_IPC				(a32 << 1)
 #define F_OVRR_GLROOT			(a32 << 2)
@@ -1087,7 +1096,7 @@ char *hpd_up =
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
 				"  --nowrite             Perform a dry run, executing normally except no writing is done\n"
 				"  -b, --nobuffer        Disable data file memory buffering\n"
-				"  -y, --followlinks     Follows symbolic links (default is skip)\n"
+				"  -y, --followlinks     Follow symbolic links (default is skip)\n"
 				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
 				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
 				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
@@ -1848,6 +1857,11 @@ int print_version(void *arg, int m) {
 	return 0;
 }
 
+int g_opt_mode_noop(void *arg, int m) {
+	updmode = UPD_MODE_NOOP;
+	return 0;
+}
+
 int print_version_long(void *arg, int m) {
 	print_str("* glutil-%d.%d-%d%s-%s - glFTPd binary logs tool *\n", VER_MAJOR,
 	VER_MINOR,
@@ -1986,7 +2000,7 @@ typedef int _d_achar_i(char *);
 typedef int _d_avoid_i(void);
 
 /* specific types */
-typedef int __d_enum_cb(char *, unsigned char, void *);
+typedef int __d_enum_cb(char *, unsigned char, void *, __g_eds);
 typedef int __d_ref_to_val(void *, char *, char *, size_t);
 typedef void *__d_ref_to_pval(void *arg, char *match, size_t *output);
 typedef int __d_format_block(void *, char *);
@@ -2008,7 +2022,7 @@ __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
 		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
 		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game,
-		ref_to_val_tv;
+		ref_to_val_tv, ref_to_val_x;
 
 __d_ref_to_pval ref_to_val_ptr_dirlog, ref_to_val_ptr_nukelog,
 		ref_to_val_ptr_oneliners, ref_to_val_ptr_online, ref_to_val_ptr_imdb,
@@ -2037,7 +2051,7 @@ time_t get_file_creation_time(struct stat *);
 int dirlog_write_record(struct dirlog *, off_t, int);
 
 char *string_replace(char *, char *, char *, char *, size_t);
-int enum_dir(char *, void *, void *, int);
+int enum_dir(char *, void *, void *, int, __g_eds);
 int update_records(char *, int);
 off_t read_file(char *, void *, size_t, off_t, FILE *);
 int option_crc32(void *, int);
@@ -2052,8 +2066,6 @@ int write_file_text(char *, char *);
 
 size_t str_match(char *, char *);
 size_t exec_and_wait_for_output(char*, char*);
-
-int get_file_type_no(struct stat *sb);
 
 p_md_obj get_cfg_opt(char *, pmda, pmda*);
 
@@ -2124,7 +2136,8 @@ __d_fcomp g_is_lower_f, g_is_higher_f, g_is_higherorequal_f, g_is_equal_f,
 int g_sort(struct g_handle *hdl, char *field, uint32_t flags);
 int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
 int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
-
+int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
+		uint32_t flags);
 int do_sort(struct g_handle *hdl, char *field, uint32_t flags);
 
 int g_filter(struct g_handle *hdl, pmda md);
@@ -2142,38 +2155,39 @@ int g_load_lom(struct g_handle *hdl);
 int g_process_lom_string(struct g_handle *hdl, char *string, __g_match _gm,
 		int *ret, uint32_t flags);
 
-void *prio_f_ref[] = { "--raw", opt_raw_dump, (void*) 0, "--silent", opt_silent,
-		(void*) 0, "-arg1", opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1,
-		(void*) 1, "-arg2", opt_g_arg2, (void*) 1, "--arg2", opt_g_arg2,
-		(void*) 1, "-arg3", opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3,
-		(void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3,
-		(void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v", opt_g_verbose,
-		(void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--info",
-		prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
-		"--logfile", opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0,
+void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
+		opt_raw_dump, (void*) 0, "--silent", opt_silent, (void*) 0, "-arg1",
+		opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2",
+		opt_g_arg2, (void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3",
+		opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvv",
+		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
+		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "-m",
+		prio_opt_g_macro, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
+		"--loglevel", opt_g_loglvl, (void*) 1, "--logfile", opt_log_file,
+		(void*) 0, "--log", opt_logging, (void*) 0,
 		NULL, NULL,
 		NULL };
 
-void *f_ref[] = { "and", opt_g_operator_and, (void*) 0, "or", opt_g_operator_or,
-		(void*) 0, "--lom", opt_g_lom_match, (void*) 1, "--ilom",
-		opt_g_lom_imatch, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
-		"--sort", opt_g_sort, (void*) 1, "-h", opt_g_dump_tv, (void*) 0, "-k",
-		opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly, (void*) 0,
-		"--imatchq", opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq,
-		(void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z", opt_g_write,
-		(void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev", opt_g_xdev,
-		(void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk,
-		(void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file", opt_g_udc_f,
-		(void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir,
-		(void*) 0, "--dir", opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max,
-		(void*) 1, "--ghost", opt_check_ghost, (void*) 0, "-x", opt_g_udc,
-		(void*) 1, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
-		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
-		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
-		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
-		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
-		"--arg1", NULL, (void*) 1, "-arg2",
+void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
+		(void*) 0, "or", opt_g_operator_or, (void*) 0, "--lom", opt_g_lom_match,
+		(void*) 1, "--ilom", opt_g_lom_imatch, (void*) 1, "--info",
+		prio_opt_g_pinfo, (void*) 0, "--sort", opt_g_sort, (void*) 1, "-h",
+		opt_g_dump_tv, (void*) 0, "-k", opt_g_dump_game, (void*) 0, "--cdir",
+		opt_g_cdironly, (void*) 0, "--imatchq", opt_g_imatchq, (void*) 0,
+		"--matchq", opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0,
+		"-z", opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1,
+		"-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0,
+		"-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0,
+		"-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0,
+		"-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
+		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
+		(void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
+		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
+		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
+		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
+		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
+		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
+		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
@@ -3008,7 +3022,9 @@ char **process_macro(void * arg, char **out) {
 				av.p_buf_1, dirn);
 	}
 
-	if (enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK) < 0) {
+	_g_eds eds = { 0 };
+
+	if (enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds) < 0) {
 		print_str("ERROR: %s: recursion failed (macro not found)\n",
 				av.p_buf_1);
 		return NULL;
@@ -3189,7 +3205,7 @@ int rebuild(void *arg) {
 
 	int r;
 
-	if ((r=rebuild_data_file(datafile, &g_act_1))) {
+	if ((r = rebuild_data_file(datafile, &g_act_1))) {
 		print_str(MSG_GEN_DFRFAIL, datafile);
 		return 5;
 	}
@@ -3198,8 +3214,8 @@ int rebuild(void *arg) {
 			(ulint64_t) g_act_1.rw);
 
 	/*if (g_act_1.bw == g_act_1.total_sz) {
-		return -1;
-	}*/
+	 return -1;
+	 }*/
 
 	return 0;
 }
@@ -3344,15 +3360,18 @@ typedef struct ___std_rh_0 {
 int g_dump_ug(char *ug) {
 	g_setjmp(0, "g_dump_ug", NULL, NULL);
 	_std_rh ret = { 0 };
+	_g_eds eds = { 0 };
 	char buffer[PATH_MAX] = { 0 };
 
 	ret.flags = flags_udcfg | F_PD_MATCHREG;
+	ret.hdl.flags |= F_GH_ISFSX;
+	ret.hdl.g_proc1 = ref_to_val_x;
 
 	snprintf(buffer, PATH_MAX, "%s/%s/%s", GLROOT, FTPDATA, ug);
 
 	remove_repeating_chars(buffer, 0x2F);
 
-	return enum_dir(buffer, g_process_directory, &ret, 0);
+	return enum_dir(buffer, g_process_directory, &ret, 0, &eds);
 }
 
 int g_dump_gen(char *root) {
@@ -3362,10 +3381,11 @@ int g_dump_gen(char *root) {
 	}
 
 	_std_rh ret = { 0 };
+	_g_eds eds = { 0 };
 
 	ret.flags = flags_udcfg;
-	ret.hdl.flags |= F_GH_ISGENERIC;
-	ret.hdl.g_proc1 = ref_to_val_generic;
+	ret.hdl.flags |= F_GH_ISFSX;
+	ret.hdl.g_proc1 = ref_to_val_x;
 
 	if (!(ret.flags & F_PD_MATCHTYPES)) {
 		ret.flags |= F_PD_MATCHTYPES;
@@ -3377,7 +3397,7 @@ int g_dump_gen(char *root) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a file\n", root);
 		}
-		g_process_directory(root, DT_REG, &ret);
+		g_process_directory(root, DT_REG, &ret, &eds);
 		return ret.rt_m;
 	} else if ((gfl & F_OPT_CDIRONLY) && !dir_exists(root)) {
 		ret.flags ^= F_PD_MATCHTYPES;
@@ -3385,7 +3405,7 @@ int g_dump_gen(char *root) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a directory\n", root);
 		}
-		g_process_directory(root, DT_DIR, &ret);
+		g_process_directory(root, DT_DIR, &ret, NULL);
 		return ret.rt_m;
 	}
 
@@ -3395,7 +3415,7 @@ int g_dump_gen(char *root) {
 
 	ret.rt_m = 1;
 
-	enum_dir(buffer, g_process_directory, &ret, 0);
+	enum_dir(buffer, g_process_directory, &ret, 0, &eds);
 
 	print_str("STATS: %s: OK: %llu/%llu\n", root,
 			(unsigned long long int) ret.st_1,
@@ -3404,7 +3424,7 @@ int g_dump_gen(char *root) {
 	return ret.rt_m;
 }
 
-int g_process_directory(char *name, unsigned char type, void *arg) {
+int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) {
 	g_setjmp(0, "g_process_directory", NULL, NULL);
 	__std_rh aa_rh = (__std_rh) arg;
 
@@ -3426,7 +3446,10 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 		break;
 	case DT_DIR:
 		if (aa_rh->flags & F_PD_RECURSIVE) {
-			enum_dir(name, g_process_directory, arg, 0);
+			enum_dir(name, g_process_directory, arg, 0, eds);
+		}
+		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
+			break;
 		}
 		if (aa_rh->flags & F_PD_MATCHDIR) {
 			if ((g_bmatch(name, &aa_rh->hdl))) {
@@ -3435,6 +3458,21 @@ int g_process_directory(char *name, unsigned char type, void *arg) {
 			}
 			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
 				print_str("DIR: %s\n", name);
+			} else if (gfl & F_OPT_FORMAT_BATCH) {
+				printf("%s\n", name);
+			}
+			aa_rh->rt_m = 0;
+			aa_rh->st_1++;
+		}
+		break;
+	case DT_LNK:
+		if (gfl & F_OPT_FOLLOW_LINKS) {
+			if ((g_bmatch(name, &aa_rh->hdl))) {
+				aa_rh->st_2++;
+				break;
+			}
+			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
+				print_str("SYMLINK: %s\n", name);
 			} else if (gfl & F_OPT_FORMAT_BATCH) {
 				printf("%s\n", name);
 			}
@@ -3842,7 +3880,7 @@ int dirlog_check_records(void) {
 
 			if ((r2 = release_generate_block(s_buffer, &buffer3))) {
 				if (r2 == 5) {
-					if (gfl & F_OPT_FIX) {
+					if ((gfl & F_OPT_FIX) && (gfl & F_OPT_FORCE)) {
 						if (remove(s_buffer)) {
 							print_str(
 									"WARNING: %s: failed removing empty directory\n",
@@ -4018,7 +4056,7 @@ char *g_bmatch_get_def_mstr(void *d_ptr, struct g_handle *hdl) {
 		case F_GH_ISTVRAGE:
 		return (char*) ((__d_tvrage) d_ptr)->dirname;
 
-		case F_GH_ISGENERIC:
+		case F_GH_ISFSX:
 		return (char*) d_ptr;
 
 	}
@@ -4721,11 +4759,13 @@ int update_records(char *dirname, int depth) {
 	arg.depth = depth;
 	arg.dirlog = &buffer;
 
-	return enum_dir(dirname, proc_section, &arg, 0);
+	_g_eds eds = { 0 };
+
+	return enum_dir(dirname, proc_section, &arg, 0, &eds);
 
 }
 
-int proc_release(char *name, unsigned char type, void *arg) {
+int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 	g_setjmp(0, "proc_release", NULL, NULL);
 	ear *iarg = (ear*) arg;
 	uint32_t crc32 = 0;
@@ -4779,20 +4819,20 @@ int proc_release(char *name, unsigned char type, void *arg) {
 	case DT_DIR:
 		if ((gfl & F_OPT_SFV)
 				&& (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV))) {
-			enum_dir(name, delete_file, (void*) "\\.sfv$", 0);
+			enum_dir(name, delete_file, (void*) "\\.sfv$", 0, NULL);
 		}
 
 		if (!reg_match(PREG_DIR_SKIP, name, REG_NEWLINE | REG_ICASE)) {
 			return 2;
 		}
-		enum_dir(name, proc_release, iarg, 0);
+		enum_dir(name, proc_release, iarg, 0, eds);
 		break;
 	}
 
 	return 0;
 }
 
-int proc_section(char *name, unsigned char type, void *arg) {
+int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 	g_setjmp(0, "proc_section", NULL, NULL);
 	ear *iarg = (ear*) arg;
 	int r;
@@ -4867,10 +4907,10 @@ int proc_section(char *name, unsigned char type, void *arg) {
 			}
 
 			if (gfl & F_OPT_FORCE) {
-				enum_dir(name, proc_section, iarg, 0);
+				enum_dir(name, proc_section, iarg, 0, eds);
 			}
 		} else {
-			enum_dir(name, proc_section, iarg, 0);
+			enum_dir(name, proc_section, iarg, 0, eds);
 		}
 		end: iarg->depth++;
 		break;
@@ -4906,13 +4946,15 @@ int release_generate_block(char *name, ear *iarg) {
 
 	if ((gfl & F_OPT_SFV)
 			&& (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV))) {
-		enum_dir(name, delete_file, (void*) "\\.sfv$", 0);
+		enum_dir(name, delete_file, (void*) "\\.sfv$", 0, NULL);
 	}
 
 	if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
 		print_str("ENTERING: %s\n", name);
 
-	if ((r = enum_dir(name, proc_release, iarg, 0)) < 1
+	_g_eds eds = { 0 };
+
+	if ((r = enum_dir(name, proc_release, iarg, 0, &eds)) < 1
 			|| !iarg->dirlog->files) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("WARNING: %s: [%d] - empty directory\n", name, r);
@@ -6485,17 +6527,13 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 	return 0;
 }
 
-int enum_dir(char *dir, void *cb, void *arg, int f) {
+typedef int (*__d_edscb)(char *, unsigned char, void *, __g_eds);
+
+int enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds) {
 	g_setjmp(0, "enum_dir", NULL, NULL);
-	int (*callback_f)(char *, unsigned char, void *) = NULL;
-	struct dirent *dirp;
+	__d_edscb callback_f = (__d_edscb ) cb;
+	struct dirent *dirp, _dirp = { 0 };
 	int r = 0, ir;
-
-	callback_f = cb;
-
-	if (!callback_f) {
-		return -1;
-	}
 
 	DIR *dp = opendir(dir);
 
@@ -6504,12 +6542,30 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 	}
 
 	char buf[PATH_MAX];
-	int d_type;
 	struct stat st;
 
-	stat(dir, &st);
+	if (stat(dir, &st)) {
+		return -3;
+	}
 
-	unsigned int i_minor = minor(st.st_dev);
+	if (eds) {
+		if (!(eds->flags & F_EDS_ROOTMINSET)) {
+			eds->r_minor = minor(st.st_dev);
+			eds->flags |= F_EDS_ROOTMINSET;
+			g_memcpy(&eds->st, &st, sizeof(struct stat));
+		}
+
+		if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
+				&& major(eds->st.st_dev) != 8) {
+			r = -6;
+			goto end;
+		}
+
+		if ((gfl & F_OPT_XDEV) && minor(st.st_dev) != eds->r_minor) {
+			r = -5;
+			goto end;
+		}
+	}
 
 	while ((dirp = readdir(dp))) {
 		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
@@ -6523,24 +6579,16 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 			continue;
 		}
 
+		if (dirp->d_type == DT_UNKNOWN) {
+			_dirp.d_type = get_file_type(dirp->d_name);
+		} else {
+			_dirp.d_type = dirp->d_type;
+		}
+
 		snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
 		remove_repeating_chars(buf, 0x2F);
 
-		stat(buf, &st);
-
-		if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
-				&& major(st.st_dev) != 8) {
-			continue;
-		}
-
-		d_type = get_file_type_no(&st);
-
-		if ((gfl & F_OPT_XDEV) && d_type == DT_DIR
-				&& minor(st.st_dev) != i_minor) {
-			continue;
-		}
-
-		if (!(ir = callback_f(buf, d_type, arg))) {
+		if (!(ir = callback_f(buf, _dirp.d_type, arg, eds))) {
 			if (f & F_ENUMD_ENDFIRSTOK) {
 				r = ir;
 				break;
@@ -6554,6 +6602,8 @@ int enum_dir(char *dir, void *cb, void *arg, int f) {
 			}
 		}
 	}
+
+	end:
 
 	closedir(dp);
 	return r;
@@ -6919,9 +6969,11 @@ void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 			p_ret = (void*) out;
 			break;
 		case F_CFGV_RETURN_TOKEN_EX:
+
 			if (c_token < 0 || c_token >= s_ret->count) {
 				return NULL;
 			}
+
 			p_md_obj p_ret_tx = &s_ret->objects[c_token];
 			if (p_ret_tx) {
 				p_ret = (void*) p_ret_tx->ptr;
@@ -6944,12 +6996,6 @@ int is_char_uppercase(char c) {
 }
 
 int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_macro", NULL, NULL);
-
-	if (!output) {
-		return 2;
-	}
-
 	if (!strcmp(match, "m:exe")) {
 		if (self_get_path(output)) {
 			snprintf(output, max_size, "UNKNOWN");
@@ -6981,12 +7027,6 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 }
 
 int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
-	g_setjmp(0, "ref_to_val_generic", NULL, NULL);
-
-	if (!output) {
-		return 2;
-	}
-
 	if (!strcmp(match, "exe")) {
 		if (self_get_path(output)) {
 			snprintf(output, max_size, "UNKNOWN");
@@ -7025,30 +7065,63 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
 		DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
-		remove_repeating_chars(output, 0x2F);
-	} else if (arg && !strcmp(match, "arg")) {
-		snprintf(output, max_size, (char*) arg);
-	} else if (arg && !strcmp(match, "size")) {
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
+int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
+		return 0;
+	}
+
+	if (arg && !strcmp(match, "size")) {
 		struct stat st;
 
 		if (stat(arg, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%llu", (long long unsigned int) st.st_size);
-	} else if (arg && !strncmp(match, "c:", 2)) {
-		char *buffer = calloc(max_size + 1, 1);
-		void *ptr = ref_to_val_get_cfgval((char*) arg, &match[2],
-		NULL,
-		F_CFGV_BUILD_FULL_STRING, buffer, max_size);
-		if (ptr && strlen(ptr) < max_size) {
-			snprintf(output, max_size, (char*) ptr);
-		}
-		g_free(buffer);
+	} else if (arg && !strcmp(match, "mode")) {
+		struct stat st;
 
+		if (lstat(arg, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%d",
+				(st.st_mode & S_IFMT) == S_IFREG ? 1 :
+				(st.st_mode & S_IFMT) == S_IFDIR ? 2 :
+				(st.st_mode & S_IFMT) == S_IFLNK ? 3 :
+				(st.st_mode & S_IFMT) == S_IFBLK ? 4 :
+				(st.st_mode & S_IFMT) == S_IFIFO ? 5 : 0);
+	} else if (arg && !strncmp(match, "c:", 2)) {
+		return g_rtval_ex(arg, &match[2], max_size, output,
+		F_CFGV_BUILD_FULL_STRING);
+	} else if (arg && !strcmp(match, "arg")) {
+		snprintf(output, max_size, (char*) arg);
+	} else if (arg && !strcmp(match, "path")) {
+		snprintf(output, max_size, (char*) arg);
 	} else {
 		return 1;
 	}
+
 	return 0;
+}
+
+int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
+		uint32_t flags) {
+	int r = 1;
+
+	char *buffer = calloc(max_size + 1, 1);
+	void *ptr = ref_to_val_get_cfgval(arg, match,
+	NULL, flags, buffer, max_size);
+	if (ptr && strlen(ptr) < max_size) {
+		snprintf(output, max_size, (char*) ptr);
+		r = 0;
+	}
+	g_free(buffer);
+	return r;
 }
 
 int g_is_higher(uint64_t s, uint64_t d) {
@@ -8084,6 +8157,19 @@ void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 	return NULL;
 }
 
+int g_l_fmode(char *path, size_t max_size, char *output) {
+	struct stat st = { 0 };
+	char buffer[PATH_MAX + 1];
+	snprintf(buffer, PATH_MAX, "%s/%s", GLROOT, path);
+	remove_repeating_chars(buffer, 0x2F);
+	lstat(buffer, &st);
+	snprintf(output, max_size, "%d",
+			(st.st_mode & S_IFMT) == S_IFLNK ? 1 :
+			(st.st_mode & S_IFMT) == S_IFREG ? 2 :
+			(st.st_mode & S_IFMT) == S_IFDIR ? 3 : 4);
+	return 0;
+}
+
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	if (!output) {
 		return 2;
@@ -8091,7 +8177,7 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8115,6 +8201,8 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%d", (int) data->status);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->uptime);
+	} else if (!strcmp(match, "mode")) {
+		g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8128,7 +8216,7 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8156,6 +8244,8 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%d", (int) data->status);
 	} else if (!strcmp(match, "mult")) {
 		snprintf(output, max_size, "%d", (int) data->mult);
+	} else if (!strcmp(match, "mode")) {
+		g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8169,7 +8259,7 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8181,6 +8271,8 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%s", data->uploader);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timeup);
+	} else if (!strcmp(match, "mode")) {
+		g_l_fmode(data->filename, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8194,7 +8286,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8249,7 +8341,7 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8278,7 +8370,7 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8341,7 +8433,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8377,6 +8469,8 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%u", data->released);
 	} else if (!strcmp(match, "year")) {
 		snprintf(output, max_size, data->year);
+	} else if (!strcmp(match, "mode")) {
+		g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8390,7 +8484,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8402,6 +8496,8 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", data->timestamp);
+	} else if (!strcmp(match, "mode")) {
+		g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8415,7 +8511,7 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 
 	bzero(output, max_size);
 
-	if (!ref_to_val_generic(arg, match, output, max_size)) {
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
 	}
 
@@ -8451,6 +8547,8 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, data->class);
 	} else if (!strcmp(match, "genres")) {
 		snprintf(output, max_size, data->genres);
+	} else if (!strcmp(match, "mode")) {
+		g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -9428,7 +9526,7 @@ char *replace_char(char w, char r, char *string) {
 #define SSD_MAX_LINE_SIZE 	262144
 #define SSD_MAX_LINE_PROC 	30000
 
-int ssd_4macro(char *name, unsigned char type, void *arg) {
+int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 	g_setjmp(0, "ssd_4macro", NULL, NULL);
 
 	off_t name_sz;
@@ -9496,7 +9594,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg) {
 		g_free(buffer);
 		break;
 	case DT_DIR:
-		enum_dir(name, ssd_4macro, arg, 0);
+		enum_dir(name, ssd_4macro, arg, 0, eds);
 		break;
 	}
 
@@ -9510,27 +9608,6 @@ int get_file_type(char *file) {
 		return errno;
 
 	switch (sb.st_mode & S_IFMT) {
-	case S_IFBLK:
-		return DT_BLK;
-	case S_IFCHR:
-		return DT_CHR;
-	case S_IFDIR:
-		return DT_DIR;
-	case S_IFIFO:
-		return DT_FIFO;
-	case S_IFLNK:
-		return DT_LNK;
-	case S_IFREG:
-		return DT_REG;
-	case S_IFSOCK:
-		return DT_SOCK;
-	default:
-		return 0;
-	}
-}
-
-int get_file_type_no(struct stat *sb) {
-	switch (sb->st_mode & S_IFMT) {
 	case S_IFBLK:
 		return DT_BLK;
 	case S_IFCHR:
