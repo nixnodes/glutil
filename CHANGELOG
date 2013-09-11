@@ -3,6 +3,9 @@
  *   - Multi-purpose generic log data types (see MANUAL and --help)
  *   - Bugfix: log path strings not null-terminated on override in some cases (rev. 1)
  *   - Added PID to compact WHO output (rev. 2)
+ *   - Bugfix: data file rebuild wasn't filtering write buffer, filtering works everywhere now (rev. 3)
+ *   - Added more levels to force (-ff) (rev. 3)
+ *   - Improved -z behaviour (rev. 3)
  *
  * v1.7
  *
