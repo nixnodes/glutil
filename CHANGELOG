@@ -2,6 +2,7 @@
  *
  *   - Multi-purpose generic log data types (see MANUAL and --help)
  *   - Bugfix: log path strings not null-terminated on override in some cases (rev. 1)
+ *   - Added PID to compact WHO output (rev. 2)
  *
  * v1.7
  *
