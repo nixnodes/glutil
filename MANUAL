@@ -19,7 +19,7 @@ Types are:
 
 |  FIELD  | TYPE |  DESCRIPTION                                       |
 +---------+------+----------------------------------------------------+
-: Global (applies to most logs and to other stuff)
+; GLOBAL (applies to most logs and to other stuff)
 
    exe        S     Absolute path to self
    procid     S     Self process id
@@ -33,13 +33,13 @@ Types are:
    tvragefile S     TVRAGE log path
    nukestr    S     glFTPd nuke string extracted from glftpd.conf
   
-: Filesystem
+; FILESYSTEM
 
    path       S     Full path
    size       S     Size of file, in bytes
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
   
-: Dirlog
+; DIRLOG
 
    dir        S     The name of the dir (fullpath)
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
@@ -52,7 +52,7 @@ Types are:
    size       I     The number of bytes in the dir   
 
 
-: NUKELOG
+; NUKELOG
 
    dir        S     The dirname (fullpath)
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
@@ -66,7 +66,7 @@ Types are:
    reason     S     The nuke reason
 
 
- : DUPEFILE
+; DUPEFILE
  
    filename   S     The file name
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
@@ -74,7 +74,7 @@ Types are:
    user       S     The name of the uploader
 
 
- : LASTONLOG
+; LASTONLOG
  
    user       S     Username
    group      S     Users primary group
@@ -86,7 +86,7 @@ Types are:
    stats      S     What did the user do ?
 
 
- : ONLINER
+; ONLINER
    
    user       S     The user that added the oneliner
    group      S     The primary group of the user who added the oneliner
@@ -95,7 +95,7 @@ Types are:
    msg        S     The message (oneliner)
 
 
- : ONLINE (shared mem)
+; ONLINE (shared mem)
 
    user       S     The username of the user
    tag        S     The users tagline
@@ -112,9 +112,9 @@ Types are:
    btxfer     I     Bytes transferred in the last loop (speed limiting)
    rate       I     Transfer rate in B/s, calculated from bxfer and lupdtime
    
---- glutil specific: ---
+; glutil specific: 
  
- : IMDB
+; IMDB
  
    dir        S     The directory name related to record
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
@@ -133,7 +133,7 @@ Types are:
    year       S     Year of release
 
 
- : TVRAGE
+; TVRAGE
  
    dir        S     The directory name related to record
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
@@ -153,10 +153,22 @@ Types are:
    status     S     Show status
 
 
- : GAME
+; GAME
  
    dir        S     The directory name related to record
    mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score
    
+; GENERIC-1 (ge1)
+
+   i32        I     32-bit integer field
+   ge1        S     255 byte character field
+   ge2        S     -||-
+   ge3        S     -||-
+   ge4        S     -||-
+   ge5        S     -||-
+   ge6        S     -||-
+   ge7        S     -||-
+   ge8        S     -||-
+  
