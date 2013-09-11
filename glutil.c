@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.7-14
+ * Version     : 1.8-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -90,6 +90,11 @@
 #define tv_log "/glftpd/ftp-data/logs/tv.log"
 #endif
 
+/* generic 1 log file path */
+#ifndef ge1_log
+#define ge1_log "/glftpd/ftp-data/logs/gen1.log"
+#endif
+
 /* see README file about this */
 #ifndef du_fld
 #define du_fld "/glftpd/bin/glutil.folders"
@@ -134,8 +139,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 7
-#define VER_REVISION 14
+#define VER_MINOR 8
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -228,6 +233,18 @@ typedef struct ___d_tvrage {
 	char _d_unused[256]; /* Reserved for future use */
 } _d_tvrage, *__d_tvrage;
 
+typedef struct ___d_generic_s2044 {
+	uint32_t i32;
+	char s_1[255];
+	char s_2[255];
+	char s_3[255];
+	char s_4[255];
+	char s_5[255];
+	char s_6[255];
+	char s_7[255];
+	char s_8[255];
+} _d_generic_s2044, *__d_generic_s2044;
+
 #pragma pack(pop)
 
 /* ------------------------------------------- */
@@ -237,13 +254,6 @@ typedef struct e_arg {
 	uint32_t flags;
 	char buffer[1024];
 	struct dirlog *dirlog;
-	struct nukelog *nukelog;
-	struct dupefile *dupefile;
-	struct lastonlog *lastonlog;
-	struct oneliner *oneliner;
-	struct ONLINE *online;
-	__d_imdb imdb;
-	__d_game game;
 	time_t t_stor;
 } ear;
 
@@ -359,9 +369,6 @@ typedef struct ___g_eds {
 	struct stat st;
 } _g_eds, *__g_eds;
 
-#define F_EDS_ROOTMINSET	(a32 << 1)
-#define F_EDS_KILL			(a32 << 2)
-
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
  * see http://en.wikipedia.org/wiki/Cyclic_redundancy_check#Commonly_used_and_standardized_CRCs
@@ -455,6 +462,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define UPD_MODE_DUMP_IMDB		0x14
 #define UPD_MODE_DUMP_GAME		0x15
 #define UPD_MODE_DUMP_TV		0x16
+#define UPD_MODE_DUMP_GENERIC	0x17
 
 #define PRIO_UPD_MODE_MACRO 	0x1001
 #define PRIO_UPD_MODE_INFO 		0x1002
@@ -533,9 +541,10 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISGAME				(a32 << 15)
 #define F_GH_ISFSX				(a32 << 16)
 #define F_GH_ISTVRAGE			(a32 << 17)
+#define F_GH_ISGENERIC1			(a32 << 18)
 
 /* these bits determine file type */
-#define F_GH_ISTYPE				(F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
+#define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
 
 #define F_OVRR_IPC				(a32 << 1)
 #define F_OVRR_GLROOT			(a32 << 2)
@@ -548,6 +557,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_NUKESTR			(a32 << 9)
 #define F_OVRR_IMDBLOG			(a32 << 10)
 #define F_OVRR_TVLOG			(a32 << 11)
+#define F_OVRR_GAMELOG			(a32 << 12)
+#define F_OVRR_GE1LOG			(a32 << 13)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -585,6 +596,9 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_LOM_TYPES				(F_LOM_FLOAT|F_LOM_INT)
 #define F_LOM_VAR_KNOWN			(F_LOM_LVAR_KNOWN|F_LOM_RVAR_KNOWN)
 
+#define F_EDS_ROOTMINSET		(a32 << 1)
+#define F_EDS_KILL				(a32 << 2)
+
 /* -- end flags -- */
 
 #define V_MB					0x100000
@@ -598,6 +612,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define ID_SZ 					sizeof(_d_imdb)
 #define GM_SZ 					sizeof(_d_game)
 #define TV_SZ 					sizeof(_d_tvrage)
+#define G1_SZ 					sizeof(_d_generic_s2044)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
 #define	DB_MAX_SIZE 			536870912   /* max file size allowed to load into memory */
@@ -626,6 +641,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define DEFF_IMDB	 			"imdb.log"
 #define DEFF_GAMELOG 			"game.log"
 #define DEFF_TV 				"tv.log"
+#define DEFF_GEN1 				"gen1.log"
 
 #define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
@@ -972,6 +988,7 @@ char FTPDATA[PATH_MAX] = { ftp_data };
 char IMDBLOG[PATH_MAX] = { imdb_file };
 char GAMELOG[PATH_MAX] = { game_log };
 char TVLOG[PATH_MAX] = { tv_log };
+char GE1LOG[PATH_MAX] = { ge1_log };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
@@ -1023,6 +1040,8 @@ char *hpd_up =
 				"  -k, [--raw]           Print game log to stdout\n"
 				"  -h, [--raw]           Print tvrage log to stdout\n"
 				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
+				"  -q <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
+				"                         Print specified log to stdout\n"
 				"  -t                    Print all user files inside /ftp-data/users\n"
 				"  -g                    Print all group files inside /ftp-data/groups\n"
 				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir])\n"
@@ -1036,12 +1055,12 @@ char *hpd_up =
 				"                           --ghost only looks for dirlog records with missing directories on filesystem\n"
 				"                           Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
-				"  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game>\n"
+				"  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                         Perform backup on specified log\n"
-				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game>\n"
+				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                         Rebuilds existing data file, based on filtering rules (see --exec,\n"
 				"                           --[i]regex[i] and --[i]match\n"
-				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game> [--infile=/path/file]\n"
+				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file]\n"
 				"                         Creates a binary record from ASCII data, inserting it into the specified log\n"
 				"                         Captures input from stdin, unless --infile is set\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
@@ -1167,9 +1186,9 @@ int g_cpg(void *arg, void *out, int m, size_t sz) {
 	size_t a_l = strlen(buffer);
 
 	a_l > sz ? a_l = sz : sz;
-
-	bzero(out, a_l);
-	g_strncpy(out, buffer, a_l);
+	char *ptr = (char*) out;
+	g_strncpy(ptr, buffer, a_l);
+	ptr[a_l] = 0x0;
 
 	return 0;
 }
@@ -1277,6 +1296,12 @@ int opt_loop_max(void *arg, int m) {
 int opt_g_udc(void *arg, int m) {
 	p_argv_off = g_pg(arg, m);
 	updmode = UPD_MODE_DUMP_GEN;
+	return 0;
+}
+
+int opt_g_dg(void *arg, int m) {
+	p_argv_off = g_pg(arg, m);
+	updmode = UPD_MODE_DUMP_GENERIC;
 	return 0;
 }
 
@@ -1518,6 +1543,18 @@ int opt_imdblog(void *arg, int m) {
 int opt_tvlog(void *arg, int m) {
 	g_cpg(arg, TVLOG, m, PATH_MAX);
 	ofl |= F_OVRR_TVLOG;
+	return 0;
+}
+
+int opt_gamelog(void *arg, int m) {
+	g_cpg(arg, GAMELOG, m, PATH_MAX);
+	ofl |= F_OVRR_GAMELOG;
+	return 0;
+}
+
+int opt_GE1LOG(void *arg, int m) {
+	g_cpg(arg, GE1LOG, m, PATH_MAX);
+	ofl |= F_OVRR_GE1LOG;
 	return 0;
 }
 
@@ -2015,28 +2052,28 @@ _d_avoid_i dirlog_check_dupe, rebuild_dirlog, dirlog_check_records,
 		g_print_info;
 
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
-		dirlog_update_record, g_dump_ug, g_dump_gen, d_write;
+		dirlog_update_record, g_dump_ug, g_dump_gen, d_write, d_gen_dump;
 
 __d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
 
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
 		ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
 		ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game,
-		ref_to_val_tv, ref_to_val_x;
+		ref_to_val_tv, ref_to_val_x, ref_to_val_gen1;
 
 __d_ref_to_pval ref_to_val_ptr_dirlog, ref_to_val_ptr_nukelog,
 		ref_to_val_ptr_oneliners, ref_to_val_ptr_online, ref_to_val_ptr_imdb,
 		ref_to_val_ptr_game, ref_to_val_ptr_lastonlog, ref_to_val_ptr_dupefile,
-		ref_to_val_ptr_tv;
+		ref_to_val_ptr_tv, ref_to_val_ptr_dummy, ref_to_val_ptr_gen1;
 
 __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
 		dirlog_format_block, imdb_format_block, game_format_block,
-		tv_format_block;
+		tv_format_block, gen1_format_block;
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
 __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
-		gcb_lastonlog, gcb_game, gcb_tv;
+		gcb_lastonlog, gcb_game, gcb_tv, gcb_gen1;
 
 uint64_t file_crc32(char *, uint32_t *);
 
@@ -2165,8 +2202,7 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		prio_opt_g_macro, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
 		"--loglevel", opt_g_loglvl, (void*) 1, "--logfile", opt_log_file,
 		(void*) 0, "--log", opt_logging, (void*) 0,
-		NULL, NULL,
-		NULL };
+		NULL, NULL, NULL };
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 0, "or", opt_g_operator_or, (void*) 0, "--lom", opt_g_lom_match,
@@ -2181,13 +2217,14 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0,
 		"-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
 		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
-		(void*) 0, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
-		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
-		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
-		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
-		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
-		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
-		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
+		(void*) 0, "-q", opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1,
+		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
+		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
+		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
+		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
+		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
+		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
+		"--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
@@ -2199,7 +2236,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
 		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
 		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
-		opt_lastonlog_dump, (void*) 0, "--tvlog", opt_tvlog, (void*) 1,
+		opt_lastonlog_dump, (void*) 0, "--ge1log", opt_GE1LOG, (void*) 1,
+		"--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
 		"--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
 		(void*) 1, "-o", opt_oneliner_dump, (void*) 0, "--lastonlog",
 		opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
@@ -2709,6 +2747,7 @@ int g_init(int argc, char **argv) {
 		build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
 		build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
 		build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
 	}
 
 	bzero(SITEROOT, 255);
@@ -2769,6 +2808,12 @@ int g_init(int argc, char **argv) {
 		if (ofl & F_OVRR_TVLOG) {
 			print_str(MSG_INIT_PATH_OVERR, "TVLOG", TVLOG);
 		}
+		if (ofl & F_OVRR_GAMELOG) {
+			print_str(MSG_INIT_PATH_OVERR, "GAMELOG", GAMELOG);
+		}
+		if (ofl & F_OVRR_GE1LOG) {
+			print_str(MSG_INIT_PATH_OVERR, "GE1LOG", GE1LOG);
+		}
 		if ((gfl & F_OPT_VERBOSE2) && (gfl & F_OPT_PS_LOGGING)) {
 			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
 		}
@@ -2776,6 +2821,11 @@ int g_init(int argc, char **argv) {
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)) {
 		print_str("WARNING: performing dry run, no writing will be done\n");
+	}
+
+	if (gfl & F_OPT_DAEMONIZE) {
+		print_str("NOTICE: forking into background.. [PID: %d]\n", getpid());
+		daemon(0, 0);
 	}
 
 	if (updmode && (gfl & F_OPT_PREEXEC)) {
@@ -2787,13 +2837,6 @@ int g_init(int argc, char **argv) {
 			WEXITSTATUS(r_e), GLOBAL_PREEXEC);
 			return 1;
 		}
-	}
-
-	if (gfl & F_OPT_DAEMONIZE) {
-
-		print_str("NOTICE: forking into background.. [PID: %d]\n", getpid());
-
-		daemon(0, 0);
 	}
 
 	if (g_usleep) {
@@ -2850,6 +2893,9 @@ int g_init(int argc, char **argv) {
 		break;
 	case UPD_MODE_DUMP_TV:
 		EXITVAL = g_print_stats(TVLOG, 0, 0);
+		break;
+	case UPD_MODE_DUMP_GENERIC:
+		EXITVAL = d_gen_dump(p_argv_off);
 		break;
 	case UPD_MODE_DUPE_CHK:
 		EXITVAL = dirlog_check_dupe();
@@ -2977,6 +3023,7 @@ int g_print_info(void) {
 	print_str(" IMDBLOG         %d        \n", ID_SZ);
 	print_str(" GAMELOG         %d        \n", GM_SZ);
 	print_str(" TVLOG           %d        \n", TV_SZ);
+	print_str(" GE1             %d        \n", G1_SZ);
 	print_str(" ONLINE(S)       %d        \n", OL_SZ);
 	print_str(MSG_NL);
 	if (gfl & F_OPT_VERBOSE) {
@@ -3172,6 +3219,8 @@ char *g_dgetf(char *str) {
 		return GAMELOG;
 	} else if (!strncmp(str, "tvrage", 6)) {
 		return TVLOG;
+	} else if (!strncmp(str, "ge1", 3)) {
+		return GE1LOG;
 	}
 	return NULL;
 }
@@ -3213,11 +3262,18 @@ int rebuild(void *arg) {
 	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
 			(ulint64_t) g_act_1.rw);
 
-	/*if (g_act_1.bw == g_act_1.total_sz) {
-	 return -1;
-	 }*/
-
 	return 0;
+}
+
+int d_gen_dump(char *arg) {
+	char *datafile = g_dgetf(arg);
+
+	if (!datafile) {
+		print_str(MSG_UNRECOGNIZED_DATA_TYPE, arg);
+		return 2;
+	}
+
+	return g_print_stats(datafile, 0, 0);
 }
 
 #define MAX_DATAIN_F		(V_MB*512)
@@ -3366,6 +3422,7 @@ int g_dump_ug(char *ug) {
 	ret.flags = flags_udcfg | F_PD_MATCHREG;
 	ret.hdl.flags |= F_GH_ISFSX;
 	ret.hdl.g_proc1 = ref_to_val_x;
+	ret.hdl.g_proc2 = ref_to_val_ptr_dummy;
 
 	snprintf(buffer, PATH_MAX, "%s/%s/%s", GLROOT, FTPDATA, ug);
 
@@ -3386,6 +3443,7 @@ int g_dump_gen(char *root) {
 	ret.flags = flags_udcfg;
 	ret.hdl.flags |= F_GH_ISFSX;
 	ret.hdl.g_proc1 = ref_to_val_x;
+	ret.hdl.g_proc2 = ref_to_val_ptr_dummy;
 
 	if (!(ret.flags & F_PD_MATCHTYPES)) {
 		ret.flags |= F_PD_MATCHTYPES;
@@ -4203,9 +4261,7 @@ int g_bmatch(void *d_ptr, struct g_handle *hdl) {
 		l_end:
 
 		if (_p_gm && _p_gm->g_oper_ptr) {
-			//printf("::%d, %d, %X, %X, %X\n", r_p, r, _p_gm->g_oper_ptr, g_oper_and,_gm->g_oper_ptr);
 			r_p = _p_gm->g_oper_ptr(r_p, r);
-			//printf("--%d, %d\n", r_p, r);
 		} else {
 			r_p = r;
 		}
@@ -5378,6 +5434,16 @@ int tv_format_block(void *iarg, char *output) {
 	return c;
 }
 
+int gen1_format_block(void *iarg, char *output) {
+	__d_generic_s2044 data = (__d_generic_s2044) iarg;
+
+	return snprintf(output, MAX_G_PRINT_STATS_BUFFER,
+			"GENERIC1\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+			data->i32, data->s_1, data->s_2, data->s_3, data->s_4,
+			data->s_5, data->s_6, data->s_7, data->s_8);
+
+}
+
 char *generate_chars(size_t num, char chr, char*buffer) {
 	g_setjmp(0, "generate_chars", NULL, NULL);
 	bzero(buffer, 255);
@@ -5732,8 +5798,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 					"WARNING: %s: could not get stats from data file! (chmod manually)\n",
 					file);
 		} else {
-			hdl->st_mode = 0;
-			hdl->st_mode |= st.st_mode;
+			hdl->st_mode = st.st_mode;
 		}
 	}
 
@@ -5846,7 +5911,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 
 		if ((r = remove(hdl->s_buffer))) {
 			print_str(
-					"WARNING: %s: [%d] removing temporary file failed (do it manually)\n",
+					"WARNING: %s: [%d] deleting temporary file failed (remove manually)\n",
 					hdl->s_buffer,
 					errno);
 			ret = 5;
@@ -6260,6 +6325,14 @@ int determine_datatype(struct g_handle *hdl) {
 		hdl->g_proc1 = ref_to_val_tv;
 		hdl->g_proc2 = ref_to_val_ptr_tv;
 		hdl->g_proc3 = tv_format_block;
+	} else if (!strncmp(hdl->file, GE1LOG, strlen(GE1LOG))) {
+		hdl->flags |= F_GH_ISGENERIC1;
+		hdl->block_sz = G1_SZ;
+		hdl->d_memb = 9;
+		hdl->g_proc0 = gcb_gen1;
+		hdl->g_proc1 = ref_to_val_gen1;
+		hdl->g_proc2 = ref_to_val_ptr_gen1;
+		hdl->g_proc3 = gen1_format_block;
 	} else {
 		return 1;
 	}
@@ -6273,6 +6346,9 @@ int g_fopen(char *file, char *mode, uint32_t flags, struct g_handle *hdl) {
 	if (flags & F_DL_FOPEN_SHM) {
 		if (g_map_shm(hdl, SHM_IPC)) {
 			return 12;
+		}
+		if (g_load_lom(hdl)) {
+			return 24;
 		}
 		return 0;
 	}
@@ -8172,6 +8248,25 @@ void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 	return NULL;
 }
 
+void *ref_to_val_ptr_gen1(void *arg, char *match, size_t *output) {
+	if (!output) {
+		return NULL;
+	}
+
+	__d_generic_s2044 data = (__d_generic_s2044) arg;
+
+	if (!strcmp(match, "time")) {
+		*output = sizeof(data->i32);
+		return &data->i32;
+	}
+
+	return NULL;
+}
+
+void *ref_to_val_ptr_dummy(void *arg, char *match, size_t *output) {
+	return NULL;
+}
+
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	if (!output) {
 		return 2;
@@ -8557,6 +8652,43 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
+int ref_to_val_gen1(void *arg, char *match, char *output, size_t max_size) {
+	if (!output) {
+		return 2;
+	}
+
+	bzero(output, max_size);
+
+	if (!ref_to_val_generic(NULL, match, output, max_size)) {
+		return 0;
+	}
+
+	__d_generic_s2044 data = (__d_generic_s2044) arg;
+
+	if (!strcmp(match, "ge1")) {
+		snprintf(output, max_size, data->s_1);
+	} else if (!strcmp(match, "ge2")) {
+		snprintf(output, max_size, data->s_2);
+	} else if (!strcmp(match, "ge3")) {
+		snprintf(output, max_size, data->s_3);
+	} else if (!strcmp(match, "ge4")) {
+		snprintf(output, max_size, data->s_4);
+	} else if (!strcmp(match, "ge5")) {
+		snprintf(output, max_size, data->s_5);
+	} else if (!strcmp(match, "ge6")) {
+		snprintf(output, max_size, data->s_6);
+	} else if (!strcmp(match, "ge7")) {
+		snprintf(output, max_size, data->s_7);
+	} else if (!strcmp(match, "ge8")) {
+		snprintf(output, max_size, data->s_8);
+	} else if (!strcmp(match, "i32")) {
+		snprintf(output, max_size, "%u", data->i32);
+	} else {
+		return 1;
+	}
+	return 0;
+}
+
 int process_exec_string(char *input, char *output, void *callback, void *data) {
 	g_setjmp(0, "process_exec_string", NULL, NULL);
 
@@ -8810,7 +8942,11 @@ int m_load_input(struct g_handle *hdl, char *input) {
 		}
 
 		if (p_l > MAX_SDENTRY_LEN) {
-
+			if (gfl & F_OPT_VERBOSE2) {
+				print_str(
+						"WARNING: DATA IMPORT: failed processing input, too large [%llu]\n",
+						(uint64_t) p_l);
+			}
 			rf++;
 			continue;
 		}
@@ -8823,6 +8959,11 @@ int m_load_input(struct g_handle *hdl, char *input) {
 		md_init(&md_s, 32);
 
 		if ((rs = split_string(buffer, 0xA, &md_s)) != hdl->d_memb) {
+			if (gfl & F_OPT_VERBOSE2) {
+				print_str(
+						"WARNING: DATA IMPORT: [%d/%d] not enough parameters\n",
+						rs, hdl->d_memb);
+			}
 			rf++;
 			goto e_loop;
 		}
@@ -9343,6 +9484,70 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 	return 0;
 }
 
+int gcb_gen1(void *buffer, char *key, char *val) {
+	size_t k_l = strlen(key), v_l;
+	__d_generic_s2044 ptr = (__d_generic_s2044) buffer;
+
+	if (k_l == 3 && !strncmp(key, "ge1", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_1, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge2", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_2, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge3", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_3, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge4", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_4, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge5", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_5, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge6", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_6, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge7", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_7, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "ge8", 3)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		g_memcpy(ptr->s_8, val, v_l > 254 ? 254 : v_l);
+		return 1;
+	} else if (k_l == 3 && !strncmp(key, "i32", 3)) {
+		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->i32 = v_ui;
+		return 1;
+	}
+
+	return 0;
+}
+
 int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 	g_setjmp(0, "load_cfg", NULL, NULL);
 	int r = 0;
@@ -9526,7 +9731,7 @@ char *replace_char(char w, char r, char *string) {
 }
 
 #define SSD_MAX_LINE_SIZE 	262144
-#define SSD_MAX_LINE_PROC 	30000
+#define SSD_MAX_LINE_PROC 	15000
 
 int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 	g_setjmp(0, "ssd_4macro", NULL, NULL);
