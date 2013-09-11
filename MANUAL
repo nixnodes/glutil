@@ -163,7 +163,7 @@ Types are:
 ; GENERIC-1 (ge1)
 
    i32        I     32-bit integer field
-   ge1        S     255 byte character field
+   ge1        S     255 byte signed character field
    ge2        S     -||-
    ge3        S     -||-
    ge4        S     -||-
