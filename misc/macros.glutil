@@ -28,3 +28,20 @@
 #@MACRO:make-tvrage-infolinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
 ## <make-imdb-dirlinks>
 #@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} votes - {genres} ]"` {m:arg1}
+#
+# <dirlog-to-ascii>
+# Converts dirlog into ASCII format, suitable
+# for re-injection using -z
+#
+# Usage:
+#
+#  ./glutil -m dirlog-to-text -arg1=dirlog.txt
+#
+# Convert back into binary format:
+#
+#  ./glutil -z dirlog --dirlog=dirlog.bin -vv < dirlog.txt
+#
+#  If --dirlog=<path> is not specified, glutil reverts to 
+#   default dirlog path
+#
+#@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -en "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
