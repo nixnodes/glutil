@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-2
+ * Version     : 1.8-3
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -140,7 +140,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -510,6 +510,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_SORT 				(a64 << 39)
 #define F_OPT_HASLOM			(a64 << 40)
 #define F_OPT_HAS_G_LOM			(a64 << 41)
+#define F_OPT_FORCE2 			(a64 << 42)
+#define F_OPT_VERBOSE5 			(a64 << 43)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM)
 
@@ -1111,7 +1113,7 @@ char *hpd_up =
 				"                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n\n"
 				"\n\n"
 				"Options:\n"
-				"  -f                    Force operation where it applies\n"
+				"  -f                    Force operation where it applies (use -ff for greater effect)\n"
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
 				"  --nowrite             Perform a dry run, executing normally except no writing is done\n"
 				"  -b, --nobuffer        Disable data file memory buffering\n"
@@ -1264,8 +1266,19 @@ int opt_g_verbose4(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_verbose5(void *arg, int m) {
+	gfl |= F_OPT_VERBOSE | F_OPT_VERBOSE2 | F_OPT_VERBOSE3 | F_OPT_VERBOSE4
+			| F_OPT_VERBOSE5;
+	return 0;
+}
+
 int opt_g_force(void *arg, int m) {
 	gfl |= F_OPT_FORCE;
+	return 0;
+}
+
+int opt_g_force2(void *arg, int m) {
+	gfl |= (F_OPT_FORCE2 | F_OPT_FORCE);
 	return 0;
 }
 
@@ -2196,12 +2209,12 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		opt_raw_dump, (void*) 0, "--silent", opt_silent, (void*) 0, "-arg1",
 		opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2",
 		opt_g_arg2, (void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3",
-		opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvv",
-		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
-		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "-m",
-		prio_opt_g_macro, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
-		"--loglevel", opt_g_loglvl, (void*) 1, "--logfile", opt_log_file,
-		(void*) 0, "--log", opt_logging, (void*) 0,
+		opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvvv",
+		opt_g_verbose5, (void*) 0, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
+		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
+		opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--info",
+		prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+		"--logfile", opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0,
 		NULL, NULL, NULL };
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
@@ -2228,14 +2241,14 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
-		opt_g_ex_fork, (void*) 1, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
-		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
-		opt_g_verbose, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
-		"--ftime", opt_g_ftime, (void*) 0, "--logfile", opt_log_file, (void*) 0,
-		"--log", opt_logging, (void*) 0, "--silent", opt_silent, (void*) 0,
-		"--loopexec", opt_g_loopexec, (void*) 1, "--loop", opt_g_loop,
-		(void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
-		opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+		opt_g_ex_fork, (void*) 1, "-vvvvv", opt_g_verbose5, (void*) 0, "-vvvv",
+		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
+		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
+		opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
+		opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "--silent",
+		opt_silent, (void*) 0, "--loopexec", opt_g_loopexec, (void*) 1,
+		"--loop", opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0,
+		"-w", opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
 		opt_lastonlog_dump, (void*) 0, "--ge1log", opt_GE1LOG, (void*) 1,
 		"--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
 		"--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
@@ -2264,8 +2277,9 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		option_crc32, (void*) 1, "--nobackup", opt_nobackup, (void*) 0, "-c",
 		opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
 		"--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
-		"-f", opt_g_force, (void*) 0, "-s", opt_update_single_record, (void*) 1,
-		"-r", opt_recursive_update_records, (void*) 0, NULL, NULL, NULL };
+		"-f", opt_g_force, (void*) 0, "-ff", opt_g_force2, (void*) 0, "-s",
+		opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
+		(void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -2349,7 +2363,7 @@ void *md_alloc(pmda md, int b) {
 	int flags = 0;
 
 	if (md->offset >= md->count) {
-		if (gfl & F_OPT_VERBOSE3) {
+		if (gfl & F_OPT_VERBOSE4) {
 			print_str(
 					"NOTICE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
 					(ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count);
@@ -2362,7 +2376,7 @@ void *md_alloc(pmda md, int b) {
 		md->count *= 2;
 		uintaa_t rlc = md_relink(md);
 		flags |= MDA_MDALLOC_RE;
-		if (gfl & F_OPT_VERBOSE3) {
+		if (gfl & F_OPT_VERBOSE4) {
 			print_str(
 					"NOTICE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
 					(ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count,
@@ -3296,9 +3310,15 @@ int d_write(char *arg) {
 		return 2;
 	}
 
+	off_t f_sz = get_file_size(datafile);
+
 	struct g_handle g_act_1 = { 0 };
 
-	g_act_1.flags |= F_GH_FFBUFFER | F_GH_WAPPEND | F_GH_DFNOWIPE;
+	g_act_1.flags |= F_GH_FFBUFFER;
+
+	if (f_sz > 0) {
+		g_act_1.flags |= F_GH_WAPPEND | F_GH_DFNOWIPE;
+	}
 
 	g_strncpy(g_act_1.file, datafile, strlen(datafile));
 
@@ -3311,13 +3331,20 @@ int d_write(char *arg) {
 
 	FILE *in = (pf_infile ? pf_infile : stdin);
 
-	if (!read_file(NULL, buffer, MAX_DATAIN_F, 0, in)) {
+	off_t fsz;
+
+	if (!(fsz = read_file(NULL, buffer, MAX_DATAIN_F, 0, in))) {
 		print_str("ERROR: %s: could not read input data\n", datafile);
 		ret = 4;
 		goto end;
 	}
 
 	int r;
+
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("NOTICE: %s: loading input data.. [%llu Bytes]\n", datafile,
+				(uint64_t) fsz);
+	}
 
 	if ((r = m_load_input(&g_act_1, buffer))) {
 		print_str("ERROR: %s: [%d]: could not load input data\n", datafile, r);
@@ -3336,39 +3363,36 @@ int d_write(char *arg) {
 				(unsigned long long int) g_act_1.w_buffer.offset);
 	}
 
-	if (!(gfl & F_OPT_FORCE) && !file_exists(datafile)
+	if (!(gfl & F_OPT_FORCE2) && !file_exists(datafile)
 			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
 			&& g_act_1.buffer_count) {
 		p_md_obj ptr_w = md_first(&g_act_1.w_buffer), ptr_r;
-
+		int m = 1;
 		while (ptr_w) {
 			ptr_r = md_first(&g_act_1.buffer);
-			int m = 1;
+			m = 1;
 			while (ptr_r) {
 				if (!(m = g_bin_compare(ptr_r->ptr, ptr_w->ptr,
-						(off_t) g_act_1.block_sz))) {
+								(off_t) g_act_1.block_sz))) {
+					if (gfl & F_OPT_VERBOSE5) {
+						print_str(
+								"NOTICE: record @0x%.16X already exists, not importing\n",
+								(unsigned long long int) (uintaa_t) ptr_w);
+					}
+					if (!md_unlink(&g_act_1.w_buffer, ptr_w)) {
+						print_str("%s: %s: [%llu]: %s, aborting build..\n",
+								g_act_1.w_buffer.offset ? "ERROR" : "WARNING",
+								datafile,
+								(unsigned long long int) g_act_1.w_buffer.offset,
+								g_act_1.w_buffer.offset ?
+										"could not unlink existing record" :
+										"all records already exist (nothing to do)");
+						goto end;
+					}
 					break;
 				}
+
 				ptr_r = ptr_r->next;
-			}
-
-			if (!m) {
-				if (gfl & F_OPT_VERBOSE2) {
-					print_str(
-							"NOTICE: record @0x%.16X already exists, unlinking..\n",
-							(unsigned long long int) (uintaa_t) ptr_w);
-				}
-
-				if (!md_unlink(&g_act_1.w_buffer, ptr_w)) {
-					print_str("%s: %s: [%llu]: %s, aborting build..\n",
-							g_act_1.w_buffer.offset ? "ERROR" : "WARNING",
-							datafile,
-							(unsigned long long int) g_act_1.w_buffer.offset,
-							g_act_1.w_buffer.offset ?
-									"could not unlink existing record" :
-									"all records already exist (nothing to do)");
-					goto end;
-				}
 			}
 
 			ptr_w = ptr_w->next;
@@ -3380,7 +3404,9 @@ int d_write(char *arg) {
 		ret = 7;
 		goto end;
 	} else {
-		//print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
+		if (gfl & F_OPT_VERBOSE) {
+			print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
+		}
 	}
 
 	end:
@@ -5744,22 +5770,31 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	snprintf(hdl->s_buffer, PATH_MAX - 1, "%s.%d.dtm", file, getpid());
 	snprintf(buffer, PATH_MAX - 1, "%s.bk", file);
 
-	if (hdl->buffer_count && (exec_str || (gfl & F_OPT_HASMATCH))
+	pmda p_ptr;
+
+	if (hdl->flags & F_GH_FFBUFFER) {
+		p_ptr = &hdl->w_buffer;
+
+	} else {
+		p_ptr = &hdl->buffer;
+	}
+
+	if (p_ptr->count && (exec_str || (gfl & F_OPT_HASMATCH))
 			&& updmode != UPD_MODE_RECURSIVE) {
 		g_setjmp(0, "rebuild_data_file(2)", NULL, NULL);
 		if (gfl & F_OPT_VERBOSE2) {
 			print_str("NOTICE: %s: filtering data..\n", file);
 		}
 
-		p_md_obj ptr = md_first(&hdl->buffer);
+		p_md_obj ptr = md_first(p_ptr);
 
 		while (ptr) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
 			if (g_bmatch(ptr->ptr, hdl)) {
-				if (!(ptr = md_unlink(&hdl->buffer, ptr))) {
-					if (!hdl->buffer.offset) {
+				if (!(ptr = md_unlink(p_ptr, ptr))) {
+					if (!p_ptr->offset) {
 						if (!(gfl & F_OPT_FORCE)) {
 							print_str(
 									"WARNING: %s: everything got filtered, refusing to write 0-byte data file\n",
@@ -5773,7 +5808,9 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 						return 12;
 					}
 				}
-				hdl->buffer_count--;
+				if (hdl->buffer_count) {
+					hdl->buffer_count--;
+				}
 				continue;
 			}
 			ptr = ptr->next;
