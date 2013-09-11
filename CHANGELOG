@@ -1,3 +1,7 @@
+ * v1.8
+ *
+ *   - Multi-purpose generic log data types (see MANUAL and --help)
+ *
  * v1.7
  *
  *   - Added matching by comparison/relational and logical operators, --[i]lom <expression>
@@ -22,6 +26,7 @@
  *   - Bugfix: -e odd return value (rev. 13)
  *   - Bugfix: extremely wastefull directory tree parsing (rev. 14)
  *   - Added 'mode' field (-x) (rev. 14)
+ *   - Added 'mode' field to -d, -n, -i, -a, -h and -k (rev. 14)
  *
  * v1.6
  *
