@@ -95,7 +95,7 @@ Types are:
    msg        S     The message (oneliner)
 
 
-; ONLINE (shared mem)
+; ONLINE (shared memory segment)
 
    user       S     The username of the user
    tag        S     The users tagline
