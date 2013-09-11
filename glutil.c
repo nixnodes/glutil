@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-1
+ * Version     : 1.8-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -140,7 +140,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3024,7 +3024,7 @@ int g_print_info(void) {
 	print_str(" GAMELOG         %d        \n", GM_SZ);
 	print_str(" TVLOG           %d        \n", TV_SZ);
 	print_str(" GE1             %d        \n", G1_SZ);
-	print_str(" ONLINE(S)       %d        \n", OL_SZ);
+	print_str(" ONLINE(SHR)     %d        \n", OL_SZ);
 	print_str(MSG_NL);
 	if (gfl & F_OPT_VERBOSE) {
 		print_str(" DATA TYPE     SIZE(B)   \n"
@@ -4478,7 +4478,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
 						print_str(
 								"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
-										"|                      USER/HOST                          |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
+										"|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
 										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
 
 					}
@@ -5306,18 +5306,24 @@ int online_format_block(void *iarg, char *output) {
 		if (gfl & F_OPT_FORMAT_COMP) {
 			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
 			char d_buffer[255] = { 0 };
-			snprintf(d_buffer, 255, "%u", (uint32_t) ltime);
+
+			snprintf(d_buffer, 254, "%u", (uint32_t) ltime);
 			size_t d_len1 = strlen(d_buffer);
-			snprintf(d_buffer, 255, "%.2f", kbps);
+			snprintf(d_buffer, 254, "%.2f", kbps);
 			size_t d_len2 = strlen(d_buffer);
-			generate_chars(54 - (strlen(data->username) + strlen(data->host)),
-					0x20, sp_buffer);
+			snprintf(d_buffer, 254, "%u", data->procid);
+			size_t d_len3 = strlen(d_buffer);
+			generate_chars(
+					54
+							- (strlen(data->username) + strlen(data->host)
+									+ d_len3 + 1), 0x20, sp_buffer);
 			generate_chars(10 - d_len1, 0x20, sp_buffer2);
 			generate_chars(13 - d_len2, 0x20, sp_buffer3);
 			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-					"| %s!%s%s |        %us%s |     %.2fKB/s%s |  %s\n",
-					data->username, data->host, sp_buffer, (uint32_t) ltime,
-					sp_buffer2, kbps, sp_buffer3, data->status);
+					"| %s!%s/%u%s |        %us%s |     %.2fKB/s%s |  %s\n",
+					data->username, data->host, data->procid, sp_buffer,
+					(uint32_t) ltime, sp_buffer2, kbps, sp_buffer3,
+					data->status);
 		} else {
 			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "[ONLINE]\n"
 					"    User:            %s\n"
