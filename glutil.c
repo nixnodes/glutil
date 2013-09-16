@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-3
+ * Version     : 1.8-4
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -626,7 +626,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE 		"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
 #define MSG_GEN_DFCORRU 		"ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
-#define MSG_GEN_DFRFAIL 		"ERROR: %s: rebuilding data file failed!\n"
+#define MSG_GEN_DFRFAIL 		"ERROR: %s: building data file failed!\n"
 #define MSG_BAD_DATATYPE 		"ERROR: %s: could not determine data type\n"
 #define MSG_GEN_WROTE			"STATS: %s: wrote %llu bytes in %llu records\n"
 
@@ -2697,8 +2697,8 @@ int g_init(int argc, char **argv) {
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
 		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE2)) {
-			print_str("GLCONF: using 'rootpath': %s\n", GLROOT);
+		if ((gfl & F_OPT_VERBOSE3)) {
+			print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
 	}
 
@@ -2707,8 +2707,8 @@ int g_init(int argc, char **argv) {
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
 		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE2)) {
-			print_str("GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
+		if ((gfl & F_OPT_VERBOSE3)) {
+			print_str("NOTICE: GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
 	}
 
@@ -2717,8 +2717,8 @@ int g_init(int argc, char **argv) {
 	if (ptr) {
 		bzero(FTPDATA, 255);
 		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE2)) {
-			print_str("GLCONF: using 'ftp-data': %s\n", FTPDATA);
+		if ((gfl & F_OPT_VERBOSE3)) {
+			print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
 	}
 
@@ -2727,8 +2727,8 @@ int g_init(int argc, char **argv) {
 	if (ptr) {
 		NUKESTR = calloc(255, 1);
 		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-		if ((gfl & F_OPT_VERBOSE2)) {
-			print_str("GLCONF: using 'nukedir_style': %s\n", NUKESTR);
+		if ((gfl & F_OPT_VERBOSE3)) {
+			print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n", NUKESTR);
 		}
 		ofl |= F_OVRR_NUKESTR;
 
@@ -3051,6 +3051,22 @@ int g_print_info(void) {
 		print_str(" uint64_t         %d      \n", (sizeof(uint64_t)));
 		print_str(MSG_NL);
 	}
+
+	if (gfl & F_OPT_VERBOSE2) {
+		print_str(" FILE TYPE     DECIMAL   \n"
+				"-------------------------\n");
+		print_str(" DT_UNKNOWN       %d     \n", DT_UNKNOWN);
+		print_str(" DT_FIFO          %d     \n", DT_FIFO);
+		print_str(" DT_CHR           %d     \n", DT_CHR);
+		print_str(" DT_DIR           %d     \n", DT_DIR);
+		print_str(" DT_BLK           %d     \n", DT_BLK);
+		print_str(" DT_REG           %d     \n", DT_REG);
+		print_str(" DT_LNK           %d     \n", DT_LNK);
+		print_str(" DT_SOCK          %d     \n", DT_SOCK);
+		print_str(" DT_WHT           %d     \n", DT_WHT);
+		print_str(MSG_NL);
+	}
+
 	return 0;
 }
 
@@ -3373,7 +3389,7 @@ int d_write(char *arg) {
 			m = 1;
 			while (ptr_r) {
 				if (!(m = g_bin_compare(ptr_r->ptr, ptr_w->ptr,
-								(off_t) g_act_1.block_sz))) {
+						(off_t) g_act_1.block_sz))) {
 					if (gfl & F_OPT_VERBOSE5) {
 						print_str(
 								"NOTICE: record @0x%.16X already exists, not importing\n",
@@ -4655,7 +4671,7 @@ int rebuild_dirlog(void) {
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
-		print_str("NOTICE: %s: allocating %u B for references (overhead)\n",
+		print_str("NOTICE: %s: allocating %u bytes for references (overhead)\n",
 				DIRLOG, (uint32_t) (ACT_WRITE_BUFFER_MEMBERS * sizeof(md_obj)));
 	}
 
@@ -6698,14 +6714,14 @@ int enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds) {
 			continue;
 		}
 
+		snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
+		remove_repeating_chars(buf, 0x2F);
+
 		if (dirp->d_type == DT_UNKNOWN) {
-			_dirp.d_type = get_file_type(dirp->d_name);
+			_dirp.d_type = get_file_type(buf);
 		} else {
 			_dirp.d_type = dirp->d_type;
 		}
-
-		snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
-		remove_repeating_chars(buf, 0x2F);
 
 		if (!(ir = callback_f(buf, _dirp.d_type, arg, eds))) {
 			if (f & F_ENUMD_ENDFIRSTOK) {
@@ -9857,23 +9873,6 @@ int get_file_type(char *file) {
 	if (stat(file, &sb) == -1)
 		return errno;
 
-	switch (sb.st_mode & S_IFMT) {
-	case S_IFBLK:
-		return DT_BLK;
-	case S_IFCHR:
-		return DT_CHR;
-	case S_IFDIR:
-		return DT_DIR;
-	case S_IFIFO:
-		return DT_FIFO;
-	case S_IFLNK:
-		return DT_LNK;
-	case S_IFREG:
-		return DT_REG;
-	case S_IFSOCK:
-		return DT_SOCK;
-	default:
-		return 0;
-	}
+	return IFTODT(sb.st_mode);
 }
 
