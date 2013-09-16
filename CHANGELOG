@@ -6,6 +6,7 @@
  *   - Bugfix: data file rebuild wasn't filtering write buffer, filtering works everywhere now (rev. 3)
  *   - Added more levels to force (-ff) (rev. 3)
  *   - Improved -z behaviour (rev. 3)
+ *   - Bugfix: readdir() not handling DT_UNKNOWN properly (file type detection failed on certain systems) (rev. 4)
  *
  * v1.7
  *
