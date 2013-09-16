@@ -140,7 +140,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
