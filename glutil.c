@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-4
+ * Version     : 1.8-5
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -140,7 +140,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -4651,18 +4651,18 @@ int rebuild_dirlog(void) {
 	char buffer[V_MB + 1] = { 0 };
 	mda dirchain = { 0 }, buffer2 = { 0 };
 
+	md_init(&dirchain, 1024);
+
 	if (read_file(DU_FLD, buffer, V_MB, 0, NULL) < 1) {
 		print_str(
 				"WARNING: unable to read folders file, doing full siteroot recursion in '%s'..\n",
 				SITEROOT);
 		gfl |= F_OPT_FORCE;
 		update_records(SITEROOT, 0);
-		goto end;
+		goto rw_end;
 	}
 
 	int r, r2;
-
-	md_init(&dirchain, 1024);
 
 	if ((r = split_string(buffer, 0x13, &dirchain)) < 1) {
 		print_str("ERROR: [%d] could not parse input from %s\n", r, DU_FLD);
@@ -4733,8 +4733,12 @@ int rebuild_dirlog(void) {
 		ptr = ptr->next;
 	}
 
+	rw_end:
+
 	if (g_act_1.flags & F_GH_FFBUFFER) {
-		rebuild_data_file(DIRLOG, &g_act_1);
+		if (rebuild_data_file(DIRLOG, &g_act_1)) {
+			print_str(MSG_GEN_DFRFAIL, DIRLOG);
+		}
 	}
 
 	r_end:
@@ -5779,6 +5783,7 @@ int rebuild_data_file(char *file, struct g_handle *hdl) {
 	}
 
 	if (gfl & F_OPT_NOWRITE) {
+
 		return 0;
 	}
 
