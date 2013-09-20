@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-6
+ * Version     : 1.8-7
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -6616,6 +6616,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1 = ref_to_val_tv;
 		hdl->g_proc2 = ref_to_val_ptr_tv;
 		hdl->g_proc3 = tv_format_block;
+		hdl->ipc_key = IPC_KEY_TVRAGELOG;
 	} else if (!strncmp(hdl->file, GE1LOG, strlen(GE1LOG))) {
 		hdl->flags |= F_GH_ISGENERIC1;
 		hdl->block_sz = G1_SZ;
