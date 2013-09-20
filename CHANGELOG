@@ -8,6 +8,7 @@
  *   - Improved -z behaviour (rev. 3)
  *   - Bugfix: readdir() not handling DT_UNKNOWN properly (file type detection failed on certain systems) (rev. 4)
  *   - Bugfix: full siteroot recursion never flushed buffered data to file (-r) (rev. 5)
+ *   - Added --shmem, buffering to shared mem segment (see --help) (rev. 6)
  *
  * v1.7
  *
