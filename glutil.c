@@ -2608,6 +2608,7 @@ int g_shutdown(void *arg) {
 	g_cleanup(&g_act_1);
 	g_cleanup(&g_act_2);
 	free_cfg_rf(&cfg_rf);
+	free_cfg(&glconf);
 	g_setjmp(0, "g_shutdown(2)", NULL, NULL);
 	if (NUKESTR) {
 		g_free(NUKESTR);
@@ -2879,6 +2880,9 @@ int g_init(int argc, char **argv) {
 	if ((gfl & F_OPT_VERBOSE)) {
 		if (gfl & F_OPT_NOBUFFER) {
 			print_str("NOTICE: disabling memory buffering\n");
+			if ( gfl & F_OPT_SHAREDMEM) {
+				print_str("WARNING: --shmem: shared memory segment buffering option is invalid when --nobuffer specified\n");
+			}
 		}
 		if (SHM_IPC && SHM_IPC != shm_ipc) {
 			print_str("NOTICE: IPC key set to '0x%.8X'\n", SHM_IPC);
@@ -3201,6 +3205,10 @@ char **process_macro(void * arg, char **out) {
 	}
 
 	g_strncpy(b_spec1, av.p_buf_2, strlen(av.p_buf_2));
+
+	if ( gfl & F_OPT_VERBOSE2 ) {
+		print_str("MACRO: '%s': found macro in '%s'\n", av.p_buf_1, av.p_buf_2);
+	}
 
 	char *s_buffer = (char*) calloc(262144, 1), **s_ptr = NULL;
 	int r;
@@ -6439,7 +6447,7 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 		return 6;
 	}
 
-	off_t count = 0, tot_sz = 0;
+	off_t tot_sz = 0;
 
 	if (!(flags & F_GBM_SHM_NO_DATAFILE)) {
 		if (st.st_size % hdl->block_sz) {
@@ -6448,13 +6456,12 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 			return 12;
 		}
 
-		count = (hdl->total_sz / hdl->block_sz);
 		tot_sz = hdl->total_sz;
 
 		if (gfl & F_OPT_VERBOSE2) {
 			print_str(
 					"NOTICE: %s: loading data file into memory [%llu records] [%llu bytes]\n",
-					file, (uint64_t) count, (ulint64_t) hdl->total_sz);
+					file, (uint64_t) (hdl->total_sz / hdl->block_sz), (ulint64_t) hdl->total_sz);
 		}
 	} else {
 		bzero(hdl->file, PATH_MAX);
@@ -6525,14 +6532,14 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 	if ((r = load_data_md(&hdl->buffer, file, hdl))) {
 		print_str(
 				"ERROR: %s: [%llu/%llu] [%u] [%u] could not load data! [%d] [%d]\n",
-				file, (uint64_t) hdl->buffer.count, (uint64_t) count,
+				file, (uint64_t) hdl->buffer.count, (uint64_t) (hdl->total_sz / hdl->block_sz),
 				(uint32_t) hdl->total_sz, hdl->block_sz, r, errno);
 		return 4;
 	} else {
 		if (!(flags & F_GBM_SHM_NO_DATAFILE)) {
 			if (tot_sz != hdl->total_sz) {
 				print_str(
-						"WARNING: %s: [%llu/%llu] actual data loaded was not the same size as source file\n",
+						"WARNING: %s: [%llu/%llu] actual data loaded was not the same size as source data file\n",
 						file, (uint64_t) hdl->total_sz, (uint64_t) tot_sz);
 			}
 		}
@@ -6774,7 +6781,6 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 }
 
 void *g_read(void *buffer, __g_handle hdl, size_t size) {
-//g_setjmp(0, "g_read", NULL, NULL);
 	if (hdl->buffer_count) {
 		hdl->buffer.pos = hdl->buffer.r_pos;
 		if (!hdl->buffer.pos) {
@@ -6788,12 +6794,12 @@ void *g_read(void *buffer, __g_handle hdl, size_t size) {
 	}
 
 	if (!buffer) {
-		print_str("IO ERROR: no buffer to write to\n");
+		print_str("IO ERROR: %s: no buffer to write to\n", hdl->file);
 		return NULL;
 	}
 
 	if (!hdl->fh) {
-		print_str("IO ERROR: data file handle not open\n");
+		print_str("IO ERROR: %s: data file handle not open\n", hdl->file);
 		return NULL;
 	}
 
@@ -7259,11 +7265,11 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 	return read;
 }
 
-#define F_CFGV_BUILD_FULL_STRING	0x1
-#define F_CFGV_RETURN_MDA_OBJECT	0x2
-#define F_CFGV_RETURN_TOKEN_EX		0x4
+#define F_CFGV_BUILD_FULL_STRING	(a32 << 1)
+#define F_CFGV_RETURN_MDA_OBJECT	(a32 << 2)
+#define F_CFGV_RETURN_TOKEN_EX		(a32 << 3)
 
-#define F_CFGV_BUILD_DATA_PATH		0x1000
+#define F_CFGV_BUILD_DATA_PATH		(a32 << 10)
 
 #define F_CFGV_MODES				(F_CFGV_BUILD_FULL_STRING|F_CFGV_RETURN_MDA_OBJECT|F_CFGV_RETURN_TOKEN_EX)
 
