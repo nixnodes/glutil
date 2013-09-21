@@ -641,7 +641,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define G1_SZ 					sizeof(_d_generic_s2044)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
-#define	DB_MAX_SIZE 			536870912   /* max file size allowed to load into memory */
+#define	DB_MAX_SIZE 			((ulint64_t)536870912)   /* max file size allowed to load into memory */
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
@@ -2105,8 +2105,10 @@ int opt_membuffer_limit(void *arg, int m) {
 	long long int l_buffer = atoll(buffer);
 	if (l_buffer > 1024) {
 		db_max_size = l_buffer;
-		print_str("NOTICE: max memory buffer limit set to %lld bytes\n",
-				l_buffer);
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("NOTICE: max memory buffer limit set to %lld bytes\n",
+					l_buffer);
+		}
 	} else {
 		print_str(
 				"NOTICE: invalid memory buffer limit, using default (%lld bytes)\n",
@@ -2944,12 +2946,16 @@ int g_init(int argc, char **argv) {
 	}
 
 	if (updmode && (gfl & F_OPT_PREEXEC)) {
-		print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
+		}
 		int r_e = 0;
 		if ((r_e = g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC))
 				== -1|| WEXITSTATUS(r_e)) {
-			print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
-			WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+			if (gfl & F_OPT_VERBOSE) {
+				print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
+				WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+			}
 			return 1;
 		}
 	}
@@ -3066,9 +3072,13 @@ int g_init(int argc, char **argv) {
 	}
 
 	if (updmode && (gfl & F_OPT_POSTEXEC)) {
-		print_str("POSTEXEC: running: '%s'\n", GLOBAL_POSTEXEC);
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("POSTEXEC: running: '%s'\n", GLOBAL_POSTEXEC);
+		}
 		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_POSTEXEC) == -1) {
-			print_str("WARNING: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
+			if (gfl & F_OPT_VERBOSE) {
+				print_str("WARNING: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
+			}
 		}
 	}
 
@@ -7460,6 +7470,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
 		DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
+	} else if (!strcmp(match, "memlimit")) {
+		snprintf(output, max_size, "%llu", db_max_size);
 	} else {
 		return 1;
 	}
