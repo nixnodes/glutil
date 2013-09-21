@@ -174,7 +174,7 @@ TYPES:
   
   
   
-MAIN IO OPS:
+MAIN INPUT/OUTPUT OPERATIONS:
 
 
 * Parse/dump:
@@ -219,7 +219,8 @@ MAIN IO OPS:
 	
 	Data is loaded into memory, passed via filters/hooks, then written back to log file.
 	
-	This is basically just for convinience, the same can be accomplished using --raw in parse mode;
+	This is basically just for convinience, the same can be accomplished using --raw in parse mode and redirecting
+	stdout back to log file;
 	
 	For example:
 	
