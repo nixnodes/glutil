@@ -1050,6 +1050,26 @@ char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
 				"\n"
 				"Main options:\n"
+				"\n Parsing:\n"
+				"  -d, [--raw]           Dump directory log to stdout in readable format (-vv prints dir nuke status)\n"
+				"  -n, [--raw]           Dump nuke log to stdout\n"
+				"  -i, [--raw]           Dump dupe file to stdout\n"
+				"  -l, [--raw]           Dump last-on log to stdout\n"
+				"  -o, [--raw]           Dump oneliners to stdout\n"
+				"  -a, [--raw]           Dump iMDB log to stdout\n"
+				"  -k, [--raw]           Dump game log to stdout\n"
+				"  -h, [--raw]           Dump tvrage log to stdout\n"
+				"  -w  [--raw]|[--comp]  Dump online users data from shared memory to stdout\n"
+				"  -q <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
+				"                        Dump specified log to stdout\n"
+				"  -t                    Dump all user files inside /ftp-data/users\n"
+				"  -g                    Dump all group files inside /ftp-data/groups\n"
+				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir])\n"
+				"                        Parses filesystem and processes each item found with internal filters/hooks\n"
+				"                          --dir scans directories only\n"
+				"                          --file scans files only (default is both dirs and files)\n"
+				"                          --cdir processes only the root directory itself\n"
+				"\n Directory log:\n"
 				"  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
 				"                           <folders> are passed relative to SITEROOT, separated by space\n"
 				"                           Use -f to overwrite existing entries\n"
@@ -1057,41 +1077,24 @@ char *hpd_up =
 				"                           .folders file (see README) defines a list of dirs in SITEROOT to scan\n"
 				"                           -u only imports new records and does not truncate existing dirlog\n"
 				"                           -f ignores .folders file and does a full recursive scan\n"
-				"  -d, [--raw]           Print directory log to stdout in readable format (-vv prints dir nuke status)\n"
-				"  -n, [--raw]           Print nuke log to stdout\n"
-				"  -i, [--raw]           Print dupe file to stdout\n"
-				"  -l, [--raw]           Print last-on log to stdout\n"
-				"  -o, [--raw]           Print oneliners to stdout\n"
-				"  -a, [--raw]           Print iMDB log to stdout\n"
-				"  -k, [--raw]           Print game log to stdout\n"
-				"  -h, [--raw]           Print tvrage log to stdout\n"
-				"  -w  [--raw]|[--comp]  Print online users data from shared memory to stdout\n"
-				"  -q <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
-				"                         Print specified log to stdout\n"
-				"  -t                    Print all user files inside /ftp-data/users\n"
-				"  -g                    Print all group files inside /ftp-data/groups\n"
-				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir])\n"
-				"                         Parses filesystem and processes each item found with internal filters/hooks\n"
-				"                         --dir scans directories only\n"
-				"                         --file scans files only (default is both dirs and files)\n"
-				"                         --cdir processes only the root directory itself\n"
 				"  -c, --check [--fix] [--ghost]\n"
-				"                         Compare dirlog and filesystem records and warn on differences\n"
-				"                           --fix attempts to correct dirlog/filesystem\n"
-				"                           --ghost only looks for dirlog records with missing directories on filesystem\n"
-				"                           Folder creation dates are ignored unless -f is given\n"
+				"                        Compare dirlog and filesystem records and warn on differences\n"
+				"                          --fix attempts to correct dirlog/filesystem\n"
+				"                          --ghost only looks for dirlog records with missing directories on filesystem\n"
+				"                          Folder creation dates are ignored unless -f is given\n"
 				"  -p, --dupechk         Look for duplicate records within dirlog and print to stdout\n"
 				"  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
-				"                         Perform backup on specified log\n"
+				"                        Perform backup on specified log\n"
+				"\n Write operations:\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
-				"                         Rebuilds existing data file, based on filtering rules (see --exec,\n"
-				"                           --[i]regex[i] and --[i]match\n"
+				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
+				"                          --[i]regex[i] and --[i]match\n"
 				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file]\n"
-				"                         Creates a binary record from ASCII data, inserting it into the specified log\n"
-				"                         Captures input from stdin, unless --infile is set\n"
+				"                        Creates a binary record from ASCII data, inserting it into the specified log\n"
+				"                          Captures input from stdin, unless --infile is set\n"
+				"\n Other:\n"
 				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
-				"\n\n"
-				"Hooks:\n"
+				"\n Hooks:\n"
 				"  --exec <command [{field}..{field}..]>\n"
 				"                        While parsing data structure/filesystem, execute command for each record\n"
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n\n"
@@ -1101,7 +1104,7 @@ char *hpd_up =
 				"  --postexec <command [{field}..{field}..]>\n"
 				"                        Execute shell <command> after main procedure finishes\n"
 				"  --loopexec <command [{field}..{field}..]>\n"
-				"\nMatching:\n"
+				"\n Matching:\n"
 				"  --regex [<field>,]<match>\n"
 				"                        Regex filter string, used during various operations\n"
 				"                          If <field> is set, matching is performed against a specific data log field\n"
@@ -1128,14 +1131,14 @@ char *hpd_up =
 				"\n"
 				"  In between match arguments, logical or|and operators apply:\n"
 				"  \".. --<argument1> <or|and> --<margument2> ..\"\n"
-				"\nMisc:\n"
+				"\n Misc:\n"
 				"  --sort <mode>,<order>,<field>\n"
 				"                        Sort data log entries before displaying\n"
 				"                          <mode> can only be 'num' (numeric)\n"
 				"                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
 				"                          Sorts by the specified data log <field>\n"
 				"                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n\n"
-				"\n\n"
+				"\n"
 				"Options:\n"
 				"  -f                    Force operation where it applies (use -ff for greater effect)\n"
 				"  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
@@ -1153,11 +1156,13 @@ char *hpd_up =
 				"                            destroys the segment and re-creates it with new size\n"
 				"                           Although this applies globally, it should only be used with dump operations (-d,-n,-i,..)\n"
 				"                           DO NOT use, unless you know exactly what you're doing\n"
-				"                        --shmdestroy forces the old segment be destroyed and re-loaded\n"
+				"                        --shmdestroy forces the old segment (if any) be destroyed and re-loaded\n"
 				"                        --shmdestonexit destroys used segments before exiting process\n"
-				"                        --shmreload forces records be reloaded, but segment is not destroyed\n"
-				"                         and it's size remains the same (when data log size doesn't match old size,\n"
-				"                         there will be junk/missing records, depending on new data file size (higher/lower))\n"
+				"                        --shmreload forces existing records (if any) be reloaded, but segment is not destroyed\n"
+				"                         and it's size remains the same (when data log size doesn't match segment size,\n"
+				"                         there will be junk/missing records, depending on input size being higher/lower)\n"
+				"  --loadq               Quit just after loading data into memory\n"
+				"                         Applies to dump operations only\n"
 				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
 				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
@@ -1194,6 +1199,8 @@ char *hpd_up =
 				"  --lastonlog=FILE      Override default path to last-on log\n"
 				"  --oneliners=FILE      Override default path to oneliners file\n"
 				"  --imdblog=FILE        Override default path to iMDB log\n"
+				"  --gamelog=FILE        Override default path to game log\n"
+				"  --tvlog=FILE          Override default path to TVRAGE log\n"
 				"  --folders=FILE        Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
 				"  --logfile=FILE        Override default log file path\n"
@@ -2880,8 +2887,9 @@ int g_init(int argc, char **argv) {
 	if ((gfl & F_OPT_VERBOSE)) {
 		if (gfl & F_OPT_NOBUFFER) {
 			print_str("NOTICE: disabling memory buffering\n");
-			if ( gfl & F_OPT_SHAREDMEM) {
-				print_str("WARNING: --shmem: shared memory segment buffering option is invalid when --nobuffer specified\n");
+			if (gfl & F_OPT_SHAREDMEM) {
+				print_str(
+						"WARNING: --shmem: shared memory segment buffering option is invalid when --nobuffer specified\n");
 			}
 		}
 		if (SHM_IPC && SHM_IPC != shm_ipc) {
@@ -3206,7 +3214,7 @@ char **process_macro(void * arg, char **out) {
 
 	g_strncpy(b_spec1, av.p_buf_2, strlen(av.p_buf_2));
 
-	if ( gfl & F_OPT_VERBOSE2 ) {
+	if (gfl & F_OPT_VERBOSE2) {
 		print_str("MACRO: '%s': found macro in '%s'\n", av.p_buf_1, av.p_buf_2);
 	}
 
@@ -6461,7 +6469,8 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 		if (gfl & F_OPT_VERBOSE2) {
 			print_str(
 					"NOTICE: %s: loading data file into memory [%llu records] [%llu bytes]\n",
-					file, (uint64_t) (hdl->total_sz / hdl->block_sz), (ulint64_t) hdl->total_sz);
+					file, (uint64_t) (hdl->total_sz / hdl->block_sz),
+					(ulint64_t) hdl->total_sz);
 		}
 	} else {
 		bzero(hdl->file, PATH_MAX);
@@ -6532,7 +6541,8 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 	if ((r = load_data_md(&hdl->buffer, file, hdl))) {
 		print_str(
 				"ERROR: %s: [%llu/%llu] [%u] [%u] could not load data! [%d] [%d]\n",
-				file, (uint64_t) hdl->buffer.count, (uint64_t) (hdl->total_sz / hdl->block_sz),
+				file, (uint64_t) hdl->buffer.count,
+				(uint64_t) (hdl->total_sz / hdl->block_sz),
 				(uint32_t) hdl->total_sz, hdl->block_sz, r, errno);
 		return 4;
 	} else {
