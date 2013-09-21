@@ -185,7 +185,7 @@ MAIN INPUT/OUTPUT OPERATIONS:
 	displays the data in either normal (synopsis), --batch (full, tab delimited) or --raw (binary) formats.
 	
 	
-	--nobuffer turns memory buffering on and directly reads record by record using C native IO procedures (fread)	
+	--nobuffer turns memory buffering off and directly reads record by record using C native IO procedures (fread)	
 	
 	Using --shmem, shared memory pages are used instead of locally allocated memory - loading there allows to
 	keep log data cached in memory, where other instances can access it thus avoiding having to allocate theirown
