@@ -147,7 +147,10 @@
 
    -------------------------------------------------------------------
 
-   Value names will usually be the same as variables in glconf.h
+   All records MUST be delimited by two new lines (\n\n), and the
+   last record must be followed by two new lines.
+   
+   See MANUAL for required record fields (all must be defined).
 
    Write info held in 'adatafile.tmp' to the dirlog:
 
