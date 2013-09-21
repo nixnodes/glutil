@@ -9,9 +9,9 @@ Log's <field>'s are referenced using static variable names.
  --sort and --[pre|post|loop]exec (see --help)
 
 Mind, that whenever passing arguments to --[..]exec, {} needs to be
-used around variables ({dir}, {time}, ...) 
+used around variables (e.g. {dir}, {time}, ...) 
 
-Types are:
+TYPES:
  
   S = string
   I = integer
@@ -172,3 +172,77 @@ Types are:
    ge7        S     -||-
    ge8        S     -||-
   
+  
+  
+MAIN IO OPS:
+
+
+* Parse/dump:
+
+	Read-only mode (operators:  -d, -n, -i, -l, -o, -w, -a, -k, -h, -q)
+	
+	This mode loads selected binary log into process memory pages or shared mem segment (--shmem) and 
+	displays the data in either normal (synopsis), --batch (full, tab delimited) or --raw (binary) formats.
+	
+	
+	--nobuffer turns memory buffering on and directly reads record by record using C native IO procedures (fread)	
+	
+	Using --shmem, shared memory pages are used instead of locally allocated memory - loading there allows to
+	keep log data cached in memory, where other instances can access it thus avoiding having to allocate theirown
+	pages and filing them with the actual log data from filesystem. 
+	
+	Shared segment should be updated promply whenever log data on disk changes;
+	
+	When the segment that belongs to a log file is non-existant, it's automatically created and filled with data.
+	If glutil detects log data file size is different from segment size or --shmdestroy is present, it automatically 
+	destroys the segment, forcing glutil to reallocate and reload it immediatelly after. 
+	
+	If data log size matches segment size and the segment exists, glutil will proceed using the segment as the data
+	buffer for all operations.
+	
+	All match/hook operators apply.	
+	
+* Write:
+
+	Write mode (operator: -z <logname> [--infile=/path/file])
+	 
+	Used to write one or more data log (specified by <logname>) records from a regular ASCII text file (see README
+	for examples).
+	
+	If --infile=<filename> is not set, stdin is expected to hold the input data.
+	
+	All match/hook operators apply.
+	
+* Rebuild:
+
+	Rebuild mode (operator: -e <logname>)
+	
+	Data is loaded into memory, passed via filters/hooks, then written back to log file.
+	
+	This is basically just for convinience, the same can be accomplished using --raw in parse mode;
+	
+	For example:
+	
+		glutil -d --regexi dir,"Smallville" or --lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
+		
+	would produce the same result as:
+	
+		glutil -e dirlog --regexi dir,"Smallville" or --lom "size == 0 || files == 0"
+		
+	These examples would filter any dirlog record including 'Smallville' in directory name (case insentitive) and any 
+	directories with size/files zero, writing results back to data log.
+	Using 'and' instead of 'or' between the match operators, would filter only stuff with both Smallvile in directory 
+	name and of size 0.
+	
+	There are however some advantages to using parsing operators with --raw, which are not available during rebuild mode;
+	
+	When in rebuild mode (-e), data must be buffered (either locally or in shared mem segment) in order to be processed, 
+	so data file size is limited with your RAM capacity (and with --memlimit argument or DB_MAX_SIZE macro in source, 512MB 
+	by default).
+	However, while parsing (-d, -n, ..), --nobuffer option can be used, turning buffering off and reading record by record 
+	using fget. 
+	Since glutil is set by default to compile using large file offsets, theoretically, a massive file could be parsed
+	(64-bit file size, not taking filesystem limits into account).
+	
+	All match/hook operators apply.
+
