@@ -1,0 +1,56 @@
+### generic macros
+#
+### run with: ./glutil -m <macro name>
+#
+## <dirlog-update>
+## Update directory log with new records and remove records that are
+## missing from filesystem
+#@MACRO:dirlog-update:{m:exe} -r -u -v --postexec "{exe} --check --fix --ghost -v"
+#
+## <dupe>
+## Search for duplicates in dirlog, avoiding non-releases
+#@MACRO:dupe:{m:exe} -p --regexi "\/(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1}
+## <dupe-v>
+## With progress stats
+#@MACRO:dupe-v:{m:exe} -p --regexi "\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
+#
+## Creates symlinks inside respective folders for every imdb/tv log record,
+## erasing any existing ones first;
+##
+## Examples:
+##
+##  ../[ TVRAGE - Scripted - Comedy,Family ]
+##  ../[ IMDB - 7.5 | 300415 - Action, Comedy, Adventure ]
+##
+## Requires logs built with DATABASE_TYPE=0 (see tvrage/imdb_get.sh)
+##
+## <make-tvrage-dirlinks>
+#@MACRO:make-tvrage-infolinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genre
+s} ]"` {m:arg1}
+## <make-imdb-dirlinks>
+#@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} vote
+s - {genres} ]"` {m:arg1}
+#
+# <dirlog-to-ascii>
+# Converts dirlog into ASCII format, suitable
+# for re-injection using -z
+#
+# Usage:
+#
+#  ./glutil -m dirlog-to-text -arg1=dirlog.txt
+#
+# Convert back into binary format:
+#
+#  ./glutil -z dirlog --dirlog=dirlog.bin -vv < dirlog.txt
+#
+#  If --dirlog=<path> is not specified, glutil reverts to
+#   default dirlog path
+#
+#@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {si
+ze}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -e "dir {dir}\nbasedir {basedir}\ntime {time}\nimdbid {imdbid}\nrated {rated}\nscore {score}\ngenr
+es {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {direct
+or}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:tvrage-to-ascii:{m:exe} -h --exec `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtim
+e {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {st
+atus}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -e "\n" >> {m:arg1}`
