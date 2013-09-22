@@ -17,7 +17,7 @@
 ## Verbose output
 VERBOSE=0
 #
-## Optional corruption checking
+## Optional corruption checking (CRC32 calc & match against .sfv)
 CHECK_CORRUPT=0
 #
 ############################[ END OPTIONS ]##############################
