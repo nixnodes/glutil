@@ -15,6 +15,7 @@
  *   - Added nuke status to -n --batch (rev. 8)
  *   - Read data from binary source and merge (-z --binary) (rev. 8)
  *   - Bugfix: full siteroot recursion never flushed buffered data to file (-r -f) (rev. 9)
+ *   - Bugfix: -r was not skipping missing log path detection as it should (rev. 10)
  *
  * v1.7
  *
