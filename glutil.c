@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-10
+ * Version     : 1.9
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -151,8 +151,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 8
-#define VER_REVISION 10
+#define VER_MINOR 9
+#define VER_REVISION 0
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -283,17 +283,17 @@ typedef struct mda_object {
 //	unsigned char flags;
 }*p_md_obj, md_obj;
 
-#define F_MDA_REFPTR		0x1
-#define F_MDA_FREE			0x2
-#define F_MDA_REUSE			0x4
-#define F_MDA_WAS_REUSED	0x8
-#define F_MDA_EOF			0x10
-#define F_MDA_FIRST_REUSED  0x20
+#define F_MDA_REFPTR		(a32 << 1)
+#define F_MDA_FREE			(a32 << 2)
+#define F_MDA_REUSE			(a32 << 3)
+#define F_MDA_WAS_REUSED	(a32 << 4)
+#define F_MDA_EOF			(a32 << 5)
+#define F_MDA_FIRST_REUSED  (a32 << 6)
 
 typedef struct mda_header {
 	p_md_obj objects; /* holds references */
 	p_md_obj pos, r_pos, c_pos, first, last;
-	off_t offset, r_offset, count;
+	off_t offset, r_offset, count, hitcnt, rescnt;
 	uint32_t flags;
 	void *lref_ptr;
 } mda, *pmda;
@@ -532,8 +532,12 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_SHMDESTROY		(a64 << 47)
 #define F_OPT_SHMDESTONEXIT		(a64 << 48)
 #define F_OPT_MODE_BINARY		(a64 << 49)
+#define F_OPT_IFIRSTRES			(a64 << 50)
+#define F_OPT_IFIRSTHIT			(a64 << 51)
+#define F_OPT_HASMAXHIT			(a64 << 52)
+#define F_OPT_HASMAXRES			(a64 << 53)
 
-#define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM)
+#define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
 #define F_DL_FOPEN_BUFFER		(a32 << 1)
 #define F_DL_FOPEN_FILE			(a32 << 2)
@@ -1048,6 +1052,8 @@ uint32_t flags_udcfg = 0;
 
 uint32_t g_sort_flags = 0;
 
+off_t max_hits = 0, max_results = 0;
+
 char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
 				"\n"
@@ -1133,6 +1139,10 @@ char *hpd_up =
 				"                        Valid logical operators: && (and), || (or)\n"
 				"                        Valid comparison/relational operators: =, !=, >, <, <=, >=\n"
 				"  --ilom <expression>   Same as --lom with negated match\n"
+				"  --maxhit <limit>      Maximum number of positive filter matches (rest are forced negative)\n"
+				"  --maxres <limit>      Maximum number of negative filter matches (rest are forced positive)\n"
+				"  --ifhit               Ignore first match\n"
+				"  --ifres               Ignore first result\n"
 				"\n"
 				"  In between match arguments, logical or|and operators apply:\n"
 				"  \".. --<argument1> <or|and> --<margument2> ..\"\n"
@@ -1391,8 +1401,32 @@ int opt_g_loopexec(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_maxresults(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	max_results = (off_t) strtoll(buffer, NULL, 10);
+	gfl |= F_OPT_HASMAXRES;
+	return 0;
+}
+
+int opt_g_maxhits(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	max_hits = (off_t) strtoll(buffer, NULL, 10);
+	gfl |= F_OPT_HASMAXHIT;
+	return 0;
+}
+
 int opt_g_daemonize(void *arg, int m) {
 	gfl |= F_OPT_DAEMONIZE;
+	return 0;
+}
+
+int opt_g_ifres(void *arg, int m) {
+	gfl |= F_OPT_IFIRSTRES;
+	return 0;
+}
+
+int opt_g_ifhit(void *arg, int m) {
+	gfl |= F_OPT_IFIRSTHIT;
 	return 0;
 }
 
@@ -2221,7 +2255,7 @@ int flush_data_md(__g_handle, char *);
 int rebuild(void *);
 int rebuild_data_file(char *, __g_handle);
 
-int g_bmatch(void *, __g_handle);
+int g_bmatch(void *, __g_handle, pmda md);
 int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback);
 
 size_t g_load_data_md(void *, size_t, char *, __g_handle hdl);
@@ -2372,7 +2406,10 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"-r", opt_recursive_update_records, (void*) 0, "--shmem", opt_g_shmem,
 		(void*) 0, "--shmreload", opt_g_shmreload, (void*) 0, "--loadq",
 		opt_g_loadq, (void*) 0, "--shmdestroy", opt_g_shmdestroy, (void*) 0,
-		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, NULL,
+		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
+		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
+		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
+		NULL,
 		NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -3686,7 +3723,7 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 	switch (type) {
 	case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			if ((g_bmatch(name, &aa_rh->hdl))) {
+			if ((g_bmatch(name, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3707,7 +3744,7 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			break;
 		}
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			if ((g_bmatch(name, &aa_rh->hdl))) {
+			if ((g_bmatch(name, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3722,7 +3759,7 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 		break;
 	case DT_LNK:
 		if (gfl & F_OPT_FOLLOW_LINKS) {
-			if ((g_bmatch(name, &aa_rh->hdl))) {
+			if ((g_bmatch(name, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
 				aa_rh->st_2++;
 				break;
 			}
@@ -3776,13 +3813,14 @@ int dirlog_check_dupe(void) {
 		g_progress_stats(s_t, e_t, nrec, st3);
 	}
 	off_t rtt;
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
+	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1,
+			g_act_1.block_sz))) {
 		st3++;
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			break;
 		}
 
-		if (g_bmatch(d_ptr, &g_act_1)) {
+		if (g_bmatch(d_ptr, &g_act_1, &g_act_1.buffer)) {
 			continue;
 		}
 
@@ -3815,7 +3853,8 @@ int dirlog_check_dupe(void) {
 
 		int ch = 0;
 
-		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1, DL_SZ))) {
+		while ((dd_ptr = (struct dirlog *) g_read(&buffer2, &g_act_1,
+				g_act_1.block_sz))) {
 			rtt = s_string_r(dd_ptr->dirname, "/");
 			ss_pb = &dd_ptr->dirname[rtt + 1];
 			size_t ss_pb_l = strlen(ss_pb);
@@ -4012,8 +4051,11 @@ int data_backup_records(char *file) {
 		return 0;
 	}
 
-	if (!(r_sz = get_file_size(file)) && (gfl & F_OPT_VERBOSE)) {
-		print_str("WARNING: %s: refusing to backup 0-byte data file\n", file);
+	if (!(r_sz = get_file_size(file))) {
+		if ((gfl & F_OPT_VERBOSE)) {
+			print_str("WARNING: %s: refusing to backup 0-byte data file\n",
+					file);
+		}
 		return 0;
 	}
 
@@ -4268,7 +4310,7 @@ int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback) {
 
 	if ((_gm->flags & F_GM_ISREGEX)
 			&& reg_match(_gm->match, mstr, _gm->regex_flags) == _gm->reg_i_m) {
-		if ((gfl & F_OPT_VERBOSE4)) {
+		if ((gfl & F_OPT_VERBOSE5)) {
 			print_str("WARNING: %s: REGEX match positive\n", mstr);
 		}
 		r = 1;
@@ -4432,7 +4474,16 @@ int eval_cmatch(__g_match _gm, __g_match _p_gm, int r) {
 	return 0;
 }
 
-int g_bmatch(void *d_ptr, __g_handle hdl) {
+int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
+	if (md) {
+		if (max_results && md->rescnt >= max_results) {
+			return 1;
+		}
+		if (max_hits && md->hitcnt >= max_hits) {
+			return 0;
+		}
+	}
+
 	p_md_obj ptr = md_first(&_match_rr);
 	int r, r_p = 0;
 	__g_match _gm, _p_gm = NULL;
@@ -4467,22 +4518,32 @@ int g_bmatch(void *d_ptr, __g_handle hdl) {
 		ptr = ptr->next;
 	}
 
-	if (r_p) {
-		goto end;
-	}
+	if (!r_p) {
+		int r_e;
 
-	int r_e;
-
-	if (exec_str
-			&& WEXITSTATUS(r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL))) {
-		if ((gfl & F_OPT_VERBOSE3)) {
-			print_str("WARNING: external call returned non-zero: [%d]\n",
-			WEXITSTATUS(r_e));
+		if (exec_str
+				&& WEXITSTATUS(r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL))) {
+			if ((gfl & F_OPT_VERBOSE3)) {
+				print_str("WARNING: external call returned non-zero: [%d]\n",
+				WEXITSTATUS(r_e));
+			}
+			r_p = 1;
 		}
-		r_p = 1;
 	}
 
-	end:
+	if (md) {
+		if (!r_p) {
+			if ((gfl & F_OPT_IFIRSTRES) && !md->rescnt) {
+				r_p = 1;
+			}
+			md->rescnt++;
+		} else {
+			if ((gfl & F_OPT_IFIRSTHIT) && !md->hitcnt) {
+				r_p = 0;
+			}
+			md->hitcnt++;
+		}
+	}
 
 	if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p)) {
 		EXITVAL = 1;
@@ -4532,17 +4593,19 @@ int g_filter(__g_handle hdl, pmda md) {
 				hdl->file, (uint64_t) hdl->buffer.offset);
 	}
 
-	off_t s_offset = g_act_1.buffer.offset;
+	off_t s_offset = md->offset;
 
-	p_md_obj ptr = md_first(md);
+	p_md_obj ptr = md_first(md), o_ptr;
 	int r = 0;
 
 	while (ptr) {
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			break;
 		}
-		if (g_bmatch(ptr->ptr, hdl)) {
-			if (!(ptr = md_unlink(&hdl->buffer, ptr))) {
+		if (g_bmatch(ptr->ptr, hdl, md)) {
+			o_ptr = ptr;
+			ptr = ptr->next;
+			if (!(md_unlink(md, o_ptr))) {
 				r = 2;
 				break;
 			}
@@ -4551,13 +4614,13 @@ int g_filter(__g_handle hdl, pmda md) {
 		ptr = ptr->next;
 	}
 
-	if (!hdl->buffer.offset) {
-		return 1;
-	}
-
 	if (gfl & F_OPT_VERBOSE3) {
 		print_str("NOTICE: %s: filtered %llu records..\n", hdl->file,
-				(uint64_t) (s_offset - hdl->buffer.offset));
+				(uint64_t) (s_offset - md->offset));
+	}
+
+	if (!md->offset) {
+		return 1;
 	}
 
 	return r;
@@ -4637,7 +4700,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			gfl ^= F_OPT_HAS_G_LOM;
 			s_gfl |= F_OPT_HAS_G_LOM;
 		}
-
+		g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
 	}
 
 	void *ptr;
@@ -4648,6 +4711,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
 
+	g_act_1.buffer.offset = 0;
+
 	while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz))) {
 		if (!sigsetjmp(g_sigjmp.env, 1)) {
 			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
@@ -4657,7 +4722,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				break;
 			}
 
-			if ((r = g_bmatch(ptr, &g_act_1))) {
+			if (!(gfl & F_OPT_SORT)
+					&& (r = g_bmatch(ptr, &g_act_1, &g_act_1.buffer))) {
 				if (r == -1) {
 					print_str("ERROR: %s: [%d] matching record failed\n",
 							g_act_1.file, r);
@@ -5137,7 +5203,7 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 				goto end;
 			}
 
-			if (g_bmatch(iarg->dirlog, &g_act_1)) {
+			if (g_bmatch(iarg->dirlog, &g_act_1, NULL)) {
 				goto end;
 			}
 
@@ -5968,14 +6034,16 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 					(ulint64_t) p_ptr->offset);
 		}
 
-		p_md_obj ptr = md_first(p_ptr);
+		p_md_obj ptr = md_first(p_ptr), o_ptr;
 
 		while (ptr) {
 			if (gfl & F_OPT_KILL_GLOBAL) {
 				break;
 			}
-			if (g_bmatch(ptr->ptr, hdl)) {
-				if (!(ptr = md_unlink(p_ptr, ptr))) {
+			if (g_bmatch(ptr->ptr, hdl, p_ptr)) {
+				o_ptr = ptr;
+				ptr = ptr->next;
+				if (!(md_unlink(p_ptr, o_ptr))) {
 					if (!p_ptr->offset) {
 						if (!(gfl & F_OPT_FORCE)) {
 							print_str(
@@ -6496,7 +6564,7 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 
 	if (!(flags & F_GBM_SHM_NO_DATAFILE)) {
 		if (!st.st_size) {
-			print_str("ERROR: %s: 0-byte data file\n", file);
+			print_str("WARNING: %s: 0-byte data file\n", file);
 			return 3;
 		}
 
@@ -9182,9 +9250,7 @@ void sig_handler(int signal) {
 		break;
 	case SIGINT:
 		if (gfl & F_OPT_KILL_GLOBAL) {
-			print_str(
-					"NOTICE: Caught SIGINT twice in %.2f seconds, terminating..\n",
-					SIG_BREAK_TIMEOUT_NS / (1000000.0));
+			print_str("NOTICE: Caught SIGINT twice, terminating..\n");
 			exit(0);
 		} else {
 			print_str(
