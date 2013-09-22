@@ -2993,7 +2993,12 @@ int g_init(int argc, char **argv) {
 
 	if (gfl & F_OPT_DAEMONIZE) {
 		print_str("NOTICE: forking into background.. [PID: %d]\n", getpid());
-		daemon(0, 0);
+		if (daemon(0, 0) == -1) {
+			print_str(
+					"ERROR: [%d] could not fork into background, terminating..\n",
+					errno);
+			return 7;
+		}
 	}
 
 	if (updmode && (gfl & F_OPT_PREEXEC)) {
@@ -3080,7 +3085,12 @@ int g_init(int argc, char **argv) {
 		break;
 	case UPD_MODE_FORK:
 		if (p_argv_off) {
-			system(p_argv_off);
+			if ((EXITVAL = WEXITSTATUS(system(p_argv_off)))) {
+				if (gfl & F_OPT_VERBOSE) {
+					print_str("WARNING: '%s': command failed, code %d\n",
+							p_argv_off, EXITVAL);
+				}
+			}
 		}
 		break;
 	case UPD_MODE_BACKUP:
@@ -5399,11 +5409,9 @@ int dirlog_format_block(void *iarg, char *output) {
 
 	char *ndup = strdup(data->dirname), *base = NULL;
 
-	if (gfl & F_OPT_VERBOSE)
-	{
+	if (gfl & F_OPT_VERBOSE) {
 		base = data->dirname;
-	}
-	else {
+	} else {
 		base = basename(ndup);
 	}
 
@@ -5416,9 +5424,10 @@ int dirlog_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n", data->dirname,
-				(ulint64_t) data->bytes, data->files, (uint32_t) data->uptime,
-				data->uploader, data->group, data->status);
+				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n",
+				data->dirname, (ulint64_t) data->bytes, data->files,
+				(uint32_t) data->uptime, data->uploader, data->group,
+				data->status);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -7548,7 +7557,7 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "m:siteroot")) {
 		snprintf(output, max_size, "%s", SITEROOT);
 	} else if (!strcmp(match, "m:ftpdata")) {
-		snprintf(output, max_size, FTPDATA);
+		snprintf(output, max_size, "%s", FTPDATA);
 	} else if ((gfl & F_OPT_PS_LOGGING) && !strcmp(match, "m:logfile")) {
 		snprintf(output, max_size, "%s", LOGFILE);
 	} else if (!strcmp(match, "m:PID")) {
@@ -7575,21 +7584,21 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 			snprintf(output, max_size, "%s", "UNKNOWN");
 		}
 	} else if (!strcmp(match, "glroot")) {
-		snprintf(output, max_size,"%s", GLROOT);
+		snprintf(output, max_size, "%s", GLROOT);
 	} else if (!strcmp(match, "siteroot")) {
-		snprintf(output, max_size,"%s", SITEROOT);
+		snprintf(output, max_size, "%s", SITEROOT);
 	} else if (!strcmp(match, "siterootn")) {
-		snprintf(output, max_size,"%s", SITEROOT_N);
+		snprintf(output, max_size, "%s", SITEROOT_N);
 	} else if (!strcmp(match, "ftpdata")) {
-		snprintf(output, max_size,"%s", FTPDATA);
+		snprintf(output, max_size, "%s", FTPDATA);
 	} else if (!strcmp(match, "logfile")) {
-		snprintf(output, max_size,"%s", LOGFILE);
+		snprintf(output, max_size, "%s", LOGFILE);
 	} else if (!strcmp(match, "imdbfile")) {
-		snprintf(output, max_size,"%s", IMDBLOG);
+		snprintf(output, max_size, "%s", IMDBLOG);
 	} else if (!strcmp(match, "gamefile")) {
-		snprintf(output, max_size,"%s", GAMELOG);
+		snprintf(output, max_size, "%s", GAMELOG);
 	} else if (!strcmp(match, "tvragefile")) {
-		snprintf(output, max_size,"%s", TVLOG);
+		snprintf(output, max_size, "%s", TVLOG);
 	} else if (!strcmp(match, "nukestr")) {
 		if (NUKESTR) {
 			snprintf(output, max_size, NUKESTR, "");
@@ -7646,9 +7655,9 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 		return g_rtval_ex(arg, &match[2], max_size, output,
 		F_CFGV_BUILD_FULL_STRING);
 	} else if (arg && !strcmp(match, "arg")) {
-		snprintf(output, max_size, (char*) arg);
+		snprintf(output, max_size, "%s", (char*) arg);
 	} else if (arg && !strcmp(match, "path")) {
-		snprintf(output, max_size, (char*) arg);
+		snprintf(output, max_size, "%s", (char*) arg);
 	} else {
 		return 1;
 	}
@@ -7664,7 +7673,7 @@ int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
 	void *ptr = ref_to_val_get_cfgval(arg, match,
 	NULL, flags, buffer, max_size);
 	if (ptr && strlen(ptr) < max_size) {
-		snprintf(output, max_size, (char*) ptr);
+		snprintf(output, max_size, "%s", (char*) ptr);
 		r = 0;
 	}
 	g_free(buffer);
@@ -8866,7 +8875,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			snprintf(output, max_size, (char*) ptr);
+			snprintf(output, max_size, "%s", (char*) ptr);
 			g_free(buffer);
 			return 0;
 		}
@@ -8874,7 +8883,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 		ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			snprintf(output, max_size, (char*) ptr);
+			snprintf(output, max_size, "%s", (char*) ptr);
 			g_free(buffer);
 			return 0;
 		}
@@ -9000,7 +9009,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
 	} else if (!strcmp(match, "imdbid")) {
-		snprintf(output, max_size, data->imdb_id);
+		snprintf(output, max_size, "%s", data->imdb_id);
 	} else if (!strcmp(match, "score")) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strcmp(match, "votes")) {
@@ -9100,7 +9109,7 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "genres")) {
 		snprintf(output, max_size, "%s", data->genres);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size , output);
+		g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
