@@ -259,7 +259,8 @@ TYPES:
 	
 	All match/hook operators apply.
 
- EXTRACTING BINARY LOGS RECORDS AS STRINGS:
+
+ EXTRACTING DATA FROM BINARY LOGS:
 
    ANY binary log record can easily be extracted as ASCII string and passed 
    to the shell using --exec, --postexec or --preexec (see --help)
