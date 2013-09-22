@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-8
+ * Version     : 1.8-9
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3467,8 +3467,6 @@ int d_write(char *arg) {
 		return 3;
 	}
 
-	char *buffer = malloc(MAX_DATAIN_F);
-
 	FILE *in;
 
 	if (pf_infile) {
@@ -3487,9 +3485,11 @@ int d_write(char *arg) {
 	}
 
 	if (!(gfl & F_OPT_MODE_BINARY)) {
+		char *buffer = malloc(MAX_DATAIN_F);
 		if (!(fsz = read_file(NULL, buffer, MAX_DATAIN_F, 0, in))) {
 			print_str("ERROR: %s: could not read input data\n", datafile);
 			ret = 4;
+			g_free(buffer);
 			goto end;
 		}
 
@@ -3497,13 +3497,14 @@ int d_write(char *arg) {
 			print_str("ERROR: %s: [%d]: could not parse input data\n", datafile,
 					r);
 			ret = 5;
+			g_free(buffer);
 			goto end;
 		}
+		g_free(buffer);
 	} else {
 		if (!(g_act_1.flags & F_GH_FROMSTDIN)) {
 			g_act_1.total_sz = get_file_size(infile_p);
-		}
-		else {
+		} else {
 			g_act_1.total_sz = DB_MAX_SIZE;
 		}
 		if ((r = load_data_md(&g_act_1.w_buffer, infile_p, &g_act_1))) {
@@ -3513,7 +3514,6 @@ int d_write(char *arg) {
 			ret = 12;
 			goto end;
 		}
-
 	}
 
 	if (g_act_1.flags & F_GH_FROMSTDIN) {
@@ -3583,7 +3583,6 @@ int d_write(char *arg) {
 
 	end:
 
-	g_free(buffer);
 	return ret;
 }
 
@@ -4808,7 +4807,7 @@ int rebuild_dirlog(void) {
 	if (gfl & F_OPT_FORCE) {
 		print_str("SCANNING: '%s'\n", SITEROOT);
 		update_records(SITEROOT, 0);
-		goto end;
+		goto rw_end;
 	}
 
 	char buffer[V_MB + 1] = { 0 };
@@ -4907,8 +4906,6 @@ int rebuild_dirlog(void) {
 	r_end:
 
 	md_g_free(&dirchain);
-
-	end:
 
 	g_close(&g_act_1);
 
