@@ -1,3 +1,9 @@
+ * v1.9
+ *
+ *   - Added --maxres, --maxhit, --ifres and --ifhit (see --help for details)
+ *   - Bugfix: filtering with --sort not working in certain cases
+ *   - Various improvements and bugfixes
+ *
  * v1.8
  *
  *   - Multi-purpose generic log data types (see MANUAL and --help)
