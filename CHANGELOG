@@ -13,7 +13,8 @@
  *   - Minor changes (rev. 7)
  *   - Added 'memlimit' and 'glconf' general fields, see MANUAL (rev. 7-8)
  *   - Added nuke status to -n --batch (rev. 8)
- *   - Read data from binary source and merge (-z --binary) (rev. 8) 
+ *   - Read data from binary source and merge (-z --binary) (rev. 8)
+ *   - Bugfix: full siteroot recursion never flushed buffered data to file (-r -f) (rev. 9)
  *
  * v1.7
  *
