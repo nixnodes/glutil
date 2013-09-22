@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-7
+ * Version     : 1.8-8
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -531,6 +531,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_LOADQ				(a64 << 46)
 #define F_OPT_SHMDESTROY		(a64 << 47)
 #define F_OPT_SHMDESTONEXIT		(a64 << 48)
+#define F_OPT_MODE_BINARY		(a64 << 49)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM)
 
@@ -564,9 +565,10 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_ISTVRAGE			(a32 << 17)
 #define F_GH_ISGENERIC1			(a32 << 18)
 #define F_GH_SHM				(a32 << 19)
-#define F_GH_RELBUFFER			(a32 << 20)
+#define F_GH_SHMRB				(a32 << 20)
 #define F_GH_SHMDESTROY			(a32 << 21)
 #define F_GH_SHMDESTONEXIT		(a32 << 22)
+#define F_GH_FROMSTDIN			(a32 << 23)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -1073,9 +1075,11 @@ char *hpd_up =
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
 				"                          --[i]regex[i] and --[i]match\n"
-				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file]\n"
+				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file] [--binary]\n"
 				"                        Creates a binary record from ASCII data, inserting it into the specified log\n"
 				"                          Captures input from stdin, unless --infile is set\n"
+				"                        --binary expects a normal binary log as input and merges it (skips exact\n"
+				"                         duplicates)\n"
 				"\n Directory log:\n"
 				"  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
 				"                           <folders> are passed relative to SITEROOT, separated by space\n"
@@ -1489,6 +1493,11 @@ int opt_raw_dump(void *arg, int m) {
 	return 0;
 }
 
+int opt_binary(void *arg, int m) {
+	gfl |= F_OPT_MODE_BINARY;
+	return 0;
+}
+
 int opt_silent(void *arg, int m) {
 	gfl |= F_OPT_PS_SILENT;
 	return 0;
@@ -1516,10 +1525,12 @@ int opt_exec(void *arg, int m) {
 }
 
 FILE *pf_infile = NULL;
+char infile_p[PATH_MAX];
 
 int opt_g_infile(void *arg, int m) {
-	char *buffer = g_pg(arg, m);
-	pf_infile = gg_fopen(buffer, "rb");
+	g_cpg(arg, infile_p, m, PATH_MAX);
+
+	pf_infile = gg_fopen(infile_p, "rb");
 	return 0;
 }
 
@@ -2213,7 +2224,7 @@ int rebuild_data_file(char *, __g_handle);
 int g_bmatch(void *, __g_handle);
 int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback);
 
-size_t g_load_data_md(void *, size_t, char *);
+size_t g_load_data_md(void *, size_t, char *, __g_handle hdl);
 int g_load_record(__g_handle, const void *);
 int remove_repeating_chars(char *string, char c);
 
@@ -2334,34 +2345,34 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 1, "-o", opt_oneliner_dump, (void*) 0, "--lastonlog",
 		opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
 		"--dupefile", opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering,
-		(void*) 0, "--raw", opt_raw_dump, (void*) 0, "--iregexi", opt_g_iregexi,
-		(void*) 1, "--iregex", opt_g_iregex, (void*) 1, "--regexi",
-		opt_g_regexi, (void*) 1, "--regex", opt_g_regex, (void*) 1, "-e",
-		opt_rebuild, (void*) 1, "--comp", opt_compact_output_formatting,
-		(void*) 0, "--batch", opt_batch_output_formatting, (void*) 0, "-y",
-		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
-		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
-		"--allowlinks", opt_g_followlinks, (void*) 0, "-exec", opt_exec,
-		(void*) 1, "--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0,
-		"-u", opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit,
-		(void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk",
-		opt_dirlog_chk_dupe, (void*) 0, "--nobuffer", opt_g_nobuffering,
-		(void*) 0, "--nukedump", opt_dirlog_dump_nukelog, (void*) 0, "-n",
-		opt_dirlog_dump_nukelog, (void*) 0, "--help", print_help, (void*) 0,
-		"--version", print_version, (void*) 0, "--folders",
-		opt_dirlog_sections_file, (void*) 1, "--dirlog", opt_dirlog_file,
-		(void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--siteroot",
-		opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1, "--nowrite",
-		opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv, (void*) 0, "--crc32",
-		option_crc32, (void*) 1, "--nobackup", opt_nobackup, (void*) 0, "-c",
-		opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
-		"--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
-		"-f", opt_g_force, (void*) 0, "-ff", opt_g_force2, (void*) 0, "-s",
-		opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
-		(void*) 0, "--shmem", opt_g_shmem, (void*) 0, "--shmreload",
-		opt_g_shmreload, (void*) 0, "--loadq", opt_g_loadq, (void*) 0,
-		"--shmdestroy", opt_g_shmdestroy, (void*) 0, "--shmdestonexit",
-		opt_g_shmdestroyonexit, (void*) 0, NULL,
+		(void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary", opt_binary,
+		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
+		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
+		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
+		opt_compact_output_formatting, (void*) 0, "--batch",
+		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
+		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
+		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
+		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
+		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
+		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
+		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
+		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
+		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
+		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
+		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
+		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
+		(void*) 1, "--nowrite", opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv,
+		(void*) 0, "--crc32", option_crc32, (void*) 1, "--nobackup",
+		opt_nobackup, (void*) 0, "-c", opt_dirlog_check, (void*) 0, "--check",
+		opt_dirlog_check, (void*) 0, "--dump", opt_dirlog_dump, (void*) 0, "-d",
+		opt_dirlog_dump, (void*) 0, "-f", opt_g_force, (void*) 0, "-ff",
+		opt_g_force2, (void*) 0, "-s", opt_update_single_record, (void*) 1,
+		"-r", opt_recursive_update_records, (void*) 0, "--shmem", opt_g_shmem,
+		(void*) 0, "--shmreload", opt_g_shmreload, (void*) 0, "--loadq",
+		opt_g_loadq, (void*) 0, "--shmdestroy", opt_g_shmdestroy, (void*) 0,
+		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, NULL,
 		NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -3458,27 +3469,55 @@ int d_write(char *arg) {
 
 	char *buffer = malloc(MAX_DATAIN_F);
 
-	FILE *in = (pf_infile ? pf_infile : stdin);
+	FILE *in;
 
-	off_t fsz;
-
-	if (!(fsz = read_file(NULL, buffer, MAX_DATAIN_F, 0, in))) {
-		print_str("ERROR: %s: could not read input data\n", datafile);
-		ret = 4;
-		goto end;
+	if (pf_infile) {
+		in = pf_infile;
+	} else {
+		in = stdin;
+		g_act_1.flags |= F_GH_FROMSTDIN;
 	}
+
+	off_t fsz = 0;
 
 	int r;
 
 	if (gfl & F_OPT_VERBOSE) {
-		print_str("NOTICE: %s: loading input data.. [%llu Bytes]\n", datafile,
-				(uint64_t) fsz);
+		print_str("NOTICE: %s: loading data..\n", datafile);
 	}
 
-	if ((r = m_load_input(&g_act_1, buffer))) {
-		print_str("ERROR: %s: [%d]: could not load input data\n", datafile, r);
-		ret = 5;
-		goto end;
+	if (!(gfl & F_OPT_MODE_BINARY)) {
+		if (!(fsz = read_file(NULL, buffer, MAX_DATAIN_F, 0, in))) {
+			print_str("ERROR: %s: could not read input data\n", datafile);
+			ret = 4;
+			goto end;
+		}
+
+		if ((r = m_load_input(&g_act_1, buffer))) {
+			print_str("ERROR: %s: [%d]: could not parse input data\n", datafile,
+					r);
+			ret = 5;
+			goto end;
+		}
+	} else {
+		if (!(g_act_1.flags & F_GH_FROMSTDIN)) {
+			g_act_1.total_sz = get_file_size(infile_p);
+		}
+		else {
+			g_act_1.total_sz = DB_MAX_SIZE;
+		}
+		if ((r = load_data_md(&g_act_1.w_buffer, infile_p, &g_act_1))) {
+			print_str(
+					"ERROR: %s: [%d]: could not load input data (binary source)\n",
+					datafile, r);
+			ret = 12;
+			goto end;
+		}
+
+	}
+
+	if (g_act_1.flags & F_GH_FROMSTDIN) {
+		g_act_1.flags ^= F_GH_FROMSTDIN;
 	}
 
 	if (!g_act_1.w_buffer.offset) {
@@ -3495,6 +3534,9 @@ int d_write(char *arg) {
 	if (!(gfl & F_OPT_FORCE2) && !file_exists(datafile)
 			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
 			&& g_act_1.buffer_count) {
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("NOTICE: '%s': filtering existing records..\n", a_ptr);
+		}
 		p_md_obj ptr_w = md_first(&g_act_1.w_buffer), ptr_r;
 		int m = 1;
 		while (ptr_w) {
@@ -3516,6 +3558,7 @@ int d_write(char *arg) {
 								g_act_1.w_buffer.offset ?
 										"could not unlink existing record" :
 										"all records already exist (nothing to do)");
+						ret = 11;
 						goto end;
 					}
 					break;
@@ -5332,14 +5375,14 @@ int nukelog_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%u\n", base,
-				data->reason, data->mult, data->bytes,
+				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%u\x9%u\n",
+				data->dirname, data->reason, data->mult, data->bytes,
 				!data->status ? data->nuker : data->unnuker, data->nukee,
-				(uint32_t) data->nuketime);
+				(uint32_t) data->nuketime, data->status);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, creator: %s - %s\n",
+						"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, nukee: %s - %s\n",
 						base, !data->status ? "NUKED" : "UNNUKED", data->reason,
 						data->bytes, data->mult,
 						!data->status ? "nuker" : "unnuker",
@@ -5924,7 +5967,8 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 			&& updmode != UPD_MODE_RECURSIVE) {
 		g_setjmp(0, "rebuild_data_file(2)", NULL, NULL);
 		if (gfl & F_OPT_VERBOSE2) {
-			print_str("NOTICE: %s: filtering data..\n", file);
+			print_str("NOTICE: %s: filtering data [%llu records]..\n", file,
+					(ulint64_t) p_ptr->offset);
 		}
 
 		p_md_obj ptr = md_first(p_ptr);
@@ -6211,13 +6255,18 @@ int flush_data_md(__g_handle hdl, char *outfile) {
 	return ret;
 }
 
-size_t g_load_data_md(void *output, size_t max, char *file) {
+size_t g_load_data_md(void *output, size_t max, char *file, __g_handle hdl) {
 	g_setjmp(0, "g_load_data_md", NULL, NULL);
 	size_t fr, c_fr = 0;
 	FILE *fh;
 
-	if (!(fh = gg_fopen(file, "rb"))) {
-		return 0;
+	if (!(hdl->flags & F_GH_FROMSTDIN)) {
+		if (!(fh = gg_fopen(file, "rb"))) {
+
+			return 0;
+		}
+	} else {
+		fh = stdin;
 	}
 
 	unsigned char *b_output = (unsigned char*) output;
@@ -6225,7 +6274,10 @@ size_t g_load_data_md(void *output, size_t max, char *file) {
 		c_fr += fr;
 	}
 
-	g_fclose(fh);
+	if (!(hdl->flags & F_GH_FROMSTDIN)) {
+		g_fclose(fh);
+	}
+
 	return c_fr;
 }
 
@@ -6292,6 +6344,10 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 		return -2;
 	}
 
+	if (!hdl->total_sz) {
+		return -3;
+	}
+
 	uint32_t sh_ret = 0;
 
 	if (hdl->flags & F_GH_ONSHM) {
@@ -6299,7 +6355,6 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 			md_g_free(md);
 			return r;
 		}
-
 		count = hdl->total_sz / hdl->block_sz;
 	} else if (hdl->flags & F_GH_SHM) {
 		if (hdl->shmid != -1) {
@@ -6320,7 +6375,7 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 
 		if (sh_ret & R_SHMAP_ALREADY_EXISTS) {
 			errno = 0;
-			if (hdl->flags & F_GH_RELBUFFER) {
+			if (hdl->flags & F_GH_SHMRB) {
 				bzero(hdl->data, hdl->ipcbuf.shm_segsz);
 			}
 
@@ -6329,7 +6384,7 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 		count = hdl->total_sz / hdl->block_sz;
 	} else {
 		count = hdl->total_sz / hdl->block_sz;
-		hdl->data = calloc(count, hdl->block_sz);
+		hdl->data = malloc(count * hdl->block_sz);
 	}
 
 	size_t b_read = 0;
@@ -6342,9 +6397,10 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 		cb = (__g_mdref ) gen_md_data_ref_cnull;
 	} else {
 		if (!((hdl->flags & F_GH_SHM) && (sh_ret & R_SHMAP_ALREADY_EXISTS))
-				|| ((hdl->flags & F_GH_SHM) && (hdl->flags & F_GH_RELBUFFER))) {
-			if ((b_read = g_load_data_md(hdl->data, hdl->total_sz, file))
+				|| ((hdl->flags & F_GH_SHM) && (hdl->flags & F_GH_SHMRB))) {
+			if ((b_read = g_load_data_md(hdl->data, hdl->total_sz, file, hdl))
 					% hdl->block_sz || !b_read) {
+
 				md_g_free(md);
 				return -9;
 			}
@@ -6466,6 +6522,18 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 		return 6;
 	}
 
+	if (gfl & F_OPT_SHMRELOAD) {
+		hdl->flags |= F_GH_SHMRB;
+	}
+
+	if (gfl & F_OPT_SHMDESTROY) {
+		hdl->flags |= F_GH_SHMDESTROY;
+	}
+
+	if (gfl & F_OPT_SHMDESTONEXIT) {
+		hdl->flags |= F_GH_SHMDESTONEXIT;
+	}
+
 	off_t tot_sz = 0;
 
 	if (!(flags & F_GBM_SHM_NO_DATAFILE)) {
@@ -6477,27 +6545,9 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 
 		tot_sz = hdl->total_sz;
 
-		if (gfl & F_OPT_VERBOSE2) {
-			print_str(
-					"NOTICE: %s: loading data file into memory [%llu records] [%llu bytes]\n",
-					file, (uint64_t) (hdl->total_sz / hdl->block_sz),
-					(ulint64_t) hdl->total_sz);
-		}
 	} else {
 		bzero(hdl->file, PATH_MAX);
 		g_strncpy(hdl->file, "SHM", 3);
-	}
-
-	if (gfl & F_OPT_SHMRELOAD) {
-		hdl->flags |= F_GH_RELBUFFER;
-	}
-
-	if (gfl & F_OPT_SHMDESTROY) {
-		hdl->flags |= F_GH_SHMDESTROY;
-	}
-
-	if (gfl & F_OPT_SHMDESTONEXIT) {
-		hdl->flags |= F_GH_SHMDESTONEXIT;
 	}
 
 	if (gfl & F_OPT_SHAREDMEM) {
@@ -6506,8 +6556,8 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 		if ((hdl->shmid = shmget(hdl->ipc_key, 0, 0)) != -1) {
 			if (gfl & F_OPT_VERBOSE2) {
 				print_str(
-						"NOTICE: %s: [IPC: 0x%.8X]: attached to existing shared memory segment\n",
-						hdl->file, (uint32_t) hdl->ipc_key);
+						"NOTICE: %s: [IPC: 0x%.8X]: [%d]: attached to existing shared memory segment\n",
+						hdl->file, (uint32_t) hdl->ipc_key, hdl->shmid);
 			}
 			if (shmctl(hdl->shmid, IPC_STAT, &hdl->ipcbuf) != -1) {
 				if (flags & F_GBM_SHM_NO_DATAFILE) {
@@ -6530,15 +6580,27 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 								"WARNING: %s: [IPC: 0x%.8X] [%d] unable to destroy shared memory segment\n",
 								hdl->file, hdl->ipc_key, errno);
 					} else {
+						if (gfl & F_OPT_VERBOSE2) {
+							print_str(
+									"NOTICE: %s: [IPC: 0x%.8X]: [%d]: marked segment to be destroyed\n",
+									hdl->file, hdl->ipc_key, hdl->shmid);
+						}
 						hdl->shmid = -1;
 					}
 				}
 			} else {
 				print_str(
-						"ERROR: %s: [IPC: 0x%.8X] [%d] could not get shared memory segment information from kernel\n",
+						"ERROR: %s: [IPC: 0x%.8X]: [%d]: could not get shared memory segment information from kernel\n",
 						hdl->file, hdl->ipc_key, errno);
 				return 21;
 			}
+			if ((gfl & F_OPT_VERBOSE2) && hdl->shmid != -1
+					&& (hdl->flags & F_GH_SHMRB)) {
+				print_str(
+						"NOTICE: %s: [IPC: 0x%.8X]: [%d]: segment data will be reloaded from file\n",
+						hdl->file, hdl->ipc_key, hdl->shmid);
+			}
+
 		} else if ((flags & F_GBM_SHM_NO_DATAFILE)) {
 			print_str(
 					"ERROR: %s: [IPC: 0x%.8X]: failed loading shared memory segment: [%d]: no shared memory segment or data file available to load\n",
@@ -6547,14 +6609,34 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 		}
 	}
 
+	if (gfl & F_OPT_VERBOSE2) {
+		print_str("NOTICE: %s: %s [%llu records] [%llu bytes]\n", file,
+				(hdl->flags & F_GH_SHM) ?
+						hdl->shmid == -1 && !(hdl->flags & F_GH_SHMRB) ?
+								"loading shared memory segment" :
+						(hdl->flags & F_GH_SHMRB) ?
+								"re-loading shared memory segment" :
+								"mapping shared memory segment"
+						:
+						"loading data file into memory",
+				(hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
+						(uint64_t) (hdl->ipcbuf.shm_segsz / hdl->block_sz) :
+						(uint64_t) (hdl->total_sz / hdl->block_sz),
+				(hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
+						(ulint64_t) hdl->ipcbuf.shm_segsz :
+						(ulint64_t) hdl->total_sz);
+	}
+
 	errno = 0;
 	int r;
 	if ((r = load_data_md(&hdl->buffer, file, hdl))) {
 		print_str(
-				"ERROR: %s: [%llu/%llu] [%u] [%u] could not load data! [%d] [%d]\n",
-				file, (uint64_t) hdl->buffer.count,
-				(uint64_t) (hdl->total_sz / hdl->block_sz),
-				(uint32_t) hdl->total_sz, hdl->block_sz, r, errno);
+				"ERROR: %s: [%llu/%llu] [%llu] [%u] could not load data!%s [%d] [%d]\n",
+				file, (ulint64_t) hdl->buffer.count,
+				(ulint64_t) (hdl->total_sz / hdl->block_sz), hdl->total_sz,
+				hdl->block_sz,
+				(hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
+				errno);
 		return 4;
 	} else {
 		if (!(flags & F_GBM_SHM_NO_DATAFILE)) {
@@ -7472,6 +7554,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strcmp(match, "memlimit")) {
 		snprintf(output, max_size, "%llu", db_max_size);
+	} else if (!strcmp(match, "glconf")) {
+		snprintf(output, max_size, GLCONF);
 	} else {
 		return 1;
 	}
