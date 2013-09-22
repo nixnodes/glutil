@@ -46,11 +46,6 @@ s - {genres} ]"` {m:arg1}
 #  If --dirlog=<path> is not specified, glutil reverts to
 #   default dirlog path
 #
-#@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {si
-ze}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
-#@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -e "dir {dir}\nbasedir {basedir}\ntime {time}\nimdbid {imdbid}\nrated {rated}\nscore {score}\ngenr
-es {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {direct
-or}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
-#@MACRO:tvrage-to-ascii:{m:exe} -h --exec `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtim
-e {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {st
-atus}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -e "\n" >> {m:arg1}`
+#@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -e "dir {dir}\nbasedir {basedir}\ntime {time}\nimdbid {imdbid}\nrated {rated}\nscore {score}\ngenres {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:tvrage-to-ascii:{m:exe} -h --exec `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {status}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -e "\n" >> {m:arg1}`
