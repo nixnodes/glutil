@@ -10,6 +10,10 @@
  *   - Bugfix: full siteroot recursion never flushed buffered data to file (-r) (rev. 5)
  *   - Added --shmem, buffering to shared mem segment (see --help) (rev. 6)
  *   - Bugfix: tvrage log had no IPC key assigned (--shmem) (rev. 7)
+ *   - Minor changes (rev. 7)
+ *   - Added 'memlimit' and 'glconf' general fields, see MANUAL (rev. 7-8)
+ *   - Added nuke status to -n --batch (rev. 8)
+ *   - Read data from binary source and merge (-z --binary) (rev. 8) 
  *
  * v1.7
  *
