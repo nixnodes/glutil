@@ -3,6 +3,7 @@
  *   - Added --maxres, --maxhit, --ifres and --ifhit (see --help for details)
  *   - Bugfix: filtering with --sort not working in certain cases
  *   - Various improvements and bugfixes
+ *   - Bugfix: unsafe snprintf calls (rev. 1)
  *
  * v1.8
  *
