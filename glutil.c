@@ -8977,7 +8977,7 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
 		if (ptr && strlen(ptr) < max_size) {
-			snprintf(output, max_size, "%s", ptr);
+			snprintf(output, max_size, "%s", (char*) ptr);
 		}
 		g_free(buffer);
 		return 0;
