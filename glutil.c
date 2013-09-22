@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.8-9
+ * Version     : 1.8-10
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 8
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2862,7 +2862,7 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
-	if (updmode != UPD_MODE_WRITE) {
+	if (updmode != UPD_MODE_WRITE && updmode != UPD_MODE_RECURSIVE) {
 		build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
 		build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
 		build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
