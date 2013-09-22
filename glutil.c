@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9
+ * Version     : 1.9-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -279,7 +279,9 @@ struct d_stats {
 };
 
 typedef struct mda_object {
-	void *ptr, *next, *prev;
+	void *ptr;
+	void *next;
+	void *prev;
 //	unsigned char flags;
 }*p_md_obj, md_obj;
 
@@ -1103,7 +1105,9 @@ char *hpd_up =
 				"  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Perform backup on specified log\n"
 				"\n Other:\n"
-				"  -m <macro>            Searches subdirs for script that has the given macro defined, and executes\n"
+				"  -m <macro> [--arg[1-3] <string>]\n"
+				"                         Searches subdirs for script that has the given macro defined, and executes\n"
+				"                         --arg[1-3] sets values that fill {m:arg[1-3]} variables inside a macro\n"
 				"\n Hooks:\n"
 				"  --exec <command [{field}..{field}..]>\n"
 				"                        While parsing data structure/filesystem, execute command for each record\n"
@@ -1148,7 +1152,7 @@ char *hpd_up =
 				"  \".. --<argument1> <or|and> --<margument2> ..\"\n"
 				"\n Misc:\n"
 				"  --sort <mode>,<order>,<field>\n"
-				"                        Sort data log entries before displaying\n"
+				"                        Sort data log entries\n"
 				"                          <mode> can only be 'num' (numeric)\n"
 				"                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
 				"                          Sorts by the specified data log <field>\n"
@@ -1166,7 +1170,7 @@ char *hpd_up =
 				"                        Instead of internal memory, use the shared memory segment to buffer log data\n"
 				"                           This is usefull as an inter-process caching mechanism, allowing other glutil\n"
 				"                            instances (or other processes) rapid access to the log data, without having to\n"
-				"                            access the filesystem each time\n"
+				"                            allocate pages and load from filesystem each time\n"
 				"                           If log file is present and it's size doesn't match segment size, glutil\n"
 				"                            destroys the segment and re-creates it with new size\n"
 				"                           Although this applies globally, it should only be used with dump operations (-d,-n,-i,..)\n"
@@ -1200,7 +1204,6 @@ char *hpd_up =
 				"  --ftime               Prepend formatted timestamps to output\n"
 				"  --log                 Force logging enabled\n"
 				"  --fork <command>      Fork process into background and execute <command>\n"
-				"  --arg[1-3] <argument> Set values that fill {m:arg[1-3]} variables\n"
 				"                           Used only with when running macros (-m)\n"
 				"  --[u]sleep <timeout>  Wait for <timeout> before running\n"
 				"  --version             Print version and exit\n"
@@ -2814,7 +2817,7 @@ int g_init(int argc, char **argv) {
 	enable_logging();
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
-			&& !(gfl & F_OPT_FORMAT_COMP)) {
+			&& !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE)) {
 		print_str("INIT: glutil %d.%d-%d%s-%s starting [PID: %d]\n",
 		VER_MAJOR,
 		VER_MINOR,
@@ -3200,7 +3203,7 @@ int g_print_info(void) {
 	print_str(" ONLINE(SHR)     %d        \n", OL_SZ);
 	print_str(MSG_NL);
 	if (gfl & F_OPT_VERBOSE) {
-		print_str(" DATA TYPE     SIZE(B)   \n"
+		print_str("  TYPE         SIZE(B)   \n"
 				"-------------------------\n");
 		print_str(" off_t            %d      \n", (sizeof(off_t)));
 		print_str(" uintaa_t         %d      \n", (sizeof(uintaa_t)));
@@ -3208,6 +3211,8 @@ int g_print_info(void) {
 		print_str(" uint16_t         %d      \n", (sizeof(uint16_t)));
 		print_str(" uint32_t         %d      \n", (sizeof(uint32_t)));
 		print_str(" uint64_t         %d      \n", (sizeof(uint64_t)));
+		print_str(MSG_NL);
+		print_str(" void *           %d      \n", PTRSZ);
 		print_str(MSG_NL);
 	}
 
@@ -3572,7 +3577,7 @@ int d_write(char *arg) {
 			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
 			&& g_act_1.buffer_count) {
 		if (gfl & F_OPT_VERBOSE) {
-			print_str("NOTICE: '%s': filtering existing records..\n", a_ptr);
+			print_str("NOTICE: '%s': pruning exact data duplicates..\n", a_ptr);
 		}
 		p_md_obj ptr_w = md_first(&g_act_1.w_buffer), ptr_r;
 		int m = 1;
@@ -4433,18 +4438,15 @@ int g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm) {
 	while (ptr) {
 		lom = (__g_lom) ptr->ptr;
 		lom->result = 0;
-		//printf ("-?? [%d] -  %.1f - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
 		i++;
 		g_lom_var(d_ptr, lom);
 
 		if (!p_lom && lom->result && !ptr->next) {
-			//printf ("-!! [%d] -  %.1f - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
 			return !lom->result;
 		}
 
 		if ( p_lom && p_lom->g_oper_ptr ) {
 			if (!(r_p = p_lom->g_oper_ptr(r_p, lom->result))) {
-				//printf ("failed r_p [%d] -  %d - %d - %d\n", i, lom->g_tf_ptr_right(d_ptr, lom->t_r_off), lom->result, r_p);
 				if ( !ptr->next) {
 					return 1;
 				}
@@ -4583,8 +4585,8 @@ int do_sort(__g_handle hdl, char *field, uint32_t flags) {
 }
 
 int g_filter(__g_handle hdl, pmda md) {
-
-	if (!(exec_str || (gfl & F_OPT_HASMATCH))) {
+	g_setjmp(0, "g_filter", NULL, NULL);
+	if (!((exec_str || (gfl & F_OPT_HASMATCH))) || !md->count) {
 		return 0;
 	}
 
@@ -4596,7 +4598,10 @@ int g_filter(__g_handle hdl, pmda md) {
 	off_t s_offset = md->offset;
 
 	p_md_obj ptr = md_first(md), o_ptr;
-	int r = 0;
+
+	int r = 0, j_offset;
+
+	j_offset = 1;
 
 	while (ptr) {
 		if (gfl & F_OPT_KILL_GLOBAL) {
@@ -4604,14 +4609,17 @@ int g_filter(__g_handle hdl, pmda md) {
 		}
 		if (g_bmatch(ptr->ptr, hdl, md)) {
 			o_ptr = ptr;
-			ptr = ptr->next;
+			ptr = *((void**) ptr + j_offset);
 			if (!(md_unlink(md, o_ptr))) {
 				r = 2;
 				break;
 			}
+			if (hdl->buffer_count) {
+				hdl->buffer_count--;
+			}
 			continue;
 		}
-		ptr = ptr->next;
+		ptr = *((void**) ptr + j_offset);
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
@@ -4706,7 +4714,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	void *ptr;
 
 	char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8], *ns_ptr;
-	off_t c = 0;
+	off_t c = 0, d = 0;
 	int re_c;
 
 	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
@@ -4754,7 +4762,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				}
 
 				if (re_c) {
-					print_str(sbuffer);
+					print_str("%s", sbuffer);
 				} else {
 					print_str("ERROR: %s: zero-length formatted result\n",
 							g_act_1.file);
@@ -4791,8 +4799,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_FORMAT_COMP)
 			&& !(g_act_1.flags & F_GH_ISONLINE)) {
-		print_str("STATS: %s: read %llu records\n", file,
-				(unsigned long long int) c);
+		print_str("STATS: %s: read %llu/%llu records\n", file,
+				(unsigned long long int) d, c);
 	}
 
 	r_end:
@@ -4833,6 +4841,12 @@ int rebuild_dirlog(void) {
 
 	if (gfl & F_OPT_WBUFFER) {
 		g_strncpy(g_act_1.mode, "r", 1);
+		if (gfl & F_OPT_VERBOSE3) {
+			print_str(
+					"NOTICE: %s: allocating %u bytes for references (overhead)\n",
+					DIRLOG,
+					(uint32_t) (ACT_WRITE_BUFFER_MEMBERS * sizeof(md_obj)));
+		}
 		md_init(&g_act_1.w_buffer, ACT_WRITE_BUFFER_MEMBERS);
 		g_act_1.block_sz = DL_SZ;
 		g_act_1.flags |= F_GH_FFBUFFER | F_GH_WAPPEND
@@ -4896,11 +4910,6 @@ int rebuild_dirlog(void) {
 		print_str("ERROR: [%d] could not parse input from %s\n", r, DU_FLD);
 		rt = 5;
 		goto r_end;
-	}
-
-	if (gfl & F_OPT_VERBOSE3) {
-		print_str("NOTICE: %s: allocating %u bytes for references (overhead)\n",
-				DIRLOG, (uint32_t) (ACT_WRITE_BUFFER_MEMBERS * sizeof(md_obj)));
 	}
 
 	int i = 0, ib;
@@ -5391,9 +5400,12 @@ int dirlog_format_block(void *iarg, char *output) {
 	char *ndup = strdup(data->dirname), *base = NULL;
 
 	if (gfl & F_OPT_VERBOSE)
+	{
 		base = data->dirname;
-	else
+	}
+	else {
 		base = basename(ndup);
+	}
 
 	time_t t_t = (time_t) data->uptime;
 
@@ -5402,8 +5414,9 @@ int dirlog_format_block(void *iarg, char *output) {
 	int c;
 
 	if (gfl & F_OPT_FORMAT_BATCH) {
+
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n", base,
+				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n", data->dirname,
 				(ulint64_t) data->bytes, data->files, (uint32_t) data->uptime,
 				data->uploader, data->group, data->status);
 	} else {
@@ -6026,44 +6039,22 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 		p_ptr = &hdl->buffer;
 	}
 
-	if (p_ptr->count && (exec_str || (gfl & F_OPT_HASMATCH))
-			&& updmode != UPD_MODE_RECURSIVE) {
+	if (updmode != UPD_MODE_RECURSIVE) {
 		g_setjmp(0, "rebuild_data_file(2)", NULL, NULL);
-		if (gfl & F_OPT_VERBOSE2) {
-			print_str("NOTICE: %s: filtering data [%llu records]..\n", file,
-					(ulint64_t) p_ptr->offset);
-		}
-
-		p_md_obj ptr = md_first(p_ptr), o_ptr;
-
-		while (ptr) {
-			if (gfl & F_OPT_KILL_GLOBAL) {
-				break;
-			}
-			if (g_bmatch(ptr->ptr, hdl, p_ptr)) {
-				o_ptr = ptr;
-				ptr = ptr->next;
-				if (!(md_unlink(p_ptr, o_ptr))) {
-					if (!p_ptr->offset) {
-						if (!(gfl & F_OPT_FORCE)) {
-							print_str(
-									"WARNING: %s: everything got filtered, refusing to write 0-byte data file\n",
-									file);
-							return 11;
-						}
-					} else {
-						print_str(
-								"ERROR: %s: failed unlinking record entry after match!\n",
-								file);
-						return 12;
-					}
+		if ((r = g_filter(hdl, p_ptr))) {
+			if (r == 1) {
+				if (!(gfl & F_OPT_FORCE)) {
+					print_str(
+							"WARNING: %s: everything got filtered, refusing to write 0-byte data file\n",
+							file);
+					return 11;
 				}
-				if (hdl->buffer_count) {
-					hdl->buffer_count--;
-				}
-				continue;
+			} else if (r == 2) {
+				print_str(
+						"ERROR: %s: failed unlinking record entry after match!\n",
+						file);
+				return 12;
 			}
-			ptr = ptr->next;
 		}
 	}
 
@@ -7550,16 +7541,16 @@ int g_l_fmode(char *path, size_t max_size, char *output) {
 int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	if (!strcmp(match, "m:exe")) {
 		if (self_get_path(output)) {
-			snprintf(output, max_size, "UNKNOWN");
+			snprintf(output, max_size, "%s", "UNKNOWN");
 		}
 	} else if (!strcmp(match, "m:glroot")) {
-		snprintf(output, max_size, GLROOT);
+		snprintf(output, max_size, "%s", GLROOT);
 	} else if (!strcmp(match, "m:siteroot")) {
-		snprintf(output, max_size, SITEROOT);
+		snprintf(output, max_size, "%s", SITEROOT);
 	} else if (!strcmp(match, "m:ftpdata")) {
 		snprintf(output, max_size, FTPDATA);
 	} else if ((gfl & F_OPT_PS_LOGGING) && !strcmp(match, "m:logfile")) {
-		snprintf(output, max_size, LOGFILE);
+		snprintf(output, max_size, "%s", LOGFILE);
 	} else if (!strcmp(match, "m:PID")) {
 		snprintf(output, max_size, "%d", getpid());
 	} else if (!strcmp(match, "m:IPC")) {
@@ -7581,24 +7572,24 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	if (!strcmp(match, "exe")) {
 		if (self_get_path(output)) {
-			snprintf(output, max_size, "UNKNOWN");
+			snprintf(output, max_size, "%s", "UNKNOWN");
 		}
 	} else if (!strcmp(match, "glroot")) {
-		snprintf(output, max_size, GLROOT);
+		snprintf(output, max_size,"%s", GLROOT);
 	} else if (!strcmp(match, "siteroot")) {
-		snprintf(output, max_size, SITEROOT);
+		snprintf(output, max_size,"%s", SITEROOT);
 	} else if (!strcmp(match, "siterootn")) {
-		snprintf(output, max_size, SITEROOT_N);
+		snprintf(output, max_size,"%s", SITEROOT_N);
 	} else if (!strcmp(match, "ftpdata")) {
-		snprintf(output, max_size, FTPDATA);
+		snprintf(output, max_size,"%s", FTPDATA);
 	} else if (!strcmp(match, "logfile")) {
-		snprintf(output, max_size, LOGFILE);
+		snprintf(output, max_size,"%s", LOGFILE);
 	} else if (!strcmp(match, "imdbfile")) {
-		snprintf(output, max_size, IMDBLOG);
+		snprintf(output, max_size,"%s", IMDBLOG);
 	} else if (!strcmp(match, "gamefile")) {
-		snprintf(output, max_size, GAMELOG);
+		snprintf(output, max_size,"%s", GAMELOG);
 	} else if (!strcmp(match, "tvragefile")) {
-		snprintf(output, max_size, TVLOG);
+		snprintf(output, max_size,"%s", TVLOG);
 	} else if (!strcmp(match, "nukestr")) {
 		if (NUKESTR) {
 			snprintf(output, max_size, NUKESTR, "");
@@ -7620,7 +7611,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "memlimit")) {
 		snprintf(output, max_size, "%llu", db_max_size);
 	} else if (!strcmp(match, "glconf")) {
-		snprintf(output, max_size, GLCONF);
+		snprintf(output, max_size, "%s", GLCONF);
 	} else {
 		return 1;
 	}
@@ -8745,10 +8736,10 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	struct dirlog *data = (struct dirlog *) arg;
 
 	if (!strcmp(match, "dir")) {
-		snprintf(output, max_size, data->dirname);
+		snprintf(output, max_size, "%s", data->dirname);
 	} else if (!strcmp(match, "basedir")) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		snprintf(output, max_size, base);
+		snprintf(output, max_size, "%s", base);
 		g_free(s_buffer);
 	} else if (!strcmp(match, "user")) {
 		snprintf(output, max_size, "%d", data->uploader);
@@ -8784,19 +8775,19 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	struct nukelog *data = (struct nukelog *) arg;
 
 	if (!strcmp(match, "dir")) {
-		snprintf(output, max_size, data->dirname);
+		snprintf(output, max_size, "%s", data->dirname);
 	} else if (!strcmp(match, "basedir")) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		g_strncpy(output, base, strlen(base));
+		snprintf(output, max_size, "%s", base);
 		g_free(s_buffer);
 	} else if (!strcmp(match, "nuker")) {
-		snprintf(output, max_size, data->nuker);
+		snprintf(output, max_size, "%s", data->nuker);
 	} else if (!strcmp(match, "nukee")) {
-		snprintf(output, max_size, data->nukee);
+		snprintf(output, max_size, "%s", data->nukee);
 	} else if (!strcmp(match, "unnuker")) {
-		snprintf(output, max_size, data->unnuker);
+		snprintf(output, max_size, "%s", data->unnuker);
 	} else if (!strcmp(match, "reason")) {
-		snprintf(output, max_size, data->reason);
+		snprintf(output, max_size, "%s", data->reason);
 	} else if (!strcmp(match, "size")) {
 		snprintf(output, max_size, "%.2f", (float) data->bytes);
 	} else if (!strcmp(match, "time")) {
@@ -8854,13 +8845,13 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	struct lastonlog *data = (struct lastonlog *) arg;
 
 	if (!strcmp(match, "user")) {
-		snprintf(output, max_size, data->uname);
+		snprintf(output, max_size, "%s", data->uname);
 	} else if (!strcmp(match, "group")) {
-		snprintf(output, max_size, data->gname);
+		snprintf(output, max_size, "%s", data->gname);
 	} else if (!strcmp(match, "stats")) {
-		snprintf(output, max_size, data->stats);
+		snprintf(output, max_size, "%s", data->stats);
 	} else if (!strcmp(match, "tag")) {
-		snprintf(output, max_size, data->tagline);
+		snprintf(output, max_size, "%s", data->tagline);
 	} else if (!strcmp(match, "logon")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->logon);
 	} else if (!strcmp(match, "logoff")) {
@@ -8909,13 +8900,13 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 	struct oneliner *data = (struct oneliner *) arg;
 
 	if (!strcmp(match, "user")) {
-		snprintf(output, max_size, data->uname);
+		snprintf(output, max_size, "%s", data->uname);
 	} else if (!strcmp(match, "group")) {
-		snprintf(output, max_size, data->gname);
+		snprintf(output, max_size, "%s", data->gname);
 	} else if (!strcmp(match, "tag")) {
-		snprintf(output, max_size, data->tagline);
+		snprintf(output, max_size, "%s", data->tagline);
 	} else if (!strcmp(match, "msg")) {
-		snprintf(output, max_size, data->message);
+		snprintf(output, max_size, "%s", data->message);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
 	} else {
@@ -8938,15 +8929,15 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	struct ONLINE *data = (struct ONLINE *) arg;
 
 	if (!strcmp(match, "user")) {
-		snprintf(output, max_size, data->username);
+		snprintf(output, max_size, "%s", data->username);
 	} else if (!strcmp(match, "tag")) {
-		snprintf(output, max_size, data->tagline);
+		snprintf(output, max_size, "%s", data->tagline);
 	} else if (!strcmp(match, "status")) {
-		snprintf(output, max_size, data->status);
+		snprintf(output, max_size, "%s", data->status);
 	} else if (!strcmp(match, "host")) {
-		snprintf(output, max_size, data->host);
+		snprintf(output, max_size, "%s", data->host);
 	} else if (!strcmp(match, "dir")) {
-		snprintf(output, max_size, data->currentdir);
+		snprintf(output, max_size, "%s", data->currentdir);
 	} else if (!strcmp(match, "ssl")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->ssl_flag);
 	} else if (!strcmp(match, "group")) {
@@ -9001,10 +8992,10 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	__d_imdb data = (__d_imdb) arg;
 
 	if (!strcmp(match, "dir")) {
-		snprintf(output, max_size, data->dirname);
+		snprintf(output, max_size, "%s", data->dirname);
 	} else if (!strcmp(match, "basedir")) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		snprintf(output, max_size, base);
+		snprintf(output, max_size, "%s", base);
 		g_free(s_buffer);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
@@ -9015,21 +9006,21 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "votes")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->votes);
 	} else if (!strcmp(match, "genres")) {
-		snprintf(output, max_size, data->genres);
+		snprintf(output, max_size, "%s", data->genres);
 	} else if (!strcmp(match, "rated")) {
-		snprintf(output, max_size, data->rated);
+		snprintf(output, max_size, "%s", data->rated);
 	} else if (!strcmp(match, "title")) {
-		snprintf(output, max_size, data->title);
+		snprintf(output, max_size, "%s", data->title);
 	} else if (!strcmp(match, "director")) {
-		snprintf(output, max_size, data->director);
+		snprintf(output, max_size, "%s", data->director);
 	} else if (!strcmp(match, "actors")) {
-		snprintf(output, max_size, data->actors);
+		snprintf(output, max_size, "%s", data->actors);
 	} else if (!strcmp(match, "runtime")) {
 		snprintf(output, max_size, "%u", data->runtime);
 	} else if (!strcmp(match, "released")) {
 		snprintf(output, max_size, "%u", data->released);
 	} else if (!strcmp(match, "year")) {
-		snprintf(output, max_size, data->year);
+		snprintf(output, max_size, "%s", data->year);
 	} else if (!strcmp(match, "mode")) {
 		g_l_fmode(data->dirname, max_size, output);
 	} else {
@@ -9052,7 +9043,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	__d_game data = (__d_game) arg;
 
 	if (!strcmp(match, "dir")) {
-		snprintf(output, max_size, data->dirname);
+		snprintf(output, max_size, "%s", data->dirname);
 	} else if (!strcmp(match, "score")) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strcmp(match, "time")) {
@@ -9079,21 +9070,21 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	__d_tvrage data = (__d_tvrage) arg;
 
 	if (!strcmp(match, "dir")) {
-		snprintf(output, max_size, data->dirname);
+		snprintf(output, max_size, "%s", data->dirname);
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", data->timestamp);
 	} else if (!strcmp(match, "airday")) {
-		snprintf(output, max_size, data->airday);
+		snprintf(output, max_size, "%s", data->airday);
 	} else if (!strcmp(match, "airtime")) {
-		snprintf(output, max_size, data->airtime);
+		snprintf(output, max_size, "%s", data->airtime);
 	} else if (!strcmp(match, "country")) {
-		snprintf(output, max_size, data->country);
+		snprintf(output, max_size, "%s", data->country);
 	} else if (!strcmp(match, "link")) {
-		snprintf(output, max_size, data->link);
+		snprintf(output, max_size, "%s", data->link);
 	} else if (!strcmp(match, "name")) {
-		snprintf(output, max_size, data->name);
+		snprintf(output, max_size, "%s", data->name);
 	} else if (!strcmp(match, "status")) {
-		snprintf(output, max_size, data->status);
+		snprintf(output, max_size, "%s", data->status);
 	} else if (!strcmp(match, "ended")) {
 		snprintf(output, max_size, "%u", data->ended);
 	} else if (!strcmp(match, "started")) {
@@ -9105,11 +9096,11 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "runtime")) {
 		snprintf(output, max_size, "%u", data->runtime);
 	} else if (!strcmp(match, "class")) {
-		snprintf(output, max_size, data->class);
+		snprintf(output, max_size, "%s", data->class);
 	} else if (!strcmp(match, "genres")) {
-		snprintf(output, max_size, data->genres);
+		snprintf(output, max_size, "%s", data->genres);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size, output);
+		g_l_fmode(data->dirname, max_size , output);
 	} else {
 		return 1;
 	}
@@ -9130,21 +9121,21 @@ int ref_to_val_gen1(void *arg, char *match, char *output, size_t max_size) {
 	__d_generic_s2044 data = (__d_generic_s2044) arg;
 
 	if (!strcmp(match, "ge1")) {
-		snprintf(output, max_size, data->s_1);
+		snprintf(output, max_size, "%s", data->s_1);
 	} else if (!strcmp(match, "ge2")) {
-		snprintf(output, max_size, data->s_2);
+		snprintf(output, max_size, "%s", data->s_2);
 	} else if (!strcmp(match, "ge3")) {
-		snprintf(output, max_size, data->s_3);
+		snprintf(output, max_size, "%s", data->s_3);
 	} else if (!strcmp(match, "ge4")) {
-		snprintf(output, max_size, data->s_4);
+		snprintf(output, max_size, "%s", data->s_4);
 	} else if (!strcmp(match, "ge5")) {
-		snprintf(output, max_size, data->s_5);
+		snprintf(output, max_size, "%s", data->s_5);
 	} else if (!strcmp(match, "ge6")) {
-		snprintf(output, max_size, data->s_6);
+		snprintf(output, max_size, "%s", data->s_6);
 	} else if (!strcmp(match, "ge7")) {
-		snprintf(output, max_size, data->s_7);
+		snprintf(output, max_size, "%s", data->s_7);
 	} else if (!strcmp(match, "ge8")) {
-		snprintf(output, max_size, data->s_8);
+		snprintf(output, max_size, "%s", data->s_8);
 	} else if (!strcmp(match, "i32")) {
 		snprintf(output, max_size, "%u", data->i32);
 	} else {
