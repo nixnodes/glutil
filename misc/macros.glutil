@@ -45,3 +45,4 @@
 #   default dirlog path
 #
 #@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -en "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
+#@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -en "dir {dir}\nbasedir {basedir}\ntime {time}\nimdbid {imdbid}\nrated {rated}\nscore {score}\ngenres {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
