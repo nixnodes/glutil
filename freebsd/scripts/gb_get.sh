@@ -31,7 +31,7 @@ INPUT_CLEAN_REGEX="([\\.\\_\\-\\(\\)](MACOSX|NUKED|EUR|Creators[\\.\\_\\-\\(\\)]
 #
 ############################[ END OPTIONS ]##############################
 
-QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gI" | sed -r 's/[\\.\\_\\-\\(\\)]/+/g' | sed -r 's/^[+ ]+//'| sed -r 's/[+ ]+$//')
+QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gI" | sed -r "s/[\\.\\_\\-\\(\\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
 
 WHAT=$2
 
