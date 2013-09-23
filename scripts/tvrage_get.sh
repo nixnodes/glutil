@@ -47,7 +47,7 @@ RECORD_MAX_AGE=14
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
 #
-VERBOSE=1
+VERBOSE=0
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
