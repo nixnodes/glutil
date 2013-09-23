@@ -1,4 +1,3 @@
-
 #!/usr/local/bin/bash
 # DO NOT EDIT THESE LINES
 #@MACRO:getscore:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) score"
@@ -28,16 +27,11 @@ URL="$BURL""api"
 ## Get it from giantbomb website (registration required)
 API_KEY=""
 #
-INPUT_CLEAN_REGEX="([\\.\\_\\-\\(\\)](MACOSX|NUKED|EUR|Creators[\\.\\_\\-\\(\\)]Edition|PATCH|DATA
-PACK|GAMEFIX|READ[\\.\\_\\-\\(\\)]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DAN
-ISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[\\.\\_\\-\\(\\)]CUT|READNFO|DLC|INCL[\\.
-\\_\\-\\(\\)]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX)[\\.\\_\\-\\(\\)].*)|(
--[A-Z0-9a-z_-]*)$"
+INPUT_CLEAN_REGEX="([\\.\\_\\-\\(\\)](MACOSX|NUKED|EUR|Creators[\\.\\_\\-\\(\\)]Edition|PATCH|DATAPACK|GAMEFIX|READ[\\.\\_\\-\\(\\)]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[\\.\\_\\-\\(\\)]CUT|READNFO|DLC|INCL[\\.\\_\\-\\(\\)]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX)[\\.\\_\\-\\(\\)].*)|(-[A-Z0-9a-z_-]*)$"
 #
 ############################[ END OPTIONS ]##############################
 
-QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gI" | sed -r "s/[\\.\\_\\-\\(\\)]/+/g" | sed -r
-"s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gI" | sed -r 's/[\\.\\_\\-\\(\\)]/+/g' | sed -r 's/^[+ ]+//'| sed -r 's/[+ ]+$//')
 
 WHAT=$2
 
@@ -55,11 +49,9 @@ G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$
 
 [ -z "$G_ID" ] && echo "ERROR: '$QUERY': Failed getting game ID" && exit 1
 
-RES=$($CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\"
->" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//')
+RES=$($CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//')
 
-[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result '$WHAT' from $BURL""game/3030-$G_ID/u
-ser-reviews/" && exit 1
+[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result '$WHAT' from $BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
 [ "$WHAT" = "score" ] && {
     echo "SCORE: '$QUERY': $RES"
