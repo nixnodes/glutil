@@ -42,8 +42,7 @@ WHAT=$2
 
 APIKEY_STR="?api_key=$API_KEY"
 
-G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT
---xpath "string((/response/results//id)[1])" -)
+G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -)
 
 #echo "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY"
 
