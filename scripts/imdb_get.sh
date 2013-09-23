@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "$(basename '{arg}')" '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
-#@MACRO:imdb-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
+#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "`basename '{arg}'`" '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
+#@MACRO:imdb-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} `basename {arg}` '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -exec "{m:spec1} '{basedir}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{dir}'" --iregexi "{m:arg1}" 
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
@@ -51,6 +51,10 @@ RECORD_MAX_AGE=14
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
+#
+## Verbose output
+VERBOSE=1
+#
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -59,21 +63,21 @@ CURL_FLAGS="--silent"
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
 
-! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
-! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
+! [ -f "$CURL" ] && CURL=`whereis curl | awk '{print $2}'`
+! [ -f "$XMLLINT" ] && XMLLINT=`whereis xmllint | awk '{print $2}'`
 
 [ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
 [ -z "$CURL" ] && echo "Could not find curl" && exit 1
 
-BASEDIR=$(dirname $0)
+BASEDIR=`dirname $0`
 
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $DATABASE_TYPE -gt 0 ] && LAPPEND="$DATABASE_TYPE"
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
-echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
+echo "$1" | egrep -q -i "$INPUT_SKIP" && exit 1
 
-QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+QUERY=`echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//"`
 
 [ -z "$QUERY" ] && exit 1
 
@@ -82,23 +86,36 @@ imdb_search()
 	$CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$1" | $XMLLINT --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|( )|["]//g'
 }
 
-iid=$(imdb_search "$QUERY""&ex=1")
-[ $LOOSE_SEARCH -eq 1 ] &&[ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=$(imdb_search "$QUERY")
-[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=$($CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g')
+cad() {
+	RTIME=`$1 --imdblog "$4$LAPPEND" -a $2 "$3" --imatchq -exec "echo {time}" --silent`
+	
+	CTIME=`date +"%s"`
+	[ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
+	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
+	 	echo "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
+	else
+		if [ -n "$RTIME" ]; then
+			[ $VERBOSE -gt 0 ] && echo "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
+			exit 1
+		fi
+	fi
+}
+
+if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
+	s_q=`echo $QUERY | sed 's/\+/\\\0/g'`
+	cad $2 "--iregexi" "dir,$s_q" "$3"
+fi
+
+iid=`imdb_search "$QUERY""&ex=1"`
+[ $LOOSE_SEARCH -eq 1 ] &&[ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=`imdb_search "$QUERY"`
+[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=`$CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g'`
 [ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-	RTIME=$($2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq -exec "echo {time}" --silent)
-	CTIME=$(date +"%s")
-	[ -n "$RTIME" ] && DIFF1=$(expr $CTIME - $RTIME) && DIFF=$(expr $DIFF1 / 86400)
-	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
-	 	echo "NOTICE: $QUERY: $iid: Record too old ($DIFF days) updating.."
-	else
-		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq | grep "^IMDB:" &> /dev/null && echo "WARNING: $QUERY: $iid: ID already exists in database ($(expr $DIFF1 / 60) min old)" && exit 1
-	fi
+	cad $2 "--iregex" "imdbid,^$iid$" "$3"	
 fi
 
-DDT=$($CURL $CURL_FLAGS "$URL""?r=XML&i=$iid")
+DDT=`$CURL $CURL_FLAGS "$URL""?r=XML&i=$iid"`
 
 [ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
@@ -107,22 +124,22 @@ get_field()
 	echo $DDT | $XMLLINT --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g" 
 }
 
-TYPE=$(get_field type)
+TYPE=`get_field type`
 
 ! echo $TYPE | grep "movie" > /dev/null && echo "ERROR: $QUERY: $1: invalid match (type is $TYPE)" && exit 1
 
-RATING=$(get_field imdbRating)
-GENRE=$(get_field genre)
-VOTES=$(echo $(get_field imdbVotes ) | tr -d ',')
-YEAR=$(get_field year | tr -d ' ')
-TITLE=$(get_field title)
-RATED=$(get_field rated)
-ACTORS=$(get_field actors)
-DIRECTOR=$(get_field director)
+RATING=`get_field imdbRating`
+GENRE=`get_field genre`
+VOTES=`echo $(get_field imdbVotes) | tr -d ','`
+YEAR=`get_field year | tr -d ' '`
+TITLE=`get_field title`
+RATED=`get_field rated`
+ACTORS=`get_field actors`
+DIRECTOR=`get_field director`
 RELEASED=`date --date="$(D_g=$(get_field released); [ "$D_g" != "N/A" ] && echo "$D_g" || echo "")" +"%s"`
-RUNTIME=$(get_field runtime)
-RUNTIME_h=$(echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g')
-RUNTIME_m=$(echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g')
+RUNTIME=`get_field runtime`
+RUNTIME_h=`echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g'`
+RUNTIME_m=`echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g'`
 [ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=$[RUNTIME_h*RUNTIME_m]
 
 [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
@@ -130,8 +147,8 @@ RUNTIME_m=$(echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g')
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
 	if [ $DATABASE_TYPE -eq 0 ]; then
-		GLR_E=$(echo $4 | sed 's/\//\\\//g')	
-		DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")  
+		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
+		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
 		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
@@ -143,11 +160,11 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 		}
 	fi	
 	
-	echo -en "dir $DIR_E\ntime $(date +%s)\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
+	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
 	$2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "IMDB: $(echo "Q:'$QUERY' | A:'$TITLE'" | tr '+' ' ') : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
+echo "IMDB: `echo "Q:'$QUERY' | A:'$TITLE'" | tr '+' ' '` : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
 exit 0
