@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-1
+ * Version     : 1.9-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -6409,10 +6409,6 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 		return -2;
 	}
 
-	if (!hdl->total_sz) {
-		return -3;
-	}
-
 	uint32_t sh_ret = 0;
 
 	if (hdl->flags & F_GH_ONSHM) {
@@ -6450,6 +6446,10 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 	} else {
 		count = hdl->total_sz / hdl->block_sz;
 		hdl->data = malloc(count * hdl->block_sz);
+	}
+
+	if (!hdl->total_sz) {
+		return -3;
 	}
 
 	size_t b_read = 0;
