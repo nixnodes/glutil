@@ -1,8 +1,8 @@
 #!/usr/local/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
-#@MACRO:tvrage-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
-#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -exec "{m:spec1} '{basedir}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
+#@MACRO:tvrage-f:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
+#@MACRO:tvrage-f-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
+#@MACRO:tvrage-f-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -exec "{m:spec1} '{basedir}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
 ## Gets show info using TVRAGE API (XML)
 #
