@@ -4,6 +4,7 @@
  *   - Bugfix: filtering with --sort not working in certain cases
  *   - Various improvements and bugfixes
  *   - Bugfix: unsafe snprintf calls (rev. 1)
+ *   - Bugfix: online users data (-w) reading always failed (rev. 2)
  *
  * v1.8
  *
