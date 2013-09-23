@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-2
+ * Version     : 1.9-3
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -312,7 +312,7 @@ typedef struct g_handle {
 	uint32_t block_sz, flags;
 	mda buffer, w_buffer;
 	void *data;
-	off_t buffer_count;
+
 	void *last;
 	char s_buffer[PATH_MAX];
 	char file[PATH_MAX], mode[32];
@@ -360,6 +360,7 @@ typedef struct ___g_match_h {
 	mda lom;
 	g_op g_oper_ptr;
 	char data[5120];
+	char b_data[5120];
 } _g_match, *__g_match;
 
 typedef struct ___g_lom {
@@ -1819,6 +1820,7 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	char *ptr = (char*) pgm->data;
 
 	g_strncpy(ptr, buffer, a_i);
+	g_strncpy((char*) pgm->b_data, buffer, a_i);
 
 	off_t i = 0;
 
@@ -2322,6 +2324,8 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
 
 int g_load_lom(__g_handle hdl);
+int g_proc_sm(__g_handle hdl);
+int g_proc_mr(__g_handle hdl);
 int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 		uint32_t flags);
 
@@ -3454,7 +3458,7 @@ int rebuild(void *arg) {
 		return 3;
 	}
 
-	if (!g_act_1.buffer_count) {
+	if (!g_act_1.buffer.count) {
 		print_str(
 				"ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
 		return 4;
@@ -3585,7 +3589,7 @@ int d_write(char *arg) {
 
 	if (!(gfl & F_OPT_FORCE2) && !file_exists(datafile)
 			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
-			&& g_act_1.buffer_count) {
+			&& g_act_1.buffer.count) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: '%s': pruning exact data duplicates..\n", a_ptr);
 		}
@@ -3820,8 +3824,8 @@ int dirlog_check_dupe(void) {
 
 	off_t nrec = g_act_1.total_sz / g_act_1.block_sz;
 
-	if (g_act_1.buffer_count) {
-		nrec = g_act_1.buffer_count;
+	if (g_act_1.buffer.count) {
+		nrec = g_act_1.buffer.count;
 	}
 
 	if (gfl & F_OPT_VERBOSE) {
@@ -3858,7 +3862,7 @@ int dirlog_check_dupe(void) {
 
 		st1 = g_act_1.offset;
 
-		if (!g_act_1.buffer_count) {
+		if (!g_act_1.buffer.count) {
 			st2 = (off_t) ftello(g_act_1.fh);
 		} else {
 
@@ -3888,7 +3892,7 @@ int dirlog_check_dupe(void) {
 		}
 
 		g_act_1.offset = st1;
-		if (!g_act_1.buffer_count) {
+		if (!g_act_1.buffer.count) {
 			fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
 		} else {
 			g_act_1.buffer.r_pos = pmd_st1;
@@ -3906,7 +3910,7 @@ int dirlog_check_dupe(void) {
 
 int gh_rewind(__g_handle hdl) {
 	g_setjmp(0, "gh_rewind", NULL, NULL);
-	if (hdl->buffer_count) {
+	if (hdl->buffer.count) {
 		hdl->buffer.r_pos = hdl->buffer.objects;
 		hdl->buffer.pos = hdl->buffer.r_pos;
 		hdl->buffer.offset = 0;
@@ -4114,7 +4118,7 @@ int dirlog_check_records(void) {
 		return 2;
 	}
 
-	if (!g_act_1.buffer_count && (gfl & F_OPT_FIX)) {
+	if (!g_act_1.buffer.count && (gfl & F_OPT_FIX)) {
 		print_str(
 				"ERROR: internal buffering must be enabled when fixing, increase limit with --memlimit (see --help)\n");
 	}
@@ -4296,8 +4300,15 @@ int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback) {
 
 	buffer[0] = 0x0;
 
-	if (_gm->field && !hdl->g_proc1(d_ptr, _gm->field, buffer, 254)) {
-		mstr = buffer;
+	if (_gm->field) {
+		if (!hdl->g_proc1(d_ptr, _gm->field, buffer, 254)) {
+			mstr = buffer;
+		} else {
+			if (_gm->match != (char*) _gm->b_data) {
+				_gm->match = (char*) _gm->b_data;
+			}
+			mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
+		}
 	} else {
 		mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
 	}
@@ -4624,9 +4635,6 @@ int g_filter(__g_handle hdl, pmda md) {
 				r = 2;
 				break;
 			}
-			if (hdl->buffer_count) {
-				hdl->buffer_count--;
-			}
 			continue;
 		}
 		ptr = *((void**) ptr + j_offset);
@@ -4724,7 +4732,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	void *ptr;
 
 	char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8], *ns_ptr;
-	off_t c = 0, d = 0;
+	off_t c = 0;
 	int re_c;
 
 	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
@@ -4810,7 +4818,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_FORMAT_COMP)
 			&& !(g_act_1.flags & F_GH_ISONLINE)) {
 		print_str("STATS: %s: read %llu/%llu records\n", file,
-				(unsigned long long int) d, c);
+				(unsigned long long int) c,
+				!g_act_1.buffer.count ? c : g_act_1.buffer.count);
 	}
 
 	r_end:
@@ -5826,8 +5835,9 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 		}
 	}
 
-	if (mode != 1)
+	if (mode != 1) {
 		g_close(&g_act_1);
+	}
 
 	return ur;
 }
@@ -5881,8 +5891,9 @@ uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
 		g_free(dup2);
 	}
 
-	if (mode != 1)
+	if (mode != 1) {
 		g_close(&g_act_1);
+	}
 
 	return ur;
 }
@@ -6065,6 +6076,7 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 				return 12;
 			}
 		}
+		//hdl->buffer_count = p_ptr->count;
 	}
 
 	if (do_sort(&g_act_1, g_sort_field, g_sort_flags)) {
@@ -6360,7 +6372,7 @@ int gen_md_data_ref(__g_handle hdl, pmda md, off_t count) {
 			return -5;
 		}
 
-		hdl->buffer_count++;
+		//hdl->buffer_count++;
 	}
 
 	return 0;
@@ -6389,7 +6401,7 @@ int gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count) {
 				return -5;
 			}
 
-			hdl->buffer_count++;
+			//hdl->buffer_count++;
 		}
 		w_ptr += hdl->block_sz;
 	}
@@ -6444,17 +6456,16 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 		}
 		count = hdl->total_sz / hdl->block_sz;
 	} else {
+		if (!hdl->total_sz) {
+			return -3;
+		}
 		count = hdl->total_sz / hdl->block_sz;
 		hdl->data = malloc(count * hdl->block_sz);
 	}
 
-	if (!hdl->total_sz) {
-		return -3;
-	}
-
 	size_t b_read = 0;
 
-	hdl->buffer_count = 0;
+	//hdl->buffer_count = 0;
 
 	__g_mdref cb = NULL;
 
@@ -6486,7 +6497,7 @@ int load_data_md(pmda md, char *file, __g_handle hdl) {
 
 	g_setjmp(0, "load_data_md", NULL, NULL);
 
-	if (!hdl->buffer_count) {
+	if (!md->count) {
 		return -5;
 	}
 
@@ -6515,7 +6526,7 @@ int g_map_shm(__g_handle hdl, key_t ipc) {
 		if (((gfl & F_OPT_VERBOSE) && r != 1002) || (gfl & F_OPT_VERBOSE4)) {
 			print_str(
 					"ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d] [%d]\n",
-					MSG_DEF_SHM, (uint32_t) hdl->buffer_count,
+					MSG_DEF_SHM, (uint32_t) hdl->buffer.count,
 					(uint32_t) (hdl->total_sz / hdl->block_sz),
 					(uint32_t) hdl->total_sz, hdl->block_sz, r, errno);
 		}
@@ -6524,7 +6535,7 @@ int g_map_shm(__g_handle hdl, key_t ipc) {
 
 	if (gfl & F_OPT_VERBOSE2) {
 		print_str("NOTICE: %s: mapped %u records\n",
-		MSG_DEF_SHM, (uint32_t) hdl->buffer_count);
+		MSG_DEF_SHM, (uint32_t) hdl->buffer.count);
 	}
 
 	hdl->flags |= F_GH_ISONLINE;
@@ -6824,13 +6835,14 @@ int g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl) {
 	if (flags & F_DL_FOPEN_REWIND) {
 		gh_rewind(hdl);
 	}
-
+	g_setjmp(0, "g_fopen(2)", NULL, NULL);
 	if (!(gfl & F_OPT_NOBUFFER) && (flags & F_DL_FOPEN_BUFFER)
 			&& !(hdl->flags & F_GH_NOMEM)) {
 		if (!g_buffer_into_memory(file, hdl)) {
 			if (g_load_lom(hdl)) {
 				return 24;
 			}
+			g_setjmp(0, "g_fopen(3)", NULL, NULL);
 			if (!(flags & F_DL_FOPEN_FILE)) {
 				return 0;
 			}
@@ -6894,13 +6906,15 @@ int g_close(__g_handle hdl) {
 		hdl->fh = NULL;
 	}
 
-	if ((hdl->flags & F_GH_ISSHM)) {
-		g_shm_cleanup(hdl);
-	}
+	/*if ((hdl->flags & F_GH_ISSHM)) {
+	 g_shm_cleanup(hdl);
+	 }*/
 
-	if (hdl->buffer_count) {
-		hdl->offset = 0;
+	if (hdl->buffer.count) {
 		hdl->buffer.r_pos = hdl->buffer.objects;
+		hdl->buffer.pos = hdl->buffer.r_pos;
+		hdl->buffer.offset = 0;
+		hdl->offset = 0;
 		if ((hdl->flags & F_GH_ONSHM)) {
 			md_g_free(&hdl->buffer);
 			md_g_free(&hdl->w_buffer);
@@ -6949,7 +6963,7 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 }
 
 void *g_read(void *buffer, __g_handle hdl, size_t size) {
-	if (hdl->buffer_count) {
+	if (hdl->buffer.count) {
 		hdl->buffer.pos = hdl->buffer.r_pos;
 		if (!hdl->buffer.pos) {
 			return NULL;
@@ -8017,7 +8031,9 @@ int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) 
 	size_t vb = 0;
 
 	void *dptr_off = hdl->g_proc2(ptr->ptr, field, &vb);
+
 	g_setjmp(0, "g_get_lom_g_t_ptr(2)", NULL, NULL);
+
 	if (!vb) {
 		errno = 0;
 		uint32_t t_f = 0;
@@ -8335,6 +8351,36 @@ int get_opr(char *in) {
 	} else {
 		return 0;
 	}
+}
+
+int g_proc_mr(__g_handle hdl) {
+	int r;
+
+	if ((r = g_load_lom(hdl))) {
+		return r;
+	}
+
+	/*if ((r = g_proc_sm(hdl))) {
+	 return r;
+	 }*/
+
+	return 0;
+}
+
+int g_proc_sm(__g_handle hdl) {
+
+	p_md_obj ptr = md_first(&_match_rr);
+	__g_match _gm;
+
+	while (ptr) {
+		_gm = (__g_match) ptr->ptr;
+		if ( _gm->field ) {
+
+		}
+		ptr = ptr->next;
+	}
+
+	return 0;
 }
 
 int g_load_lom(__g_handle hdl) {
