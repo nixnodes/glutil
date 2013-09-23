@@ -70,7 +70,7 @@ BASEDIR=$(dirname $0)
 
 echo "$1" | grep -w -i "$INPUT_SKIP" > /dev/null && exit 1
 
-QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r "s/[\\.\\_\\-\\(\\)]/\+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+QUERY=$(echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r 's/[\\.\\_\\-\\(\\)]/\+/g' | sed -r 's/^[+ ]+//'| sed -r 's/[+ ]+$//')
 
 [ -z "$QUERY" ] && exit 1
 
