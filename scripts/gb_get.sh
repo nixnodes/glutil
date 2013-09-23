@@ -42,11 +42,11 @@ BASEDIR=$(dirname $0)
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
-echo "$1" | grep -P -i "$INPUT_SKIP" > /dev/null && exit 1
+echo "$1" | egrep -q -i "$INPUT_SKIP" && exit 1
 
 [ -z "$API_KEY" ] && echo "ERROR: set API_KEY first" && exit 1
 
-QUERY=$(echo $1 | sed -r "s/($INPUT_CLEAN_REGEX)//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
+QUERY=`echo "$1" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[._-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
 
 
 FIELD="reviews"
