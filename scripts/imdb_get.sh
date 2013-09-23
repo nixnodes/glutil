@@ -6,7 +6,8 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires glutil-1.6 or greater
+## Requires: -glutil-1.6 or above
+##			 -libxml2 v2.7.7 or above 
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
@@ -77,7 +78,7 @@ BASEDIR=`dirname $0`
 
 echo "$1" | egrep -q -i "$INPUT_SKIP" && exit 1
 
-QUERY=`echo "$1" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[._-\(\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//"`
+QUERY=`echo "$1" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[._-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
 
 [ -z "$QUERY" ] && exit 1
 
