@@ -1,10 +1,10 @@
 #!/usr/local/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:getscore:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) score"
+#@MACRO:getscore-f:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) score"
 #
 ## Retrieves game info using giantbomb API (XML)
 #
-## Usage (macro): ./dirupdate -m getscore --arg1=/path/to/games
+## Usage (macro): ./dirupdate -m getscore-f --arg1=/path/to/games
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where dirupdate is
  located
