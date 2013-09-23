@@ -21,7 +21,7 @@
 MINRATE=512000
 #
 # Maximum time a transfer can be under the speed limit, before killing it (seconds)
-MAXSLOWTIME=7
+MAXSLOWTIME=8
 #
 ## Enforce only after transfer is atleast this amount of seconds old
 WAIT=3
@@ -43,7 +43,7 @@ EXEMPTSITEOPS=1
 #
 ## Enforce only on files matching this expression
 #
-FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi)$"
+FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi|mp(e|)g|mp3)$"
 #
 ## Do NOT enforce paths matching this expression
 #
