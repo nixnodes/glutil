@@ -1,6 +1,6 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec "{m:spec1} "$(basename '{arg}')" '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'"
+#@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec "{m:spec1} "`basename '{arg}'`" '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'"
 #@MACRO:gamescore-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -exec "{m:spec1} '{basedir}' '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
 ## Retrieves game info using giantbomb API (XML)
@@ -15,8 +15,8 @@ CURL_FLAGS="--silent"
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
 
-! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
-! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
+! [ -f "$CURL" ] && CURL=`whereis curl | awk '{print $2}'`
+! [ -f "$XMLLINT" ] && XMLLINT=`whereis xmllint | awk '{print $2}'`
 
 [ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
 [ -z "$CURL" ] && echo "Could not find curl" && exit 1
@@ -27,7 +27,7 @@ BURL="http://www.giantbomb.com/"
 URL="$BURL""api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY=""
+API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
 INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
@@ -38,7 +38,7 @@ INPUT_CLEAN_REGEX="([._-\(\)](MACOSX|EUR|Creators[._-\(\)]Edition|PATCH|DATAPACK
 #
 ############################[ END OPTIONS ]##############################
 
-BASEDIR=$(dirname $0)
+BASEDIR=`dirname $0`
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
@@ -55,13 +55,13 @@ FIELD="reviews"
 
 APIKEY_STR="?api_key=$API_KEY"
 
-G_ID=$($CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -)
+G_ID=`$CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -`
 
 #echo "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY"
 
 [ -z "$G_ID" ] && echo "ERROR: '$QUERY': Failed getting game ID" && exit 1
 
-RES=$($CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//')
+RES=`$CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//'`
 
 [ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result score from $BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
@@ -71,10 +71,10 @@ echo "SCORE: '$QUERY': $RES"
 
 if [ $UPDATE_GAMELOG -eq 1 ]; then
 	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" 2 15 9 6
-	GLR_E=$(echo $4 | sed 's/\//\\\//g')	    
-	DIR_E=$(echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//")
+	GLR_E=`echo $4 | sed 's/\//\\\\\//g'`	   
+	DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
 	$2 -k --iregex "$DIR_E" --imatchq > /dev/null || $2 -f -e game --match "$DIR_E" > /dev/null
-	echo -en "dir $DIR_E\ntime $(date +%s)\nscore $RES\n\n" > "/tmp/glutil.gg.$$.tmp"
+	echo -en "dir $DIR_E\ntime `date +%s`\nscore $RES\n\n" > "/tmp/glutil.gg.$$.tmp"
 	$2 -z game --nobackup --silent < "/tmp/glutil.gg.$$.tmp" || echo "ERROR: failed writing to gamelog!!"
 	rm /tmp/glutil.gg.$$.tmp
 fi
