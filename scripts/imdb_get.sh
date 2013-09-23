@@ -102,7 +102,7 @@ cad() {
 }
 
 if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-	s_q=`echo $QUERY | sed 's/\+/\\\0/g'`
+	s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
 	cad $2 "--iregexi" "dir,$s_q" "$3"
 fi
 
