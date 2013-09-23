@@ -119,7 +119,7 @@ KILLED=0
 
 
 [ $DIFFT -gt $WAIT ] && [ $DRATE -lt $MINRATE ] && SLOW=1 && [ $VERBOSE -gt 0 ] && 
-        O="[`date "+%T %D"`] WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]\n"  
+        echo "[`date "+%T %D"`] WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]"
 
 if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 	MT1=`stat -c %Y "/tmp/du-ks/$4"` 
