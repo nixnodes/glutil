@@ -5,6 +5,7 @@
  *   - Various improvements and bugfixes
  *   - Bugfix: unsafe snprintf calls (rev. 1)
  *   - Bugfix: online users data (-w) reading always failed (rev. 2)
+ *   - Bugfix: field arguments to string matches colliding with match param (rev. 3)
  *
  * v1.8
  *
