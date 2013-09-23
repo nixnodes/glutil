@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-3
+ * Version     : 1.9-4
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -311,9 +311,8 @@ typedef struct g_handle {
 	off_t rw;
 	uint32_t block_sz, flags;
 	mda buffer, w_buffer;
+	mda _match_rr;
 	void *data;
-
-	void *last;
 	char s_buffer[PATH_MAX];
 	char file[PATH_MAX], mode[32];
 	mode_t st_mode;
@@ -576,6 +575,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_SHMDESTROY			(a32 << 21)
 #define F_GH_SHMDESTONEXIT		(a32 << 22)
 #define F_GH_FROMSTDIN			(a32 << 23)
+#define F_GH_HASLOM				(a32 << 24)
+#define F_GH_HASMATCHES			(a32 << 25)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -1874,7 +1875,7 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 		return (a32 << 28);
 	}
 
-	md_init(&_lom_strings, 32);
+	//md_init(&_lom_strings, 32);
 
 	size_t a_i = strlen(buffer);
 
@@ -1884,11 +1885,11 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 
 	a_i > 8190 ? a_i = 8190 : a_i;
 
-	__lom_s_h lsh = md_alloc(&_lom_strings, sizeof(_lom_s_h));
+	/*__lom_s_h lsh = md_alloc(&_lom_strings, sizeof(_lom_s_h));
 
-	if (!lsh) {
-		return (a32 << 29);
-	}
+	 if (!lsh) {
+	 return (a32 << 29);
+	 }*/
 
 	__g_match pgm = g_global_register_match();
 
@@ -1896,9 +1897,9 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 		return (a32 << 25);
 	}
 
-	lsh->m_ref = pgm;
-	lsh->flags |= flags;
-	pgm->flags |= flags;
+	/*lsh->m_ref = pgm;
+	 lsh->flags |= flags;*/
+	pgm->flags |= flags | F_GM_ISLOM;
 	if (pgm->flags & F_GM_IMATCH) {
 		pgm->g_oper_ptr = g_oper_or;
 	} else {
@@ -1911,7 +1912,7 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 	_match_rr_l.ptr = (void *) pgm;
 	_match_rr_l.flags = F_LM_LOM;
 
-	g_cpg(arg, lsh->string, m, a_i);
+	g_cpg(arg, pgm->data, m, a_i);
 
 	return 0;
 }
@@ -2324,7 +2325,7 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
 
 int g_load_lom(__g_handle hdl);
-int g_proc_sm(__g_handle hdl);
+
 int g_proc_mr(__g_handle hdl);
 int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 		uint32_t flags);
@@ -2740,6 +2741,7 @@ int g_cleanup(__g_handle hdl) {
 
 	r += md_g_free(&hdl->buffer);
 	r += md_g_free(&hdl->w_buffer);
+	r += md_g_free(&hdl->_match_rr);
 	if (!(hdl->flags & F_GH_ISSHM) && hdl->data) {
 		g_free(hdl->data);
 	} else if ((hdl->flags & F_GH_ISSHM) && hdl->data) {
@@ -3225,6 +3227,7 @@ int g_print_info(void) {
 		print_str(" uint16_t         %d      \n", (sizeof(uint16_t)));
 		print_str(" uint32_t         %d      \n", (sizeof(uint32_t)));
 		print_str(" uint64_t         %d      \n", (sizeof(uint64_t)));
+		print_str(" size_t           %d      \n", (sizeof(size_t)));
 		print_str(MSG_NL);
 		print_str(" void *           %d      \n", PTRSZ);
 		print_str(MSG_NL);
@@ -4507,7 +4510,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 		}
 	}
 
-	p_md_obj ptr = md_first(&_match_rr);
+	p_md_obj ptr = md_first(&hdl->_match_rr);
 	int r, r_p = 0;
 	__g_match _gm, _p_gm = NULL;
 
@@ -4610,6 +4613,8 @@ int g_filter(__g_handle hdl, pmda md) {
 	if (!((exec_str || (gfl & F_OPT_HASMATCH))) || !md->count) {
 		return 0;
 	}
+
+	g_proc_mr(hdl);
 
 	if (gfl & F_OPT_VERBOSE) {
 		print_str("NOTICE: %s: passing %llu records through filters..\n",
@@ -4902,6 +4907,8 @@ int rebuild_dirlog(void) {
 				g_act_1.mode, flags);
 		return errno;
 	}
+
+	g_proc_mr(&g_act_1);
 
 	if (gfl & F_OPT_FORCE) {
 		print_str("SCANNING: '%s'\n", SITEROOT);
@@ -6041,11 +6048,6 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 		return 1;
 	}
 
-	if (gfl & F_OPT_NOWRITE) {
-
-		return 0;
-	}
-
 	bzero(hdl->s_buffer, PATH_MAX - 1);
 	snprintf(hdl->s_buffer, PATH_MAX - 1, "%s.%d.dtm", file, getpid());
 	snprintf(buffer, PATH_MAX - 1, "%s.bk", file);
@@ -6826,7 +6828,7 @@ int g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl) {
 		if (g_map_shm(hdl, SHM_IPC)) {
 			return 12;
 		}
-		if (g_load_lom(hdl)) {
+		if (g_proc_mr(hdl)) {
 			return 14;
 		}
 		return 0;
@@ -6835,14 +6837,14 @@ int g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl) {
 	if (flags & F_DL_FOPEN_REWIND) {
 		gh_rewind(hdl);
 	}
-	g_setjmp(0, "g_fopen(2)", NULL, NULL);
+
 	if (!(gfl & F_OPT_NOBUFFER) && (flags & F_DL_FOPEN_BUFFER)
 			&& !(hdl->flags & F_GH_NOMEM)) {
 		if (!g_buffer_into_memory(file, hdl)) {
-			if (g_load_lom(hdl)) {
+			if (g_proc_mr(hdl)) {
 				return 24;
 			}
-			g_setjmp(0, "g_fopen(3)", NULL, NULL);
+
 			if (!(flags & F_DL_FOPEN_FILE)) {
 				return 0;
 			}
@@ -6888,6 +6890,8 @@ int g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl) {
 		print_str(MSG_GEN_NODFILE, file, "not available");
 		return 1;
 	}
+
+	g_proc_mr(hdl);
 
 	hdl->fh = fd;
 
@@ -7924,14 +7928,14 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 	int (*g_s_ex)(pmda, size_t, uint32_t, void *, void *) = NULL;
 	pmda m_ptr;
 
+	if (!hdl) {
+			return 1;
+		}
+
 	if (!(hdl->flags & F_GH_FFBUFFER)) {
 		m_ptr = &hdl->buffer;
 	} else {
 		m_ptr = &hdl->w_buffer;
-	}
-
-	if (!hdl) {
-		return 1;
 	}
 
 	if (!hdl->g_proc2) {
@@ -7951,19 +7955,15 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 		return 3;
 	}
 
-	p_md_obj ptr = md_first(m_ptr);
+	/*p_md_obj ptr = md_first(m_ptr);
 
 	if (!ptr) {
 		return 11;
-	}
+	}*/
 
 	size_t vb = 0;
 
-	void *dptr_off = hdl->g_proc2(ptr->ptr, field, &vb);
-
-	if (!dptr_off) {
-		return 12;
-	}
+	size_t off = (size_t)hdl->g_proc2(NULL, field, &vb);
 
 	if (!vb) {
 		return 13;
@@ -8003,7 +8003,6 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 		break;
 	}
 
-	size_t off = (size_t) (dptr_off - ptr->ptr);
 
 	return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);
 
@@ -8016,21 +8015,21 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 
 int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) {
 	g_setjmp(0, "g_get_lom_g_t_ptr", NULL, NULL);
-	pmda m_ptr;
+	/*pmda m_ptr;
 	if (!(hdl->flags & F_GH_FFBUFFER)) {
-		m_ptr = &hdl->buffer;
-	} else {
-		m_ptr = &hdl->w_buffer;
-	}
-	p_md_obj ptr = md_first(m_ptr);
+	 m_ptr = &hdl->buffer;
+	 } else {
+	 m_ptr = &hdl->w_buffer;
+	 }
+	 p_md_obj ptr = md_first(m_ptr);
 
-	if (!ptr) {
-		return 1;
-	}
+	 if (!ptr) {
+	 return 600;
+	 }*/
 
 	size_t vb = 0;
 
-	void *dptr_off = hdl->g_proc2(ptr->ptr, field, &vb);
+	size_t off = (size_t) hdl->g_proc2(NULL, field, &vb);
 
 	g_setjmp(0, "g_get_lom_g_t_ptr(2)", NULL, NULL);
 
@@ -8080,8 +8079,8 @@ int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) 
 		return 0;
 	}
 	g_setjmp(0, "g_get_lom_g_t_ptr(3)", NULL, NULL);
-	if (!dptr_off) {
-		return 2;
+	if (off > hdl->block_sz) {
+		return 601;
 	}
 
 	switch (vb) {
@@ -8141,11 +8140,9 @@ int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) 
 		lom->flags |= F_LOM_INT;
 		break;
 	default:
-		return 8;
+		return 608;
 		break;
 	}
-
-	size_t off = (size_t) (dptr_off - ptr->ptr);
 
 	switch (flags & F_GLT_DIRECT) {
 	case F_GLT_LEFT:
@@ -8177,7 +8174,7 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 	int r = 0;
 
 	if ((r = g_get_lom_g_t_ptr(hdl, left, lom, F_GLT_LEFT))) {
-		rt = 3;
+		rt = r;
 		goto end;
 	}
 
@@ -8353,31 +8350,63 @@ int get_opr(char *in) {
 	}
 }
 
-int g_proc_mr(__g_handle hdl) {
-	int r;
-
-	if ((r = g_load_lom(hdl))) {
-		return r;
+int md_copy(pmda source, pmda dest, size_t block_sz) {
+	g_setjmp(0, "md_copy", NULL, NULL);
+	if (!source || !dest) {
+		return 1;
 	}
 
-	/*if ((r = g_proc_sm(hdl))) {
-	 return r;
-	 }*/
+	if (dest->count) {
+		return 2;
+	}
+	int ret = 0;
+	p_md_obj ptr = md_first(source);
+	void *d_ptr;
+
+	md_init(dest, source->count);
+
+	while (ptr) {
+		d_ptr = md_alloc(dest, block_sz);
+		if (!d_ptr) {
+			ret = 10;
+			break;
+		}
+		g_memcpy(d_ptr, ptr->ptr, block_sz);
+		ptr = ptr->next;
+	}
+
+	if (ret) {
+		md_g_free(dest);
+	}
+
+	if (source->offset != dest->offset) {
+		return 3;
+	}
 
 	return 0;
 }
 
-int g_proc_sm(__g_handle hdl) {
+int g_proc_mr(__g_handle hdl) {
+	g_setjmp(0, "g_proc_mr", NULL, NULL);
+	int r;
 
-	p_md_obj ptr = md_first(&_match_rr);
-	__g_match _gm;
-
-	while (ptr) {
-		_gm = (__g_match) ptr->ptr;
-		if ( _gm->field ) {
-
+	if (!(hdl->flags & F_GH_HASMATCHES)) {
+		if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match)))) {
+			print_str("ERROR: %s: could not copy matches to handle\n",
+					hdl->file);
+			return 2000;
 		}
-		ptr = ptr->next;
+		if (hdl->_match_rr.offset && (gfl & F_OPT_VERBOSE4)) {
+			print_str("NOTICE: %s: commit %llu matches to handle\n", hdl->file,
+					(ulint64_t) hdl->_match_rr.offset);
+		}
+		hdl->flags |= F_GH_HASMATCHES;
+	}
+
+	if ((gfl & F_OPT_HAS_G_LOM)) {
+		if ((r = g_load_lom(hdl))) {
+			return r;
+		}
 	}
 
 	return 0;
@@ -8385,41 +8414,39 @@ int g_proc_sm(__g_handle hdl) {
 
 int g_load_lom(__g_handle hdl) {
 	g_setjmp(0, "g_load_lom", NULL, NULL);
-	if ((gfl & F_OPT_HASLOM) || !(gfl & F_OPT_HAS_G_LOM)) {
+
+	if ((hdl->flags & F_GH_HASLOM)) {
 		return 0;
 	}
 
-	gfl |= F_OPT_HASLOM;
-
 	int rt = 0;
 
-	p_md_obj ptr = md_first(&_lom_strings);
-	__lom_s_h lsh_ptr;
+	p_md_obj ptr = md_first(&hdl->_match_rr);
+	__g_match _m_ptr;
 	int r, ret, c = 0;
 	while (ptr) {
-		lsh_ptr = (__lom_s_h) ptr->ptr;
-		if (!lsh_ptr->m_ref) {
-			rt = 5;
-			break;
+		_m_ptr = (__g_match) ptr->ptr;
+		if ( _m_ptr->flags & F_GM_ISLOM ) {
+			if ((r = g_process_lom_string(hdl, _m_ptr->data, _m_ptr, &ret,
+									_m_ptr->flags))) {
+				print_str("ERROR: %s: [%d] [%d]: could not load LOM string\n",
+						hdl->file, r, ret);
+				rt = 1;
+				break;
+			}
+			c++;
 		}
-		//lsh_ptr->m_ref->g_oper_ptr = lsh_ptr->g_oper_ptr;
-		if ((r = g_process_lom_string(hdl, lsh_ptr->string, lsh_ptr->m_ref, &ret,
-								lsh_ptr->flags))) {
-			printf("ERROR: %s: [%d] [%d]: could not load LOM string\n",
-					hdl->file, r, ret);
-			rt = 1;
-			break;
-		}
-		c++;
 		ptr = ptr->next;
 	}
 
-	if (rt) {
-		gfl ^= F_OPT_HASLOM;
-	} else {
+	if (!rt) {
+		hdl->flags |= F_GH_HASLOM;
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s: loaded %d LOM matches\n", hdl->file, c);
 		}
+	} else {
+		print_str("ERROR: %s: [%d] LOM specified, but none was loaded\n",
+				hdl->file, rt);
 	}
 
 	return rt;
@@ -8551,10 +8578,6 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 }
 
 void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
-
 	struct dirlog *data = (struct dirlog *) arg;
 
 	if (!strcmp(match, "time")) {
@@ -8580,9 +8603,6 @@ void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_nukelog(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	struct nukelog *data = (struct nukelog *) arg;
 
@@ -8603,9 +8623,6 @@ void *ref_to_val_ptr_nukelog(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	struct dupefile *data = (struct dupefile *) arg;
 
@@ -8617,10 +8634,6 @@ void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_lastonlog(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
-
 	struct lastonlog *data = (struct lastonlog *) arg;
 
 	if (!strcmp(match, "logon")) {
@@ -8640,9 +8653,6 @@ void *ref_to_val_ptr_lastonlog(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_oneliners(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	struct oneliner *data = (struct oneliner *) arg;
 
@@ -8654,9 +8664,6 @@ void *ref_to_val_ptr_oneliners(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	struct ONLINE *data = (struct ONLINE *) arg;
 
@@ -8684,9 +8691,6 @@ void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	__d_imdb data = (__d_imdb) arg;
 
@@ -8711,9 +8715,6 @@ void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	__d_game data = (__d_game) arg;
 
@@ -8729,9 +8730,6 @@ void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
 
 	__d_tvrage data = (__d_tvrage) arg;
 
@@ -8759,13 +8757,9 @@ void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 }
 
 void *ref_to_val_ptr_gen1(void *arg, char *match, size_t *output) {
-	if (!output) {
-		return NULL;
-	}
-
 	__d_generic_s2044 data = (__d_generic_s2044) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strcmp(match, "i32")) {
 		*output = sizeof(data->i32);
 		return &data->i32;
 	}
