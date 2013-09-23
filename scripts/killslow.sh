@@ -43,7 +43,7 @@ EXEMPTSITEOPS=1
 #
 ## Enforce only on files matching this expression
 #
-FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi)$"
+FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi|mp(e|)g|mp3)$"
 #
 ## Do NOT enforce paths matching this expression
 #
