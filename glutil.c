@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-5
+ * Version     : 1.9-6
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2360,28 +2360,31 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 0, "or", opt_g_operator_or, (void*) 0, "--rev", opt_g_reverse,
-		(void*) 0, "--lom", opt_g_lom_match, (void*) 1, "--ilom",
+		(void*) 0, "lom", opt_g_lom_match, (void*) 1, "--lom", opt_g_lom_match,
+		(void*) 1, "ilom", opt_g_lom_imatch, (void*) 1, "--ilom",
 		opt_g_lom_imatch, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
-		"--sort", opt_g_sort, (void*) 1, "-h", opt_g_dump_tv, (void*) 0, "-k",
-		opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly, (void*) 0,
-		"--imatchq", opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq,
-		(void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z", opt_g_write,
-		(void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev", opt_g_xdev,
-		(void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk,
-		(void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file", opt_g_udc_f,
-		(void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir,
-		(void*) 0, "--dir", opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max,
-		(void*) 1, "--ghost", opt_check_ghost, (void*) 0, "-q", opt_g_dg,
-		(void*) 1, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
-		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
-		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
-		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
-		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
-		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
-		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
+		"sort", opt_g_sort, (void*) 1, "--sort", opt_g_sort, (void*) 1, "-h",
+		opt_g_dump_tv, (void*) 0, "-k", opt_g_dump_game, (void*) 0, "--cdir",
+		opt_g_cdironly, (void*) 0, "--imatchq", opt_g_imatchq, (void*) 0,
+		"--matchq", opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0,
+		"-z", opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1,
+		"-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0,
+		"-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0,
+		"-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0,
+		"-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
+		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
+		(void*) 0, "-q", opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1,
+		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
+		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
+		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
+		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
+		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
+		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
+		"--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
-		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
+		opt_g_imatch, (void*) 1, "imatch", opt_g_imatch, (void*) 1, "match",
+		opt_g_match, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
 		opt_g_ex_fork, (void*) 1, "-vvvvv", opt_g_verbose5, (void*) 0, "-vvvv",
 		opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
 		opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
@@ -2397,8 +2400,10 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
 		"--dupefile", opt_dupefile, (void*) 1, "--nowbuffer", opt_g_buffering,
 		(void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary", opt_binary,
-		(void*) 0, "--iregexi", opt_g_iregexi, (void*) 1, "--iregex",
-		opt_g_iregex, (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "--regex",
+		(void*) 0, "iregexi", opt_g_iregexi, (void*) 1, "--iregexi",
+		opt_g_iregexi, (void*) 1, "iregex", opt_g_iregex, (void*) 1, "--iregex",
+		opt_g_iregex, (void*) 1, "regexi", opt_g_regexi, (void*) 1, "--regexi",
+		opt_g_regexi, (void*) 1, "regex", opt_g_regex, (void*) 1, "--regex",
 		opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
 		opt_compact_output_formatting, (void*) 0, "--batch",
 		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
@@ -3702,6 +3707,7 @@ int g_dump_ug(char *ug) {
 	ret.hdl.flags |= F_GH_ISFSX;
 	ret.hdl.g_proc1 = ref_to_val_x;
 	ret.hdl.g_proc2 = ref_to_val_ptr_dummy;
+	g_proc_mr(&ret.hdl);
 
 	snprintf(buffer, PATH_MAX, "%s/%s/%s", GLROOT, FTPDATA, ug);
 
@@ -3723,6 +3729,7 @@ int g_dump_gen(char *root) {
 	ret.hdl.flags |= F_GH_ISFSX;
 	ret.hdl.g_proc1 = ref_to_val_x;
 	ret.hdl.g_proc2 = ref_to_val_ptr_dummy;
+	g_proc_mr(&ret.hdl);
 
 	if (!(ret.flags & F_PD_MATCHTYPES)) {
 		ret.flags |= F_PD_MATCHTYPES;
@@ -4708,7 +4715,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	int r;
 	uint32_t i_flags = 0;
-	uint64_t s_gfl = 0;
 
 	if (gfl & F_OPT_SORT) {
 		if ((gfl & F_OPT_NOBUFFER)) {
@@ -4745,20 +4751,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			goto r_end;
 		}
 
-		if (gfl & F_OPT_HAS_G_REGEX) {
-			gfl ^= F_OPT_HAS_G_REGEX;
-			s_gfl |= F_OPT_HAS_G_REGEX;
-		}
-
-		if (gfl & F_OPT_HAS_G_MATCH) {
-			gfl ^= F_OPT_HAS_G_MATCH;
-			s_gfl |= F_OPT_HAS_G_MATCH;
-		}
-
-		if (gfl & F_OPT_HAS_G_LOM) {
-			gfl ^= F_OPT_HAS_G_LOM;
-			s_gfl |= F_OPT_HAS_G_LOM;
-		}
 		if (g_act_1.j_offset == 2) {
 			g_act_1.buffer.r_pos = md_last(&g_act_1.buffer);
 		} else {
@@ -4860,8 +4852,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	}
 
 	r_end:
-
-	gfl |= s_gfl;
 
 	g_free(buffer);
 
@@ -7587,13 +7577,19 @@ int g_l_fmode(char *path, size_t max_size, char *output) {
 	char buffer[PATH_MAX + 1];
 	snprintf(buffer, PATH_MAX, "%s/%s", GLROOT, path);
 	remove_repeating_chars(buffer, 0x2F);
-	lstat(buffer, &st);
-	snprintf(output, max_size, "%d",
-			(st.st_mode & S_IFMT) == S_IFREG ? 1 :
-			(st.st_mode & S_IFMT) == S_IFDIR ? 2 :
-			(st.st_mode & S_IFMT) == S_IFLNK ? 3 :
-			(st.st_mode & S_IFMT) == S_IFBLK ? 4 :
-			(st.st_mode & S_IFMT) == S_IFIFO ? 5 : 0);
+	if (lstat(buffer, &st)) {
+		return 1;
+	}
+	snprintf(output, max_size, "%d", IFTODT(st.st_mode));
+	return 0;
+}
+
+int g_l_fmode_n(char *path, size_t max_size, char *output) {
+	struct stat st = { 0 };
+	if (lstat(path, &st)) {
+		return 1;
+	}
+	snprintf(output, max_size, "%d", IFTODT(st.st_mode));
 	return 0;
 }
 
@@ -7628,6 +7624,73 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
+int rtv_q(void *query, char *output, size_t max_size) {
+	mda md_s = { 0 };
+
+	md_init(&md_s, 2);
+	p_md_obj ptr;
+
+	if (split_string(query, 0x40, &md_s) != 2) {
+		return 1;
+	}
+
+	ptr = md_s.objects;
+
+	char *rtv_l = g_dgetf((char*) ptr->ptr);
+
+	if (!rtv_l) {
+		return 1;
+	}
+
+	ptr = ptr->next;
+
+	int r = 0;
+	char *rtv_q = (char*) ptr->ptr;
+
+	if (!strncmp(rtv_q, "size", 4)) {
+		snprintf(output, max_size, "%llu", (ulint64_t) get_file_size(rtv_l));
+	} else if (!strncmp(rtv_q, "count", 5)) {
+		_g_handle hdl = { 0 };
+		size_t rtv_ll = strlen(rtv_l);
+
+		g_strncpy(hdl.file, rtv_l,
+				rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
+		if (determine_datatype(&hdl)) {
+			snprintf(output, max_size, "{'count' - could not get data type}");
+			r = 1;
+			goto end;
+		}
+
+		snprintf(output, max_size, "%llu",
+				(ulint64_t) get_file_size(rtv_l) / (ulint64_t) hdl.block_sz);
+	} else if (!strncmp(rtv_q, "corrupt", 7)) {
+		_g_handle hdl = { 0 };
+		size_t rtv_ll = strlen(rtv_l);
+
+		g_strncpy(hdl.file, rtv_l,
+				rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
+		if (determine_datatype(&hdl)) {
+			snprintf(output, max_size, "{'corrupt' - could not get data type}");
+			r = 1;
+			goto end;
+		}
+
+		snprintf(output, max_size, "%llu",
+				(ulint64_t) get_file_size(rtv_l) % (ulint64_t) hdl.block_sz);
+	} else if (!strncmp(rtv_q, "mode", 4)) {
+		return g_l_fmode_n(rtv_l, max_size, output);
+	} else {
+
+		return 1;
+	}
+
+	end:
+
+	md_g_free(&md_s);
+
+	return r;
+}
+
 int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	if (!strcmp(match, "exe")) {
 		if (self_get_path(output)) {
@@ -7653,24 +7716,24 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		if (NUKESTR) {
 			snprintf(output, max_size, NUKESTR, "");
 		}
-	} else if (!strcmp(match, "procid")) {
+	} else if (!strncmp(match, "procid", 6)) {
 		snprintf(output, max_size, "%d", getpid());
-	} else if (!strcmp(match, "ipc")) {
+	} else if (!strncmp(match, "ipc", 3)) {
 		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
-	} else if (!strcmp(match, "spec1")) {
+	} else if (!strncmp(match, "spec1", 5)) {
 		snprintf(output, max_size, "%s", b_spec1);
-	} else if (!strcmp(match, "usroot")) {
-		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
-		DEFPATH_USERS);
+	} else if (!strncmp(match, "usroot", 6)) {
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_USERS);
 		remove_repeating_chars(output, 0x2F);
-	} else if (!strcmp(match, "logroot")) {
-		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
-		DEFPATH_LOGS);
+	} else if (!strncmp(match, "logroot", 7)) {
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
-	} else if (!strcmp(match, "memlimit")) {
+	} else if (!strncmp(match, "memlimit", 8)) {
 		snprintf(output, max_size, "%llu", db_max_size);
-	} else if (!strcmp(match, "glconf")) {
+	} else if (!strncmp(match, "glconf", 6)) {
 		snprintf(output, max_size, "%s", GLCONF);
+	} else if (!strncmp(match, "q:", 2)) {
+		return rtv_q(&match[2], output, max_size);
 	} else {
 		return 1;
 	}
@@ -7683,31 +7746,16 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 	}
 
 	if (arg && !strcmp(match, "size")) {
-		struct stat st;
-
-		if (stat(arg, &st)) {
-			return 1;
-		}
-		snprintf(output, max_size, "%llu", (long long unsigned int) st.st_size);
+		snprintf(output, max_size, "%llu", (ulint64_t) get_file_size(arg));
 	} else if (arg && !strcmp(match, "mode")) {
-		struct stat st;
-
-		if (lstat(arg, &st)) {
-			return 1;
-		}
-		snprintf(output, max_size, "%d",
-				(st.st_mode & S_IFMT) == S_IFREG ? 1 :
-				(st.st_mode & S_IFMT) == S_IFDIR ? 2 :
-				(st.st_mode & S_IFMT) == S_IFLNK ? 3 :
-				(st.st_mode & S_IFMT) == S_IFBLK ? 4 :
-				(st.st_mode & S_IFMT) == S_IFIFO ? 5 : 0);
-	} else if (arg && !strncmp(match, "c:", 2)) {
-		return g_rtval_ex(arg, &match[2], max_size, output,
-		F_CFGV_BUILD_FULL_STRING);
+		return g_l_fmode_n(arg, max_size, output);
 	} else if (arg && !strcmp(match, "arg")) {
 		snprintf(output, max_size, "%s", (char*) arg);
 	} else if (arg && !strcmp(match, "path")) {
 		snprintf(output, max_size, "%s", (char*) arg);
+	} else if (arg && !strncmp(match, "c:", 2)) {
+		return g_rtval_ex(arg, &match[2], max_size, output,
+		F_CFGV_BUILD_FULL_STRING);
 	} else {
 		return 1;
 	}
@@ -8846,7 +8894,7 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->uptime);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size, output);
+		return g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8889,7 +8937,7 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "mult")) {
 		snprintf(output, max_size, "%d", (int) data->mult);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size, output);
+		return g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -8916,7 +8964,7 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timeup);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->filename, max_size, output);
+		return g_l_fmode(data->filename, max_size, output);
 	} else {
 		return 1;
 	}
@@ -9114,7 +9162,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "year")) {
 		snprintf(output, max_size, "%s", data->year);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size, output);
+		return g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -9141,7 +9189,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "time")) {
 		snprintf(output, max_size, "%u", data->timestamp);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size, output);
+		return g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
@@ -9192,7 +9240,7 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strcmp(match, "genres")) {
 		snprintf(output, max_size, "%s", data->genres);
 	} else if (!strcmp(match, "mode")) {
-		g_l_fmode(data->dirname, max_size, output);
+		return g_l_fmode(data->dirname, max_size, output);
 	} else {
 		return 1;
 	}
