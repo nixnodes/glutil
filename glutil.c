@@ -7677,6 +7677,19 @@ int rtv_q(void *query, char *output, size_t max_size) {
 
 		snprintf(output, max_size, "%llu",
 				(ulint64_t) get_file_size(rtv_l) % (ulint64_t) hdl.block_sz);
+	} else if (!strncmp(rtv_q, "bsize", 5)) {
+		_g_handle hdl = { 0 };
+		size_t rtv_ll = strlen(rtv_l);
+
+		g_strncpy(hdl.file, rtv_l,
+				rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
+		if (determine_datatype(&hdl)) {
+			snprintf(output, max_size, "{'bsize' - could not get data type}");
+			r = 1;
+			goto end;
+		}
+
+		snprintf(output, max_size, "%u", (uint32_t) hdl.block_sz);
 	} else if (!strncmp(rtv_q, "mode", 4)) {
 		return g_l_fmode_n(rtv_l, max_size, output);
 	} else {
