@@ -10,6 +10,8 @@
  *   - Each open log handle now holds it's own match instruction set (rev. 4)
  *   - Bugfix: GENERIC-1 log changed field name (was 'time', should have been 'i32') (rev. 4)
  *   - Processing records in reverse order (--rev) (rev. 5)
+ *   - Bugfix: matching broken with -x (rev. 6)
+ *   - Misc addons to -exec field vars (rev. 6)
  *
  * v1.8
  *
