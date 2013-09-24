@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-4
+ * Version     : 1.9-5
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -152,7 +152,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -323,6 +323,7 @@ typedef struct g_handle {
 	int (*g_proc1)(void *, char *, char *, size_t);
 	void *(*g_proc2)(void *, char *, size_t*);
 	int (*g_proc3)(void *, char *);
+	size_t j_offset;
 	int d_memb;
 } _g_handle, *__g_handle;
 
@@ -538,6 +539,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_IFIRSTHIT			(a64 << 51)
 #define F_OPT_HASMAXHIT			(a64 << 52)
 #define F_OPT_HASMAXRES			(a64 << 53)
+#define F_OPT_PROCREV			(a64 << 54)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1149,6 +1151,8 @@ char *hpd_up =
 				"  --maxres <limit>      Maximum number of negative filter matches (rest are forced positive)\n"
 				"  --ifhit               Ignore first match\n"
 				"  --ifres               Ignore first result\n"
+				"  --matchq              Exit on first match\n"
+				"  --imatchq             Exit on first result\n"
 				"\n"
 				"  In between match arguments, logical or|and operators apply:\n"
 				"  \".. --<argument1> <or|and> --<margument2> ..\"\n"
@@ -1191,8 +1195,7 @@ char *hpd_up =
 				"                           Applies to -r, -t, -g, -x (can apply to other modes)\n"
 				"  --xblk                Ignores files/dirs on non-block devices\n"
 				"                           Applies to -r, -t, -g, -x (can apply to other modes)\n"
-				"  --matchq              Exit on first match (--exec, --[i]regex[i], --[i]match)\n"
-				"  --imatchq             Exit on first non-match (--exec, --[i]regex[i], --[i]match)\n"
+				"  --rev                 Reverses the order in which records are processed\n"
 				"  --batch               Prints with simple formatting\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --daemon              Fork process into background\n"
@@ -1534,6 +1537,11 @@ int opt_raw_dump(void *arg, int m) {
 
 int opt_binary(void *arg, int m) {
 	gfl |= F_OPT_MODE_BINARY;
+	return 0;
+}
+
+int opt_g_reverse(void *arg, int m) {
+	gfl |= F_OPT_PROCREV;
 	return 0;
 }
 
@@ -2327,6 +2335,7 @@ int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
 int g_load_lom(__g_handle hdl);
 
 int g_proc_mr(__g_handle hdl);
+int md_copy(pmda source, pmda dest, size_t block_sz);
 int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 		uint32_t flags);
 
@@ -2350,26 +2359,26 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		NULL, NULL, NULL };
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
-		(void*) 0, "or", opt_g_operator_or, (void*) 0, "--lom", opt_g_lom_match,
-		(void*) 1, "--ilom", opt_g_lom_imatch, (void*) 1, "--info",
-		prio_opt_g_pinfo, (void*) 0, "--sort", opt_g_sort, (void*) 1, "-h",
-		opt_g_dump_tv, (void*) 0, "-k", opt_g_dump_game, (void*) 0, "--cdir",
-		opt_g_cdironly, (void*) 0, "--imatchq", opt_g_imatchq, (void*) 0,
-		"--matchq", opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0,
-		"-z", opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1,
-		"-xdev", opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0,
-		"-xblk", opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0,
-		"-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0,
-		"-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
-		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
-		(void*) 0, "-q", opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1,
-		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
-		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
-		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
-		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
-		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
-		"--arg1", NULL, (void*) 1, "-arg2",
+		(void*) 0, "or", opt_g_operator_or, (void*) 0, "--rev", opt_g_reverse,
+		(void*) 0, "--lom", opt_g_lom_match, (void*) 1, "--ilom",
+		opt_g_lom_imatch, (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0,
+		"--sort", opt_g_sort, (void*) 1, "-h", opt_g_dump_tv, (void*) 0, "-k",
+		opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly, (void*) 0,
+		"--imatchq", opt_g_imatchq, (void*) 0, "--matchq", opt_g_matchq,
+		(void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z", opt_g_write,
+		(void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev", opt_g_xdev,
+		(void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk", opt_g_xblk,
+		(void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file", opt_g_udc_f,
+		(void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir", opt_g_udc_dir,
+		(void*) 0, "--dir", opt_g_udc_dir, (void*) 0, "--loopmax", opt_loop_max,
+		(void*) 1, "--ghost", opt_check_ghost, (void*) 0, "-q", opt_g_dg,
+		(void*) 1, "-x", opt_g_udc, (void*) 1, "-recursive", opt_g_recursive,
+		(void*) 0, "--recursive", opt_g_recursive, (void*) 0, "-g",
+		opt_dump_grps, (void*) 0, "-t", opt_dump_users, (void*) 0, "--backup",
+		opt_backup, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
+		opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
+		"--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
+		"-arg1", NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
@@ -2494,6 +2503,20 @@ p_md_obj md_first(pmda md) {
 	}
 
 	return NULL;
+}
+
+p_md_obj md_last(pmda md) {
+	p_md_obj ptr = md_first(md);
+
+	if (!ptr) {
+		return ptr;
+	}
+
+	while (ptr->next) {
+		ptr = ptr->next;
+	}
+
+	return ptr;
 }
 
 #define MDA_MDALLOC_RE	0x1
@@ -4623,11 +4646,16 @@ int g_filter(__g_handle hdl, pmda md) {
 
 	off_t s_offset = md->offset;
 
-	p_md_obj ptr = md_first(md), o_ptr;
+	p_md_obj ptr = NULL, o_ptr;
 
-	int r = 0, j_offset;
+	if (hdl->j_offset == 2) {
+		ptr = md_last(md);
+	} else {
+		ptr = md_first(md);
+		hdl->j_offset = 1;
+	}
 
-	j_offset = 1;
+	int r = 0;
 
 	while (ptr) {
 		if (gfl & F_OPT_KILL_GLOBAL) {
@@ -4635,14 +4663,14 @@ int g_filter(__g_handle hdl, pmda md) {
 		}
 		if (g_bmatch(ptr->ptr, hdl, md)) {
 			o_ptr = ptr;
-			ptr = *((void**) ptr + j_offset);
+			ptr = *((void**) ptr + hdl->j_offset);
 			if (!(md_unlink(md, o_ptr))) {
 				r = 2;
 				break;
 			}
 			continue;
 		}
-		ptr = *((void**) ptr + j_offset);
+		ptr = *((void**) ptr + hdl->j_offset);
 	}
 
 	if (gfl & F_OPT_VERBOSE3) {
@@ -4731,7 +4759,11 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			gfl ^= F_OPT_HAS_G_LOM;
 			s_gfl |= F_OPT_HAS_G_LOM;
 		}
-		g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
+		if (g_act_1.j_offset == 2) {
+			g_act_1.buffer.r_pos = md_last(&g_act_1.buffer);
+		} else {
+			g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
+		}
 	}
 
 	void *ptr;
@@ -6972,7 +7004,7 @@ void *g_read(void *buffer, __g_handle hdl, size_t size) {
 		if (!hdl->buffer.pos) {
 			return NULL;
 		}
-		hdl->buffer.r_pos = hdl->buffer.r_pos->next;
+		hdl->buffer.r_pos = *((void**) hdl->buffer.r_pos + hdl->j_offset);
 		hdl->buffer.offset++;
 		hdl->offset++;
 		hdl->br += hdl->block_sz;
@@ -7929,8 +7961,8 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 	pmda m_ptr;
 
 	if (!hdl) {
-			return 1;
-		}
+		return 1;
+	}
 
 	if (!(hdl->flags & F_GH_FFBUFFER)) {
 		m_ptr = &hdl->buffer;
@@ -7957,13 +7989,13 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 
 	/*p_md_obj ptr = md_first(m_ptr);
 
-	if (!ptr) {
-		return 11;
-	}*/
+	 if (!ptr) {
+	 return 11;
+	 }*/
 
 	size_t vb = 0;
 
-	size_t off = (size_t)hdl->g_proc2(NULL, field, &vb);
+	size_t off = (size_t) hdl->g_proc2(NULL, field, &vb);
 
 	if (!vb) {
 		return 13;
@@ -8003,7 +8035,6 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 		break;
 	}
 
-
 	return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);
 
 }
@@ -8016,7 +8047,7 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) {
 	g_setjmp(0, "g_get_lom_g_t_ptr", NULL, NULL);
 	/*pmda m_ptr;
-	if (!(hdl->flags & F_GH_FFBUFFER)) {
+	 if (!(hdl->flags & F_GH_FFBUFFER)) {
 	 m_ptr = &hdl->buffer;
 	 } else {
 	 m_ptr = &hdl->w_buffer;
@@ -8389,6 +8420,18 @@ int md_copy(pmda source, pmda dest, size_t block_sz) {
 int g_proc_mr(__g_handle hdl) {
 	g_setjmp(0, "g_proc_mr", NULL, NULL);
 	int r;
+
+	if (!(gfl & F_OPT_PROCREV)) {
+		hdl->j_offset = 1;
+		if (hdl->buffer.count) {
+			hdl->buffer.r_pos = md_first(&hdl->buffer);
+		}
+	} else {
+		if (hdl->buffer.count) {
+			hdl->buffer.r_pos = md_last(&hdl->buffer);
+		}
+		hdl->j_offset = 2;
+	}
 
 	if (!(hdl->flags & F_GH_HASMATCHES)) {
 		if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match)))) {
