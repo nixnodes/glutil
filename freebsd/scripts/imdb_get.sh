@@ -3,6 +3,7 @@
 #@MACRO:imdb-f:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
 #@MACRO:imdb-f-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} $(basename {arg}) '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}"
 #@MACRO:imdb-f-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -exec "{m:spec1} '{basedir}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}"
+#@MACRO:imdb-f-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}'"
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
