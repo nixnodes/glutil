@@ -1,8 +1,10 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:killslow:{m:exe} -w --loop=2 --silent --daemon --loglevel=3 -exec "{m:spec1} '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
+#@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
+#
+## Requires: glutil-1.9-7 or above
 #
 ## Usage (manual): /glroot/bin/glutil -w --loop=2 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{c:FLAGS}' '{dir}' '{usroot}'"
 #
@@ -10,8 +12,8 @@
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
-##  NOTE: this macro forks glutil into background, executing this every --loop=<x> seconds - if necessary, 
-##        change interval on the third line (one starting with "#@MACRO:..")
+##  NOTE: this macro forks glutil into background, executing this every --loop=<x> seconds
+##  If necessary, change interval on the third line (one starting with "#@MACRO:..")
 #
 ## See ./glutil --help for more info about options
 #
