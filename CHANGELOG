@@ -14,6 +14,7 @@
  *   - Misc addons to -exec field vars (rev. 6)
  *   - Added --execv, uses execv() instead of system() (--exec) (rev. 7)
  *   - Bugfix --sort caused --exec[v] not executing (rev. 7)
+ *   - Bugfix: internal argument parsing ignored last char (rev. 8)
  *
  * v1.8
  *
