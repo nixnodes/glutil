@@ -8806,7 +8806,7 @@ int g_proc_mr(__g_handle hdl) {
 	}
 
 	if ((exec_v || exec_str)) {
-		if (hdl->flags & F_GH_HASEXC) {
+		if (!(hdl->flags & F_GH_HASEXC)) {
 			hdl->exec_args.exc = exc;
 
 			if (!hdl->exec_args.exc) {
