@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-6
+ * Version     : 1.9-7
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -145,6 +145,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <limits.h>
+#include <sys/wait.h>
 
 #ifndef WEXITSTATUS
 #define	WEXITSTATUS(status)	(((status) & 0xff00) >> 8)
@@ -152,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -305,6 +306,16 @@ typedef struct config_header {
 	mda data;
 } cfg_h, *p_cfg_h;
 
+typedef int (*__d_exec)(void *buffer, void *callback, char *ex_str, void *hdl);
+
+typedef struct ___execv {
+	int argc;
+	char **argv, **argv_c;
+	char exec_v_path[PATH_MAX];
+	mda ac_ref;
+	__d_exec exc;
+} _execv, *__execv;
+
 typedef struct g_handle {
 	FILE *fh;
 	off_t offset, bw, br, total_sz;
@@ -312,6 +323,7 @@ typedef struct g_handle {
 	uint32_t block_sz, flags;
 	mda buffer, w_buffer;
 	mda _match_rr;
+	_execv exec_args;
 	void *data;
 	char s_buffer[PATH_MAX];
 	char file[PATH_MAX], mode[32];
@@ -657,7 +669,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
-#define MAX_VAR_LEN				255
+#define MAX_VAR_LEN				4096
 
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE 		"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
@@ -1038,6 +1050,10 @@ uint64_t loop_max = 0;
 char *NUKESTR = NULL;
 
 char *exec_str = NULL;
+char **exec_v = NULL;
+int exec_vc = 0;
+//char exec_v_path[PATH_MAX];
+__d_exec exc = NULL;
 
 mda glconf = { 0 };
 
@@ -1065,7 +1081,8 @@ char *hpd_up =
 				"\n"
 				"Main options:\n"
 				"\n Output:\n"
-				"  -d, [--raw] [--batch] Parse directory log and print to stdout in text/binary format (-vv prints dir nuke status from nukelog)\n"
+				"  -d, [--raw] [--batch] Parse directory log and print to stdout in text/binary format\n"
+				"                          (-vv prints dir nuke status from nukelog)\n"
 				"  -n, -||-              Parse nuke log to stdout\n"
 				"  -i, -||-              Parse dupe file to stdout\n"
 				"  -l, -||-              Parse last-on log to stdout\n"
@@ -1114,10 +1131,15 @@ char *hpd_up =
 				"                         --arg[1-3] sets values that fill {m:arg[1-3]} variables inside a macro\n"
 				"\n Hooks:\n"
 				"  --exec <command [{field}..{field}..]>\n"
-				"                        While parsing data structure/filesystem, execute command for each record\n"
+				"                        While parsing data structure/filesystem, execute shell command for each record\n"
 				"                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 				"                          Operators {..} are overwritten with dirlog values\n"
 				"                          If return value is non-zero, the processed record gets filtered\n"
+				"                          Uses system() call (man system)\n"
+				"  --execv <command [{field}..{field}..]>\n"
+				"                        Same as --exec, only instead of calling system(), this uses execv() (man exec)\n"
+				"                          It's generally much faster compared to --exec, since it doesn't fork /bin/sh\n"
+				"                          for each individual processed record\n"
 				"  --preexec <command [{field}..{field}..]>\n"
 				"                        Execute shell <command> before starting main procedure\n"
 				"  --postexec <command [{field}..{field}..]>\n"
@@ -1241,6 +1263,10 @@ void *md_alloc(pmda md, int b);
 __g_match g_global_register_match(void);
 int g_oper_and(int s, int d);
 int g_oper_or(int s, int d);
+char **build_argv(char *args, size_t max, int *c);
+int find_absolute_path(char *exec, char *output);
+int g_do_exec(void *, void *, char*, void *hdl);
+int g_do_exec_v(void *buffer, void *p_hdl, char *ex_str, void *hdl);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1568,6 +1594,54 @@ int opt_backup(void *arg, int m) {
 
 int opt_exec(void *arg, int m) {
 	exec_str = g_pd(arg, m, MAX_EXEC_STR);
+	exc = g_do_exec;
+	return 0;
+}
+
+long amax = 0;
+
+int opt_execv(void *arg, int m) {
+	int c = 0;
+
+#ifdef _SC_ARG_MAX
+	amax = sysconf(_SC_ARG_MAX);
+#else
+#ifdef ARG_MAX
+	val = ARG_MAX;
+#endif
+#endif
+
+	if (!amax) {
+		amax = LONG_MAX;
+	}
+
+	long count = amax / sizeof(char*);
+
+	exec_str = g_pd(arg, m, MAX_EXEC_STR);
+
+	if (!exec_str) {
+		return 9008;
+	}
+
+	if (!strlen(exec_str)) {
+		return 9009;
+	}
+
+	char **ptr = build_argv(exec_str, count, &c);
+
+	if (!c) {
+		return 9001;
+	}
+
+	if (c > count / 2) {
+		return 9002;
+	}
+
+	exec_vc = c;
+
+	exec_v = ptr;
+	exc = g_do_exec_v;
+
 	return 0;
 }
 
@@ -2258,9 +2332,9 @@ int process_opt(char *, void *, void *, int);
 
 int g_fopen(char *, char *, uint32_t, __g_handle);
 void *g_read(void *buffer, __g_handle, size_t);
-int process_exec_string(char *, char *, void *, void*);
+int process_exec_string(char *, char *, size_t, void *, void*);
+int process_exec_args(void *data, __g_handle hdl);
 
-int g_do_exec(void *, void *, char*);
 int is_char_uppercase(char);
 
 void sig_handler(int);
@@ -2294,8 +2368,6 @@ int get_relative_path(char *, char *, char *);
 void free_cfg(pmda);
 
 int g_init(int argc, char **argv);
-
-char **build_argv(char *args, size_t max, int *c);
 
 char *g_dgetf(char *str);
 
@@ -2409,14 +2481,15 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		opt_batch_output_formatting, (void*) 0, "-y", opt_g_followlinks,
 		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
 		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
-		opt_g_followlinks, (void*) 0, "-exec", opt_exec, (void*) 1, "--exec",
-		opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
-		(void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "-p",
-		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
-		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "--nukedump",
-		opt_dirlog_dump_nukelog, (void*) 0, "-n", opt_dirlog_dump_nukelog,
-		(void*) 0, "--help", print_help, (void*) 0, "--version", print_version,
-		(void*) 0, "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+		opt_g_followlinks, (void*) 0, "--execv", opt_execv, (void*) 1, "-execv",
+		opt_execv, (void*) 1, "-exec", opt_exec, (void*) 1, "--exec", opt_exec,
+		(void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update, (void*) 0,
+		"--memlimit", opt_membuffer_limit, (void*) 1, "-p", opt_dirlog_chk_dupe,
+		(void*) 0, "--dupechk", opt_dirlog_chk_dupe, (void*) 0, "--nobuffer",
+		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
+		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
+		print_help, (void*) 0, "--version", print_version, (void*) 0,
+		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
 		(void*) 1, "--nowrite", opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv,
@@ -2431,8 +2504,7 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
-		NULL,
-		NULL, NULL };
+		NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -2736,6 +2808,16 @@ int g_shutdown(void *arg) {
 		g_fclose(pf_infile);
 	}
 
+	if (exec_v) {
+		int i;
+
+		for (i = 0; i < exec_vc && exec_v[i]; i++) {
+			g_free(exec_v[i]);
+		}
+		g_free(exec_v);
+
+	}
+
 	md_g_free(&_match_rr);
 	md_g_free(&_md_gsort);
 	md_g_free(&_lom_strings);
@@ -2769,7 +2851,35 @@ int g_cleanup(__g_handle hdl) {
 
 	r += md_g_free(&hdl->buffer);
 	r += md_g_free(&hdl->w_buffer);
-	r += md_g_free(&hdl->_match_rr);
+
+	p_md_obj ptr;
+
+	if (hdl->_match_rr.objects) {
+		ptr = md_first(&hdl->_match_rr);
+
+		while (ptr) {
+			__g_match g_ptr = (__g_match) ptr->ptr;
+			if ( g_ptr->flags & F_GM_ISLOM) {
+				md_g_free(&g_ptr->lom);
+			}
+		}
+
+		r += md_g_free(&hdl->_match_rr);
+	}
+
+	if (hdl->exec_args.ac_ref.objects) {
+		ptr = md_first(&hdl->exec_args.ac_ref);
+		while (ptr) {
+			int *t = (int*) ptr->ptr;
+			g_free(hdl->exec_args.argv_c[*t]);
+			ptr = ptr->next;
+		}
+		if (hdl->exec_args.argv_c) {
+			g_free(hdl->exec_args.argv_c);
+		}
+		r += md_g_free(&hdl->exec_args.ac_ref);
+	}
+
 	if (!(hdl->flags & F_GH_ISSHM) && hdl->data) {
 		g_free(hdl->data);
 	} else if ((hdl->flags & F_GH_ISSHM) && hdl->data) {
@@ -2829,6 +2939,71 @@ void enable_logging(void) {
 #define MSG_INIT_PATH_OVERR 	"NOTICE: %s path set to '%s'\n"
 
 int g_init(int argc, char **argv) {
+
+	/*int p_f[2] = { 0 }, p_f2[2] = { 0 };
+	 FILE *fd, *fd2;
+	 int status, w;
+	 if (pipe(p_f) == -1) {
+	 printf("bad pipe\n");
+	 }
+
+	 int pid = (int) fork();
+
+	 if (!pid) {
+
+	 dup2(p_f[1], STDOUT_FILENO);
+	 close(p_f[1]);
+	 close(p_f[0]);
+
+	 dup2(p_f2[0], STDIN_FILENO);
+	 close(p_f2[0]);
+	 close(p_f2[1]);
+
+	 execlp("/bin/sh", "", NULL);
+	 _exit(127);
+	 } else {
+
+	 w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
+	 if (w == -1) {
+	 perror("waitpid");
+	 exit(EXIT_FAILURE);
+	 }
+
+	 if (WIFEXITED(status)) {
+	 printf("exited, status=%d\n", WEXITSTATUS(status));
+	 } else if (WIFSIGNALED(status)) {
+	 printf("killed by signal %d\n", WTERMSIG(status));
+	 } else if (WIFSTOPPED(status)) {
+	 printf("stopped by signal %d\n", WSTOPSIG(status));
+	 } else if (WIFCONTINUED(status)) {
+	 printf("continued\n");
+	 }
+	 close(p_f[1]);
+	 close(p_f2[0]);
+
+	 }
+
+	 char bb[8192] = { 0 };
+	 if (!(fd = fdopen(p_f[0], "r"))) {
+
+	 printf("bad handle 0\n");
+	 } else {
+	 if (!(fd2 = fdopen(p_f2[1], "w"))) {
+	 printf("bad w hdl\n");
+	 } else {
+	 g_fwrite("ls -lah\n", 1, 8, fd2);
+
+	 fclose(fd2);
+
+	 }
+	 g_fread(bb, 1, 8191, fd);
+	 printf("-- %s\n", bb);
+	 fclose(fd);
+	 }
+
+	 printf("here we go\n");
+	 */
+	//return 0;
 	g_setjmp(0, "g_init", NULL, NULL);
 	int r;
 
@@ -2866,8 +3041,8 @@ int g_init(int argc, char **argv) {
 	}
 
 	if ((gfl & F_OPT_VERBOSE3) && glconf.offset) {
-		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
-				(int) glconf.offset);
+		print_str("NOTICE: %s: loaded %d config lines into memory\n",
+		GLCONF, (int) glconf.offset);
 	}
 
 	p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
@@ -3040,8 +3215,8 @@ int g_init(int argc, char **argv) {
 			print_str("PREEXEC: running: '%s'\n", GLOBAL_PREEXEC);
 		}
 		int r_e = 0;
-		if ((r_e = g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC))
-				== -1|| WEXITSTATUS(r_e)) {
+		if ((r_e = g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC, NULL))
+				== -1 || WEXITSTATUS(r_e)) {
 			if (gfl & F_OPT_VERBOSE) {
 				print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
 				WEXITSTATUS(r_e), GLOBAL_PREEXEC);
@@ -3160,7 +3335,7 @@ int g_init(int argc, char **argv) {
 		free_cfg_rf(&cfg_rf);
 		sleep(loop_interval);
 		if (gfl & F_OPT_LOOPEXEC) {
-			g_do_exec(NULL, ref_to_val_generic, LOOPEXEC);
+			g_do_exec(NULL, ref_to_val_generic, LOOPEXEC, NULL);
 		}
 		mloop_c++;
 		goto enter;
@@ -3170,7 +3345,7 @@ int g_init(int argc, char **argv) {
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("POSTEXEC: running: '%s'\n", GLOBAL_POSTEXEC);
 		}
-		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_POSTEXEC) == -1) {
+		if (g_do_exec(NULL, ref_to_val_generic, GLOBAL_POSTEXEC, NULL) == -1) {
 			if (gfl & F_OPT_VERBOSE) {
 				print_str("WARNING: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
 			}
@@ -3183,10 +3358,12 @@ int g_init(int argc, char **argv) {
 int main(int argc, char *argv[]) {
 	g_setjmp(0, "main", NULL, NULL);
 	char **p_argv = (char**) argv;
+	int r;
 
-	if (setup_sighandlers()) {
+	if ((r = setup_sighandlers())) {
 		print_str(
-				"WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!)\n");
+				"WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!) [%d]\n",
+				r);
 		sleep(5);
 	}
 
@@ -3330,8 +3507,9 @@ char **process_macro(void * arg, char **out) {
 	char *s_buffer = (char*) calloc(262144, 1), **s_ptr = NULL;
 	int r;
 
-	if ((r = process_exec_string(av.s_ret, s_buffer, ref_to_val_macro,
-	NULL))) {
+	if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
+			ref_to_val_macro, NULL))) {
+
 		print_str("ERROR: [%d]: could not process exec string: '%s'\n", r,
 				av.s_ret);
 		goto end;
@@ -3707,7 +3885,9 @@ int g_dump_ug(char *ug) {
 	ret.hdl.flags |= F_GH_ISFSX;
 	ret.hdl.g_proc1 = ref_to_val_x;
 	ret.hdl.g_proc2 = ref_to_val_ptr_dummy;
-	g_proc_mr(&ret.hdl);
+	if (g_proc_mr(&ret.hdl)) {
+		return 1;
+	}
 
 	snprintf(buffer, PATH_MAX, "%s/%s/%s", GLROOT, FTPDATA, ug);
 
@@ -3729,7 +3909,10 @@ int g_dump_gen(char *root) {
 	ret.hdl.flags |= F_GH_ISFSX;
 	ret.hdl.g_proc1 = ref_to_val_x;
 	ret.hdl.g_proc2 = ref_to_val_ptr_dummy;
-	g_proc_mr(&ret.hdl);
+
+	if (g_proc_mr(&ret.hdl)) {
+		return 1;
+	}
 
 	if (!(ret.flags & F_PD_MATCHTYPES)) {
 		ret.flags |= F_PD_MATCHTYPES;
@@ -4205,7 +4388,6 @@ int dirlog_check_records(void) {
 				continue;
 			}
 
-			//g_do_exec(d_ptr, &g_act_1);
 			struct nukelog n_buffer;
 			ir = r;
 			if (d_ptr->status == 1 || d_ptr->status == 2) {
@@ -4329,12 +4511,12 @@ int dirlog_check_records(void) {
 }
 
 int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback) {
-	char buffer[255], *mstr = NULL;
+	char buffer[MAX_VAR_LEN], *mstr = NULL;
 
 	buffer[0] = 0x0;
 
 	if (_gm->field) {
-		if (!hdl->g_proc1(d_ptr, _gm->field, buffer, 254)) {
+		if (!hdl->g_proc1(d_ptr, _gm->field, buffer, MAX_VAR_LEN)) {
 			mstr = buffer;
 		} else {
 			if (_gm->match != (char*) _gm->b_data) {
@@ -4577,8 +4759,8 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 	if (!r_p) {
 		int r_e;
 
-		if (exec_str
-				&& WEXITSTATUS(r_e = g_do_exec(d_ptr, (void*) hdl->g_proc1, NULL))) {
+		if (hdl->exec_args.exc
+				&& WEXITSTATUS(r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl))) {
 			if ((gfl & F_OPT_VERBOSE3)) {
 				print_str("WARNING: external call returned non-zero: [%d]\n",
 				WEXITSTATUS(r_e));
@@ -4640,11 +4822,13 @@ int do_sort(__g_handle hdl, char *field, uint32_t flags) {
 
 int g_filter(__g_handle hdl, pmda md) {
 	g_setjmp(0, "g_filter", NULL, NULL);
-	if (!((exec_str || (gfl & F_OPT_HASMATCH))) || !md->count) {
+	if (!((hdl->exec_args.exc || (gfl & F_OPT_HASMATCH))) || !md->count) {
 		return 0;
 	}
 
-	g_proc_mr(hdl);
+	if (g_proc_mr(hdl)) {
+		return -1;
+	}
 
 	if (gfl & F_OPT_VERBOSE) {
 		print_str("NOTICE: %s: passing %llu records through filters..\n",
@@ -4715,6 +4899,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	int r;
 	uint32_t i_flags = 0;
+	uint64_t s_gfl = 0;
 
 	if (gfl & F_OPT_SORT) {
 		if ((gfl & F_OPT_NOBUFFER)) {
@@ -4723,13 +4908,13 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			goto r_end;
 		}
 
-		char *s_exec_str = exec_str;
+		void *s_exec = g_act_1.exec_args.exc;
 
-		exec_str = NULL;
+		g_act_1.exec_args.exc = NULL;
 
 		r = g_filter(&g_act_1, &g_act_1.buffer);
 
-		exec_str = s_exec_str;
+		g_act_1.exec_args.exc = (__d_exec) s_exec;
 
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			goto r_end;
@@ -4756,6 +4941,10 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		} else {
 			g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
 		}
+
+		s_gfl = gfl & F_OPT_HASMATCH;
+		gfl ^= F_OPT_HASMATCH;
+
 	}
 
 	void *ptr;
@@ -4777,8 +4966,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				break;
 			}
 
-			if (!(gfl & F_OPT_SORT)
-					&& (r = g_bmatch(ptr, &g_act_1, &g_act_1.buffer))) {
+			if ((r = g_bmatch(ptr, &g_act_1, &g_act_1.buffer))) {
 				if (r == -1) {
 					print_str("ERROR: %s: [%d] matching record failed\n",
 							g_act_1.file, r);
@@ -4837,6 +5025,10 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	}
 
 	end:
+
+	if (s_gfl) {
+		gfl |= s_gfl;
+	}
 
 	if (gfl & F_OPT_MODE_RAWDUMP) {
 		fflush(stdout);
@@ -6958,11 +7150,71 @@ int g_close(__g_handle hdl) {
 	return 0;
 }
 
-int g_do_exec(void *buffer, void *callback, char *ex_str) {
+static int prep_for_exec(void) {
+	const char inputfile[] = "/dev/null";
+
+	if (close(0) < 0) {
+		fprintf(stdout, "ERROR: could not close stdin\n");
+		return 1;
+	} else {
+		if (open(inputfile, O_RDONLY
+#if defined O_LARGEFILE
+				| O_LARGEFILE
+#endif
+				) < 0) {
+			fprintf(stdout, "ERROR: could not open %s\n", inputfile);
+		}
+	}
+	return 0;
+}
+
+int l_execv(char *exec, char **argv) {
+	pid_t c_pid;
+
+	fflush(stdout);
+	fflush(stderr);
+
+	c_pid = fork();
+
+	if (c_pid == (pid_t) -1) {
+		fprintf(stderr, "ERROR: %s: fork failed\n", exec);
+		return 1;
+	}
+	if (!c_pid) {
+		if (prep_for_exec()) {
+			_exit(1);
+		} else {
+			execv(exec, argv);
+			fprintf(stderr, "ERROR: %s: execv failed to execute [%d]\n", exec, errno);
+			_exit(1);
+		}
+	}
+	int status;
+	while (waitpid(c_pid, &status, 0) == (pid_t) -1) {
+		if (errno != EINTR) {
+			fprintf(stderr, "ERROR: %s:failed waiting for child process to finish [%d]\n", exec, errno);
+			return 2;
+		}
+	}
+
+	return status;
+}
+
+int g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl) {
+	g_setjmp(0, "g_do_exec", NULL, NULL);
+
+	__g_handle hdl = (__g_handle) p_hdl;
+
+	process_exec_args(buffer, hdl);
+
+	return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
+}
+
+int g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl) {
 	g_setjmp(0, "g_do_exec", NULL, NULL);
 
 	if (callback) {
-		char b_glob[MAX_EXEC_STR] = { 0 };
+		char b_glob[MAX_EXEC_STR];
 		char *e_str;
 		if (ex_str) {
 			e_str = ex_str;
@@ -6974,9 +7226,11 @@ int g_do_exec(void *buffer, void *callback, char *ex_str) {
 		}
 		bzero(b_glob, MAX_EXEC_STR);
 
-		if (process_exec_string(e_str, b_glob, callback, buffer)) {
+		if (process_exec_string(e_str, b_glob, MAX_EXEC_STR, callback,
+				buffer)) {
 			return 2;
 		}
+
 		return system(b_glob);
 	} else if (ex_str) {
 		if (strlen(ex_str) > MAX_EXEC_STR) {
@@ -6998,7 +7252,7 @@ void *g_read(void *buffer, __g_handle hdl, size_t size) {
 		hdl->buffer.offset++;
 		hdl->offset++;
 		hdl->br += hdl->block_sz;
-		return (struct dirlog *) hdl->buffer.pos->ptr;
+		return (void *) hdl->buffer.pos->ptr;
 	}
 
 	if (!buffer) {
@@ -7573,19 +7827,19 @@ int is_char_uppercase(char c) {
 }
 
 int g_l_fmode(char *path, size_t max_size, char *output) {
-	struct stat st = { 0 };
+	struct stat st;
 	char buffer[PATH_MAX + 1];
 	snprintf(buffer, PATH_MAX, "%s/%s", GLROOT, path);
 	remove_repeating_chars(buffer, 0x2F);
 	if (lstat(buffer, &st)) {
-		return 1;
+		return 0;
 	}
 	snprintf(output, max_size, "%d", IFTODT(st.st_mode));
 	return 0;
 }
 
 int g_l_fmode_n(char *path, size_t max_size, char *output) {
-	struct stat st = { 0 };
+	struct stat st;
 	if (lstat(path, &st)) {
 		return 1;
 	}
@@ -7736,10 +7990,12 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, "spec1", 5)) {
 		snprintf(output, max_size, "%s", b_spec1);
 	} else if (!strncmp(match, "usroot", 6)) {
-		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_USERS);
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
+		DEFPATH_USERS);
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strncmp(match, "logroot", 7)) {
-		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS);
+		snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
+		DEFPATH_LOGS);
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strncmp(match, "memlimit", 8)) {
 		snprintf(output, max_size, "%llu", db_max_size);
@@ -8478,6 +8734,33 @@ int md_copy(pmda source, pmda dest, size_t block_sz) {
 	return 0;
 }
 
+int g_build_argv_c(__g_handle hdl) {
+	md_init(&hdl->exec_args.ac_ref, hdl->exec_args.argc);
+
+	hdl->exec_args.argv_c = calloc(amax / sizeof(char*), sizeof(char**));
+	int i, *t;
+	char *ptr;
+	for (i = 0; i < hdl->exec_args.argc && hdl->exec_args.argv[i]; i++) {
+		ptr = strchr(hdl->exec_args.argv[i], 0x7B);
+		if (ptr) {
+			hdl->exec_args.argv_c[i] = (char*) calloc(8192, 1);
+			size_t t_l = strlen(hdl->exec_args.argv[i]);
+			g_strncpy(hdl->exec_args.argv_c[i], hdl->exec_args.argv[i],
+					t_l > 8191 ? 8191 : t_l);
+			t = md_alloc(&hdl->exec_args.ac_ref, sizeof(int));
+			*t = i;
+		} else {
+			hdl->exec_args.argv_c[i] = hdl->exec_args.argv[i];
+		}
+	}
+
+	if (!i) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int g_proc_mr(__g_handle hdl) {
 	g_setjmp(0, "g_proc_mr", NULL, NULL);
 	int r;
@@ -8510,6 +8793,47 @@ int g_proc_mr(__g_handle hdl) {
 	if ((gfl & F_OPT_HAS_G_LOM)) {
 		if ((r = g_load_lom(hdl))) {
 			return r;
+		}
+	}
+
+	if ((exec_v || exec_str)) {
+		if (!hdl->exec_args.exc) {
+			hdl->exec_args.exc = exc;
+
+			if (!hdl->exec_args.exc) {
+				print_str(
+						"ERROR: %s: no exec call pointer (this is probably a bug)\n",
+						hdl->file);
+				return 2002;
+			}
+		}
+		if (exec_v && !hdl->exec_args.argv) {
+			hdl->exec_args.argv = exec_v;
+			hdl->exec_args.argc = exec_vc;
+
+			if (!hdl->exec_args.argc) {
+				print_str("ERROR: %s: no exec arguments\n", hdl->file);
+				return 2001;
+			}
+
+			if (g_build_argv_c(hdl)) {
+				print_str("ERROR: %s: failed building exec arguments\n",
+						hdl->file);
+				return 2005;
+			}
+
+			int r;
+
+			if ((r = find_absolute_path(hdl->exec_args.argv_c[0],
+					hdl->exec_args.exec_v_path))) {
+				if (gfl & F_OPT_VERBOSE2) {
+					print_str(
+							"WARNING: %s: [%d]: exec unable to get absolute path\n",
+							hdl->file, r);
+				}
+				snprintf(hdl->exec_args.exec_v_path, PATH_MAX, "%s",
+						hdl->exec_args.argv_c[0]);
+			}
 		}
 	}
 
@@ -9297,48 +9621,65 @@ int ref_to_val_gen1(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-int process_exec_string(char *input, char *output, void *callback, void *data) {
-	g_setjmp(0, "process_exec_string", NULL, NULL);
+int process_exec_args(void *data, __g_handle hdl) {
+	g_setjmp(0, "process_exec_args", NULL, NULL);
 
+	p_md_obj ptr = md_first(&hdl->exec_args.ac_ref);
+
+	int *t;
+	while (ptr) {
+
+		t = (int*) ptr->ptr;
+		//bzero(hdl->exec_args.argv_c[*t], 8192);
+
+		if (process_exec_string(hdl->exec_args.argv[*t],
+				hdl->exec_args.argv_c[*t], 8191, (void*) hdl->g_proc1, data)) {
+			bzero(hdl->exec_args.argv_c[*t], 8192);
+		}
+
+		ptr = ptr->next;
+	}
+
+	return 0;
+}
+
+int process_exec_string(char *input, char *output, size_t max_size,
+		void *callback, void *data) {
+	g_setjmp(0, "process_exec_string", NULL, NULL);
 	int (*call)(void *, char *, char *, size_t) = callback;
 
 	size_t blen = strlen(input);
 
 	if (!blen || blen > MAX_EXEC_STR) {
-		return 4;
+		return 1;
 	}
 
 	size_t b_l_1;
-	char buffer[8192] = { 0 }, buffer2[8192] = { 0 }, *buffer_o =
-			(char*) calloc(
-			MAX_EXEC_STR, 1);
+	char buffer[255] = { 0 }, buffer2[MAX_VAR_LEN] = { 0 };
 	int i, i2, pi, r, f;
 
 	for (i = 0, pi = 0; i < blen; i++, pi++) {
 		if (input[i] == 0x7B) {
-			bzero(buffer, MAX_VAR_LEN + 1);
-			for (i2 = 0, i++, r = 0, f = 0; i < blen && i2 < MAX_VAR_LEN;
-					i++, i2++) {
+			for (i2 = 0, i++, r = 0, f = 0; i < blen && i2 < 255; i++, i2++) {
 				if (input[i] == 0x7D) {
+					buffer[i2] = 0x0;
 					if (!i2 || strlen(buffer) > MAX_VAR_LEN
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
 						if (r) {
 							b_l_1 = strlen(buffer);
-							snprintf(&buffer_o[pi],
+							snprintf(&output[pi],
 							MAX_EXEC_STR - pi - 2, "%c%s%c", 0x7B, buffer,
 									0x7D);
 
 							pi += b_l_1 + 2;
 						}
 						f |= 0x1;
-						//i++;
 						break;
 					}
 					b_l_1 = strlen(buffer2);
-					g_memcpy(&buffer_o[pi], buffer2, b_l_1);
+					g_memcpy(&output[pi], buffer2, b_l_1);
 
 					pi += b_l_1;
-					//i++;
 					f |= 0x1;
 					break;
 				}
@@ -9346,24 +9687,15 @@ int process_exec_string(char *input, char *output, void *callback, void *data) {
 			}
 
 			if ((f & 0x1)) {
-				//i-=1;
 				pi -= 1;
 				continue;
 			}
 		}
-
-		buffer_o[pi] = input[i];
-
+		output[pi] = input[i];
 	}
 
-	buffer_o[pi] = 0x0;
-	size_t l = strlen(buffer_o);
+	output[pi] = 0x0;
 
-	if (l <= MAX_EXEC_STR) {
-		g_memcpy(output, buffer_o, l);
-	}
-
-	g_free(buffer_o);
 	return 0;
 }
 
@@ -10477,4 +10809,37 @@ int get_file_type(char *file) {
 		return errno;
 
 	return IFTODT(sb.st_mode);
+}
+
+int find_absolute_path(char *exec, char *output) {
+	char *env = getenv("PATH");
+
+	if (!env) {
+		return 1;
+	}
+
+	mda s_p = { 0 };
+
+	md_init(&s_p, 64);
+
+	int p_c = split_string(env, 0x3A, &s_p);
+
+	if (p_c < 1) {
+		return 2;
+	}
+
+	p_md_obj ptr = md_first(&s_p);
+
+	while (ptr) {
+		snprintf(output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
+		if (!access(output, R_OK | X_OK)) {
+			md_g_free(&s_p);
+			return 0;
+		}
+		ptr = ptr->next;
+	}
+
+	md_g_free(&s_p);
+
+	return 3;
 }
