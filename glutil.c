@@ -1630,14 +1630,6 @@ int opt_execv(void *arg, int m) {
 
 	char **ptr = build_argv(exec_str, count, &c);
 
-	int i;
-	for (i= 0; i < c; i++) {
-		printf("%s ", ptr[i]);
-
-	}
-	printf("\n");
-	exit(0);
-
 	if (!c) {
 		return 9001;
 	}
