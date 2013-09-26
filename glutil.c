@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-7
+ * Version     : 1.9-8
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -153,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1629,6 +1629,14 @@ int opt_execv(void *arg, int m) {
 	}
 
 	char **ptr = build_argv(exec_str, count, &c);
+
+	int i;
+	for (i= 0; i < c; i++) {
+		printf("%s ", ptr[i]);
+
+	}
+	printf("\n");
+	exit(0);
 
 	if (!c) {
 		return 9001;
@@ -3550,7 +3558,7 @@ char **build_argv(char *args, size_t max, int *c) {
 
 	*c = 0;
 
-	for (i_0 = 0; i_0 < args_l && b_c < max; i_0++) {
+	for (i_0 = 0; i_0 <= args_l && b_c < max; i_0++) {
 		if (i_0 == 0) {
 			while (args[i_0] == sp_1) {
 				i_0++;
@@ -3563,9 +3571,9 @@ char **build_argv(char *args, size_t max, int *c) {
 				l_p = i_0;
 			}
 		}
-		if ((((args[i_0] == sp_1 || (args[i_0] == sp_2 || args[i_0] == sp_3))
-				&& args[i_0 - 1] != 0x5C && args[i_0] != 0x5C)
-				|| i_0 == args_l - 1) && i_0 > l_p) {
+
+		if ((((args[i_0] == sp_1 || (args[i_0] == sp_2 || args[i_0] == sp_3)) && args[i_0 - 1] != 0x5C && args[i_0] != 0x5C)
+				|| !args[i_0] ) && i_0 > l_p) {
 
 			if (i_0 == args_l - 1) {
 				if (!(args[i_0] == sp_1 || args[i_0] == sp_2
@@ -3576,8 +3584,10 @@ char **build_argv(char *args, size_t max, int *c) {
 			}
 
 			size_t ptr_b_l = i_0 - l_p;
+
 			ptr[b_c] = (char*) calloc(ptr_b_l + 1, 1);
 			g_strncpy((char*) ptr[b_c], &args[l_p], ptr_b_l);
+
 			b_c++;
 			*c += 1;
 
@@ -3614,7 +3624,6 @@ char **build_argv(char *args, size_t max, int *c) {
 				}
 
 			}
-
 		}
 
 	}
