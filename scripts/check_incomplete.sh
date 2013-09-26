@@ -61,17 +61,4 @@ $EXE -x "$DIR" --iregexi "\.sfv$" -execv "$0 {arg} $2 $3 cdir $4" --silent -recu
 
 exit 1
 
-proc_dir() {
-	for i in $1/*; do
-		if [ -f "$i" ] && echo $i | egrep -q "\.sfv$"; then
-			c_dir "$i"
-		elif [ -d "$i" ]; then
-			pdbn=$(basename "$i")
-			[[ "$pdbn" != ".." ]] && [[ "$pdbn" != "." ]] && proc_dir $i
-		fi
-	done
-}
 
-proc_dir $DIR
-
-exit 1
