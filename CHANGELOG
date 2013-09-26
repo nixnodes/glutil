@@ -12,6 +12,8 @@
  *   - Processing records in reverse order (--rev) (rev. 5)
  *   - Bugfix: matching broken with -x (rev. 6)
  *   - Misc addons to -exec field vars (rev. 6)
+ *   - Added --execv, uses execv() instead of system() (--exec) (rev. 7)
+ *   - Bugfix --sort caused --exec[v] not executing (rev. 7)
  *
  * v1.8
  *
