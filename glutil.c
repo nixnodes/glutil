@@ -591,6 +591,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_FROMSTDIN			(a32 << 23)
 #define F_GH_HASLOM				(a32 << 24)
 #define F_GH_HASMATCHES			(a32 << 25)
+#define F_GH_HASEXC				(a32 << 26)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -2862,6 +2863,7 @@ int g_cleanup(__g_handle hdl) {
 			if ( g_ptr->flags & F_GM_ISLOM) {
 				md_g_free(&g_ptr->lom);
 			}
+			ptr = ptr->next;
 		}
 
 		r += md_g_free(&hdl->_match_rr);
@@ -4899,7 +4901,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	int r;
 	uint32_t i_flags = 0;
-	uint64_t s_gfl = 0;
 
 	if (gfl & F_OPT_SORT) {
 		if ((gfl & F_OPT_NOBUFFER)) {
@@ -4908,7 +4909,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			goto r_end;
 		}
 
-		void *s_exec = g_act_1.exec_args.exc;
+		void *s_exec = (void*)g_act_1.exec_args.exc;
 
 		g_act_1.exec_args.exc = NULL;
 
@@ -4942,9 +4943,18 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
 		}
 
-		s_gfl = gfl & F_OPT_HASMATCH;
-		gfl ^= F_OPT_HASMATCH;
+		p_md_obj lm_ptr = md_first(&g_act_1._match_rr), lm_s_ptr;
 
+		while (lm_ptr) {
+			__g_match gm_ptr = (__g_match ) lm_ptr->ptr;
+			if (gm_ptr->flags & F_GM_TYPES) {
+				lm_s_ptr = lm_ptr;
+				lm_ptr = lm_ptr->next;
+				md_unlink(&g_act_1._match_rr, lm_s_ptr);
+			} else {
+				lm_ptr = lm_ptr->next;
+			}
+		}
 	}
 
 	void *ptr;
@@ -5025,10 +5035,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	}
 
 	end:
-
-	if (s_gfl) {
-		gfl |= s_gfl;
-	}
 
 	if (gfl & F_OPT_MODE_RAWDUMP) {
 		fflush(stdout);
@@ -7185,14 +7191,17 @@ int l_execv(char *exec, char **argv) {
 			_exit(1);
 		} else {
 			execv(exec, argv);
-			fprintf(stderr, "ERROR: %s: execv failed to execute [%d]\n", exec, errno);
+			fprintf(stderr, "ERROR: %s: execv failed to execute [%d]\n", exec,
+			errno);
 			_exit(1);
 		}
 	}
 	int status;
 	while (waitpid(c_pid, &status, 0) == (pid_t) -1) {
 		if (errno != EINTR) {
-			fprintf(stderr, "ERROR: %s:failed waiting for child process to finish [%d]\n", exec, errno);
+			fprintf(stderr,
+					"ERROR: %s:failed waiting for child process to finish [%d]\n",
+					exec, errno);
 			return 2;
 		}
 	}
@@ -8797,7 +8806,7 @@ int g_proc_mr(__g_handle hdl) {
 	}
 
 	if ((exec_v || exec_str)) {
-		if (!hdl->exec_args.exc) {
+		if (hdl->flags & F_GH_HASEXC) {
 			hdl->exec_args.exc = exc;
 
 			if (!hdl->exec_args.exc) {
@@ -8806,6 +8815,7 @@ int g_proc_mr(__g_handle hdl) {
 						hdl->file);
 				return 2002;
 			}
+			hdl->flags |= F_GH_HASEXC;
 		}
 		if (exec_v && !hdl->exec_args.argv) {
 			hdl->exec_args.argv = exec_v;
