@@ -24,7 +24,6 @@ CHECK_CORRUPT=1
 #
 ############################[ END OPTIONS ]##############################
 
-
 [ -z "$1" ] && exit 1
 [ -z "$2" ] && exit 1
 
@@ -36,8 +35,6 @@ EXE=$2
 c_dir() {
 	while read l; do
 		FFL=$(echo "$l" | sed -r 's/ [A-Fa-f0-9]*([ ]*|$)$//')
-#		FCRC=$(echo "$l" | rev | cut -d " " -f -1 | rev)
-#		echo $FFL $FCRC
 		FFT=$(dirname "$1")/$FFL
 		! [ -f "$FFT" ] && echo "WARNING: $DIR: incomplete, missing file: $FFL" && continue
 		[ $CHECK_CORRUPT -gt 0 ] && { 
