@@ -44,14 +44,12 @@ c_dir() {
 			FCRC=$(echo "$l" | rev | cut -d " " -f -1 | rev) && CRC32=$($EXE --crc32 $FFT) && 
 				[ $CRC32 != $FCRC ] && echo "WARNING: $DIR: corrupted: $FFL, CRC32: $CRC32, should be: $FCRC" && continue
 		}
-		[ $VERBOSE -gt 0 ] && echo "OK: $FFL: $FCRC"
+		[ $VERBOSE -gt 0 ] && echo "OK: $FFT: $FCRC"
 	done < "$1"
 }
 
-
 [ "$4" = "cdir" ] && {
 	DIR="$1"
-
 	[ -n "$5" ] && VERBOSE=1
 	c_dir "$DIR"
 	exit 1
@@ -62,9 +60,7 @@ DIR=$GLROOT$1
 
 ! [ -d "$DIR" ] && exit 1
 
-#echo "$0 {arg} $2 $3 cdir"
-
-$EXE -x "$DIR" --iregexi "\.sfv$" -execv "$0 {arg} $2 $3 cdir $4" --silent
+$EXE -x "$DIR" --iregexi "\.sfv$" -execv "$0 {arg} $2 $3 cdir $4" --silent -recursive
 
 exit 1
 
