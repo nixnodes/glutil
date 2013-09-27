@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-10
+ * Version     : 1.9-11
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -153,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 10
+#define VER_REVISION 11
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1286,6 +1286,10 @@ int g_cpg(void *arg, void *out, int m, size_t sz) {
 
 	size_t a_l = strlen(buffer);
 
+	if (!a_l) {
+		return 2;
+	}
+
 	a_l > sz ? a_l = sz : sz;
 	char *ptr = (char*) out;
 	g_strncpy(ptr, buffer, a_l);
@@ -1732,56 +1736,74 @@ int opt_g_postexec(void *arg, int m) {
 }
 
 int opt_glroot(void *arg, int m) {
-	g_cpg(arg, GLROOT, m, 255);
-	ofl |= F_OVRR_GLROOT;
+	if (!(ofl & F_OVRR_GLROOT)) {
+		g_cpg(arg, GLROOT, m, 255);
+		ofl |= F_OVRR_GLROOT;
+	}
 	return 0;
 }
 
 int opt_siteroot(void *arg, int m) {
-	g_cpg(arg, SITEROOT_N, m, 255);
-	ofl |= F_OVRR_SITEROOT;
+	if (!(ofl & F_OVRR_SITEROOT)) {
+		g_cpg(arg, SITEROOT_N, m, 255);
+		ofl |= F_OVRR_SITEROOT;
+	}
 	return 0;
 }
 
 int opt_dupefile(void *arg, int m) {
-	g_cpg(arg, DUPEFILE, m, PATH_MAX);
-	ofl |= F_OVRR_DUPEFILE;
+	if (!(ofl & F_OVRR_DUPEFILE)) {
+		g_cpg(arg, DUPEFILE, m, PATH_MAX);
+		ofl |= F_OVRR_DUPEFILE;
+	}
 	return 0;
 }
 
 int opt_lastonlog(void *arg, int m) {
-	g_cpg(arg, LASTONLOG, m, PATH_MAX);
-	ofl |= F_OVRR_LASTONLOG;
+	if (!(ofl & F_OVRR_LASTONLOG)) {
+		g_cpg(arg, LASTONLOG, m, PATH_MAX);
+		ofl |= F_OVRR_LASTONLOG;
+	}
 	return 0;
 }
 
 int opt_oneliner(void *arg, int m) {
-	g_cpg(arg, ONELINERS, m, PATH_MAX);
-	ofl |= F_OVRR_ONELINERS;
+	if (!(ofl & F_OVRR_ONELINERS)) {
+		g_cpg(arg, ONELINERS, m, PATH_MAX);
+		ofl |= F_OVRR_ONELINERS;
+	}
 	return 0;
 }
 
 int opt_imdblog(void *arg, int m) {
-	g_cpg(arg, IMDBLOG, m, PATH_MAX);
-	ofl |= F_OVRR_IMDBLOG;
+	if (!(ofl & F_OVRR_IMDBLOG)) {
+		g_cpg(arg, IMDBLOG, m, PATH_MAX);
+		ofl |= F_OVRR_IMDBLOG;
+	}
 	return 0;
 }
 
 int opt_tvlog(void *arg, int m) {
-	g_cpg(arg, TVLOG, m, PATH_MAX);
-	ofl |= F_OVRR_TVLOG;
+	if (!(ofl & F_OVRR_TVLOG)) {
+		g_cpg(arg, TVLOG, m, PATH_MAX);
+		ofl |= F_OVRR_TVLOG;
+	}
 	return 0;
 }
 
 int opt_gamelog(void *arg, int m) {
-	g_cpg(arg, GAMELOG, m, PATH_MAX);
-	ofl |= F_OVRR_GAMELOG;
+	if (!(ofl & F_OVRR_GAMELOG)) {
+		g_cpg(arg, GAMELOG, m, PATH_MAX);
+		ofl |= F_OVRR_GAMELOG;
+	}
 	return 0;
 }
 
 int opt_GE1LOG(void *arg, int m) {
-	g_cpg(arg, GE1LOG, m, PATH_MAX);
-	ofl |= F_OVRR_GE1LOG;
+	if (!(ofl & F_OVRR_GE1LOG)) {
+		g_cpg(arg, GE1LOG, m, PATH_MAX);
+		ofl |= F_OVRR_GE1LOG;
+	}
 	return 0;
 }
 
@@ -1792,8 +1814,10 @@ int opt_rebuild(void *arg, int m) {
 }
 
 int opt_dirlog_file(void *arg, int m) {
-	g_cpg(arg, DIRLOG, m, PATH_MAX);
-	ofl |= F_OVRR_DIRLOG;
+	if (!(ofl & F_OVRR_DIRLOG)) {
+		g_cpg(arg, DIRLOG, m, PATH_MAX);
+		ofl |= F_OVRR_DIRLOG;
+	}
 	return 0;
 }
 
@@ -2437,8 +2461,14 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		opt_g_verbose5, (void*) 0, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
 		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
 		opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--info",
-		prio_opt_g_pinfo, (void*) 0, "--loglevel", NULL, (void*) 1, "--logfile",
-		NULL, (void*) 1, "--log", opt_logging, (void*) 0,
+		prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
+		"--logfile", opt_log_file, (void*) 1, "--log", opt_logging, (void*) 0,
+		"--dirlog", opt_dirlog_file, (void*) 1, "--ge1log", opt_GE1LOG,
+		(void*) 1, "--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog,
+		(void*) 1, "--imdblog", opt_imdblog, (void*) 1, "--oneliners",
+		opt_oneliner, (void*) 1, "--lastonlog", opt_lastonlog, (void*) 1,
+		"--nukelog", opt_nukelog_file, (void*) 1, "--siteroot", opt_siteroot,
+		(void*) 1, "--glroot", opt_glroot, (void*) 1,
 		NULL, NULL, NULL };
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
@@ -2497,9 +2527,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update, (void*) 0,
 		"--memlimit", opt_membuffer_limit, (void*) 1, "-p", opt_dirlog_chk_dupe,
 		(void*) 0, "--dupechk", opt_dirlog_chk_dupe, (void*) 0, "--nobuffer",
-		opt_g_nobuffering, (void*) 0, "--nukedump", opt_dirlog_dump_nukelog,
-		(void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0, "--help",
-		print_help, (void*) 0, "--version", print_version, (void*) 0,
+		opt_g_nobuffering, (void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0,
+		"--help", print_help, (void*) 0, "--version", print_version, (void*) 0,
 		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
 		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
@@ -2515,8 +2544,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
-		"--nofq", opt_g_nofq, (void*) 0,
-		NULL, NULL, NULL };
+		"--nofq", opt_g_nofq, (void*) 0, NULL, NULL, NULL
+};
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -2614,7 +2643,7 @@ void *md_alloc(pmda md, int b) {
 	int flags = 0;
 
 	if (md->offset >= md->count) {
-		if (gfl & F_OPT_VERBOSE4) {
+		if (gfl & F_OPT_VERBOSE5) {
 			print_str(
 					"NOTICE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
 					(ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count);
@@ -2627,7 +2656,7 @@ void *md_alloc(pmda md, int b) {
 		md->count *= 2;
 		uintaa_t rlc = md_relink(md);
 		flags |= MDA_MDALLOC_RE;
-		if (gfl & F_OPT_VERBOSE4) {
+		if (gfl & F_OPT_VERBOSE5) {
 			print_str(
 					"NOTICE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
 					(ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count,
@@ -2990,7 +3019,7 @@ int g_init(int argc, char **argv) {
 		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
 	}
 
-	if ((gfl & F_OPT_VERBOSE3) && glconf.offset) {
+	if ((gfl & F_OPT_VERBOSE4) && glconf.offset) {
 		print_str("NOTICE: %s: loaded %d config lines into memory\n",
 		GLCONF, (int) glconf.offset);
 	}
@@ -3006,7 +3035,7 @@ int g_init(int argc, char **argv) {
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
 		bzero(GLROOT, 255);
 		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE3)) {
+		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
 	}
@@ -3016,7 +3045,7 @@ int g_init(int argc, char **argv) {
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
 		bzero(SITEROOT_N, 255);
 		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE3)) {
+		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
 	}
@@ -3026,7 +3055,7 @@ int g_init(int argc, char **argv) {
 	if (ptr) {
 		bzero(FTPDATA, 255);
 		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
-		if ((gfl & F_OPT_VERBOSE3)) {
+		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
 	}
@@ -3036,7 +3065,7 @@ int g_init(int argc, char **argv) {
 	if (ptr) {
 		NUKESTR = calloc(255, 1);
 		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-		if ((gfl & F_OPT_VERBOSE3)) {
+		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n", NUKESTR);
 		}
 		ofl |= F_OVRR_NUKESTR;
@@ -9940,7 +9969,7 @@ int m_load_input(__g_handle hdl, char *input) {
 		if ((rs = split_string(buffer, 0xA, &md_s)) != hdl->d_memb) {
 			if (gfl & F_OPT_VERBOSE2) {
 				print_str(
-						"WARNING: DATA IMPORT: [%d/%d] not enough parameters\n",
+						"WARNING: DATA IMPORT: [%d/%d] parameter count mismatch\n",
 						rs, hdl->d_memb);
 			}
 			rf++;
