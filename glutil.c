@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-9
+ * Version     : 1.9-10
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -153,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3637,6 +3637,10 @@ int rebuild(void *arg) {
 				(ulint64_t) g_act_1.rw);
 	}
 
+	if ((gfl & F_OPT_NOFQ) && !(g_act_1.flags & F_GH_APFILT)) {
+		return 6;
+	}
+
 	return 0;
 }
 
@@ -4780,7 +4784,8 @@ int do_sort(__g_handle hdl, char *field, uint32_t flags) {
 
 int g_filter(__g_handle hdl, pmda md) {
 	g_setjmp(0, "g_filter", NULL, NULL);
-	if (!((hdl->exec_args.exc || (gfl & F_OPT_HASMATCH))) || !md->count) {
+	if (!((hdl->exec_args.exc || (hdl->flags & F_GH_HASMATCHES)))
+			|| !md->count) {
 		return 0;
 	}
 
@@ -8759,11 +8764,14 @@ int g_proc_mr(__g_handle hdl) {
 					hdl->file);
 			return 2000;
 		}
-		if (hdl->_match_rr.offset && (gfl & F_OPT_VERBOSE4)) {
-			print_str("NOTICE: %s: commit %llu matches to handle\n", hdl->file,
-					(ulint64_t) hdl->_match_rr.offset);
+		if (hdl->_match_rr.offset) {
+			if ((gfl & F_OPT_VERBOSE4)) {
+				print_str("NOTICE: %s: commit %llu matches to handle\n",
+						hdl->file, (ulint64_t) hdl->_match_rr.offset);
+			}
+			hdl->flags |= F_GH_HASMATCHES;
 		}
-		hdl->flags |= F_GH_HASMATCHES;
+
 	}
 
 	if ((gfl & F_OPT_HAS_G_LOM)) {
