@@ -18,6 +18,7 @@
  *   - Abort rebuild when nothing was filtered (optional, --nofq) (rev. 9)
  *   - Rebuild (-e) returns error if --nofq aborted (rev. 10)
  *   - Path overrides can be given at macro launch (-m) (rev. 11)
+ *   - Bugfix: --maxhit/maxres ignored when no match given (rev. 12)
  *
  * v1.8
  *
