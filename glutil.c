@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-11
+ * Version     : 1.9-12
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -153,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 11
+#define VER_REVISION 12
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -323,6 +323,7 @@ typedef struct g_handle {
 	uint32_t block_sz, flags;
 	mda buffer, w_buffer;
 	mda _match_rr;
+	off_t max_results, max_hits;
 	_execv exec_args;
 	void *data;
 	char s_buffer[PATH_MAX];
@@ -594,10 +595,13 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_HASMATCHES			(a32 << 25)
 #define F_GH_HASEXC				(a32 << 26)
 #define F_GH_APFILT 			(a32 << 27)
+#define F_GH_HASMAXRES			(a32 << 28)
+#define F_GH_HASMAXHIT			(a32 << 29)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
 #define F_GH_ISSHM				(F_GH_SHM|F_GH_ONSHM)
+#define F_GH_ISMP				(F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
 
 #define F_OVRR_IPC				(a32 << 1)
 #define F_OVRR_GLROOT			(a32 << 2)
@@ -2544,8 +2548,7 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
-		"--nofq", opt_g_nofq, (void*) 0, NULL, NULL, NULL
-};
+		"--nofq", opt_g_nofq, (void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -4705,10 +4708,10 @@ int eval_cmatch(__g_match _gm, __g_match _p_gm, int r) {
 
 int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 	if (md) {
-		if (max_results && md->rescnt >= max_results) {
+		if (hdl->max_results && md->rescnt >= hdl->max_results) {
 			return 1;
 		}
-		if (max_hits && md->hitcnt >= max_hits) {
+		if (hdl->max_hits && md->hitcnt >= hdl->max_hits) {
 			return 0;
 		}
 	}
@@ -4813,8 +4816,7 @@ int do_sort(__g_handle hdl, char *field, uint32_t flags) {
 
 int g_filter(__g_handle hdl, pmda md) {
 	g_setjmp(0, "g_filter", NULL, NULL);
-	if (!((hdl->exec_args.exc || (hdl->flags & F_GH_HASMATCHES)))
-			|| !md->count) {
+	if (!((hdl->exec_args.exc || (hdl->flags & F_GH_ISMP))) || !md->count) {
 		return 0;
 	}
 
@@ -8801,6 +8803,16 @@ int g_proc_mr(__g_handle hdl) {
 			hdl->flags |= F_GH_HASMATCHES;
 		}
 
+	}
+
+	if (gfl & F_OPT_HASMAXHIT) {
+		hdl->max_hits = max_hits;
+		hdl->flags |= F_GH_HASMAXHIT;
+	}
+
+	if (gfl & F_OPT_HASMAXRES) {
+		hdl->max_results = max_results;
+		hdl->flags |= F_GH_HASMAXRES;
 	}
 
 	if ((gfl & F_OPT_HAS_G_LOM)) {
