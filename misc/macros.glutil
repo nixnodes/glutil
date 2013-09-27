@@ -75,6 +75,12 @@
 ##  causing mismatches, blindly running this 
 ##  macro is highly dicouraged. !WARNING!
 #
+## !!MAKE SURE 1.9-10 IS INSTALLED!!
+##   If not, EVERY glutil -e call will return positive,
+##   making it it wipe each dir found in dirlog from 
+##   filesystem, potentially wiping the entire site
+##   
+#
 ## Before proceeding, verify the sanity of glutil's return 
 ## value by replacing "rm -R" with "echo" (or similar)
 #
