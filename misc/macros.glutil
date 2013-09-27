@@ -47,3 +47,14 @@
 #@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -en "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
 #@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -en "dir {dir}\ntime {time}\nimdbid {imdbid}\nrated {rated}\nscore {score}\ngenre {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
 #@MACRO:tvrage-to-ascii:{m:exe} -h --exec `echo "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {status}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#
+## <dirlog-clean-dupes>
+#
+## Erases duplicate records in dirlog
+#
+## The first record found is ignored, any other with
+## the same base directory name are removed.
+#
+## This could take a long time, depending on the dirlog size
+#
+#@MACRO:dirlog-clean-dupes:{m:exe} -d -execv `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
