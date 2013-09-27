@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-8
+ * Version     : 1.9-9
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -153,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -552,6 +552,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_HASMAXHIT			(a64 << 52)
 #define F_OPT_HASMAXRES			(a64 << 53)
 #define F_OPT_PROCREV			(a64 << 54)
+#define F_OPT_NOFQ				(a64 << 55)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -592,6 +593,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_HASLOM				(a32 << 24)
 #define F_GH_HASMATCHES			(a32 << 25)
 #define F_GH_HASEXC				(a32 << 26)
+#define F_GH_APFILT 			(a32 << 27)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -610,6 +612,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_TVLOG			(a32 << 11)
 #define F_OVRR_GAMELOG			(a32 << 12)
 #define F_OVRR_GE1LOG			(a32 << 13)
+#define F_OVRR_LOGFILE			(a32 << 14)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -1210,7 +1213,8 @@ char *hpd_up =
 				"                         and it's size remains the same (when data log size doesn't match segment size,\n"
 				"                         there will be junk/missing records, depending on input size being higher/lower)\n"
 				"  --loadq               Quit just after loading data into memory\n"
-				"                         Applies to dump operations only\n"
+				"                           Applies to dump operations only\n"
+				"  --nofq                Abort data (re)build operation unconditionally, if nothing was filtered\n"
 				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
 				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
@@ -1465,6 +1469,11 @@ int opt_g_ifhit(void *arg, int m) {
 	return 0;
 }
 
+int opt_g_nofq(void *arg, int m) {
+	gfl |= F_OPT_NOFQ;
+	return 0;
+}
+
 int opt_g_fix(void *arg, int m) {
 	gfl |= F_OPT_FIX;
 	return 0;
@@ -1677,6 +1686,7 @@ int opt_shmipc(void *arg, int m) {
 int opt_log_file(void *arg, int m) {
 	g_cpg(arg, LOGFILE, m, PATH_MAX);
 	gfl |= F_OPT_PS_LOGGING;
+	ofl |= F_OVRR_LOGFILE;
 	return 0;
 }
 
@@ -2427,8 +2437,8 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		opt_g_verbose5, (void*) 0, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
 		opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
 		opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--info",
-		prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
-		"--logfile", opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0,
+		prio_opt_g_pinfo, (void*) 0, "--loglevel", NULL, (void*) 1, "--logfile",
+		NULL, (void*) 1, "--log", opt_logging, (void*) 0,
 		NULL, NULL, NULL };
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
@@ -2505,6 +2515,7 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
+		"--nofq", opt_g_nofq, (void*) 0,
 		NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -2926,7 +2937,9 @@ char *build_data_path(char *file, char *path, char *sd) {
 
 void enable_logging(void) {
 	if ((gfl & F_OPT_PS_LOGGING) && !fd_log) {
-		build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
+		if (!(ofl & F_OVRR_LOGFILE)) {
+			build_data_path(DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
+		}
 		if (!(fd_log = gg_fopen(LOGFILE, "a"))) {
 			gfl ^= F_OPT_PS_LOGGING;
 			print_str(
@@ -2941,71 +2954,6 @@ void enable_logging(void) {
 #define MSG_INIT_PATH_OVERR 	"NOTICE: %s path set to '%s'\n"
 
 int g_init(int argc, char **argv) {
-
-	/*int p_f[2] = { 0 }, p_f2[2] = { 0 };
-	 FILE *fd, *fd2;
-	 int status, w;
-	 if (pipe(p_f) == -1) {
-	 printf("bad pipe\n");
-	 }
-
-	 int pid = (int) fork();
-
-	 if (!pid) {
-
-	 dup2(p_f[1], STDOUT_FILENO);
-	 close(p_f[1]);
-	 close(p_f[0]);
-
-	 dup2(p_f2[0], STDIN_FILENO);
-	 close(p_f2[0]);
-	 close(p_f2[1]);
-
-	 execlp("/bin/sh", "", NULL);
-	 _exit(127);
-	 } else {
-
-	 w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
-	 if (w == -1) {
-	 perror("waitpid");
-	 exit(EXIT_FAILURE);
-	 }
-
-	 if (WIFEXITED(status)) {
-	 printf("exited, status=%d\n", WEXITSTATUS(status));
-	 } else if (WIFSIGNALED(status)) {
-	 printf("killed by signal %d\n", WTERMSIG(status));
-	 } else if (WIFSTOPPED(status)) {
-	 printf("stopped by signal %d\n", WSTOPSIG(status));
-	 } else if (WIFCONTINUED(status)) {
-	 printf("continued\n");
-	 }
-	 close(p_f[1]);
-	 close(p_f2[0]);
-
-	 }
-
-	 char bb[8192] = { 0 };
-	 if (!(fd = fdopen(p_f[0], "r"))) {
-
-	 printf("bad handle 0\n");
-	 } else {
-	 if (!(fd2 = fdopen(p_f2[1], "w"))) {
-	 printf("bad w hdl\n");
-	 } else {
-	 g_fwrite("ls -lah\n", 1, 8, fd2);
-
-	 fclose(fd2);
-
-	 }
-	 g_fread(bb, 1, 8191, fd);
-	 printf("-- %s\n", bb);
-	 fclose(fd);
-	 }
-
-	 printf("here we go\n");
-	 */
-	//return 0;
 	g_setjmp(0, "g_init", NULL, NULL);
 	int r;
 
@@ -3204,7 +3152,7 @@ int g_init(int argc, char **argv) {
 
 	if (gfl & F_OPT_DAEMONIZE) {
 		print_str("NOTICE: forking into background.. [PID: %d]\n", getpid());
-		if (daemon(0, 0) == -1) {
+		if (daemon(1, 0) == -1) {
 			print_str(
 					"ERROR: [%d] could not fork into background, terminating..\n",
 					errno);
@@ -3564,8 +3512,9 @@ char **build_argv(char *args, size_t max, int *c) {
 			}
 		}
 
-		if ((((args[i_0] == sp_1 || (args[i_0] == sp_2 || args[i_0] == sp_3)) && args[i_0 - 1] != 0x5C && args[i_0] != 0x5C)
-				|| !args[i_0] ) && i_0 > l_p) {
+		if ((((args[i_0] == sp_1 || (args[i_0] == sp_2 || args[i_0] == sp_3))
+				&& args[i_0 - 1] != 0x5C && args[i_0] != 0x5C) || !args[i_0])
+				&& i_0 > l_p) {
 
 			if (i_0 == args_l - 1) {
 				if (!(args[i_0] == sp_1 || args[i_0] == sp_2
@@ -3683,8 +3632,10 @@ int rebuild(void *arg) {
 		return 5;
 	}
 
-	print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
-			(ulint64_t) g_act_1.rw);
+	if (g_act_1.bw || (gfl & F_OPT_VERBOSE4)) {
+		print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
+				(ulint64_t) g_act_1.rw);
+	}
 
 	return 0;
 }
@@ -3844,7 +3795,7 @@ int d_write(char *arg) {
 		ret = 7;
 		goto end;
 	} else {
-		if (gfl & F_OPT_VERBOSE) {
+		if (g_act_1.bw || (gfl & F_OPT_VERBOSE4)) {
 			print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
 		}
 	}
@@ -4234,7 +4185,9 @@ int dirlog_update_record(char *argv) {
 	}
 	r_end: md_g_free(&dirchain);
 
-	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
+	if (dl_stats.bw || (gfl & F_OPT_VERBOSE4)) {
+		print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
+	}
 
 	return ret;
 }
@@ -4503,8 +4456,10 @@ int dirlog_check_records(void) {
 		if (rebuild_data_file(DIRLOG, &g_act_1)) {
 			print_str(MSG_GEN_DFRFAIL, DIRLOG);
 		} else {
-			print_str(MSG_GEN_WROTE, DIRLOG, (ulint64_t) g_act_1.bw,
-					(ulint64_t) g_act_1.rw);
+			if (g_act_1.bw || (gfl & F_OPT_VERBOSE4)) {
+				print_str(MSG_GEN_WROTE, DIRLOG, (ulint64_t) g_act_1.bw,
+						(ulint64_t) g_act_1.rw);
+			}
 		}
 	}
 
@@ -4872,6 +4827,10 @@ int g_filter(__g_handle hdl, pmda md) {
 				(uint64_t) (s_offset - md->offset));
 	}
 
+	if (s_offset != md->offset) {
+		hdl->flags |= F_GH_APFILT;
+	}
+
 	if (!md->offset) {
 		return 1;
 	}
@@ -4910,7 +4869,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			goto r_end;
 		}
 
-		void *s_exec = (void*)g_act_1.exec_args.exc;
+		void *s_exec = (void*) g_act_1.exec_args.exc;
 
 		g_act_1.exec_args.exc = NULL;
 
@@ -4956,6 +4915,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				lm_ptr = lm_ptr->next;
 			}
 		}
+
 	}
 
 	void *ptr;
@@ -5231,7 +5191,9 @@ int rebuild_dirlog(void) {
 
 	g_close(&g_act_1);
 
-	print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
+	if (dl_stats.bw || (gfl & F_OPT_VERBOSE4)) {
+		print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
+	}
 
 	return rt;
 }
@@ -6298,6 +6260,10 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 						file);
 				return 12;
 			}
+		}
+		if ((gfl & F_OPT_NOFQ) && (hdl->exec_args.exc || (gfl & F_OPT_HASMATCH))
+				&& !(hdl->flags & F_GH_APFILT)) {
+			return 0;
 		}
 		//hdl->buffer_count = p_ptr->count;
 	}
