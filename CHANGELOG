@@ -15,6 +15,7 @@
  *   - Added --execv, uses execv() instead of system() (--exec) (rev. 7)
  *   - Bugfix --sort caused --exec[v] not executing (rev. 7)
  *   - Bugfix: internal argument parsing ignored last char (rev. 8)
+ *   - Abort rebuild when nothing was filtered (optional, --nofq) (rev. 9)
  *
  * v1.8
  *
