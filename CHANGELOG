@@ -16,6 +16,7 @@
  *   - Bugfix --sort caused --exec[v] not executing (rev. 7)
  *   - Bugfix: internal argument parsing ignored last char (rev. 8)
  *   - Abort rebuild when nothing was filtered (optional, --nofq) (rev. 9)
+ *   - Rebuild (-e) returns error if --nofq aborted (rev. 10)
  *
  * v1.8
  *
