@@ -1,6 +1,6 @@
-### generic macros
+### Generic macros
 #
-### run with: ./glutil -m <macro name>
+### Run: ./glutil -m <macro name>
 #
 ## <dirlog-update>
 ## Update directory log with new records and remove records that are
@@ -9,10 +9,10 @@
 #
 ## <dupe>
 ## Search for duplicates in dirlog, avoiding non-releases
-#@MACRO:dupe:{m:exe} -p --regexi "\/(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1}
+#@MACRO:dupe:{m:exe} -p --regexi "basedir,(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1}
 ## <dupe-v>
 ## With progress stats
-#@MACRO:dupe-v:{m:exe} -p --regexi "\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
+#@MACRO:dupe-v:{m:exe} -p --regexi "basedir,(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
 #
 ## Creates symlinks inside respective folders for every imdb/tv log record,
 ## erasing any existing ones first; 
@@ -35,18 +35,18 @@
 #
 # Usage:
 #
-#  ./glutil -m dirlog-to-text -arg1=dirlog.txt
+#  glutil -m dirlog-to-text -arg1=dirlog.txt
 #
 # Convert back into binary format:
 #
-#  ./glutil -z dirlog --dirlog=dirlog.bin -vv < dirlog.txt
+#  glutil -z dirlog --dirlog=dirlog.bin -vv < dirlog.txt
 #
 #  If --dirlog=<path> is not specified, glutil reverts to 
 #   default dirlog path
 #
 #@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -en "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
-#@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -en "dir {dir}\ntime {time}\nimdbid {imdbid}\nrated {rated}\nscore {score}\ngenre {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
-#@MACRO:tvrage-to-ascii:{m:exe} -h --exec `echo "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {status}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -en "dir {dir}\ntime {time}\nimdbid {imdbid}\nscore {score}\ngenre {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:tvrage-to-ascii:{m:exe} -h --exec `echo -en "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {status}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
 #
 ## <dirlog-clean-dupes>
 #
@@ -60,13 +60,13 @@
 ## Use <dirlog-clean-dupes-rm> to get rid of filesystem
 ## directories
 #
-## This could take a long time, depending on the dirlog size
+## This can take a long time, depending on the dirlog size
 #
 #@MACRO:dirlog-clean-dupes:{m:exe} -d -execv `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
 #
 ## <dirlog-clean-dupes-rm>
 #
-## Requires glutil-1.9-10
+## Requires glutil-1.9-10 or above
 #
 ## Same as <dirlog-clean-dupes>, but wipes the filesystem
 ## directory too (after dirlog) 
@@ -76,11 +76,46 @@
 ##  macro is highly dicouraged. !WARNING!
 #
 ## !!MAKE SURE 1.9-10 IS INSTALLED!!
-##   If not, EVERY glutil -e call will return positive,
-##   making it wipe each dir found in dirlog from 
-##   filesystem, potentially wiping the entire site  
+##   Otherwise, EVERY glutil -e call will return positive,
+##   making it wipe each dir found in dirlog, from the
+##   filesystem - potentially wiping the entire site  
 #
 ## Before proceeding, verify the sanity of glutil's return 
 ## value by replacing "rm -R" with "echo" (or similar)
 #
-#@MACRO:dirlog-clean-dupes-rm:{m:exe} -d -exec `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent && echo "Erasing \"{glroot}{dir}\"" && rm -R \"{glroot}{dir}\"` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#@MACRO:dirlog-clean-dupes-rm:{m:exe} -d -exec `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent && echo "erasing \"{glroot}{dir}\"" && rm -R \"{glroot}{dir}\"` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#
+## <dirlog-clean-empty>
+#
+## Requires glutil-1.9-11 or above
+#
+## Clean  dirlog records that are size 0 and
+##  have no files
+#
+## Filters based on dirlog (not filesystem) file/size
+##  information
+#
+## Usage:
+#
+#   glutil -m dirlog-clean-empty [--dirlog=file] [-arg1=<additional params>]
+#
+## If no path is given, glutil reverts to default 
+##  (attempts extracting from glftpd.conf)
+#
+#@MACRO:dirlog-clean-empty:{m:exe} -e dirlog --lom "size == 0 && files == 0" --nofq -vvv {m:arg1}
+#
+## <dirlog-clean-junk>
+#
+## Remove unecessary entries from dirlog
+#
+#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog --regexi "basedir,^(sample|proof|booklet|subs|cover(s|))$" -vvv
+#
+## <dirlog-trim>
+#
+## Rebuild dirlog with a limit of <maxsize> records
+#
+## Usage:
+#
+#    glutil -m dirlog-trim -arg1=<maxsize>
+#
+#@MACRO:dirlog-trim:{m:exe} -e dirlog --maxres={m:arg1} --rev -vvv
