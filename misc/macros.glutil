@@ -50,11 +50,32 @@
 #
 ## <dirlog-clean-dupes>
 #
+## ## Requires glutil-1.9-9
+#
 ## Erases duplicate records in dirlog
 #
 ## The first record found is ignored, any other with
 ## the same base directory name are removed.
 #
+## Use <dirlog-clean-dupes-rm> to get rid of filesystem
+## directories
+#
 ## This could take a long time, depending on the dirlog size
 #
 #@MACRO:dirlog-clean-dupes:{m:exe} -d -execv `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#
+## <dirlog-clean-dupes-rm>
+#
+## Requires glutil-1.9-10
+#
+## Same as <dirlog-clean-dupes>, but wipes the filesystem
+## directory too (after dirlog) 
+#
+## !WARNING! There could be unforseen factors
+##  causing mismatches, blindly running this 
+##  macro is highly dicouraged. !WARNING!
+#
+## Before proceeding, verify the sanity of glutil's return 
+## value by replacing "rm -R" with "echo" (or similar)
+#
+#@MACRO:dirlog-clean-dupes-rm:{m:exe} -d -exec `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent && echo "Erasing \"{glroot}{dir}\"" && rm -R \"{glroot}{dir}\"` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
