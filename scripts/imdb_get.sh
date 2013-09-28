@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:0
+#@REVISION:1
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "`basename '{arg}'`" '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
 #@MACRO:imdb-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} `basename {arg}` '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -exec "{m:spec1} '{basedir}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{dir}'" --iregexi "{m:arg1}" 
@@ -43,7 +43,7 @@ UPDATE_IMDBLOG=1
 ## Set to 1, imdblog directory path fields are set to exact 
 ##  query that was made
 ## Existing records are always overwritten, except if DENY_IMDBID_DUPE=1
-DATABASE_TYPE=1
+IMDB_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
 ## iMDB ID already in the database
@@ -75,7 +75,7 @@ XMLLINT="/usr/bin/xmllint"
 
 BASEDIR=`dirname $0`
 
-[ $TYPE_SPECIFIC_DB -eq 1 ] && [ $DATABASE_TYPE -gt 0 ] && LAPPEND="$DATABASE_TYPE"
+[ $TYPE_SPECIFIC_DB -eq 1 ] && [ $IMDB_DATABASE_TYPE -gt 0 ] && LAPPEND="$IMDB_DATABASE_TYPE"
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
@@ -150,13 +150,13 @@ RUNTIME_m=`echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g'`
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
-	if [ $DATABASE_TYPE -eq 0 ]; then
+	if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
 		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
-	elif [ $DATABASE_TYPE -eq 1 ]; then
+	elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
 		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
 		DIR_E=$QUERY		
 		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex imdbid,"^$iid$" > /dev/null || {

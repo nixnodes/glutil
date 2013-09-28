@@ -1,10 +1,10 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:0
+#@REVISION:1
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "`basename '{arg}'`" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
 #@MACRO:tvrage-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} `basename {arg}` '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
-#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -exec `{m:spec1} "{basedir}" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{dir}'` --iregexi "{m:arg1}" {m:arg2} 
+#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -exec `{m:spec1} "{basedir}" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{dir}'` --iregexi "{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}'"
 #
 ## Gets show info using TVRAGE API (XML)
@@ -34,7 +34,7 @@ UPDATE_TVLOG=1
 ## Set to 1, tvlog directory path fields are set to exact 
 ##  query that was made
 ## Existing records are always overwritten, except if DENY_IMDBID_DUPE=1
-DATABASE_TYPE=1
+TVRAGE_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
 ## showID already in the database
@@ -68,7 +68,7 @@ XMLLINT="/usr/bin/xmllint"
 
 BASEDIR=`dirname $0`
 
-[ $TYPE_SPECIFIC_DB -eq 1 ] && [ $DATABASE_TYPE -gt 0 ] && LAPPEND="$DATABASE_TYPE"
+[ $TYPE_SPECIFIC_DB -eq 1 ] && [ $TVRAGE_DATABASE_TYPE -gt 0 ] && LAPPEND="$TVRAGE_DATABASE_TYPE"
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
@@ -151,13 +151,13 @@ GENRES=`get_field_t '/genres//genre[.]'`
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
-	if [ $DATABASE_TYPE -eq 0 ]; then
+	if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
 		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
-	elif [ $DATABASE_TYPE -eq 1 ]; then		
+	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
 		$2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
 			echo "ERROR: $SHOWID: Failed removing old record" && exit 1 

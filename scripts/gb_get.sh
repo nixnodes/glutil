@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
 #@VERSION:1
-#@REVISION:0
+#@REVISION:1
 #@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec "{m:spec1} "`basename '{arg}'`" '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'"
 #@MACRO:gamescore-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -exec "{m:spec1} '{basedir}' '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'" --iregex "{m:arg1}" 
 #
@@ -25,8 +25,8 @@ XMLLINT="/usr/bin/xmllint"
 
 ###########################[ BEGIN OPTIONS ]#############################
 #
-BURL="http://www.giantbomb.com/"
-URL="$BURL""api"
+GIANTBOMB_BURL="http://www.giantbomb.com/"
+GIANTBOMB_URL="$GIANTBOMB_BURL""api"
 #
 ## Get it from giantbomb website (registration required)
 API_KEY=""
@@ -57,15 +57,15 @@ FIELD="reviews"
 
 APIKEY_STR="?api_key=$API_KEY"
 
-G_ID=`$CURL $CURL_FLAGS "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -`
+G_ID=`$CURL $CURL_FLAGS "$GIANTBOMB_URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -`
 
-#echo "$URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY"
+#echo "$GIANTBOMB_URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY"
 
 [ -z "$G_ID" ] && echo "ERROR: '$QUERY': Failed getting game ID" && exit 1
 
-RES=`$CURL $CURL_FLAGS $BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//'`
+RES=`$CURL $CURL_FLAGS $GIANTBOMB_BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//'`
 
-[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result score from $BURL""game/3030-$G_ID/user-reviews/" && exit 1
+[ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result score from $GIANTBOMB_BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
 
 echo "SCORE: '$QUERY': $RES"
