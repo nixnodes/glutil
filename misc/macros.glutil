@@ -1,4 +1,4 @@
-#@REVISION:2
+#@REVISION:3
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -108,9 +108,9 @@
 #
 #@MACRO:dirlog-clean-dupes-rm:{m:exe} -d -exec `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent && echo "erasing \"{glroot}{dir}\"" && rm -R \"{glroot}{dir}\"` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
 #
-## <dirlog-clean-empty>
-#
 ## Requires glutil-1.9-11 or above
+#
+## <dirlog-clean-empty>
 #
 ## Clean  dirlog records that are size 0 and
 ##  have no files
@@ -143,11 +143,13 @@
 #
 ## Rebuild dirlog with a limit of <maxsize> records
 #
+## Requires glutil-1.9-10 or above
+#
 ## Usage:
 #
 #    glutil -m dirlog-trim -arg1=<maxsize>
 #
-#@MACRO:dirlog-trim:{m:exe} -e dirlog --maxres={m:arg1} --rev -vvv
+#@MACRO:dirlog-trim:{m:exe} -e dirlog --maxres={m:arg1}  --nofq --rev -vvv
 #
 ## <print-<log>-info>
 #
