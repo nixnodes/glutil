@@ -1,6 +1,9 @@
-### Generic macros
+#@REVISION:0
+## These are basically just sets of glutil arguments, 
+##  packed into macros for convinience
 #
-### Run: ./glutil -m <macro name>
+#
+### Run with: ./glutil -m <macro name>
 #
 ## <dirlog-update>
 #
@@ -25,14 +28,13 @@
 #
 ## Creates symlinks inside respective folders for every imdb/tv log record,
 ## erasing any existing ones first; 
-##
+#
 ## Examples:
-##
-##  ../[ TVRAGE - Scripted - Comedy,Family ] 
-##  ../[ IMDB - 7.5 | 300415 - Action, Comedy, Adventure ] 
-##
+#
+#   ../[ TVRAGE - Scripted - Comedy,Family ] 
+#   ../[ IMDB - 7.5 | 300415 - Action, Comedy, Adventure ] 
+#
 ## Requires logs built with DATABASE_TYPE=0 (see tvrage/imdb_get.sh)
-##
 #
 #@MACRO:make-tvrage-infolinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
 #
@@ -44,16 +46,16 @@
 # Converts dirlog into ASCII format, suitable
 # for re-injection using -z
 #
-# Usage:
+## Usage:
 #
-#  glutil -m dirlog-to-text -arg1=dirlog.txt
+#   glutil -m dirlog-to-text -arg1=dirlog.txt
 #
-# Convert back into binary format:
+## Convert back into binary format:
 #
-#  glutil -z dirlog --dirlog=dirlog.bin -vv < dirlog.txt
+#   glutil -z dirlog --dirlog=dirlog.bin -vv < dirlog.txt
 #
-#  If --dirlog=<path> is not specified, glutil reverts to 
-#   default dirlog path
+##  If --dirlog=<path> is not specified, glutil reverts to 
+##   default dirlog path
 #
 #@MACRO:dirlog-to-ascii:{m:exe} -d --exec `echo -en "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
 #@MACRO:imdb-to-ascii:{m:exe} -a --exec `echo -en "dir {dir}\ntime {time}\nimdbid {imdbid}\nscore {score}\ngenre {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n" >> {m:arg1}` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
