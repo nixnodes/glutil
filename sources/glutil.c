@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-17
+ * Version     : 1.9-18
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 17
+#define VER_REVISION 18
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -610,6 +610,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_GAMELOG			(a32 << 12)
 #define F_OVRR_GE1LOG			(a32 << 13)
 #define F_OVRR_LOGFILE			(a32 << 14)
+#define F_ESREDIRFAILED			(a32 << 15)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -666,7 +667,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define G1_SZ 					sizeof(_d_generic_s2044)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
-#define	DB_MAX_SIZE 			((ulint64_t)536870912)   /* max file size allowed to load into memory */
+#define	DB_MAX_SIZE 			((ulint64_t)2147483648)   /* max file size allowed to load into memory */
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
@@ -1076,6 +1077,8 @@ uint32_t flags_udcfg = 0;
 uint32_t g_sort_flags = 0;
 
 off_t max_hits = 0, max_results = 0;
+
+int execv_stdout_redir = 0;
 
 char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
@@ -1828,6 +1831,18 @@ int opt_g_usleep(void *arg, int m) {
 	return 0;
 }
 
+int opt_execv_stdout_redir(void *arg, int m) {
+	char *ptr = g_pg(arg, m);
+	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+	int hdl = open(ptr, O_RDWR | O_CREAT, mode);
+	if (hdl == -1) {
+		ofl |= F_ESREDIRFAILED;
+	} else {
+		execv_stdout_redir = hdl;
+	}
+	return 0;
+}
+
 mda _md_gsort = { 0 };
 char *g_sort_field = NULL;
 
@@ -2548,7 +2563,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
-		"--nofq", opt_g_nofq, (void*) 0, NULL, NULL, NULL };
+		"--nofq", opt_g_nofq, (void*) 0, "--esredir", opt_execv_stdout_redir,
+		(void*) 1, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -2860,6 +2876,10 @@ int g_shutdown(void *arg) {
 		}
 		g_free(exec_v);
 
+	}
+
+	if ( execv_stdout_redir) {
+		close(execv_stdout_redir);
 	}
 
 	md_g_free(&_match_rr);
@@ -3176,6 +3196,10 @@ int g_init(int argc, char **argv) {
 		if ((gfl & F_OPT_VERBOSE2) && (gfl & F_OPT_PS_LOGGING)) {
 			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
 		}
+	}
+
+	if (ofl & F_ESREDIRFAILED) {
+		print_str("WARNING: could not open file to redirect execv stdout to\n");
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)) {
@@ -7176,6 +7200,9 @@ static int prep_for_exec(void) {
 			fprintf(stdout, "ERROR: could not open %s\n", inputfile);
 		}
 	}
+	if (execv_stdout_redir) {
+		dup2(execv_stdout_redir, STDOUT_FILENO);
+	}
 	return 0;
 }
 
@@ -7191,10 +7218,12 @@ int l_execv(char *exec, char **argv) {
 		fprintf(stderr, "ERROR: %s: fork failed\n", exec);
 		return 1;
 	}
+
 	if (!c_pid) {
 		if (prep_for_exec()) {
 			_exit(1);
 		} else {
+
 			execv(exec, argv);
 			fprintf(stderr, "ERROR: %s: execv failed to execute [%d]\n", exec,
 			errno);
@@ -9672,7 +9701,6 @@ int process_exec_string(char *input, char *output, size_t max_size,
 			for (i2 = 0, i++, r = 0, f = 0; i < blen && i2 < 255; i++, i2++) {
 				if (input[i] == 0x7D) {
 					buffer[i2] = 0x0;
-					//buffer2[0] = 0x0;
 					if (!i2 || strlen(buffer) > MAX_VAR_LEN
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
 						if (r) {
