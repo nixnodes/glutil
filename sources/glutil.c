@@ -1317,7 +1317,7 @@ char *g_pd(void *arg, int m, size_t l) {
 	a_l > l ? a_l = l : l;
 
 	if (a_l) {
-		ptr = (char*) calloc(a_l + 10, 1);
+		ptr = (char*) calloc(a_l + 1, 1);
 		g_strncpy(ptr, buffer, a_l);
 	}
 	return ptr;
@@ -3509,7 +3509,7 @@ char **process_macro(void * arg, char **out) {
 		print_str("MACRO: '%s': found macro in '%s'\n", av.p_buf_1, av.p_buf_2);
 	}
 
-	char *s_buffer = (char*) calloc(262144, 1), **s_ptr = NULL;
+	char *s_buffer = (char*) malloc(MAX_EXEC_STR + 1), **s_ptr = NULL;
 	int r;
 
 	if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
@@ -7247,9 +7247,10 @@ int g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl) {
 	return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
 }
 
+char b_glob[MAX_EXEC_STR + 1];
+
 int g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl) {
 	if (callback) {
-		char b_glob[MAX_EXEC_STR];
 		char *e_str;
 		if (ex_str) {
 			e_str = ex_str;
@@ -7259,11 +7260,11 @@ int g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl) {
 			}
 			e_str = exec_str;
 		}
-		bzero(b_glob, MAX_EXEC_STR);
 
 		if (process_exec_string(e_str, b_glob, MAX_EXEC_STR, callback,
 				buffer)) {
-			return 2;
+			bzero(b_glob, MAX_EXEC_STR + 1);
+			return -2;
 		}
 
 		return system(b_glob);
@@ -7703,7 +7704,7 @@ ssize_t file_copy(char *source, char *dest, char *mode, uint32_t flags) {
 	}
 
 	size_t r = 0, t = 0, w;
-	char *buffer = calloc(V_MB, 1);
+	char *buffer = malloc(V_MB);
 
 	while ((r = g_fread(buffer, 1, V_MB, fh_s)) > 0) {
 		if ((w = g_fwrite(buffer, 1, r, fh_d))) {
@@ -7729,7 +7730,7 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 	FILE *fp;
 	int read;
 	size_t r;
-	unsigned char *buffer = calloc(CRC_FILE_READ_BUFFER_SIZE, 1);
+	unsigned char *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE);
 
 	*crc_out = 0x0;
 
@@ -7827,6 +7828,7 @@ void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 				}
 				ptr = ptr->next;
 			}
+			out[o_w] = 0x0;
 			p_ret = (void*) out;
 			break;
 		case F_CFGV_RETURN_TOKEN_EX:
@@ -8073,7 +8075,7 @@ int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
 		uint32_t flags) {
 	int r = 1;
 
-	char *buffer = calloc(max_size + 1, 1);
+	char *buffer = malloc(max_size + 1);
 	void *ptr = ref_to_val_get_cfgval(arg, match,
 	NULL, flags, buffer, max_size);
 	if (ptr && strlen(ptr) < max_size) {
@@ -9368,7 +9370,7 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	} else if (!strcmp(match, "download")) {
 		snprintf(output, max_size, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
-		char *buffer = calloc(max_size + 1, 1);
+		char *buffer = malloc(max_size + 1);
 		void *ptr = ref_to_val_get_cfgval(data->uname, match,
 		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
@@ -9470,7 +9472,7 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		}
 		snprintf(output, max_size, "%u", kbps);
 	} else if (!is_char_uppercase(match[0])) {
-		char *buffer = calloc(max_size + 1, 1);
+		char *buffer = malloc(max_size + 1);
 		void *ptr = ref_to_val_get_cfgval(data->username, match,
 		DEFPATH_USERS,
 		F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
@@ -9660,7 +9662,6 @@ int process_exec_args(void *data, __g_handle hdl) {
 	while (ptr) {
 
 		t = (int*) ptr->ptr;
-		//bzero(hdl->exec_args.argv_c[*t], 8192);
 
 		if (process_exec_string(hdl->exec_args.argv[*t],
 				hdl->exec_args.argv_c[*t], 8191, (void*) hdl->g_proc1, data)) {
@@ -10598,7 +10599,7 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 		return 3;
 	}
 
-	char *buffer = calloc(V_MB, 1);
+	char *buffer = malloc(V_MB);
 	p_cfg_h pce;
 	int rd, i;
 
@@ -10770,7 +10771,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 			break;
 		}
 
-		char *buffer = calloc(1, SSD_MAX_LINE_SIZE + 16);
+		char *buffer = malloc(SSD_MAX_LINE_SIZE + 16);
 
 		size_t b_len, lc = 0;
 		int hit = 0, i;
