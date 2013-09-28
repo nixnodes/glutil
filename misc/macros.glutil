@@ -1,7 +1,7 @@
-#@REVISION:0
+#@REVISION:1
+#
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
-#
 #
 ### Run with: ./glutil -m <macro name>
 #
