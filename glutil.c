@@ -3512,7 +3512,9 @@ char **process_macro(void * arg, char **out) {
 				av.p_buf_1, c);
 	}
 
-	print_str("MACRO: '%s': EXECUTING: '%s'\n", av.p_buf_1, s_buffer);
+	if (gfl & F_OPT_VERBOSE) {
+		print_str("MACRO: '%s': EXECUTING: '%s'\n", av.p_buf_1, s_buffer);
+	}
 
 	end:
 
@@ -5630,7 +5632,6 @@ int release_generate_block(char *name, ear *iarg) {
 }
 
 int get_relative_path(char *subject, char *root, char *output) {
-	g_setjmp(0, "get_relative_path", NULL, NULL);
 	char *root_dir = root;
 
 	if (!root_dir)
@@ -6025,8 +6026,6 @@ time_t get_file_creation_time(struct stat *st) {
 }
 
 uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
-	g_setjmp(0, "dirlog_find", NULL, NULL);
-
 	if (!(ofl & F_OVRR_NUKESTR)) {
 		return dirlog_find_old(dirn, mode, flags, callback);
 	}
@@ -6084,7 +6083,6 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 }
 
 uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
-	g_setjmp(0, "dirlog_find_old", NULL, NULL);
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
@@ -6174,7 +6172,6 @@ char *string_replace(char *input, char *match, char *with, char *output,
 
 uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags,
 		void *callback) {
-	g_setjmp(0, "dirlog_find_simple", NULL, NULL);
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
@@ -6218,7 +6215,6 @@ uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags,
 }
 
 uint64_t nukelog_find(char *dirn, int mode, struct nukelog *output) {
-	g_setjmp(0, "nukelog_find", NULL, NULL);
 	struct nukelog buffer = { 0 };
 
 	uint64_t r = MAX_uint64_t;
