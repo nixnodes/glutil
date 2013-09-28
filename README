@@ -11,8 +11,8 @@
     - Display data (filtered and sorted) from any supported binary log 
         in various formats
   
-  Check /scripts folder in this repo for examples on how glutil passes 
-    binary log data data to scripts (and vice versa)
+  Check /scripts folder in this repo for examples on what can be done 
+    with this tool
 
   See ./glutil --help for full list of flags with short descriptions.
 
