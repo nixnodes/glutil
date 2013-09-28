@@ -97,7 +97,7 @@
 #
 ## Usage:
 #
-#   glutil -m dirlog-clean-empty [--dirlog=file] [-arg1=<additional params>]
+#    glutil -m dirlog-clean-empty [--dirlog=file] [-arg1=<additional params>]
 #
 ## If no path is given, glutil reverts to default 
 ##  (attempts extracting from glftpd.conf)
@@ -119,3 +119,11 @@
 #    glutil -m dirlog-trim -arg1=<maxsize>
 #
 #@MACRO:dirlog-trim:{m:exe} -e dirlog --maxres={m:arg1} --rev -vvv
+#
+## <print-<log>-info>
+#
+#@MACRO:print-dirlog-info:{m:exe} noop --silent --preexec `if [ {q:dirlog@read} -eq 0 ]; then echo "WARNING: unable to read dirlog, no read permission"; exit 1;elif [ {q:dirlog@read} -eq -1 ]; then echo "WARNING: unable to access dirlog"; exit 1; fi; echo "DIRLOG: {q:dirlog@file}: {q:dirlog@size} bytes in {q:dirlog@count} records, block size: {q:dirlog@bsize}"; [ {q:dirlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt dirlog detected, size is not a multiple of {q:dirlog@bsize}"; [ {q:dirlog@write} -eq 0 ] && echo "WARNING: no write access to dirlog"`
+#@MACRO:print-nukelog-info:{m:exe} noop --silent --preexec `if [ {q:nukelog@read} -eq 0 ]; then echo "WARNING: unable to read nukelog, no read permission"; exit 1;elif [ {q:nukelog@read} -eq -1 ]; then echo "WARNING: unable to access nukelog"; exit 1; fi; echo "NUKELOG: {q:nukelog@file}: {q:nukelog@size} bytes in {q:nukelog@count} records, block size: {q:nukelog@bsize}"; [ {q:nukelog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt nukelog detected, size is not a multiple of {q:nukelog@bsize}"; [ {q:nukelog@write} -eq 0 ] && echo "WARNING: no write access to nukelog"`
+#@MACRO:print-lastonlog-info:{m:exe} noop --silent --preexec `if [ {q:lastonlog@read} -eq 0 ]; then echo "WARNING: unable to read lastonlog, no read permission"; exit 1;elif [ {q:lastonlog@read} -eq -1 ]; then echo "WARNING: unable to access lastonlog"; exit 1; fi; echo "LASTONLOG: {q:lastonlog@file}: {q:lastonlog@size} bytes in {q:lastonlog@count} records, block size: {q:lastonlog@bsize}"; [ {q:lastonlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt lastonlog detected, size is not a multiple of {q:lastonlog@bsize}"; [ {q:lastonlog@write} -eq 0 ] && echo "WARNING: no write access to lastonlog"`
+#@MACRO:print-imdb-info:{m:exe} noop --silent --preexec `if [ {q:imdb@read} -eq 0 ]; then echo "WARNING: unable to read imdb, no read permission"; exit 1;elif [ {q:imdb@read} -eq -1 ]; then echo "WARNING: unable to access imdb"; exit 1; fi; echo "IMDB: {q:imdb@file}: {q:imdb@size} bytes in {q:imdb@count} records, block size: {q:imdb@bsize}"; [ {q:imdb@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt imdb detected, size is not a multiple of {q:imdb@bsize}"; [ {q:imdb@write} -eq 0 ] && echo "WARNING: no write access to imdb"`
+#@MACRO:print-tvrage-info:{m:exe} noop --silent --preexec `if [ {q:tvrage@read} -eq 0 ]; then echo "WARNING: unable to read tvrage, no read permission"; exit 1;elif [ {q:tvrage@read} -eq -1 ]; then echo "WARNING: unable to access tvrage"; exit 1; fi; echo "TVRAGE: {q:tvrage@file}: {q:tvrage@size} bytes in {q:tvrage@count} records, block size: {q:tvrage@bsize}"; [ {q:tvrage@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt tvrage detected, size is not a multiple of {q:tvrage@bsize}"; [ {q:tvrage@write} -eq 0 ] && echo "WARNING: no write access to tvrage"`
