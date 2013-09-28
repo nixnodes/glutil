@@ -1,5 +1,7 @@
 #!/bin/bash
-# DO NOT EDIT THESE LINES
+# DO NOT EDIT/REMOVE THESE LINES
+#@VERSION:1
+#@REVISION:0
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -81,6 +83,7 @@ ban_user() {
 	fi
 	return 0
 }
+
 if [[ "$1" == "ban" ]];then
 	ban_user $2 0 $3 $4 $5 $0 && exit 1
 elif [[ "$1" == "unban" ]];then
@@ -118,7 +121,6 @@ DIFFT=`expr $CT - $LUPDT`;
 SLOW=0
 SHOULDKILL=0
 KILLED=0
-
 
 [ $DIFFT -gt $WAIT ] && [ $DRATE -lt $MINRATE ] && SLOW=1 && [ $VERBOSE -gt 0 ] && 
         echo "[`date "+%T %D"`] WARNING: Too slow (running $DIFFT secs): $GLUSER [PID: $4] [Rate: $DRATE/$MINRATE B/s]" >> $LOG
