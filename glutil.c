@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-13
+ * Version     : 1.9-14
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -112,15 +112,6 @@
 #define du_fld "/glftpd/bin/glutil.folders"
 #endif
 
-/* folders to skip during fs rebuild (-r) */
-#ifndef PREG_DIR_SKIP
-#define PREG_DIR_SKIP "\\/(Sample|Covers|Subs|Cover|Proof)$"
-#endif
-
-#ifndef PREG_SFV_SKIP
-#define PREG_SFV_SKIP PREG_DIR_SKIP
-#endif
-
 /* file extensions to skip generating crc32 (SFV mode)*/
 #ifndef PREG_SFV_SKIP_EXT
 #define PREG_SFV_SKIP_EXT "\\.(nfo|sfv)$"
@@ -153,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 13
+#define VER_REVISION 14
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1963,7 +1954,8 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	pgm->reg_i_m = reg_i_m;
 	pgm->regex_flags = regex_flags;
 	pgm->flags = flags;
-	if (regcomp(&pgm->preg, pgm->match, (regex_flags | REG_EXTENDED | REG_NOSUB))) {
+	if (regcomp(&pgm->preg, pgm->match,
+			(regex_flags | REG_EXTENDED | REG_NOSUB))) {
 		return 11001;
 	}
 
@@ -5375,8 +5367,7 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 		base = basename(fn3);
 		if ((gfl & F_OPT_SFV)
 				&& (updmode == UPD_MODE_RECURSIVE || updmode == UPD_MODE_SINGLE)
-				&& reg_match(PREG_SFV_SKIP, name,
-				REG_ICASE | REG_NEWLINE) && reg_match(PREG_SFV_SKIP_EXT, fn2,
+				&& reg_match(PREG_SFV_SKIP_EXT, fn2,
 				REG_ICASE | REG_NEWLINE) && file_crc32(name, &crc32)) {
 			fn = strdup(name);
 			char *dn = basename(dirname(fn));
@@ -5412,9 +5403,6 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 			enum_dir(name, delete_file, (void*) "\\.sfv$", 0, NULL);
 		}
 
-		if (!reg_match(PREG_DIR_SKIP, name, REG_NEWLINE | REG_ICASE)) {
-			return 2;
-		}
 		enum_dir(name, proc_release, iarg, 0, eds);
 		break;
 	}
@@ -5435,14 +5423,14 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 		return 1;
 	}
 
-	if (!reg_match(PREG_DIR_SKIP, name, REG_NEWLINE | REG_ICASE)) {
-		return 1;
-	}
-
 	switch (type) {
 	case DT_DIR:
 		iarg->depth--;
 		if (!iarg->depth || (gfl & F_OPT_FORCE)) {
+			if (g_bmatch(iarg->dirlog, &g_act_1, NULL)) {
+				goto end;
+			}
+
 			if (gfl & F_OPT_UPDATE) {
 				if (((rl = dirlog_find(name, 1, F_DL_FOPEN_REWIND, NULL))
 						< MAX_uint64_t)) {
@@ -5461,10 +5449,6 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 					print_str(
 							"ERROR: %s: [%d] generating dirlog data chunk failed\n",
 							name, r);
-				goto end;
-			}
-
-			if (g_bmatch(iarg->dirlog, &g_act_1, NULL)) {
 				goto end;
 			}
 
@@ -7481,7 +7465,6 @@ int reg_match(char *expression, char *match, int flags) {
 
 	return r;
 }
-
 
 int split_string(char *line, char dl, pmda output_t) {
 	int i, p, c, llen = strlen(line);
