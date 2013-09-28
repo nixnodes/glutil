@@ -22,6 +22,7 @@
  *   - Bugfix: regex expression compiled for each record (huge performance hit (rev. 13)
  *   - Removed unecessary dirlog rebuild regex filter (C preprocessor macro) (rev. 14)
  *   - Bugfix: SFV generation (rev. 15)
+ *   - Made GLCONF preprocessor macro in glconf.h unecessary (rev. 16)
  *
  * v1.8
  *
