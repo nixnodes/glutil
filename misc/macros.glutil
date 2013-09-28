@@ -1,4 +1,4 @@
-#@REVISION:3
+#@REVISION:4
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -12,6 +12,9 @@
 #
 ## Stores glutil.c in /glroot/bin/sources,
 ##  and compiles glutil binary to /glroot/bin
+#
+## If compilation succeeds, tries to create a symlink
+##  in /bin folder, if it doesn't already exists
 #
 #@MACRO:glutil-update:{m:exe} noop --preexec `if curl --silent https://raw.github.com/nixnodes/glutil/master/sources/glutil.c > {glroot}/bin/sources/glutil.c ; then echo "Downloaded glutil.c ($(expr $(stat -c %s glutil) / 1024) KB, $(cat {glroot}/bin/sources/glutil.c | wc -l) lines), compiling.."; if cc {glroot}/bin/sources/glutil.c -o {glroot}/bin/glutil -O3 -Wall; then echo "Update OK"; [ -f "/bin/glutil" ] || ln -s {glroot}/bin/glutil /bin/glutil; else echo "ERROR: compilation failed"; fi else echo "ERROR: unable to fetch glutil.c"; fi`
 #
