@@ -1,5 +1,7 @@
 #!/bin/bash
-# DO NOT EDIT THESE LINES
+# DO NOT EDIT/REMOVE THESE LINES
+#@VERSION:1
+#@REVISION:0
 #@MACRO:incomplete:{m:exe} -d -execv "{m:spec1} {dir} {exe} {glroot} {m:arg1}" --silent
 #@MACRO:incomplete-c:{m:exe} -d -execv "{m:spec1} {dir} {exe} {glroot} {m:arg2}" --iregex "{m:arg1}" --silent
 #
@@ -29,9 +31,6 @@ CHECK_CORRUPT=0
 
 GLROOT=$3
 
-EXE=$2
-
-
 c_dir() {
 	while read l; do
 		FFL=$(echo "$l" | sed -r 's/ [A-Fa-f0-9]*([ ]*|$)$//')
@@ -46,7 +45,7 @@ c_dir() {
 }
 
 [ "$4" = "cdir" ] && {
-	DIR="$1"
+	DIR="$1"; EXE=$2
 	[ -n "$5" ] && VERBOSE=1
 	c_dir "$DIR"
 	exit 1
@@ -57,7 +56,7 @@ DIR=$GLROOT$1
 
 ! [ -d "$DIR" ] && exit 1
 
-$EXE -x "$DIR" --iregexi "\.sfv$" -execv "$0 {arg} $2 $3 cdir $4" --silent -recursive
+$2 -x "$DIR" --iregexi "\.sfv$" -execv "$0 {arg} $2 $3 cdir $4" --silent -recursive
 
 exit 1
 
