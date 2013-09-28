@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-12
+ * Version     : 1.9-13
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -153,7 +153,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -370,6 +370,7 @@ typedef struct ___g_match_h {
 	uint32_t flags;
 	char *match, *field;
 	int reg_i_m, match_i_m, regex_flags;
+	regex_t preg;
 	mda lom;
 	g_op g_oper_ptr;
 	char data[5120];
@@ -1936,7 +1937,7 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	__g_match pgm = g_global_register_match();
 
 	if (!pgm) {
-		return (a32 << 8);
+		return 11000;
 	}
 
 	char *ptr = (char*) pgm->data;
@@ -1962,6 +1963,9 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	pgm->reg_i_m = reg_i_m;
 	pgm->regex_flags = regex_flags;
 	pgm->flags = flags;
+	if (regcomp(&pgm->preg, pgm->match, (regex_flags | REG_EXTENDED | REG_NOSUB))) {
+		return 11001;
+	}
 
 	if (pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
 		pgm->g_oper_ptr = g_oper_or;
@@ -2355,6 +2359,7 @@ int load_cfg(pmda md, char * file, uint32_t flags, pmda *res);
 int free_cfg_rf(pmda md);
 
 int reg_match(char *, char *, int);
+
 int delete_file(char *, unsigned char, void *);
 
 int write_file_text(char *, char *);
@@ -2418,6 +2423,8 @@ int g_bin_compare(const void *p1, const void *p2, off_t size);
 
 typedef int __d_icomp(uint64_t s, uint64_t d);
 typedef int __d_fcomp(float s, float d);
+
+int rtv_q(void *query, char *output, size_t max_size);
 
 __d_icomp g_is_higher, g_is_lower, g_is_higherorequal, g_is_equal,
 		g_is_not_equal, g_is_lowerorequal, g_is_not, g_is, g_is_lower_2,
@@ -3942,11 +3949,10 @@ int g_dump_gen(char *root) {
 }
 
 int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) {
-	g_setjmp(0, "g_process_directory", NULL, NULL);
 	__std_rh aa_rh = (__std_rh) arg;
 
 	switch (type) {
-	case DT_REG:
+		case DT_REG:
 		if (aa_rh->flags & F_PD_MATCHREG) {
 			if ((g_bmatch(name, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
 				aa_rh->st_2++;
@@ -3961,7 +3967,7 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			aa_rh->st_1++;
 		}
 		break;
-	case DT_DIR:
+		case DT_DIR:
 		if (aa_rh->flags & F_PD_RECURSIVE) {
 			enum_dir(name, g_process_directory, arg, 0, eds);
 		}
@@ -3982,7 +3988,7 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			aa_rh->st_1++;
 		}
 		break;
-	case DT_LNK:
+		case DT_LNK:
 		if (gfl & F_OPT_FOLLOW_LINKS) {
 			if ((g_bmatch(name, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
 				aa_rh->st_2++;
@@ -4515,6 +4521,14 @@ int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback) {
 		} else {
 			if (_gm->match != (char*) _gm->b_data) {
 				_gm->match = (char*) _gm->b_data;
+				if (regcomp(&_gm->preg, _gm->match, _gm->regex_flags)) {
+					print_str(
+							"ERROR: could not re-compile regex expression '%s', critical..\n",
+							_gm->match);
+					EXITVAL = 0;
+					gfl |= F_OPT_KILL_GLOBAL;
+					return 0;
+				}
 			}
 			mstr = g_bmatch_get_def_mstr(d_ptr, hdl);
 		}
@@ -4542,9 +4556,8 @@ int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback) {
 		}
 		goto end;
 	}
-
 	if ((_gm->flags & F_GM_ISREGEX)
-			&& reg_match(_gm->match, mstr, _gm->regex_flags) == _gm->reg_i_m) {
+			&& regexec(&_gm->preg, mstr, 0, NULL, 0) == _gm->reg_i_m) {
 		if ((gfl & F_OPT_VERBOSE5)) {
 			print_str("WARNING: %s: REGEX match positive\n", mstr);
 		}
@@ -4596,7 +4609,7 @@ char *g_bmatch_get_def_mstr(void *d_ptr, __g_handle hdl) {
 }
 
 int g_lom_var(void *d_ptr, __g_lom lom) {
-	g_setjmp(0, "g_lom_var", NULL, NULL);
+
 	uint64_t l_val, r_val;
 	float l_val_f, r_val_f;
 	switch (lom->flags & F_LOM_TYPES) {
@@ -4621,7 +4634,7 @@ int g_lom_var(void *d_ptr, __g_lom lom) {
 			}
 
 		}
-		//printf("%d -- %d\n", l_val, r_val);
+
 		lom->result = lom->g_icomp_ptr(l_val, r_val);
 
 		break;
@@ -4645,7 +4658,6 @@ int g_lom_var(void *d_ptr, __g_lom lom) {
 				r_val_f = lom->g_tf_ptr_right(d_ptr, lom->t_r_off);
 			}
 		}
-		//printf("%.1f -- %.1f\n", l_val_f, r_val_f);
 
 		lom->result = lom->g_fcomp_ptr(l_val_f, r_val_f);
 
@@ -4658,8 +4670,6 @@ int g_lom_var(void *d_ptr, __g_lom lom) {
 }
 
 int g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm) {
-	g_setjmp(0, "g_lom_match", NULL, NULL);
-
 	p_md_obj ptr = md_first(&_gm->lom);
 	__g_lom lom, p_lom = NULL;
 
@@ -5302,7 +5312,6 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 }
 
 int process_opt(char *opt, void *arg, void *reference_array, int m) {
-	g_setjmp(0, "process_opt", NULL, NULL);
 	int (*proc_opt_generic)(void *arg, int m);
 	int i = 0;
 	p_ora ora = (p_ora) reference_array;
@@ -5348,7 +5357,6 @@ int update_records(char *dirname, int depth) {
 }
 
 int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
-	g_setjmp(0, "proc_release", NULL, NULL);
 	ear *iarg = (ear*) arg;
 	uint32_t crc32 = 0;
 	char buffer[PATH_MAX] = { 0 };
@@ -5415,7 +5423,6 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 }
 
 int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
-	g_setjmp(0, "proc_section", NULL, NULL);
 	ear *iarg = (ear*) arg;
 	int r;
 	uint64_t rl;
@@ -5501,7 +5508,6 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 }
 
 int release_generate_block(char *name, ear *iarg) {
-	g_setjmp(0, "release_generate_block", NULL, NULL);
 	bzero(iarg->dirlog, sizeof(struct dirlog));
 
 	int r, ret = 0;
@@ -5587,7 +5593,7 @@ int release_generate_block(char *name, ear *iarg) {
 	iarg->dirlog->uptime = orig_ctime;
 	iarg->dirlog->uploader = (uint16_t) st.st_uid;
 	iarg->dirlog->group = (uint16_t) st.st_gid;
-	char buffer[255] = { 0 };
+	char buffer[PATH_MAX] = { 0 };
 
 	if ((r = get_relative_path(name, GLROOT, buffer))) {
 		print_str("ERROR: [%s] could not get relative to root directory name\n",
@@ -5631,7 +5637,7 @@ int get_relative_path(char *subject, char *root, char *output) {
 	while (subject[i] != 0x2F && i > 0)
 		i--;
 
-	g_memcpy(output, &subject[i], strlen(subject) - i);
+	snprintf(output, PATH_MAX, "%s", &subject[i]);
 	return 0;
 }
 
@@ -6301,7 +6307,6 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 				&& !(hdl->flags & F_GH_APFILT)) {
 			return 0;
 		}
-		//hdl->buffer_count = p_ptr->count;
 	}
 
 	if (do_sort(&g_act_1, g_sort_field, g_sort_flags)) {
@@ -7133,10 +7138,6 @@ int g_close(__g_handle hdl) {
 		hdl->fh = NULL;
 	}
 
-	/*if ((hdl->flags & F_GH_ISSHM)) {
-	 g_shm_cleanup(hdl);
-	 }*/
-
 	if (hdl->buffer.count) {
 		hdl->buffer.r_pos = hdl->buffer.objects;
 		hdl->buffer.pos = hdl->buffer.r_pos;
@@ -7146,10 +7147,6 @@ int g_close(__g_handle hdl) {
 			md_g_free(&hdl->buffer);
 			md_g_free(&hdl->w_buffer);
 		}
-		/*if (hdl->data && !(hdl->flags & F_GH_ONSHM)) {
-		 g_free(hdl->data);
-		 hdl->data = NULL;
-		 }*/
 	}
 
 	hdl->br = 0;
@@ -7373,7 +7370,6 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 typedef int (*__d_edscb)(char *, unsigned char, void *, __g_eds);
 
 int enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds) {
-	g_setjmp(0, "enum_dir", NULL, NULL);
 	__d_edscb callback_f = (__d_edscb ) cb;
 	struct dirent *dirp, _dirp = { 0 };
 	int r = 0, ir;
@@ -7453,7 +7449,6 @@ int enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds) {
 }
 
 int dir_exists(char *dir) {
-	g_setjmp(0, "dir_exists", NULL, NULL);
 	int r;
 
 	errno = 0;
@@ -7473,7 +7468,6 @@ int dir_exists(char *dir) {
 }
 
 int reg_match(char *expression, char *match, int flags) {
-	g_setjmp(0, "reg_match", NULL, NULL);
 	regex_t preg;
 	size_t r;
 	regmatch_t pmatch[REG_MATCHES_MAX];
@@ -7488,8 +7482,8 @@ int reg_match(char *expression, char *match, int flags) {
 	return r;
 }
 
+
 int split_string(char *line, char dl, pmda output_t) {
-	g_setjmp(0, "split_string", NULL, NULL);
 	int i, p, c, llen = strlen(line);
 
 	for (i = 0, p = 0, c = 0; i <= llen; i++) {
@@ -7513,7 +7507,6 @@ int split_string(char *line, char dl, pmda output_t) {
 }
 
 int split_string_sp_tab(char *line, pmda output_t) {
-	g_setjmp(0, "split_string_sp_tab", NULL, NULL);
 	int i, p, c, llen = strlen(line);
 
 	for (i = 0, p = 0, c = 0; i <= llen; i++) {
@@ -7751,7 +7744,7 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 
 void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
 		char *out, size_t max) {
-	g_setjmp(0, "ref_to_val_get_cfgval", NULL, NULL);
+
 	char buffer[PATH_MAX];
 
 	if (flags & F_CFGV_BUILD_DATA_PATH) {
@@ -7864,26 +7857,28 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 		if (self_get_path(output)) {
 			snprintf(output, max_size, "%s", "UNKNOWN");
 		}
-	} else if (!strcmp(match, "m:glroot")) {
+	} else if (!strncmp(match, "m:glroot", 8)) {
 		snprintf(output, max_size, "%s", GLROOT);
-	} else if (!strcmp(match, "m:siteroot")) {
+	} else if (!strncmp(match, "m:siteroot", 10)) {
 		snprintf(output, max_size, "%s", SITEROOT);
-	} else if (!strcmp(match, "m:ftpdata")) {
+	} else if (!strncmp(match, "m:ftpdata", 9)) {
 		snprintf(output, max_size, "%s", FTPDATA);
-	} else if ((gfl & F_OPT_PS_LOGGING) && !strcmp(match, "m:logfile")) {
+	} else if ((gfl & F_OPT_PS_LOGGING) && !strncmp(match, "m:logfile", 9)) {
 		snprintf(output, max_size, "%s", LOGFILE);
-	} else if (!strcmp(match, "m:PID")) {
+	} else if (!strncmp(match, "m:PID", 5)) {
 		snprintf(output, max_size, "%d", getpid());
-	} else if (!strcmp(match, "m:IPC")) {
+	} else if (!strncmp(match, "m:IPC", 5)) {
 		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
-	} else if (!strcmp(match, "m:spec1")) {
+	} else if (!strncmp(match, "m:spec1", 7)) {
 		snprintf(output, max_size, "%s", b_spec1);
-	} else if (!strcmp(match, "m:arg1")) {
+	} else if (!strncmp(match, "m:arg1", 5)) {
 		snprintf(output, max_size, "%s", MACRO_ARG1);
-	} else if (!strcmp(match, "m:arg2")) {
+	} else if (!strncmp(match, "m:arg2", 5)) {
 		snprintf(output, max_size, "%s", MACRO_ARG2);
-	} else if (!strcmp(match, "m:arg3")) {
+	} else if (!strncmp(match, "m:arg3", 5)) {
 		snprintf(output, max_size, "%s", MACRO_ARG3);
+	} else if (!strncmp(match, "m:q:", 4)) {
+		return rtv_q(&match[4], output, max_size);
 	} else {
 		return 1;
 	}
@@ -7897,7 +7892,7 @@ int rtv_q(void *query, char *output, size_t max_size) {
 	p_md_obj ptr;
 
 	if (split_string(query, 0x40, &md_s) != 2) {
-		return 1;
+		return 0;
 	}
 
 	ptr = md_s.objects;
@@ -7905,7 +7900,7 @@ int rtv_q(void *query, char *output, size_t max_size) {
 	char *rtv_l = g_dgetf((char*) ptr->ptr);
 
 	if (!rtv_l) {
-		return 1;
+		return 0;
 	}
 
 	ptr = ptr->next;
@@ -7922,8 +7917,6 @@ int rtv_q(void *query, char *output, size_t max_size) {
 		g_strncpy(hdl.file, rtv_l,
 				rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
 		if (determine_datatype(&hdl)) {
-			snprintf(output, max_size, "{'count' - could not get data type}");
-			r = 1;
 			goto end;
 		}
 
@@ -7936,8 +7929,6 @@ int rtv_q(void *query, char *output, size_t max_size) {
 		g_strncpy(hdl.file, rtv_l,
 				rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
 		if (determine_datatype(&hdl)) {
-			snprintf(output, max_size, "{'corrupt' - could not get data type}");
-			r = 1;
 			goto end;
 		}
 
@@ -7950,17 +7941,20 @@ int rtv_q(void *query, char *output, size_t max_size) {
 		g_strncpy(hdl.file, rtv_l,
 				rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
 		if (determine_datatype(&hdl)) {
-			snprintf(output, max_size, "{'bsize' - could not get data type}");
-			r = 1;
 			goto end;
 		}
 
 		snprintf(output, max_size, "%u", (uint32_t) hdl.block_sz);
 	} else if (!strncmp(rtv_q, "mode", 4)) {
 		return g_l_fmode_n(rtv_l, max_size, output);
-	} else {
-
-		return 1;
+	} else if (!strncmp(rtv_q, "file", 4)) {
+		snprintf(output, max_size, "%s", rtv_l);
+	} else if (!strncmp(rtv_q, "read", 4)) {
+		snprintf(output, max_size, "%d",
+				!access(rtv_l, R_OK) ? 1 : errno == EACCES ? 0 : -1);
+	} else if (!strncmp(rtv_q, "write", 5)) {
+		snprintf(output, max_size, "%d",
+				!access(rtv_l, W_OK) ? 1 : errno == EACCES ? 0 : -1);
 	}
 
 	end:
@@ -8375,23 +8369,10 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 
 int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) {
 	g_setjmp(0, "g_get_lom_g_t_ptr", NULL, NULL);
-	/*pmda m_ptr;
-	 if (!(hdl->flags & F_GH_FFBUFFER)) {
-	 m_ptr = &hdl->buffer;
-	 } else {
-	 m_ptr = &hdl->w_buffer;
-	 }
-	 p_md_obj ptr = md_first(m_ptr);
-
-	 if (!ptr) {
-	 return 600;
-	 }*/
 
 	size_t vb = 0;
 
 	size_t off = (size_t) hdl->g_proc2(NULL, field, &vb);
-
-	g_setjmp(0, "g_get_lom_g_t_ptr(2)", NULL, NULL);
 
 	if (!vb) {
 		errno = 0;
@@ -8438,7 +8419,7 @@ int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags) 
 
 		return 0;
 	}
-	g_setjmp(0, "g_get_lom_g_t_ptr(3)", NULL, NULL);
+
 	if (off > hdl->block_sz) {
 		return 601;
 	}
@@ -8556,8 +8537,6 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 		goto end;
 	}
 
-	g_setjmp(0, "g_build_lom_packet(2)", NULL, NULL);
-
 	if ((lom->flags & F_LOM_FLOAT) && (lom->flags & F_LOM_INT)) {
 		lom->flags ^= F_LOM_INT;
 	}
@@ -8567,7 +8546,6 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 		goto end;
 	}
 
-	g_setjmp(0, "g_build_lom_packet(3)", NULL, NULL);
 	if (!comp) {
 		switch (lom->flags & F_LOM_TYPES) {
 		case F_LOM_FLOAT:
@@ -8648,8 +8626,6 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 		goto end;
 	}
 
-	g_setjmp(0, "g_build_lom_packet(4)", NULL, NULL);
-
 	if (oper) {
 		if (oper_l == 2 && !strncmp(oper, "&&", 2)) {
 			lom->g_oper_ptr = g_oper_and;
@@ -8658,13 +8634,11 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 		} else {
 			lom->g_oper_ptr = g_oper_and;
 		}
-		//lom->flags |= F_LOM_HASOPER;
 	}
-	g_setjmp(0, "g_build_lom_packet(5)", NULL, NULL);
+
 	if (ret) {
 		*ret = lom;
 	}
-	g_setjmp(0, "g_build_lom_packet(6)", NULL, NULL);
 
 	end:
 
@@ -8679,7 +8653,7 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 			match->match_i_m = G_MATCH;
 		}
 	}
-	g_setjmp(0, "g_build_lom_packet(7)", NULL, NULL);
+
 	return rt;
 }
 
@@ -8711,7 +8685,6 @@ int get_opr(char *in) {
 }
 
 int md_copy(pmda source, pmda dest, size_t block_sz) {
-	g_setjmp(0, "md_copy", NULL, NULL);
 	if (!source || !dest) {
 		return 1;
 	}
@@ -9671,7 +9644,7 @@ int process_exec_args(void *data, __g_handle hdl) {
 
 int process_exec_string(char *input, char *output, size_t max_size,
 		void *callback, void *data) {
-	g_setjmp(0, "process_exec_string", NULL, NULL);
+
 	int (*call)(void *, char *, char *, size_t) = callback;
 
 	size_t blen = strlen(input);
@@ -9853,7 +9826,6 @@ void *shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
 }
 
 pmda search_cfg_rf(pmda md, char * file) {
-	g_setjmp(0, "search_cfg_rf", NULL, NULL);
 	p_md_obj ptr = md_first(md);
 	p_cfg_r ptr_c;
 	size_t fn_len = strlen(file);
@@ -9868,7 +9840,7 @@ pmda search_cfg_rf(pmda md, char * file) {
 }
 
 pmda register_cfg_rf(pmda md, char *file) {
-	g_setjmp(0, "register_cfg_rf", NULL, NULL);
+
 	if (!md->count) {
 		if (md_init(md, 128)) {
 			return NULL;
@@ -9896,7 +9868,7 @@ pmda register_cfg_rf(pmda md, char *file) {
 }
 
 int free_cfg_rf(pmda md) {
-	g_setjmp(0, "free_cfg_rf", NULL, NULL);
+
 	p_md_obj ptr = md_first(md);
 	p_cfg_r ptr_c;
 	while (ptr) {
@@ -10654,7 +10626,6 @@ void free_cfg(pmda md) {
 }
 
 p_md_obj get_cfg_opt(char *key, pmda md, pmda *ret) {
-	g_setjmp(0, "get_cfg_opt", NULL, NULL);
 	if (!md->count) {
 		return NULL;
 	}
@@ -10754,8 +10725,6 @@ char *replace_char(char w, char r, char *string) {
 #define SSD_MAX_LINE_PROC 	15000
 
 int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
-	g_setjmp(0, "ssd_4macro", NULL, NULL);
-
 	off_t name_sz;
 	switch (type) {
 	case DT_REG:
