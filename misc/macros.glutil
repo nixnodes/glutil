@@ -1,4 +1,4 @@
-#@REVISION:4
+#@REVISION:5
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -134,13 +134,13 @@
 #
 ## Remove unecessary entries from dirlog
 #
-#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog --regexi "basedir,^(sample|proof|booklet|subs|cover(s|))$" --nofq -vvv
+#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|proof|booklet|subs|cover(s|)|.*\(no-sfv|incomplete\| complete ).*|)$" --nofq -vvv
 #
 ## <dirlog-full-clean>
 #
 ## Runs both <dirlog-clean-empty> and <dirlog-clean-junk>
 #
-#@MACRO:dirlog-full-clean:{m:exe} noop --silent --preexec "{m:exe} -v -m dirlog-clean-empty; {m:exe} -v -m dirlog-clean-junk"
+#@MACRO:dirlog-full-clean:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|booklet|subs|cover(s|)|.*\(no-sfv|incomplete\| complete ).*|)$" or lom size=0&&files=0
 #
 ## <dirlog-trim>
 #
