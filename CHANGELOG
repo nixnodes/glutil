@@ -20,6 +20,7 @@
  *   - Path overrides can be given at macro launch (-m) (rev. 11)
  *   - Bugfix: --maxhit/maxres ignored when no match given (rev. 12)
  *   - Bugfix: regex expression compiled for each record (huge performance hit (rev. 13)
+ *   - Removed unecessary dirlog rebuild regex filter (C preprocessor macro) (rev. 14)
  *
  * v1.8
  *
