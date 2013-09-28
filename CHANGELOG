@@ -23,7 +23,8 @@
  *   - Removed unecessary dirlog rebuild regex filter (C preprocessor macro) (rev. 14)
  *   - Bugfix: SFV generation (rev. 15)
  *   - Made GLCONF preprocessor macro in glconf.h unecessary (rev. 16)
- *   - Bugfix: m:arg<2-3> macro vars were returned as m:arg1 (rev. 17) 
+ *   - Bugfix: m:arg<2-3> macro vars were returned as m:arg1 (rev. 17)
+ *   - Added --esdir (redirect -execv stdout to file) (rev. 18)
  *
  * v1.8
  *
