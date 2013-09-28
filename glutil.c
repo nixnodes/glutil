@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-14
+ * Version     : 1.9-15
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -114,7 +114,7 @@
 
 /* file extensions to skip generating crc32 (SFV mode)*/
 #ifndef PREG_SFV_SKIP_EXT
-#define PREG_SFV_SKIP_EXT "\\.(nfo|sfv)$"
+#define PREG_SFV_SKIP_EXT "\\.(nfo|sfv(\\.tmp|))$"
 #endif
 
 /* -------------------------- */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 14
+#define VER_REVISION 15
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -256,7 +256,8 @@ typedef struct ___d_generic_s2044 {
 typedef struct e_arg {
 	int depth;
 	uint32_t flags;
-	char buffer[1024];
+	char buffer[PATH_MAX];
+	char buffer2[PATH_MAX + 10];
 	struct dirlog *dirlog;
 	time_t t_stor;
 } ear;
@@ -5373,17 +5374,17 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 			char *dn = basename(dirname(fn));
 			g_free(fn2);
 			fn2 = strdup(name);
-			snprintf(buffer, PATH_MAX, "%s/%s.sfv", dirname(fn2), dn);
-			char buffer2[1024];
+			snprintf(iarg->buffer, PATH_MAX, "%s/%s.sfv.tmp", dirname(fn2), dn);
+			snprintf(iarg->buffer2, PATH_MAX, "%s/%s.sfv", dirname(fn2), dn);
+			char buffer2[PATH_MAX + 10];
 			snprintf(buffer2, 1024, "%s %.8X\n", base, (uint32_t) crc32);
 			if (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)) {
-				if (!write_file_text(buffer2, buffer)) {
+				if (!write_file_text(buffer2, iarg->buffer)) {
 					print_str("ERROR: %s: failed writing to SFV file: '%s'\n",
-							name, buffer);
+							name, iarg->buffer);
 				}
 			}
 			iarg->flags |= F_EARG_SFV;
-			g_strncpy(iarg->buffer, buffer, strlen(buffer));
 			snprintf(buffer, PATH_MAX, "  %.8X", (uint32_t) crc32);
 			g_free(fn);
 		}
@@ -5400,7 +5401,7 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 	case DT_DIR:
 		if ((gfl & F_OPT_SFV)
 				&& (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV))) {
-			enum_dir(name, delete_file, (void*) "\\.sfv$", 0, NULL);
+			enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
 		}
 
 		enum_dir(name, proc_release, iarg, 0, eds);
@@ -5409,6 +5410,8 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 
 	return 0;
 }
+
+#define MSG_PS_UWSFV	"WARNING: %s: unable wiping temp. SFV file (remove it manually)\n"
 
 int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 	ear *iarg = (ear*) arg;
@@ -5427,10 +5430,6 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 	case DT_DIR:
 		iarg->depth--;
 		if (!iarg->depth || (gfl & F_OPT_FORCE)) {
-			if (g_bmatch(iarg->dirlog, &g_act_1, NULL)) {
-				goto end;
-			}
-
 			if (gfl & F_OPT_UPDATE) {
 				if (((rl = dirlog_find(name, 1, F_DL_FOPEN_REWIND, NULL))
 						< MAX_uint64_t)) {
@@ -5442,7 +5441,7 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 					goto end;
 				}
 			}
-			bzero(iarg->buffer, 1024);
+			bzero(iarg->buffer, PATH_MAX);
 			iarg->flags = 0;
 			if ((r = release_generate_block(name, iarg))) {
 				if (r < 5)
@@ -5452,11 +5451,37 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 				goto end;
 			}
 
+			if (g_bmatch(iarg->dirlog, &g_act_1, NULL)) {
+				if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)) {
+					if (remove(iarg->buffer)) {
+						print_str( MSG_PS_UWSFV, iarg->buffer);
+					}
+				}
+				goto end;
+			}
+
+			if (gfl & F_OPT_KILL_GLOBAL) {
+				if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)) {
+					if (remove(iarg->buffer)) {
+						print_str( MSG_PS_UWSFV, iarg->buffer);
+					}
+				}
+				goto end;
+			}
+
 			if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)) {
 				iarg->dirlog->bytes += (uint64_t) get_file_size(iarg->buffer);
 				iarg->dirlog->files++;
-				print_str("SFV: succesfully generated '%s'\n",
-				basename(iarg->buffer));
+				if (!rename(iarg->buffer, iarg->buffer2)) {
+					if (gfl & F_OPT_VERBOSE) {
+						print_str(
+								"NOTICE: '%s': succesfully generated SFV file\n",
+								name);
+					}
+				} else {
+					print_str("ERROR: '%s': failed renaming '%s' to '%s'\n",
+					basename(iarg->buffer2), basename(iarg->buffer));
+				}
 			}
 
 			if (g_act_1.flags & F_GH_FFBUFFER) {
@@ -5518,7 +5543,7 @@ int release_generate_block(char *name, ear *iarg) {
 
 	if ((gfl & F_OPT_SFV)
 			&& (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV))) {
-		enum_dir(name, delete_file, (void*) "\\.sfv$", 0, NULL);
+		enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
 	}
 
 	if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
