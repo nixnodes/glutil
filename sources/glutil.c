@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-18
+ * Version     : 1.9-19
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 18
+#define VER_REVISION 19
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1078,7 +1078,7 @@ uint32_t g_sort_flags = 0;
 
 off_t max_hits = 0, max_results = 0;
 
-int execv_stdout_redir = 0;
+int execv_stdout_redir = -1;
 
 char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
@@ -1140,10 +1140,11 @@ char *hpd_up =
 				"                          Operators {..} are overwritten with dirlog values\n"
 				"                          If return value is non-zero, the processed record gets filtered\n"
 				"                          Uses system() call (man system)\n"
-				"  --execv <command [{field}..{field}..]>\n"
+				"  --execv <command [{field}..{field}..]> [--esredir=<file>]\n"
 				"                        Same as --exec, only instead of calling system(), this uses execv() (man exec)\n"
 				"                          It's generally much faster compared to --exec, since it doesn't fork /bin/sh\n"
 				"                          for each individual processed record\n"
+				"                        --esredir redirects stdout from executed command to <file>\n"
 				"  --preexec <command [{field}..{field}..]>\n"
 				"                        Execute shell <command> before starting main procedure\n"
 				"  --postexec <command [{field}..{field}..]>\n"
@@ -1833,12 +1834,10 @@ int opt_g_usleep(void *arg, int m) {
 
 int opt_execv_stdout_redir(void *arg, int m) {
 	char *ptr = g_pg(arg, m);
-	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-	int hdl = open(ptr, O_RDWR | O_CREAT, mode);
-	if (hdl == -1) {
+	int execv_stdout_redir = open(ptr, O_RDWR | O_CREAT,
+			(mode_t) (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+	if (execv_stdout_redir == -1) {
 		ofl |= F_ESREDIRFAILED;
-	} else {
-		execv_stdout_redir = hdl;
 	}
 	return 0;
 }
@@ -2878,7 +2877,7 @@ int g_shutdown(void *arg) {
 
 	}
 
-	if ( execv_stdout_redir) {
+	if (execv_stdout_redir) {
 		close(execv_stdout_redir);
 	}
 
@@ -7200,7 +7199,7 @@ static int prep_for_exec(void) {
 			fprintf(stdout, "ERROR: could not open %s\n", inputfile);
 		}
 	}
-	if (execv_stdout_redir) {
+	if (execv_stdout_redir != -1) {
 		dup2(execv_stdout_redir, STDOUT_FILENO);
 	}
 	return 0;
@@ -7223,7 +7222,6 @@ int l_execv(char *exec, char **argv) {
 		if (prep_for_exec()) {
 			_exit(1);
 		} else {
-
 			execv(exec, argv);
 			fprintf(stderr, "ERROR: %s: execv failed to execute [%d]\n", exec,
 			errno);
@@ -7244,18 +7242,12 @@ int l_execv(char *exec, char **argv) {
 }
 
 int g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl) {
-	g_setjmp(0, "g_do_exec", NULL, NULL);
-
 	__g_handle hdl = (__g_handle) p_hdl;
-
 	process_exec_args(buffer, hdl);
-
 	return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
 }
 
 int g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl) {
-	g_setjmp(0, "g_do_exec", NULL, NULL);
-
 	if (callback) {
 		char b_glob[MAX_EXEC_STR];
 		char *e_str;
