@@ -108,7 +108,13 @@
 #
 ## Remove unecessary entries from dirlog
 #
-#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog --regexi "basedir,^(sample|proof|booklet|subs|cover(s|))$" -vvv
+#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog --regexi "basedir,^(sample|proof|booklet|subs|cover(s|))$" --nofq -vvv
+#
+## <dirlog-full-clean>
+#
+## Runs both <dirlog-clean-empty> and <dirlog-clean-junk>
+#
+#@MACRO:dirlog-full-clean:{m:exe} noop --silent --preexec "{m:exe} -v -m dirlog-clean-empty; {m:exe} -v -m dirlog-clean-junk"
 #
 ## <dirlog-trim>
 #
@@ -121,6 +127,9 @@
 #@MACRO:dirlog-trim:{m:exe} -e dirlog --maxres={m:arg1} --rev -vvv
 #
 ## <print-<log>-info>
+#
+## Prints information about logs and does 
+##  access/error checks
 #
 #@MACRO:print-dirlog-info:{m:exe} noop --silent --preexec `if [ {q:dirlog@read} -eq 0 ]; then echo "WARNING: unable to read dirlog, no read permission"; exit 1;elif [ {q:dirlog@read} -eq -1 ]; then echo "WARNING: unable to access dirlog"; exit 1; fi; echo "DIRLOG: {q:dirlog@file}: {q:dirlog@size} bytes in {q:dirlog@count} records, block size: {q:dirlog@bsize}"; [ {q:dirlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt dirlog detected, size is not a multiple of {q:dirlog@bsize}"; [ {q:dirlog@write} -eq 0 ] && echo "WARNING: no write access to dirlog"`
 #@MACRO:print-nukelog-info:{m:exe} noop --silent --preexec `if [ {q:nukelog@read} -eq 0 ]; then echo "WARNING: unable to read nukelog, no read permission"; exit 1;elif [ {q:nukelog@read} -eq -1 ]; then echo "WARNING: unable to access nukelog"; exit 1; fi; echo "NUKELOG: {q:nukelog@file}: {q:nukelog@size} bytes in {q:nukelog@count} records, block size: {q:nukelog@bsize}"; [ {q:nukelog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt nukelog detected, size is not a multiple of {q:nukelog@bsize}"; [ {q:nukelog@write} -eq 0 ] && echo "WARNING: no write access to nukelog"`
