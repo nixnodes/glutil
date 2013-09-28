@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-16
+ * Version     : 1.9-17
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 16
+#define VER_REVISION 17
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -7875,11 +7875,11 @@ int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
 	} else if (!strncmp(match, "m:spec1", 7)) {
 		snprintf(output, max_size, "%s", b_spec1);
-	} else if (!strncmp(match, "m:arg1", 5)) {
+	} else if (!strncmp(match, "m:arg1", 6)) {
 		snprintf(output, max_size, "%s", MACRO_ARG1);
-	} else if (!strncmp(match, "m:arg2", 5)) {
+	} else if (!strncmp(match, "m:arg2", 6)) {
 		snprintf(output, max_size, "%s", MACRO_ARG2);
-	} else if (!strncmp(match, "m:arg3", 5)) {
+	} else if (!strncmp(match, "m:arg3", 6)) {
 		snprintf(output, max_size, "%s", MACRO_ARG3);
 	} else if (!strncmp(match, "m:q:", 4)) {
 		return rtv_q(&match[4], output, max_size);
@@ -9672,6 +9672,7 @@ int process_exec_string(char *input, char *output, size_t max_size,
 			for (i2 = 0, i++, r = 0, f = 0; i < blen && i2 < 255; i++, i2++) {
 				if (input[i] == 0x7D) {
 					buffer[i2] = 0x0;
+					//buffer2[0] = 0x0;
 					if (!i2 || strlen(buffer) > MAX_VAR_LEN
 							|| (r = call(data, buffer, buffer2, MAX_VAR_LEN))) {
 						if (r) {
