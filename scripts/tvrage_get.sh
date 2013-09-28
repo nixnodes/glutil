@@ -1,5 +1,7 @@
 #!/bin/bash
-# DO NOT EDIT THESE LINES
+# DO NOT EDIT/REMOVE THESE LINES
+#@VERSION:1
+#@REVISION:0
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "`basename '{arg}'`" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
 #@MACRO:tvrage-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} `basename {arg}` '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -exec `{m:spec1} "{basedir}" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{dir}'` --iregexi "{m:arg1}" {m:arg2} 
