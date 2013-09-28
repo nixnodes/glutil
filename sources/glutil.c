@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-15
+ * Version     : 1.9-16
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 15
+#define VER_REVISION 16
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3077,7 +3077,7 @@ int g_init(int argc, char **argv) {
 
 	remove_repeating_chars(FTPDATA, 0x2F);
 #else
-	print_str("WARNING: GLCONF not defined in glconf.h");
+	print_str("WARNING: GLCONF not defined in glconf.h\n");
 #endif
 
 	remove_repeating_chars(GLROOT, 0x2F);
@@ -8010,7 +8010,13 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, "memlimit", 8)) {
 		snprintf(output, max_size, "%llu", db_max_size);
 	} else if (!strncmp(match, "glconf", 6)) {
-		snprintf(output, max_size, "%s", GLCONF);
+		snprintf(output, max_size, "%s",
+#ifdef GLCONF
+				GLCONF
+#else
+				"UNKNOWN"
+#endif
+				);
 	} else if (!strncmp(match, "q:", 2)) {
 		return rtv_q(&match[2], output, max_size);
 	} else {
