@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-25
+ * Version     : 1.9-26
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 25
+#define VER_REVISION 26
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -598,8 +598,9 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_GH_IFRES				(a64 << 30)
 #define F_GH_IFHIT				(a64 << 31)
 
-/* these bits determine file type */
+/* these bits determine log type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
+
 #define F_GH_ISSHM				(F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP				(F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
 
@@ -1036,9 +1037,9 @@ mda nukelog_buffer = { 0 };
 
 int updmode = 0;
 char *argv_off = NULL;
-char GLROOT[255] = { glroot };
-char SITEROOT_N[255] = { siteroot };
-char SITEROOT[255] = { 0 };
+char GLROOT[PATH_MAX] = { glroot };
+char SITEROOT_N[PATH_MAX] = { siteroot };
+char SITEROOT[PATH_MAX] = { 0 };
 char DIRLOG[PATH_MAX] = { dir_log };
 char NUKELOG[PATH_MAX] = { nuke_log };
 char DU_FLD[PATH_MAX] = { du_fld };
@@ -1753,7 +1754,7 @@ int opt_g_postexec(void *arg, int m) {
 
 int opt_glroot(void *arg, int m) {
 	if (!(ofl & F_OVRR_GLROOT)) {
-		g_cpg(arg, GLROOT, m, 255);
+		g_cpg(arg, GLROOT, m, PATH_MAX);
 		ofl |= F_OVRR_GLROOT;
 	}
 	return 0;
@@ -1761,7 +1762,7 @@ int opt_glroot(void *arg, int m) {
 
 int opt_siteroot(void *arg, int m) {
 	if (!(ofl & F_OVRR_SITEROOT)) {
-		g_cpg(arg, SITEROOT_N, m, 255);
+		g_cpg(arg, SITEROOT_N, m, PATH_MAX);
 		ofl |= F_OVRR_SITEROOT;
 	}
 	return 0;
@@ -2847,11 +2848,12 @@ int setup_sighandlers(void) {
 
 int g_shutdown(void *arg) {
 	g_setjmp(0, "g_shutdown", NULL, NULL);
+
 	g_cleanup(&g_act_1);
 	g_cleanup(&g_act_2);
 	free_cfg_rf(&cfg_rf);
 	free_cfg(&glconf);
-	g_setjmp(0, "g_shutdown(2)", NULL, NULL);
+
 	if (NUKESTR) {
 		g_free(NUKESTR);
 	}
@@ -3058,8 +3060,8 @@ int g_init(int argc, char **argv) {
 	}
 
 	if ((gfl & F_OPT_VERBOSE4) && glconf.offset) {
-		print_str("NOTICE: %s: loaded %d config lines into memory\n",
-		GLCONF, (int) glconf.offset);
+		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
+				(int) glconf.offset);
 	}
 
 	p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
@@ -3071,8 +3073,7 @@ int g_init(int argc, char **argv) {
 	ptr = get_cfg_opt("rootpath", &glconf, NULL);
 
 	if (ptr && !(ofl & F_OVRR_GLROOT)) {
-		bzero(GLROOT, 255);
-		g_memcpy(GLROOT, ptr->ptr, strlen((char*) ptr->ptr));
+		snprintf(GLROOT, PATH_MAX, "%s", (char*) ptr->ptr);
 		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
 		}
@@ -3081,8 +3082,7 @@ int g_init(int argc, char **argv) {
 	ptr = get_cfg_opt("min_homedir", &glconf, NULL);
 
 	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
-		bzero(SITEROOT_N, 255);
-		g_memcpy(SITEROOT_N, ptr->ptr, strlen((char*) ptr->ptr));
+		snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
 		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
 		}
@@ -3091,8 +3091,7 @@ int g_init(int argc, char **argv) {
 	ptr = get_cfg_opt("ftp-data", &glconf, NULL);
 
 	if (ptr) {
-		bzero(FTPDATA, 255);
-		g_memcpy(FTPDATA, ptr->ptr, strlen((char*) ptr->ptr));
+		snprintf(FTPDATA, PATH_MAX, "%s", (char*) ptr->ptr);
 		if ((gfl & F_OPT_VERBOSE4)) {
 			print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
 		}
@@ -3107,16 +3106,11 @@ int g_init(int argc, char **argv) {
 			print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n", NUKESTR);
 		}
 		ofl |= F_OVRR_NUKESTR;
-
 	}
 
-	remove_repeating_chars(FTPDATA, 0x2F);
 #else
 	print_str("WARNING: GLCONF not defined in glconf.h\n");
 #endif
-
-	remove_repeating_chars(GLROOT, 0x2F);
-	remove_repeating_chars(SITEROOT_N, 0x2F);
 
 	if (!strlen(GLROOT)) {
 		print_str("ERROR: glftpd root directory not specified!\n");
@@ -3142,12 +3136,11 @@ int g_init(int argc, char **argv) {
 	build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
 	build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
 
-	bzero(SITEROOT, 255);
-	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
+	snprintf(SITEROOT, PATH_MAX, "%s%s", GLROOT, SITEROOT_N);
 	remove_repeating_chars(SITEROOT, 0x2F);
 
 	if (dir_exists(SITEROOT) && !dir_exists(SITEROOT_N)) {
-		snprintf(SITEROOT, 254, "%s", SITEROOT_N);
+		snprintf(SITEROOT, PATH_MAX, "%s", SITEROOT_N);
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && dir_exists(SITEROOT)) {
@@ -6137,8 +6130,9 @@ uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
 	char *dup, *dup2, *base, *dir;
 	int gi1, gi2;
 
-	if ((r = get_relative_path(dirn, GLROOT, buffer_s)))
+	if ((r = get_relative_path(dirn, GLROOT, buffer_s))) {
 		g_strncpy(buffer_s, dirn, strlen(dirn));
+	}
 
 	gi2 = strlen(buffer_s);
 
@@ -7839,6 +7833,7 @@ int g_l_fmode(char *path, size_t max_size, char *output) {
 	snprintf(buffer, PATH_MAX, "%s/%s", GLROOT, path);
 	remove_repeating_chars(buffer, 0x2F);
 	if (lstat(buffer, &st)) {
+		snprintf(output, max_size, "-1");
 		return 0;
 	}
 	snprintf(output, max_size, "%d", IFTODT(st.st_mode));
