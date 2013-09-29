@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:3
+#@REVISION:4
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "$(basename '{arg}')" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
 #@MACRO:tvrage-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} `basename {arg}` '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -exec `{m:spec1} "{basedir}" '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{dir}'` --iregexi "dir,{m:arg1}"  {m:arg2} 
@@ -20,7 +20,7 @@
 ###########################[ BEGIN OPTIONS ]#############################
 #
 # tvrage services base url
-URL="http://services.tvrage.com"
+TVRAGE_URL="http://services.tvrage.com"
 #
 #INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
@@ -99,9 +99,9 @@ fi
 
 [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $1"
 
-DDT=`$CURL $CURL_FLAGS "$URL""/feeds/full_search.php?show=$QUERY"`
+DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=$QUERY"`
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get show data $URL""/feeds/full_search.php?show=$QUERY" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY" && exit 1
 
 get_field()
 {
