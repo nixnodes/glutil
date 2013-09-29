@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-26
+ * Version     : 1.9-27
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 26
+#define VER_REVISION 27
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -552,6 +552,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_PROCREV			(a64 << 54)
 #define F_OPT_NOFQ				(a64 << 55)
 #define F_OPT_IFRH_E			(a64 << 56)
+#define F_OPT_NOGLCONF			(a64 << 57)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1227,6 +1228,7 @@ char *hpd_up =
 				"  --loadq               Quit just after loading data into memory\n"
 				"                           Applies to dump operations only\n"
 				"  --nofq                Abort data (re)build operation unconditionally, if nothing was filtered\n"
+				"  --noglconf            Disable reading settings from glftpd.conf\n"
 				"  --sfv                 Generate new SFV files inside target folders, works with -r [-u] and -s\n"
 				"                           Used by itself, triggers -r (fs rebuild) dry run (does not modify dirlog)\n"
 				"                           Avoid using this if doing a full recursive rebuild\n"
@@ -1492,6 +1494,11 @@ int opt_g_ifrh_e(void *arg, int m) {
 
 int opt_g_nofq(void *arg, int m) {
 	gfl |= F_OPT_NOFQ;
+	return 0;
+}
+
+int opt_g_noglconf(void *arg, int m) {
+	gfl |= F_OPT_NOGLCONF;
 	return 0;
 }
 
@@ -2581,7 +2588,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
 		"--ifrhe", opt_g_ifrh_e, (void*) 0, "--nofq", opt_g_nofq, (void*) 0,
-		"--esredir", opt_execv_stdout_redir, (void*) 1, NULL, NULL, NULL };
+		"--esredir", opt_execv_stdout_redir, (void*) 1, "--noglconf",
+		opt_g_noglconf, (void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -2854,7 +2862,7 @@ int g_shutdown(void *arg) {
 	free_cfg_rf(&cfg_rf);
 	free_cfg(&glconf);
 
-	if (NUKESTR) {
+	if (NUKESTR && NUKESTR != (char*) NUKESTR_DEF) {
 		g_free(NUKESTR);
 	}
 
@@ -3052,65 +3060,70 @@ int g_init(int argc, char **argv) {
 		VER_REVISION, VER_STR, __STR_ARCH, getpid());
 	}
 
+	if (!(gfl & F_OPT_NOGLCONF)) {
 #ifdef GLCONF
 
-	if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))
-			&& (gfl & F_OPT_VERBOSE)) {
-		print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF, r);
-	}
-
-	if ((gfl & F_OPT_VERBOSE4) && glconf.offset) {
-		print_str("NOTICE: %s: loaded %d config lines into memory\n", GLCONF,
-				(int) glconf.offset);
-	}
-
-	p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
-
-	if (ptr && !(ofl & F_OVRR_IPC)) {
-		SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
-	}
-
-	ptr = get_cfg_opt("rootpath", &glconf, NULL);
-
-	if (ptr && !(ofl & F_OVRR_GLROOT)) {
-		snprintf(GLROOT, PATH_MAX, "%s", (char*) ptr->ptr);
-		if ((gfl & F_OPT_VERBOSE4)) {
-			print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
+		if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))
+				&& (gfl & F_OPT_VERBOSE)) {
+			print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF,
+					r);
 		}
-	}
 
-	ptr = get_cfg_opt("min_homedir", &glconf, NULL);
-
-	if (ptr && !(ofl & F_OVRR_SITEROOT)) {
-		snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
-		if ((gfl & F_OPT_VERBOSE4)) {
-			print_str("NOTICE: GLCONF: using 'min_homedir': %s\n", SITEROOT_N);
+		if ((gfl & F_OPT_VERBOSE4) && glconf.offset) {
+			print_str("NOTICE: %s: loaded %d config lines into memory\n",
+			GLCONF, (int) glconf.offset);
 		}
-	}
 
-	ptr = get_cfg_opt("ftp-data", &glconf, NULL);
+		p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
 
-	if (ptr) {
-		snprintf(FTPDATA, PATH_MAX, "%s", (char*) ptr->ptr);
-		if ((gfl & F_OPT_VERBOSE4)) {
-			print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
+		if (ptr && !(ofl & F_OVRR_IPC)) {
+			SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
 		}
-	}
 
-	ptr = get_cfg_opt("nukedir_style", &glconf, NULL);
+		ptr = get_cfg_opt("rootpath", &glconf, NULL);
 
-	if (ptr) {
-		NUKESTR = calloc(255, 1);
-		NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-		if ((gfl & F_OPT_VERBOSE4)) {
-			print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n", NUKESTR);
+		if (ptr && !(ofl & F_OVRR_GLROOT)) {
+			snprintf(GLROOT, PATH_MAX, "%s", (char*) ptr->ptr);
+			if ((gfl & F_OPT_VERBOSE4)) {
+				print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
+			}
 		}
-		ofl |= F_OVRR_NUKESTR;
-	}
+
+		ptr = get_cfg_opt("min_homedir", &glconf, NULL);
+
+		if (ptr && !(ofl & F_OVRR_SITEROOT)) {
+			snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
+			if ((gfl & F_OPT_VERBOSE4)) {
+				print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
+						SITEROOT_N);
+			}
+		}
+
+		ptr = get_cfg_opt("ftp-data", &glconf, NULL);
+
+		if (ptr) {
+			snprintf(FTPDATA, PATH_MAX, "%s", (char*) ptr->ptr);
+			if ((gfl & F_OPT_VERBOSE4)) {
+				print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
+			}
+		}
+
+		ptr = get_cfg_opt("nukedir_style", &glconf, NULL);
+
+		if (ptr) {
+			NUKESTR = calloc(255, 1);
+			NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
+			if ((gfl & F_OPT_VERBOSE4)) {
+				print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n",
+						NUKESTR);
+			}
+			ofl |= F_OVRR_NUKESTR;
+		}
 
 #else
-	print_str("WARNING: GLCONF not defined in glconf.h\n");
+		print_str("WARNING: GLCONF not defined in glconf.h\n");
 #endif
+	}
 
 	if (!strlen(GLROOT)) {
 		print_str("ERROR: glftpd root directory not specified!\n");
@@ -4796,7 +4809,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 
 		if (hdl->exec_args.exc
 				&& WEXITSTATUS(r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl))) {
-			if ((gfl & F_OPT_VERBOSE3)) {
+			if ((gfl & F_OPT_VERBOSE5)) {
 				print_str("WARNING: external call returned non-zero: [%d]\n",
 				WEXITSTATUS(r_e));
 			}
@@ -6904,7 +6917,7 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 
 		} else if ((flags & F_GBM_SHM_NO_DATAFILE)) {
 			print_str(
-					"ERROR: %s: [IPC: 0x%.8X]: failed loading shared memory segment: [%d]: no shared memory segment or data file available to load\n",
+					"ERROR: %s: [IPC: 0x%.8X]: failed loading data into shared memory segment: [%d]: no shared memory segment or data file available to load\n",
 					hdl->file, hdl->ipc_key, errno);
 			return 22;
 		}
@@ -6914,9 +6927,9 @@ int g_buffer_into_memory(char *file, __g_handle hdl) {
 		print_str("NOTICE: %s: %s [%llu records] [%llu bytes]\n", file,
 				(hdl->flags & F_GH_SHM) ?
 						hdl->shmid == -1 && !(hdl->flags & F_GH_SHMRB) ?
-								"loading shared memory segment" :
+								"loading data into shared memory segment" :
 						(hdl->flags & F_GH_SHMRB) ?
-								"re-loading shared memory segment" :
+								"re-loading data into shared memory segment" :
 								"mapping shared memory segment"
 						:
 						"loading data file into memory",
@@ -9884,6 +9897,9 @@ pmda register_cfg_rf(pmda md, char *file) {
 }
 
 int free_cfg_rf(pmda md) {
+	if (!md || !md->count) {
+		return 0;
+	}
 
 	p_md_obj ptr = md_first(md);
 	p_cfg_r ptr_c;
@@ -10623,7 +10639,7 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 void free_cfg(pmda md) {
 	g_setjmp(0, "free_cfg", NULL, NULL);
 
-	if (!md->objects) {
+	if (!md || !md->objects) {
 		return;
 	}
 
@@ -10632,7 +10648,7 @@ void free_cfg(pmda md) {
 
 	while (ptr) {
 		pce = (p_cfg_h) ptr->ptr;
-		if (pce) {
+		if (pce && &pce->data) {
 			md_g_free(&pce->data);
 		}
 		ptr = ptr->next;
