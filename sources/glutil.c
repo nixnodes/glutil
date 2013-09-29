@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-24
+ * Version     : 1.9-25
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 24
+#define VER_REVISION 25
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -701,6 +701,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define DEFF_GAMELOG 			"game.log"
 #define DEFF_TV 				"tv.log"
 #define DEFF_GEN1 				"gen1.log"
+
+#define NUKESTR_DEF				"NUKED-%s"
 
 #define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
@@ -3126,6 +3128,10 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
+	if (!NUKESTR) {
+		NUKESTR = NUKESTR_DEF;
+	}
+
 	build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
 	build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
 	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
@@ -4947,7 +4953,6 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	void *buffer = calloc(1, g_act_1.block_sz);
 
 	int r;
-	uint32_t i_flags = 0;
 
 	if (gfl & F_OPT_SORT) {
 		if ((gfl & F_OPT_NOBUFFER)) {
@@ -5007,7 +5012,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	void *ptr;
 
-	char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8], *ns_ptr;
+	char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8];
 	off_t c = 0;
 	int re_c;
 
@@ -5059,27 +5064,10 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				} else {
 					print_str("ERROR: %s: zero-length formatted result\n",
 							g_act_1.file);
-					continue;
 				}
-				if (!(i_flags & F_GPS_NONUKELOG)
-						&& (g_act_1.flags & F_GH_ISDIRLOG)) {
-					if ((gfl & F_OPT_VERBOSE4)) {
-						ns_ptr = ((struct dirlog*) ptr)->dirname;
-						struct nukelog n_buffer = { 0 };
-						if (nukelog_find(ns_ptr, 2, &n_buffer) < MAX_uint64_t) {
-							if (nukelog_format_block(&n_buffer, sbuffer) > 0) {
-								print_str(sbuffer);
-							}
-							goto end_loop;
-						} else {
-							i_flags |= F_GPS_NONUKELOG;
-						}
-					}
-				}
-
 			}
 		}
-		end_loop: ;
+
 	}
 
 	end:
@@ -5691,8 +5679,9 @@ int get_relative_path(char *subject, char *root, char *output) {
 			break;
 	}
 
-	while (subject[i] != 0x2F && i > 0)
+	while (subject[i] != 0x2F && i > 0) {
 		i--;
+	}
 
 	snprintf(output, PATH_MAX, "%s", &subject[i]);
 	return 0;
@@ -6077,20 +6066,23 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 		return dirlog_find_old(dirn, mode, flags, callback);
 	}
 
-	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *) = callback;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return MAX_uint64_t;
+	}
+
+	struct dirlog buffer;
 
 	int r;
 	uint64_t ur = MAX_uint64_t;
 
-	char buffer_s[512] = { 0 }, buffer_s2[512], buffer_s3[512];
+	char buffer_s[PATH_MAX] = { 0 }, buffer_s2[PATH_MAX], buffer_s3[PATH_MAX];
 	char *dup, *dup2, *base, *dir;
 
-	if ((r = get_relative_path(dirn, GLROOT, buffer_s)))
-		g_strncpy(buffer_s, dirn, strlen(dirn));
+	if ((r = get_relative_path(dirn, GLROOT, buffer_s))) {
+		snprintf(buffer_s, PATH_MAX, "%s", dirn);
+	}
 
 	size_t d_l = strlen(buffer_s);
 
@@ -6104,8 +6096,8 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 		base = basename(dup);
 		dup2 = strdup(d_ptr->dirname);
 		dir = dirname(dup2);
-		snprintf(buffer_s2, 512, NUKESTR, base);
-		snprintf(buffer_s3, 512, "%s/%s", dir, buffer_s2);
+		snprintf(buffer_s2, PATH_MAX, NUKESTR, base);
+		snprintf(buffer_s3, PATH_MAX, "%s/%s", dir, buffer_s2);
 		remove_repeating_chars(buffer_s3, 0x2F);
 		g_free(dup);
 		g_free(dup2);
@@ -6130,16 +6122,18 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 }
 
 uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
-	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
+	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return MAX_uint64_t;
+	}
+
+	struct dirlog buffer;
 
 	int r;
 	uint64_t ur = MAX_uint64_t;
 
-	char buffer_s[255] = { 0 };
+	char buffer_s[PATH_MAX] = { 0 };
 	char *dup, *dup2, *base, *dir;
 	int gi1, gi2;
 
@@ -6215,50 +6209,6 @@ char *string_replace(char *input, char *match, char *with, char *output,
 	g_strncpy(&output[m_off + w_l], &input[m_off + m_l], i_l - m_off - m_l);
 
 	return output;
-}
-
-uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags,
-		void *callback) {
-	struct dirlog buffer;
-	int (*callback_f)(struct dirlog *data) = callback;
-
-	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
-		return MAX_uint64_t;
-	}
-
-	int r;
-	uint64_t ur = MAX_uint64_t;
-
-	char buffer_s[255] = { 0 };
-
-	if ((r = get_relative_path(dirn, GLROOT, buffer_s)))
-		g_strncpy(buffer_s, dirn, strlen(dirn));
-
-	size_t s_blen = strlen(buffer_s), d_ptr_blen;
-
-	struct dirlog *d_ptr = NULL;
-
-	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
-		d_ptr_blen = strlen(d_ptr->dirname);
-		if (d_ptr_blen == s_blen
-				&& !strncmp(buffer_s, d_ptr->dirname, d_ptr_blen)) {
-			ur = g_act_1.offset - 1;
-			if (mode == 2 && callback) {
-				if (callback_f(&buffer)) {
-					break;
-				}
-			} else {
-
-				break;
-			}
-		}
-	}
-
-	if (mode != 1) {
-		g_close(&g_act_1);
-	}
-
-	return ur;
 }
 
 uint64_t nukelog_find(char *dirn, int mode, struct nukelog *output) {
