@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-20
+ * Version     : 1.9-21
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 20
+#define VER_REVISION 21
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1834,11 +1834,12 @@ int opt_g_usleep(void *arg, int m) {
 
 int opt_execv_stdout_redir(void *arg, int m) {
 	char *ptr = g_pg(arg, m);
-	int execv_stdout_redir = open(ptr, O_RDWR | O_CREAT,
+	execv_stdout_redir = open(ptr, O_RDWR | O_CREAT,
 			(mode_t) (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
 	if (execv_stdout_redir == -1) {
 		ofl |= F_ESREDIRFAILED;
 	}
+
 	return 0;
 }
 
@@ -2954,36 +2955,29 @@ int g_cleanup(__g_handle hdl) {
 }
 
 char *build_data_path(char *file, char *path, char *sd) {
+	char *ret = path;
 	remove_repeating_chars(path, 0x2F);
 
-	if (strlen(path) && !file_exists(path)) {
-		return path;
+	char *p_d = strdup(path);
+	char *b_pd = dirname(p_d);
+
+	if (!dir_exists(b_pd)) {
+		goto end;
 	}
 
-	char buffer[PATH_MAX] = { 0 };
-
-	snprintf(buffer, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
-
-	remove_repeating_chars(buffer, 0x2F);
-
-	size_t blen = strlen(buffer), plen = strlen(path);
-
-	if (blen > 255) {
-		return path;
-	}
-
-	if (plen == blen && !strncmp(buffer, path, plen)) {
-		return path;
-	}
+	snprintf(path, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
+	remove_repeating_chars(path, 0x2F);
 
 	if (gfl & F_OPT_VERBOSE3) {
 		print_str("NOTICE: %s: was not found, setting default data path: %s\n",
-				path, buffer);
+				b_pd, path);
 	}
 
-	bzero(path, 255);
-	g_memcpy(path, buffer, strlen(buffer));
-	return path;
+	end:
+
+	g_free(p_d);
+
+	return ret;
 }
 
 void enable_logging(void) {
@@ -3025,6 +3019,7 @@ int g_init(int argc, char **argv) {
 	}
 
 	enable_logging();
+
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
 			&& !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE)) {
@@ -3112,7 +3107,7 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
-	if (updmode != UPD_MODE_WRITE && updmode != UPD_MODE_RECURSIVE) {
+	//if (updmode != UPD_MODE_WRITE && updmode != UPD_MODE_RECURSIVE) {
 		build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
 		build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
 		build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
@@ -3122,7 +3117,7 @@ int g_init(int argc, char **argv) {
 		build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
 		build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
 		build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
-	}
+	//}
 
 	bzero(SITEROOT, 255);
 	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
@@ -5153,6 +5148,8 @@ int rebuild_dirlog(void) {
 		return errno;
 	}
 
+	mda dirchain = { 0 }, buffer2 = { 0 };
+
 	g_proc_mr(&g_act_1);
 
 	if (gfl & F_OPT_FORCE) {
@@ -5162,9 +5159,8 @@ int rebuild_dirlog(void) {
 	}
 
 	char buffer[V_MB + 1] = { 0 };
-	mda dirchain = { 0 }, buffer2 = { 0 };
 
-	md_init(&dirchain, 1024);
+	md_init(&dirchain, 128);
 
 	if (read_file(DU_FLD, buffer, V_MB, 0, NULL) < 1) {
 		print_str(
@@ -6193,7 +6189,8 @@ char *string_replace(char *input, char *match, char *with, char *output,
 	return output;
 }
 
-uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags, void *callback) {
+uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags,
+		void *callback) {
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
@@ -6382,7 +6379,6 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 					r);
 			ret = 2;
 		}
-
 		goto end;
 	}
 
@@ -7198,9 +7194,11 @@ static int prep_for_exec(void) {
 			fprintf(stdout, "ERROR: could not open %s\n", inputfile);
 		}
 	}
+
 	if (execv_stdout_redir != -1) {
 		dup2(execv_stdout_redir, STDOUT_FILENO);
 	}
+
 	return 0;
 }
 
