@@ -1,4 +1,4 @@
-#@REVISION:7
+#@REVISION:8
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -104,7 +104,7 @@
 ##  causing mismatches, blindly running this 
 ##  macro is highly dicouraged. !WARNING!
 #
-## !!MAKE SURE 1.9-10 IS INSTALLED!!
+## !!MAKE SURE 1.9-10 (or above) IS INSTALLED!!
 ##   Otherwise, EVERY glutil -e call will return positive,
 ##   making it wipe each dir found in dirlog, from the
 ##   filesystem - potentially wiping the entire site  
