@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-19
+ * Version     : 1.9-20
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 19
+#define VER_REVISION 20
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -667,7 +667,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define G1_SZ 					sizeof(_d_generic_s2044)
 
 #define CRC_FILE_READ_BUFFER_SIZE 26214400
-#define	DB_MAX_SIZE 			((ulint64_t)2147483648)   /* max file size allowed to load into memory */
+#define	DB_MAX_SIZE 			((long long int)1073741824)   /* max file size allowed to load into memory */
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
@@ -2877,7 +2877,7 @@ int g_shutdown(void *arg) {
 
 	}
 
-	if (execv_stdout_redir) {
+	if (execv_stdout_redir != -1) {
 		close(execv_stdout_redir);
 	}
 
@@ -3785,7 +3785,7 @@ int d_write(char *arg) {
 		if (!(g_act_1.flags & F_GH_FROMSTDIN)) {
 			g_act_1.total_sz = get_file_size(infile_p);
 		} else {
-			g_act_1.total_sz = DB_MAX_SIZE;
+			g_act_1.total_sz = db_max_size;
 		}
 		if ((r = load_data_md(&g_act_1.w_buffer, infile_p, &g_act_1))) {
 			print_str(
@@ -5040,7 +5040,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 				}
 				if (!(i_flags & F_GPS_NONUKELOG)
 						&& (g_act_1.flags & F_GH_ISDIRLOG)) {
-					if ((gfl & F_OPT_VERBOSE2)) {
+					if ((gfl & F_OPT_VERBOSE4)) {
 						ns_ptr = ((struct dirlog*) ptr)->dirname;
 						struct nukelog n_buffer = { 0 };
 						if (nukelog_find(ns_ptr, 2, &n_buffer) < MAX_uint64_t) {
@@ -6193,8 +6193,7 @@ char *string_replace(char *input, char *match, char *with, char *output,
 	return output;
 }
 
-uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags,
-		void *callback) {
+uint64_t dirlog_find_simple(char *dirn, int mode, uint32_t flags, void *callback) {
 	struct dirlog buffer;
 	int (*callback_f)(struct dirlog *data) = callback;
 
