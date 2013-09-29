@@ -27,6 +27,14 @@
 #
 #@MACRO:update-scripts:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/scripts/";D="{glroot}/bin/scripts/";[ -d "{glroot}/bin/scripts" ] || mkdir "{glroot}/bin/scripts"; if curl --silent "$B"imdb_get.sh > "$D"imdb_get.sh; then echo -e "$D"imdb_get.sh" \t\tv$(cat "$D"imdb_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"imdb_get.sh | grep @REVISION: | cut -d ":" -f 2) \tOK"; chmod 755 "$D"imdb_get.sh; else echo "$D"imdb_get.sh" FAILED"; fi; if curl --silent "$B"tvrage_get.sh > "$D"tvrage_get.sh; then echo -e "$D"tvrage_get.sh" \t\tv$(cat "$D"tvrage_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"tvrage_get.sh | grep @REVISION: | cut -d ":" -f 2) \tOK";  chmod 755 "$D"tvrage_get.sh; else echo "$D"tvrage_get.sh" FAILED"; fi;if curl --silent "$B"killslow.sh > "$D"killslow.sh; then echo -e "$D"killslow.sh" \t\tv$(cat "$D"killslow.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"killslow.sh | grep @REVISION: | cut -d ":" -f 2) \tOK"; chmod 755 "$D"killslow.sh; else echo "$D"killslow.sh" FAILED"; fi;if curl --silent "$B"gb_get.sh > "$D"gb_get.sh; then echo -e "$D"gb_get.sh" \t\t\tv$(cat "$D"gb_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"gb_get.sh | grep @REVISION: | cut -d ":" -f 2) \tOK"; chmod 755 "$D"gb_get.sh; else echo "$D"gb_get.sh" FAILED"; fi; if curl --silent "$B"check_incomplete.sh > "$D"check_incomplete.sh; then echo -e "$D"check_incomplete.sh" \tv$(cat "$D"check_incomplete.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"check_incomplete.sh | grep @REVISION: | cut -d ":" -f 2) \tOK"; chmod 755 "$D"check_incomplete.sh; else echo "$D"check_incomplete.sh" FAILED"; fi;  `
 #
+## <update-self>
+#
+## Gets this macro from github repo and
+##  dumps it into /glroot/bin/misc/,
+##  creating the folder if needed
+#
+#@MACRO:update-self:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/misc/";D="{glroot}/bin/misc/"; [ -d "{glroot}/bin/misc" ] || mkdir "{glroot}/bin/misc"; if curl --silent "$B"macros.glutil > "$D"macros.glutil; then echo -e "$D"macros.glutil" \t\trev:$(cat "$D"macros.glutil | grep @REVISION: | cut -d ":" -f 2) \tOK"; else echo "$D"macros.glutil" FAILED"; fi;` 
+#
 ## <dirlog-update>
 #
 ## Update directory log with new records and remove 
