@@ -1,4 +1,4 @@
-#@REVISION:6
+#@REVISION:7
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -16,7 +16,7 @@
 ## If compilation succeeds, tries to create a symlink
 ##  in /bin folder, if it doesn't already exists
 #
-#@MACRO:glutil-update:{m:exe} noop --preexec `if curl --silent https://raw.github.com/nixnodes/glutil/master/sources/glutil.c > {glroot}/bin/sources/glutil.c ; then echo "Downloaded glutil.c ($(expr $(stat -c %s glutil) / 1024) KB, $(cat {glroot}/bin/sources/glutil.c | wc -l) lines), compiling.."; if cc {glroot}/bin/sources/glutil.c -o {glroot}/bin/glutil -O3 -Wall; then echo "Update OK"; [ -f "/bin/glutil" ] || ln -s {glroot}/bin/glutil /bin/glutil; else echo "ERROR: compilation failed"; fi else echo "ERROR: unable to fetch glutil.c"; fi`
+#@MACRO:glutil-update:{m:exe} noop --preexec `if curl --silent https://raw.github.com/nixnodes/glutil/master/sources/glutil.c > {glroot}/bin/sources/glutil.c ; then echo "Downloaded glutil.c ($(expr $(stat -c %s glutil) / 1024) KB, $(cat {glroot}/bin/sources/glutil.c | wc -l) lines), compiling glutil-$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_MAJOR" | cut -d " " -f 3).$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_MINOR" | cut -d " " -f 3)-$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_REVISION" | cut -d " " -f 3).."; if cc {glroot}/bin/sources/glutil.c -o {glroot}/bin/glutil -O3 -Wall; then echo "Update OK"; [ -f "/bin/glutil" ] || ln -s {glroot}/bin/glutil /bin/glutil; else echo "ERROR: compilation failed"; fi else echo "ERROR: unable to fetch glutil.c"; fi`
 #
 ## <dirlog-update>
 #
