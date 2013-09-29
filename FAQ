@@ -41,8 +41,8 @@ I'm using freebsd and get "ERROR: could not get own path" what do I do?
 If you get the error in freebsd "ERROR: could not get own path" you must mount procfs:
 mount -t procfs proc /proc
 
-How do I store static information so I don't have to edit files everytime?
---------------------------------------------------------------------------
+How do I store static information so I don't have to edit files every time?
+---------------------------------------------------------------------------
 Note: glutil is designed to grab information from glftpd.conf and glconf.h you shouldn't have to edit the glutil.c file.
 Note: editing the glconf.h is not absolutely necessary, but will help save your settings if ever upgrades occur.
 
