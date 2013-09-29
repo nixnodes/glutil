@@ -67,7 +67,7 @@ What the hell are macros?
 -------------------------
 As you have already found out glutil is very complex.  It can do wonderous magical things.  Creating macros allows you to
 combine commands and shorten them so that they are easy to remember.  If you look in the misc folder you will see the
-macros.glutils file.  Follow the examples to create new ones.  It's very important to follow the MANUAL for proper syntax
+macros.glutil file.  Follow the examples to create new ones.  It's very important to follow the MANUAL for proper syntax
 especially when dealing with tvrage and imdb.
 
 Do you have any useful commands to help me see glutil's potential?
