@@ -92,6 +92,9 @@ will be printed out.
 
 glutil -w : Print the users that are online.
 
+glutil -w --exec "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --silent : This
+will print out from shared memory username and pid and loop the information every 1 second.
+
 glutil -m imdb-e -arg1="Goodfellas" : This will do a lookup on imdb.com for the movie title and add it to the imdb.log
 
 glutil -m tvrage-e -arg1="Sons Of Anarchy" : This will do a lookup on tvrage.com for the television title and add it to
