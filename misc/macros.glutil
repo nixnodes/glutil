@@ -1,4 +1,4 @@
-#@REVISION:10
+#@REVISION:11
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -16,7 +16,7 @@
 ## If compilation succeeds, tries to create a symlink
 ##  in /bin folder, if it doesn't already exists
 #
-#@MACRO:glutil-update:{m:exe} noop --preexec `if curl --silent https://raw.github.com/nixnodes/glutil/master/sources/glutil.c > {glroot}/bin/sources/glutil.c ; then echo "Downloaded glutil.c ($(expr $(stat -c %s glutil) / 1024) KB, $(cat {glroot}/bin/sources/glutil.c | wc -l) lines), compiling glutil-$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_MAJOR" | cut -d " " -f 3).$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_MINOR" | cut -d " " -f 3)-$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_REVISION" | cut -d " " -f 3).."; if cc {glroot}/bin/sources/glutil.c -o {glroot}/bin/glutil -O3 -Wall; then echo "Update OK"; [ -f "/bin/glutil" ] || ln -s {glroot}/bin/glutil /bin/glutil; else echo "ERROR: compilation failed"; fi else echo "ERROR: unable to fetch glutil.c"; fi`
+#@MACRO:glutil-update:{m:exe} noop --preexec `if curl --silent https://raw.github.com/nixnodes/glutil/master/sources/glutil.c > {glroot}/bin/sources/glutil.c ; then echo -en "glutil.c: $(expr $(stat -c %s glutil) / 1024) KB, $(cat {glroot}/bin/sources/glutil.c | wc -l) lines; compiling.. \tv$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_MAJOR" | cut -d " " -f 3).$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_MINOR" | cut -d " " -f 3)-$(cat {glroot}/bin/sources/glutil.c | grep "#define VER_REVISION" | cut -d " " -f 3)\t"; if cc {glroot}/bin/sources/glutil.c -o {glroot}/bin/glutil -O3 -Wall; then echo "OK"; [ -f "/bin/glutil" ] || ln -s {glroot}/bin/glutil /bin/glutil; else echo -n "\nERROR: compilation failed\n"; fi else echo "ERROR: unable to fetch glutil.c"; fi`
 #
 ## <update-scipts>
 #
@@ -33,7 +33,13 @@
 ##  dumps it into /glroot/bin/misc/,
 ##  creating the folder if needed
 #
-#@MACRO:update-self:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/misc/";D="{glroot}/bin/misc/"; [ -d "{glroot}/bin/misc" ] || mkdir "{glroot}/bin/misc"; if curl --silent "$B"macros.glutil > "$D"macros.glutil; then echo -e "$D"macros.glutil" \t\trev:$(cat "$D"macros.glutil | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; else echo "$D"macros.glutil" FAILED"; fi;` 
+#@MACRO:update-self:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/misc/";D="{glroot}/bin/misc/"; [ -d "{glroot}/bin/misc" ] || mkdir "{glroot}/bin/misc"; if curl --silent "$B"macros.glutil > "$D"macros.glutil; then echo -e "$D"macros.glutil" \t\t\trev:$(cat "$D"macros.glutil | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; else echo "$D"macros.glutil" FAILED"; fi;` 
+#
+## <update>
+#
+## Performs all updates
+#
+#@MACRO:update:{m:exe} noop --preexec `{m:exe} -m glutil-update;{m:exe} -m update-scripts;{m:exe} -m update-self`
 #
 ## <dirlog-update>
 #
