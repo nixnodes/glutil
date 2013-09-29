@@ -17,16 +17,10 @@ has soo many possibilities.  glutil can watch your connected users in realtime. 
 
 How do I install glutil?
 ------------------------
-step 1 : git clone https://github.com/nixnodes/glutil ~/
-step 2 : cp -R ~/scripts /glftpd/bin; cp -R ~/sources /glftpd/bin ; cp ~/misc /glftpd/bin
-step 3 : cd /glftpd/bin/sources ; cc glutil.c -o /glftpd/bin/glutil -Wall -O3
-step 4 : chmod -R 755 /glftpd/bin/scripts
-
-How do I upgrade glutil?
-------------------------
-step 1 : cd /glftpd/bin ; git pull
-step 2 : cd /glftpd/bin/sources ; cc glutil.c -o /glftpd/bin/glutil -Wall -O3
-step 3 : chmod -R 755 /glftpd/bin/scripts
+step 1 : git clone https://github.com/nixnodes/glutil /tmp/glut.inst
+step 2 : cp -R /tmp/glut.inst/scripts /tmp/glut.inst/sources /tmp/glut.inst/misc /glftpd/bin
+step 3 : rm -Rf /tmp/glut.inst
+step 4 : cc /glftpd/bin/sources/glutil.c -o /glftpd/bin/glutil -Wall -O3
 
 How do I upgrade just the glutil.c file?
 ----------------------------------------
@@ -125,10 +119,10 @@ will be printed out.
 glutil -w 
 Print the users that are online.
 
-glutil -w -execv "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --stlent
+glutil -w -execv "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --silent
 This will print out from shared memory username and pid and loop the information every 1 second.
 
-glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6 
+glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6
 This will print out all movies with comedy genre of scores greater than 6.
 
 glutil -h --iregexi name,"Hell On Wheels" 
