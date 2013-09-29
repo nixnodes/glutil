@@ -34,6 +34,7 @@
  *   - Bugfix: regex expression got compiled for regular string matches (rev. 23)
  *   - Added --ifrhe (rev. 24)
  *   - Falls back to a default NUKESTR if it's not read from glftpd.conf (rev. 25)
+ *   - {mode} returns "-1" if lstat fails (rev. 26)
  *
  * v1.8
  *
