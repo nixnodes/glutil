@@ -17,10 +17,16 @@ has soo many possibilities.  glutil can watch your connected users in realtime. 
 
 How do I install glutil?
 ------------------------
-step 1 : git clone https://github.com/nixnodes/glutil /tmp/glut.inst
-step 2 : cp -R /tmp/glut.inst/scripts /tmp/glut.inst/sources /tmp/glut.inst/misc /glftpd/bin
-step 3 : rm -Rf /tmp/glut.inst
-step 4 : cc /glftpd/bin/sources/glutil.c -o /glftpd/bin/glutil -Wall -O3
+step 1 : git clone https://github.com/nixnodes/glutil ~/
+step 2 : cp -R ~/scripts /glftpd/bin; cp -R ~/sources /glftpd/bin ; cp ~/misc /glftpd/bin
+step 3 : cd /glftpd/bin/sources ; cc glutil.c -o /glftpd/bin/glutil -Wall -O3
+step 4 : chmod -R 755 /glftpd/bin/scripts
+
+How do I upgrade glutil?
+------------------------
+step 1 : cd /glftpd/bin ; git pull
+step 2 : cd /glftpd/bin/sources ; cc glutil.c -o /glftpd/bin/glutil -Wall -O3
+step 3 : chmod -R 755 /glftpd/bin/scripts
 
 How do I upgrade just the glutil.c file?
 ----------------------------------------
@@ -66,15 +72,23 @@ especially when dealing with tvrage and imdb.
 
 glutil -m : will call a macro.  A macro can combine commands and call a bash script.  Soo many possibilities.
 
-examples to run on linux :
+How do I use glutil to do a imdb or tvrage lookup?
+--------------------------------------------------
+To utilize imdb and tvrage lookups you can use the included scripts imdb_get.sh and tvrage_get.sh.  These scripts are 
+called by using the -m flag.
 
-glutil -m imdb-e -arg1="Goodfellas" : This will do a lookup on imdb.com for the movie title and add it to the imdb.log
+glutil -m imdb-e -arg1="Goodfellas"
+This will do a lookup on imdb.com for the movie title and add it to the imdb.log
 
-glutil -m tvrage-e -arg1="Sons Of Anarchy" : This will do a lookup on tvrage.com for the television title and add it to
-the tv.log.
+glutil -m tvrage-e -arg1="Sons Of Anarchy"
+This will do a lookup on tvrage.com for the television title and add it to the tv.log.
 
-glutil -m imdb-d --arg1 '\/(xvid|x264|archive\/x264|archive\/xvid)\/.*\-[a-zA-Z0-9\-_]+$' : This will search the dirlog
-and look for movies in the folders xvid and x264.  It will then gather imdb information and place into imdb.log.
+glutil -m imdb-d --arg1 '\/(xvid|x264|archive\/x264|archive\/xvid)\/.*\-[a-zA-Z0-9\-_]+$'
+This will search the dirlog and look for movies in the folders xvid and x264.  It will then gather imdb information 
+and place into imdb.log.
+
+glutil -m imdb --arg1=/glftpd/site/xvid
+This will do imdb lookups for all the movies located in xvid folder.
 
 examples to run on freebsd :
 
@@ -87,35 +101,42 @@ Do you have any useful commands to help me see glutil's potential?
 ------------------------------------------------------------------
 Oh boy do I.  Take a gander at some of these!
 
-watch -n 1 ./glutil -w --comp : This will watch in real time the users connecting and what they are doing, placing them
-info in a table.
+watch -n 1 ./glutil -w --comp
+This will watch in real time the users connecting and what they are doing, placing them info in a table.
 
-glutil -w --comp --loop 10 --loopexec clear : This will print out the users connected to the site and place in an organized
-table and loop it for 10 seconds, clearing the screen each time.
+glutil -w --comp --loop 10 --loopexec clear
+This will print out the users connected to the site and place in an organized table and loop it for 10 seconds,
+clearing the screen each time.
 
-glutil -r : This will rebuild the entire dirlog.  A backup of original will be created.
+glutil -r
+This will rebuild the entire dirlog.  A backup of original will be created.
 
-glutil -r -u -v --postexec "{exe} --check --fix --ghost -v" : This will update the existing dirlog and remove enteries 
-that no longer exist.  Great for fixing paths if directories have been moved.
+glutil -r -u -v --postexec "{exe} --check --fix --ghost -v"
+This will update the existing dirlog and remove enteries that no longer exist.  Great for fixing paths if directories
+have been moved.
 
-glutil -d : This will dump the dirlog in readable format to stdout.
+glutil -d
+This will dump the dirlog in readable format to stdout.
 
-glutil -d -vv : This will dump the dirlog in readable format to stdout.  The move -v you use the more verbose information
+glutil -d -vv 
+This will dump the dirlog in readable format to stdout.  The move -v you use the more verbose information
 will be printed out.
 
-glutil -w : Print the users that are online.
+glutil -w 
+Print the users that are online.
 
-glutil -w -execv "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --stlent : This
-will print out from shared memory username and pid and loop the information every 1 second.
+glutil -w -execv "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --stlent
+This will print out from shared memory username and pid and loop the information every 1 second.
 
-glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6 : This will print out the movies 
-with genre comedy for scores greater than 6.
+glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6 
+This will print out all movies with comedy genre of scores greater than 6.
 
-glutil -h --iregexi name,"Hell On Wheels" : This will print out the tvrage info stored in the tv.log, case insensative.
+glutil -h --iregexi name,"Hell On Wheels" 
+This will print out the tvrage info stored in the tv.log, case insensative.
 
-glutil -e dirlog --ftime -vvv --regex ".*[\/]{2,}.*" : This will remove from the dirlog what is in the regex.  
-In this case it would remove any entries with repeating back-slashes"
+glutil -e dirlog --ftime -vvv --regex ".*[\/]{2,}.*"
+This will remove from the dirlog what is in the regex.  In this case it would remove any entries with repeating 
+back-slashes"
 
-glutil -n --lom "time < $(expr $(date +%s) - 604800)" : This will output all the entries in the nukelog that are under 7
-days.
-
+glutil -n --lom "time < $(expr $(date +%s) - 604800)"
+This will output all the entries in the nukelog that are under 7 days.
