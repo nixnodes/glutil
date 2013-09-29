@@ -26,6 +26,7 @@
  *   - Bugfix: m:arg<2-3> macro vars were returned as m:arg1 (rev. 17)
  *   - Added --esdir (redirect -execv stdout to file) (rev. 18)
  *   - Reduced physical mem consumption (replaced unecessary calloc with malloc) (rev. 19)
+ *   - Fixed an integer overflow on BSD (rev. 20)
  *
  * v1.8
  *
