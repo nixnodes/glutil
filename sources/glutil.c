@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-23
+ * Version     : 1.9-24
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 23
+#define VER_REVISION 24
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -183,7 +183,7 @@ typedef unsigned long long int ulint64_t;
 #define PATH_MAX 4096
 #endif
 
-#define a64					((uint64_t) 1)
+#define a64					((ulint64_t) 1)
 #define a32					((uint32_t) 1)
 
 /* ------------------------------------------- */
@@ -308,14 +308,18 @@ typedef struct ___execv {
 	__d_exec exc;
 } _execv, *__execv;
 
+typedef void (*__g_ipcbm)(void *hdl, pmda md, int *r_p);
+
 typedef struct g_handle {
 	FILE *fh;
 	off_t offset, bw, br, total_sz;
 	off_t rw;
-	uint32_t block_sz, flags;
+	uint32_t block_sz;
+	uint64_t flags;
 	mda buffer, w_buffer;
 	mda _match_rr;
 	off_t max_results, max_hits;
+	__g_ipcbm ifrh_l0, ifrh_l1;
 	_execv exec_args;
 	void *data;
 	char s_buffer[PATH_MAX];
@@ -547,6 +551,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_HASMAXRES			(a64 << 53)
 #define F_OPT_PROCREV			(a64 << 54)
 #define F_OPT_NOFQ				(a64 << 55)
+#define F_OPT_IFRH_E			(a64 << 56)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -561,35 +566,37 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_FC_MSET_SRC			(a32 << 1)
 #define F_FC_MSET_DEST			(a32 << 2)
 
-#define F_GH_NOMEM  			(a32 << 1)
-#define F_GH_ISDIRLOG			(a32 << 2)
-#define F_GH_EXEC				(a32 << 3)
-#define F_GH_ISNUKELOG			(a32 << 4)
-#define F_GH_FFBUFFER			(a32 << 5)
-#define F_GH_WAPPEND			(a32 << 6)
-#define F_GH_DFWASWIPED			(a32 << 7)
-#define F_GH_DFNOWIPE			(a32 << 8)
-#define F_GH_ISDUPEFILE			(a32 << 9)
-#define F_GH_ISLASTONLOG		(a32 << 10)
-#define F_GH_ISONELINERS		(a32 << 11)
-#define F_GH_ONSHM				(a32 << 12)
-#define F_GH_ISONLINE			(a32 << 13)
-#define F_GH_ISIMDB				(a32 << 14)
-#define F_GH_ISGAME				(a32 << 15)
-#define F_GH_ISFSX				(a32 << 16)
-#define F_GH_ISTVRAGE			(a32 << 17)
-#define F_GH_ISGENERIC1			(a32 << 18)
-#define F_GH_SHM				(a32 << 19)
-#define F_GH_SHMRB				(a32 << 20)
-#define F_GH_SHMDESTROY			(a32 << 21)
-#define F_GH_SHMDESTONEXIT		(a32 << 22)
-#define F_GH_FROMSTDIN			(a32 << 23)
-#define F_GH_HASLOM				(a32 << 24)
-#define F_GH_HASMATCHES			(a32 << 25)
-#define F_GH_HASEXC				(a32 << 26)
-#define F_GH_APFILT 			(a32 << 27)
-#define F_GH_HASMAXRES			(a32 << 28)
-#define F_GH_HASMAXHIT			(a32 << 29)
+#define F_GH_NOMEM  			(a64 << 1)
+#define F_GH_ISDIRLOG			(a64 << 2)
+#define F_GH_EXEC				(a64 << 3)
+#define F_GH_ISNUKELOG			(a64 << 4)
+#define F_GH_FFBUFFER			(a64 << 5)
+#define F_GH_WAPPEND			(a64 << 6)
+#define F_GH_DFWASWIPED			(a64 << 7)
+#define F_GH_DFNOWIPE			(a64 << 8)
+#define F_GH_ISDUPEFILE			(a64 << 9)
+#define F_GH_ISLASTONLOG		(a64 << 10)
+#define F_GH_ISONELINERS		(a64 << 11)
+#define F_GH_ONSHM				(a64 << 12)
+#define F_GH_ISONLINE			(a64 << 13)
+#define F_GH_ISIMDB				(a64 << 14)
+#define F_GH_ISGAME				(a64 << 15)
+#define F_GH_ISFSX				(a64 << 16)
+#define F_GH_ISTVRAGE			(a64 << 17)
+#define F_GH_ISGENERIC1			(a64 << 18)
+#define F_GH_SHM				(a64 << 19)
+#define F_GH_SHMRB				(a64 << 20)
+#define F_GH_SHMDESTROY			(a64 << 21)
+#define F_GH_SHMDESTONEXIT		(a64 << 22)
+#define F_GH_FROMSTDIN			(a64 << 23)
+#define F_GH_HASLOM				(a64 << 24)
+#define F_GH_HASMATCHES			(a64 << 25)
+#define F_GH_HASEXC				(a64 << 26)
+#define F_GH_APFILT 			(a64 << 27)
+#define F_GH_HASMAXRES			(a64 << 28)
+#define F_GH_HASMAXHIT			(a64 << 29)
+#define F_GH_IFRES				(a64 << 30)
+#define F_GH_IFHIT				(a64 << 31)
 
 /* these bits determine file type */
 #define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -1178,6 +1185,7 @@ char *hpd_up =
 				"  --maxres <limit>      Maximum number of negative filter matches (rest are forced positive)\n"
 				"  --ifhit               Ignore first match\n"
 				"  --ifres               Ignore first result\n"
+				"  --ifrhe               Takes -exec[v] return value into account with --max[hit|res] and --if[hit|res]\n"
 				"  --matchq              Exit on first match\n"
 				"  --imatchq             Exit on first result\n"
 				"\n"
@@ -1471,6 +1479,11 @@ int opt_g_ifres(void *arg, int m) {
 
 int opt_g_ifhit(void *arg, int m) {
 	gfl |= F_OPT_IFIRSTHIT;
+	return 0;
+}
+
+int opt_g_ifrh_e(void *arg, int m) {
+	gfl |= F_OPT_IFRH_E;
 	return 0;
 }
 
@@ -2447,6 +2460,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
 int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
 		uint32_t flags);
 int do_sort(__g_handle hdl, char *field, uint32_t flags);
+void g_ipcbm(void *, pmda md, int *r_p);
 
 int g_filter(__g_handle hdl, pmda md);
 
@@ -2563,8 +2577,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
 		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
-		"--nofq", opt_g_nofq, (void*) 0, "--esredir", opt_execv_stdout_redir,
-		(void*) 1, NULL, NULL, NULL };
+		"--ifrhe", opt_g_ifrh_e, (void*) 0, "--nofq", opt_g_nofq, (void*) 0,
+		"--esredir", opt_execv_stdout_redir, (void*) 1, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -4760,9 +4774,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 			}
 		}
 
-		if ((r = do_match(hdl, d_ptr, _gm, (void*) hdl->g_proc1))) {
-			goto l_end;
-		}
+		r = do_match(hdl, d_ptr, _gm, (void*) hdl->g_proc1);
 
 		l_end:
 
@@ -4774,6 +4786,10 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 
 		_p_gm = _gm;
 		ptr = ptr->next;
+	}
+
+	if (hdl->ifrh_l0) {
+		hdl->ifrh_l0((void*) hdl, md, &r_p);
 	}
 
 	if (!r_p) {
@@ -4789,18 +4805,8 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 		}
 	}
 
-	if (md) {
-		if (!r_p) {
-			if ((gfl & F_OPT_IFIRSTRES) && !md->rescnt) {
-				r_p = 1;
-			}
-			md->rescnt++;
-		} else {
-			if ((gfl & F_OPT_IFIRSTHIT) && !md->hitcnt) {
-				r_p = 0;
-			}
-			md->hitcnt++;
-		}
+	if (hdl->ifrh_l1) {
+		hdl->ifrh_l1((void*) hdl, md, &r_p);
 	}
 
 	if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p)) {
@@ -4809,6 +4815,25 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 	}
 
 	return r_p;
+}
+
+void g_ipcbm(void *ptr, pmda md, int *r_p) {
+	__g_handle hdl = (__g_handle) ptr;
+
+	if (!*r_p) {
+		if (hdl->flags & F_GH_IFRES) {
+			hdl->flags ^= F_GH_IFRES;
+			*r_p = 1;
+		}
+		md->rescnt++;
+	} else {
+		if (hdl->flags & F_GH_IFHIT) {
+			hdl->flags ^= F_GH_IFHIT;
+			*r_p = 0;
+		}
+		md->hitcnt++;
+	}
+
 }
 
 int do_sort(__g_handle hdl, char *field, uint32_t flags) {
@@ -5475,7 +5500,7 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 				goto end;
 			}
 
-			if (g_bmatch(iarg->dirlog, &g_act_1, NULL)) {
+			if (g_bmatch(iarg->dirlog, &g_act_1, &g_act_1.buffer)) {
 				if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)) {
 					if (remove(iarg->buffer)) {
 						print_str( MSG_PS_UWSFV, iarg->buffer);
@@ -8819,6 +8844,20 @@ int g_proc_mr(__g_handle hdl) {
 	if (gfl & F_OPT_HASMAXRES) {
 		hdl->max_results = max_results;
 		hdl->flags |= F_GH_HASMAXRES;
+	}
+
+	if (gfl & F_OPT_IFIRSTRES) {
+		hdl->flags |= F_GH_IFRES;
+	}
+
+	if (gfl & F_OPT_IFIRSTHIT) {
+		hdl->flags |= F_GH_IFHIT;
+	}
+
+	if (!(gfl & F_OPT_IFRH_E)) {
+		hdl->ifrh_l0 = g_ipcbm;
+	} else {
+		hdl->ifrh_l1 = g_ipcbm;
 	}
 
 	if ((gfl & F_OPT_HAS_G_LOM)) {
