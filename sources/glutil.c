@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-22
+ * Version     : 1.9-23
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 22
+#define VER_REVISION 23
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1970,10 +1970,6 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	pgm->reg_i_m = reg_i_m;
 	pgm->regex_flags = regex_flags;
 	pgm->flags = flags;
-	if (regcomp(&pgm->preg, pgm->match,
-			(regex_flags | REG_EXTENDED | REG_NOSUB))) {
-		return 11001;
-	}
 
 	if (pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
 		pgm->g_oper_ptr = g_oper_or;
@@ -1987,6 +1983,10 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	switch (flags & F_GM_TYPES) {
 	case F_GM_ISREGEX:
+		if (regcomp(&pgm->preg, pgm->match,
+				(regex_flags | REG_EXTENDED | REG_NOSUB))) {
+			return 11001;
+		}
 		if (!(gfl & F_OPT_HAS_G_REGEX)) {
 			gfl |= F_OPT_HAS_G_REGEX;
 		}
@@ -2973,7 +2973,8 @@ char *build_data_path(char *file, char *path, char *sd) {
 	}
 
 	if ((gfl & F_OPT_VERBOSE4) && p_l) {
-		print_str("NOTICE: %s: set data path was not found, setting default: %s\n",
+		print_str(
+				"NOTICE: %s: set data path was not found, setting default: %s\n",
 				file, path);
 	}
 
