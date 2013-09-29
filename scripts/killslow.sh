@@ -1,8 +1,8 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:0
-#@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot}"
+#@REVISION:1
+#@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
@@ -52,6 +52,10 @@ FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi|mp(e|)g|mp3)$"
 ## Do NOT enforce paths matching this expression
 #
 PATHS_FILTERED="\/(sample|cover(s|)|proof)(($)|\/)"
+#
+## Log to glftpd.log
+#
+LOG_TO_GLFTPD=1
 #
 ############################[ END OPTIONS ]##############################
 
@@ -145,6 +149,12 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		[ -n "`ps -p $4 -o comm=`" ] && { 
 				echo "[`date "+%T %D"`] WARNING: process still running after $i seconds, killing by force" >> $LOG
 				kill -9 $4 && FORCEKILL=1
+		}
+
+		[ $LOG_TO_GLFTPD -gt 0 ] && {
+			gllog="${11}/glftpd.log"
+			[ -f "$gllog" ] && echo "`date "+%a %b %e %T %Y"` KILLSLOW: \"$GLUSER\" \"$4\" \"$DRATE\" \"$MINRATE\" \"$UNDERTIME\" \"$FORCEKILL\" \"$9\" \"$1\" \"$(echo "$6" | sed 's/^STOR //')\" \"$1\" \"${12}\" \"${13}\"" >> $gllog || 
+				echo "[`date "+%T %D"`] ERROR: could" >> $LOG
 		}
 
     	g_FILE=`echo $6 | cut -f 2- -d " "`
