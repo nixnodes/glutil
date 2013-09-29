@@ -77,6 +77,9 @@ Oh boy do I.  Take a gander at some of these!
 watch -n 1 ./glutil -w --comp : This will watch in real time the users connecting and what they are doing, placing them
 info in a table.
 
+glutil -w --comp --loop 10 --loopexec clear : This will print out the users connected to the site and place in an organized
+table and loop it for 10 seconds, clearing the screen each time.
+
 glutil -r : This will rebuild the entire dirlog.  A backup of original will be created.
 
 glutil -r -u -v --postexec "{exe} --check --fix --ghost -v" : This will update the existing dirlog and remove enteries 
