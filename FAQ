@@ -104,23 +104,23 @@ glutil -r : This will rebuild the entire dirlog.  A backup of original will be c
 glutil -r -u -v --postexec "{exe} --check --fix --ghost -v" : This will update the existing dirlog and remove enteries 
 that no longer exist.  Great for fixing paths if directories have been moved.
 
-glutil -d : This will dump the dirlog to readable output to stdout.
+glutil -d : This will dump the dirlog in readable format to stdout.
 
-glutil -d -vv : This will dump the dirlog to readable output to stdout.  The move -v you use the more verbose information
+glutil -d -vv : This will dump the dirlog in readable format to stdout.  The move -v you use the more verbose information
 will be printed out.
 
 glutil -w : Print the users that are online.
 
-glutil -w --exec "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --silent : This
+glutil -w -execv "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --stlent : This
 will print out from shared memory username and pid and loop the information every 1 second.
 
-glutil -a --iregexi genre,"comedy" --ilom "score > 6.0" --exec "echo \"{title}\"" --silent : This will print out the movies 
+glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6 : This will print out the movies 
 with genre comedy for scores greater than 6.
 
 glutil -h --iregexi name,"Hell On Wheels" : This will print out the tvrage info stored in the tv.log, case insensative.
 
 glutil -e dirlog --ftime -vvv --regex ".*[\/]{2,}.*" : This will remove from the dirlog what is in the regex.  
-In this case it would remove the entry /site/apps//glutil.v1.9.29-FORTHEWIN"
+In this case it would remove any entries with repeating back-slashes"
 
 glutil -n --lom "time < $(expr $(date +%s) - 604800)" : This will output all the entries in the nukelog that are under 7
 days.
