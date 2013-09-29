@@ -154,7 +154,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		[ $LOG_TO_GLFTPD -gt 0 ] && {
 			gllog="${11}/glftpd.log"
 			[ -f "$gllog" ] && echo "`date "+%a %b %e %T %Y"` KILLSLOW: \"$GLUSER\" \"$4\" \"$DRATE\" \"$MINRATE\" \"$UNDERTIME\" \"$FORCEKILL\" \"$9\" \"$1\" \"$(echo "$6" | sed 's/^STOR //')\" \"$1\" \"${12}\" \"${13}\"" >> $gllog || 
-				echo "[`date "+%T %D"`] ERROR: could" >> $LOG
+				echo "[`date "+%T %D"`] ERROR: could not log to glftpd.log" >> $LOG
 		}
 
     	g_FILE=`echo $6 | cut -f 2- -d " "`
