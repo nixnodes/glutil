@@ -31,6 +31,7 @@
  *   - Bugfix: --esredir not redirecting (rev. 21)
  *   - Fixed broken log path detection (rev. 21)
  *   - Bugfix: automatic log path update wasn't working (rev. 22)
+ *   - Bugfix: regex expression got compiled for regular string matches (rev. 23)
  *
  * v1.8
  *
