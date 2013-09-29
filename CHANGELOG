@@ -30,6 +30,7 @@
  *   - Bugfix: attempted to free non-allocated memory (-r -f) (rev. 21)
  *   - Bugfix: --esredir not redirecting (rev. 21)
  *   - Fixed broken log path detection (rev. 21)
+ *   - Bugfix: automatic log path update wasn't working (rev. 22)
  *
  * v1.8
  *
