@@ -72,11 +72,22 @@ especially when dealing with tvrage and imdb.
 
 glutil -m : will call a macro.  A macro can combine commands and call a bash script.  Soo man possibilities.
 
-examples:
+examples to run on linux :
 
+glutil -m imdb-e -arg1="Goodfellas" : This will do a lookup on imdb.com for the movie title and add it to the imdb.log
 
+glutil -m tvrage-e -arg1="Sons Of Anarchy" : This will do a lookup on tvrage.com for the television title and add it to
+the tv.log.
 
+glutil -m imdb-d --arg1 '\/(xvid|x264|archive\/x264|archive\/xvid)\/.*\-[a-zA-Z0-9\-_]+$' : This will search the dirlog
+and look for movies in the folders xvid and x264.  It will then gather imdb information and place into imdb.log.
 
+examples to run on freebsd :
+
+glutil -m imdb-f-e --arg1="Shawshank Redemption"
+glutil -m idmb-f-d --arg1 '\/(MOVIES-SD|MOVIES-HD|ARCHIVE\/MOVIES-SD|ARCHIVE\/MOVIES-HD)\/.*\-[a-zA-Z0-9\-_]+$'
+glutil -m tvrage-f-e --arg1="Breaking Bad" 
+glutil -m tvrage-f-d --arg1='\/(TV-SD|TV-HD|TV-DVDRIP|ARCHIVE\/TV-HD|ARCHIVE\/TV-SD|ARCHIVE\/TV-DVDRIP)\/.*\-[a-zA-Z0-9\-_]+$'
 
 Do you have any useful commands to help me see glutil's potential?
 ------------------------------------------------------------------
@@ -102,14 +113,6 @@ glutil -w : Print the users that are online.
 
 glutil -w --exec "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --silent : This
 will print out from shared memory username and pid and loop the information every 1 second.
-
-glutil -m imdb-e -arg1="Goodfellas" : This will do a lookup on imdb.com for the movie title and add it to the imdb.log
-
-glutil -m tvrage-e -arg1="Sons Of Anarchy" : This will do a lookup on tvrage.com for the television title and add it to
-the tv.log.
-
-glutil -m imdb-d --arg1 '\/(xvid|x264|archive\/x264|archive\/xvid)\/.*\-[a-zA-Z0-9\-_]+$' : This will search the dirlog
-and look for movies in the folders xvid and x264.  It will then gather imdb information and place into imdb.log.
 
 glutil -a --iregexi genre,"comedy" --ilom "score > 6.0" --exec "echo \"{title}\"" --silent : This will print out the movies 
 with genre comedy for scores greater than 6.
