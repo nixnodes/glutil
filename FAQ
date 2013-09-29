@@ -18,7 +18,7 @@ has soo many possibilities.  glutil can watch your connected users in realtime. 
 How do I install glutil?
 ------------------------
 step 1 : git clone https://github.com/nixnodes/glutil /tmp/glut.inst
-step 2 : cp -R /tmp/glut.inst/scripts /tmp/glut.inst/sources /tmp/glut.inst /glftpd/bin
+step 2 : cp -R /tmp/glut.inst/scripts /tmp/glut.inst/sources /tmp/glut.inst/misc /glftpd/bin
 step 3 : rm -Rf /tmp/glut.inst
 step 4 : cc /glftpd/bin/sources/glutil.c -o /glftpd/bin/glutil -Wall -O3
 
