@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-21
+ * Version     : 1.9-22
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 21
+#define VER_REVISION 22
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2958,24 +2958,29 @@ char *build_data_path(char *file, char *path, char *sd) {
 	char *ret = path;
 	remove_repeating_chars(path, 0x2F);
 
-	char *p_d = strdup(path);
-	char *b_pd = dirname(p_d);
+	size_t p_l = strlen(path);
 
-	if (!dir_exists(b_pd)) {
-		goto end;
+	if (p_l) {
+		char *p_d = strdup(path);
+		char *b_pd = dirname(p_d);
+
+		if (!dir_exists(b_pd)) {
+			g_free(p_d);
+			goto end;
+		}
+
+		g_free(p_d);
+	}
+
+	if ((gfl & F_OPT_VERBOSE4) && p_l) {
+		print_str("NOTICE: %s: set data path was not found, setting default: %s\n",
+				file, path);
 	}
 
 	snprintf(path, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
 	remove_repeating_chars(path, 0x2F);
 
-	if (gfl & F_OPT_VERBOSE3) {
-		print_str("NOTICE: %s: was not found, setting default data path: %s\n",
-				b_pd, path);
-	}
-
 	end:
-
-	g_free(p_d);
 
 	return ret;
 }
@@ -3019,7 +3024,6 @@ int g_init(int argc, char **argv) {
 	}
 
 	enable_logging();
-
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
 			&& !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE)) {
@@ -3107,17 +3111,15 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
-	//if (updmode != UPD_MODE_WRITE && updmode != UPD_MODE_RECURSIVE) {
-		build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
-		build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
-		build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
-		build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
-		build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
-		build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
-		build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
-		build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
-		build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
-	//}
+	build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
+	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
+	build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
+	build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
+	build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
+	build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
 
 	bzero(SITEROOT, 255);
 	snprintf(SITEROOT, 254, "%s%s", GLROOT, SITEROOT_N);
