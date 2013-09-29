@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:3
+#@REVISION:4
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "$(basename '{arg}')" '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
 #@MACRO:imdb-c:{m:exe} -x {m:arg1} --cdir --exec "{m:spec1} `basename {arg}` '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'" {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -exec "{m:spec1} '{basedir}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{dir}'" --iregexi "dir,{m:arg1}" 
@@ -22,7 +22,7 @@
 ###########################[ BEGIN OPTIONS ]#############################
 #
 # omdbapi base url
-URL="http://www.omdbapi.com/"
+IMDB_URL="http://www.omdbapi.com/"
 #
 # iMDB base url
 IMDBURL="http://www.imdb.com/"
@@ -112,14 +112,14 @@ fi
 
 iid=`imdb_search "$QUERY""&ex=1"`
 [ $LOOSE_SEARCH -eq 1 ] &&[ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=`imdb_search "$QUERY"`
-[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=`$CURL $CURL_FLAGS "$URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g'`
-[ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$URL?r=xml&s=$QUERY]" && exit 1
+[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=`$CURL $CURL_FLAGS "$IMDB_URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g'`
+[ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "imdbid,^$iid$" "$3"	
 fi
 
-DDT=`$CURL $CURL_FLAGS "$URL""?r=XML&i=$iid"`
+DDT=`$CURL $CURL_FLAGS "$IMDB_URL""?r=XML&i=$iid"`
 
 [ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
