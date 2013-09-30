@@ -73,7 +73,8 @@ TYPES:
 
 ; NUKELOG
 
-   dir        S     The dirname (fullpath)
+   dir        S     The name of the dir (fullpath)
+   basedir    S     The name of the dir (basepath)
    mode       S     File type (glutil --info -vv)
    status     I     0 = NUKED, 1 = UNNUKED
    time       I     The nuke time since epoch (man 2 time)
@@ -155,6 +156,7 @@ TYPES:
 ; TVRAGE
  
    dir        S     The directory name related to record
+   basedir    S     The name of the dir (basepath)
    mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    showid     I     TVRAGE show id
@@ -175,6 +177,7 @@ TYPES:
 ; GAME
  
    dir        S     The directory name related to record
+   basedir    S     The name of the dir (basepath)
    mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score
@@ -271,7 +274,7 @@ TYPES:
 	by default).
 	However, while parsing (-d, -n, ..), --nobuffer option can be used, turning buffering off and reading record by record 
 	using fget. 
-	Since glutil is set by default to compile using large file offsets, theoretically, a massive file could be parsed
+	Since glutil is set by default to compile with large file offsets, theoretically a massive file could be parsed
 	(64-bit file size, not taking filesystem limits into account).
 	
 	All match/hook operators apply.
