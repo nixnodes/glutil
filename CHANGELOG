@@ -52,6 +52,7 @@
  *   - %! Disabled exception tracing helper functions (rev. 31)
  *   - + --mindepth=<depth> (-x) (rev. 32)
  *   - + links field (see MANUAL under FILESYSTEM) (-x) (rev. 32)
+ *   - ~ Command line arguments processing stuck in perm loop (some platforms) (rev. 33)
  *
  * v1.8
  *
