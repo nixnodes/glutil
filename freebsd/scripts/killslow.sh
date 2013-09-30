@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
 #@VERSION:1
-#@REVISION:1
+#@REVISION:2
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
