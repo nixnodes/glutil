@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-31
+ * Version     : 1.9-32
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 31
+#define VER_REVISION 32
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -562,6 +562,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_IFRH_E			(a64 << 56)
 #define F_OPT_NOGLCONF			(a64 << 57)
 #define F_OPT_MAXDEPTH 			(a64 << 58)
+#define F_OPT_MINDEPTH 			(a64 << 59)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -756,6 +757,100 @@ void g_setjmp(uint32_t flags, char *type, void *callback, void *arg) {
 	memcpy(g_sigjmp.type, type, strlen(type));
 
 	return;
+}
+
+void *g_memcpy(void *dest, const void *src, size_t n) {
+	void *ret = NULL;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags = 0;
+	g_sigjmp.id = ID_SIGERR_MEMCPY;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = memcpy(dest, src, n);
+	}
+	e_push(&g_sigjmp);
+	return ret;
+}
+
+void *g_memmove(void *dest, const void *src, size_t n) {
+	void *ret = NULL;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags = 0;
+	g_sigjmp.id = ID_SIGERR_MEMMOVE;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = memmove(dest, src, n);
+	}
+	e_push(&g_sigjmp);
+	return ret;
+}
+
+char *g_strncpy(char *dest, const char *src, size_t n) {
+	char *ret = NULL;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags = 0;
+	g_sigjmp.id = ID_SIGERR_STRCPY;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = strncpy(dest, src, n);
+	}
+	e_push(&g_sigjmp);
+	return ret;
+}
+
+void g_free(void *ptr) {
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags |= F_SIGERR_CONTINUE;
+	g_sigjmp.id = ID_SIGERR_FREE;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		free(ptr);
+	}
+	e_push(&g_sigjmp);
+}
+
+size_t g_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+	size_t ret = 0;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags |= F_SIGERR_CONTINUE;
+	g_sigjmp.id = ID_SIGERR_FREAD;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = fread(ptr, size, nmemb, stream);
+	}
+	e_push(&g_sigjmp);
+	return ret;
+}
+
+size_t g_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+	size_t ret = 0;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags |= F_SIGERR_CONTINUE;
+	g_sigjmp.id = ID_SIGERR_FWRITE;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = fwrite(ptr, size, nmemb, stream);
+	}
+	e_push(&g_sigjmp);
+	return ret;
+}
+
+FILE *gg_fopen(const char *path, const char *mode) {
+	FILE *ret = NULL;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags |= F_SIGERR_CONTINUE;
+	g_sigjmp.id = ID_SIGERR_FOPEN;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = fopen(path, mode);
+	}
+	e_push(&g_sigjmp);
+	return ret;
+}
+
+int g_fclose(FILE *fp) {
+	int ret = 0;
+	e_pop(&g_sigjmp);
+	g_sigjmp.flags |= F_SIGERR_CONTINUE;
+	g_sigjmp.id = ID_SIGERR_FCLOSE;
+	if (!sigsetjmp(g_sigjmp.env, 1)) {
+		ret = fclose(fp);
+	}
+	e_push(&g_sigjmp);
+	return ret;
 }
 
 #define MSG_DEF_UNKN1 	"(unknown)"
@@ -1002,7 +1097,7 @@ uint32_t flags_udcfg = 0;
 uint32_t g_sort_flags = 0;
 
 off_t max_hits = 0, max_results = 0;
-off_t max_depth = 0;
+off_t max_depth, min_depth;
 
 int execv_stdout_redir = -1;
 
@@ -1027,12 +1122,13 @@ char *hpd_up =
 				"                        Parse specified log to stdout\n"
 				"  -t                    Parse all user files inside /ftp-data/users\n"
 				"  -g                    Parse all group files inside /ftp-data/groups\n"
-				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>]\n"
+				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>]\n"
 				"                        Parses filesystem and processes each item found with internal filters/hooks\n"
 				"                          --dir scans directories only\n"
 				"                          --file scans files only (default is both dirs and files)\n"
 				"                          --cdir processes only the root directory itself\n"
 				"                        --maxdepth limits how deep into the directory tree recursor descends\n"
+				"                        --mindepth does not process levels lesser than <limit>\n"
 				"\n Input:\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -1388,6 +1484,13 @@ int opt_g_maxdepth(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 	max_depth = (off_t) strtoll(buffer, NULL, 10);
 	gfl |= F_OPT_MAXDEPTH;
+	return 0;
+}
+
+int opt_g_mindepth(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	min_depth = (off_t) strtoll(buffer, NULL, 10);
+	gfl |= F_OPT_MINDEPTH;
 	return 0;
 }
 
@@ -2531,8 +2634,9 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 0, "--nofq", opt_g_nofq, (void*) 0, "--esredir",
 		opt_execv_stdout_redir, (void*) 1, "--noglconf", opt_g_noglconf,
 		(void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1, "-maxdepth",
-		opt_g_maxdepth, (void*) 1, "--noereg", opt_g_noereg, (void*) 0, NULL,
-		NULL, NULL };
+		opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth, (void*) 1,
+		"-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
+		(void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -3421,7 +3525,9 @@ int g_print_info(void) {
 		print_str(" DT_REG           %d\t%s\n", DT_REG, "regular file");
 		print_str(" DT_LNK           %d\t%s\n", DT_LNK, "symbolic link");
 		print_str(" DT_SOCK          %d\t%s\n", DT_SOCK, "UNIX domain socket");
+#ifdef DT_WHT
 		print_str(" DT_WHT           %d\t\n", DT_WHT);
+#endif
 		print_str(MSG_NL);
 	}
 
@@ -4008,6 +4114,9 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 	switch (type) {
 		case DT_REG:;
 		if (aa_rh->flags & F_PD_MATCHREG) {
+			if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
+				break;
+			}
 			g_preproc_dm(name, aa_rh, type);
 			if ((g_bmatch((void*)&aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
 				aa_rh->st_2++;
@@ -4030,6 +4139,11 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 				eds->depth--;
 			}
 		}
+
+		if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
+			break;
+		}
+
 		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
 			break;
 		}
@@ -4049,6 +4163,9 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 		}
 		break;
 		case DT_LNK:;
+		if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
+			break;
+		}
 		if (gfl & F_OPT_FOLLOW_LINKS) {
 			g_preproc_dm(name, aa_rh, type);
 			if ((g_bmatch((void*)&aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
@@ -8091,6 +8208,12 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_ino);
+	} else if (!strncmp(match, "links", 5)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%u", (uint32_t) st.st_nlink);
 	} else if (!strncmp(match, "uid", 3)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
@@ -8238,6 +8361,10 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->st.st_ino);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_ino;
+	} else if (!strncmp(match, "links", 5)) {
+		*output = sizeof(data->st.st_nlink);
+		data->flags |= F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->st.st_nlink;
 	} else if (!strncmp(match, "uid", 3)) {
 		*output = sizeof(data->st.st_uid);
 		data->flags |= F_XRF_DO_STAT;
