@@ -43,6 +43,7 @@ TYPES:
    mode       I     File type (glutil --info -vv)
    devid      I     ID of device containing file
    inode      I     inode number
+   links      I     Number of hard links
    uid        I     User ID of owner
    gid        I     Uroup ID of owner
    blksize    I     Blocksize for filesystem I/O
