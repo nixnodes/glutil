@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:1
+#@REVISION:2
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -58,6 +58,9 @@ PATHS_FILTERED="\/(sample|cover(s|)|proof)(($)|\/)"
 LOG_TO_GLFTPD=1
 #
 ############################[ END OPTIONS ]##############################
+
+BASEDIR=`dirname $0`
+[ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
 ban_user() {	
 
