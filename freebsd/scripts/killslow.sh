@@ -59,6 +59,9 @@ LOG_TO_GLFTPD=1
 #
 ############################[ END OPTIONS ]##############################
 
+BASEDIR=`dirname $0`
+[ -f "$BASEDIR/config" ] && . $BASEDIR/config
+
 ban_user() {	
 
 	[ -z "$1" ] && return 0	
