@@ -50,6 +50,8 @@
  *   - + uperm, gperm, operm and isread, iswrite, isexec fields (-x) (rev. 30)
  *   - + Disable POSIX extended regex (--noereg) (rev. 31)
  *   - %! Disabled exception tracing helper functions (rev. 31)
+ *   - + --mindepth=<depth> (-x) (rev. 32)
+ *   - + links field (see MANUAL under FILESYSTEM) (-x) (rev. 32)
  *
  * v1.8
  *
