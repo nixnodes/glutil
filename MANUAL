@@ -52,9 +52,10 @@ TYPES:
    isread     I     1 = Read access, 0 = No read access, -1 = Operation failed
    iswrite    I     1 = Write access, 0 = No write access, -1 = Operation failed
    isexec     I     1 = Execute access, 0 = No execute access, -1 = Operation failed
-   uperm      I     User permission bits
-   gperm      I     Group permission bits
-   operm      I     Others permission bits
+   uperm      I     User permission octet
+   gperm      I     Group permission octet
+   operm      I     Others permission octet
+   perm       S     File permissions string
   
 ; DIRLOG
 
