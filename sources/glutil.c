@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-32
+ * Version     : 1.9-33
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 32
+#define VER_REVISION 33
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1069,7 +1069,7 @@ int EXITVAL = 0;
 
 int loop_interval = 0;
 uint64_t loop_max = 0;
-char *NUKESTR = NULL;
+char *NUKESTR = NUKESTR_DEF;
 
 char *exec_str = NULL;
 char **exec_v = NULL;
@@ -3182,10 +3182,6 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
-	if (!NUKESTR) {
-		NUKESTR = NUKESTR_DEF;
-	}
-
 	build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
 	build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
 	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
@@ -3200,7 +3196,7 @@ int g_init(int argc, char **argv) {
 	remove_repeating_chars(SITEROOT, 0x2F);
 
 	if (dir_exists(SITEROOT) && !dir_exists(SITEROOT_N)) {
-		snprintf(SITEROOT, PATH_MAX, "%s", SITEROOT_N);
+		strcp_s(SITEROOT, PATH_MAX, SITEROOT_N);
 	}
 
 	if ((gfl & F_OPT_VERBOSE) && dir_exists(SITEROOT)) {
@@ -3511,6 +3507,12 @@ int g_print_info(void) {
 		print_str(" size_t           %d      \n", (sizeof(size_t)));
 		print_str(MSG_NL);
 		print_str(" void *           %d      \n", PTRSZ);
+		print_str(MSG_NL);
+		print_str(" mda              %d      \n", sizeof(mda));
+		print_str(" md_obj           %d      \n", sizeof(md_obj));
+		print_str(" _g_handle        %d      \n", sizeof(_g_handle));
+		print_str(" _g_match         %d      \n", sizeof(_g_match));
+		print_str(" _g_lom           %d      \n", sizeof(_g_lom));
 		print_str(MSG_NL);
 	}
 
@@ -5390,6 +5392,8 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 				print_str("CMDLINE: [%d] invalid argument '%s'\n", vi, c_arg);
 				ret = -2;
 				goto end;
+			} else {
+				continue;
 			}
 
 		}
@@ -5405,6 +5409,12 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 			void *buffer = NULL;
 
 			if ((vp = (uintaa_t) ora[vi].arg_cnt)) {
+				if (vp < 0 || vp > 8192) {
+					print_str("ERROR: '%s' bad reference array [%llu]\n",
+							argv[i], (ulint64_t) ((i + vp) - (argc - 1)));
+					c = -3;
+					goto end;
+				}
 				if (i + vp > argc - 1) {
 					if (fref_t != prio_f_ref) {
 						print_str(
@@ -5412,11 +5422,14 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 								argv[i], (ulint64_t) ((i + vp) - (argc - 1)));
 						c = 0;
 						goto end;
+					} else {
+						continue;
 					}
 
 				}
 				buffer = &argv[i + 1];
 				i += vp;
+
 			}
 			ret |= process_opt(argv[oi], buffer, fref_t, 0);
 
@@ -5426,6 +5439,8 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 
 	}
 	end:
+
+	md_g_free(&cmd_lt);
 
 	if (!c) {
 		return -1;
