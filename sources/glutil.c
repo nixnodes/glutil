@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-29
+ * Version     : 1.9-30
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 29
+#define VER_REVISION 30
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -401,6 +401,7 @@ typedef struct ___g_eds {
 	uint32_t flags;
 	uint32_t r_minor, r_major;
 	struct stat st;
+	off_t depth;
 } _g_eds, *__g_eds;
 
 /*
@@ -560,6 +561,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_NOFQ				(a64 << 55)
 #define F_OPT_IFRH_E			(a64 << 56)
 #define F_OPT_NOGLCONF			(a64 << 57)
+#define F_OPT_MAXDEPTH 			(a64 << 58)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1094,6 +1096,7 @@ uint32_t flags_udcfg = 0;
 uint32_t g_sort_flags = 0;
 
 off_t max_hits = 0, max_results = 0;
+off_t max_depth = 0;
 
 int execv_stdout_redir = -1;
 
@@ -1116,11 +1119,12 @@ char *hpd_up =
 				"                        Parse specified log to stdout\n"
 				"  -t                    Parse all user files inside /ftp-data/users\n"
 				"  -g                    Parse all group files inside /ftp-data/groups\n"
-				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir])\n"
+				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>]\n"
 				"                        Parses filesystem and processes each item found with internal filters/hooks\n"
 				"                          --dir scans directories only\n"
 				"                          --file scans files only (default is both dirs and files)\n"
 				"                          --cdir processes only the root directory itself\n"
+				"                        --maxdepth limits how deep into the directory tree recursor descends\n"
 				"\n Input:\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -1468,6 +1472,13 @@ int opt_g_maxresults(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 	max_results = (off_t) strtoll(buffer, NULL, 10);
 	gfl |= F_OPT_HASMAXRES;
+	return 0;
+}
+
+int opt_g_maxdepth(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	max_depth = (off_t) strtoll(buffer, NULL, 10);
+	gfl |= F_OPT_MAXDEPTH;
 	return 0;
 }
 
@@ -2603,7 +2614,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
 		"--ifrhe", opt_g_ifrh_e, (void*) 0, "--nofq", opt_g_nofq, (void*) 0,
 		"--esredir", opt_execv_stdout_redir, (void*) 1, "--noglconf",
-		opt_g_noglconf, (void*) 0, NULL, NULL, NULL };
+		opt_g_noglconf, (void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1,
+		"-maxdepth", opt_g_maxdepth, (void*) 1, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -3923,11 +3935,24 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 
 #define F_XRF_DO_STAT		(a32 << 1)
 #define F_XRF_GET_DT_MODE	(a32 << 2)
+#define F_XRF_GET_READ		(a32 << 3)
+#define F_XRF_GET_WRITE		(a32 << 4)
+#define F_XRF_GET_EXEC		(a32 << 5)
+#define F_XRF_GET_UPERM		(a32 << 6)
+#define F_XRF_GET_GPERM		(a32 << 7)
+#define F_XRF_GET_OPERM		(a32 << 8)
+#define F_XRF_GET_PERM		(a32 << 9)
+
+#define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
+#define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
 
 typedef struct ___d_xref {
 	char name[PATH_MAX];
 	struct stat st;
-	unsigned char type;
+	uint8_t type;
+	uint8_t r, w, x;
+	uint8_t uperm, gperm, operm;
+	uint16_t perm;
 	uint32_t flags;
 } _d_xref, *__d_xref;
 
@@ -4032,11 +4057,32 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 	if (aa_rh->p_xref.flags & F_XRF_DO_STAT) {
 		if (lstat(name, &aa_rh->p_xref.st)) {
 			bzero(&aa_rh->p_xref.st, sizeof(struct stat));
+		} else {
+			if (aa_rh->p_xref.flags & F_XRF_GET_UPERM) {
+				aa_rh->p_xref.uperm = (aa_rh->p_xref.st.st_mode & S_IRWXU) >> 6;
+			}
+			if (aa_rh->p_xref.flags & F_XRF_GET_GPERM) {
+				aa_rh->p_xref.gperm = (aa_rh->p_xref.st.st_mode & S_IRWXG) >> 3;
+			}
+			if (aa_rh->p_xref.flags & F_XRF_GET_OPERM) {
+				aa_rh->p_xref.operm = (aa_rh->p_xref.st.st_mode & S_IRWXO);
+			}
 		}
 	}
 	if (aa_rh->p_xref.flags & F_XRF_GET_DT_MODE) {
 		aa_rh->p_xref.type = type;
 	}
+
+	if (aa_rh->p_xref.flags & F_XRF_GET_READ) {
+		aa_rh->p_xref.r = (uint8_t) !(access(aa_rh->p_xref.name, R_OK));
+	}
+	if (aa_rh->p_xref.flags & F_XRF_GET_WRITE) {
+		aa_rh->p_xref.w = (uint8_t) !(access(aa_rh->p_xref.name, W_OK));
+	}
+	if (aa_rh->p_xref.flags & F_XRF_GET_EXEC) {
+		aa_rh->p_xref.x = (uint8_t) !(access(aa_rh->p_xref.name, X_OK));
+	}
+
 }
 
 int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) {
@@ -4059,9 +4105,13 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			aa_rh->st_1++;
 		}
 		break;
-		case DT_DIR:
+		case DT_DIR:;
 		if (aa_rh->flags & F_PD_RECURSIVE) {
-			enum_dir(name, g_process_directory, arg, 0, eds);
+			if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth)) {
+				eds->depth++;
+				enum_dir(name, g_process_directory, arg, 0, eds);
+				eds->depth--;
+			}
 		}
 		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
 			break;
@@ -4081,7 +4131,7 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			aa_rh->st_1++;
 		}
 		break;
-		case DT_LNK:
+		case DT_LNK:;
 		if (gfl & F_OPT_FOLLOW_LINKS) {
 			g_preproc_dm(name, aa_rh, type);
 			if ((g_bmatch((void*)&aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
@@ -8162,6 +8212,44 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_mtime);
+	} else if (!strncmp(match, "isread", 6)) {
+		snprintf(output, max_size, "%hu",
+				(uint8_t) !(access(data->name, R_OK)));
+	} else if (!strncmp(match, "iswrite", 7)) {
+		snprintf(output, max_size, "%hu",
+				(uint8_t) !(access(data->name, W_OK)));
+	} else if (!strncmp(match, "isexec", 6)) {
+		snprintf(output, max_size, "%hu",
+				(uint8_t) !(access(data->name, X_OK)));
+	} else if (!strncmp(match, "uperm", 5)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%hu",
+				(uint16_t) ((st.st_mode & S_IRWXU) >> 6));
+	} else if (!strncmp(match, "gperm", 5)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%hu",
+				(uint16_t) ((st.st_mode & S_IRWXG) >> 3));
+	} else if (!strncmp(match, "operm", 5)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%hu", (uint16_t) ((st.st_mode & S_IRWXO)));
+	} else if (!strncmp(match, "perm", 4)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%hu%hu%hu",
+				(uint16_t) ((st.st_mode & S_IRWXU) >> 6),
+				(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
+				(uint16_t) ((st.st_mode & S_IRWXO)));
 	} else if (!strncmp(match, "c:", 2)) {
 		return g_rtval_ex(data->name, &match[2], max_size, output,
 		F_CFGV_BUILD_FULL_STRING);
@@ -8203,6 +8291,30 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->type);
 		data->flags |= F_XRF_GET_DT_MODE;
 		return &((__d_xref) NULL)->type;
+	} else if (!strncmp(match, "isread", 6)) {
+		*output = sizeof(data->r);
+		data->flags |= F_XRF_GET_READ;
+		return &((__d_xref) NULL)->r;
+	} else if (!strncmp(match, "iswrite", 7)) {
+		*output = sizeof(data->w);
+		data->flags |= F_XRF_GET_WRITE;
+		return &((__d_xref) NULL)->w;
+	} else if (!strncmp(match, "isexec", 6)) {
+		*output = sizeof(data->x);
+		data->flags |= F_XRF_GET_EXEC;
+		return &((__d_xref) NULL)->x;
+	} else if (!strncmp(match, "uperm", 5)) {
+		*output = sizeof(data->uperm);
+		data->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->uperm;
+	} else if (!strncmp(match, "gperm", 5)) {
+		*output = sizeof(data->gperm);
+		data->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->gperm;
+	} else if (!strncmp(match, "operm", 5)) {
+		*output = sizeof(data->operm);
+		data->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->operm;
 	} else if (!strncmp(match, "devid", 5)) {
 		*output = sizeof(data->st.st_dev);
 		data->flags |= F_XRF_DO_STAT;
@@ -8231,6 +8343,10 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->st.st_ctime);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_ctime;
+	} else if (!strncmp(match, "mtime", 5)) {
+		*output = sizeof(data->st.st_mtime);
+		data->flags |= F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->st.st_mtime;
 	}
 
 	return NULL;
