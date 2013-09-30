@@ -48,6 +48,8 @@
  *   - + various file/directory information fields (see MANUAL) (rev. 29)
  *   - + --maxdepth=<limit> (-x) (rev. 30)
  *   - + uperm, gperm, operm and isread, iswrite, isexec fields (-x) (rev. 30)
+ *   - + Disable POSIX extended regex (--noereg) (rev. 31)
+ *   - %! Disabled exception tracing helper functions (rev. 31)
  *
  * v1.8
  *
