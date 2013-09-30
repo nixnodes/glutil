@@ -38,13 +38,22 @@ TYPES:
 ; FILESYSTEM
 
    path       S     Full path
-   size       S     Size of file, in bytes
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   basepath   S     Base path
+   size       S     Total size, in bytes
+   mode       I     File type (glutil --info -vv)
+   devid      I     ID of device containing file
+   inode      I     inode number
+   uid        I     User ID of owner
+   gid        I     Uroup ID of owner
+   blksize    I     Blocksize for filesystem I/O
+   atime      I     Time of last access
+   mtime      I     Time of last modification
+   ctime      I     Time of last status change
   
 ; DIRLOG
 
    dir        S     The name of the dir (fullpath)
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   mode       S     File type (glutil --info -vv)
    basedir    S     The name of the dir (basepath)
    status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
    time       I     Creation time since epoch (man 2 time)
@@ -57,7 +66,7 @@ TYPES:
 ; NUKELOG
 
    dir        S     The dirname (fullpath)
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   mode       S     File type (glutil --info -vv)
    status     I     0 = NUKED, 1 = UNNUKED
    time       I     The nuke time since epoch (man 2 time)
    nuker      S     The name of the nuker
@@ -71,7 +80,7 @@ TYPES:
 ; DUPEFILE
  
    filename   S     The file name
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    user       S     The name of the uploader
 
@@ -119,7 +128,7 @@ TYPES:
 ; IMDB
  
    dir        S     The directory name related to record
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   mode       S     File type (glutil --info -vv)
    basedir    S     The directory name related to record (basepath)
    time       I     Creation time since epoch (man 2 time)
    imdbid     S     iMDB object ID
@@ -138,7 +147,7 @@ TYPES:
 ; TVRAGE
  
    dir        S     The directory name related to record
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    showid     I     TVRAGE show id
    name       S     Show name
@@ -158,7 +167,7 @@ TYPES:
 ; GAME
  
    dir        S     The directory name related to record
-   mode       S     0 = Undefined, 1 = File, 2 = Dir, 3 = Symlink, 4 = Block, 5 = FIFO
+   mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score
    
