@@ -1,4 +1,4 @@
-#@REVISION:11
+#@REVISION:12
 #
 ## These are basically just sets of glutil arguments, 
 ##  packed into macros for convinience
@@ -20,7 +20,7 @@
 #
 ## <update-scipts>
 #
-## Gets glutil script from github repo
+## Gets glutil scripts from github repo
 #
 ## Scripts are put into /glroot/bin/scripts,
 ##  folder is created if it doesn't exist
@@ -29,8 +29,8 @@
 #
 ## <update-self>
 #
-## Gets this macro from github repo and
-##  dumps it into /glroot/bin/misc/,
+## Gets this macro file from github repo 
+##  and dumps it into /glroot/bin/misc/,
 ##  creating the folder if needed
 #
 #@MACRO:update-self:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/misc/";D="{glroot}/bin/misc/"; [ -d "{glroot}/bin/misc" ] || mkdir "{glroot}/bin/misc"; if curl --silent "$B"macros.glutil > "$D"macros.glutil; then echo -e "$D"macros.glutil" \t\t\trev:$(cat "$D"macros.glutil | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; else echo "$D"macros.glutil" FAILED"; fi;` 
