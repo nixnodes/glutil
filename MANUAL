@@ -49,6 +49,12 @@ TYPES:
    atime      I     Time of last access
    mtime      I     Time of last modification
    ctime      I     Time of last status change
+   isread     I     1 = Read access, 0 = No read access, -1 = Operation failed
+   iswrite    I     1 = Write access, 0 = No write access, -1 = Operation failed
+   isexec     I     1 = Execute access, 0 = No execute access, -1 = Operation failed
+   uperm      I     User permission bits
+   gperm      I     Group permission bits
+   operm      I     Others permission bits
   
 ; DIRLOG
 
