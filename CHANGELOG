@@ -36,6 +36,7 @@
  *   - Falls back to a default NUKESTR if it's not read from glftpd.conf (rev. 25)
  *   - {mode} returns "-1" if lstat fails (rev. 26)
  *   - Added --noglconf, disable reading settings from glftpd.conf (rev. 27)
+ *   - 60-70% faster string match processing for most fields (rev. 28) 
  *
  * v1.8
  *
