@@ -18,11 +18,12 @@ used around variables (e.g. {dir}, {time}, ...)
   Some field names were changed.
   
 
-TYPES:
+FLAGS:
  
   S = string
   I = integer
   F = float
+  E = extra info (not part of actual data structure)
 
 |  FIELD  | TYPE |  DESCRIPTION                                       |
 +---------+------+----------------------------------------------------+
@@ -42,7 +43,7 @@ TYPES:
    memlimit   S     Maximum number of bytes that can be buffered
    glconf     S     Path to glftpd.conf per glconf.h
   
-; FILESYSTEM
+; FILESYSTEM (applies to -x only)
 
    path       S     Full path
    basepath   S     Base path
@@ -68,8 +69,8 @@ TYPES:
 ; DIRLOG
 
    dir        S     The name of the dir (fullpath)
-   mode       S     File type (glutil --info -vv)
-   basedir    S     The name of the dir (basepath)
+   mode       ES    File type (glutil --info -vv)
+   basedir    ES    The name of the dir (basepath)
    status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
    time       I     Creation time since epoch (man 2 time)
    user       I     The userid of the creator
@@ -81,8 +82,8 @@ TYPES:
 ; NUKELOG
 
    dir        S     The name of the dir (fullpath)
-   basedir    S     The name of the dir (basepath)
-   mode       S     File type (glutil --info -vv)
+   basedir    ES    The name of the dir (basepath)
+   mode       ES    File type (glutil --info -vv)
    status     I     0 = NUKED, 1 = UNNUKED
    time       I     The nuke time since epoch (man 2 time)
    nuker      S     The name of the nuker
@@ -96,7 +97,6 @@ TYPES:
 ; DUPEFILE
  
    file       S     The file name
-   mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    user       S     The name of the uploader
 
@@ -144,8 +144,8 @@ TYPES:
 ; IMDB
  
    dir        S     The directory name related to record
-   mode       S     File type (glutil --info -vv)
-   basedir    S     The directory name related to record (basepath)
+   mode       ES    File type (glutil --info -vv)
+   basedir    ES    The directory name related to record (basepath)
    time       I     Creation time since epoch (man 2 time)
    imdbid     S     iMDB object ID
    score      F     iMDB score
@@ -163,8 +163,8 @@ TYPES:
 ; TVRAGE
  
    dir        S     The directory name related to record
-   basedir    S     The name of the dir (basepath)
-   mode       S     File type (glutil --info -vv)
+   basedir    ES    The name of the dir (basepath)
+   mode       ES    File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    showid     I     TVRAGE show id
    name       S     Show name
@@ -184,8 +184,8 @@ TYPES:
 ; GAME
  
    dir        S     The directory name related to record
-   basedir    S     The name of the dir (basepath)
-   mode       S     File type (glutil --info -vv)
+   basedir    ES    The name of the dir (basepath)
+   mode       ES    File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score
    
