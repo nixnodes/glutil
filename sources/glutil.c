@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-37
+ * Version     : 1.9-38
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 37
+#define VER_REVISION 38
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -9763,8 +9763,6 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timeup);
-	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
-		return g_l_fmode(data->filename, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_FILE, 4)) {
 		strcp_s(output, max_size, data->filename);
 	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
