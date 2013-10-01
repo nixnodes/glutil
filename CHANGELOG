@@ -56,6 +56,7 @@
  *   - % Standardized field names (see MANUAL) (rev.34)
  *   - + --fd option (-x) (rev. 35)
  *   - % On error print help before message (rev. 36)
+ *   - ~ Recursor properly follows symlinks upon request (-x [-y]) (rev. 37)
  *
  * v1.8
  *
