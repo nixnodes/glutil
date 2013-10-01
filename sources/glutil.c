@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-36
+ * Version     : 1.9-37
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 36
+#define VER_REVISION 37
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -563,7 +563,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_NOGLCONF			(a64 << 57)
 #define F_OPT_MAXDEPTH 			(a64 << 58)
 #define F_OPT_MINDEPTH 			(a64 << 59)
-#define F_OPT_XFD 			(a64 << 60)
+#define F_OPT_XFD 				(a64 << 60)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1022,10 +1022,18 @@ int print_str(const char * volatile buf, ...) {
 	va_start(al, buf);
 
 	if (gfl & F_OPT_PS_TIME) {
-		vprintf(d_buffer_2, al);
-	} else {
-		vprintf(buf, al);
+		if (!strncmp(buf, "ERROR:", 6)) {
+			vfprintf(stderr, d_buffer_2, al);
+		} else {
+			vprintf(d_buffer_2, al);
+		}
 
+	} else {
+		if (!strncmp(buf, "ERROR:", 6)) {
+			vfprintf(stderr, buf, al);
+		} else {
+			vprintf(buf, al);
+		}
 	}
 
 	va_end(al);
@@ -2633,8 +2641,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1, "-maxdepth",
 		opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth, (void*) 1,
 		"-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
-		(void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd,
-		(void*) 0, NULL, NULL, NULL };
+		(void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
+		NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
 	if (!md || md->objects) {
@@ -4129,11 +4137,7 @@ int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
 		aa_rh->st_2++;
 		return 1;
 	}
-	if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
-		print_str("%s: %s\n", s_type, aa_rh->p_xref.name);
-	} else if (gfl & F_OPT_FORMAT_BATCH) {
-		printf("%s\n", aa_rh->p_xref.name);
-	}
+
 	aa_rh->rt_m = 0;
 	aa_rh->st_1++;
 	return 0;
@@ -4156,6 +4160,11 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			if (g_xproc_m("FILE", type, name, aa_rh, eds)) {
 				break;
 			}
+			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
+				print_str("FILE: %s\n", aa_rh->p_xref.name);
+			} else if (gfl & F_OPT_FORMAT_BATCH) {
+				printf("%s\n", aa_rh->p_xref.name);
+			}
 		}
 		break;
 		case DT_DIR:;
@@ -4168,6 +4177,11 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			if (g_xproc_m("DIR", type, name, aa_rh, eds)) {
 				break;
 			}
+			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
+				print_str("DIR: %s\n", aa_rh->p_xref.name);
+			} else if (gfl & F_OPT_FORMAT_BATCH) {
+				printf("%s\n", aa_rh->p_xref.name);
+			}
 		}
 
 		if (aa_rh->xproc_rcl1) {
@@ -4176,10 +4190,21 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 
 		break;
 		case DT_LNK:;
-		if (gfl & F_OPT_FOLLOW_LINKS) {
+		if (!(gfl & F_OPT_FOLLOW_LINKS)) {
 			if (g_xproc_m("LINK", type, name, aa_rh, eds)) {
 				break;
 			}
+			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
+				print_str("LINK: %s\n", aa_rh->p_xref.name);
+			} else if (gfl & F_OPT_FORMAT_BATCH) {
+				printf("%s\n", aa_rh->p_xref.name);
+			}
+		}
+		else {
+			if (stat(name, &aa_rh->p_xref.st)) {
+				break;
+			}
+			g_process_directory(name, IFTODT(aa_rh->p_xref.st.st_mode), arg, eds);
 		}
 		break;
 	}
@@ -5388,7 +5413,7 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 
 		if ((vi = process_opt(c_arg, NULL, fref_t, 1)) < 0) {
 			if (fref_t != prio_f_ref) {
-				print_str("CMDLINE: [%d] invalid argument '%s'\n", vi, c_arg);
+				print_str("ERROR: [%d] invalid argument '%s'\n", vi, c_arg);
 				ret = -2;
 				goto end;
 			} else {
@@ -5417,7 +5442,7 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 				if (i + vp > argc - 1) {
 					if (fref_t != prio_f_ref) {
 						print_str(
-								"CMDLINE: '%s' missing argument parameters [%llu]\n",
+								"ERROR: '%s' missing argument parameters [%llu]\n",
 								argv[i], (ulint64_t) ((i + vp) - (argc - 1)));
 						c = 0;
 						goto end;
