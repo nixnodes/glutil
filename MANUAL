@@ -11,6 +11,13 @@ Log's <field>'s are referenced using static variable names.
 Mind, that whenever passing arguments to --[..]exec, {} needs to be
 used around variables (e.g. {dir}, {time}, ...) 
 
+* NOTE: As of 1.9-34, data log field names are guaranteed to be the
+  same when reading and writing. For instance, filtering by a specific
+  field (regex,lom,..) takes the same field name argument as textform
+  datalog records (used when injecting data into logs, -z).
+  Some field names were changed.
+  
+
 TYPES:
  
   S = string
@@ -88,7 +95,7 @@ TYPES:
 
 ; DUPEFILE
  
-   filename   S     The file name
+   file       S     The file name
    mode       S     File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    user       S     The name of the uploader
@@ -143,7 +150,7 @@ TYPES:
    imdbid     S     iMDB object ID
    score      F     iMDB score
    votes      I     iMDB votes
-   genres     S     Listed genres
+   genre      S     Listed genres
    rated      S     Rating
    title      S     Title
    director   S     Director
@@ -170,7 +177,7 @@ TYPES:
    ended      I     Show ended time since epoch         
    seasons    I     Total number of seasons
    class      S     Show classification
-   genres     S     Show genres
+   genre      S     Show genres
    status     S     Show status
 
 
