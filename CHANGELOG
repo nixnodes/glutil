@@ -53,6 +53,7 @@
  *   - + --mindepth=<depth> (-x) (rev. 32)
  *   - + links field (see MANUAL under FILESYSTEM) (-x) (rev. 32)
  *   - ~ Command line arguments processing stuck in perm loop (some platforms) (rev. 33)
+ *   - % Standardized field names (see MANUAL) (rev.34)
  *
  * v1.8
  *
