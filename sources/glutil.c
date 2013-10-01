@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-34
+ * Version     : 1.9-35
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 34
+#define VER_REVISION 35
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -563,6 +563,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_NOGLCONF			(a64 << 57)
 #define F_OPT_MAXDEPTH 			(a64 << 58)
 #define F_OPT_MINDEPTH 			(a64 << 59)
+#define F_OPT_XFD 			(a64 << 60)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1122,13 +1123,14 @@ char *hpd_up =
 				"                        Parse specified log to stdout\n"
 				"  -t                    Parse all user files inside /ftp-data/users\n"
 				"  -g                    Parse all group files inside /ftp-data/groups\n"
-				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>]\n"
+				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>] [--fd]\n"
 				"                        Parses filesystem and processes each item found with internal filters/hooks\n"
 				"                          --dir scans directories only\n"
 				"                          --file scans files only (default is both dirs and files)\n"
 				"                          --cdir processes only the root directory itself\n"
-				"                        --maxdepth limits how deep into the directory tree recursor descends\n"
-				"                        --mindepth does not process levels lesser than <limit>\n"
+				"                          --maxdepth limits how deep into the directory tree recursor descends\n"
+				"                          --mindepth does not process levels lesser than <limit>\n"
+				"                          --fd applies filters before recursor descends into subdirectory\n"
 				"\n Input:\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -1528,6 +1530,11 @@ int opt_g_nofq(void *arg, int m) {
 
 int opt_g_noereg(void *arg, int m) {
 	g_regex_flags ^= REG_EXTENDED;
+	return 0;
+}
+
+int opt_g_fd(void *arg, int m) {
+	gfl |= F_OPT_XFD;
 	return 0;
 }
 
@@ -2401,7 +2408,7 @@ __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
 		gcb_lastonlog, gcb_game, gcb_tv, gcb_gen1;
 
 uint64_t file_crc32(char *, uint32_t *);
-
+void g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
 int data_backup_records(char*);
 ssize_t file_copy(char *, char *, char *, uint32_t);
 
@@ -2626,6 +2633,7 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1, "-maxdepth",
 		opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth, (void*) 1,
 		"-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
+		(void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd,
 		(void*) 0, NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -3971,12 +3979,15 @@ typedef struct ___d_xref {
 	uint32_t flags;
 } _d_xref, *__d_xref;
 
+typedef void (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
+
 typedef struct ___std_rh_0 {
 	uint8_t rt_m;
 	uint32_t flags;
 	uint64_t st_1, st_2;
 	_g_handle hdl;
 	_d_xref p_xref;
+	__d_xproc_rc xproc_rcl0, xproc_rcl1;
 } _std_rh, *__std_rh;
 
 void g_preproc_xhdl(__g_handle hdl, void *p_xref) {
@@ -4017,6 +4028,14 @@ int g_dump_gen(char *root) {
 
 	_std_rh ret = { 0 };
 	_g_eds eds = { 0 };
+
+	if (flags_udcfg & F_PD_RECURSIVE) {
+		if (!(gfl & F_OPT_XFD)) {
+			ret.xproc_rcl0 = g_xproc_rc;
+		} else {
+			ret.xproc_rcl1 = g_xproc_rc;
+		}
+	}
 
 	ret.flags = flags_udcfg;
 	g_preproc_xhdl(&ret.hdl, (void*) &ret.p_xref);
@@ -4100,77 +4119,67 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 
 }
 
+int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
+		__g_eds eds) {
+	if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
+		return 1;
+	}
+	g_preproc_dm(name, aa_rh, type);
+	if ((g_bmatch((void*) &aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
+		aa_rh->st_2++;
+		return 1;
+	}
+	if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
+		print_str("%s: %s\n", s_type, aa_rh->p_xref.name);
+	} else if (gfl & F_OPT_FORMAT_BATCH) {
+		printf("%s\n", aa_rh->p_xref.name);
+	}
+	aa_rh->rt_m = 0;
+	aa_rh->st_1++;
+	return 0;
+}
+
+void g_xproc_rc(char *name, void *aa_rh, __g_eds eds) {
+	if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth)) {
+		eds->depth++;
+		enum_dir(name, g_process_directory, aa_rh, 0, eds);
+		eds->depth--;
+	}
+}
+
 int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) {
 	__std_rh aa_rh = (__std_rh) arg;
 
 	switch (type) {
 		case DT_REG:;
 		if (aa_rh->flags & F_PD_MATCHREG) {
-			if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
+			if (g_xproc_m("FILE", type, name, aa_rh, eds)) {
 				break;
 			}
-			g_preproc_dm(name, aa_rh, type);
-			if ((g_bmatch((void*)&aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
-				aa_rh->st_2++;
-				break;
-			}
-			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
-				print_str("FILE: %s\n", aa_rh->p_xref.name);
-			} else if (gfl & F_OPT_FORMAT_BATCH) {
-				printf("%s\n", aa_rh->p_xref.name);
-			}
-			aa_rh->rt_m = 0;
-			aa_rh->st_1++;
 		}
 		break;
 		case DT_DIR:;
-		if (aa_rh->flags & F_PD_RECURSIVE) {
-			if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth)) {
-				eds->depth++;
-				enum_dir(name, g_process_directory, arg, 0, eds);
-				eds->depth--;
-			}
+
+		if (aa_rh->xproc_rcl0) {
+			aa_rh->xproc_rcl0(name, (void*)aa_rh, eds);
 		}
 
-		if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
-			break;
-		}
-
-		if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM)) {
-			break;
-		}
 		if (aa_rh->flags & F_PD_MATCHDIR) {
-			g_preproc_dm(name, aa_rh, type);
-			if ((g_bmatch((void*)&aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
-				aa_rh->st_2++;
+			if (g_xproc_m("DIR", type, name, aa_rh, eds)) {
 				break;
 			}
-			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
-				print_str("DIR: %s\n", aa_rh->p_xref.name);
-			} else if (gfl & F_OPT_FORMAT_BATCH) {
-				printf("%s\n", aa_rh->p_xref.name);
-			}
-			aa_rh->rt_m = 0;
-			aa_rh->st_1++;
 		}
+
+		if (aa_rh->xproc_rcl1) {
+			aa_rh->xproc_rcl1(name, (void*)aa_rh, eds);
+		}
+
 		break;
 		case DT_LNK:;
-		if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth) {
-			break;
-		}
 		if (gfl & F_OPT_FOLLOW_LINKS) {
-			g_preproc_dm(name, aa_rh, type);
-			if ((g_bmatch((void*)&aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer))) {
-				aa_rh->st_2++;
+			if (g_xproc_m("LINK", type, name, aa_rh, eds)) {
 				break;
 			}
-			if ((gfl & F_OPT_VERBOSE) && !(gfl & F_OPT_FORMAT_BATCH)) {
-				print_str("SYMLINK: %s\n", aa_rh->p_xref.name);
-			} else if (gfl & F_OPT_FORMAT_BATCH) {
-				printf("%s\n", aa_rh->p_xref.name);
-			}
-			aa_rh->rt_m = 0;
-			aa_rh->st_1++;
 		}
 		break;
 	}
@@ -9237,7 +9246,7 @@ int g_load_lom(__g_handle hdl) {
 
 	if (!rt) {
 		hdl->flags |= F_GH_HASLOM;
-		if (gfl & F_OPT_VERBOSE) {
+		if (gfl & F_OPT_VERBOSE3) {
 			print_str("NOTICE: %s: loaded %d LOM matches\n", hdl->file, c);
 		}
 	} else {
