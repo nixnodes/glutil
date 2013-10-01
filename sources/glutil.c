@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-33
+ * Version     : 1.9-34
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 33
+#define VER_REVISION 34
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2065,8 +2065,6 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 		return (a32 << 28);
 	}
 
-	//md_init(&_lom_strings, 32);
-
 	size_t a_i = strlen(buffer);
 
 	if (!a_i) {
@@ -2075,20 +2073,12 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 
 	a_i > 8190 ? a_i = 8190 : a_i;
 
-	/*__lom_s_h lsh = md_alloc(&_lom_strings, sizeof(_lom_s_h));
-
-	 if (!lsh) {
-	 return (a32 << 29);
-	 }*/
-
 	__g_match pgm = g_global_register_match();
 
 	if (!pgm) {
 		return (a32 << 25);
 	}
 
-	/*lsh->m_ref = pgm;
-	 lsh->flags |= flags;*/
 	pgm->flags |= flags | F_GM_ISLOM;
 	if (pgm->flags & F_GM_IMATCH) {
 		pgm->g_oper_ptr = g_oper_or;
@@ -9383,45 +9373,65 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 	return 0;
 }
 
+#define _MC_GLOB_DIR 		"dir"
+#define _MC_GLOB_BASEDIR 	"basedir"
+#define _MC_GLOB_MODE 		"mode"
+#define _MC_GLOB_PID 		"pid"
+#define _MC_GLOB_USER		"user"
+#define _MC_GLOB_GROUP		"group"
+#define _MC_GLOB_TIME		"time"
+#define _MC_GLOB_SIZE		"size"
+#define _MC_GLOB_SCORE		"score"
+#define _MC_GLOB_RUNTIME	"runtime"
+#define _MC_GLOB_LOGON		"logon"
+#define _MC_GLOB_LOGOFF		"logoff"
+#define _MC_GLOB_DOWNLOAD	"download"
+#define _MC_GLOB_UPLOAD		"upload"
+#define _MC_GLOB_STATUS		"status"
+
+#define _MC_DIRLOG_FILES	"files"
+
 void *ref_to_val_ptr_dirlog(void *arg, char *match, size_t *output) {
 	struct dirlog *data = (struct dirlog *) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->uptime);
 		return &data->uptime;
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		*output = sizeof(data->uploader);
 		return &data->uploader;
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		*output = sizeof(data->group);
 		return &data->group;
-	} else if (!strcmp(match, "files")) {
+	} else if (!strncmp(match, _MC_DIRLOG_FILES, 5)) {
 		*output = sizeof(data->files);
 		return &data->files;
-	} else if (!strcmp(match, "size")) {
+	} else if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		*output = sizeof(data->bytes);
 		return &data->bytes;
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		*output = sizeof(data->status);
 		return &data->status;
 	}
 	return NULL;
 }
 
+#define _MC_NUKELOG_MULT	"mult"
+
 void *ref_to_val_ptr_nukelog(void *arg, char *match, size_t *output) {
 
 	struct nukelog *data = (struct nukelog *) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->nuketime);
 		return &data->nuketime;
-	} else if (!strcmp(match, "size")) {
+	} else if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		*output = -1;
 		return &data->bytes;
-	} else if (!strcmp(match, "mult")) {
+	} else if (!strncmp(match, _MC_NUKELOG_MULT, 4)) {
 		*output = sizeof(data->mult);
 		return &data->mult;
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		*output = sizeof(data->status);
 		return &data->status;
 	}
@@ -9432,7 +9442,7 @@ void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
 
 	struct dupefile *data = (struct dupefile *) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->timeup);
 		return &data->timeup;
 	}
@@ -9442,16 +9452,16 @@ void *ref_to_val_ptr_dupefile(void *arg, char *match, size_t *output) {
 void *ref_to_val_ptr_lastonlog(void *arg, char *match, size_t *output) {
 	struct lastonlog *data = (struct lastonlog *) arg;
 
-	if (!strcmp(match, "logon")) {
+	if (!strncmp(match, _MC_GLOB_LOGON, 5)) {
 		*output = sizeof(data->logon);
 		return &data->logon;
-	} else if (!strcmp(match, "logoff")) {
+	} else if (!strncmp(match, _MC_GLOB_LOGOFF, 6)) {
 		*output = sizeof(data->logoff);
 		return &data->logoff;
-	} else if (!strcmp(match, "download")) {
+	} else if (!strncmp(match, _MC_GLOB_DOWNLOAD, 8)) {
 		*output = sizeof(data->download);
 		return &data->download;
-	} else if (!strcmp(match, "upload")) {
+	} else if (!strncmp(match, _MC_GLOB_UPLOAD, 6)) {
 		*output = sizeof(data->upload);
 		return &data->upload;
 	}
@@ -9462,57 +9472,73 @@ void *ref_to_val_ptr_oneliners(void *arg, char *match, size_t *output) {
 
 	struct oneliner *data = (struct oneliner *) arg;
 
-	if (!strcmp(match, "timestamp")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->timestamp);
 		return &data->timestamp;
 	}
 	return NULL;
 }
+
+#define _MC_ONLINE_BTXFER 	"btxfer"
+#define _MC_ONLINE_BXFER 	"bxfer"
+#define _MC_ONLINE_GROUP 	"group"
+#define _MC_ONLINE_SSL 		"ssl"
+#define _MC_ONLINE_LUPDT	"lupdtime"
+#define _MC_ONLINE_LXFRT	"lxfertime"
 
 void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
 
 	struct ONLINE *data = (struct ONLINE *) arg;
 
-	if (!strcmp(match, "btxfer")) {
+	if (!strncmp(match, _MC_ONLINE_BTXFER, 6)) {
 		*output = sizeof(data->bytes_txfer);
 		return &data->bytes_txfer;
-	} else if (!strcmp(match, "bxfer")) {
+	} else if (!strncmp(match, _MC_ONLINE_BXFER, 5)) {
 		*output = sizeof(data->bytes_xfer);
 		return &data->bytes_xfer;
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		*output = sizeof(data->groupid);
 		return &data->groupid;
-	} else if (!strcmp(match, "PID")) {
+	} else if (!strncmp(match, _MC_GLOB_PID, 3)) {
 		*output = sizeof(data->procid);
 		return &data->procid;
-	} else if (!strcmp(match, "ssl")) {
+	} else if (!strncmp(match, _MC_ONLINE_SSL, 3)) {
 		*output = sizeof(data->ssl_flag);
 		return &data->ssl_flag;
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->login_time);
 		return &data->login_time;
+	} else if (!strncmp(match, _MC_ONLINE_LUPDT, 8)) {
+		*output = sizeof(data->tstart.tv_sec);
+		return &data->tstart.tv_sec;
+	} else if (!strncmp(match, _MC_ONLINE_LXFRT, 9)) {
+		*output = sizeof(data->txfer.tv_sec);
+		return &data->txfer.tv_sec;
 	}
 
 	return NULL;
 }
 
-void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
+#define _MC_IMDB_RELEASED		"released"
 
+#define _MC_IMDB_VOTES			"votes"
+
+void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
 	__d_imdb data = (__d_imdb) arg;
 
-	if (!strcmp(match, "score")) {
+	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		*output = -1;
 		return &data->rating;
-	} else if (!strcmp(match, "released")) {
+	} else if (!strncmp(match, _MC_IMDB_RELEASED, 8)) {
 		*output = sizeof(data->released);
 		return &data->released;
-	} else if (!strcmp(match, "runtime")) {
+	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		*output = sizeof(data->runtime);
 		return &data->runtime;
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->timestamp);
 		return &data->timestamp;
-	} else if (!strcmp(match, "votes")) {
+	} else if (!strncmp(match, _MC_IMDB_VOTES, 5)) {
 		*output = sizeof(data->votes);
 		return &data->votes;
 	}
@@ -9524,10 +9550,10 @@ void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
 
 	__d_game data = (__d_game) arg;
 
-	if (!strcmp(match, "score")) {
+	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		*output = -1;
 		return &data->rating;
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->timestamp);
 		return &data->timestamp;
 	}
@@ -9535,26 +9561,31 @@ void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
 	return NULL;
 }
 
+#define _MC_TV_STARTED		"started"
+#define _MC_TV_ENDED		"ended"
+#define _MC_TV_SHOWID		"showid"
+#define _MC_TV_SEASONS		"seasons"
+
 void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 
 	__d_tvrage data = (__d_tvrage) arg;
 
-	if (!strcmp(match, "started")) {
+	if (!strncmp(match, _MC_TV_STARTED, 7)) {
 		*output = sizeof(data->started);
 		return &data->started;
-	} else if (!strcmp(match, "runtime")) {
+	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		*output = sizeof(data->runtime);
 		return &data->runtime;
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		*output = sizeof(data->timestamp);
 		return &data->timestamp;
-	} else if (!strcmp(match, "ended")) {
+	} else if (!strncmp(match, _MC_TV_ENDED, 5)) {
 		*output = sizeof(data->ended);
 		return &data->ended;
-	} else if (!strcmp(match, "showid")) {
+	} else if (!strncmp(match, _MC_TV_SHOWID, 6)) {
 		*output = sizeof(data->showid);
 		return &data->showid;
-	} else if (!strcmp(match, "seasons")) {
+	} else if (!strncmp(match, _MC_TV_SEASONS, 7)) {
 		*output = sizeof(data->seasons);
 		return &data->seasons;
 	}
@@ -9584,25 +9615,25 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 
 	struct dirlog *data = (struct dirlog *) arg;
 
-	if (!strcmp(match, "basedir")) {
+	if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		snprintf(output, max_size, "%d", data->uploader);
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		snprintf(output, max_size, "%d", data->group);
-	} else if (!strcmp(match, "files")) {
+	} else if (!strncmp(match, _MC_DIRLOG_FILES, 5)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->files);
-	} else if (!strcmp(match, "size")) {
+	} else if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes);
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		snprintf(output, max_size, "%d", (int) data->status);
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->uptime);
-	} else if (!strcmp(match, "mode")) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
-	} else if (!strcmp(match, "dir")) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
 	} else {
 		return 1;
@@ -9613,7 +9644,7 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 char *ref_to_val_dirlog_ps(void *arg, char *match, char *output,
 		size_t max_size) {
 	struct dirlog *data = (struct dirlog *) arg;
-	if (!strcmp(match, "dir")) {
+	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
 	} else {
 		if (!ref_to_val_dirlog(arg, match, output, max_size)) {
@@ -9623,6 +9654,11 @@ char *ref_to_val_dirlog_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
+#define _MC_NUKELOG_NUKER		"nuker"
+#define _MC_NUKELOG_UNNUKER		"unnuker"
+#define _MC_NUKELOG_NUKEE		"nukee"
+#define _MC_NUKELOG_REASON		"reason"
+
 int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9630,29 +9666,29 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 
 	struct nukelog *data = (struct nukelog *) arg;
 
-	if (!strcmp(match, "size")) {
+	if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		snprintf(output, max_size, "%.2f", (float) data->bytes);
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->nuketime);
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		snprintf(output, max_size, "%d", (int) data->status);
-	} else if (!strcmp(match, "mult")) {
+	} else if (!strncmp(match, _MC_NUKELOG_MULT, 4)) {
 		snprintf(output, max_size, "%d", (int) data->mult);
-	} else if (!strcmp(match, "mode")) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
-	} else if (!strcmp(match, "basedir")) {
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
-	} else if (!strcmp(match, "nuker")) {
+	} else if (!strncmp(match, _MC_NUKELOG_NUKER, 5)) {
 		strcp_s(output, max_size, data->nuker);
-	} else if (!strcmp(match, "nukee")) {
+	} else if (!strncmp(match, _MC_NUKELOG_NUKEE, 5)) {
 		strcp_s(output, max_size, data->nukee);
-	} else if (!strcmp(match, "unnuker")) {
+	} else if (!strncmp(match, _MC_NUKELOG_UNNUKER, 7)) {
 		strcp_s(output, max_size, data->unnuker);
-	} else if (!strcmp(match, "reason")) {
+	} else if (!strncmp(match, _MC_NUKELOG_REASON, 6)) {
 		strcp_s(output, max_size, data->reason);
-	} else if (!strcmp(match, "dir")) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
 	} else {
 		return 1;
@@ -9664,15 +9700,15 @@ char *ref_to_val_nukelog_ps(void *arg, char *match, char *output,
 		size_t max_size) {
 	struct nukelog *data = (struct nukelog *) arg;
 
-	if (!strcmp(match, "dir")) {
+	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
-	} else if (!strcmp(match, "nuker")) {
+	} else if (!strncmp(match, _MC_NUKELOG_NUKER, 5)) {
 		return data->nuker;
-	} else if (!strcmp(match, "nukee")) {
+	} else if (!strncmp(match, _MC_NUKELOG_NUKEE, 5)) {
 		return data->nukee;
-	} else if (!strcmp(match, "unnuker")) {
+	} else if (!strncmp(match, _MC_NUKELOG_UNNUKER, 7)) {
 		return data->unnuker;
-	} else if (!strcmp(match, "reason")) {
+	} else if (!strncmp(match, _MC_NUKELOG_REASON, 6)) {
 		return data->reason;
 	} else {
 		if (!ref_to_val_nukelog(arg, match, output, max_size)) {
@@ -9682,6 +9718,8 @@ char *ref_to_val_nukelog_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
+#define _MC_GLOB_FILE	"file"
+
 int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9689,13 +9727,13 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 
 	struct dupefile *data = (struct dupefile *) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timeup);
-	} else if (!strcmp(match, "mode")) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->filename, max_size, output);
-	} else if (!strcmp(match, "file")) {
+	} else if (!strncmp(match, _MC_GLOB_FILE, 4)) {
 		strcp_s(output, max_size, data->filename);
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		strcp_s(output, max_size, data->uploader);
 	} else {
 		return 1;
@@ -9707,9 +9745,9 @@ char* ref_to_val_dupefile_ps(void *arg, char *match, char *output,
 		size_t max_size) {
 	struct dupefile *data = (struct dupefile *) arg;
 
-	if (!strcmp(match, "file")) {
+	if (!strncmp(match, _MC_GLOB_FILE, 4)) {
 		return data->filename;
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		return data->uploader;
 	} else {
 		if (!ref_to_val_dupefile(arg, match, output, max_size)) {
@@ -9719,6 +9757,9 @@ char* ref_to_val_dupefile_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
+#define _MC_LASTONLOG_STATS  	"stats"
+#define _MC_GLOB_TAG			"tag"
+
 int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9726,13 +9767,13 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 
 	struct lastonlog *data = (struct lastonlog *) arg;
 
-	if (!strcmp(match, "logon")) {
+	if (!strncmp(match, _MC_GLOB_LOGON, 5)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->logon);
-	} else if (!strcmp(match, "logoff")) {
+	} else if (!strncmp(match, _MC_GLOB_LOGOFF, 6)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->logoff);
-	} else if (!strcmp(match, "upload")) {
+	} else if (!strncmp(match, _MC_GLOB_UPLOAD, 6)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->upload);
-	} else if (!strcmp(match, "download")) {
+	} else if (!strncmp(match, _MC_GLOB_DOWNLOAD, 8)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->download);
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = malloc(max_size + 1);
@@ -9754,13 +9795,13 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 		}
 		free(buffer);
 		return 1;
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		strcp_s(output, max_size, data->uname);
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		strcp_s(output, max_size, data->gname);
-	} else if (!strcmp(match, "stats")) {
+	} else if (!strncmp(match, _MC_LASTONLOG_STATS, 5)) {
 		strcp_s(output, max_size, data->stats);
-	} else if (!strcmp(match, "tag")) {
+	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
 		strcp_s(output, max_size, data->tagline);
 	} else {
 		return 1;
@@ -9772,13 +9813,13 @@ char *ref_to_val_lastonlog_ps(void *arg, char *match, char *output,
 		size_t max_size) {
 	struct lastonlog *data = (struct lastonlog *) arg;
 
-	if (!strcmp(match, "user")) {
+	if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		return data->uname;
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		return data->gname;
-	} else if (!strcmp(match, "stats")) {
+	} else if (!strncmp(match, _MC_LASTONLOG_STATS, 5)) {
 		return data->stats;
-	} else if (!strcmp(match, "tag")) {
+	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
 		return data->tagline;
 	} else {
 		if (!ref_to_val_lastonlog(arg, match, output, max_size)) {
@@ -9788,6 +9829,8 @@ char *ref_to_val_lastonlog_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
+#define _MC_ONELINERS_MSG	"msg"
+
 int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9795,15 +9838,15 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 
 	struct oneliner *data = (struct oneliner *) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		strcp_s(output, max_size, data->uname);
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		strcp_s(output, max_size, data->gname);
-	} else if (!strcmp(match, "tag")) {
+	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
 		strcp_s(output, max_size, data->tagline);
-	} else if (!strcmp(match, "msg")) {
+	} else if (!strncmp(match, _MC_ONELINERS_MSG, 3)) {
 		strcp_s(output, max_size, data->message);
 	} else {
 		return 1;
@@ -9815,13 +9858,13 @@ char* ref_to_val_oneliners_ps(void *arg, char *match, char *output,
 		size_t max_size) {
 	struct oneliner *data = (struct oneliner *) arg;
 
-	if (!strcmp(match, "user")) {
+	if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		return data->uname;
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		return data->gname;
-	} else if (!strcmp(match, "tag")) {
+	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
 		return data->tagline;
-	} else if (!strcmp(match, "msg")) {
+	} else if (!strncmp(match, _MC_ONELINERS_MSG, 3)) {
 		return data->message;
 	} else {
 		if (!ref_to_val_oneliners(arg, match, output, max_size)) {
@@ -9831,6 +9874,8 @@ char* ref_to_val_oneliners_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
+#define _MC_ONLINE_HOST		"host"
+
 int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9838,21 +9883,21 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 
 	struct ONLINE *data = (struct ONLINE *) arg;
 
-	if (!strcmp(match, "ssl")) {
+	if (!strncmp(match, _MC_ONLINE_SSL, 3)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->ssl_flag);
-	} else if (!strcmp(match, "group")) {
+	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->groupid);
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->login_time);
-	} else if (!strcmp(match, "lupdtime")) {
+	} else if (!strncmp(match, _MC_ONLINE_LUPDT, 8)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->tstart.tv_sec);
-	} else if (!strcmp(match, "lxfertime")) {
+	} else if (!strncmp(match, _MC_ONLINE_LXFRT, 9)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->txfer.tv_sec);
-	} else if (!strcmp(match, "bxfer")) {
+	} else if (!strncmp(match, _MC_ONLINE_BXFER, 5)) {
 		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_xfer);
-	} else if (!strcmp(match, "btxfer")) {
+	} else if (!strncmp(match, _MC_ONLINE_BTXFER, 6)) {
 		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_txfer);
-	} else if (!strcmp(match, "pid")) {
+	} else if (!strncmp(match, _MC_GLOB_PID, 3)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->procid);
 	} else if (!strcmp(match, "rate")) {
 		int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
@@ -9872,19 +9917,19 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		}
 		free(buffer);
 		return 0;
-	} else if (!strcmp(match, "basedir")) {
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		char *s_buffer = strdup(data->currentdir), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
-	} else if (!strcmp(match, "user")) {
+	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		strcp_s(output, max_size, data->username);
-	} else if (!strcmp(match, "tag")) {
+	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
 		strcp_s(output, max_size, data->tagline);
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		strcp_s(output, max_size, data->status);
-	} else if (!strcmp(match, "host")) {
+	} else if (!strncmp(match, _MC_ONLINE_HOST, 4)) {
 		strcp_s(output, max_size, data->host);
-	} else if (!strcmp(match, "dir")) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->currentdir);
 	} else {
 		return 1;
@@ -9896,15 +9941,15 @@ char* ref_to_val_online_ps(void *arg, char *match, char *output,
 		size_t max_size) {
 	struct ONLINE *data = (struct ONLINE *) arg;
 
-	if (!strcmp(match, "user")) {
+	if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		return data->username;
-	} else if (!strcmp(match, "tag")) {
+	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
 		return data->tagline;
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		return data->status;
-	} else if (!strcmp(match, "host")) {
+	} else if (!strncmp(match, _MC_ONLINE_HOST, 4)) {
 		return data->host;
-	} else if (!strcmp(match, "dir")) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->currentdir;
 	} else {
 		if (!ref_to_val_online(arg, match, output, max_size)) {
@@ -9914,6 +9959,14 @@ char* ref_to_val_online_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
+#define _MC_IMDB_YEAR		"year"
+#define _MC_IMDB_ACTORS		"actors"
+#define _MC_IMDB_TITLE		"title"
+#define _MC_IMDB_IMDBID		"imdbid"
+#define _MC_GLOB_GENRE		"genre"
+#define _MC_IMDB_RATED		"rated"
+#define _MC_IMDB_DIRECT		"director"
+
 int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9921,37 +9974,37 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 
 	__d_imdb data = (__d_imdb) arg;
 
-	if (!strcmp(match, "time")) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
-	} else if (!strcmp(match, "score")) {
+	} else if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		snprintf(output, max_size, "%.1f", data->rating);
-	} else if (!strcmp(match, "votes")) {
+	} else if (!strncmp(match, _MC_IMDB_VOTES, 5)) {
 		snprintf(output, max_size, "%u", (uint32_t) data->votes);
-	} else if (!strcmp(match, "runtime")) {
+	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		snprintf(output, max_size, "%u", data->runtime);
-	} else if (!strcmp(match, "released")) {
+	} else if (!strncmp(match, _MC_IMDB_RELEASED, 8)) {
 		snprintf(output, max_size, "%u", data->released);
-	} else if (!strcmp(match, "mode")) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
-	} else if (!strcmp(match, "basedir")) {
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
-	} else if (!strcmp(match, "dir")) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
-	} else if (!strcmp(match, "imdbid")) {
+	} else if (!strncmp(match, _MC_IMDB_IMDBID, 6)) {
 		strcp_s(output, max_size, data->imdb_id);
-	} else if (!strcmp(match, "genres")) {
+	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		strcp_s(output, max_size, data->genres);
-	} else if (!strcmp(match, "rated")) {
+	} else if (!strncmp(match, _MC_IMDB_RATED, 5)) {
 		strcp_s(output, max_size, data->rated);
-	} else if (!strcmp(match, "title")) {
+	} else if (!strncmp(match, _MC_IMDB_TITLE, 5)) {
 		strcp_s(output, max_size, data->title);
-	} else if (!strcmp(match, "director")) {
+	} else if (!strncmp(match, _MC_IMDB_DIRECT, 8)) {
 		strcp_s(output, max_size, data->director);
-	} else if (!strcmp(match, "actors")) {
+	} else if (!strncmp(match, _MC_IMDB_ACTORS, 6)) {
 		strcp_s(output, max_size, data->actors);
-	} else if (!strcmp(match, "year")) {
+	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
 		strcp_s(output, max_size, data->year);
 	} else {
 		return 1;
@@ -9962,21 +10015,21 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 char* ref_to_val_imdb_ps(void *arg, char *match, char *output, size_t max_size) {
 	__d_imdb data = (__d_imdb) arg;
 
-	if (!strcmp(match, "dir")) {
+	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
-	} else if (!strcmp(match, "imdbid")) {
+	} else if (!strncmp(match, _MC_IMDB_IMDBID, 6)) {
 		return data->imdb_id;
-	} else if (!strcmp(match, "genres")) {
+	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		return data->genres;
-	} else if (!strcmp(match, "rated")) {
+	} else if (!strncmp(match, _MC_IMDB_RATED, 5)) {
 		return data->rated;
-	} else if (!strcmp(match, "title")) {
+	} else if (!strncmp(match, _MC_IMDB_TITLE, 5)) {
 		return data->title;
-	} else if (!strcmp(match, "director")) {
+	} else if (!strncmp(match, _MC_IMDB_DIRECT, 8)) {
 		return data->director;
-	} else if (!strcmp(match, "actors")) {
+	} else if (!strncmp(match, _MC_IMDB_ACTORS, 6)) {
 		return data->actors;
-	} else if (!strcmp(match, "year")) {
+	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
 		return data->year;
 	} else {
 		if (!ref_to_val_imdb(arg, match, output, max_size)) {
@@ -9993,17 +10046,17 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 
 	__d_game data = (__d_game) arg;
 
-	if (!strcmp(match, "score")) {
+	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		snprintf(output, max_size, "%.1f", data->rating);
-	} else if (!strcmp(match, "time")) {
+	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", data->timestamp);
-	} else if (!strcmp(match, "mode")) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
-	} else if (!strcmp(match, "basedir")) {
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
-	} else if (!strcmp(match, "dir")) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
 	} else {
 		return 1;
@@ -10014,7 +10067,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 char* ref_to_val_game_ps(void *arg, char *match, char *output, size_t max_size) {
 	__d_game data = (__d_game) arg;
 
-	if (!strcmp(match, "dir")) {
+	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
 	} else {
 		if (!ref_to_val_game(arg, match, output, max_size)) {
@@ -10024,6 +10077,13 @@ char* ref_to_val_game_ps(void *arg, char *match, char *output, size_t max_size) 
 	return NULL;
 }
 
+#define _MC_TV_AIRDAY		"airday"
+#define _MC_TV_AIRTIME		"airtime"
+#define _MC_TV_COUNTRY		"country"
+#define _MC_TV_LINK			"link"
+#define _MC_TV_NAME			"name"
+#define _MC_TV_CLASS		"class"
+
 int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -10031,41 +10091,41 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 
 	__d_tvrage data = (__d_tvrage) arg;
 
-	if (!strncmp(match, "time", 4)) {
+	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		snprintf(output, max_size, "%u", data->timestamp);
-	} else if (!strncmp(match, "ended", 5)) {
+	} else if (!strncmp(match, _MC_TV_ENDED, 5)) {
 		snprintf(output, max_size, "%u", data->ended);
-	} else if (!strncmp(match, "started", 7)) {
+	} else if (!strncmp(match, _MC_TV_STARTED, 7)) {
 		snprintf(output, max_size, "%u", data->started);
-	} else if (!strncmp(match, "seasons", 7)) {
+	} else if (!strncmp(match, _MC_TV_SEASONS, 7)) {
 		snprintf(output, max_size, "%u", data->seasons);
-	} else if (!strncmp(match, "showid", 6)) {
+	} else if (!strncmp(match, _MC_TV_SHOWID, 6)) {
 		snprintf(output, max_size, "%u", data->showid);
-	} else if (!strncmp(match, "runtime", 7)) {
+	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		snprintf(output, max_size, "%u", data->runtime);
-	} else if (!strncmp(match, "basedir", 7)) {
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
-	} else if (!strncmp(match, "mode", 4)) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
-	} else if (!strncmp(match, "dir", 3)) {
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
-	} else if (!strncmp(match, "airday", 6)) {
+	} else if (!strncmp(match, _MC_TV_AIRDAY, 6)) {
 		strcp_s(output, max_size, data->airday);
-	} else if (!strncmp(match, "airtime", 7)) {
+	} else if (!strncmp(match, _MC_TV_AIRTIME, 7)) {
 		strcp_s(output, max_size, data->airtime);
-	} else if (!strncmp(match, "country", 7)) {
+	} else if (!strncmp(match, _MC_TV_COUNTRY, 7)) {
 		strcp_s(output, max_size, data->country);
-	} else if (!strncmp(match, "link", 4)) {
+	} else if (!strncmp(match, _MC_TV_LINK, 4)) {
 		strcp_s(output, max_size, data->link);
-	} else if (!strncmp(match, "name", 4)) {
+	} else if (!strncmp(match, _MC_TV_NAME, 4)) {
 		strcp_s(output, max_size, data->name);
-	} else if (!strncmp(match, "status", 6)) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		strcp_s(output, max_size, data->status);
-	} else if (!strncmp(match, "class", 5)) {
+	} else if (!strncmp(match, _MC_TV_CLASS, 5)) {
 		strcp_s(output, max_size, data->class);
-	} else if (!strncmp(match, "genre", 5)) {
+	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		strcp_s(output, max_size, data->genres);
 	} else {
 		return 1;
@@ -10076,23 +10136,23 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 char* ref_to_val_tv_ps(void *arg, char *match, char *output, size_t max_size) {
 	__d_tvrage data = (__d_tvrage) arg;
 
-	if (!strcmp(match, "dir")) {
+	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
-	} else if (!strcmp(match, "airday")) {
+	} else if (!strncmp(match, _MC_TV_AIRDAY, 6)) {
 		return data->airday;
-	} else if (!strcmp(match, "airtime")) {
+	} else if (!strncmp(match, _MC_TV_AIRTIME, 7)) {
 		return data->airtime;
-	} else if (!strcmp(match, "country")) {
+	} else if (!strncmp(match, _MC_TV_COUNTRY, 7)) {
 		return data->country;
-	} else if (!strcmp(match, "link")) {
+	} else if (!strncmp(match, _MC_TV_LINK, 4)) {
 		return data->link;
-	} else if (!strcmp(match, "name")) {
+	} else if (!strncmp(match, _MC_TV_NAME, 4)) {
 		return data->name;
-	} else if (!strcmp(match, "status")) {
+	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
 		return data->status;
-	} else if (!strcmp(match, "class")) {
+	} else if (!strncmp(match, _MC_TV_CLASS, 5)) {
 		return data->class;
-	} else if (!strcmp(match, "genres")) {
+	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		return data->genres;
 	} else {
 		if (!ref_to_val_tv(arg, match, output, max_size)) {
@@ -10551,48 +10611,48 @@ int gcb_dirlog(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l, v_i;
 	uint32_t k_ui;
 	struct dirlog * ptr = (struct dirlog *) buffer;
-	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+	if (k_l == 3 && !strncmp(key, _MC_GLOB_DIR, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "user", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_USER, 4)) {
 		v_i = (int) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->uploader = v_i;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "group", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GROUP, 5)) {
 		v_i = (int) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->group = v_i;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "files", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_DIRLOG_FILES, 5)) {
 		k_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->files = k_ui;
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "size", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_SIZE, 4)) {
 		ulint64_t k_uli = (ulint64_t) strtoll(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->bytes = k_uli;
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		k_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->uptime = k_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "status", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_STATUS, 6)) {
 		uint16_t k_us = (uint16_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
@@ -10607,58 +10667,58 @@ int gcb_nukelog(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 
 	struct nukelog* ptr = (struct nukelog*) buffer;
-	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+	if (k_l == 3 && !strncmp(key, _MC_GLOB_DIR, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "reason", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_NUKELOG_REASON, 6)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->reason, val, v_l > 59 ? 59 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "bytes", 5)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_SIZE, 4)) {
 		float v_f = strtof(val, NULL);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->bytes = v_f;
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "mult", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_NUKELOG_MULT, 4)) {
 		uint16_t v_ui = (uint16_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->mult = v_ui;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "nukee", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_NUKELOG_NUKEE, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->nukee, val, v_l > 12 ? 12 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "nuker", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_NUKELOG_NUKER, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->nuker, val, v_l > 12 ? 12 : v_l);
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "unnuker", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_NUKELOG_UNNUKER, 7)) {
 		if (!(v_l = strlen(val))) {
 			return 1;
 		}
 		memcpy(ptr->unnuker, val, v_l > 12 ? 12 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		uint32_t k_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->nuketime = k_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "status", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_STATUS, 6)) {
 		uint16_t k_us = (uint16_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
@@ -10673,33 +10733,33 @@ int gcb_oneliner(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	struct oneliner* ptr = (struct oneliner*) buffer;
 
-	if (k_l == 5 && !strncmp(key, "uname", 5)) {
+	if (k_l == 4 && !strncmp(key, _MC_GLOB_USER, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->uname, val, v_l > 23 ? 23 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "gname", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GROUP, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->gname, val, v_l > 23 ? 23 : v_l);
 		return 1;
 
-	} else if (k_l == 7 && !strncmp(key, "tagline", 7)) {
+	} else if (k_l == 3 && !strncmp(key, _MC_GLOB_TAG, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->tagline, val, v_l > 63 ? 63 : v_l);
 		return 1;
-	} else if (k_l == 9 && !strncmp(key, "timestamp", 9)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->timestamp = v_ui;
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "message", 7)) {
+	} else if (k_l == 3 && !strncmp(key, _MC_ONELINERS_MSG, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
@@ -10713,20 +10773,20 @@ int gcb_dupefile(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	struct dupefile* ptr = (struct dupefile*) buffer;
 
-	if (k_l == 8 && !strncmp(key, "filename", 8)) {
+	if (k_l == 4 && !strncmp(key, _MC_GLOB_FILE, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->filename, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 8 && !strncmp(key, "uploader", 8)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_USER, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->uploader, val, v_l > 23 ? 23 : v_l);
 		return 1;
 
-	} else if (k_l == 6 && !strncmp(key, "timeup", 6)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
@@ -10741,53 +10801,53 @@ int gcb_lastonlog(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	struct lastonlog* ptr = (struct lastonlog*) buffer;
 
-	if (k_l == 5 && !strncmp(key, "uname", 5)) {
+	if (k_l == 4 && !strncmp(key, _MC_GLOB_USER, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->uname, val, v_l > 23 ? 23 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "gname", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GROUP, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->gname, val, v_l > 23 ? 23 : v_l);
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "tagline", 7)) {
+	} else if (k_l == 3 && !strncmp(key, _MC_GLOB_TAG, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->tagline, val, v_l > 63 ? 63 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "logon", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_LOGON, 5)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->logon = v_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "logoff", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_LOGOFF, 6)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->logoff = v_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "upload", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_UPLOAD, 6)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->upload = v_ui;
 		return 1;
-	} else if (k_l == 8 && !strncmp(key, "download", 8)) {
+	} else if (k_l == 8 && !strncmp(key, _MC_GLOB_DOWNLOAD, 8)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->download = v_ui;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "stats", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_LASTONLOG_STATS, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
@@ -10800,20 +10860,20 @@ int gcb_lastonlog(void *buffer, char *key, char *val) {
 int gcb_game(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	__d_game ptr = (__d_game) buffer;
-	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+	if (k_l == 3 && !strncmp(key, _MC_GLOB_DIR, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->timestamp = v_ui;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "score", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_SCORE, 5)) {
 		float v_f = strtof(val, NULL);
 		if ( errno == ERANGE) {
 			return 0;
@@ -10827,97 +10887,97 @@ int gcb_game(void *buffer, char *key, char *val) {
 int gcb_tv(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	__d_tvrage ptr = (__d_tvrage) buffer;
-	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+	if (k_l == 3 && !strncmp(key, _MC_GLOB_DIR, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->timestamp = v_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "airday", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_TV_AIRDAY, 6)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->airday, val, v_l > 31 ? 31 : v_l);
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "airtime", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_TV_AIRTIME, 7)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->airtime, val, v_l > 5 ? 5 : v_l);
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "country", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_TV_COUNTRY, 7)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->country, val, v_l > 23 ? 23 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "link", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_TV_LINK, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->link, val, v_l > 127 ? 127 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "name", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_TV_NAME, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->name, val, v_l > 127 ? 127 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "ended", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_TV_ENDED, 5)) {
 		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->ended = v_ui;
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "started", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_TV_STARTED, 7)) {
 		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->started = v_ui;
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "runtime", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_GLOB_RUNTIME, 7)) {
 		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->runtime = v_ui;
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "seasons", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_TV_SEASONS, 7)) {
 		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->seasons = v_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "showid", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_TV_SHOWID, 6)) {
 		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->showid = v_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "status", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_STATUS, 6)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->status, val, v_l > 63 ? 63 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "class", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_TV_CLASS, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->class, val, v_l > 63 ? 63 : v_l);
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "genres", 6)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GENRE, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
@@ -10930,84 +10990,84 @@ int gcb_tv(void *buffer, char *key, char *val) {
 int gcb_imdbh(void *buffer, char *key, char *val) {
 	size_t k_l = strlen(key), v_l;
 	__d_imdb ptr = (__d_imdb) buffer;
-	if (k_l == 3 && !strncmp(key, "dir", 3)) {
+	if (k_l == 3 && !strncmp(key, _MC_GLOB_DIR, 3)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "time", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
 		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->timestamp = v_ui;
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "imdbid", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_IMDB_IMDBID, 6)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->imdb_id, val, v_l > 63 ? 63 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "score", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_SCORE, 5)) {
 		float v_f = strtof(val, NULL);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->rating = v_f;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "votes", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_IMDB_VOTES, 5)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->votes = v_ui;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "genre", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GENRE, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->genres, val, v_l > 254 ? 254 : v_l);
 		return 1;
-	} else if (k_l == 4 && !strncmp(key, "year", 4)) {
+	} else if (k_l == 4 && !strncmp(key, _MC_IMDB_YEAR, 4)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->year, val, v_l > 4 ? 4 : v_l);
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "title", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_IMDB_TITLE, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->title, val, v_l > 127 ? 127 : v_l);
 		return 1;
-	} else if (k_l == 8 && !strncmp(key, "released", 8)) {
+	} else if (k_l == 8 && !strncmp(key, _MC_IMDB_RELEASED, 8)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->released = v_ui;
 		return 1;
-	} else if (k_l == 7 && !strncmp(key, "runtime", 7)) {
+	} else if (k_l == 7 && !strncmp(key, _MC_GLOB_RUNTIME, 7)) {
 		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->runtime = v_ui;
 		return 1;
-	} else if (k_l == 5 && !strncmp(key, "rated", 5)) {
+	} else if (k_l == 5 && !strncmp(key, _MC_IMDB_RATED, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->rated, val, v_l > 7 ? 7 : v_l);
 		return 1;
-	} else if (k_l == 6 && !strncmp(key, "actors", 6)) {
+	} else if (k_l == 6 && !strncmp(key, _MC_IMDB_ACTORS, 6)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->actors, val, v_l > 127 ? 127 : v_l);
 		return 1;
-	} else if (k_l == 8 && !strncmp(key, "director", 8)) {
+	} else if (k_l == 8 && !strncmp(key, _MC_IMDB_DIRECT, 8)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
