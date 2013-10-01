@@ -57,6 +57,7 @@
  *   - + --fd option (-x) (rev. 35)
  *   - % On error print help before message (rev. 36)
  *   - ~ Recursor properly follows symlinks upon request (-x [-y]) (rev. 37)
+ *   - - Unecessary 'mode' field with dupefile (rev. 38)
  *
  * v1.8
  *
