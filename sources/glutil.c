@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-35
+ * Version     : 1.9-36
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 35
+#define VER_REVISION 36
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3085,7 +3085,7 @@ int g_init(int argc, char **argv) {
 	r = parse_args(argc, argv, f_ref);
 
 	if (r == -2 || r == -1) {
-		print_help(NULL, -1);
+		print_str("See --help\n");
 		return 4;
 	}
 
@@ -3393,8 +3393,8 @@ int g_init(int argc, char **argv) {
 	case UPD_MODE_NOOP:
 		break;
 	default:
-		print_str("ERROR: no mode specified\n");
 		print_help(NULL, -1);
+		print_str("ERROR: no mode specified\n");
 		break;
 	}
 
