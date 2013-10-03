@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-38
+ * Version     : 1.9-39
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 38
+#define VER_REVISION 39
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2458,6 +2458,7 @@ int process_exec_string(char *, char *, size_t, void *, void*);
 int process_exec_args(void *data, __g_handle hdl);
 
 int is_char_uppercase(char);
+char *g_basename(char *input);
 
 void sig_handler(int);
 void child_sig_handler(int, siginfo_t*, void*);
@@ -3115,7 +3116,6 @@ int g_init(int argc, char **argv) {
 
 	if (!(gfl & F_OPT_NOGLCONF)) {
 #ifdef GLCONF
-
 		if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))
 				&& (gfl & F_OPT_VERBOSE)) {
 			print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF,
@@ -3172,7 +3172,6 @@ int g_init(int argc, char **argv) {
 			}
 			ofl |= F_OVRR_NUKESTR;
 		}
-
 #else
 		print_str("WARNING: GLCONF not defined in glconf.h\n");
 #endif
@@ -3297,7 +3296,7 @@ int g_init(int argc, char **argv) {
 				== -1 || WEXITSTATUS(r_e)) {
 			if (gfl & F_OPT_VERBOSE) {
 				print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
-				WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+						WEXITSTATUS(r_e), GLOBAL_PREEXEC);
 			}
 			return 1;
 		}
@@ -3741,7 +3740,7 @@ char *g_dgetf(char *str) {
 int rebuild(void *arg) {
 	g_setjmp(0, "rebuild", NULL, NULL);
 	if (!arg) {
-		print_str("ERROR: missing data type argument (-e <dirlog|nukelog>)\n");
+		print_str("ERROR: missing data type argument (-e <log>)\n");
 		return 1;
 	}
 
@@ -4171,6 +4170,10 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 
 		if (aa_rh->xproc_rcl0) {
 			aa_rh->xproc_rcl0(name, (void*)aa_rh, eds);
+		}
+
+		if ((gfl & F_OPT_KILL_GLOBAL) ) {
+			break;
 		}
 
 		if (aa_rh->flags & F_PD_MATCHDIR) {
@@ -4921,10 +4924,11 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 		int r_e;
 
 		if (hdl->exec_args.exc
-				&& WEXITSTATUS(r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl))) {
+				&& WEXITSTATUS(
+						r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl))) {
 			if ((gfl & F_OPT_VERBOSE5)) {
 				print_str("WARNING: external call returned non-zero: [%d]\n",
-				WEXITSTATUS(r_e));
+						WEXITSTATUS(r_e));
 			}
 			r_p = 1;
 		}
@@ -5522,7 +5526,7 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 	ear *iarg = (ear*) arg;
 	uint32_t crc32 = 0;
 	char buffer[PATH_MAX] = { 0 };
-	char *fn, *fn2, *fn3, *base;
+	char *fn, *fn2, *base;
 
 	if (!reg_match("\\/[.]{1,2}$", name, 0))
 		return 1;
@@ -5533,14 +5537,13 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 	switch (type) {
 	case DT_REG:
 		fn2 = strdup(name);
-		fn3 = strdup(name);
-		base = basename(fn3);
+		base = g_basename(name);
 		if ((gfl & F_OPT_SFV)
 				&& (updmode == UPD_MODE_RECURSIVE || updmode == UPD_MODE_SINGLE)
 				&& reg_match(PREG_SFV_SKIP_EXT, fn2,
 				REG_ICASE | REG_NEWLINE) && file_crc32(name, &crc32)) {
 			fn = strdup(name);
-			char *dn = basename(dirname(fn));
+			char *dn = g_basename(dirname(fn));
 			free(fn2);
 			fn2 = strdup(name);
 			snprintf(iarg->buffer, PATH_MAX, "%s/%s.sfv.tmp", dirname(fn2), dn);
@@ -5564,7 +5567,7 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 			print_str("     %s  %.2fMB%s\n", base,
 					(double) fs / 1024.0 / 1024.0, buffer);
 		}
-		free(fn3);
+
 		free(fn2);
 		break;
 	case DT_DIR:
@@ -5765,8 +5768,7 @@ int release_generate_block(char *name, ear *iarg) {
 		goto end;
 	}
 
-	char *namedup = strdup(name);
-	char *bn = basename(namedup);
+	char *bn = g_basename(name);
 
 	iarg->dirlog->uptime = orig_ctime;
 	iarg->dirlog->uploader = (uint16_t) st.st_uid;
@@ -5777,7 +5779,7 @@ int release_generate_block(char *name, ear *iarg) {
 		print_str("ERROR: [%s] could not get relative to root directory name\n",
 				bn);
 		ret = 2;
-		goto r_end;
+		goto end;
 	}
 
 	struct nukelog n_buffer = { 0 };
@@ -5788,10 +5790,6 @@ int release_generate_block(char *name, ear *iarg) {
 	} else {
 		strncpy(iarg->dirlog->dirname, buffer, strlen(buffer));
 	}
-
-	r_end:
-
-	free(namedup);
 
 	end:
 
@@ -5826,12 +5824,12 @@ int dirlog_format_block(void *iarg, char *output) {
 
 	struct dirlog *data = (struct dirlog *) iarg;
 
-	char *ndup = strdup(data->dirname), *base = NULL;
+	char *base = NULL;
 
 	if (gfl & F_OPT_VERBOSE) {
 		base = data->dirname;
 	} else {
-		base = basename(ndup);
+		base = g_basename(data->dirname);
 	}
 
 	time_t t_t = (time_t) data->uptime;
@@ -5856,8 +5854,6 @@ int dirlog_format_block(void *iarg, char *output) {
 						data->status);
 	}
 
-	free(ndup);
-
 	return c;
 }
 
@@ -5866,12 +5862,13 @@ int nukelog_format_block(void *iarg, char *output) {
 
 	struct nukelog *data = (struct nukelog *) iarg;
 
-	char *ndup = strdup(data->dirname), *base = NULL;
+	char *base = NULL;
 
-	if (gfl & F_OPT_VERBOSE)
+	if (gfl & F_OPT_VERBOSE) {
 		base = data->dirname;
-	else
-		base = basename(ndup);
+	} else {
+		base = g_basename(data->dirname);
+	}
 
 	time_t t_t = (time_t) data->nuketime;
 
@@ -5893,7 +5890,6 @@ int nukelog_format_block(void *iarg, char *output) {
 						!data->status ? data->nuker : data->unnuker,
 						data->nukee, buffer2);
 	}
-	free(ndup);
 
 	return c;
 }
@@ -6210,7 +6206,7 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 	uint64_t ur = MAX_uint64_t;
 
 	char buffer_s[PATH_MAX] = { 0 }, buffer_s2[PATH_MAX], buffer_s3[PATH_MAX];
-	char *dup, *dup2, *base, *dir;
+	char *dup2, *base, *dir;
 
 	if ((r = get_relative_path(dirn, GLROOT, buffer_s))) {
 		snprintf(buffer_s, PATH_MAX, "%s", dirn);
@@ -6224,14 +6220,13 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 		if (!strncmp(buffer_s, d_ptr->dirname, d_l)) {
 			goto match;
 		}
-		dup = strdup(d_ptr->dirname);
-		base = basename(dup);
+		base = g_basename(d_ptr->dirname);
 		dup2 = strdup(d_ptr->dirname);
 		dir = dirname(dup2);
 		snprintf(buffer_s2, PATH_MAX, NUKESTR, base);
 		snprintf(buffer_s3, PATH_MAX, "%s/%s", dir, buffer_s2);
 		remove_repeating_chars(buffer_s3, 0x2F);
-		free(dup);
+
 		free(dup2);
 		if (!strncmp(buffer_s3, buffer_s, d_l)) {
 			match: ur = g_act_1.offset - 1;
@@ -6266,7 +6261,7 @@ uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
 	uint64_t ur = MAX_uint64_t;
 
 	char buffer_s[PATH_MAX] = { 0 };
-	char *dup, *dup2, *base, *dir;
+	char *dup2, *base, *dir;
 	int gi1, gi2;
 
 	if ((r = get_relative_path(dirn, GLROOT, buffer_s))) {
@@ -6278,8 +6273,8 @@ uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
 	struct dirlog *d_ptr = NULL;
 
 	while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ))) {
-		dup = strdup(d_ptr->dirname);
-		base = basename(dup);
+
+		base = g_basename(d_ptr->dirname);
 		gi1 = strlen(base);
 		dup2 = strdup(d_ptr->dirname);
 		dir = dirname(dup2);
@@ -6289,18 +6284,18 @@ uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
 			ur = g_act_1.offset - 1;
 			if (mode == 2 && callback) {
 				if (callback_f(&buffer)) {
-					free(dup);
+
 					free(dup2);
 					break;
 				}
 
 			} else {
-				free(dup);
+
 				free(dup2);
 				break;
 			}
 		}
-		free(dup);
+
 		free(dup2);
 	}
 
@@ -6348,7 +6343,7 @@ uint64_t nukelog_find(char *dirn, int mode, struct nukelog *output) {
 	struct nukelog buffer = { 0 };
 
 	uint64_t r = MAX_uint64_t;
-	char *dup, *dup2, *base, *dir;
+	char *dup2, *base, *dir;
 
 	if (g_fopen(NUKELOG, "r", F_DL_FOPEN_BUFFER, &g_act_2)) {
 		goto r_end;
@@ -6360,8 +6355,8 @@ uint64_t nukelog_find(char *dirn, int mode, struct nukelog *output) {
 	struct nukelog *n_ptr = NULL;
 
 	while ((n_ptr = (struct nukelog *) g_read(&buffer, &g_act_2, NL_SZ))) {
-		dup = strdup(n_ptr->dirname);
-		base = basename(dup);
+
+		base = g_basename(n_ptr->dirname);
 		gi1 = strlen(base);
 		dup2 = strdup(n_ptr->dirname);
 		dir = dirname(dup2);
@@ -6377,13 +6372,14 @@ uint64_t nukelog_find(char *dirn, int mode, struct nukelog *output) {
 			}
 			r = g_act_2.offset - 1;
 			if (mode != 2) {
-				free(dup);
+
 				free(dup2);
 				break;
 			}
 		}
-		l_end: free(dup2);
-		free(dup);
+		l_end:
+
+		free(dup2);
 	}
 
 	if (mode != 1) {
@@ -8301,39 +8297,42 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, "uperm", 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
-			return 1;
+			strcp_s(output, max_size, "-1");
+		} else {
+			snprintf(output, max_size, "%hu",
+					(uint16_t) ((st.st_mode & S_IRWXU) >> 6));
 		}
-		snprintf(output, max_size, "%hu",
-				(uint16_t) ((st.st_mode & S_IRWXU) >> 6));
 	} else if (!strncmp(match, "gperm", 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
-			return 1;
+			strcp_s(output, max_size, "-1");
+		} else {
+			snprintf(output, max_size, "%hu",
+					(uint16_t) ((st.st_mode & S_IRWXG) >> 3));
 		}
-		snprintf(output, max_size, "%hu",
-				(uint16_t) ((st.st_mode & S_IRWXG) >> 3));
 	} else if (!strncmp(match, "operm", 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
-			return 1;
+			strcp_s(output, max_size, "-1");
+		} else {
+			snprintf(output, max_size, "%hu",
+					(uint16_t) ((st.st_mode & S_IRWXO)));
 		}
-		snprintf(output, max_size, "%hu", (uint16_t) ((st.st_mode & S_IRWXO)));
 	} else if (!strncmp(match, "perm", 4)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
-			return 1;
+			strcp_s(output, max_size, "-1");
+		} else {
+			snprintf(output, max_size, "%hu%hu%hu",
+					(uint16_t) ((st.st_mode & S_IRWXU) >> 6),
+					(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
+					(uint16_t) ((st.st_mode & S_IRWXO)));
 		}
-		snprintf(output, max_size, "%hu%hu%hu",
-				(uint16_t) ((st.st_mode & S_IRWXU) >> 6),
-				(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
-				(uint16_t) ((st.st_mode & S_IRWXO)));
 	} else if (!strncmp(match, "c:", 2)) {
 		return g_rtval_ex(data->name, &match[2], max_size, output,
 		F_CFGV_BUILD_FULL_STRING);
 	} else if (!strncmp(match, "basepath", 8)) {
-		char *s_buffer = strdup(data->name), *base = basename(s_buffer);
-		strcp_s(output, max_size, base);
-		free(s_buffer);
+		strcp_s(output, max_size, g_basename(data->name));
 	} else if (!strncmp(match, "path", 4)) {
 		strcp_s(output, max_size, data->name);
 	} else {
@@ -8348,6 +8347,8 @@ char* ref_to_val_x_ps(void *arg, char *match, char *output, size_t max_size) {
 
 	if (!strcmp(match, "path")) {
 		return data->name;
+	} else if (!strncmp(match, "basepath", 8)) {
+		return g_basename(data->name);
 	} else {
 		if (!ref_to_val_x(arg, match, output, max_size)) {
 			return output;
@@ -9642,6 +9643,15 @@ void *ref_to_val_ptr_dummy(void *arg, char *match, size_t *output) {
 	return NULL;
 }
 
+char *g_basename(char *input) {
+	char *b_ptr = strrchr(input, 0x2F);
+
+	if (!b_ptr) {
+		return input;
+	}
+	return b_ptr + 1;
+}
+
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -9649,11 +9659,7 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 
 	struct dirlog *data = (struct dirlog *) arg;
 
-	if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
-		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		strcp_s(output, max_size, base);
-		free(s_buffer);
-	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
+	if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		snprintf(output, max_size, "%d", data->uploader);
 	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
 		snprintf(output, max_size, "%d", data->group);
@@ -9669,6 +9675,16 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
+	} else if (!strncmp(match, "x:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		strcp_s(xref_t.name, max_size, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+	} else if (!strncmp(match, "xg:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		snprintf(xref_t.name, max_size, "%s%s", GLROOT, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		strcp_s(output, max_size, g_basename(data->dirname));
 	} else {
 		return 1;
 	}
@@ -9680,6 +9696,8 @@ char *ref_to_val_dirlog_ps(void *arg, char *match, char *output,
 	struct dirlog *data = (struct dirlog *) arg;
 	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		return g_basename(data->dirname);
 	} else {
 		if (!ref_to_val_dirlog(arg, match, output, max_size)) {
 			return output;
@@ -9711,9 +9729,7 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
-		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		strcp_s(output, max_size, base);
-		free(s_buffer);
+		strcp_s(output, max_size, g_basename(data->dirname));
 	} else if (!strncmp(match, _MC_NUKELOG_NUKER, 5)) {
 		strcp_s(output, max_size, data->nuker);
 	} else if (!strncmp(match, _MC_NUKELOG_NUKEE, 5)) {
@@ -9724,6 +9740,14 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->reason);
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
+	} else if (!strncmp(match, "x:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		strcp_s(xref_t.name, max_size, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+	} else if (!strncmp(match, "xg:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		snprintf(xref_t.name, max_size, "%s%s", GLROOT, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else {
 		return 1;
 	}
@@ -9736,6 +9760,8 @@ char *ref_to_val_nukelog_ps(void *arg, char *match, char *output,
 
 	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		return g_basename(data->dirname);
 	} else if (!strncmp(match, _MC_NUKELOG_NUKER, 5)) {
 		return data->nuker;
 	} else if (!strncmp(match, _MC_NUKELOG_NUKEE, 5)) {
@@ -10019,9 +10045,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
-		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		strcp_s(output, max_size, base);
-		free(s_buffer);
+		strcp_s(output, max_size, g_basename(data->dirname));
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, _MC_IMDB_IMDBID, 6)) {
@@ -10038,6 +10062,14 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->actors);
 	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
 		strcp_s(output, max_size, data->year);
+	} else if (!strncmp(match, "x:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		strcp_s(xref_t.name, max_size, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+	} else if (!strncmp(match, "xg:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		snprintf(xref_t.name, max_size, "%s%s", GLROOT, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else {
 		return 1;
 	}
@@ -10049,6 +10081,8 @@ char* ref_to_val_imdb_ps(void *arg, char *match, char *output, size_t max_size) 
 
 	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		return g_basename(data->dirname);
 	} else if (!strncmp(match, _MC_IMDB_IMDBID, 6)) {
 		return data->imdb_id;
 	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
@@ -10085,11 +10119,17 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
-		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		strcp_s(output, max_size, base);
-		free(s_buffer);
+		strcp_s(output, max_size, g_basename(data->dirname));
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
+	} else if (!strncmp(match, "x:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		strcp_s(xref_t.name, max_size, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+	} else if (!strncmp(match, "xg:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		snprintf(xref_t.name, max_size, "%s%s", GLROOT, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else {
 		return 1;
 	}
@@ -10101,6 +10141,8 @@ char* ref_to_val_game_ps(void *arg, char *match, char *output, size_t max_size) 
 
 	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		return g_basename(data->dirname);
 	} else {
 		if (!ref_to_val_game(arg, match, output, max_size)) {
 			return output;
@@ -10135,14 +10177,12 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%u", data->showid);
 	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		snprintf(output, max_size, "%u", data->runtime);
-	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
-		char *s_buffer = strdup(data->dirname), *base = basename(s_buffer);
-		strcp_s(output, max_size, base);
-		free(s_buffer);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		strcp_s(output, max_size, data->dirname);
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		strcp_s(output, max_size, g_basename(data->dirname));
 	} else if (!strncmp(match, _MC_TV_AIRDAY, 6)) {
 		strcp_s(output, max_size, data->airday);
 	} else if (!strncmp(match, _MC_TV_AIRTIME, 7)) {
@@ -10159,6 +10199,14 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->class);
 	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		strcp_s(output, max_size, data->genres);
+	} else if (!strncmp(match, "x:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		strcp_s(xref_t.name, max_size, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+	} else if (!strncmp(match, "xg:", 2)) {
+		_d_xref xref_t = { { 0 } };
+		snprintf(xref_t.name, max_size, "%s%s", GLROOT, data->dirname);
+		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else {
 		return 1;
 	}
@@ -10170,6 +10218,8 @@ char* ref_to_val_tv_ps(void *arg, char *match, char *output, size_t max_size) {
 
 	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->dirname;
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		return g_basename(data->dirname);
 	} else if (!strncmp(match, _MC_TV_AIRDAY, 6)) {
 		return data->airday;
 	} else if (!strncmp(match, _MC_TV_AIRTIME, 7)) {
