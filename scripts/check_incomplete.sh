@@ -56,7 +56,7 @@ DIR=$GLROOT$1
 
 ! [ -d "$DIR" ] && exit 1
 
-$2 -x "$DIR" --iregexi "\.sfv$" -execv "$0 {arg} $2 $3 cdir $4" --silent -recursive
+$2 -x "$DIR" --iregexi "\.sfv$" -execv "$0 {path} $2 $3 cdir $4" --silent -recursive
 
 exit 1
 
