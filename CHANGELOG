@@ -58,6 +58,8 @@
  *   - % On error print help before message (rev. 36)
  *   - ~ Recursor properly follows symlinks upon request (-x [-y]) (rev. 37)
  *   - - Unecessary 'mode' field with dupefile (rev. 38)
+ *   - + Related filesystem info extraction (x:<field>, see MANUAL) (rev. 39)
+ *   - %! Basedir extraction was too costly (matching/exec) (rev. 39)
  *
  * v1.8
  *
