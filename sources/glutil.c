@@ -2045,8 +2045,10 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	if (pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
 		pgm->g_oper_ptr = g_oper_or;
+		pgm->flags |= F_GM_NOR;
 	} else {
 		pgm->g_oper_ptr = g_oper_and;
+		pgm->flags |= F_GM_NAND;
 	}
 
 	bzero(&_match_rr_l, sizeof(_match_rr_l));
@@ -2097,8 +2099,10 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 	pgm->flags |= flags | F_GM_ISLOM;
 	if (pgm->flags & F_GM_IMATCH) {
 		pgm->g_oper_ptr = g_oper_or;
+		pgm->flags |= F_GM_NOR;
 	} else {
 		pgm->g_oper_ptr = g_oper_and;
+		pgm->flags |= F_GM_NAND;
 	}
 
 	gfl |= F_OPT_HAS_G_LOM;
@@ -2140,6 +2144,7 @@ int opt_g_operator_or(void *arg, int m) {
 		return (a32 << 27);
 		break;
 	}
+	pgm->flags |= F_GM_NOR;
 	return 0;
 }
 
@@ -2171,6 +2176,7 @@ int opt_g_operator_and(void *arg, int m) {
 		return (a32 << 27);
 		break;
 	}
+	pgm->flags |= F_GM_NAND;
 	return 0;
 }
 
@@ -4905,6 +4911,12 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 		r = do_match(hdl, d_ptr, _gm, (void*) hdl->g_proc1);
 
 		l_end:
+
+		if ((_gm->flags & F_GM_NAND) && ptr->next
+				&& !((p_md_obj) ptr->next)->next && r == 1) {
+			r_p = 1;
+			break;
+		}
 
 		if (_p_gm && _p_gm->g_oper_ptr) {
 			r_p = _p_gm->g_oper_ptr(r_p, r);
@@ -8436,17 +8448,16 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 
 int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
 		uint32_t flags) {
-	int r = 1;
-
 	char *buffer = malloc(max_size + 1);
 	void *ptr = ref_to_val_get_cfgval(arg, match,
 	NULL, flags, buffer, max_size);
 	if (ptr && strlen(ptr) < max_size) {
 		strcp_s(output, max_size, (char*) ptr);
-		r = 0;
+	} else {
+		output[0] = 0x0;
 	}
 	free(buffer);
-	return r;
+	return 0;
 }
 
 int g_is_higher(uint64_t s, uint64_t d) {
