@@ -1,7 +1,7 @@
-#@REVISION:13
+#@REVISION:14
 #
-## These are basically just sets of glutil arguments, 
-##  packed into macros for convinience
+## These are basically just sets of glutil arguments and 
+##  bash commands, packed into macros for convinience
 #
 ### Run with: ./glutil -m <macro name>
 #
