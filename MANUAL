@@ -27,7 +27,7 @@ FLAGS:
 
 |  FIELD  | TYPE |  DESCRIPTION                                       |
 +---------+------+----------------------------------------------------+
-; GLOBAL (applies to most logs and to other stuff)
+; GLOBAL (applies everywhere)
 
    exe        S     Absolute path to self
    procid     S     Self process id
@@ -43,7 +43,7 @@ FLAGS:
    memlimit   S     Maximum number of bytes that can be buffered
    glconf     S     Path to glftpd.conf per glconf.h
   
-; FILESYSTEM (applies to -x only)
+; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
 
    path       S     Full path
    basepath   S     Base path
@@ -71,6 +71,8 @@ FLAGS:
    dir        S     The name of the dir (fullpath)
    mode       ES    File type (glutil --info -vv)
    basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
    status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
    time       I     Creation time since epoch (man 2 time)
    user       I     The userid of the creator
@@ -83,6 +85,8 @@ FLAGS:
 
    dir        S     The name of the dir (fullpath)
    basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
    mode       ES    File type (glutil --info -vv)
    status     I     0 = NUKED, 1 = UNNUKED
    time       I     The nuke time since epoch (man 2 time)
@@ -146,6 +150,8 @@ FLAGS:
    dir        S     The directory name related to record
    mode       ES    File type (glutil --info -vv)
    basedir    ES    The directory name related to record (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
    time       I     Creation time since epoch (man 2 time)
    imdbid     S     iMDB object ID
    score      F     iMDB score
@@ -164,6 +170,8 @@ FLAGS:
  
    dir        S     The directory name related to record
    basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
    mode       ES    File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    showid     I     TVRAGE show id
@@ -185,6 +193,8 @@ FLAGS:
  
    dir        S     The directory name related to record
    basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
    mode       ES    File type (glutil --info -vv)
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score

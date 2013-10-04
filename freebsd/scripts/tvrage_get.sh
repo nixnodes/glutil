@@ -10,7 +10,7 @@
 ## Requires glutil-1.7-6 or greater
 #
 ## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 (filesystem based)
-##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid)\/.*\-[a-zA-Z0-9\-_]+$'   (dirlog based)
+##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|)\/.*\-[a-zA-Z0-9\-_]+$'   (dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #

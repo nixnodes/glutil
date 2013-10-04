@@ -160,14 +160,14 @@
 #
 ## Remove unecessary entries from dirlog
 #
-#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|proof|booklet|subs|cover(s|)|.*\(no-sfv|incomplete\| complete ).*|)$" --nofq -vvv
+#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|extras|vobsubs(s|)|subpack|proof|booklet|subs|cover(s|)|.*\(no-sfv|incomplete\| complete ).*|)$" --nofq -vvv
 #
 ## <dirlog-full-clean>
 #
 ## Does the job of both <dirlog-clean-empty> 
 ##  and <dirlog-clean-junk>
 #
-#@MACRO:dirlog-full-clean:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|booklet|subs|cover(s|)|.*\(no-sfv|incomplete\| complete ).*|)$" or lom size=0&&files=0
+#@MACRO:dirlog-full-clean:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|extras|vobsubs(s|)|subpack|booklet|subs|cover(s|)|.*\(no-sfv|incomplete\| complete ).*|)$" or lom size=0&&files=0
 #
 ## <dirlog-trim>
 #
