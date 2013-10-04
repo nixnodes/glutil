@@ -12,7 +12,12 @@
         in various formats
   
   Check /scripts folder in this repo for examples on what can be done 
-    with this tool
+    with this tool. This is a C source project, scripts are NOT required
+    for any part of glutil to function.  However, scripts depend on 
+    glutil to read/write binary log/shm/filesystem/config data. 
+    Scripts are NOT maintained and tested on different evironments. 
+    That said, they should work fine on most newer linux environments 
+    and provide scripters with a base for porting to theirown select platforms.
 
   See ./glutil --help for full list of flags with short descriptions.
 
