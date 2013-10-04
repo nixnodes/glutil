@@ -1,8 +1,8 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:9
-#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "$(basename '{arg}')" '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
+#@REVISION:10
+#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path}` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
 #@MACRO:imdb-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}'"
@@ -59,7 +59,7 @@ RECORD_MAX_AGE=14
 TYPE_SPECIFIC_DB=0
 #
 ## Verbose output
-VERBOSE=0
+VERBOSE=1
 #
 ############################[ END OPTIONS ]##############################
 
