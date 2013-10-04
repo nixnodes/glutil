@@ -60,6 +60,7 @@
  *   - - Unecessary 'mode' field with dupefile (rev. 38)
  *   - + Related filesystem info extraction (x:<field>, see MANUAL) (rev. 39)
  *   - %! Basedir extraction was too costly (matching/exec) (rev. 39)
+ *   - ! Logic operations perform a bit faster (only in certain cases) (Rev. 40)
  *
  * v1.8
  *
