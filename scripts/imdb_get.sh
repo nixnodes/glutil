@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:7
+#@REVISION:9
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --exec `{m:spec1} "$(basename '{arg}')" '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{arg}'` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
@@ -14,8 +14,8 @@
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
-## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]        (filesystem based)
-##                ./glutil -m imdb-d --arg1 '\/(x264|xvid)\/.*\-[a-zA-Z0-9\-_]+$'       (dirlog based)
+## Usage (macro): ./glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]        		(filesystem based)
+##                ./glutil -m imdb-d --arg1 '\/(x264|xvid|movies)\/.*\-[a-zA-Z0-9\-_]*$'       (dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
@@ -27,9 +27,11 @@ IMDB_URL="http://www.omdbapi.com/"
 # iMDB base url
 IMDBURL="http://www.imdb.com/"
 #
-INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
+#INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+## Uncomment unless stored in config
+## file
+#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|PROPER|REPACK|XVID)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## If set to 1, might cause mis-matches 
 ## Only runs if exact match fails
@@ -57,7 +59,7 @@ RECORD_MAX_AGE=14
 TYPE_SPECIFIC_DB=0
 #
 ## Verbose output
-VERBOSE=1
+VERBOSE=0
 #
 ############################[ END OPTIONS ]##############################
 
@@ -153,13 +155,13 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
-		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex "$DIR_E" > /dev/null || { 
+		$2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
 	elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
 		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
 		DIR_E=$QUERY		
-		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" -e imdb --regex imdbid,"^$iid$" > /dev/null || {
+		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex imdbid,"^$iid$" > /dev/null || {
 			echo "ERROR: $iid: Failed removing old record" && exit 1 
 		}
 	fi	
