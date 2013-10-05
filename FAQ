@@ -60,7 +60,8 @@ Example of what to insert into glconf.h ( configure it the way you have your glf
 Can I use the features of glutil with site commands?
 ----------------------------------------------------
 YES! Absolutely.  Our recommendation though would be to create another glutil binary that has the chroot setting in the
-glutil.c file to /.  This will ensure that the commands work properly with your cscript creations.
+glutil.c file to /.  This will ensure that the commands work properly with your cscript creations.  Note: you can also use
+the --chroot= functionality via command line.
 
 What the hell are macros?
 -------------------------
