@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-40
+ * Version     : 1.9-41
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -43,7 +43,7 @@
 #define shm_ipc 0x0000DEAD
 #endif
 
-/* glutil's ipc keys */
+/* glutil data buffers ipc keys */
 #define IPC_KEY_DIRLOG		0xDEAD1000
 #define IPC_KEY_NUKELOG		0xDEAD1100
 #define IPC_KEY_DUPEFILE	0xDEAD1200
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 40
+#define VER_REVISION 41
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -564,6 +564,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_MAXDEPTH 			(a64 << 58)
 #define F_OPT_MINDEPTH 			(a64 << 59)
 #define F_OPT_XFD 				(a64 << 60)
+#define F_OPT_ZPRUNEDUP			(a64 << 61)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -715,6 +716,12 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define DEFF_GEN1 				"gen1.log"
 
 #define NUKESTR_DEF				"NUKED-%s"
+
+#ifdef GLCONF
+char GLCONF_I[PATH_MAX] = { GLCONF };
+#else
+char GLCONF_I[PATH_MAX] = {0};
+#endif
 
 #define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
@@ -1143,11 +1150,11 @@ char *hpd_up =
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
 				"                          --[i]regex[i] and --[i]match\n"
-				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file] [--binary]\n"
+				"  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file] [--binary] [--prune]\n"
 				"                        Creates a binary record from ASCII data, inserting it into the specified log\n"
 				"                          Captures input from stdin, unless --infile is set\n"
-				"                        --binary expects a normal binary log as input and merges it (skips exact\n"
-				"                         duplicates)\n"
+				"                        --binary expects a normal binary log as input and merges it\n"
+				"                        --prune skips importing duplicate records (full binary compare)\n"
 				"\n Directory log:\n"
 				"  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
 				"                           <folders> are passed relative to SITEROOT, separated by space\n"
@@ -1280,19 +1287,20 @@ char *hpd_up =
 				"  --version             Print version and exit\n"
 				"\n"
 				"Directory and file:\n"
-				"  --glroot=PATH         Override default glFTPd root path\n"
-				"  --siteroot=PATH       Override default site root path (relative to glFTPd root)\n"
-				"  --dirlog=FILE         Override default path to directory log\n"
-				"  --nukelog=FILE        Override default path to nuke log\n"
-				"  --dupefile=FILE       Override default path to dupe file\n"
-				"  --lastonlog=FILE      Override default path to last-on log\n"
-				"  --oneliners=FILE      Override default path to oneliners file\n"
-				"  --imdblog=FILE        Override default path to iMDB log\n"
-				"  --gamelog=FILE        Override default path to game log\n"
-				"  --tvlog=FILE          Override default path to TVRAGE log\n"
-				"  --folders=FILE        Override default path to folders file (contains sections and depths,\n"
+				"  --glroot=<path>       Override default glFTPd root path\n"
+				"  --siteroot=<path>     Override default site root path (relative to glFTPd root)\n"
+				"  --dirlog=<file>       Override default path to directory log\n"
+				"  --nukelog=<file>      Override default path to nuke log\n"
+				"  --dupefile=<file>     Override default path to dupe file\n"
+				"  --lastonlog=<file>    Override default path to last-on log\n"
+				"  --oneliners=<file>    Override default path to oneliners file\n"
+				"  --imdblog=<file>      Override default path to iMDB log\n"
+				"  --gamelog=<file>      Override default path to game log\n"
+				"  --tvlog=<file>        Override default path to TVRAGE log\n"
+				"  --glconf=<file>       \n"
+				"  --folders=<file>      Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
-				"  --logfile=FILE        Override default log file path\n"
+				"  --logfile=<file>      Override default log file path\n"
 				"\n";
 
 int md_init(pmda md, int nm);
@@ -1543,6 +1551,11 @@ int opt_g_noereg(void *arg, int m) {
 
 int opt_g_fd(void *arg, int m) {
 	gfl |= F_OPT_XFD;
+	return 0;
+}
+
+int opt_prune(void *arg, int m) {
+	gfl |= F_OPT_ZPRUNEDUP;
 	return 0;
 }
 
@@ -2218,6 +2231,11 @@ int opt_nukelog_file(void *arg, int m) {
 	return 0;
 }
 
+int opt_glconf_file(void *arg, int m) {
+	g_cpg(arg, GLCONF_I, m, PATH_MAX - 1);
+	return 0;
+}
+
 int opt_dirlog_sections_file(void *arg, int m) {
 	g_cpg(arg, DU_FLD, m, PATH_MAX - 1);
 	return 0;
@@ -2465,7 +2483,7 @@ int process_exec_args(void *data, __g_handle hdl);
 
 int is_char_uppercase(char);
 char *g_basename(char *input);
-
+char *g_dirname(char *input);
 void sig_handler(int);
 void child_sig_handler(int, siginfo_t*, void*);
 int flush_data_md(__g_handle, char *);
@@ -2566,7 +2584,8 @@ void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		(void*) 1, "--oneliners", opt_oneliner, (void*) 1, "--lastonlog",
 		opt_lastonlog, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
 		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
-		(void*) 1,
+		(void*) 1, "--noglconf", opt_g_noglconf, (void*) 0, "--glconf",
+		opt_glconf_file, (void*) 1,
 		NULL, NULL, NULL };
 
 void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
@@ -2649,6 +2668,7 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth, (void*) 1,
 		"-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
 		(void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
+		"--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
 		NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -2881,6 +2901,14 @@ void *md_swap(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
 	return md_o2->next;
 }
 
+void *md_swap_s(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
+	void *ptr = md_o1->ptr;
+	md_o1->ptr = md_o2->ptr;
+	md_o2->ptr = ptr;
+
+	return md_o1->next;
+}
+
 int setup_sighandlers(void) {
 	struct sigaction sa = { { 0 } }, sa_c = { { 0 } }, sa_e = { { 0 } };
 	int r = 0;
@@ -3042,7 +3070,6 @@ int g_cleanup(__g_handle hdl) {
 
 char *build_data_path(char *file, char *path, char *sd) {
 	char *ret = path;
-	remove_repeating_chars(path, 0x2F);
 
 	size_t p_l = strlen(path);
 
@@ -3050,24 +3077,22 @@ char *build_data_path(char *file, char *path, char *sd) {
 		char *p_d = strdup(path);
 		char *b_pd = dirname(p_d);
 
-		if (!dir_exists(b_pd)) {
-			free(p_d);
-			goto end;
+		if (access(b_pd, R_OK)) {
+			if (gfl & F_OPT_VERBOSE4) {
+				print_str(
+						"NOTICE: %s: data path was not found, building default using GLROOT '%s'..\n",
+						path, GLROOT);
+			}
+			snprintf(path, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
+			remove_repeating_chars(path, 0x2F);
+
+			/*if (gfl & F_OPT_VERBOSE4) {
+			 print_str("setting: %s\n", path);
+			 }*/
 		}
 
 		free(p_d);
 	}
-
-	if ((gfl & F_OPT_VERBOSE4) && p_l) {
-		print_str(
-				"NOTICE: %s: set data path was not found, setting default: %s\n",
-				file, path);
-	}
-
-	snprintf(path, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
-	remove_repeating_chars(path, 0x2F);
-
-	end:
 
 	return ret;
 }
@@ -3121,66 +3146,67 @@ int g_init(int argc, char **argv) {
 	}
 
 	if (!(gfl & F_OPT_NOGLCONF)) {
-#ifdef GLCONF
-		if ((r = load_cfg(&glconf, GLCONF, F_LCONF_NORF, NULL))
-				&& (gfl & F_OPT_VERBOSE)) {
-			print_str("WARNING: %s: could not load GLCONF file [%d]\n", GLCONF,
-					r);
-		}
-
-		if ((gfl & F_OPT_VERBOSE4) && glconf.offset) {
-			print_str("NOTICE: %s: loaded %d config lines into memory\n",
-			GLCONF, (int) glconf.offset);
-		}
-
-		p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
-
-		if (ptr && !(ofl & F_OVRR_IPC)) {
-			SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
-		}
-
-		ptr = get_cfg_opt("rootpath", &glconf, NULL);
-
-		if (ptr && !(ofl & F_OVRR_GLROOT)) {
-			snprintf(GLROOT, PATH_MAX, "%s", (char*) ptr->ptr);
-			if ((gfl & F_OPT_VERBOSE4)) {
-				print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
+		if (strlen(GLCONF_I)) {
+			if ((r = load_cfg(&glconf, GLCONF_I, F_LCONF_NORF, NULL))
+					&& (gfl & F_OPT_VERBOSE)) {
+				print_str("WARNING: %s: could not load GLCONF file [%d]\n",
+						GLCONF_I, r);
 			}
-		}
 
-		ptr = get_cfg_opt("min_homedir", &glconf, NULL);
-
-		if (ptr && !(ofl & F_OVRR_SITEROOT)) {
-			snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
-			if ((gfl & F_OPT_VERBOSE4)) {
-				print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
-						SITEROOT_N);
+			if ((gfl & F_OPT_VERBOSE4) && glconf.offset) {
+				print_str("NOTICE: %s: loaded %d config lines into memory\n",
+						GLCONF_I, (int) glconf.offset);
 			}
-		}
 
-		ptr = get_cfg_opt("ftp-data", &glconf, NULL);
+			p_md_obj ptr = get_cfg_opt("ipc_key", &glconf, NULL);
 
-		if (ptr) {
-			snprintf(FTPDATA, PATH_MAX, "%s", (char*) ptr->ptr);
-			if ((gfl & F_OPT_VERBOSE4)) {
-				print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
+			if (ptr && !(ofl & F_OVRR_IPC)) {
+				SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
 			}
-		}
 
-		ptr = get_cfg_opt("nukedir_style", &glconf, NULL);
+			ptr = get_cfg_opt("rootpath", &glconf, NULL);
 
-		if (ptr) {
-			NUKESTR = calloc(255, 1);
-			NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-			if ((gfl & F_OPT_VERBOSE4)) {
-				print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n",
-						NUKESTR);
+			if (ptr && !(ofl & F_OVRR_GLROOT)) {
+				snprintf(GLROOT, PATH_MAX, "%s", (char*) ptr->ptr);
+				if ((gfl & F_OPT_VERBOSE4)) {
+					print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
+				}
 			}
-			ofl |= F_OVRR_NUKESTR;
+
+			ptr = get_cfg_opt("min_homedir", &glconf, NULL);
+
+			if (ptr && !(ofl & F_OVRR_SITEROOT)) {
+				snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
+				if ((gfl & F_OPT_VERBOSE4)) {
+					print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
+							SITEROOT_N);
+				}
+			}
+
+			ptr = get_cfg_opt("ftp-data", &glconf, NULL);
+
+			if (ptr) {
+				snprintf(FTPDATA, PATH_MAX, "%s", (char*) ptr->ptr);
+				if ((gfl & F_OPT_VERBOSE4)) {
+					print_str("NOTICE: GLCONF: using 'ftp-data': %s\n",
+							FTPDATA);
+				}
+			}
+
+			ptr = get_cfg_opt("nukedir_style", &glconf, NULL);
+
+			if (ptr) {
+				NUKESTR = calloc(255, 1);
+				NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
+				if ((gfl & F_OPT_VERBOSE4)) {
+					print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n",
+							NUKESTR);
+				}
+				ofl |= F_OVRR_NUKESTR;
+			}
+		} else {
+			print_str("WARNING: GLCONF not defined in glconf.h\n");
 		}
-#else
-		print_str("WARNING: GLCONF not defined in glconf.h\n");
-#endif
 	}
 
 	if (!strlen(GLROOT)) {
@@ -3459,12 +3485,13 @@ int main(int argc, char *argv[]) {
 	switch (updmode) {
 	case PRIO_UPD_MODE_MACRO:
 		;
+		uint64_t gfl_s = (gfl
+				& (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF));
 		char **ptr;
 		ptr = process_macro(prio_argv_off, NULL);
 		if (ptr) {
 			_p_macro_argv = p_argv = ptr;
-			gfl = F_OPT_WBUFFER
-					| (gfl & F_OPT_PS_LOGGING ? F_OPT_PS_LOGGING : 0);
+			gfl = gfl_s;
 		} else {
 			g_shutdown(NULL);
 		}
@@ -3599,7 +3626,8 @@ char **process_macro(void * arg, char **out) {
 	int r;
 
 	if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
-			ref_to_val_macro, NULL))) {
+			ref_to_val_macro,
+			NULL))) {
 
 		print_str("ERROR: [%d]: could not process exec string: '%s'\n", r,
 				av.s_ret);
@@ -3897,7 +3925,7 @@ int d_write(char *arg) {
 				(unsigned long long int) g_act_1.w_buffer.offset);
 	}
 
-	if (!(gfl & F_OPT_FORCE2) && !file_exists(datafile)
+	if ((gfl & F_OPT_ZPRUNEDUP) && !access(datafile, R_OK)
 			&& !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
 			&& g_act_1.buffer.count) {
 		if (gfl & F_OPT_VERBOSE) {
@@ -3906,16 +3934,16 @@ int d_write(char *arg) {
 		p_md_obj ptr_w = md_first(&g_act_1.w_buffer), ptr_r;
 		int m = 1;
 		while (ptr_w) {
-			ptr_r = md_first(&g_act_1.buffer);
+			ptr_r = g_act_1.buffer.first;
 			m = 1;
 			while (ptr_r) {
 				if (!(m = g_bin_compare(ptr_r->ptr, ptr_w->ptr,
 						(off_t) g_act_1.block_sz))) {
-					if (gfl & F_OPT_VERBOSE5) {
-						print_str(
-								"NOTICE: record @0x%.16X already exists, not importing\n",
-								(unsigned long long int) (uintaa_t) ptr_w);
-					}
+					/*if (gfl & F_OPT_VERBOSE5) {
+					 print_str(
+					 "NOTICE: record @0x%.16X already exists, not importing\n",
+					 (unsigned long long int) (uintaa_t) ptr_w);
+					 }*/
 					if (!md_unlink(&g_act_1.w_buffer, ptr_w)) {
 						print_str("%s: %s: [%llu]: %s, aborting build..\n",
 								g_act_1.w_buffer.offset ? "ERROR" : "WARNING",
@@ -4001,6 +4029,7 @@ typedef struct ___std_rh_0 {
 	_g_handle hdl;
 	_d_xref p_xref;
 	__d_xproc_rc xproc_rcl0, xproc_rcl1;
+	char root[PATH_MAX];
 } _std_rh, *__std_rh;
 
 void g_preproc_xhdl(__g_handle hdl, void *p_xref) {
@@ -4079,16 +4108,15 @@ int g_dump_gen(char *root) {
 		return ret.rt_m;
 	}
 
-	char buffer[PATH_MAX] = { 0 };
-	snprintf(buffer, PATH_MAX, "%s", root);
-	remove_repeating_chars(buffer, 0x2F);
+	snprintf(ret.root, PATH_MAX, "%s", root);
+	remove_repeating_chars(ret.root, 0x2F);
 
 	ret.rt_m = 1;
 
-	enum_dir(buffer, g_process_directory, &ret, 0, &eds);
+	enum_dir(ret.root, g_process_directory, &ret, 0, &eds);
 
 	if (!(gfl & F_OPT_FORMAT_BATCH)) {
-		print_str("STATS: %s: OK: %llu/%llu\n", root,
+		print_str("STATS: %s: OK: %llu/%llu\n", ret.root,
 				(unsigned long long int) ret.st_1,
 				(unsigned long long int) ret.st_1 + ret.st_2);
 	}
@@ -4210,10 +4238,24 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 			}
 		}
 		else {
-			if (stat(name, &aa_rh->p_xref.st)) {
-				break;
+			char b_spl[PATH_MAX];
+			ssize_t b_spl_l;
+			if ( (b_spl_l=readlink(name, b_spl, PATH_MAX)) > 0 ) {
+				b_spl[b_spl_l] = 0x0;
+
+				char *p_spl;
+
+				if ((p_spl=strstr(name, b_spl)) && p_spl == name) {
+					print_str("ERROR: %s: filesystem loop detected inside '%s'\n", name, b_spl);
+
+					break;
+				}
+				if (stat(name, &aa_rh->p_xref.st)) {
+					break;
+				}
+				g_process_directory(name, IFTODT(aa_rh->p_xref.st.st_mode), arg, eds);
 			}
-			g_process_directory(name, IFTODT(aa_rh->p_xref.st.st_mode), arg, eds);
+
 		}
 		break;
 	}
@@ -8019,28 +8061,31 @@ int g_l_fmode_n(char *path, size_t max_size, char *output) {
 int ref_to_val_macro(void *arg, char *match, char *output, size_t max_size) {
 	if (!strcmp(match, "m:exe")) {
 		if (self_get_path(output)) {
-			snprintf(output, max_size, "%s", "UNKNOWN");
+			output[0] = 0x0;
 		}
 	} else if (!strncmp(match, "m:glroot", 8)) {
-		snprintf(output, max_size, "%s", GLROOT);
+		strcp_s(output, max_size, GLROOT);
 	} else if (!strncmp(match, "m:siteroot", 10)) {
-		snprintf(output, max_size, "%s", SITEROOT);
+		strcp_s(output, max_size, SITEROOT);
 	} else if (!strncmp(match, "m:ftpdata", 9)) {
-		snprintf(output, max_size, "%s", FTPDATA);
+		strcp_s(output, max_size, FTPDATA);
 	} else if ((gfl & F_OPT_PS_LOGGING) && !strncmp(match, "m:logfile", 9)) {
-		snprintf(output, max_size, "%s", LOGFILE);
+		strcp_s(output, max_size, LOGFILE);
 	} else if (!strncmp(match, "m:PID", 5)) {
 		snprintf(output, max_size, "%d", getpid());
 	} else if (!strncmp(match, "m:IPC", 5)) {
 		snprintf(output, max_size, "%.8X", (uint32_t) SHM_IPC);
+	} else if (!strncmp(match, "m:spec1:dir", 10)) {
+		strcp_s(output, max_size, b_spec1);
+		g_dirname(output);
 	} else if (!strncmp(match, "m:spec1", 7)) {
-		snprintf(output, max_size, "%s", b_spec1);
+		strcp_s(output, max_size, b_spec1);
 	} else if (!strncmp(match, "m:arg1", 6)) {
-		snprintf(output, max_size, "%s", MACRO_ARG1);
+		strcp_s(output, max_size, MACRO_ARG1);
 	} else if (!strncmp(match, "m:arg2", 6)) {
-		snprintf(output, max_size, "%s", MACRO_ARG2);
+		strcp_s(output, max_size, MACRO_ARG2);
 	} else if (!strncmp(match, "m:arg3", 6)) {
-		snprintf(output, max_size, "%s", MACRO_ARG3);
+		strcp_s(output, max_size, MACRO_ARG3);
 	} else if (!strncmp(match, "m:q:", 4)) {
 		return rtv_q(&match[4], output, max_size);
 	} else {
@@ -8126,7 +8171,7 @@ int rtv_q(void *query, char *output, size_t max_size) {
 }
 
 int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
-	if (!strcmp(match, "nukestr")) {
+	if (!strncmp(match, "nukestr", 7)) {
 		if (NUKESTR) {
 			snprintf(output, max_size, NUKESTR, "");
 		}
@@ -8169,14 +8214,7 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, "spec1", 5)) {
 		strcp_s(output, max_size, b_spec1);
 	} else if (!strncmp(match, "glconf", 6)) {
-		strcp_s(output, max_size,
-#ifdef GLCONF
-				GLCONF
-#else
-				"UNKNOWN"
-#endif
-				);
-
+		strcp_s(output, max_size, GLCONF_I);
 	} else {
 		return 1;
 	}
@@ -8204,14 +8242,7 @@ char *ref_to_val_generic_ps(void *arg, char *match, char *output,
 	} else if (!strncmp(match, "spec1", 5)) {
 		return b_spec1;
 	} else if (!strncmp(match, "glconf", 6)) {
-		return
-#ifdef GLCONF
-		GLCONF
-#else
-		"UNKNOWN"
-#endif
-		;
-
+		return GLCONF_I;
 	} else {
 		if (!ref_to_val_generic(arg, match, output, max_size)) {
 			return output;
@@ -8345,6 +8376,9 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 		F_CFGV_BUILD_FULL_STRING);
 	} else if (!strncmp(match, "basepath", 8)) {
 		strcp_s(output, max_size, g_basename(data->name));
+	} else if (!strncmp(match, "dirpath", 7)) {
+		strcp_s(output, max_size, data->name);
+		g_dirname(output);
 	} else if (!strncmp(match, "path", 4)) {
 		strcp_s(output, max_size, data->name);
 	} else {
@@ -8590,7 +8624,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 	uint64_t (*g_t_ptr_c)(void *base, size_t offset) = cb2;
 
 	p_md_obj ptr, ptr_n;
-	int r = 0;
+
 	uint64_t t_b, t_b_n;
 	uint32_t ml_f = 0;
 	uint64_t ml_i;
@@ -8605,7 +8639,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 			t_b_n = g_t_ptr_c(ptr_n->ptr, off);
 
 			if (!m_op(t_b, t_b_n)) {
-				ptr = md_swap(m_ptr, ptr, ptr_n);
+				ptr = md_swap_s(m_ptr, ptr, ptr_n);
 				if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
 					ml_f |= F_INT_GSORT_LOOP_DID_SORT;
 				}
@@ -8627,11 +8661,11 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 		return -1;
 	}
 
-	if (!r && (flags & F_GSORT_RESETPOS)) {
+	if ((flags & F_GSORT_RESETPOS)) {
 		m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
 	}
 
-	return r;
+	return 0;
 }
 
 int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
@@ -8654,7 +8688,7 @@ int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 			t_b_n = g_t_ptr_c(ptr_n->ptr, off);
 
 			if (!m_op(t_b, t_b_n)) {
-				ptr = md_swap(m_ptr, ptr, ptr_n);
+				ptr = md_swap_s(m_ptr, ptr, ptr_n);
 				if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
 					ml_f |= F_INT_GSORT_LOOP_DID_SORT;
 				}
@@ -9661,6 +9695,16 @@ char *g_basename(char *input) {
 		return input;
 	}
 	return b_ptr + 1;
+}
+
+char *g_dirname(char *input) {
+	char *b_ptr = strrchr(input, 0x2F);
+	if (!b_ptr) {
+		input[0] = 0x0;
+	} else {
+		b_ptr[0] = 0x0;
+	}
+	return input;
 }
 
 int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
