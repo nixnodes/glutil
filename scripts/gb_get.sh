@@ -1,11 +1,15 @@
 #!/bin/bash
 # DO NOT EDIT THESE LINES
 #@VERSION:1
-#@REVISION:4
+#@REVISION:5
 #@MACRO:gamescore:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -exec `{m:spec1} "$(basename '{arg}')" '{exe}' '{gamefile}' '{glroot}' '{siterootn}' '{dir}'`
 #@MACRO:gamescore-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -execv "{m:spec1} {basedir} {exe} {gamefile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #
 ## Retrieves game info using giantbomb API (XML)
+#
+## Requires: - glutil-1.9-34 or above
+##			 - libxml2 v2.7.7 or above 
+##           - curl, date, grep, egrep, sed
 #
 ## Usage (macro): ./glutil -m gamescore --arg1=/path/to/games
 #
@@ -16,12 +20,6 @@ CURL_FLAGS="--silent"
 
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
-
-! [ -f "$CURL" ] && CURL=`whereis curl | awk '{print $2}'`
-! [ -f "$XMLLINT" ] && XMLLINT=`whereis xmllint | awk '{print $2}'`
-
-[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
-[ -z "$CURL" ] && echo "Could not find curl" && exit 1
 
 ###########################[ BEGIN OPTIONS ]#############################
 #
