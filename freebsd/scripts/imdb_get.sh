@@ -63,12 +63,6 @@ CURL_FLAGS="--silent"
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/local/bin/xmllint"
 
-! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
-! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
-
-[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
-[ -z "$CURL" ] && echo "Could not find curl" && exit 1
-
 BASEDIR=$(dirname $0)
 
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $DATABASE_TYPE -gt 0 ] && LAPPEND="$DATABASE_TYPE"
