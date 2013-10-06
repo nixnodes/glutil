@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:11
+#@REVISION:12
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path}` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
@@ -9,8 +9,9 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: -glutil-1.6 or above
-##			 -libxml2 v2.7.7 or above 
+## Requires: - glutil-1.6 or above
+##			 - libxml2 v2.7.7 or above 
+##           - curl, date, grep, egrep, sed
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
