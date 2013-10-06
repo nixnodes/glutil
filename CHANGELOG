@@ -61,6 +61,10 @@
  *   - + Related filesystem info extraction (x:<field>, see MANUAL) (rev. 39)
  *   - %! Basedir extraction was too costly (matching/exec) (rev. 39)
  *   - ! Logic operations perform a bit faster (only in certain cases) (Rev. 40)
+ *   - % --noglconf applies when calling macro (-m) (rev. 41)
+ *   - + --glconf=<file>, overrides default path to glftpd.conf (rev. 41)
+ *   - + --prune, removes exact data record duplicates on import (-z) (rev. 41)
+ *   - % Filesystem loop detection (-x) (rev. 41)
  *
  * v1.8
  *
