@@ -13,12 +13,6 @@ CURL="/usr/local/bin/curl"
 CURL_FLAGS="--silent"
 XMLLINT="/usr/local/bin/xmllint"
 
-! [ -f "$CURL" ] && CURL=$(whereis curl | awk '{print $2}')
-! [ -f "$XMLLINT" ] && XMLLINT=$(whereis xmllint | awk '{print $2}')
-
-[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
-[ -z "$CURL" ] && echo "Could not find curl" && exit 1
-
 ###########################[ BEGIN OPTIONS ]#############################
 #
 BURL="http://www.giantbomb.com/"
