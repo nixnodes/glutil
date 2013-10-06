@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:10
+#@REVISION:11
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path}` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
@@ -59,7 +59,7 @@ RECORD_MAX_AGE=14
 TYPE_SPECIFIC_DB=0
 #
 ## Verbose output
-VERBOSE=1
+VERBOSE=0
 #
 ############################[ END OPTIONS ]##############################
 
@@ -68,12 +68,6 @@ CURL_FLAGS="--silent"
 
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
-
-! [ -f "$CURL" ] && CURL=`whereis curl | awk '{print $2}'`
-! [ -f "$XMLLINT" ] && XMLLINT=`whereis xmllint | awk '{print $2}'`
-
-[ -z "$XMLLINT" ] && echo "Could not find command line XML tool" && exit 1
-[ -z "$CURL" ] && echo "Could not find curl" && exit 1
 
 BASEDIR=`dirname $0`
 
