@@ -30,10 +30,17 @@ Is glutil compatible with freebsd?
 ----------------------------------
 Yes indeed it is!  Use the freebsd folder, it should have everything you need to run scripts and utilize macros.
 
-I'm using freebsd and get "ERROR: could not get own path" what do I do?
+I get "ERROR: could not get own path" what do I do?
 -----------------------------------------------------------------------
 If you get the error in freebsd "ERROR: could not get own path" you must mount procfs:
+
 mount -t procfs proc /proc
+
+For certain features to work properly, procfs needs to always be mounted;
+This means when running glutil from a chrooted environment, you should mount
+procfs there:
+
+mount -t proc proc /glroot/proc  (linux example)
 
 How do I store static information so I don't have to edit files every time?
 ---------------------------------------------------------------------------
