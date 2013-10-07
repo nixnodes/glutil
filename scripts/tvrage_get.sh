@@ -1,11 +1,11 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:10
-#@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {arg}` {m:arg2}
-#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir}` --iregexi "dir,{m:arg1}"  {m:arg2} 
+#@REVISION:11
+#@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
-#@MACRO:tvrage-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}'"
+#@MACRO:tvrage-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
 #
 ## Gets show info using TVRAGE API (XML)
 #
@@ -25,7 +25,7 @@ TVRAGE_URL="http://services.tvrage.com"
 #
 #INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
-#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|)([._-\(\)](S[0-9]{1,3}E[0-9]{1,3}|XVID|X264|REPACK|DVDRIP|(H|P)DTV|BRRIP)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|())([._-\(\)](S[0-9]{1,3}E[0-9]{1,3}|XVID|X264|REPACK|DVDRIP|(H|P)DTV|BRRIP)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## Updates tvlog
 UPDATE_TVLOG=1
@@ -67,9 +67,11 @@ BASEDIR=`dirname $0`
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
-echo "$1" | egrep -q -i "$INPUT_SKIP" && exit 1
+[ $7 -eq 1 ] && [ $TVRAGE_DATABASE_TYPE -eq 1 ] && TD=`basename "$1"` || TD="$1"
 
-QUERY=`echo "$1" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
+echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
+
+QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
 
 [ -z "$QUERY" ] && exit 1
 
@@ -89,14 +91,14 @@ cad() {
 
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_QUERY_DUPE -eq 1 ]; then
 	s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-	cad $2 "--iregexi" "dir,$s_q" "$3"
+	cad $2 "--iregexi" "dir,^$s_q\$" "$3"
 fi
 
-[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $1"
+[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
 
 DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=$QUERY"`
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY" && exit 1
 
 get_field()
 {
@@ -111,7 +113,7 @@ get_field_t()
 SHOWID=`get_field showid`
 
 if [ -z "$SHOWID" ]; then 
-	echo "ERROR: $QUERY: $1: could not get show id"
+	echo "ERROR: $QUERY: $TD: could not get show id"
 	[ $VERBOSE -gt 0 ] && echo "$DDT"
 	exit 1
 fi
@@ -160,10 +162,10 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	fi	
 	
 	echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to tvlog [$3$LAPPEND]"
+	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $1 : $LINK : $CLASS | $GENRES"
+echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
 
 exit 0
