@@ -1,12 +1,13 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:2
+#@REVISION:3
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Requires: glutil-1.9-7 or above
+## Requires: - glutil-1.9-7 or above
+##           - date, kill, expr, sleep, stat
 #
 ## Usage (manual): /glroot/bin/glutil -w --loop=1 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
