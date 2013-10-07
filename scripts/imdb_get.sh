@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:14
+#@REVISION:15
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path}` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
@@ -50,7 +50,7 @@ IMDB_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
 ## iMDB ID already in the database
-DENY_IMDBID_DUPE=1
+DENY_IMDBID_DUPE=0
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
@@ -79,9 +79,12 @@ BASEDIR=`dirname $0`
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
-echo "$1" | egrep -q -i "$INPUT_SKIP" && exit 1
+[ -n "$7" ] && TD=`basename "$1"` || TD="$1"
 
-QUERY=`echo "$1" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
+
+echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
+
+QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
 
 [ -z "$QUERY" ] && exit 1
 
@@ -111,9 +114,9 @@ if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 fi
 
 iid=`imdb_search "$QUERY""&ex=1"`
-[ $LOOSE_SEARCH -eq 1 ] &&[ -z "$iid" ] && echo "WARNING: $QUERY: $1: exact match failed, performing loose search.." && iid=`imdb_search "$QUERY"`
-[ -z "$iid" ] && echo "WARNING: $QUERY: $1: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=`$CURL $CURL_FLAGS "$IMDB_URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g'`
-[ -z "$iid" ] && echo "ERROR: $QUERY: $1: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
+[ $LOOSE_SEARCH -eq 1 ] &&[ -z "$iid" ] && echo "WARNING: $QUERY: $TD: exact match failed, performing loose search.." && iid=`imdb_search "$QUERY"`
+[ -z "$iid" ] && echo "WARNING: $QUERY: $TD: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY search failed, falling back to secondary" && iid=`$CURL $CURL_FLAGS "$IMDB_URL?r=xml&s=$QUERY" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g'`
+[ -z "$iid" ] && echo "ERROR: $QUERY: $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "imdbid,^$iid$" "$3"	
@@ -121,7 +124,7 @@ fi
 
 DDT=`$CURL $CURL_FLAGS "$IMDB_URL""?r=XML&i=$iid"`
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
 get_field()
 {
@@ -130,7 +133,7 @@ get_field()
 
 TYPE=`get_field type`
 
-! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES" && echo "ERROR: $QUERY: $1: invalid match (type is $TYPE): $IMDB_URL""?r=XML&i=$iid" && exit 1
+! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES" && echo "ERROR: $QUERY: $TD: invalid match (type is $TYPE): $IMDB_URL""?r=XML&i=$iid" && exit 1
 
 RATING=`get_field imdbRating`
 GENRE=`get_field genre`
@@ -146,7 +149,7 @@ RUNTIME_h=`echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g'`
 RUNTIME_m=`echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g'`
 [ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=$[RUNTIME_h*RUNTIME_m]
 
-[ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $1: could not extract movie data" && exit 1
+[ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $TD: could not extract movie data" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
@@ -157,7 +160,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
 	elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
-		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $1: failed extracting movie title" && exit 1
+		#[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
 		DIR_E=$QUERY		
 		$2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex imdbid,"^$iid$" > /dev/null || {
 			echo "ERROR: $iid: Failed removing old record" && exit 1 
@@ -165,7 +168,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	fi	
 	
 	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $1: failed writing to imdblog!!"
+	$2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
