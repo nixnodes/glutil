@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:15
+#@REVISION:16
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path}` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir}" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
@@ -79,7 +79,7 @@ BASEDIR=`dirname $0`
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
-[ -n "$7" ] && TD=`basename "$1"` || TD="$1"
+[ -n "$7" ] && [ $IMDB_DATABASE_TYPE -eq 1 ] && TD=`basename "$1"` || TD="$1"
 
 
 echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
