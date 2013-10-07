@@ -1,4 +1,4 @@
-#@REVISION:16
+#@REVISION:17
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -112,11 +112,12 @@
 ## Use <dirlog-clean-dupes-rm> to get rid of filesystem
 ## directories
 #
-## This can take a long time, depending on the dirlog size
+## This can take a long time, depending on the log size
 #
 #@MACRO:dirlog-clean-dupes:{m:exe} -d -execv `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
-#@MACRO:imdb-clean-dupes:{m:exe} -a -execv `{m:exe} -e imdb --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
-#@MACRO:tvrage-clean-dupes:{m:exe} -h -execv `{m:exe} -e tvrage --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#@MACRO:imdb-clean-dupes:{m:exe} -a -execv `{m:exe} -e imdb --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
+#@MACRO:imdb-clean-dupes-id:{m:exe} -a -execv `{m:exe} -e imdb --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit ` --silent
+#@MACRO:tvrage-clean-dupes:{m:exe} -h -execv `{m:exe} -e tvrage --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
 #
 ## <dirlog-clean-dupes-rm>
 #
