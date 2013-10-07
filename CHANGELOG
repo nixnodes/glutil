@@ -65,6 +65,7 @@
  *   - + --glconf=<file>, overrides default path to glftpd.conf (rev. 41)
  *   - + --prune, removes exact data record duplicates on import (-z) (rev. 41)
  *   - % Filesystem loop detection (-x) (rev. 41)
+ *   - ~ build_data_path was broken (since 1.9-41) (rev. 42)
  *
  * v1.8
  *
