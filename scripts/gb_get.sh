@@ -27,7 +27,7 @@ GIANTBOMB_BURL="http://www.giantbomb.com/"
 GIANTBOMB_URL="$GIANTBOMB_BURL""api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY=""
+API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
 INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
@@ -73,7 +73,6 @@ if [ $UPDATE_GAMELOG -eq 1 ]; then
 	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" 2 15 9 6
 	GLR_E=`echo $4 | sed 's/\//\\\\\//g'`	   
 	DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-	echo ":: $DIR_E"
 	$2 -k --iregex "$DIR_E" --imatchq > /dev/null || $2 -f -e game --match "$DIR_E" > /dev/null
 	echo -en "dir $DIR_E\ntime `date +%s`\nscore $RES\n\n" > "/tmp/glutil.gg.$$.tmp"
 	$2 -z game --nobackup --silent < "/tmp/glutil.gg.$$.tmp" || echo "ERROR: failed writing to gamelog!!"
