@@ -27,7 +27,7 @@ GIANTBOMB_BURL="http://www.giantbomb.com/"
 GIANTBOMB_URL="$GIANTBOMB_BURL""api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
+API_KEY=""
 #
 INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
 #
