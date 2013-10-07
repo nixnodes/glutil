@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:0
+#@REVISION:1
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" 
@@ -51,7 +51,7 @@ IMDB_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
 ## iMDB ID already in the database
-DENY_IMDBID_DUPE=1
+DENY_IMDBID_DUPE=0
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
@@ -112,6 +112,10 @@ imdb_search()
 omdb_search()
 {
 	$CURL $CURL_FLAGS "$IMDB_URL?r=xml&s=$1""$YQ_O" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|(\s)|[\"]//g'
+}
+
+get_omdbapi_data() {
+	$CURL $CURL_FLAGS "$IMDB_URL""?r=XML&i=$1"
 }
 
 cad() {
@@ -189,10 +193,6 @@ if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "imdbid,^$iid$" "$3"	
 fi
 
-get_omdbapi_data() {
-	$CURL $CURL_FLAGS "$IMDB_URL""?r=XML&i=$1"
-}
-
 DDT=`get_omdbapi_data "$iid"`
 
 [ -z "$DDT" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
@@ -267,8 +267,7 @@ RELEASED=`date --date="$(D_g=$(get_field released); [ "$D_g" != "N/A" ] && echo 
 RUNTIME=`get_field runtime`
 RUNTIME_h=`echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g'`
 RUNTIME_m=`echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g'`
-[ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=$[RUNTIME_h*RUNTIME_m]
-
+[ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=`expr $RUNTIME_h \* 60 + $RUNTIME_m`
 [ -z "$RATING" ] && [ -z "$VOTES" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $TD: could not extract movie data" && exit 1
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
