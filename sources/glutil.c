@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-41
+ * Version     : 1.9-42
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 41
+#define VER_REVISION 42
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1297,7 +1297,7 @@ char *hpd_up =
 				"  --imdblog=<file>      Override default path to iMDB log\n"
 				"  --gamelog=<file>      Override default path to game log\n"
 				"  --tvlog=<file>        Override default path to TVRAGE log\n"
-				"  --glconf=<file>       \n"
+				"  --glconf=<file>       Override path to glftpd.conf (set using glconf.h by default)\n"
 				"  --folders=<file>      Override default path to folders file (contains sections and depths,\n"
 				"                           used on recursive imports)\n"
 				"  --logfile=<file>      Override default log file path\n"
@@ -3073,8 +3073,10 @@ char *build_data_path(char *file, char *path, char *sd) {
 
 	size_t p_l = strlen(path);
 
+	char *p_d = NULL;
+
 	if (p_l) {
-		char *p_d = strdup(path);
+		p_d = strdup(path);
 		char *b_pd = dirname(p_d);
 
 		if (access(b_pd, R_OK)) {
@@ -3083,14 +3085,19 @@ char *build_data_path(char *file, char *path, char *sd) {
 						"NOTICE: %s: data path was not found, building default using GLROOT '%s'..\n",
 						path, GLROOT);
 			}
-			snprintf(path, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
-			remove_repeating_chars(path, 0x2F);
-
-			/*if (gfl & F_OPT_VERBOSE4) {
-			 print_str("setting: %s\n", path);
-			 }*/
+		}
+		else {
+			goto end;
 		}
 
+	}
+
+	snprintf(path, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, sd, file);
+	remove_repeating_chars(path, 0x2F);
+
+	end:
+
+	if (p_d) {
 		free(p_d);
 	}
 
@@ -3296,7 +3303,7 @@ int g_init(int argc, char **argv) {
 		if (ofl & F_OVRR_GE1LOG) {
 			print_str(MSG_INIT_PATH_OVERR, "GE1LOG", GE1LOG);
 		}
-		if ((gfl & F_OPT_VERBOSE2) && (gfl & F_OPT_PS_LOGGING)) {
+		if ((gfl & F_OPT_VERBOSE4) && (gfl & F_OPT_PS_LOGGING)) {
 			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
 		}
 	}
@@ -4245,15 +4252,18 @@ int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) 
 
 				char *p_spl;
 
-				if ((p_spl=strstr(name, b_spl)) && p_spl == name) {
-					print_str("ERROR: %s: filesystem loop detected inside '%s'\n", name, b_spl);
-
-					break;
-				}
 				if (stat(name, &aa_rh->p_xref.st)) {
 					break;
 				}
-				g_process_directory(name, IFTODT(aa_rh->p_xref.st.st_mode), arg, eds);
+
+				uint8_t dt_mode=IFTODT(aa_rh->p_xref.st.st_mode);
+
+				if (dt_mode == DT_DIR && (p_spl=strstr(name, b_spl)) && p_spl == name) {
+					print_str("ERROR: %s: filesystem loop detected inside '%s'\n", name, b_spl);
+					break;
+				}
+
+				g_process_directory(name, dt_mode, arg, eds);
 			}
 
 		}
