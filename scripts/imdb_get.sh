@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:4
+#@REVISION:5
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -85,7 +85,7 @@ BASEDIR=`dirname $0`
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
-[[ $7 -eq 1 ]] && [[ $IMDB_DATABASE_TYPE -eq 1 ]] && TD=`basename "$1"` || TD="$1"
+[ $7 -eq 1 ] && [ $IMDB_DATABASE_TYPE -eq 1 ] && TD=`basename "$1"` || TD="$1"
 
 imdb_do_query() {
 	$CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$1"
@@ -125,7 +125,7 @@ get_field()
 }
 
 
-if ! [[ $7 -eq 2 ]]; then	
+if ! [ $7 -eq 2 ]; then	
 	echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
 	
 	QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r "s/[\.\_\-\(\)]/+/g" | sed -r "s/(^[+ ]+)|([+ ]+\$)//g"`
@@ -137,7 +137,7 @@ if ! [[ $7 -eq 2 ]]; then
 	}
 
 	[ $IMDB_SEARCH_BY_YEAR -eq 1 ] && {
-		if [[ $7 -eq 1 ]] && [[ $IMDB_DATABASE_TYPE -eq 1 ]]; then
+		if [ $7 -eq 1 ] && [ $IMDB_DATABASE_TYPE -eq 1 ]; then
 			DENY_IMDBID_DUPE=0
 			YEAR_q="$8"
 		else
