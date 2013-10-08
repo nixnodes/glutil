@@ -64,14 +64,6 @@ Example of what to insert into glconf.h ( configure it the way you have your glf
 #define du_fld "/glftpd/bin/glutil.folders"
 #define shm_ipc 0x0000DEAD
 
-Can I use the features of glutil with site commands?
-----------------------------------------------------
-YES! Absolutely.  Our recommendation though would be to create another glutil binary that is 
-compiled with glroot set to / and absolute log paths adjusted, or use --glroot=/ when executing 
-from chrooted environment. This will ensure that the commands work properly with your cscript creations. You will need
-to put curl and xmllint into your /glroot/usr/bin and of course copy over the required libaries. Use ldd curl , ldd xmllint.
-Don't forget to chmod +s glutil-chroot (that's what I would call it when recompiling).
-
 What the hell are macros?
 -------------------------
 As you have already found out glutil is very complex.  It can do wonderous magical things.  Creating macros allows you to
