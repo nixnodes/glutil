@@ -26,7 +26,7 @@ if [ "$reason" == "" ]; then
 fi
 
 ### No need to edit belowe ###
-findrelease=`$glutil -d -v | grep $release | awk '{print $2}'`
+findrelease=`$glutil -d -v | grep $release | awk '{print $2}' | head -1`
 if [ "$findrelease" ]
 then
 $nuke $config -N $nukeuser -n {$findrelease} $ratio $reason >/dev/null

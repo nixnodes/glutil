@@ -31,7 +31,7 @@ Is glutil compatible with freebsd?
 Yes indeed it is!  Use the freebsd folder, it should have everything you need to run scripts and utilize macros.
 
 I get "ERROR: could not get own path" what do I do?
------------------------------------------------------------------------
+---------------------------------------------------
 If you get the error in freebsd "ERROR: could not get own path" you must mount procfs:
 
 mount -t procfs proc /proc
@@ -97,6 +97,13 @@ glutil -m imdb-f-e --arg1="Shawshank Redemption"
 glutil -m idmb-f-d --arg1 '\/(MOVIES-SD|MOVIES-HD|ARCHIVE\/MOVIES-SD|ARCHIVE\/MOVIES-HD)\/.*\-[a-zA-Z0-9\-_]+$'
 glutil -m tvrage-f-e --arg1="Breaking Bad" 
 glutil -m tvrage-f-d --arg1='\/(TV-SD|TV-HD|TV-DVDRIP|ARCHIVE\/TV-HD|ARCHIVE\/TV-SD|ARCHIVE\/TV-DVDRIP)\/.*\-[a-zA-Z0-9\-_]+$'
+
+Seems when I run the imdb_get.sh macro the imdb info isn't getting pulled from the web.  The script works perfectly fine
+outside of chroot.  How do I fix this?
+------------------------------------------------------------------------------------------------------------------------
+This is a missing lib issue.  In the chroot environment sometimes resolving doesn't work.  Simply copy the two files
+libnss_files.so.2 libnss_dns.so.2 to your /glftpd/lib folder and try again.  Also it is really important to have an up to
+date version of xmllint ( 20707 and up ).
 
 Do you have any useful commands to help me see glutil's potential?
 ------------------------------------------------------------------
