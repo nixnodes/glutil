@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-43
+ * Version     : 1.9-44
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 43
+#define VER_REVISION 44
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -11234,7 +11234,7 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
-		memcpy(ptr->synopsis, val, v_l > 199 ? 199 : v_l);
+		memcpy(ptr->synopsis, val, v_l > 197 ? 197 : v_l);
 		return 1;
 	}
 
