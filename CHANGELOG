@@ -67,6 +67,7 @@
  *   - % Filesystem loop detection (-x) (rev. 41)
  *   - ~ build_data_path was broken (since 1.9-41) (rev. 42)
  *   - + Plot field (imdblog) (rev. 43)
+ *   - ~ Fixed max input length for iMDB synopsis (rev. 44)
  *
  * v1.8
  *
