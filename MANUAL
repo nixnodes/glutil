@@ -164,6 +164,7 @@ FLAGS:
    released   I     Released time since epoch (man 2 time)
    runtime    I     Runtime 
    year       S     Year of release
+   plot       S     Plot/synopsis
 
 
 ; TVRAGE
