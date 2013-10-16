@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-42
+ * Version     : 1.9-43
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 42
+#define VER_REVISION 43
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -204,8 +204,9 @@ typedef struct ___d_imdb {
 	char rated[8];
 	char actors[128];
 	char director[64];
+	char synopsis[198];
 	/* ------------- */
-	char _d_unused[230]; /* Reserved for future use */
+	char _d_unused[32]; /* Reserved for future use */
 
 } _d_imdb, *__d_imdb;
 
@@ -3085,8 +3086,7 @@ char *build_data_path(char *file, char *path, char *sd) {
 						"NOTICE: %s: data path was not found, building default using GLROOT '%s'..\n",
 						path, GLROOT);
 			}
-		}
-		else {
+		} else {
 			goto end;
 		}
 
@@ -3335,7 +3335,7 @@ int g_init(int argc, char **argv) {
 				== -1 || WEXITSTATUS(r_e)) {
 			if (gfl & F_OPT_VERBOSE) {
 				print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
-						WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+				WEXITSTATUS(r_e), GLOBAL_PREEXEC);
 			}
 			return 1;
 		}
@@ -3602,6 +3602,11 @@ char **process_macro(void * arg, char **out) {
 	_si_argv0 av = { 0 };
 
 	av.ret = -1;
+
+	if (strlen(a_ptr) > sizeof(av.p_buf_1)) {
+		print_str("ERROR: invalid macro name\n");
+		return NULL;
+	}
 
 	strncpy(av.p_buf_1, a_ptr, strlen(a_ptr));
 
@@ -4992,7 +4997,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 						r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl))) {
 			if ((gfl & F_OPT_VERBOSE5)) {
 				print_str("WARNING: external call returned non-zero: [%d]\n",
-						WEXITSTATUS(r_e));
+				WEXITSTATUS(r_e));
 			}
 			r_p = 1;
 		}
@@ -7215,7 +7220,7 @@ int determine_datatype(__g_handle hdl) {
 	} else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG))) {
 		hdl->flags |= F_GH_ISIMDB;
 		hdl->block_sz = ID_SZ;
-		hdl->d_memb = 13;
+		hdl->d_memb = 14;
 		hdl->g_proc0 = gcb_imdbh;
 		hdl->g_proc1 = ref_to_val_imdb;
 		hdl->g_proc2 = ref_to_val_ptr_imdb;
@@ -10089,6 +10094,7 @@ char* ref_to_val_online_ps(void *arg, char *match, char *output,
 #define _MC_GLOB_GENRE		"genre"
 #define _MC_IMDB_RATED		"rated"
 #define _MC_IMDB_DIRECT		"director"
+#define _MC_IMDB_SYNOPSIS	"plot"
 
 int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
@@ -10127,6 +10133,8 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->actors);
 	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
 		strcp_s(output, max_size, data->year);
+	} else if (!strncmp(match, _MC_IMDB_SYNOPSIS, 4)) {
+		strcp_s(output, max_size, data->synopsis);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
 		strcp_s(xref_t.name, max_size, data->dirname);
@@ -10162,6 +10170,8 @@ char* ref_to_val_imdb_ps(void *arg, char *match, char *output, size_t max_size) 
 		return data->actors;
 	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
 		return data->year;
+	} else if (!strncmp(match, _MC_IMDB_SYNOPSIS, 4)) {
+		return data->synopsis;
 	} else {
 		if (!ref_to_val_imdb(arg, match, output, max_size)) {
 			return output;
@@ -11219,6 +11229,12 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 			return 0;
 		}
 		memcpy(ptr->director, val, v_l > 63 ? 63 : v_l);
+		return 1;
+	} else if (k_l == 4 && !strncmp(key, _MC_IMDB_SYNOPSIS, 4)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		memcpy(ptr->synopsis, val, v_l > 199 ? 199 : v_l);
 		return 1;
 	}
 
