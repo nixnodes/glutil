@@ -68,6 +68,7 @@
  *   - ~ build_data_path was broken (since 1.9-41) (rev. 42)
  *   - + Plot field (imdblog) (rev. 43)
  *   - ~ Fixed max input length for iMDB synopsis (rev. 44)
+ *   - % --batch shows plot (rev. 45)
  *
  * v1.8
  *

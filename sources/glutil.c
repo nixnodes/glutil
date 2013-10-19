@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-44
+ * Version     : 1.9-45
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 44
+#define VER_REVISION 45
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -6147,11 +6147,11 @@ int imdb_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\n",
+						"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\x9%s\n",
 						data->dirname, data->title, (uint32_t) data->timestamp,
 						data->imdb_id, data->rating, data->votes, data->genres,
 						data->year, data->released, data->runtime, data->rated,
-						data->actors, data->director);
+						data->actors, data->director, data->synopsis);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
