@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-47
+ * Version     : 1.9-48
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 47
+#define VER_REVISION 48
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -9764,7 +9764,7 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
-		strcp_s(xref_t.name, max_size, data->dirname);
+		strcp_s(xref_t.name, PATH_MAX, data->dirname);
 		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else if (!strncmp(match, "xg:", 3)) {
 		_d_xref xref_t = { { 0 } };
@@ -9829,7 +9829,7 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
-		strcp_s(xref_t.name, max_size, data->dirname);
+		strcp_s(xref_t.name, PATH_MAX, data->dirname);
 		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else if (!strncmp(match, "xg:", 3)) {
 		_d_xref xref_t = { { 0 } };
@@ -10154,7 +10154,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->synopsis);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
-		strcp_s(xref_t.name, max_size, data->dirname);
+		strcp_s(xref_t.name, PATH_MAX, data->dirname);
 		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else if (!strncmp(match, "xg:", 3)) {
 		_d_xref xref_t = { { 0 } };
@@ -10216,7 +10216,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
-		strcp_s(xref_t.name, max_size, data->dirname);
+		strcp_s(xref_t.name, PATH_MAX, data->dirname);
 		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else if (!strncmp(match, "xg:", 3)) {
 		_d_xref xref_t = { { 0 } };
@@ -10293,7 +10293,7 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->genres);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
-		strcp_s(xref_t.name, max_size, data->dirname);
+		strcp_s(xref_t.name, PATH_MAX, data->dirname);
 		return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	} else if (!strncmp(match, "xg:", 3)) {
 		_d_xref xref_t = { { 0 } };
