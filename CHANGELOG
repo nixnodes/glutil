@@ -69,6 +69,7 @@
  *   - + Plot field (imdblog) (rev. 43)
  *   - ~ Fixed max input length for iMDB synopsis (rev. 44)
  *   - % --batch shows plot (rev. 45)
+ *   - + crc32 and dec-crc32 fields (-x) (rev. 46)
  *
  * v1.8
  *
