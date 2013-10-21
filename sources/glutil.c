@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-45
+ * Version     : 1.9-46
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 45
+#define VER_REVISION 46
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -186,7 +186,7 @@ typedef unsigned long long int ulint64_t;
 #define a64					((ulint64_t) 1)
 #define a32					((uint32_t) 1)
 
-/* ------------------------------------------- */
+/* -------------------------------------------- */
 
 #pragma pack(push, 4)
 
@@ -252,7 +252,7 @@ typedef struct ___d_generic_s2044 {
 
 #pragma pack(pop)
 
-/* ------------------------------------------- */
+/* -------------------------------------------- */
 
 typedef struct e_arg {
 	int depth;
@@ -2440,7 +2440,7 @@ __d_cfg search_cfg_rf, register_cfg_rf;
 __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
 		gcb_lastonlog, gcb_game, gcb_tv, gcb_gen1;
 
-uint64_t file_crc32(char *, uint32_t *);
+off_t file_crc32(char *, uint32_t *);
 void g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
 int data_backup_records(char*);
 ssize_t file_copy(char *, char *, char *, uint32_t);
@@ -3335,7 +3335,7 @@ int g_init(int argc, char **argv) {
 				== -1 || WEXITSTATUS(r_e)) {
 			if (gfl & F_OPT_VERBOSE) {
 				print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
-				WEXITSTATUS(r_e), GLOBAL_PREEXEC);
+						WEXITSTATUS(r_e), GLOBAL_PREEXEC);
 			}
 			return 1;
 		}
@@ -3993,17 +3993,14 @@ int d_write(char *arg) {
 }
 
 int g_bin_compare(const void *p1, const void *p2, off_t size) {
-	unsigned char *b_ptr1 = (unsigned char *) p1,
-			*b_ptr2 = (unsigned char *) p2, *ptr1, *ptr2;
+	unsigned char *ptr1 = (unsigned char *) p1 + (size - 1), *ptr2 =
+			(unsigned char *) p2 + (size - 1);
 
-	ptr1 = b_ptr1 + (size - 1);
-	ptr2 = b_ptr2 + (size - 1);
-
-	while (ptr1[0] == ptr2[0] && ptr1 >= b_ptr1) {
+	while (ptr1[0] == ptr2[0] && ptr1 >= (unsigned char *) p1) {
 		ptr1--;
 		ptr2--;
 	}
-	if (ptr1 < b_ptr1) {
+	if (ptr1 < (unsigned char *) p1) {
 		return 0;
 	}
 	return 1;
@@ -4018,6 +4015,7 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 #define F_XRF_GET_GPERM		(a32 << 7)
 #define F_XRF_GET_OPERM		(a32 << 8)
 #define F_XRF_GET_PERM		(a32 << 9)
+#define F_XRF_GET_CRC32		(a32 << 10)
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
@@ -4030,6 +4028,7 @@ typedef struct ___d_xref {
 	uint8_t uperm, gperm, operm;
 	uint16_t perm;
 	uint32_t flags;
+	uint32_t crc32;
 } _d_xref, *__d_xref;
 
 typedef void (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
@@ -4169,7 +4168,9 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 	if (aa_rh->p_xref.flags & F_XRF_GET_EXEC) {
 		aa_rh->p_xref.x = (uint8_t) !(access(aa_rh->p_xref.name, X_OK));
 	}
-
+	if (aa_rh->p_xref.flags & F_XRF_GET_CRC32) {
+		file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
+	}
 }
 
 int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
@@ -4520,9 +4521,9 @@ int option_crc32(void *arg, int m) {
 
 	uint32_t crc32;
 
-	uint64_t read = file_crc32(buffer, &crc32);
+	off_t read = file_crc32(buffer, &crc32);
 
-	if (read)
+	if (read > 0)
 		print_str("%.8X\n", (uint32_t) crc32);
 	else {
 		print_str("ERROR: %s: [%d] could not get CRC32\n", buffer,
@@ -4997,7 +4998,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 						r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl))) {
 			if ((gfl & F_OPT_VERBOSE5)) {
 				print_str("WARNING: external call returned non-zero: [%d]\n",
-				WEXITSTATUS(r_e));
+						WEXITSTATUS(r_e));
 			}
 			r_p = 1;
 		}
@@ -5610,7 +5611,7 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 		if ((gfl & F_OPT_SFV)
 				&& (updmode == UPD_MODE_RECURSIVE || updmode == UPD_MODE_SINGLE)
 				&& reg_match(PREG_SFV_SKIP_EXT, fn2,
-				REG_ICASE | REG_NEWLINE) && file_crc32(name, &crc32)) {
+				REG_ICASE | REG_NEWLINE) && file_crc32(name, &crc32) > 0) {
 			fn = strdup(name);
 			char *dn = g_basename(dirname(fn));
 			free(fn2);
@@ -6829,8 +6830,6 @@ int gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count) {
 				md_g_free(md);
 				return -5;
 			}
-
-			//hdl->buffer_count++;
 		}
 		w_ptr += hdl->block_sz;
 	}
@@ -7918,16 +7917,16 @@ ssize_t file_copy(char *source, char *dest, char *mode, uint32_t flags) {
 	return t;
 }
 
-uint64_t file_crc32(char *file, uint32_t *crc_out) {
+off_t file_crc32(char *file, uint32_t *crc_out) {
 	g_setjmp(0, "file_crc32", NULL, NULL);
 	FILE *fp;
 	int read;
 	size_t r;
-	unsigned char *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE);
+	uint8_t *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE);
 
 	*crc_out = 0x0;
 
-	if ((fp = fopen((char*) &file[0], "rb")) == NULL) {
+	if ((fp = fopen(file, "rb")) == NULL) {
 		free(buffer);
 		return 0;
 	}
@@ -7935,15 +7934,21 @@ uint64_t file_crc32(char *file, uint32_t *crc_out) {
 	uint32_t crc = MAX_uint32_t;
 
 	for (read = 0, r = 0; !feof(fp);) {
-		if ((r = fread(buffer, 1, CRC_FILE_READ_BUFFER_SIZE, fp)) < 1)
+		if ((r = fread(buffer, 1, CRC_FILE_READ_BUFFER_SIZE, fp)) < 1) {
 			break;
+		}
 		crc = crc32(crc, buffer, r);
-		bzero(buffer, CRC_FILE_READ_BUFFER_SIZE);
+		//bzero(buffer, CRC_FILE_READ_BUFFER_SIZE);
 		read += r;
 	}
 
-	if (read)
+	if (ferror(fp)) {
+		return 0;
+	}
+
+	if (read) {
 		*crc_out = crc;
+	}
 
 	free(buffer);
 	fclose(fp);
@@ -8386,6 +8391,14 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 					(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
 					(uint16_t) ((st.st_mode & S_IRWXO)));
 		}
+	} else if (!strncmp(match, "crc32", 5)) {
+		uint32_t crc32;
+		file_crc32(data->name, &crc32);
+		snprintf(output, max_size, "%.8X", crc32);
+	} else if (!strncmp(match, "dec-crc32", 9)) {
+		uint32_t crc32;
+		file_crc32(data->name, &crc32);
+		snprintf(output, max_size, "%u", crc32);
 	} else if (!strncmp(match, "c:", 2)) {
 		return g_rtval_ex(data->name, &match[2], max_size, output,
 		F_CFGV_BUILD_FULL_STRING);
@@ -8490,6 +8503,10 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->st.st_mtime);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_mtime;
+	} else if (!strncmp(match, "crc32", 5)) {
+		*output = sizeof(data->crc32);
+		data->flags |= F_XRF_GET_CRC32;
+		return &((__d_xref) NULL)->crc32;
 	}
 
 	return NULL;
