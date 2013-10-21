@@ -70,6 +70,7 @@
  *   - ~ Fixed max input length for iMDB synopsis (rev. 44)
  *   - % --batch shows plot (rev. 45)
  *   - + crc32 and dec-crc32 fields (-x) (rev. 46)
+ *   - ~ 'xg:' extra reference field was broken globally (rev. 47)
  *
  * v1.8
  *
