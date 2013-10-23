@@ -1,7 +1,7 @@
 #!/usr/local/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:4
+#@REVISION:5
 #@MACRO:imdb-f:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-f-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}"
 #@MACRO:imdb-f-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}"
@@ -267,6 +267,7 @@ GENRE=`get_field genre`
 VOTES=`echo $(get_field imdbVotes) | tr -d ','`
 YEAR=`get_field year | tr -d ' '`
 RATED=`get_field rated`
+PLOT=`get_field plot`
 ACTORS=`get_field actors`
 DIRECTOR=`get_field director`
 RELEASED=`date -j -f '%d %b %Y' "$(D_g=$(get_field released); [ "$D_g" != "N/A" ] && echo "$D_g" || echo "")" +"%s"`
@@ -292,7 +293,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 }
         fi
 
-        echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\n\n" > /tmp/glutil.img.$$.tmp
+        echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
         $2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to imdblog!!"
         rm /tmp/glutil.img.$$.tmp
 fi
