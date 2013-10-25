@@ -1,23 +1,27 @@
 #!/usr/local/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:5
-#@MACRO:imdb-f:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
-#@MACRO:imdb-f-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}"
-#@MACRO:imdb-f-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}"
-#@MACRO:imdb-f-su-id:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}"
-#@MACRO:imdb-f-su-f1:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" iregex "dir,\/"
-#@MACRO:imdb-f-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' 0 0"
+#@REVISION:8
+#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}"
+#@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}"
+#@MACRO:imdb-su-id:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}"
+#@MACRO:imdb-su-f1:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" iregex "dir,\/"
+#@MACRO:imdb-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' 0 0"
+#
+## Install script dependencies + libs into glftpd root (requires mlocate)
+#
+#@MACRO:imdb-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname$f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-1.6 or above
+## Requires: - glutil-1.9-43 or above
 ##           - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
-## Usage (macro): glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]                  (filesystem based)
+## Usage (macro): glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]              (filesystem based)
 ##                glutil -m imdb-d --arg1 '\/(x264|xvid|movies)\/.*\-[a-zA-Z0-9\-_]*$'      (dirlog based)
 ##                glutil -m imdb-e -arg1=<query>                                            (single release)
 ##                glutil -m imdb-su                                                         (update existing records, pass query/dir name through the search engine)
@@ -35,7 +39,6 @@ IMDBURL="http://www.imdb.com/"
 #
 ## Define here if not using config file
 #INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
-
 INPUT_CLEAN_REGEX="([\\.\\_\\-\\(\\)]([1-2][0-9]{3,3}|(S[0-9]{1,3}E[0-9]{1,3}|E(P|())[0-9]{1,3}|S[0-9]{1,3}).*)[\\.\\_\\-\\(\\)].*)|([\\.\\_\\-\\(\\)](MACOSX|EUR|Creators[\\.\\_\\-\\(\\)]Edition|PATCH|DATAPACK|GAMEFIX|READ[\\.\\_\\-\\(\\)]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[\\.\\_\\-\\(\\)]CUT|READNFO|DLC|INCL[\\.\\_\\-\\(\\)]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|GOTY|MULTI|Crack|DOX|VOBSUBS|SUBPACK|BOXSET|FESTIVAL|(720|1080)[ip]|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|REPACK|XVID)([\\.\\_\\-\\(\\)]|$).*)|-([A-Z0-9a-z_-]*$)"
 #
 ## If set to 1, might cause mis-matches
@@ -64,7 +67,7 @@ RECORD_MAX_AGE=14
 TYPE_SPECIFIC_DB=0
 #
 ## Verbose output
-VERBOSE=1
+VERBOSE=0
 #
 ## Allowed types regular expression (per omdbapi)
 OMDB_ALLOWED_TYPES="movie|N\/A"
@@ -129,10 +132,10 @@ get_field()
 if ! [[ $7 -eq 2 ]]; then
         echo "$TD" | grep -w -i "$INPUT_SKIP" > /dev/null && exit 1
 
-        QUERY=$(echo "$TD" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r "s/[\\.\\_\\-\\(\\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//")
-       
+        QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r "s/[\\.\\_\\-\\(\\)]/+/g" | sed -r "s/^[+ ]+//"| sed -r "s/[+ ]+$//g"`
+
         [ -z "$QUERY" ] && exit 1
-       
+
         extract_year() {
                 echo "$1" | egrep -o "[\_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([\_\-\(\)\.\+\ ]|())" | tail -1 | sed -r "s/[\\_\\-\\(\\)\\.\+\ ]//g"
         }
@@ -151,28 +154,28 @@ if ! [[ $7 -eq 2 ]]; then
                 s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
                 cad $2 "--iregexi" "dir,^$s_q\$" "$3"
         fi
-       
+
         DTMP=`imdb_do_query "$QUERY""&ex=1"`
-       
+
         imdb_get_by_year() {
                 echo "$1" | xmllint --xpath "(((/IMDbResults//ImdbEntity)))" - 2> /dev/null | sed -r "s/<\/ImdbEntity>/\0\\n/g" | egrep "<Description>$2" | tr -d '\n'
         }
-       
+
         unset iid
         YR_F=0
-       
+
         [ -n "$YEAR_q" ] && {
                 DTMP_t=`imdb_get_by_year "$DTMP" $YEAR_q`
                 [ -n "$DTMP_t" ] && DTMP="<IMDbResults>""$DTMP_t""</IMDbResults>" || YR_F=1
         }
-       
+
         if [ $YR_F -eq 1 ] && [ $LOOSE_SEARCH -eq 0 ]; then
                 echo "WARNING: $QUERY ($YEAR_q): $TD: could not find by year, ignoring match.."
         else
                 iid=`imdb_search "$DTMP"`
         fi
-       
-       
+
+
         SMODE=0
         S_OMDB=0
         if [ -n "$iid" ] ; then
@@ -183,13 +186,13 @@ if ! [[ $7 -eq 2 ]]; then
                 iid=`omdb_search "$QUERY"`
                 S_OMDB=1
         fi
-       
+
         S_LOOSE=0
-       
+
         [ $LOOSE_SEARCH -eq 1 ] && [ -z "$iid" ] && {
                 echo "WARNING: $QUERY ($YEAR_q): $TD: omdbapi query failed, performing loose iMDB search.."
                 DTMP=`imdb_do_query "$QUERY"`
-       
+
                 [ -n "$YEAR_q" ] && {
                                 DTMP_t=`imdb_get_by_year "$DTMP" $YEAR_q`
                                 [ -n "$DTMP_t" ] && DTMP="<IMDbResults>$DTMP_t</IMDbResults>" || {
@@ -201,20 +204,20 @@ if ! [[ $7 -eq 2 ]]; then
                 SMODE=1
                 S_LOOSE=1
         }
-       
+
         [ -z "$iid" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
-       
+
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
                 cad $2 "--iregex" "imdbid,^$iid$" "$3"
         fi
-       
+
         DDT=`get_omdbapi_data "$iid"`
-       
+
         [ -z "$DDT" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
-       
-       
+
+
         TYPE=`get_field type`
-       
+
         if ! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES"; then
                 if [ $S_OMDB -eq 0 ]; then
                         echo "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying omdbapi.."
@@ -228,7 +231,7 @@ if ! [[ $7 -eq 2 ]]; then
                 elif [ $LOOSE_SEARCH -eq 1 ] && [ $S_LOOSE -eq 0 ] ; then
                         echo "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying loose search.."
                         DTMP=`imdb_do_query "$QUERY"`
-       
+
                         [ -n "$YEAR_q" ] && {
                                         DTMP_t=`imdb_get_by_year "$DTMP" $YEAR_q`
                                         [ -n "$DTMP_t" ] && DTMP="<IMDbResults>$DTMP_t</IMDbResults>" || {
@@ -245,17 +248,17 @@ if ! [[ $7 -eq 2 ]]; then
                         TYPE=`get_field type`
                 fi
         fi
-       
+
         TITLE=`get_field title`
        else
         iid="$1"
         QUERY="$8"
         YEAR_q="$9"
-       
+
         DDT=`get_omdbapi_data "$iid"`
-       
+
         [ -z "$DDT" ] && echo "ERROR: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
-       
+
         TYPE=`get_field type`
         TITLE=`get_field title`
 fi
@@ -267,9 +270,9 @@ GENRE=`get_field genre`
 VOTES=`echo $(get_field imdbVotes) | tr -d ','`
 YEAR=`get_field year | tr -d ' '`
 RATED=`get_field rated`
-PLOT=`get_field plot`
 ACTORS=`get_field actors`
 DIRECTOR=`get_field director`
+PLOT=`get_field plot`
 RELEASED=`date -j -f '%d %b %Y' "$(D_g=$(get_field released); [ "$D_g" != "N/A" ] && echo "$D_g" || echo "")" +"%s"`
 RUNTIME=`get_field runtime`
 RUNTIME_h=`echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g'`
@@ -295,6 +298,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 
         echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
         $2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to imdblog!!"
+
         rm /tmp/glutil.img.$$.tmp
 fi
 
