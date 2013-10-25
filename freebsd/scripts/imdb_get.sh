@@ -97,7 +97,7 @@ imdb_do_query() {
 
 imdb_search()
 {
-        echo "$1" | $XMLLINT --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|( )|[\"]//g'
+        echo "$1" | $XMLLINT --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|[ ]*|[\"]//g'
 }
 
 omdb_search()
