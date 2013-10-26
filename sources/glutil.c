@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-48
+ * Version     : 1.9-49
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 48
+#define VER_REVISION 49
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -693,6 +693,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
+#define MAX_DATAIN_F			(V_MB*32)
 
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE 		"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
@@ -1120,6 +1121,8 @@ int execv_stdout_redir = -1;
 
 int g_regex_flags = REG_EXTENDED;
 
+long long int max_datain_f = MAX_DATAIN_F;
+
 char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
 				"\n"
@@ -1244,6 +1247,7 @@ char *hpd_up =
 				"  -y, --followlinks     Follow symbolic links (default is skip)\n"
 				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
 				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
+				"  --memlimita=<bytes>   Maximum ASCII input data file size\n"
 				"  --shmem [--shmdestroy] [--shmdestonexit] [--shmreload]\n"
 				"                        Instead of internal memory, use the shared memory segment to buffer log data\n"
 				"                           This is usefull as an inter-process caching mechanism, allowing other glutil\n"
@@ -2371,7 +2375,7 @@ int opt_dirlog_chk_dupe(void *arg, int m) {
 int opt_membuffer_limit(void *arg, int m) {
 	char *buffer = g_pg(arg, m);
 	if (!buffer) {
-		return 1;
+		return 3512;
 	}
 	long long int l_buffer = atoll(buffer);
 	if (l_buffer > 1024) {
@@ -2384,6 +2388,26 @@ int opt_membuffer_limit(void *arg, int m) {
 		print_str(
 				"NOTICE: invalid memory buffer limit, using default (%lld bytes)\n",
 				db_max_size);
+	}
+	return 0;
+}
+
+int opt_membuffer_limit_in(void *arg, int m) {
+	char *buffer = g_pg(arg, m);
+	if (!buffer) {
+		return 3513;
+	}
+	long long int l_buffer = atoll(buffer);
+	if (l_buffer > 8192) {
+		max_datain_f = l_buffer;
+		if (gfl & F_OPT_VERBOSE) {
+			print_str("NOTICE: ASCII input buffer limit set to %lld bytes\n",
+					l_buffer);
+		}
+	} else {
+		print_str(
+				"NOTICE: invalid ASCII input buffer limit, using default (%lld bytes)\n",
+				max_datain_f);
 	}
 	return 0;
 }
@@ -2644,7 +2668,8 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		(void*) 1, "-execv", opt_execv, (void*) 1, "-exec", opt_exec, (void*) 1,
 		"--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u",
 		opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1,
-		"-p", opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
+		"--memlimita", opt_membuffer_limit_in, (void*) 1, "-p",
+		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
 		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "-n",
 		opt_dirlog_dump_nukelog, (void*) 0, "--help", print_help, (void*) 0,
 		"--version", print_version, (void*) 0, "--folders",
@@ -3838,8 +3863,6 @@ int d_gen_dump(char *arg) {
 	return g_print_stats(datafile, 0, 0);
 }
 
-#define MAX_DATAIN_F		(V_MB*512)
-
 int d_write(char *arg) {
 	g_setjmp(0, "d_write", NULL, NULL);
 
@@ -3891,8 +3914,8 @@ int d_write(char *arg) {
 	}
 
 	if (!(gfl & F_OPT_MODE_BINARY)) {
-		char *buffer = malloc(MAX_DATAIN_F);
-		if (!(fsz = read_file(NULL, buffer, MAX_DATAIN_F, 0, in))) {
+		char *buffer = malloc(max_datain_f);
+		if (!(fsz = read_file(NULL, buffer, max_datain_f, 0, in))) {
 			print_str("ERROR: %s: could not read input data\n", datafile);
 			ret = 4;
 			free(buffer);
