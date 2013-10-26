@@ -72,6 +72,8 @@
  *   - + crc32 and dec-crc32 fields (-x) (rev. 46)
  *   - ~ 'xg:' extra reference field was broken globally (rev. 47)
  *   - ~ Potential overflow when referencing x:<field> (rev. 48)
+ *   - % Reduced default ASCII data file buffer size to 32MB (rev. 49)
+ *   - + --memlimita=<bytes>, overrides default ASCII data buffer size (rev. 49) 
  *
  * v1.8
  *
