@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:12
+#@REVISION:13
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -102,16 +102,23 @@ fi
 
 DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=$QUERY"`
 
+echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
+	echo "$DDT - retrying.."
+	sleep 2
+	$0 $@
+	exit $?
+}
+
 [ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY" && exit 1
 
 get_field()
 {
-	echo $DDT | $XMLLINT --xpath "((/Results//show)[1]/$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>//g"
+	echo "$DDT" | $XMLLINT --xpath "((/Results//show)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>//g"
 }
 
 get_field_t()
 {
-	echo $DDT | $XMLLINT --xpath "((/Results//show)[1]/$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
+	echo "$DDT" | $XMLLINT --xpath "((/Results//show)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
 }
 
 SHOWID=`get_field showid`
@@ -121,6 +128,7 @@ if [ -z "$SHOWID" ]; then
 	[ $VERBOSE -gt 0 ] && echo "$DDT"
 	exit 1
 fi
+
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "showid,^$SHOWID$" "$3"	
 fi
