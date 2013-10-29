@@ -76,6 +76,7 @@
  *   - + --memlimita=<bytes>, overrides default ASCII data buffer size (rev. 49) 
  *   - ~ {director} returning title (imdblog) (rev. 50)
  *   - % --[i]matchq works in rebuild mode (-e) (rev. 50)
+ *   - ~ Plugged memory leak in file_crc32 (rev. 51)
  *
  * v1.8
  *
