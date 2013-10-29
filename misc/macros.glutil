@@ -1,4 +1,4 @@
-#@REVISION:17
+#@REVISION:18
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -87,7 +87,10 @@
 #
 ## Usage:
 #
-#   glutil -m dirlog-to-text -arg1=dirlog.txt
+#   glutil -m dirlog-to-text -arg1=dirlog.txt [-arg2=<extra arguments>]
+#
+#		-arg2 is optional, adds extra glutil arguments to the 
+#		 command line
 #
 ## Convert back into binary format:
 #
@@ -97,8 +100,8 @@
 ##   default dirlog path
 #
 #@MACRO:dirlog-to-ascii:{m:exe} -d --esredir={m:arg1} --execv `echo -en "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n\n"` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
-#@MACRO:imdb-to-ascii:{m:exe} -a --esredir={m:arg1} --execv `echo -en "dir {dir}\ntime {time}\nimdbid {imdbid}\nscore {score}\ngenre {genres}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n"` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
-#@MACRO:tvrage-to-ascii:{m:exe} -h --esredir={m:arg1} --execv `echo -en "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenres {genres}\nstatus {status}\n\n"` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
+#@MACRO:imdb-to-ascii:{m:exe} -a --esredir={m:arg1} --execv `echo -en "dir {dir}\ntime {time}\nimdbid {imdbid}\nplot {plot}\nscore {score}\ngenre {genre}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n\n"` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}` 
+#@MACRO:tvrage-to-ascii:{m:exe} -h --esredir={m:arg1} --execv `echo -en "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenre {genre}\nstatus {status}\n\n"` {m:arg2} --silent --postexec `echo -en "\n" >> {m:arg1}`
 #
 ## <dirlog-clean-dupes>
 #
@@ -194,3 +197,20 @@
 #@MACRO:print-lastonlog-info:{m:exe} noop --silent --preexec `if [ {q:lastonlog@read} -eq 0 ]; then echo "WARNING: unable to read lastonlog, no read permission"; exit 1;elif [ {q:lastonlog@read} -eq -1 ]; then echo "WARNING: unable to access lastonlog"; exit 1; fi; echo "LASTONLOG: {q:lastonlog@file}: {q:lastonlog@size} bytes in {q:lastonlog@count} records, block size: {q:lastonlog@bsize}"; [ {q:lastonlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt lastonlog detected, size is not a multiple of {q:lastonlog@bsize}"; [ {q:lastonlog@write} -eq 0 ] && echo "WARNING: no write access to lastonlog"`
 #@MACRO:print-imdb-info:{m:exe} noop --silent --preexec `if [ {q:imdb@read} -eq 0 ]; then echo "WARNING: unable to read imdb, no read permission"; exit 1;elif [ {q:imdb@read} -eq -1 ]; then echo "WARNING: unable to access imdb"; exit 1; fi; echo "IMDB: {q:imdb@file}: {q:imdb@size} bytes in {q:imdb@count} records, block size: {q:imdb@bsize}"; [ {q:imdb@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt imdb detected, size is not a multiple of {q:imdb@bsize}"; [ {q:imdb@write} -eq 0 ] && echo "WARNING: no write access to imdb"`
 #@MACRO:print-tvrage-info:{m:exe} noop --silent --preexec `if [ {q:tvrage@read} -eq 0 ]; then echo "WARNING: unable to read tvrage, no read permission"; exit 1;elif [ {q:tvrage@read} -eq -1 ]; then echo "WARNING: unable to access tvrage"; exit 1; fi; echo "TVRAGE: {q:tvrage@file}: {q:tvrage@size} bytes in {q:tvrage@count} records, block size: {q:tvrage@bsize}"; [ {q:tvrage@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt tvrage detected, size is not a multiple of {q:tvrage@bsize}"; [ {q:tvrage@write} -eq 0 ] && echo "WARNING: no write access to tvrage"`
+#
+## <edit-<logname>>
+#
+## These are basically for editing the 
+##   binary logs by hand
+#
+## Example usage:
+#
+#    glutil -m edit-dirlog [-arg1=<regex>]
+#
+## -arg1 is optional, used to select 
+##   specific entries to edit
+#
+#@MACRO:edit-dirlog:{m:exe} noop silent --preexec `if ! glutil -q dirlog iregex dir,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m dirlog-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"dir,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e dirlog --nofq regex dir,"{m:arg1}" silent && glutil -z dirlog -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-tvrage:{m:exe} noop silent --preexec `if ! glutil -q tvrage iregex name,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m tvrage-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"name,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e tvrage --nofq regex name,"{m:arg1}" silent && glutil -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-imdb:{m:exe} noop silent --preexec `if ! glutil -q imdb iregex title,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m imdb-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"title,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e imdb --nofq regex title,"{m:arg1}" silent && glutil -z imdb -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#
