@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-50
+ * Version     : 1.9-51
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 50
+#define VER_REVISION 51
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -7972,6 +7972,8 @@ off_t file_crc32(char *file, uint32_t *crc_out) {
 	}
 
 	if (ferror(fp)) {
+		free(buffer);
+		fclose(fp);
 		return 0;
 	}
 
