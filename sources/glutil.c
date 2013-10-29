@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-49
+ * Version     : 1.9-50
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 49
+#define VER_REVISION 50
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -633,6 +633,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OVRR_GE1LOG			(a32 << 13)
 #define F_OVRR_LOGFILE			(a32 << 14)
 #define F_ESREDIRFAILED			(a32 << 15)
+#define F_BM_TERM				(a32 << 16)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -3158,7 +3159,8 @@ int g_init(int argc, char **argv) {
 
 	if (r == -2 || r == -1) {
 		print_str("See --help\n");
-		return 4;
+		EXITVAL = 4;
+		return EXITVAL;
 	}
 
 	if (r > 0) {
@@ -5033,7 +5035,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 
 	if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p)) {
 		EXITVAL = 1;
-		gfl |= F_OPT_KILL_GLOBAL;
+		ofl |= F_BM_TERM;
 	}
 
 	return r_p;
@@ -5116,7 +5118,7 @@ int g_filter(__g_handle hdl, pmda md) {
 	int r = 0;
 
 	while (ptr) {
-		if (gfl & F_OPT_KILL_GLOBAL) {
+		if (ofl & F_BM_TERM) {
 			break;
 		}
 		if (g_bmatch(ptr->ptr, hdl, md)) {
@@ -5299,6 +5301,10 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		print_str("STATS: %s: read %llu/%llu records\n", file,
 				(unsigned long long int) c,
 				!g_act_1.buffer.count ? c : g_act_1.buffer.count);
+	}
+
+	if ((gfl & F_OPT_NOFQ) && !c) {
+		EXITVAL = 1;
 	}
 
 	r_end:
@@ -6540,7 +6546,7 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
-	if (gfl & F_OPT_KILL_GLOBAL) {
+	if ((gfl & F_OPT_KILL_GLOBAL) && !(gfl & F_OPT_FORCE)) {
 		print_str( MSG_REDF_ABORT, file);
 		return 0;
 	}
@@ -6584,7 +6590,7 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 
 	g_setjmp(0, "rebuild_data_file(4)", NULL, NULL);
 
-	if (gfl & F_OPT_KILL_GLOBAL) {
+	if ((gfl & F_OPT_KILL_GLOBAL) && !(gfl & F_OPT_FORCE)) {
 		print_str( MSG_REDF_ABORT, file);
 		if (!(gfl & F_OPT_NOWRITE)) {
 			remove(hdl->s_buffer);
@@ -6600,8 +6606,8 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 
 	g_setjmp(0, "rebuild_data_file(5)", NULL, NULL);
 
-	if (!(gfl & F_OPT_FORCE) && !(gfl & F_OPT_NOWRITE)
-			&& (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz) {
+	if (!(gfl & F_OPT_FORCE2) && !(gfl & F_OPT_NOWRITE) && (sz_r =
+			get_file_size(hdl->s_buffer)) < hdl->block_sz) {
 		print_str(
 				"ERROR: %s: [%u/%u] generated data file is smaller than a single record!\n",
 				hdl->s_buffer, (uint32_t) sz_r, (uint32_t) hdl->block_sz);
@@ -10157,8 +10163,6 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		strcp_s(output, max_size, g_basename(data->dirname));
-	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
-		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, _MC_IMDB_IMDBID, 6)) {
 		strcp_s(output, max_size, data->imdb_id);
 	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
@@ -10169,6 +10173,8 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->title);
 	} else if (!strncmp(match, _MC_IMDB_DIRECT, 8)) {
 		strcp_s(output, max_size, data->director);
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
+		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, _MC_IMDB_ACTORS, 6)) {
 		strcp_s(output, max_size, data->actors);
 	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
@@ -10192,9 +10198,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 char* ref_to_val_imdb_ps(void *arg, char *match, char *output, size_t max_size) {
 	__d_imdb data = (__d_imdb) arg;
 
-	if (!strncmp(match, _MC_GLOB_DIR, 3)) {
-		return data->dirname;
-	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+	if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
 		return g_basename(data->dirname);
 	} else if (!strncmp(match, _MC_IMDB_IMDBID, 6)) {
 		return data->imdb_id;
@@ -10206,6 +10210,8 @@ char* ref_to_val_imdb_ps(void *arg, char *match, char *output, size_t max_size) 
 		return data->title;
 	} else if (!strncmp(match, _MC_IMDB_DIRECT, 8)) {
 		return data->director;
+	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
+		return data->dirname;
 	} else if (!strncmp(match, _MC_IMDB_ACTORS, 6)) {
 		return data->actors;
 	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
