@@ -74,6 +74,8 @@
  *   - ~ Potential overflow when referencing x:<field> (rev. 48)
  *   - % Reduced default ASCII data file buffer size to 32MB (rev. 49)
  *   - + --memlimita=<bytes>, overrides default ASCII data buffer size (rev. 49) 
+ *   - ~ {director} returning title (imdblog) (rev. 50)
+ *   - % --[i]matchq works in rebuild mode (-e) (rev. 50)
  *
  * v1.8
  *
