@@ -1,4 +1,4 @@
-#@REVISION:18
+#@REVISION:19
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -203,14 +203,14 @@
 ## These are basically for editing the 
 ##   binary logs by hand
 #
-## Example usage:
+## Usage:
 #
 #    glutil -m edit-dirlog [-arg1=<regex>]
 #
 ## -arg1 is optional, used to select 
 ##   specific entries to edit
 #
-#@MACRO:edit-dirlog:{m:exe} noop silent --preexec `if ! glutil -q dirlog iregex dir,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m dirlog-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"dir,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e dirlog --nofq regex dir,"{m:arg1}" silent && glutil -z dirlog -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
-#@MACRO:edit-tvrage:{m:exe} noop silent --preexec `if ! glutil -q tvrage iregex name,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m tvrage-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"name,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e tvrage --nofq regex name,"{m:arg1}" silent && glutil -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
-#@MACRO:edit-imdb:{m:exe} noop silent --preexec `if ! glutil -q imdb iregex title,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m imdb-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"title,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e imdb --nofq regex title,"{m:arg1}" silent && glutil -z imdb -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-dirlog:{m:exe} noop silent --preexec `if ! glutil -q dirlog iregex dir,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m dirlog-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"dir,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [-z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e dirlog --nofq regex dir,"{m:arg1}" silent && glutil -z dirlog -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-tvrage:{m:exe} noop silent --preexec `if ! glutil -q tvrage iregex name,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m tvrage-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"name,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [-z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e tvrage --nofq regex name,"{m:arg1}" silent && glutil -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-imdb:{m:exe} noop silent --preexec `if ! glutil -q imdb iregex title,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; glutil -m imdb-to-ascii -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"title,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [-z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then glutil -e imdb --nofq regex title,"{m:arg1}" silent && glutil -z imdb -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
 #
