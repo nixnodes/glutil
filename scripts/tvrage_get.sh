@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:13
+#@REVISION:14
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -100,12 +100,12 @@ fi
 
 [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
 
-DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=$QUERY"`
+DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY"`
 
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 	echo "$DDT - retrying.."
 	sleep 2
-	$0 $@
+	$0 "$1" "$2" "$3" "$4" "$5" $6 $7 
 	exit $?
 }
 
