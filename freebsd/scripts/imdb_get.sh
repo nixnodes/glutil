@@ -291,7 +291,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
-                $2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex i mdbid,"^$iid$" > /dev/null || {
+                $2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex imdbid,"^$iid$" > /dev/null || {
                         echo "ERROR: $iid: Failed removing old record" && exit 1
                 }
         fi
