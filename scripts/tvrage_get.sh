@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:1
-#@REVISION:15
+#@VERSION:2
+#@REVISION:0
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -56,7 +56,10 @@ RECORD_MAX_AGE=14
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
 #
-VERBOSE=0
+## Extract year from release string and apply to searches
+TVRAGE_SEARCH_BY_YEAR=1
+#
+VERBOSE=1
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -93,14 +96,18 @@ cad() {
 	fi
 }
 
-if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_QUERY_DUPE -eq 1 ]; then
-	s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-	cad $2 "--iregexi" "dir,^$s_q\$" "$3"
-fi
+extract_year() {
+	echo "$1" | egrep -o "[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())" | tail -1 | sed -r "s/[_\-\(\)\.\+\ ]//g"
+}
+
+[ $TVRAGE_SEARCH_BY_YEAR -eq 1 ] && {
+	YEAR_q=`extract_year "$TD"`
+	[ -n "$YEAR_q" ] && YQ_O='+'$YEAR_q
+}
 
 [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
 
-DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY"`
+DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
 
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 	echo "$DDT - retrying.."
