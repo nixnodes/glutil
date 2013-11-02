@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:10
+#@REVISION:11
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -22,7 +22,7 @@
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
 ## Usage (macro): glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]              (filesystem based)
-##                glutil -m imdb-d --arg1 '\/(x264|xvid|movies)\/.*\-[a-zA-Z0-9\-_]*$'      (dirlog based)
+##                glutil -m imdb-d --arg1 '\/(x264|xvid|movies|dvdr|bluray)\/.*\-[a-zA-Z0-9\-_]*$'      (dirlog based)
 ##                glutil -m imdb-e -arg1=<query>                                            (single release)
 ##                glutil -m imdb-su                                                         (update existing records, pass query/dir name through the search engine)
 ##                glutil -m imdb-su-id                                                      (update records using existing imdbID's, no searching is done)
