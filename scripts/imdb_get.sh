@@ -21,11 +21,11 @@
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
-## Usage (macro): glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]              (filesystem based)
-##                glutil -m imdb-d --arg1 '\/(x264|xvid|movies|dvdr|bluray)\/.*\-[a-zA-Z0-9\-_]*$'      (dirlog based)
-##                glutil -m imdb-e -arg1=<query>                                            (single release)
-##                glutil -m imdb-su                                                         (update existing records, pass query/dir name through the search engine)
-##                glutil -m imdb-su-id                                                      (update records using existing imdbID's, no searching is done)
+## Usage (macro): glutil -m imdb --arg1=/path/to/movies [--arg2=<path filter>]              		(filesystem based)
+##                glutil -m imdb-d --arg1 '\/(x264|xvid|movies|dvdr|bluray)\/.*\-[a-zA-Z0-9\-_]*$'  (dirlog based)
+##                glutil -m imdb-e -arg1=<query>                                            		(single release)
+##                glutil -m imdb-su                                                         		(update existing records, pass query/dir name through the search engine)
+##                glutil -m imdb-su-id                                                      		(update records using existing imdbID's, no searching is done)
 #
 ##  To use these macros, place script in the same directory (or any subdirectory) where glutil is located
 #

@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:14
+#@REVISION:15
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -17,8 +17,8 @@
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr
 #
-## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 (filesystem based)
-##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid)\/.*\-[a-zA-Z0-9\-_]+$'   (dirlog based)
+## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 				(filesystem based)
+##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr)\/.*\-[a-zA-Z0-9\-_]+$'   	(dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
