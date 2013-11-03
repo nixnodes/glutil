@@ -1,4 +1,4 @@
-#@REVISION:20
+#@REVISION:21
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -117,10 +117,11 @@
 #
 ## This can take a long time, depending on the log size
 #
-#@MACRO:dirlog-clean-dupes:{m:exe} -d -execv `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
-#@MACRO:imdb-clean-dupes:{m:exe} -a -execv `{m:exe} -e imdb --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
-#@MACRO:imdb-clean-dupes-id:{m:exe} -a -execv `{m:exe} -e imdb --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit ` --silent
-#@MACRO:tvrage-clean-dupes:{m:exe} -h -execv `{m:exe} -e tvrage --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
+#@MACRO:dirlog-clean-dupes:{m:exe} -d --dirlog={m:q:dirlog@file} -execv `{m:exe} -e dirlog --dirlog={m:q:dirlog@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#@MACRO:imdb-clean-dupes:{m:exe} -a --imdblog={m:q:imdb@file} -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
+#@MACRO:imdb-clean-dupes-id:{m:exe} -a --imdblog={m:q:imdb@file} -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit ` --silent
+#@MACRO:tvrage-clean-dupes:{m:exe} -h --tvlog={m:q:tvrage@file} -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
+#@MACRO:tvrage-clean-dupes-id:{m:exe} -h --tvlog={m:q:tvrage@file} -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --lom "showid={showid}" --nofq --loglevel=6 --ifhit ` --silent
 #
 ## <dirlog-clean-dupes-rm>
 #
@@ -147,7 +148,7 @@
 #
 ## <dirlog-clean-empty>
 #
-## Clean  dirlog records that are size 0 and
+## Clean dirlog records that are size 0 and
 ##  have no files
 #
 ## Filters based on dirlog (not filesystem) file/size
