@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-51
+ * Version     : 1.9-52
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 51
+#define VER_REVISION 52
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -8152,6 +8152,7 @@ int rtv_q(void *query, char *output, size_t max_size) {
 	p_md_obj ptr;
 
 	if (split_string(query, 0x40, &md_s) != 2) {
+		bzero(output, max_size);
 		return 0;
 	}
 
@@ -8160,6 +8161,7 @@ int rtv_q(void *query, char *output, size_t max_size) {
 	char *rtv_l = g_dgetf((char*) ptr->ptr);
 
 	if (!rtv_l) {
+		bzero(output, max_size);
 		return 0;
 	}
 
@@ -8212,6 +8214,8 @@ int rtv_q(void *query, char *output, size_t max_size) {
 	} else if (!strncmp(rtv_q, "write", 5)) {
 		snprintf(output, max_size, "%d",
 				!access(rtv_l, W_OK) ? 1 : errno == EACCES ? 0 : -1);
+	} else {
+		bzero(output, max_size);
 	}
 
 	end:
