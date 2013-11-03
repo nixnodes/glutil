@@ -1,11 +1,15 @@
 #!/usr/local/bin/bash
-#@VERSION:1
-#@REVISION:14
+# DO NOT EDIT/REMOVE THESE LINES
+#@VERSION:2
+#@REVISION:3
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
-#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
+#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2}
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
 #@MACRO:tvrage-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
-#@MACRO:tvrage-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#
+## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
+#
+#@MACRO:tvrage-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets show info using TVRAGE API (XML)
 #
@@ -13,8 +17,8 @@
 ##                       - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr
 #
-## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 (filesystem based)
-##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid)\/.*\-[a-zA-Z0-9\-_]+$'   (dirlog based)
+## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                                               (filesystem based)
+##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'        (dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
 #
@@ -47,15 +51,19 @@ DENY_QUERY_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast
 ##  this old (days) (when DENY_TVID_DUPE=1 or DENY_QUERY_DUPE=1)
-RECORD_MAX_AGE=14
+RECORD_MAX_AGE=30
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
 #
+## Extract year from release string and apply to searches
+TVRAGE_SEARCH_BY_YEAR=1
+#
 VERBOSE=0
 ############################[ END OPTIONS ]##############################
+
 CURL="/usr/local/bin/curl"
-CURL_FLAGS="--silent"
+CURL_FLAGS="--silent --max-time 30"
 
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/local/bin/xmllint"
@@ -70,7 +78,7 @@ BASEDIR=`dirname $0`
 
 echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
 
-QUERY=$(echo "$TD" | tr ' ' '+' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r "s/[\\.\\_\\-\\(\\)]/\+/g" | sed -r "s/^[+ ]+)|([+ ]+$)//g" )
+QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r 's/[\\.\\_\\-\\(\\)]/\+/g' | sed -r 's/^[+ ]+)|([+ ]+$)//g'`
 
 [ -z "$QUERY" ] && exit 1
 
@@ -88,23 +96,27 @@ cad() {
         fi
 }
 
-if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_QUERY_DUPE -eq 1 ]; then
-        s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-        cad $2 "--iregexi" "dir,^$s_q\$" "$3"
-fi
+extract_year() {
+        echo "$1" | egrep -o "[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())" | head -1 | sed -r "s/[_\-\(\)\.\+\ ]//g"
+}
+
+[ $TVRAGE_SEARCH_BY_YEAR -eq 1 ] && {
+        YEAR_q=`extract_year "$TD"`
+        [ -n "$YEAR_q" ] && YQ_O='+'$YEAR_q
+}
 
 [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
 
-DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY"`
+DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
 
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
-        echo "$DDT - retrying.."
+        [ $VERBOSE -gt 0 ] && echo "$DDT - retrying.."
         sleep 2
         $0 "$1" "$2" "$3" "$4" "$5" $6 $7
         exit $?
 }
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O" && exit 1
 
 get_field()
 {
@@ -123,6 +135,7 @@ if [ -z "$SHOWID" ]; then
         [ $VERBOSE -gt 0 ] && echo "$DDT"
         exit 1
 fi
+
 if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
         cad $2 "--iregex" "showid,^$SHOWID$" "$3"
 fi
@@ -143,11 +156,11 @@ RUNTIME=`get_field runtime`
 [ -z "$RUNTIME" ] && RUNTIME=0
 LINK=`get_field link`
 [ -z "$LINK" ] && LINK="N/A"
-ZZ=$(get_field started)
-[ $(echo "$ZZ" | tr '/' ' ' | wc -w) -eq 2 ] && ZZ="1 $ZZ"
+ZZ=`get_field started`
+[ `echo "$ZZ" | tr '/' ' ' | wc -w` -eq 2 ] && ZZ="1 $ZZ"
 [ -n "$ZZ" ] && STARTED=$(date -j -f '%b %d %Y' "`echo "$ZZ" | tr '/' ' '`" +"%s") || STARTED=0
-ZZ=$(get_field ended)
-[ $(echo "$ZZ" | tr '/' ' ' | wc -w) -eq 2 ] && ZZ="1 $ZZ"
+ZZ=`get_field ended`
+[ `echo "$ZZ" | tr '/' ' ' | wc -w` -eq 2 ] && ZZ="1 $ZZ"
 [ -n "$ZZ" ] && ENDED=$(date -j -f '%b %d %Y' "`echo "$ZZ" | tr '/' ' '`" +"%s") || ENDED=0
 GENRES=`get_field_t '/genres//genre[.]'`
 [ -z "$GENRES" ] && GENRES="N/A"
@@ -172,6 +185,6 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
         rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
+echo "TVRAGE: `echo "'$NAME'" | tr '+' ' '` : $TD : $LINK -> Country: $COUNTRY -> Class: $CLASS -> Genre: $GENRES"
 
 exit 0
