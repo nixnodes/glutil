@@ -42,6 +42,7 @@ FLAGS:
    nukestr    S     glFTPd nuke string extracted from glftpd.conf
    memlimit   S     Maximum number of bytes that can be buffered
    glconf     S     Path to glftpd.conf per glconf.h
+   curtime    S	    Seconds passed since Epoch
   
 ; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
 
@@ -67,6 +68,7 @@ FLAGS:
    perm       S     File permissions string
    crc32      I     CRC32 of file (hexadecimal)
    dec-crc32  S     CRC32 of file (decimal)
+   curtime    I     Seconds passed since Epoch (when LOM matching, trailing +/- increase/decrease this value, e.g curtime-3600, curtime+7200, ..)
   
 ; DIRLOG
 
