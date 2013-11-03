@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:2
+#@REVISION:3
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -59,7 +59,7 @@ TYPE_SPECIFIC_DB=0
 ## Extract year from release string and apply to searches
 TVRAGE_SEARCH_BY_YEAR=1
 #
-VERBOSE=1
+VERBOSE=0
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -97,7 +97,7 @@ cad() {
 }
 
 extract_year() {
-	echo "$1" | egrep -o "[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())" | tail -1 | sed -r "s/[_\-\(\)\.\+\ ]//g"
+	echo "$1" | egrep -o "[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())" | head -1 | sed -r "s/[_\-\(\)\.\+\ ]//g"
 }
 
 [ $TVRAGE_SEARCH_BY_YEAR -eq 1 ] && {

@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:11
+#@REVISION:12
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -137,7 +137,7 @@ if ! [ $7 -eq 2 ]; then
         [ -z "$QUERY" ] && exit 1
 
         extract_year() {
-                echo "$1" | egrep -o "[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())" | tail -1 | sed -r "s/[_\-\(\)\.\+\ ]//g"
+                echo "$1" | egrep -o "[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())" | head -1 | sed -r "s/[_\-\(\)\.\+\ ]//g"
         }
 
         [ $IMDB_SEARCH_BY_YEAR -eq 1 ] && {
