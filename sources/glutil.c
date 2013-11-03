@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-52
+ * Version     : 1.9-53
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 52
+#define VER_REVISION 53
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -4041,9 +4041,13 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 #define F_XRF_GET_OPERM		(a32 << 8)
 #define F_XRF_GET_PERM		(a32 << 9)
 #define F_XRF_GET_CRC32		(a32 << 10)
+#define F_XRF_GET_CTIME		(a32 << 11)
+#define F_XRF_GET_CTIME_P	(a32 << 12)
+#define F_XRF_GET_CTIME_M	(a32 << 13)
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
+#define F_XRF_CTIME_DM		(F_XRF_GET_CTIME|F_XRF_GET_CTIME_P|F_XRF_GET_CTIME_M)
 
 typedef struct ___d_xref {
 	char name[PATH_MAX];
@@ -4054,6 +4058,8 @@ typedef struct ___d_xref {
 	uint16_t perm;
 	uint32_t flags;
 	uint32_t crc32;
+	time_t curtime;
+	time_t ct_off;
 } _d_xref, *__d_xref;
 
 typedef void (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
@@ -4196,6 +4202,22 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 	if (aa_rh->p_xref.flags & F_XRF_GET_CRC32) {
 		file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
 	}
+
+	switch (aa_rh->p_xref.flags & F_XRF_CTIME_DM) {
+	case F_XRF_GET_CTIME:
+		aa_rh->p_xref.curtime = time(NULL);
+		break;
+	case F_XRF_GET_CTIME_M:
+		aa_rh->p_xref.curtime = time(NULL) - aa_rh->p_xref.ct_off;
+		break;
+	case F_XRF_GET_CTIME_P:
+		aa_rh->p_xref.curtime = time(NULL) + aa_rh->p_xref.ct_off;
+		break;
+	}
+
+	/*if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
+	 aa_rh->p_xref.curtime = time(NULL);
+	 }*/
 }
 
 int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
@@ -8244,6 +8266,8 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 		remove_repeating_chars(output, 0x2F);
 	} else if (!strncmp(match, "memlimit", 8)) {
 		snprintf(output, max_size, "%llu", db_max_size);
+	} else if (!strncmp(match, "curtime", 7)) {
+		snprintf(output, max_size, "%u", (uint32_t) time(NULL));
 	} else if (!strncmp(match, "q:", 2)) {
 		return rtv_q(&match[2], output, max_size);
 	} else if (!strncmp(match, "exe", 3)) {
@@ -8542,6 +8566,22 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->crc32);
 		data->flags |= F_XRF_GET_CRC32;
 		return &((__d_xref) NULL)->crc32;
+	} else if (!strncmp(match, "curtime", 7)) {
+		*output = sizeof(data->curtime);
+		switch (match[7]) {
+			case 0x2D:
+			data->flags |= F_XRF_GET_CTIME_M;
+			data->ct_off = (time_t) atoll(&match[8]);
+			break;
+			case 0x2B:
+			data->flags |= F_XRF_GET_CTIME_P;
+			data->ct_off = (time_t) atoll(&match[8]);
+			break;
+			default:
+			data->flags |= F_XRF_GET_CTIME;
+			break;
+		}
+		return &((__d_xref) NULL)->curtime;
 	}
 
 	return NULL;
@@ -9414,7 +9454,8 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
 		w_ptr = ptr;
 		i = 0;
-		while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E) {
+		while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E
+				|| ptr[0] == 0x2B || ptr[0] == 0x2D) {
 			i++;
 			ptr++;
 		}
@@ -9454,7 +9495,8 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
 		w_ptr = ptr;
 		i = 0;
-		while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E) {
+		while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E
+				|| ptr[0] == 0x2B || ptr[0] == 0x2D) {
 			i++;
 			ptr++;
 		}
