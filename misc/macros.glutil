@@ -1,4 +1,4 @@
-#@REVISION:21
+#@REVISION:22
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -123,30 +123,9 @@
 #@MACRO:tvrage-clean-dupes:{m:exe} -h --tvlog={m:q:tvrage@file} -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit ` --silent
 #@MACRO:tvrage-clean-dupes-id:{m:exe} -h --tvlog={m:q:tvrage@file} -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --lom "showid={showid}" --nofq --loglevel=6 --ifhit ` --silent
 #
-## <dirlog-clean-dupes-rm>
-#
-## Requires glutil-1.9-10 or above
-#
-## Same as <dirlog-clean-dupes>, but wipes the filesystem
-## directory too (after dirlog) 
-#
-## !WARNING! There could be unforseen factors
-##  causing mismatches, blindly running this 
-##  macro is highly dicouraged. !WARNING!
-#
-## !!MAKE SURE 1.9-10 (or above) IS INSTALLED!!
-##   Otherwise, EVERY glutil -e call will return positive,
-##   making it wipe each dir found in dirlog, from the
-##   filesystem - potentially wiping the entire site  
-#
-## Before proceeding, verify the sanity of glutil's return 
-## value by replacing "rm -R" with "echo" (or similar)
-#
-#@MACRO:dirlog-clean-dupes-rm:{m:exe} -d -exec `{m:exe} -e dirlog --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --silent && echo "erasing \"{glroot}{dir}\"" && rm -R \"{glroot}{dir}\"` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+## <dirlog-clean-empty>
 #
 ## Requires glutil-1.9-11 or above
-#
-## <dirlog-clean-empty>
 #
 ## Clean dirlog records that are size 0 and
 ##  have no files
