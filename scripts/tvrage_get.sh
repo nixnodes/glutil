@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:5
+#@REVISION:6
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -153,10 +153,12 @@ adjust_tc() {
 }
 
 NAME=`get_field name`
-rcd=0
+GENRES=`get_field_t '/genres//genre[.]'`
+[ -z "$GENRES" ] && GENRES="N/A"
+
 recode --version 2&> /dev/null && {
 	NAME=`echo $NAME | recode -f HTML_4.0`
-	rcd=1	
+	GENRES=`echo $GENRES | recode -f HTML_4.0`
 }
 
 STATUS=`get_field status`
@@ -178,12 +180,6 @@ ZZ=`adjust_tc started`
 [ -n "$ZZ" ] && STARTED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
 ZZ=`adjust_tc ended`
 [ -n "$ZZ" ] && ENDED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || ENDED=0
-GENRES=`get_field_t '/genres//genre[.]'`
-[ -z "$GENRES" ] && GENRES="N/A"
-
-[ $rcd -eq 1 ] && {
-	GENRES=`echo $GENRES | recode -f HTML_4.0`
-}
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
