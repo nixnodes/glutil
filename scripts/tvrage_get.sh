@@ -1,11 +1,11 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:3
+#@REVISION:4
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
-#@MACRO:tvrage-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
-#@MACRO:tvrage-su:{m:exe} -h --silent -v --loglevel=5 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
-#@MACRO:tvrage-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
+#@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
+#@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
+#@MACRO:tvrage-e:{m:exe} -d --silent --loglevel=1 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
@@ -15,9 +15,9 @@
 #
 ## Requires: - glutil-1.9-34 or greater
 ##			 - libxml2 v2.7.7 or above
-##           - curl, date, egrep, sed, expr
+##           - curl, date, egrep, sed, expr, recode (optional)
 #
-## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 				(filesystem based)
+## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 					(filesystem based)
 ##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'   	(dirlog based)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
@@ -27,9 +27,9 @@
 # tvrage services base url
 TVRAGE_URL="http://services.tvrage.com"
 #
-#INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
+#INPUT_SKIP=""
 #
-#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|())([._-\(\)](S[0-9]{1,3}E[0-9]{1,3}|XVID|X264|REPACK|DVDRIP|(H|P)DTV|BRRIP)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_CLEAN_REGEX=""
 #
 ## Updates tvlog
 UPDATE_TVLOG=1
@@ -59,7 +59,7 @@ TYPE_SPECIFIC_DB=0
 ## Extract year from release string and apply to searches
 TVRAGE_SEARCH_BY_YEAR=1
 #
-VERBOSE=0
+VERBOSE=1
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -131,7 +131,7 @@ get_field_t()
 SHOWID=`get_field showid`
 
 if [ -z "$SHOWID" ]; then 
-	echo "ERROR: $QUERY: $TD: could not get show id"
+	echo "ERROR: $QUERY: $TD: could not get show id: $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O"
 	[ $VERBOSE -gt 0 ] && echo "$DDT"
 	exit 1
 fi
@@ -140,7 +140,24 @@ if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "showid,^$SHOWID$" "$3"	
 fi
 
+adjust_tc() {
+	ZZ=`get_field $1`
+	tc=`echo "$ZZ" | tr '/' ' ' | wc -w`
+	if [ $tc -eq 2 ]; then
+		echo "1 $ZZ"
+	elif [ $tc -eq 1 ]; then
+		echo "1 Jan $ZZ"
+	else
+		echo "$ZZ"
+	fi
+}
+
 NAME=`get_field name`
+
+recode --version 2&> /dev/null && {
+	NAME=`echo $NAME | recode -f HTML_4.0`
+}
+
 STATUS=`get_field status`
 [ -z "$STATUS" ] && STATUS="N/A"
 COUNTRY=`get_field country`
@@ -156,11 +173,9 @@ RUNTIME=`get_field runtime`
 [ -z "$RUNTIME" ] && RUNTIME=0
 LINK=`get_field link`
 [ -z "$LINK" ] && LINK="N/A"
-ZZ=`get_field started`
-[ `echo "$ZZ" | tr '/' ' ' | wc -w` -eq 2 ] && ZZ="1 $ZZ"
+ZZ=`adjust_tc started`
 [ -n "$ZZ" ] && STARTED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
-ZZ=`get_field ended`
-[ `echo "$ZZ" | tr '/' ' ' | wc -w` -eq 2 ] && ZZ="1 $ZZ"
+ZZ=`adjust_tc ended`
 [ -n "$ZZ" ] && ENDED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || ENDED=0
 GENRES=`get_field_t '/genres//genre[.]'`
 [ -z "$GENRES" ] && GENRES="N/A"
