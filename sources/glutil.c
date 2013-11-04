@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-53
+ * Version     : 1.9-54
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 53
+#define VER_REVISION 54
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -6253,11 +6253,11 @@ int tv_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"TVRAGE\x9%s\x9%u\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\n",
+						"TVRAGE\x9%s\x9%u\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%s\x9%s\x9%hu\n",
 						data->dirname, data->timestamp, data->name, data->class,
 						data->showid, data->link, data->status, data->airday,
 						data->airtime, data->runtime, data->started,
-						data->ended);
+						data->ended, data->genres, data->country, data->seasons);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
