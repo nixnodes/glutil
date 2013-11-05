@@ -68,6 +68,9 @@ CURL_FLAGS="--silent --max-time 30"
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/local/bin/xmllint"
 
+# recode binary (optional)
+RECODE="/usr/local/bin/recode"
+
 BASEDIR=`dirname $0`
 
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $TVRAGE_DATABASE_TYPE -gt 0 ] && LAPPEND="$TVRAGE_DATABASE_TYPE"
@@ -156,9 +159,9 @@ NAME=`get_field name`
 GENRES=`get_field_t '/genres//genre[.]'`
 [ -z "$GENRES" ] && GENRES="N/A"
 
-recode --version 2&> /dev/null && {
-        NAME=`echo $NAME | recode -f HTML_4.0`
-        GENRES=`echo $GENRES | recode -f HTML_4.0`
+$RECODE --version 2>&1 > /dev/null && {    
+        NAME=`echo $NAME | $RECODE -f HTML_4.0`
+        GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
 }
 
 STATUS=`get_field status`
