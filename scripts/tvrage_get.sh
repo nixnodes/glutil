@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:6
+#@REVISION:7
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -67,6 +67,9 @@ CURL_FLAGS="--silent --max-time 30"
 
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
+
+# recode binary (optional)
+RECODE="recode"
 
 BASEDIR=`dirname $0`
 
@@ -156,9 +159,9 @@ NAME=`get_field name`
 GENRES=`get_field_t '/genres//genre[.]'`
 [ -z "$GENRES" ] && GENRES="N/A"
 
-recode --version 2&> /dev/null && {
-	NAME=`echo $NAME | recode -f HTML_4.0`
-	GENRES=`echo $GENRES | recode -f HTML_4.0`
+$RECODE --version 2&> /dev/null && {
+	NAME=`echo $NAME | $RECODE -f HTML_4.0`
+	GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
 }
 
 STATUS=`get_field status`
