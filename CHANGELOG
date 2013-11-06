@@ -80,6 +80,7 @@
  *   - % rtv_q cleans output buffer on error (rev. 52)
  *   - + 'curtime' field (rev. 53)
  *   - + Add 'genre', 'country' and 'seasons' fields to --batch output (-h) (rev. 54)
+ *   - ~ Memory leak when searching inside files (rev. 55)
  *
  * v1.8
  *
