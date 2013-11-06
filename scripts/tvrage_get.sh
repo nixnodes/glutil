@@ -1,10 +1,11 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:7
+#@REVISION:8
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
+#@MACRO:tvrage-su-id:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
 #@MACRO:tvrage-e:{m:exe} -d --silent --loglevel=1 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
@@ -28,7 +29,6 @@
 TVRAGE_URL="http://services.tvrage.com"
 #
 #INPUT_SKIP=""
-#
 #INPUT_CLEAN_REGEX=""
 #
 ## Updates tvlog
@@ -45,13 +45,9 @@ TVRAGE_DATABASE_TYPE=1
 ## showID already in the database
 DENY_TVID_DUPE=1
 #
-## If set to 1, do not import records with same
-## name already in the database
-DENY_QUERY_DUPE=1
-#
 ## Overwrite existing matched record, when it's atleast 
-##  this old (days) (when DENY_TVID_DUPE=1 or DENY_QUERY_DUPE=1)
-RECORD_MAX_AGE=14
+##  this old (days) (when DENY_TVID_DUPE=1)
+RECORD_MAX_AGE=1
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -59,7 +55,7 @@ TYPE_SPECIFIC_DB=0
 ## Extract year from release string and apply to searches
 TVRAGE_SEARCH_BY_YEAR=1
 #
-VERBOSE=1
+VERBOSE=0
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -81,7 +77,11 @@ BASEDIR=`dirname $0`
 
 echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
 
-QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
+if ! [ $7 -eq 2 ]; then
+	QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
+else
+	QUERY=$TD	
+fi
 
 [ -z "$QUERY" ] && exit 1
 
@@ -110,12 +110,34 @@ extract_year() {
 
 [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
 
-DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
+if [ $7 -eq 2 ]; then
+	[ -z "$8" ] && {
+		echo "ERROR: missing show id"
+		exit 1
+	}
+	if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
+		cad $2 "--iregex" "showid,^$8$" "$3"	
+	fi
+	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/showinfo.php?sid=""$8"`
+	SFIELD="/Showinfo"
+	SLINK="showlink"
+	SCOUNTRY="origin_country"
+	SNAME="showname"
+	SDATE="startdate"
+	
+else
+	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
+	SFIELD="/Results//show"
+	SLINK="link"
+	SNAME="name"
+	SCOUNTRY="country"
+	SDATE="started"
+fi
 
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 	[ $VERBOSE -gt 0 ] && echo "$DDT - retrying.."
 	sleep 2
-	$0 "$1" "$2" "$3" "$4" "$5" $6 $7 
+	$0 "$1" "$2" "$3" "$4" "$5" $6 $7 $8
 	exit $?
 }
 
@@ -123,15 +145,17 @@ echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 
 get_field()
 {
-	echo "$DDT" | $XMLLINT --xpath "((/Results//show)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>//g"
+	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" -  | sed -r "s/<[\/a-zA-Z0-9]+>//g"
 }
 
 get_field_t()
 {
-	echo "$DDT" | $XMLLINT --xpath "((/Results//show)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
+	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
 }
 
-SHOWID=`get_field showid`
+! [ $7 -eq 2 ] &&
+	SHOWID=`get_field showid` ||
+	SHOWID=$8
 
 if [ -z "$SHOWID" ]; then 
 	echo "ERROR: $QUERY: $TD: could not get show id: $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O"
@@ -139,7 +163,7 @@ if [ -z "$SHOWID" ]; then
 	exit 1
 fi
 
-if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
+if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 	cad $2 "--iregex" "showid,^$SHOWID$" "$3"	
 fi
 
@@ -155,32 +179,35 @@ adjust_tc() {
 	fi
 }
 
-NAME=`get_field name`
+NAME=`get_field $SNAME`
 GENRES=`get_field_t '/genres//genre[.]'`
-[ -z "$GENRES" ] && GENRES="N/A"
 
 $RECODE --version 2&> /dev/null && {
 	NAME=`echo $NAME | $RECODE -f HTML_4.0`
 	GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
+	
 }
+
+[ -z "$GENRES" ] && GENRES="N/A"
 
 STATUS=`get_field status`
 [ -z "$STATUS" ] && STATUS="N/A"
-COUNTRY=`get_field country`
+COUNTRY=`get_field "$SCOUNTRY"`
 [ -z "$COUNTRY" ] && COUNTRY="N/A"
 SEASONS=`get_field seasons`
 [ -z "$SEASONS" ] && SEASONS=0
 CLASS=`get_field classification`
+[ -z "$CLASS" ] && CLASS="N/A"
 AIRTIME=`get_field airtime`
 [ -z "$AIRTIME" ] && AIRTIME="N/A"
 AIRDAY=`get_field airday`
 [ -z "$AIRDAY" ] && AIRDAY="N/A"
 RUNTIME=`get_field runtime`
 [ -z "$RUNTIME" ] && RUNTIME=0
-LINK=`get_field link`
+LINK=`get_field "$SLINK"`
 [ -z "$LINK" ] && LINK="N/A"
 ZZ=`adjust_tc started`
-[ -n "$ZZ" ] && STARTED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
+[ -n "$ZZ" ] && SDATE=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
 ZZ=`adjust_tc ended`
 [ -n "$ZZ" ] && ENDED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || ENDED=0
 
