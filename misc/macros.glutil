@@ -1,4 +1,4 @@
-#@REVISION:23
+#@REVISION:24
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -117,11 +117,11 @@
 #
 ## This can take a long time, depending on the log size
 #
-#@MACRO:dirlog-clean-dupes:{m:exe} -d --dirlog={m:q:dirlog@file} --preexec `{m:exe} --backup dirlog -vv` -execv `{m:exe} -e dirlog --dirlog={m:q:dirlog@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
-#@MACRO:imdb-clean-dupes:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:imdb-clean-dupes-id:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:tvrage-clean-dupes:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:tvrage-clean-dupes-id:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --lom "showid={showid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:dirlog-clean-dupes:{m:exe} -d --dirlog={m:q:dirlog@file} --preexec `{m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -vv` -execv `{m:exe} -e dirlog --dirlog={m:q:dirlog@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#@MACRO:imdb-clean-dupes:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:imdb-clean-dupes-id:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:tvrage-clean-dupes:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:tvrage-clean-dupes-id:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --lom "showid={showid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #
 ## <dirlog-clean-empty>
 #
