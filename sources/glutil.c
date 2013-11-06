@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-54
+ * Version     : 1.9-55
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 54
+#define VER_REVISION 55
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2076,8 +2076,11 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
 	switch (flags & F_GM_TYPES) {
 	case F_GM_ISREGEX:
-		if (regcomp(&pgm->preg, pgm->match,
-				(regex_flags | g_regex_flags | REG_NOSUB))) {
+		;
+		int re;
+		if ((re = regcomp(&pgm->preg, pgm->match,
+				(regex_flags | g_regex_flags | REG_NOSUB)))) {
+			fprintf(stderr, "ERROR: regex compilation failed : %d\n", re);
 			return 11001;
 		}
 		if (!(gfl & F_OPT_HAS_G_REGEX)) {
@@ -2870,15 +2873,13 @@ void *md_unlink(pmda md, p_md_obj md_o) {
 		c_ptr = md_o->next;
 	}
 
-	if (md->first == md_o) {
-		if (md_o->prev) {
-			md->first = md_o->prev;
-		} else if (md_o->next) {
-			md->first = md_o->next;
-		} else {
-			md->first = md->objects;
-		}
-	}
+	/*if (md->first == md_o && !md->first->prev) {
+	 if (md_o->next) {
+	 md->first = md_o->next;
+	 } else {
+	 md->first = md->objects;
+	 }
+	 }*/
 
 	md->offset--;
 	if (md->pos == md_o && c_ptr) {
@@ -3253,15 +3254,41 @@ int g_init(int argc, char **argv) {
 		return 2;
 	}
 
-	build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
-	build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
-	build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
-	build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
-	build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
-	build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
+	if (!(ofl & F_OVRR_DIRLOG)) {
+		build_data_path(DEFF_DIRLOG, DIRLOG, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_NUKELOG)) {
+		build_data_path(DEFF_NUKELOG, NUKELOG, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_DUPEFILE)) {
+		build_data_path(DEFF_DIRLOG, DUPEFILE, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_LASTONLOG)) {
+		build_data_path(DEFF_DIRLOG, LASTONLOG, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_ONELINERS)) {
+		build_data_path(DEFF_DIRLOG, ONELINERS, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_IMDBLOG)) {
+		build_data_path(DEFF_DIRLOG, IMDBLOG, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_TVLOG)) {
+		build_data_path(DEFF_DIRLOG, TVLOG, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_GAMELOG)) {
+		build_data_path(DEFF_DIRLOG, GAMELOG, DEFPATH_LOGS);
+	}
+
+	if (!(ofl & F_OVRR_GE1LOG)) {
+		build_data_path(DEFF_DIRLOG, GE1LOG, DEFPATH_LOGS);
+	}
 
 	snprintf(SITEROOT, PATH_MAX, "%s%s", GLROOT, SITEROOT_N);
 	remove_repeating_chars(SITEROOT, 0x2F);
@@ -3279,7 +3306,13 @@ int g_init(int argc, char **argv) {
 		if (!(gfl & F_OPT_NOWRITE)) {
 			gfl |= F_OPT_FORCEWSFV | F_OPT_NOWRITE;
 		}
+		if (ofl & F_OVRR_GLROOT) {
+			print_str(MSG_INIT_PATH_OVERR, "GLROOT", GLROOT);
+		}
 
+		if (ofl & F_OVRR_SITEROOT) {
+			print_str(MSG_INIT_PATH_OVERR, "SITEROOT", SITEROOT);
+		}
 		if ((gfl & F_OPT_VERBOSE)) {
 			print_str(
 					"NOTICE: switching to non-destructive filesystem rebuild mode\n");
@@ -3297,39 +3330,7 @@ int g_init(int argc, char **argv) {
 		if (SHM_IPC && SHM_IPC != shm_ipc) {
 			print_str("NOTICE: IPC key set to '0x%.8X'\n", SHM_IPC);
 		}
-		if (ofl & F_OVRR_GLROOT) {
-			print_str(MSG_INIT_PATH_OVERR, "GLROOT", GLROOT);
-		}
-		if (ofl & F_OVRR_SITEROOT) {
-			print_str(MSG_INIT_PATH_OVERR, "SITEROOT", SITEROOT);
-		}
-		if (ofl & F_OVRR_DIRLOG) {
-			print_str(MSG_INIT_PATH_OVERR, "DIRLOG", DIRLOG);
-		}
-		if (ofl & F_OVRR_NUKELOG) {
-			print_str(MSG_INIT_PATH_OVERR, "NUKELOG", NUKELOG);
-		}
-		if (ofl & F_OVRR_DUPEFILE) {
-			print_str(MSG_INIT_PATH_OVERR, "DUPEFILE", DUPEFILE);
-		}
-		if (ofl & F_OVRR_LASTONLOG) {
-			print_str(MSG_INIT_PATH_OVERR, "LASTONLOG", LASTONLOG);
-		}
-		if (ofl & F_OVRR_ONELINERS) {
-			print_str(MSG_INIT_PATH_OVERR, "ONELINERS", ONELINERS);
-		}
-		if (ofl & F_OVRR_IMDBLOG) {
-			print_str(MSG_INIT_PATH_OVERR, "IMDBLOG", IMDBLOG);
-		}
-		if (ofl & F_OVRR_TVLOG) {
-			print_str(MSG_INIT_PATH_OVERR, "TVLOG", TVLOG);
-		}
-		if (ofl & F_OVRR_GAMELOG) {
-			print_str(MSG_INIT_PATH_OVERR, "GAMELOG", GAMELOG);
-		}
-		if (ofl & F_OVRR_GE1LOG) {
-			print_str(MSG_INIT_PATH_OVERR, "GE1LOG", GE1LOG);
-		}
+
 		if ((gfl & F_OPT_VERBOSE4) && (gfl & F_OPT_PS_LOGGING)) {
 			print_str("NOTICE: Logging enabled: %s\n", LOGFILE);
 		}
@@ -6257,7 +6258,8 @@ int tv_format_block(void *iarg, char *output) {
 						data->dirname, data->timestamp, data->name, data->class,
 						data->showid, data->link, data->status, data->airday,
 						data->airtime, data->runtime, data->started,
-						data->ended, data->genres, data->country, data->seasons);
+						data->ended, data->genres, data->country,
+						data->seasons);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -10676,7 +10678,9 @@ void *shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
 }
 
 pmda search_cfg_rf(pmda md, char * file) {
+	g_setjmp(0, "search_cfg_rf", NULL, NULL);
 	p_md_obj ptr = md_first(md);
+	g_setjmp(0, "search_cfg_rf-2", NULL, NULL);
 	p_cfg_r ptr_c;
 	size_t fn_len = strlen(file);
 	while (ptr) {
@@ -10690,7 +10694,7 @@ pmda search_cfg_rf(pmda md, char * file) {
 }
 
 pmda register_cfg_rf(pmda md, char *file) {
-
+	g_setjmp(0, "register_cfg_rf", NULL, NULL);
 	if (!md->count) {
 		if (md_init(md, 128)) {
 			return NULL;
@@ -10708,7 +10712,7 @@ pmda register_cfg_rf(pmda md, char *file) {
 	if (fn_len >= PATH_MAX) {
 		return NULL;
 	}
-
+	g_setjmp(0, "register_cfg_rf-2", NULL, NULL);
 	p_cfg_r ptr_c = md_alloc(md, sizeof(cfg_r));
 
 	strncpy(ptr_c->file, file, fn_len);
@@ -11399,6 +11403,10 @@ int gcb_gen1(void *buffer, char *key, char *val) {
 	return 0;
 }
 
+#define LCFG_MAX_LOADED 0x200
+#define LCFG_MAX_LOAD_LINES 10000
+#define LCFG_MAX_LINE_SIZE	16384
+
 int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 	g_setjmp(0, "load_cfg", NULL, NULL);
 	int r = 0;
@@ -11409,6 +11417,9 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 		md_init(pmd, 256);
 		md = pmd;
 	} else {
+		if (pmd->offset > LCFG_MAX_LOADED) {
+			free_cfg_rf(pmd);
+		}
 		md = register_cfg_rf(pmd, file);
 	}
 
@@ -11426,11 +11437,11 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 		return 3;
 	}
 
-	char *buffer = malloc(V_MB);
+	char *buffer = malloc(LCFG_MAX_LINE_SIZE);
 	p_cfg_h pce;
-	int rd, i;
+	int rd, i, c = 0;
 
-	while (fgets(buffer, V_MB, fh)) {
+	while (fgets(buffer, LCFG_MAX_LINE_SIZE+1, fh) && c < LCFG_MAX_LOAD_LINES) {
 		if (strlen(buffer) < 3) {
 			continue;
 		}
@@ -11449,7 +11460,7 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 			md_unlink(md, md->pos);
 			continue;
 		}
-
+		c++;
 		pce->key = pce->data.objects->ptr;
 	}
 
