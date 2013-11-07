@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:8
+#@REVISION:9
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -43,11 +43,11 @@ TVRAGE_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
 ## showID already in the database
-DENY_TVID_DUPE=1
+DENY_TVID_DUPE=0
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1)
-RECORD_MAX_AGE=1
+RECORD_MAX_AGE=7
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -206,8 +206,8 @@ RUNTIME=`get_field runtime`
 [ -z "$RUNTIME" ] && RUNTIME=0
 LINK=`get_field "$SLINK"`
 [ -z "$LINK" ] && LINK="N/A"
-ZZ=`adjust_tc started`
-[ -n "$ZZ" ] && SDATE=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
+ZZ=`adjust_tc "$SDATE"`
+[ -n "$ZZ" ] && STARTED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
 ZZ=`adjust_tc ended`
 [ -n "$ZZ" ] && ENDED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || ENDED=0
 
@@ -216,12 +216,12 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
-		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || { 
+		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage -ff --regex "$DIR_E" > /dev/null || { 
 			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
 		}
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
-		$2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
+		$2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage -ff --regex showid,"^$SHOWID$" > /dev/null || {
 			echo "ERROR: $SHOWID: Failed removing old record" && exit 1 
 		}
 	fi	
