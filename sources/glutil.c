@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-55
+ * Version     : 1.9-56
  * Description : glFTPd binary logs utility
  * ============================================================================
  */
@@ -144,7 +144,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 55
+#define VER_REVISION 56
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -11441,7 +11441,7 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 	p_cfg_h pce;
 	int rd, i, c = 0;
 
-	while (fgets(buffer, LCFG_MAX_LINE_SIZE+1, fh) && c < LCFG_MAX_LOAD_LINES) {
+	while (fgets(buffer, LCFG_MAX_LINE_SIZE+1, fh) && c < LCFG_MAX_LOAD_LINES && !ferror(fh) && !feof(fh)) {
 		if (strlen(buffer) < 3) {
 			continue;
 		}
@@ -11614,7 +11614,7 @@ int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 		size_t b_len, lc = 0;
 		int hit = 0, i;
 
-		while (fgets(buffer, SSD_MAX_LINE_SIZE, fh) && lc < SSD_MAX_LINE_PROC) {
+		while (fgets(buffer, SSD_MAX_LINE_SIZE, fh) && lc < SSD_MAX_LINE_PROC && !ferror(fh) && !feof(fh)) {
 			lc++;
 			b_len = strlen(buffer);
 			if (b_len < 8) {
