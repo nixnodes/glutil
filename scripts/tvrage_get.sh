@@ -43,7 +43,7 @@ TVRAGE_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
 ## showID already in the database
-DENY_TVID_DUPE=0
+DENY_TVID_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1)
