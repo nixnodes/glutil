@@ -1,13 +1,13 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:15
-#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
-#@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
-#@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
-#@MACRO:imdb-su-id:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}" 
-#@MACRO:imdb-su-f1:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" iregex "dir,\/"
-#@MACRO:imdb-e:{m:exe} -d --silent --loglevel=1 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' 0 0"
+#@REVISION:16
+#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} -v --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
+#@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} -v --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
+#@MACRO:imdb-su-id:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} -v --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}" 
+#@MACRO:imdb-su-f1:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} -v --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" iregex "dir,\/"
+#@MACRO:imdb-e:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --imdblog={m:q:imdb@file} --backup imdb; {m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' 0 0"
 #
 ## Install script dependencies + libs into glftpd root (requires mlocate)
 #
@@ -288,13 +288,13 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex "$DIR_E" > /dev/null || {
+                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb --regex "$DIR_E" > /dev/null || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
                 }
         elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
-                $2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 -f --imdblog="$3$LAPPEND" --nobackup -e imdb --regex imdbid,"^$iid$" > /dev/null || {
+                $2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb --regex imdbid,"^$iid$" > /dev/null || {
                         echo "ERROR: $iid: Failed removing old record" && exit 1
                 }
         fi
