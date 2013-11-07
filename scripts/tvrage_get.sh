@@ -1,12 +1,13 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:11
+#@REVISION:12
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
 #@MACRO:tvrage-su-id:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
-#@MACRO:tvrage-e:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
+#@MACRO:tvrage-e:{m:exe} noop --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
+#@MACRO:tvrage-e-id:{m:exe} noop --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} 'id' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 '{m:arg1}'"
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
@@ -145,12 +146,12 @@ echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 
 get_field()
 {
-	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" -  | sed -r "s/<[\/a-zA-Z0-9]+>//g"
+	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" -  | sed -r "s/<[\/a-zA-Z0-9\_]+>//g"
 }
 
 get_field_t()
 {
-	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
+	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9\_]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
 }
 
 ! [ $7 -eq 2 ] &&
