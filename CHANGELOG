@@ -81,6 +81,7 @@
  *   - + 'curtime' field (rev. 53)
  *   - + Add 'genre', 'country' and 'seasons' fields to --batch output (-h) (rev. 54)
  *   - ~ Memory leak when searching inside files (rev. 55)
+ *   - % Detect error/eof while reading files (cfg parser) and macros (rev. 56)
  *
  * v1.8
  *
