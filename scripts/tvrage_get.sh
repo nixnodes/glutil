@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:4
+#@REVISION:5
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -173,9 +173,9 @@ adjust_tc() {
 	ZZtc=`get_field "$1" | tr '/' ' '`
 	tc=`echo "$ZZtc" | wc -w`
 	if [ $tc -eq 2 ]; then
-		echo "1 $ZZtc"
+		echo "$ZZtc" | sed -r "s/[ ]+/ 1 /"
 	elif [ $tc -eq 1 ]; then
-		echo "1 Jan $ZZtc"
+		echo "Jan 1 $ZZtc"
 	else
 		echo "$ZZtc"
 	fi
