@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:3
+#@REVISION:4
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -170,14 +170,14 @@ if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 fi
 
 adjust_tc() {
-	ZZ=`get_field "$1" | tr '/' ' '`
-	tc=`echo "$ZZ" | wc -w`
+	ZZtc=`get_field "$1" | tr '/' ' '`
+	tc=`echo "$ZZtc" | wc -w`
 	if [ $tc -eq 2 ]; then
-		echo "1 $ZZ"
+		echo "1 $ZZtc"
 	elif [ $tc -eq 1 ]; then
-		echo "1 Jan $ZZ"
+		echo "1 Jan $ZZtc"
 	else
-		echo "$ZZ"
+		echo "$ZZtc"
 	fi
 }
 
@@ -209,9 +209,9 @@ RUNTIME=`get_field runtime`
 LINK=`get_field "$SLINK"`
 [ -z "$LINK" ] && LINK="N/A"
 ZZ=`adjust_tc "$SDATE"`
-[ -n "$ZZ" ] && STARTED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || STARTED=0
+[ -n "$ZZ" ] && STARTED=`date --date="$ZZ" +"%s"` || STARTED=0
 ZZ=`adjust_tc ended`
-[ -n "$ZZ" ] && ENDED=`date --date="$(echo $ZZ | tr '/' ' ')" +"%s"` || ENDED=0
+[ -n "$ZZ" ] && ENDED=`date --date="$ZZ" +"%s"` || ENDED=0
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
