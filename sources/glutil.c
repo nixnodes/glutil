@@ -6,7 +6,7 @@
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
- *  Copyright (C) 2013
+ *  Copyright (C) 2013 NixNodes
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
