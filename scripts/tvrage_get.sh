@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:6
+#@REVISION:7
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -20,10 +20,26 @@
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, recode (optional)
 #
-## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 					(filesystem based)
-##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'   	(dirlog based)
+## Usage (macro): -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 					(filesystem based)
+##                -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'   	(dirlog based)
+##                -m tvrage-su-id                                                                           (rebuild entire log based on showid fields)
+##                -m tvrage-e -arg1="<showname>"                                                            (lookup/process using a specific query (by show name))
+##                -m tvrage-e-id -arg1=<showid>                                                             (lookup/process using a specific query (by show id))
+##                -m tvrage-e-full                                                                          (retrieve a full show list and build/update log based on returned showids)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
+#
+##  Keeping a local cache not only provides much faster lookups for you, but helps keep the public (free) 
+##  TVRage services API unencumbered.. Performing web lookups each time you need the info, then discarding
+##  that data the moment you're done with it, is extremely wastefull. 
+##  In this repository you can find a pre-built (full) gzipped database, avoid building one from scratch
+##  yourself - only keep the pre-built one up to date.
+##
+##  For example, set RECORD_MAX_AGE=30 and run periodic updates (<tvrage-e-full> recommended) every so often. 
+##  This would lookup and update records older than 30 days and only add content that doesn't already exist in 
+##  the local db. Moreover, your glutil based database query mechanism should only perform a web query, when it 
+##  can not find something in the local database. Note when using an up-to-date full local db cache, not getting 
+##  results from a query probably means, that the show doesn't exist, or your query string was malformed.
 #
 ###########################[ BEGIN OPTIONS ]#############################
 #
@@ -49,7 +65,7 @@ DENY_TVID_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1)
-RECORD_MAX_AGE=7
+RECORD_MAX_AGE=30
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -57,7 +73,12 @@ TYPE_SPECIFIC_DB=0
 ## Extract year from release string and apply to searches
 TVRAGE_SEARCH_BY_YEAR=1
 #
-VERBOSE=1
+## TVRage services api key (leave blank if you don't know
+## what this is)
+TVRAGE_API_KEY=""
+#
+VERBOSE=0
+#
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/bin/curl"
@@ -110,7 +131,12 @@ extract_year() {
 	[ -n "$YEAR_q" ] && YQ_O='+'$YEAR_q
 }
 
-[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
+if [ -n "$TVRAGE_API_KEY" ]; then 
+	q_TVR_KEY="key=""$TVRAGE_API_KEY""&"
+	q_FEEDS="myfeeds"
+else
+	q_FEEDS="feeds"
+fi
 
 if [ $7 -eq 2 ]; then
 	[ -z "$8" ] && {
@@ -120,15 +146,18 @@ if [ $7 -eq 2 ]; then
 	if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 		cad $2 "--iregex" "showid,^$8$" "$3"	
 	fi
-	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/showinfo.php?sid=""$8"`
+	
+	[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"
+	
+	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"`
 	SFIELD="/Showinfo"
 	SLINK="showlink"
 	SCOUNTRY="origin_country"
 	SNAME="showname"
 	SDATE="startdate"
-	
 else
-	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
+	[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"
+	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"`
 	SFIELD="/Results//show"
 	SLINK="link"
 	SNAME="name"
@@ -143,7 +172,12 @@ echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 	exit $?
 }
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O" && exit 1
+echo "$DDT" | egrep -q "^Invalid" && {
+	echo "$DDT - aborting.."
+	exit 1
+}
+
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O""$q_TVR_KEY" && exit 1
 
 get_field()
 {
