@@ -1,7 +1,7 @@
 #!/bin/bash
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:7
+#@REVISION:8
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -157,7 +157,7 @@ if [ $7 -eq 2 ]; then
 	SDATE="startdate"
 else
 	[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"
-	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"`
+	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"`
 	SFIELD="/Results//show"
 	SLINK="link"
 	SNAME="name"
