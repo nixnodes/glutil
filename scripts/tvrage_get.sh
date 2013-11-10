@@ -87,7 +87,7 @@ CURL_FLAGS="--silent --max-time 30"
 # libxml2 version 2.7.7 or above required
 XMLLINT="/usr/bin/xmllint"
 
-# recode binary (optional)
+# recode binary (optional), gets rid of HTML entities
 RECODE="recode"
 
 BASEDIR=`dirname $0`
@@ -177,7 +177,7 @@ echo "$DDT" | egrep -q "^Invalid" && {
 	exit 1
 }
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O""$q_TVR_KEY" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/""$q_FEEDS""/full_search.php?show=$QUERY""$YQ_O""$q_TVR_KEY" && exit 1
 
 get_field()
 {
@@ -194,7 +194,7 @@ get_field_t()
 	SHOWID=$8
 
 if [ -z "$SHOWID" ]; then 
-	echo "ERROR: $QUERY: $TD: could not get show id: $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O"
+	echo "ERROR: $QUERY: $TD: could not get show id"
 	[ $VERBOSE -gt 0 ] && echo "$DDT"
 	exit 1
 fi
