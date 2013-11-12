@@ -1,11 +1,29 @@
 #!/usr/local/bin/bash
+#  Copyright (C) 2013 NixNodes
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:2
-#@REVISION:6
-#@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
-#@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2}
-#@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} -v --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
-#@MACRO:tvrage-e:{m:exe} -d --silent --loglevel=1 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
+#@VERSION:3
+#@REVISION:8
+#@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
+#@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
+#@MACRO:tvrage-su-id:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
+#@MACRO:tvrage-e:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0"
+#@MACRO:tvrage-e-id:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '-' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 '{m:arg1}'"
+#@MACRO:tvrage-e-full:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; for i in $(curl http://services.tvrage.com/feeds/show_list.php | sed -r 's/<show><id>|<\/id><name>.*|<(\/|())shows>|<\?xml.*>//g' | sed -r '/^$/d'); do if echo "$i" | egrep -q '^[0-9]+$'; then {m:spec1} '-' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 "$i"; else echo "ERROR: invalid id: '$i'"; fi; done`
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
@@ -14,22 +32,37 @@
 ## Gets show info using TVRAGE API (XML)
 #
 ## Requires: - glutil-1.9-34 or greater
-##                       - libxml2 v2.7.7 or above
+##                         - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, recode (optional)
 #
-## Usage (macro): ./glutil -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                                 (filesystem based)
-##                ./glutil -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'  (dirlog based)
+## Usage (macro): -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                                                         (filesystem based)
+##                -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'           (dirlog based)
+##                -m tvrage-su-id                                                                           (rebuild entire log based on showid fields)
+##                -m tvrage-e -arg1="<showname>"                                                            (lookup/process using a specific query (by show name))
+##                -m tvrage-e-id -arg1=<showid>                                                             (lookup/process using a specific query (by show id))
+##                -m tvrage-e-full                                                                          (retrieve a full show list and build/update log based on returned showids)
 #
 ##  To use this macro, place script in the same directory (or any subdirectory) where glutil is located
+#
+##  Keeping a local cache not only provides much faster lookups for you, but helps keep the public (free) 
+##  TVRage services API unencumbered.. Performing web lookups each time you need the info, then discarding
+##  that data the moment you're done with it, is extremely wastefull. 
+##  In this repository you can find a pre-built (full) gzipped database, avoid building one from scratch
+##  yourself - only keep the pre-built one up to date.
+##
+##  For example, set RECORD_MAX_AGE=30 and run periodic updates (<tvrage-e-full> recommended) every so often. 
+##  This would lookup and update records older than 30 days and only add content that doesn't already exist in 
+##  the local db. Moreover, your glutil based database query mechanism should only perform a web query, when it 
+##  can not find something in the local database. Note when using an up-to-date full local db cache, not getting 
+##  results from a query probably means, that the show doesn't exist, or your query string was malformed.
 #
 ###########################[ BEGIN OPTIONS ]#############################
 #
 # tvrage services base url
 TVRAGE_URL="http://services.tvrage.com"
 #
-#INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
-#
-#INPUT_CLEAN_REGEX="([._-\(\)][1-2][0-9]{3,3}|())([._-\(\)](S[0-9]{1,3}E[0-9]{1,3}|XVID|X264|REPACK|DVDRIP|(H|P)DTV|BRRIP)([._-\(\)]|$).*)|-([A-Z0-9a-z_-]*$)"
+#INPUT_SKIP=""
+#INPUT_CLEAN_REGEX=""
 #
 ## Updates tvlog
 UPDATE_TVLOG=1
@@ -45,13 +78,9 @@ TVRAGE_DATABASE_TYPE=1
 ## showID already in the database
 DENY_TVID_DUPE=1
 #
-## If set to 1, do not import records with same
-## name already in the database
-DENY_QUERY_DUPE=1
-#
 ## Overwrite existing matched record, when it's atleast
-##  this old (days) (when DENY_TVID_DUPE=1 or DENY_QUERY_DUPE=1)
-RECORD_MAX_AGE=30
+##  this old (days) (when DENY_TVID_DUPE=1)
+RECORD_MAX_AGE=38
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -59,7 +88,12 @@ TYPE_SPECIFIC_DB=0
 ## Extract year from release string and apply to searches
 TVRAGE_SEARCH_BY_YEAR=1
 #
+## TVRage services api key (leave blank if you don't know
+## what this is)
+TVRAGE_API_KEY=""
+#
 VERBOSE=0
+#
 ############################[ END OPTIONS ]##############################
 
 CURL="/usr/local/bin/curl"
@@ -81,7 +115,11 @@ BASEDIR=`dirname $0`
 
 echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
 
-QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r 's/[\\.\\_\\-\\(\\)]/\+/g' | sed -r 's/^[+ ]+)|([+ ]+$)//g'`
+if ! [[ $7 -eq 2 ]]; then
+        QUERY=`echo "$TD" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gI" | sed -r 's/[\\.\\_\\-\\(\\)]/\+/g' | sed -r 's/^[+ ]+)|([+ ]+$)//g'`
+else
+        QUERY=$TD
+fi
 
 [ -z "$QUERY" ] && exit 1
 
@@ -108,102 +146,140 @@ extract_year() {
         [ -n "$YEAR_q" ] && YQ_O='+'$YEAR_q
 }
 
-[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD"
+if [ -n "$TVRAGE_API_KEY" ]; then 
+        q_TVR_KEY="key=""$TVRAGE_API_KEY""&"
+        q_FEEDS="myfeeds"
+else
+        q_FEEDS="feeds"
+fi
 
-DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
+if [[ $7 -eq 2 ]]; then
+        [ -z "$8" ] && {
+                echo "ERROR: missing show id"
+                exit 1
+        }
+        if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
+                cad $2 "--iregex" "showid,^$8$" "$3"
+        fi
+
+        [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"
+
+        DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/showinfo.php?sid=""$8"`
+        SFIELD="/Showinfo"
+        SLINK="showlink"
+        SCOUNTRY="origin_country"
+        SNAME="showname"
+        SDATE="startdate"
+
+else
+        [ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"                   
+        DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?show=""$QUERY""$YQ_O"`
+        SFIELD="/Results//show"
+        SLINK="link"
+        SNAME="name"
+        SCOUNTRY="country"
+        SDATE="started"
+fi
 
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
         [ $VERBOSE -gt 0 ] && echo "$DDT - retrying.."
         sleep 2
-        $0 "$1" "$2" "$3" "$4" "$5" $6 $7
+        $0 "$1" "$2" "$3" "$4" "$5" $6 $7 $8
         exit $?
+}
+
+echo "$DDT" | egrep -q "^Invalid" && {
+        echo "$DDT - aborting.."
+        exit 1
 }
 
 [ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/feeds/full_search.php?show=$QUERY""$YQ_O" && exit 1
 
 get_field()
 {
-        echo "$DDT" | $XMLLINT --xpath "((/Results//show)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>//g"
+        echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" -  | sed -r "s/<[\/a-zA-Z0-9\_]+>//g"
 }
 
 get_field_t()
 {
-        echo "$DDT" | $XMLLINT --xpath "((/Results//show)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
+        echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9\_]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
 }
 
-SHOWID=`get_field showid`
+! [[ $7 -eq 2 ]] &&
+        SHOWID=`get_field showid` ||
+        SHOWID=$8
 
-if [ -z "$SHOWID" ]; then
+if [ -z "$SHOWID" ]; then 
         echo "ERROR: $QUERY: $TD: could not get show id"
         [ $VERBOSE -gt 0 ] && echo "$DDT"
         exit 1
 fi
 
-if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
+
+if ! [[ $7 -eq 2 ]] && [[ $UPDATE_TVLOG -eq 1 ]] && [[ $DENY_TVID_DUPE -eq 1 ]]; then
         cad $2 "--iregex" "showid,^$SHOWID$" "$3"
 fi
 
 adjust_tc() {
-        ZZ=`get_field $1`
-        tc=`echo "$ZZ" | tr '/' ' ' | wc -w`
+        ZZtc=`get_field "$1" | tr '/' ' '`
+        tc=`echo "$ZZtc" | wc -w`
         if [ $tc -eq 2 ]; then
-                echo "1 $ZZ"
+                echo "$ZZtc" | sed -r "s/[ ]+/ 1 /"
         elif [ $tc -eq 1 ]; then
-                echo "1 Jan $ZZ"
+                echo "Jan 1 $ZZtc"
         else
-                echo "$ZZ"
+                echo "$ZZtc"
         fi
 }
 
-NAME=`get_field name`
+NAME=`get_field $SNAME`
 GENRES=`get_field_t '/genres//genre[.]'`
-[ -z "$GENRES" ] && GENRES="N/A"
 
-$RECODE --version 2>&1 > /dev/null && {    
+
+$RECODE --version 2>&1 > /dev/null && {
         NAME=`echo $NAME | $RECODE -f HTML_4.0`
         GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
 }
 
+[ -z "$GENRES" ] && GENRES="N/A"
+
 STATUS=`get_field status`
 [ -z "$STATUS" ] && STATUS="N/A"
-COUNTRY=`get_field country`
+COUNTRY=`get_field "$SCOUNTRY"`
 [ -z "$COUNTRY" ] && COUNTRY="N/A"
 SEASONS=`get_field seasons`
 [ -z "$SEASONS" ] && SEASONS=0
 CLASS=`get_field classification`
+[ -z "$CLASS" ] && CLASS="N/A"
 AIRTIME=`get_field airtime`
 [ -z "$AIRTIME" ] && AIRTIME="N/A"
 AIRDAY=`get_field airday`
 [ -z "$AIRDAY" ] && AIRDAY="N/A"
 RUNTIME=`get_field runtime`
 [ -z "$RUNTIME" ] && RUNTIME=0
-LINK=`get_field link`
+LINK=`get_field "$SLINK"`
 [ -z "$LINK" ] && LINK="N/A"
-ZZ=`get_field started`
-[ `echo "$ZZ" | tr '/' ' ' | wc -w` -eq 2 ] && ZZ="1 $ZZ"
-[ -n "$ZZ" ] && STARTED=$(date -j -f '%b %d %Y' "`echo "$ZZ" | tr '/' ' '`" +"%s") || STARTED=0
-ZZ=`get_field ended`
-[ `echo "$ZZ" | tr '/' ' ' | wc -w` -eq 2 ] && ZZ="1 $ZZ"
-[ -n "$ZZ" ] && ENDED=$(date -j -f '%b %d %Y' "`echo "$ZZ" | tr '/' ' '`" +"%s") || ENDED=0
-GENRES=`get_field_t '/genres//genre[.]'`
-[ -z "$GENRES" ] && GENRES="N/A"
+ZZ=`adjust_tc "$SDATE"`
+[ -n "$ZZ" ] && STARTED=`date -j -f '%b %d %Y' "$ZZ" +"%s"` || STARTED=0
+ZZ=`adjust_tc ended`
+[ -n "$ZZ" ] && ENDED=`date -j -f '%b %d %Y' "$ZZ" +"%s"` || ENDED=0
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
         trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
         if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-                $2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || {
+                $2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
                 }
         elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then
                 DIR_E=$QUERY
-                $2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -f --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
+                $2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
                         echo "ERROR: $SHOWID: Failed removing old record" && exit 1
                 }
         fi
-       
-        echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\n\n" > /tmp/glutil.img.$$.tmp 
+
+        echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\n\n" > /tmp/glutil.img.$$.tmp
         $2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
         rm /tmp/glutil.img.$$.tmp
 fi
