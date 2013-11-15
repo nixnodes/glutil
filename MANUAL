@@ -187,10 +187,13 @@ FLAGS:
    airday     S     Air day of the week
    runtime    I     Show runtime in minutes
    started    I     Show starting time since epoch
-   ended      I     Show ended time since epoch         
+   ended      I     Show ended time since epoch
+   startyear  I     Year show started
+   endyear    I     Year show ended
    seasons    I     Total number of seasons
    class      S     Show classification
    genre      S     Show genres
+   network    S     Show network
    status     S     Show status
 
 
