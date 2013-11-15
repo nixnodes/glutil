@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:19
+#@REVISION:20
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -27,13 +27,13 @@
 #
 ## Install script dependencies + libs into glftpd root (requires mlocate)
 #
-#@MACRO:imdb-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/recode"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#@MACRO:imdb-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/recode /bin/awk"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
 ## Requires: - glutil-1.9-43 or above
 ##           - libxml2 v2.7.7 or above 
-##           - curl, date, egrep, sed, expr, recode (optional)
+##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
@@ -288,6 +288,8 @@ fi
 
 ! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES" && echo "ERROR: $QUERY: $TD: invalid match (type is $TYPE): $IMDB_URL""?r=XML&i=$iid" && exit 1
 
+[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: could not extract movie data" && exit 1
+
 PLOT=`get_field plot`
 
 $RECODE --version 2&> /dev/null && {
@@ -295,19 +297,32 @@ $RECODE --version 2&> /dev/null && {
 	PLOT=`echo $PLOT | $RECODE -f HTML_4.0`
 }
 
+[ -z "$PLOT" ] && PLOT="N/A"
+
 RATING=`get_field imdbRating`
+[ -z "$RATING" ] && RATING="0.0"
 GENRE=`get_field genre`
+[ -z "$GENRE" ] && GENRE="N/A"
 VOTES=`echo $(get_field imdbVotes) | tr -d ','`
+[ -z "$VOTES" ] && VOTES=0
 YEAR=`get_field year | tr -d ' '`
+[ -z "$YEAR" ] && YEAR="N/A"
 RATED=`get_field rated`
+[ -z "$RATED" ] && RATED="N/A"
 ACTORS=`get_field actors`
+[ -z "$ACTORS" ] && ACTORS="N/A"
 DIRECTOR=`get_field director`
-RELEASED=`date --date="$(D_g=$(get_field released); [ "$D_g" != "N/A" ] && echo "$D_g" || echo "")" +"%s"`
+[ -z "$DIRECTOR" ] && DIRECTOR="N/A"
+D_g=`get_field released`
+[ -n "$D_g" ] && [ "$D_g" != "N/A" ] && RELEASED=`date --date="$D_g" +"%s"` || RELEASED=0
 RUNTIME=`get_field runtime`
-RUNTIME_h=`echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g'`
-RUNTIME_m=`echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g'`
-[ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=`expr $RUNTIME_h \* 60 + $RUNTIME_m`
-[ -z "$TITLE" ] && [ -z "$RATING" ] && [ -z "$GENRE" ] && echo "ERROR: $QUERY: $TD: could not extract movie data" && exit 1
+if [ -n "$RUNTIME" ]; then
+	RUNTIME_h=`echo $RUNTIME | awk '{print $1}' | sed -r 's/[^0-9]+//g'`
+	RUNTIME_m=`echo $RUNTIME | awk '{print $3}' | sed -r 's/[^0-9]+//g'`
+	[ -z "$RUNTIME_m" ] && RUNTIME=$RUNTIME_h || RUNTIME=`expr $RUNTIME_h \* 60 + $RUNTIME_m`
+else
+	RUNTIME=0
+fi
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
         trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
