@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-57
+ * Version     : 1.9-58
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 57
+#define VER_REVISION 58
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -251,7 +251,10 @@ typedef struct ___d_tvrage {
 	char airday[32];
 	char class[64];
 	char genres[256];
-	char _d_unused[256]; /* Reserved for future use */
+	uint16_t startyear;
+	uint16_t endyear;
+	char network[72];
+	char _d_unused[180]; /* Reserved for future use */
 } _d_tvrage, *__d_tvrage;
 
 typedef struct ___d_generic_s2044 {
@@ -6270,12 +6273,12 @@ int tv_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"TVRAGE\x9%s\x9%u\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%s\x9%s\x9%hu\n",
+						"TVRAGE\x9%s\x9%u\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%s\x9%s\x9%hu\x9%hu\x9%hu\x9%s\n",
 						data->dirname, data->timestamp, data->name, data->class,
 						data->showid, data->link, data->status, data->airday,
 						data->airtime, data->runtime, data->started,
-						data->ended, data->genres, data->country,
-						data->seasons);
+						data->ended, data->genres, data->country, data->seasons,
+						data->startyear, data->endyear, data->network);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -7310,7 +7313,7 @@ int determine_datatype(__g_handle hdl) {
 	} else if (!strncmp(hdl->file, TVLOG, strlen(TVLOG))) {
 		hdl->flags |= F_GH_ISTVRAGE;
 		hdl->block_sz = TV_SZ;
-		hdl->d_memb = 15;
+		hdl->d_memb = 18;
 		hdl->g_proc0 = gcb_tv;
 		hdl->g_proc1 = ref_to_val_tv;
 		hdl->g_proc2 = ref_to_val_ptr_tv;
@@ -9727,7 +9730,6 @@ void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
 }
 
 #define _MC_IMDB_RELEASED		"released"
-
 #define _MC_IMDB_VOTES			"votes"
 
 void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
@@ -9772,6 +9774,8 @@ void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
 #define _MC_TV_ENDED		"ended"
 #define _MC_TV_SHOWID		"showid"
 #define _MC_TV_SEASONS		"seasons"
+#define _MC_TV_SYEAR		"startyear"
+#define _MC_TV_EYEAR		"endyear"
 
 void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 
@@ -9795,6 +9799,12 @@ void *ref_to_val_ptr_tv(void *arg, char *match, size_t *output) {
 	} else if (!strncmp(match, _MC_TV_SEASONS, 7)) {
 		*output = sizeof(data->seasons);
 		return &data->seasons;
+	} else if (!strncmp(match, _MC_TV_SYEAR, 9)) {
+		*output = sizeof(data->startyear);
+		return &data->startyear;
+	} else if (!strncmp(match, _MC_TV_EYEAR, 7)) {
+		*output = sizeof(data->endyear);
+		return &data->endyear;
 	}
 
 	return NULL;
@@ -10344,6 +10354,7 @@ char* ref_to_val_game_ps(void *arg, char *match, char *output, size_t max_size) 
 #define _MC_TV_LINK			"link"
 #define _MC_TV_NAME			"name"
 #define _MC_TV_CLASS		"class"
+#define _MC_TV_NETWORK		"network"
 
 int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
@@ -10364,6 +10375,10 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%u", data->showid);
 	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		snprintf(output, max_size, "%u", data->runtime);
+	} else if (!strncmp(match, _MC_TV_SYEAR, 9)) {
+		snprintf(output, max_size, "%u", data->startyear);
+	} else if (!strncmp(match, _MC_TV_EYEAR, 7)) {
+		snprintf(output, max_size, "%u", data->endyear);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
@@ -10386,6 +10401,8 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->class);
 	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		strcp_s(output, max_size, data->genres);
+	} else if (!strncmp(match, _MC_TV_NETWORK, 7)) {
+		strcp_s(output, max_size, data->network);
 	} else if (!strncmp(match, "x:", 2)) {
 		_d_xref xref_t = { { 0 } };
 		strcp_s(xref_t.name, PATH_MAX, data->dirname);
@@ -10423,6 +10440,8 @@ char* ref_to_val_tv_ps(void *arg, char *match, char *output, size_t max_size) {
 		return data->class;
 	} else if (!strncmp(match, _MC_GLOB_GENRE, 5)) {
 		return data->genres;
+	} else if (!strncmp(match, _MC_TV_NETWORK, 7)) {
+		return data->network;
 	} else {
 		if (!ref_to_val_tv(arg, match, output, max_size)) {
 			return output;
@@ -11254,6 +11273,26 @@ int gcb_tv(void *buffer, char *key, char *val) {
 		}
 		memcpy(ptr->genres, val, v_l > 255 ? 255 : v_l);
 		return 1;
+	} else if (k_l == 9 && !strncmp(key, _MC_TV_SYEAR, 9)) {
+		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->startyear = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, _MC_TV_EYEAR, 7)) {
+		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->endyear = v_ui;
+		return 1;
+	} else if (k_l == 7 && !strncmp(key, _MC_TV_NETWORK, 7)) {
+		if (!(v_l = strlen(val))) {
+			return 0;
+		}
+		memcpy(ptr->network, val, v_l > 255 ? 255 : v_l);
+		return 1;
 	}
 	return 0;
 }
@@ -11620,16 +11659,16 @@ int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 		if (!name_sz) {
 			break;
 		}
-/*
-		if (name_sz > SSD_MAX_FILE_SIZE) {
-			if (gfl & F_OPT_VERBOSE2) {
-				print_str(
-						"MACRO: %s: file is too big (%llu bytes) and will not be processed\n",
-						name, (ulint64_t) name_sz);
-			}
-			break;
-		}
-*/
+		/*
+		 if (name_sz > SSD_MAX_FILE_SIZE) {
+		 if (gfl & F_OPT_VERBOSE2) {
+		 print_str(
+		 "MACRO: %s: file is too big (%llu bytes) and will not be processed\n",
+		 name, (ulint64_t) name_sz);
+		 }
+		 break;
+		 }
+		 */
 		FILE *fh = fopen(name, "r");
 
 		if (!fh) {
