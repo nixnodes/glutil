@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:8
+#@REVISION:9
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -28,13 +28,13 @@
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
-#@MACRO:tvrage-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#@MACRO:tvrage-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/rev /bin/cut /bin/recode"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-1.9-34 or greater
+## Requires: - glutil-1.9-58 or greater
 ##			 - libxml2 v2.7.7 or above
-##           - curl, date, egrep, sed, expr, recode (optional)
+##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
 ## Usage (macro): -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 					(filesystem based)
 ##                -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'   	(dirlog based)
@@ -193,16 +193,16 @@ echo "$DDT" | egrep -q "^Invalid" && {
 	exit 1
 }
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data $TVRAGE_URL""/""$q_FEEDS""/full_search.php?show=$QUERY""$YQ_O""$q_TVR_KEY" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data - ""$TVRAGE_URL""/feeds/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O" && exit 1
 
 get_field()
 {
-	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" -  | sed -r "s/<[\/a-zA-Z0-9\_]+>//g"
+	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" -  | sed -r "s/<[\/a-zA-Z0-9\_\ \=\"]+>//g"
 }
 
 get_field_t()
 {
-	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9\_]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
+	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - | sed -r "s/<[\/a-zA-Z0-9\_\ \=\"]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
 }
 
 ! [ $7 -eq 2 ] &&
@@ -220,7 +220,7 @@ if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 fi
 
 adjust_tc() {
-	ZZtc=`get_field "$1" | tr '/' ' '`
+	ZZtc=`echo "$1" | tr '/' ' '`
 	tc=`echo "$ZZtc" | wc -w`
 	if [ $tc -eq 2 ]; then
 		echo "$ZZtc" | sed -r "s/[ ]+/ 1 /"
@@ -258,10 +258,18 @@ RUNTIME=`get_field runtime`
 [ -z "$RUNTIME" ] && RUNTIME=0
 LINK=`get_field "$SLINK"`
 [ -z "$LINK" ] && LINK="N/A"
-ZZ=`adjust_tc "$SDATE"`
+ZZ_SD=`get_field started`
+ZZ_ED=`get_field ended`
+ZZ=`adjust_tc "$ZZ_SD"`
 [ -n "$ZZ" ] && STARTED=`date --date="$ZZ" +"%s"` || STARTED=0
-ZZ=`adjust_tc ended`
+ZZ=`adjust_tc "$ZZ_ED"`
 [ -n "$ZZ" ] && ENDED=`date --date="$ZZ" +"%s"` || ENDED=0
+STARTYEAR=`echo "$ZZ_SD" | rev | cut -d "/" -f1 | rev`
+[ -z "$STARTYEAR" ] && STARTYEAR=0
+ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
+[ -z "$ENDYEAR" ] && ENDYEAR=0
+
+NETWORK=`get_field "network[@country='$COUNTRY']"`
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
@@ -278,7 +286,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 		}
 	fi	
 	
-	echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\n\n" > /tmp/glutil.img.$$.tmp
+	echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\nstartyear $STARTYEAR\nendyear $ENDYEAR\nnetwork $NETWORK\n\n" > /tmp/glutil.img.$$.tmp
 	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
 	rm /tmp/glutil.img.$$.tmp
 fi
