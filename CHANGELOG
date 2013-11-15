@@ -83,6 +83,7 @@
  *   - ~ Memory leak when searching inside files (rev. 55)
  *   - % Detect error/eof while reading files (cfg parser) and macros (rev. 56)
  *   - !% Reduce max. macro line size to 32k (SSD_MAX_LINE_SIZE) (rev. 57)
+ *   - + Add 'startyear', 'endyear' and 'network' (tvrage log) (rev. 58)
  *
  * v1.8
  *
