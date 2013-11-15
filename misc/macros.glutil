@@ -1,4 +1,4 @@
-#@REVISION:24
+#@REVISION:25
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -101,7 +101,7 @@
 #
 #@MACRO:dirlog-to-ascii:{m:exe} -d --dirlog={m:q:dirlog@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}` 
 #@MACRO:imdb-to-ascii:{m:exe} -a --imdblog={m:q:imdb@file} --imdblog={imdbfile} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nimdbid {imdbid}\nplot {plot}\nscore {score}\ngenre {genre}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n"` {m:arg2} --silent --postexec `echo  "" >> {m:arg1}` 
-#@MACRO:tvrage-to-ascii:{m:exe} -h --tvlog={m:q:tvrage@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenre {genre}\nstatus {status}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}`
+#@MACRO:tvrage-to-ascii:{m:exe} -h --tvlog={m:q:tvrage@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenre {genre}\nstatus {status}\nstartyear {startyear}\nendyear {endyear}\nnetwork {network}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}`
 #
 ## <dirlog-clean-dupes>
 #
