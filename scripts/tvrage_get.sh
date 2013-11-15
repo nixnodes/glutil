@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:9
+#@REVISION:10
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -270,6 +270,7 @@ ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
 [ -z "$ENDYEAR" ] && ENDYEAR=0
 
 NETWORK=`get_field "network[@country='$COUNTRY']"`
+[ -z "$NETWORK" ] && NETWORK="N/A"
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
