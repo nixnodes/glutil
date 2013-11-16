@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-58
+ * Version     : 1.9-59
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 58
+#define VER_REVISION 59
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -5078,6 +5078,7 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 	if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p)) {
 		EXITVAL = 1;
 		ofl |= F_BM_TERM;
+		gfl |= F_OPT_KILL_GLOBAL;
 	}
 
 	return r_p;
