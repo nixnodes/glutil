@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:22
+#@REVISION:23
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -135,7 +135,7 @@ get_omdbapi_data() {
 }
 
 cad() {
-        RTIME=`$1 --imdblog "$4$LAPPEND" -a $2 "$3" --imatchq -exec "echo {time}" --silent`
+        RTIME=`$1 --imdblog "$4$LAPPEND" -a $2 "$3" --imatchq -execv "echo {time}" --silent`
         CTIME=`date +"%s"`
         [ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
         if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
@@ -233,7 +233,7 @@ if ! [ $7 -eq 2 ]; then
         [ -z "$iid" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                cad $2 "--iregex" "imdbid,^$iid$" "$3"
+                cad $2 "imatch" "imdbid,$iid" "$3"
         fi
 
         DDT=`get_omdbapi_data "$iid"`
@@ -281,7 +281,7 @@ else
         QUERY="$8"
         YEAR_q="$9"
 
-		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad $2 "--iregex" "imdbid,^$iid$" "$3"
+		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad $2 "imatch" "imdbid,$iid" "$3"
 
         DDT=`get_omdbapi_data "$iid"`
 
@@ -336,13 +336,13 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq -v > /dev/null || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb --regex "$DIR_E" > /dev/null || {
+                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb --regex "$DIR_E" --silent || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
                 }
         elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
-                $2 --imdblog="$3$LAPPEND" -a --iregex imdbid,"^$iid$" --imatchq > /dev/null || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb --regex imdbid,"^$iid$" > /dev/null || {
+                $2 --imdblog="$3$LAPPEND" -a imatch "imdbid,$iid" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb match "imdbid,$iid" --silent || {
                         echo "ERROR: $iid: Failed removing old record" && exit 1
                 }
         fi
