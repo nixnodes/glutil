@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:11
+#@REVISION:12
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -93,12 +93,12 @@ TVRAGE_SEARCH_BY_YEAR=1
 ## what this is)
 TVRAGE_API_KEY=""
 #
-VERBOSE=0
+VERBOSE=1
 #
 ## Wipes given characters out from show name, before
 ## writing the log (regex)
 ## To disable this, comment out the below line
-TITLE_WIPE_CHARS="\'\´"
+TITLE_WIPE_CHARS="\'\´\:\""
 #
 ############################[ END OPTIONS ]##############################
 
@@ -130,7 +130,7 @@ fi
 [ -z "$QUERY" ] && exit 1
 
 cad() {
-	RTIME=`$1 --tvlog "$4$LAPPEND" -h $2 "$3" --imatchq -exec "echo {time}" --silent`
+	RTIME=`$1 --tvlog "$4$LAPPEND" -h $2 "$3" --imatchq -execv "echo {time}" --silent`
 	CTIME=`date +"%s"`
 	[ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
 	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
@@ -221,7 +221,7 @@ if [ -z "$SHOWID" ]; then
 fi
 
 if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
-	cad $2 "--iregex" "showid,^$SHOWID$" "$3"	
+	cad $2 "ilom" "showid=$SHOWID" "$3"	
 fi
 
 adjust_tc() {
@@ -284,13 +284,13 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
-		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq -v > /dev/null || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" > /dev/null || { 
-			echo "ERROR: $DIR_E: Failed removing old record" && exit 1 
+		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq --silent || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" --silent || { 
+			echo "ERROR: $DIR_E: Failed removing old record"; exit 1 
 		}
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
-		$2 --tvlog="$3$LAPPEND" -h --iregex showid,"^$SHOWID$" --imatchq > /dev/null || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex showid,"^$SHOWID$" > /dev/null || {
-			echo "ERROR: $SHOWID: Failed removing old record" && exit 1 
+		$2 --tvlog="$3$LAPPEND" -h ilom "showid=$SHOWID" --imatchq --silent || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage lom "showid=$SHOWID" --silent || {
+			echo "ERROR: $SHOWID: Failed removing old record"; exit 1 
 		}
 	fi	
 	
