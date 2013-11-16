@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:21
+#@REVISION:22
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -90,6 +90,11 @@ OMDB_ALLOWED_TYPES="movie|N\/A"
 #
 ## Extract year from release string and apply to searches
 IMDB_SEARCH_BY_YEAR=1
+#
+## Wipes given characters out from title, before
+## writing the log (regex)
+## To disable this, comment out the below line
+IMDB_TITLE_WIPE_CHARS="\'\´\:\""
 #
 ############################[ END OPTIONS ]##############################
 
@@ -288,7 +293,9 @@ fi
 
 ! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES" && echo "ERROR: $QUERY: $TD: invalid match (type is $TYPE): $IMDB_URL""?r=XML&i=$iid" && exit 1
 
-[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: could not extract movie data" && exit 1
+[ -n "$IMDB_TITLE_WIPE_CHARS" ] && TITLE=`echo "$TITLE" | sed -r "s/[${IMDB_TITLE_WIPE_CHARS}]+//g"`
+
+[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: could not extract movie title, fatal.." && exit 1
 
 PLOT=`get_field plot`
 
