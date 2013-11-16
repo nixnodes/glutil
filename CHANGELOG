@@ -84,6 +84,7 @@
  *   - % Detect error/eof while reading files (cfg parser) and macros (rev. 56)
  *   - !% Reduce max. macro line size to 32k (SSD_MAX_LINE_SIZE) (rev. 57)
  *   - + Add 'startyear', 'endyear' and 'network' fields (tvrage log) (rev. 58)
+ *   - ~ Quit on first match/result failing when parsing (rev. 59)
  *
  * v1.8
  *
