@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:10
+#@REVISION:11
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -32,7 +32,7 @@
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-1.9-58 or greater
+## Requires: - glutil-1.9-58 or above
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
@@ -94,6 +94,11 @@ TVRAGE_SEARCH_BY_YEAR=1
 TVRAGE_API_KEY=""
 #
 VERBOSE=0
+#
+## Wipes given characters out from show name, before
+## writing the log (regex)
+## To disable this, comment out the below line
+TITLE_WIPE_CHARS="\'\´"
 #
 ############################[ END OPTIONS ]##############################
 
@@ -193,7 +198,7 @@ echo "$DDT" | egrep -q "^Invalid" && {
 	exit 1
 }
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data - ""$TVRAGE_URL""/feeds/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O" && exit 1
+[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data (empty) - $8" && exit 1
 
 get_field()
 {
@@ -232,6 +237,8 @@ adjust_tc() {
 }
 
 NAME=`get_field $SNAME`
+[ -n "$TITLE_WIPE_CHARS" ] && NAME=`echo "$NAME" | sed -r "s/[${TITLE_WIPE_CHARS}]+//g"`
+[ -z "$NAME" ] && echo "ERROR: $QUERY: $TD: could not extract show name, fatal.." && exit 1
 GENRES=`get_field_t '/genres//genre[.]'`
 
 $RECODE --version 2&> /dev/null && {
