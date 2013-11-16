@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:12
+#@REVISION:13
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -93,7 +93,7 @@ TVRAGE_SEARCH_BY_YEAR=1
 ## what this is)
 TVRAGE_API_KEY=""
 #
-VERBOSE=1
+VERBOSE=0
 #
 ## Wipes given characters out from show name, before
 ## writing the log (regex)
@@ -165,7 +165,7 @@ if [ $7 -eq 2 ]; then
 		exit 1
 	}
 	if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
-		cad $2 "--iregex" "showid,^$8$" "$3"	
+		cad $2 "ilom" "showid=${8}" "$3"	
 	fi
 	
 	[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"
@@ -221,7 +221,7 @@ if [ -z "$SHOWID" ]; then
 fi
 
 if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
-	cad $2 "ilom" "showid=$SHOWID" "$3"	
+	cad $2 "ilom" "showid=${SHOWID}" "$3"	
 fi
 
 adjust_tc() {
