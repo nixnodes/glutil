@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-62
+ * Version     : 1.9-63
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 62
+#define VER_REVISION 63
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -5688,11 +5688,11 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 				&& reg_match(PREG_SFV_SKIP_EXT, fn2,
 				REG_ICASE | REG_NEWLINE) && file_crc32(name, &crc32) > 0) {
 			fn = strdup(name);
-			char *dn = g_basename(dirname(fn));
+			char *dn = g_basename(g_dirname(fn));
 			free(fn2);
 			fn2 = strdup(name);
-			snprintf(iarg->buffer, PATH_MAX, "%s/%s.sfv.tmp", dirname(fn2), dn);
-			snprintf(iarg->buffer2, PATH_MAX, "%s/%s.sfv", dirname(fn2), dn);
+			snprintf(iarg->buffer, PATH_MAX, "%s/%s.sfv.tmp", g_dirname(fn2), dn);
+			snprintf(iarg->buffer2, PATH_MAX, "%s/%s.sfv", fn2, dn);
 			char buffer2[PATH_MAX + 10];
 			snprintf(buffer2, 1024, "%s %.8X\n", base, (uint32_t) crc32);
 			if (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)) {
@@ -5792,8 +5792,7 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 				if (!rename(iarg->buffer, iarg->buffer2)) {
 					if (gfl & F_OPT_VERBOSE) {
 						print_str(
-								"NOTICE: '%s': succesfully generated SFV file\n",
-								name);
+								"NOTICE: '%s': succesfully generated SFV file\n", name);
 					}
 				} else {
 					print_str("ERROR: '%s': failed renaming '%s' to '%s'\n",
