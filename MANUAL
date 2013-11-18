@@ -51,11 +51,14 @@ FLAGS:
    size       S     Total size, in bytes
    mode       I     File type (glutil --info -vv)
    devid      I     ID of device containing file
+   major      I     Class ID of device
+   minor      I     ID of the device in class
    inode      I     inode number
    links      I     Number of hard links
    uid        I     User ID of owner
    gid        I     Uroup ID of owner
    blksize    I     Blocksize for filesystem I/O
+   blocks     I     Number of 512B blocks allocated
    atime      I     Time of last access
    mtime      I     Time of last modification
    ctime      I     Time of last status change
