@@ -85,6 +85,11 @@
  *   - !% Reduce max. macro line size to 32k (SSD_MAX_LINE_SIZE) (rev. 57)
  *   - + Add 'startyear', 'endyear' and 'network' fields (tvrage log) (rev. 58)
  *   - ~ Quit on first match/result failing when parsing (rev. 59)
+ *   - ~ --sort segfaulting in certain cases (rev. 60)
+ *   - ~ Quit on first match/result broken in rebuild mode (-e) (rev. 60)
+ *   - ~ Only the last given 'curtime+/-' field was taken into account (rev. 60)
+ *   - ~ A 'fgets' was called with bigger size than length of destination buffer(rev. 60)
+ *   - + Add 'blocks', 'major', 'minor' fields (FILESYSTEM) (rev. 60)
  *
  * v1.8
  *
