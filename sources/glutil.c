@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-60
+ * Version     : 1.9-61
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 60
+#define VER_REVISION 61
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -482,19 +482,11 @@ static uint32_t crc_32_tab[] = { 0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
 #define UPDC32(octet,crc) (crc_32_tab[((crc) ^ ((uint8_t)octet)) & 0xff] ^ ((crc) >> 8))
 
 uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
-	uint32_t oldcrc32;
-
-	if (crc32) {
-		oldcrc32 = crc32;
-	} else {
-		oldcrc32 = MAX_uint32_t;
-	}
-
 	for (; len; len--, buf++) {
-		oldcrc32 = UPDC32(*buf, oldcrc32);
+		crc32 = UPDC32(*buf, crc32);
 	}
 
-	return ~oldcrc32;
+	return crc32;
 }
 
 #define PTRSZ 				(sizeof(void*))
@@ -714,7 +706,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define TV_SZ 					sizeof(_d_tvrage)
 #define G1_SZ 					sizeof(_d_generic_s2044)
 
-#define CRC_FILE_READ_BUFFER_SIZE 26214400
+#define CRC_FILE_READ_BUFFER_SIZE 64512
 #define	DB_MAX_SIZE 			((long long int)1073741824)   /* max file size allowed to load into memory */
 #define MAX_EXEC_STR 			262144
 
@@ -8003,9 +7995,9 @@ ssize_t file_copy(char *source, char *dest, char *mode, uint32_t flags) {
 off_t file_crc32(char *file, uint32_t *crc_out) {
 	g_setjmp(0, "file_crc32", NULL, NULL);
 	FILE *fp;
-	int read;
+
 	size_t r;
-	uint8_t *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE);
+	uint8_t *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE), *ptr = buffer;
 
 	*crc_out = 0x0;
 
@@ -8016,13 +8008,14 @@ off_t file_crc32(char *file, uint32_t *crc_out) {
 
 	uint32_t crc = MAX_uint32_t;
 
-	for (read = 0, r = 0; !feof(fp);) {
+	for (;; ptr = buffer) {
 		if ((r = fread(buffer, 1, CRC_FILE_READ_BUFFER_SIZE, fp)) < 1) {
 			break;
 		}
-		crc = crc32(crc, buffer, r);
-		//bzero(buffer, CRC_FILE_READ_BUFFER_SIZE);
-		read += r;
+
+		for (; r; r--, ptr++) {
+			crc = UPDC32(*ptr, crc);
+		}
 	}
 
 	if (ferror(fp)) {
@@ -8031,20 +8024,17 @@ off_t file_crc32(char *file, uint32_t *crc_out) {
 		return 0;
 	}
 
-	if (read) {
-		*crc_out = crc;
-	}
+	*crc_out = ~crc;
 
 	free(buffer);
 	fclose(fp);
 
-	return read;
+	return 1;
 }
 
 #define F_CFGV_BUILD_FULL_STRING	(a32 << 1)
 #define F_CFGV_RETURN_MDA_OBJECT	(a32 << 2)
 #define F_CFGV_RETURN_TOKEN_EX		(a32 << 3)
-
 #define F_CFGV_BUILD_DATA_PATH		(a32 << 10)
 
 #define F_CFGV_MODES				(F_CFGV_BUILD_FULL_STRING|F_CFGV_RETURN_MDA_OBJECT|F_CFGV_RETURN_TOKEN_EX)
