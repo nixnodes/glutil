@@ -90,6 +90,8 @@
  *   - ~ Only the last given 'curtime+/-' field was taken into account (rev. 60)
  *   - ~ A 'fgets' was called with bigger size than length of destination buffer(rev. 60)
  *   - + Add 'blocks', 'major', 'minor' fields (FILESYSTEM) (rev. 60)
+ *   - ~ file_crc32 mis-calculated data larger than 26214400 bytes (rev. 61)
+ *   - ! file_crc32 optimized for performance (rev. 61)
  *
  * v1.8
  *
