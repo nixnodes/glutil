@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-59
+ * Version     : 1.9-60
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 59
+#define VER_REVISION 60
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -423,6 +423,12 @@ typedef struct ___g_eds {
 	struct stat st;
 	off_t depth;
 } _g_eds, *__g_eds;
+
+typedef struct ___d_xref_ct {
+	uint8_t active;
+	time_t curtime;
+	int ct_off;
+} _d_xref_ct, *__d_xref_ct;
 
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
@@ -713,6 +719,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
+#define GM_MAX					16384
 #define MAX_DATAIN_F			(V_MB*32)
 
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
@@ -2616,6 +2623,8 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 void *shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
 		int *shmid);
 
+size_t d_xref_ct_fe(__d_xref_ct input, size_t sz);
+
 void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		opt_raw_dump, (void*) 0, "silent", opt_silent, (void*) 0, "--silent",
 		opt_silent, (void*) 0, "-arg1", opt_g_arg1, (void*) 1, "--arg1",
@@ -4062,12 +4071,11 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 #define F_XRF_GET_PERM		(a32 << 9)
 #define F_XRF_GET_CRC32		(a32 << 10)
 #define F_XRF_GET_CTIME		(a32 << 11)
-#define F_XRF_GET_CTIME_P	(a32 << 12)
-#define F_XRF_GET_CTIME_M	(a32 << 13)
+#define F_XRF_GET_MINOR		(a32 << 14)
+#define F_XRF_GET_MAJOR		(a32 << 15)
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
-#define F_XRF_CTIME_DM		(F_XRF_GET_CTIME|F_XRF_GET_CTIME_P|F_XRF_GET_CTIME_M)
 
 typedef struct ___d_xref {
 	char name[PATH_MAX];
@@ -4078,8 +4086,9 @@ typedef struct ___d_xref {
 	uint16_t perm;
 	uint32_t flags;
 	uint32_t crc32;
-	time_t curtime;
-	time_t ct_off;
+	uint32_t major;
+	uint32_t minor;
+	_d_xref_ct ct[GM_MAX + 1];
 } _d_xref, *__d_xref;
 
 typedef void (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
@@ -4204,12 +4213,18 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 			if (aa_rh->p_xref.flags & F_XRF_GET_OPERM) {
 				aa_rh->p_xref.operm = (aa_rh->p_xref.st.st_mode & S_IRWXO);
 			}
+			if (aa_rh->p_xref.flags & F_XRF_GET_MINOR) {
+				aa_rh->p_xref.minor = minor(aa_rh->p_xref.st.st_dev);
+			}
+			if (aa_rh->p_xref.flags & F_XRF_GET_MAJOR) {
+				aa_rh->p_xref.major = major(aa_rh->p_xref.st.st_dev);
+			}
 		}
 	}
+
 	if (aa_rh->p_xref.flags & F_XRF_GET_DT_MODE) {
 		aa_rh->p_xref.type = type;
 	}
-
 	if (aa_rh->p_xref.flags & F_XRF_GET_READ) {
 		aa_rh->p_xref.r = (uint8_t) !(access(aa_rh->p_xref.name, R_OK));
 	}
@@ -4223,21 +4238,13 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 		file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
 	}
 
-	switch (aa_rh->p_xref.flags & F_XRF_CTIME_DM) {
-	case F_XRF_GET_CTIME:
-		aa_rh->p_xref.curtime = time(NULL);
-		break;
-	case F_XRF_GET_CTIME_M:
-		aa_rh->p_xref.curtime = time(NULL) - aa_rh->p_xref.ct_off;
-		break;
-	case F_XRF_GET_CTIME_P:
-		aa_rh->p_xref.curtime = time(NULL) + aa_rh->p_xref.ct_off;
-		break;
+	if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
+		__d_xref_ct x_ptr = &aa_rh->p_xref.ct[0];
+		while (x_ptr->active) {
+			x_ptr->curtime = time(NULL) + x_ptr->ct_off;
+			x_ptr++;
+		}
 	}
-
-	/*if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
-	 aa_rh->p_xref.curtime = time(NULL);
-	 }*/
 }
 
 int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
@@ -5162,6 +5169,9 @@ int g_filter(__g_handle hdl, pmda md) {
 
 	while (ptr) {
 		if (ofl & F_BM_TERM) {
+			if (gfl & F_OPT_KILL_GLOBAL) {
+				gfl ^= F_OPT_KILL_GLOBAL;
+			}
 			break;
 		}
 		if (g_bmatch(ptr->ptr, hdl, md)) {
@@ -5286,7 +5296,7 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
 			NULL);
 
-			if (gfl & F_OPT_KILL_GLOBAL) {
+			if ((gfl & F_OPT_KILL_GLOBAL)) {
 				break;
 			}
 
@@ -6591,7 +6601,7 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 	g_setjmp(0, "rebuild_data_file(3)", NULL, NULL);
 
 	if ((gfl & F_OPT_KILL_GLOBAL) && !(gfl & F_OPT_FORCE)) {
-		print_str( MSG_REDF_ABORT, file);
+		print_str(MSG_REDF_ABORT, file);
 		return 0;
 	}
 
@@ -8381,6 +8391,18 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_dev);
+	} else if (!strncmp(match, "minor", 5)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%u", minor(st.st_dev));
+	} else if (!strncmp(match, "major", 5)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%u", major(st.st_dev));
 	} else if (!strncmp(match, "inode", 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
@@ -8411,6 +8433,12 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_blksize);
+	} else if (!strncmp(match, "blocks", 6)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		}
+		snprintf(output, max_size, "%u", (uint32_t) st.st_blocks);
 	} else if (!strncmp(match, "atime", 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
@@ -8552,6 +8580,14 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->st.st_dev);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_dev;
+	} else if (!strncmp(match, "minor", 5)) {
+		*output = sizeof(data->minor);
+		data->flags |= F_XRF_GET_MINOR | F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->minor;
+	} else if (!strncmp(match, "major", 5)) {
+		*output = sizeof(data->major);
+		data->flags |= F_XRF_GET_MAJOR | F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->major;
 	} else if (!strncmp(match, "inode", 5)) {
 		*output = sizeof(data->st.st_ino);
 		data->flags |= F_XRF_DO_STAT;
@@ -8572,6 +8608,10 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->st.st_blksize);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_blksize;
+	} else if (!strncmp(match, "blocks", 6)) {
+		*output = sizeof(data->st.st_blocks);
+		data->flags |= F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->st.st_blocks;
 	} else if (!strncmp(match, "atime", 5)) {
 		*output = sizeof(data->st.st_atime);
 		data->flags |= F_XRF_DO_STAT;
@@ -8589,24 +8629,39 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		data->flags |= F_XRF_GET_CRC32;
 		return &((__d_xref) NULL)->crc32;
 	} else if (!strncmp(match, "curtime", 7)) {
-		*output = sizeof(data->curtime);
+		size_t xrf_cto = d_xref_ct_fe(&data->ct[0], GM_MAX);
+		if (xrf_cto == -1) {
+			print_str("ERROR: ct slot limit exceeded!\n");
+			gfl = F_OPT_KILL_GLOBAL;
+			EXITVAL = 4;
+			return NULL;
+		}
+		data->ct[xrf_cto].active = 1;
 		switch (match[7]) {
-			case 0x2D:
-			data->flags |= F_XRF_GET_CTIME_M;
-			data->ct_off = (time_t) atoll(&match[8]);
+			case 0x2D:;
+			data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
 			break;
-			case 0x2B:
-			data->flags |= F_XRF_GET_CTIME_P;
-			data->ct_off = (time_t) atoll(&match[8]);
-			break;
-			default:
-			data->flags |= F_XRF_GET_CTIME;
+			case 0x2B:;
+			data->ct[xrf_cto].ct_off = atoi(&match[8]);
 			break;
 		}
-		return &((__d_xref) NULL)->curtime;
+		data->flags |= F_XRF_GET_CTIME;
+		*output = sizeof(data->ct[xrf_cto].curtime);
+		return &((__d_xref) NULL)->ct[xrf_cto].curtime;
 	}
 
 	return NULL;
+}
+
+size_t d_xref_ct_fe(__d_xref_ct input, size_t sz) {
+	size_t i;
+
+	for (i = 0; i < sz; i++) {
+		if (!input[i].active) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
@@ -8760,7 +8815,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 
 	for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++) {
 		ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
-		ptr = m_ptr->first;
+		ptr = md_first(m_ptr);
 		while (ptr && ptr->next) {
 			ptr_n = (p_md_obj) ptr->next;
 
@@ -8809,7 +8864,7 @@ int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 
 	for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++) {
 		ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
-		ptr = m_ptr->first;
+		ptr = md_first(m_ptr);
 		while (ptr && ptr->next) {
 			ptr_n = (p_md_obj) ptr->next;
 
@@ -9224,7 +9279,7 @@ int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 __g_match g_global_register_match(void) {
 	md_init(&_match_rr, 32);
 
-	if (_match_rr.offset >= 8192) {
+	if (_match_rr.offset >= GM_MAX) {
 		return NULL;
 	}
 
@@ -11493,7 +11548,7 @@ int load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res) {
 		return 3;
 	}
 
-	char *buffer = malloc(LCFG_MAX_LINE_SIZE);
+	char *buffer = malloc(LCFG_MAX_LINE_SIZE + 2);
 	p_cfg_h pce;
 	int rd, i, c = 0;
 
