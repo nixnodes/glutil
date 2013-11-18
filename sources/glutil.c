@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-61
+ * Version     : 1.9-62
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 61
+#define VER_REVISION 62
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -5436,6 +5436,7 @@ int rebuild_dirlog(void) {
 	g_proc_mr(&g_act_1);
 
 	if (gfl & F_OPT_FORCE) {
+		print_str("NOTICE: performing a full siteroot rescan\n");
 		print_str("SCANNING: '%s'\n", SITEROOT);
 		update_records(SITEROOT, 0);
 		goto rw_end;
@@ -5447,11 +5448,11 @@ int rebuild_dirlog(void) {
 
 	if (read_file(DU_FLD, buffer, V_MB, 0, NULL) < 1) {
 		print_str(
-				"WARNING: unable to read folders file, doing full siteroot recursion in '%s'..\n",
-				SITEROOT);
-		gfl |= F_OPT_FORCE;
-		update_records(SITEROOT, 0);
-		goto rw_end;
+				"ERROR: unable to read folders file '%s', read MANUAL on how to set it up, or use -f (force) to do a full rescan (not compatible with -u (update))..\n",
+				DU_FLD, SITEROOT);
+		//gfl |= F_OPT_FORCE;
+		//update_records(SITEROOT, 0);
+		goto r_end;
 	}
 
 	int r, r2;
