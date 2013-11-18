@@ -4071,8 +4071,8 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 #define F_XRF_GET_PERM		(a32 << 9)
 #define F_XRF_GET_CRC32		(a32 << 10)
 #define F_XRF_GET_CTIME		(a32 << 11)
-#define F_XRF_GET_MINOR		(a32 << 14)
-#define F_XRF_GET_MAJOR		(a32 << 15)
+#define F_XRF_GET_MINOR		(a32 << 12)
+#define F_XRF_GET_MAJOR		(a32 << 13)
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
