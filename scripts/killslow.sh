@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:4
+#@REVISION:5
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -73,7 +73,7 @@ PATHS_FILTERED="\/(sample|cover(s|)|proof)(($)|\/)"
 IGNORE_LONE_RANGER=0
 #
 ## Remove file the violator was uploading, immediately
-## after sending PID the kill signal
+## after sending process the kill signal
 WIPE_FILE=1
 #
 ## Remove all file records the violator was uploading
@@ -125,7 +125,9 @@ fi
 
 echo $6 | egrep -q '^STOR' || exit 1
 
-echo $6 | egrep -q "${FILES_ENFORCED}" || exit 1
+[ -n "$FILES_ENFORCED" ] && {
+	echo $6 | egrep -q "${FILES_ENFORCED}" || exit 1
+}
 [ -n "$PATHS_FILTERED" ] && echo $9 | egrep -q "${PATHS_FILTERED}" && exit 1
 
 [ -n "$EXEMPTUSERS" ] && echo "$3" | egrep -q "^(${EXEMPTUSERS})\$" && {
