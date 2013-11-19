@@ -17,12 +17,12 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:3
-#@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host}"
+#@REVISION:4
+#@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Requires: - glutil-1.9-7 or above
+## Requires: - glutil-1.9-68 or above
 ##           - date, kill, expr, sleep, stat
 #
 ## Usage (manual): /glroot/bin/glutil -w --loop=1 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
@@ -59,19 +59,28 @@ BANUSER=15
 ## Exempt users list
 EXEMPTUSERS="user1|user2"
 #
-## Do not enforce limit on siteops
+## Do NOT enforce limit on siteops
 EXEMPTSITEOPS=1
 #
 ## Enforce only on files matching this expression
-#
-FILES_ENFORCED="\.(r[0-9]{1,3}|rar|mkv|avi|mp(e|)g|mp3)$"
+FILES_ENFORCED="\.(r([0-9]{1,3}|ar)|mkv|avi|mp((e|())g|[34]))$"
 #
 ## Do NOT enforce paths matching this expression
-#
 PATHS_FILTERED="\/(sample|cover(s|)|proof)(($)|\/)"
 #
-## Log to glftpd.log
+## Do not enforce when only one user is uploading
+## into a certain directory
+IGNORE_LONE_RANGER=0
 #
+## Remove file the violator was uploading, immediately
+## after sending PID the kill signal
+WIPE_FILE=1
+#
+## Remove all file records the violator was uploading
+## from the dupelog
+WIPE_FROM_DUPELOG=1
+#
+## Log to glftpd.log
 LOG_TO_GLFTPD=1
 #
 ############################[ END OPTIONS ]##############################
@@ -91,7 +100,7 @@ ban_user() {
 		[ -n "$LOG" ] && echo "[`date "+%T %D"`] DISABLE USER: $1 for $BANUSER seconds.." >> $LOG
 		sed -r 's/^FLAGS .*$/&6/' "$4/$1" > /tmp/ks.$1.$$.dtm &&	
 			cat /tmp/ks.$1.$$.dtm > $4/$1 &&			
-			$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"
+				$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"
 		rm /tmp/ks.$1.$$.dtm
 		
 		return 0
@@ -102,24 +111,27 @@ ban_user() {
 		[ -z "$g_FLAGS" ] && return 1
 		sed -r "s/^FLAGS .*/$g_FLAGS/" "$4/$1" > /tmp/ks.$1.$$.dtm &&
 			cat /tmp/ks.$1.$$.dtm > $4/$1 &&
-			rm /tmp/ks.$1.$$.dtm	
+				rm /tmp/ks.$1.$$.dtm	
 		
 	fi
 	return 0
 }
 
-if [[ "$1" == "ban" ]];then
+if [[ "$1" == "ban" ]]; then
 	ban_user $2 0 $3 $4 $5 $0 && exit 1
-elif [[ "$1" == "unban" ]];then
+elif [[ "$1" == "unban" ]]; then
 	ban_user $2 1 $3 $4 && exit 1
 fi
 
 echo $6 | egrep -q '^STOR' || exit 1
 
-echo $6 | egrep -q $FILES_ENFORCED || exit 1
-echo $9 | egrep -q $PATHS_FILTERED && exit 1
+echo $6 | egrep -q "${FILES_ENFORCED}" || exit 1
+[ -n "$PATHS_FILTERED" ] && echo $9 | egrep -q "${PATHS_FILTERED}" && exit 1
 
-[ -n "$EXEMPTUSERS" ] && echo "$3" | egrep -q "^($EXEMPTUSERS)\$" && exit 1
+[ -n "$EXEMPTUSERS" ] && echo "$3" | egrep -q "^(${EXEMPTUSERS})\$" && {
+	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
+	exit 1
+}
 [ $EXEMPTSITEOPS -eq 1 ] && echo "$8" | grep -q 1 && exit 1
 
 ! [ -d "/tmp/du-ks" ] && mkdir -p /tmp/du-ks
@@ -130,6 +142,14 @@ if [ $BXFER -lt 1 ]; then
 	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4 
 	exit 1
 fi
+
+[ $IGNORE_LONE_RANGER -eq 1 ] && {
+	glutil -w --batch match "user,${3}" or iregex status,"^STOR\ " and ilom "bxfer" and imatch "ndir,${14}" | egrep -q "^ONLINE" || {
+		#echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
+		[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
+		exit 1
+	}
+}
 
 DRATE=$5
 LUPDT=$2
@@ -156,7 +176,14 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		echo "[`date "+%T %D"`] KILLING: [PID: $4]: Below speed limit for too long ($UNDERTIME secs): $GLUSER [Rate: $DRATE/$MINRATE B/s]" >> $LOG
 		ban_user $GLUSER 0 $8 ${10} $7 $0
 		SHOULDKILL=1
-		kill $4 && KILLED=1 && rm /tmp/du-ks/$4
+		kill $4 && {
+			[ $WIPE_FILE -eq 1 ] && [ -f "${15}${9}" ] && rm -f "${15}${9}"
+			[ $WIPE_FROM_DUPELOG -eq 1 ] && {
+				g_FILE=`echo "${6}" | cut -f 2- -d " "`
+				[ -n "$g_FILE" ]  && $7 -e dupefile match "file,$g_FILE" and match "user,${3}" --loglevel=6 -vvv
+			}
+			KILLED=1 && rm /tmp/du-ks/$4
+		}
 	}
 	if [ $KILLED -eq 1 ]; then 
 		FORCEKILL=0		
@@ -175,10 +202,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 			gllog="${11}/glftpd.log"
 			[ -f "$gllog" ] && echo "`date "+%a %b %e %T %Y"` KILLSLOW: \"$GLUSER\" \"$4\" \"$DRATE\" \"$MINRATE\" \"$UNDERTIME\" \"$FORCEKILL\" \"$9\" \"$1\" \"$(echo "$6" | sed 's/^STOR //')\" \"$1\" \"${12}\" \"${13}\"" >> $gllog || 
 				echo "[`date "+%T %D"`] ERROR: could not log to glftpd.log" >> $LOG
-		}
-
-    	g_FILE=`echo $6 | cut -f 2- -d " "`
-    	[ -n "$g_FILE" ]  && $7 -e dupefile --match "$g_FILE" --loglevel=6 -vvv
+		}   	
     fi    	
 elif [ $SLOW -eq 1 ]; then
 	touch "/tmp/du-ks/$4"
