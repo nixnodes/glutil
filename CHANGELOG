@@ -97,6 +97,7 @@
  *   - ~ Fix timestamps to be represented as signed integers (rev. 64)
  *   - ~ Fix integer type representation relating to various logs (rev. 65) 
  *   - ~ Default log path building was broken (rev. 66)
+ *   - + Add 'ndir' field, see MANUAL (ONLINE users) (rev. 67)
  *
  * v1.8
  *
