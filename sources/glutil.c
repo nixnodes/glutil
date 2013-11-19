@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-63
+ * Version     : 1.9-64
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 63
+#define VER_REVISION 64
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -216,7 +216,7 @@ typedef struct ___d_imdb {
 	char year[6];
 	char title[128];
 	int32_t released;
-	int32_t runtime;
+	uint32_t runtime;
 	char rated[8];
 	char actors[128];
 	char director[64];
@@ -228,7 +228,7 @@ typedef struct ___d_imdb {
 
 typedef struct ___d_game {
 	char dirname[255];
-	uint32_t timestamp;
+	int32_t timestamp;
 	float rating;
 	/* ------------- */
 	char _d_unused[512]; /* Reserved for future use */
@@ -237,13 +237,13 @@ typedef struct ___d_game {
 
 typedef struct ___d_tvrage {
 	char dirname[255];
-	uint32_t timestamp;
+	int32_t timestamp;
 	uint32_t showid;
 	char name[128];
 	char link[128];
 	char country[24];
-	uint32_t started;
-	uint32_t ended;
+	int32_t started;
+	int32_t ended;
 	uint16_t seasons;
 	char status[64];
 	uint32_t runtime;
@@ -6222,8 +6222,8 @@ int imdb_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"IMDB\x9%s\x9%s\x9%u\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%u\x9%u\x9%s\x9%s\x9%s\x9%s\n",
-						data->dirname, data->title, (uint32_t) data->timestamp,
+						"IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\n",
+						data->dirname, data->title, data->timestamp,
 						data->imdb_id, data->rating, data->votes, data->genres,
 						data->year, data->released, data->runtime, data->rated,
 						data->actors, data->director, data->synopsis);
@@ -6252,7 +6252,7 @@ int game_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"GAMELOG\x9%s\x9%u\x9%.1f\n", data->dirname, data->timestamp,
+				"GAMELOG\x9%s\x9%d\x9%.1f\n", data->dirname, data->timestamp,
 				data->rating);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -6276,7 +6276,7 @@ int tv_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"TVRAGE\x9%s\x9%u\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%s\x9%s\x9%hu\x9%hu\x9%hu\x9%s\n",
+						"TVRAGE\x9%s\x9%d\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%d\x9%d\x9%s\x9%s\x9%hu\x9%hu\x9%hu\x9%s\n",
 						data->dirname, data->timestamp, data->name, data->class,
 						data->showid, data->link, data->status, data->airday,
 						data->airtime, data->runtime, data->started,
@@ -10272,7 +10272,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	__d_imdb data = (__d_imdb) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
+		snprintf(output, max_size, "%d", data->timestamp);
 	} else if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strncmp(match, _MC_IMDB_VOTES, 5)) {
@@ -10280,7 +10280,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		snprintf(output, max_size, "%u", data->runtime);
 	} else if (!strncmp(match, _MC_IMDB_RELEASED, 8)) {
-		snprintf(output, max_size, "%u", data->released);
+		snprintf(output, max_size, "%d", data->released);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
@@ -10358,7 +10358,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", data->timestamp);
+		snprintf(output, max_size, "%d", data->timestamp);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
@@ -10410,11 +10410,11 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	__d_tvrage data = (__d_tvrage) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", data->timestamp);
+		snprintf(output, max_size, "%d", data->timestamp);
 	} else if (!strncmp(match, _MC_TV_ENDED, 5)) {
-		snprintf(output, max_size, "%u", data->ended);
+		snprintf(output, max_size, "%d", data->ended);
 	} else if (!strncmp(match, _MC_TV_STARTED, 7)) {
-		snprintf(output, max_size, "%u", data->started);
+		snprintf(output, max_size, "%d", data->started);
 	} else if (!strncmp(match, _MC_TV_SEASONS, 7)) {
 		snprintf(output, max_size, "%u", data->seasons);
 	} else if (!strncmp(match, _MC_TV_SHOWID, 6)) {
@@ -10944,8 +10944,8 @@ int m_load_input(__g_handle hdl, char *input) {
 }
 
 int gcb_dirlog(void *buffer, char *key, char *val) {
-	size_t k_l = strlen(key), v_l, v_i;
-	uint32_t k_ui;
+	size_t k_l = strlen(key), v_l;
+
 	struct dirlog * ptr = (struct dirlog *) buffer;
 	if (k_l == 3 && !strncmp(key, _MC_GLOB_DIR, 3)) {
 		if (!(v_l = strlen(val))) {
@@ -10954,21 +10954,21 @@ int gcb_dirlog(void *buffer, char *key, char *val) {
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_USER, 4)) {
-		v_i = (int) strtol(val, NULL, 10);
+		uint16_t v_i = (uint16_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->uploader = v_i;
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GROUP, 5)) {
-		v_i = (int) strtol(val, NULL, 10);
+		uint16_t v_i = (uint16_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->group = v_i;
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_DIRLOG_FILES, 5)) {
-		k_ui = (uint32_t) strtol(val, NULL, 10);
+		uint16_t k_ui = (uint16_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
@@ -10982,7 +10982,7 @@ int gcb_dirlog(void *buffer, char *key, char *val) {
 		ptr->bytes = k_uli;
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		k_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t k_ui = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
@@ -11048,11 +11048,11 @@ int gcb_nukelog(void *buffer, char *key, char *val) {
 		memcpy(ptr->unnuker, val, v_l > 12 ? 12 : v_l);
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		uint32_t k_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t k_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->nuketime = k_ui;
+		ptr->nuketime = k_i;
 		return 1;
 	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_STATUS, 6)) {
 		uint16_t k_us = (uint16_t) strtol(val, NULL, 10);
@@ -11089,11 +11089,11 @@ int gcb_oneliner(void *buffer, char *key, char *val) {
 		memcpy(ptr->tagline, val, v_l > 63 ? 63 : v_l);
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->timestamp = v_ui;
+		ptr->timestamp = v_i;
 		return 1;
 	} else if (k_l == 3 && !strncmp(key, _MC_ONELINERS_MSG, 3)) {
 		if (!(v_l = strlen(val))) {
@@ -11123,11 +11123,11 @@ int gcb_dupefile(void *buffer, char *key, char *val) {
 		return 1;
 
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->timeup = v_ui;
+		ptr->timeup = v_i;
 		return 1;
 	}
 	return 0;
@@ -11156,32 +11156,32 @@ int gcb_lastonlog(void *buffer, char *key, char *val) {
 		memcpy(ptr->tagline, val, v_l > 63 ? 63 : v_l);
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_LOGON, 5)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->logon = v_ui;
+		ptr->logon = v_i;
 		return 1;
 	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_LOGOFF, 6)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->logoff = v_ui;
+		ptr->logoff = v_i;
 		return 1;
 	} else if (k_l == 6 && !strncmp(key, _MC_GLOB_UPLOAD, 6)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		unsigned long v_ul = (unsigned long) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->upload = v_ui;
+		ptr->upload = v_ul;
 		return 1;
 	} else if (k_l == 8 && !strncmp(key, _MC_GLOB_DOWNLOAD, 8)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		unsigned long v_ul = (unsigned long) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->download = v_ui;
+		ptr->download = v_ul;
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_LASTONLOG_STATS, 5)) {
 		if (!(v_l = strlen(val))) {
@@ -11203,11 +11203,11 @@ int gcb_game(void *buffer, char *key, char *val) {
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->timestamp = v_ui;
+		ptr->timestamp = v_i;
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_SCORE, 5)) {
 		float v_f = strtof(val, NULL);
@@ -11230,11 +11230,11 @@ int gcb_tv(void *buffer, char *key, char *val) {
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->timestamp = v_ui;
+		ptr->timestamp = v_i;
 		return 1;
 	} else if (k_l == 6 && !strncmp(key, _MC_TV_AIRDAY, 6)) {
 		if (!(v_l = strlen(val))) {
@@ -11267,35 +11267,35 @@ int gcb_tv(void *buffer, char *key, char *val) {
 		memcpy(ptr->name, val, v_l > 127 ? 127 : v_l);
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_TV_ENDED, 5)) {
-		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
-		if ( errno == ERANGE) {
+		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE ) {
 			return 0;
 		}
 		ptr->ended = v_ui;
 		return 1;
 	} else if (k_l == 7 && !strncmp(key, _MC_TV_STARTED, 7)) {
-		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->started = v_ui;
+		ptr->started = v_i;
 		return 1;
 	} else if (k_l == 7 && !strncmp(key, _MC_GLOB_RUNTIME, 7)) {
-		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->runtime = v_ui;
 		return 1;
 	} else if (k_l == 7 && !strncmp(key, _MC_TV_SEASONS, 7)) {
-		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
+		uint16_t v_ui = (uint16_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->seasons = v_ui;
 		return 1;
 	} else if (k_l == 6 && !strncmp(key, _MC_TV_SHOWID, 6)) {
-		int32_t v_ui = (int32_t) strtoul(val, NULL, 10);
+		uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
@@ -11320,14 +11320,14 @@ int gcb_tv(void *buffer, char *key, char *val) {
 		memcpy(ptr->genres, val, v_l > 255 ? 255 : v_l);
 		return 1;
 	} else if (k_l == 9 && !strncmp(key, _MC_TV_SYEAR, 9)) {
-		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
+		uint16_t v_ui = (uint16_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->startyear = v_ui;
 		return 1;
 	} else if (k_l == 7 && !strncmp(key, _MC_TV_EYEAR, 7)) {
-		int16_t v_ui = (int16_t) strtoul(val, NULL, 10);
+		uint16_t v_ui = (uint16_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
@@ -11353,11 +11353,11 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 		memcpy(ptr->dirname, val, v_l > 254 ? 254 : v_l);
 		return 1;
 	} else if (k_l == 4 && !strncmp(key, _MC_GLOB_TIME, 4)) {
-		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->timestamp = v_ui;
+		ptr->timestamp = v_i;
 		return 1;
 	} else if (k_l == 6 && !strncmp(key, _MC_IMDB_IMDBID, 6)) {
 		if (!(v_l = strlen(val))) {
@@ -11398,14 +11398,14 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 		memcpy(ptr->title, val, v_l > 127 ? 127 : v_l);
 		return 1;
 	} else if (k_l == 8 && !strncmp(key, _MC_IMDB_RELEASED, 8)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		int32_t v_i = (int32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
-		ptr->released = v_ui;
+		ptr->released = v_i;
 		return 1;
 	} else if (k_l == 7 && !strncmp(key, _MC_GLOB_RUNTIME, 7)) {
-		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+		uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
@@ -11493,7 +11493,7 @@ int gcb_gen1(void *buffer, char *key, char *val) {
 		memcpy(ptr->s_8, val, v_l > 254 ? 254 : v_l);
 		return 1;
 	} else if (k_l == 3 && !strncmp(key, "i32", 3)) {
-		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+		uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
 		if ( errno == ERANGE) {
 			return 0;
 		}
