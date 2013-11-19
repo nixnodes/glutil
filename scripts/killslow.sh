@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:5
+#@REVISION:6
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -183,7 +183,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 			[ $WIPE_FILE -eq 1 ] && [ -f "${15}${9}" ] && rm -f "${15}${9}"
 			[ $WIPE_FROM_DUPELOG -eq 1 ] && {
 				g_FILE=`echo "${6}" | cut -f 2- -d " "`
-				[ -n "$g_FILE" ]  && $7 -e dupefile match "file,$g_FILE" and match "user,${3}" --loglevel=6 -vvv
+				[ -n "$g_FILE" ]  && $7 -e dupefile match "file,$g_FILE" and match "user,${3}" --loglevel=6 -vvv -ff
 			}
 			KILLED=1 && rm /tmp/du-ks/$4
 		}
