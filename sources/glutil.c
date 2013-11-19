@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-64
+ * Version     : 1.9-65
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 64
+#define VER_REVISION 65
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -5691,7 +5691,8 @@ int proc_release(char *name, unsigned char type, void *arg, __g_eds eds) {
 			char *dn = g_basename(g_dirname(fn));
 			free(fn2);
 			fn2 = strdup(name);
-			snprintf(iarg->buffer, PATH_MAX, "%s/%s.sfv.tmp", g_dirname(fn2), dn);
+			snprintf(iarg->buffer, PATH_MAX, "%s/%s.sfv.tmp", g_dirname(fn2),
+					dn);
 			snprintf(iarg->buffer2, PATH_MAX, "%s/%s.sfv", fn2, dn);
 			char buffer2[PATH_MAX + 10];
 			snprintf(buffer2, 1024, "%s %.8X\n", base, (uint32_t) crc32);
@@ -5792,7 +5793,8 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 				if (!rename(iarg->buffer, iarg->buffer2)) {
 					if (gfl & F_OPT_VERBOSE) {
 						print_str(
-								"NOTICE: '%s': succesfully generated SFV file\n", name);
+								"NOTICE: '%s': succesfully generated SFV file\n",
+								name);
 					}
 				} else {
 					print_str("ERROR: '%s': failed renaming '%s' to '%s'\n",
@@ -5985,9 +5987,9 @@ int dirlog_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DIRLOG\x9%s\x9%llu\x9%hu\x9%u\x9%hu\x9%hu\x9%hu\n",
+				"DIRLOG\x9%s\x9%llu\x9%hu\x9%d\x9%hu\x9%hu\x9%hu\n",
 				data->dirname, (ulint64_t) data->bytes, data->files,
-				(uint32_t) data->uptime, data->uploader, data->group,
+				(int32_t) data->uptime, data->uploader, data->group,
 				data->status);
 	} else {
 		c =
@@ -6020,10 +6022,10 @@ int nukelog_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%u\x9%u\n",
+				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%d\x9%hu\n",
 				data->dirname, data->reason, data->mult, data->bytes,
 				!data->status ? data->nuker : data->unnuker, data->nukee,
-				(uint32_t) data->nuketime, data->status);
+				(int32_t) data->nuketime, data->status);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
@@ -6049,8 +6051,8 @@ int dupefile_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DUPEFILE\x9%s\x9%s\x9%u\n", data->filename, data->uploader,
-				(uint32_t) data->timeup);
+				"DUPEFILE\x9%s\x9%s\x9%d\n", data->filename, data->uploader,
+				(int32_t) data->timeup);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"DUPEFILE: %s - uploader: %s, time: %s\n", data->filename,
@@ -6076,17 +6078,17 @@ int lastonlog_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"LASTONLOG\x9%s\x9%s\x9%s\x9%u\x9%u\x9%u\x9%u\x9%s\n",
-				data->uname, data->gname, data->tagline, (uint32_t) data->logon,
-				(uint32_t) data->logoff, (uint32_t) data->upload,
-				(uint32_t) data->download, buffer4);
+				"LASTONLOG\x9%s\x9%s\x9%s\x9%d\x9%d\x9%lu\x9%lu\x9%s\n",
+				data->uname, data->gname, data->tagline, (int32_t) data->logon,
+				(int32_t) data->logoff, (unsigned long) data->upload,
+				(unsigned long) data->download, buffer4);
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %u/%u B, changes: %s\n",
+						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %lu/%lu B, changes: %s\n",
 						data->uname, data->gname, data->tagline, buffer2,
-						buffer3, (uint32_t) data->upload,
-						(uint32_t) data->download, buffer4);
+						buffer3, (unsigned long) data->upload,
+						(unsigned long) data->download, buffer4);
 	}
 
 	return c;
@@ -6104,8 +6106,8 @@ int oneliner_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONELINER\x9%s\x9%s\x9%s\x9%u\x9%s\n", data->uname, data->gname,
-				data->tagline, (uint32_t) data->timestamp, data->message);
+				"ONELINER\x9%s\x9%s\x9%s\x9%d\x9%s\n", data->uname, data->gname,
+				data->tagline, (int32_t) data->timestamp, data->message);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
@@ -6148,10 +6150,10 @@ int online_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"ONLINE\x9%s\x9%s\x9%u\x9%u\x9%s\x9%u\x9%u\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
-						data->username, data->host, (uint32_t) data->groupid,
-						(uint32_t) data->login_time, data->tagline,
-						(uint32_t) data->ssl_flag, (uint32_t) data->procid,
+						"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
+						data->username, data->host, (int32_t) data->groupid,
+						(int32_t) data->login_time, data->tagline,
+						(int16_t) data->ssl_flag, (int32_t) data->procid,
 						(ulint64_t) data->bytes_xfer,
 						(ulint64_t) data->bytes_txfer, (ulint64_t) kbps,
 						data->status, data->currentdir);
@@ -6252,8 +6254,8 @@ int game_format_block(void *iarg, char *output) {
 	int c;
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"GAMELOG\x9%s\x9%d\x9%.1f\n", data->dirname, data->timestamp,
-				data->rating);
+				"GAMELOG\x9%s\x9%d\x9%.1f\n", data->dirname,
+				(int32_t) data->timestamp, data->rating);
 	} else {
 		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
 				"GAMELOG: %s: created: %s - rating: %.1f\n", data->dirname,
@@ -9898,17 +9900,17 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	struct dirlog *data = (struct dirlog *) arg;
 
 	if (!strncmp(match, _MC_GLOB_USER, 4)) {
-		snprintf(output, max_size, "%d", data->uploader);
+		snprintf(output, max_size, "%hu", data->uploader);
 	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
-		snprintf(output, max_size, "%d", data->group);
+		snprintf(output, max_size, "%hu", data->group);
 	} else if (!strncmp(match, _MC_DIRLOG_FILES, 5)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->files);
+		snprintf(output, max_size, "%hu", data->files);
 	} else if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes);
 	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
-		snprintf(output, max_size, "%d", (int) data->status);
+		snprintf(output, max_size, "%hu", data->status);
 	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->uptime);
+		snprintf(output, max_size, "%d", (int32_t) data->uptime);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
@@ -9959,11 +9961,11 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		snprintf(output, max_size, "%.2f", (float) data->bytes);
 	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->nuketime);
+		snprintf(output, max_size, "%d", (int32_t) data->nuketime);
 	} else if (!strncmp(match, _MC_GLOB_STATUS, 6)) {
-		snprintf(output, max_size, "%d", (int) data->status);
+		snprintf(output, max_size, "%hu", data->status);
 	} else if (!strncmp(match, _MC_NUKELOG_MULT, 4)) {
-		snprintf(output, max_size, "%d", (int) data->mult);
+		snprintf(output, max_size, "%hu", data->mult);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
@@ -10026,7 +10028,7 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 	struct dupefile *data = (struct dupefile *) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->timeup);
+		snprintf(output, max_size, "%d", (int32_t) data->timeup);
 	} else if (!strncmp(match, _MC_GLOB_FILE, 4)) {
 		strcp_s(output, max_size, data->filename);
 	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
@@ -10064,13 +10066,13 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	struct lastonlog *data = (struct lastonlog *) arg;
 
 	if (!strncmp(match, _MC_GLOB_LOGON, 5)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->logon);
+		snprintf(output, max_size, "%d", (int32_t) data->logon);
 	} else if (!strncmp(match, _MC_GLOB_LOGOFF, 6)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->logoff);
+		snprintf(output, max_size, "%d", (int32_t) data->logoff);
 	} else if (!strncmp(match, _MC_GLOB_UPLOAD, 6)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->upload);
+		snprintf(output, max_size, "%lu", (unsigned long) data->upload);
 	} else if (!strncmp(match, _MC_GLOB_DOWNLOAD, 8)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->download);
+		snprintf(output, max_size, "%lu", (unsigned long) data->download);
 	} else if (!is_char_uppercase(match[0])) {
 		char *buffer = malloc(max_size + 1);
 		void *ptr = ref_to_val_get_cfgval(data->uname, match,
@@ -10135,7 +10137,7 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 	struct oneliner *data = (struct oneliner *) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->timestamp);
+		snprintf(output, max_size, "%d", (int32_t) data->timestamp);
 	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		strcp_s(output, max_size, data->uname);
 	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
@@ -10180,21 +10182,21 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	struct ONLINE *data = (struct ONLINE *) arg;
 
 	if (!strncmp(match, _MC_ONLINE_SSL, 3)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->ssl_flag);
+		snprintf(output, max_size, "%hd", data->ssl_flag);
 	} else if (!strncmp(match, _MC_GLOB_GROUP, 5)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->groupid);
+		snprintf(output, max_size, "%d", (int32_t) data->groupid);
 	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->login_time);
+		snprintf(output, max_size, "%d", (int32_t) data->login_time);
 	} else if (!strncmp(match, _MC_ONLINE_LUPDT, 8)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->tstart.tv_sec);
+		snprintf(output, max_size, "%d", (int32_t) data->tstart.tv_sec);
 	} else if (!strncmp(match, _MC_ONLINE_LXFRT, 9)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->txfer.tv_sec);
+		snprintf(output, max_size, "%d", (int32_t) data->txfer.tv_sec);
 	} else if (!strncmp(match, _MC_ONLINE_BXFER, 5)) {
 		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_xfer);
 	} else if (!strncmp(match, _MC_ONLINE_BTXFER, 6)) {
 		snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_txfer);
 	} else if (!strncmp(match, _MC_GLOB_PID, 3)) {
-		snprintf(output, max_size, "%u", (uint32_t) data->procid);
+		snprintf(output, max_size, "%d", (int32_t) data->procid);
 	} else if (!strcmp(match, "rate")) {
 		int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
 		uint32_t kbps = 0;
@@ -10272,7 +10274,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	__d_imdb data = (__d_imdb) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%d", data->timestamp);
+		snprintf(output, max_size, "%d", (int32_t) data->timestamp);
 	} else if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strncmp(match, _MC_IMDB_VOTES, 5)) {
@@ -10280,7 +10282,7 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
 		snprintf(output, max_size, "%u", data->runtime);
 	} else if (!strncmp(match, _MC_IMDB_RELEASED, 8)) {
-		snprintf(output, max_size, "%d", data->released);
+		snprintf(output, max_size, "%d", (int32_t) data->released);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
@@ -10358,7 +10360,7 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
 		snprintf(output, max_size, "%.1f", data->rating);
 	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%d", data->timestamp);
+		snprintf(output, max_size, "%d", (int32_t) data->timestamp);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
@@ -10410,11 +10412,11 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	__d_tvrage data = (__d_tvrage) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
-		snprintf(output, max_size, "%d", data->timestamp);
+		snprintf(output, max_size, "%d", (int32_t) data->timestamp);
 	} else if (!strncmp(match, _MC_TV_ENDED, 5)) {
-		snprintf(output, max_size, "%d", data->ended);
+		snprintf(output, max_size, "%d", (int32_t) data->ended);
 	} else if (!strncmp(match, _MC_TV_STARTED, 7)) {
-		snprintf(output, max_size, "%d", data->started);
+		snprintf(output, max_size, "%d", (int32_t) data->started);
 	} else if (!strncmp(match, _MC_TV_SEASONS, 7)) {
 		snprintf(output, max_size, "%u", data->seasons);
 	} else if (!strncmp(match, _MC_TV_SHOWID, 6)) {
@@ -11268,7 +11270,7 @@ int gcb_tv(void *buffer, char *key, char *val) {
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_TV_ENDED, 5)) {
 		int32_t v_ui = (int32_t) strtol(val, NULL, 10);
-		if ( errno == ERANGE ) {
+		if ( errno == ERANGE) {
 			return 0;
 		}
 		ptr->ended = v_ui;
