@@ -141,6 +141,8 @@ FLAGS:
    status     I     The status of the user, idle, RETR, etc
    host       S     The host the user is comming from (with ident)
    dir        S     The users current dir (fullpath)
+   basedir    ES    The filename component of fullpath current dir (basepath)
+   ndir       ES    The directory component of fullpath current dir
    ssl        I     0 = no ssl, 1 = ssl on control, 2 = ssl on control and data
    group      I     The groupid of the users primary group
    pid        I     The processor id of the process
