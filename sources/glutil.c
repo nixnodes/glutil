@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-65
+ * Version     : 1.9-66
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 65
+#define VER_REVISION 66
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3283,31 +3283,31 @@ int g_init(int argc, char **argv) {
 	}
 
 	if (!(ofl & F_OVRR_DUPEFILE)) {
-		build_data_path(DEFF_DIRLOG, DUPEFILE, DEFPATH_LOGS);
+		build_data_path(DEFF_DUPEFILE, DUPEFILE, DEFPATH_LOGS);
 	}
 
 	if (!(ofl & F_OVRR_LASTONLOG)) {
-		build_data_path(DEFF_DIRLOG, LASTONLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_LASTONLOG, LASTONLOG, DEFPATH_LOGS);
 	}
 
 	if (!(ofl & F_OVRR_ONELINERS)) {
-		build_data_path(DEFF_DIRLOG, ONELINERS, DEFPATH_LOGS);
+		build_data_path(DEFF_ONELINERS, ONELINERS, DEFPATH_LOGS);
 	}
 
 	if (!(ofl & F_OVRR_IMDBLOG)) {
-		build_data_path(DEFF_DIRLOG, IMDBLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_IMDB, IMDBLOG, DEFPATH_LOGS);
 	}
 
 	if (!(ofl & F_OVRR_TVLOG)) {
-		build_data_path(DEFF_DIRLOG, TVLOG, DEFPATH_LOGS);
+		build_data_path(DEFF_TV, TVLOG, DEFPATH_LOGS);
 	}
 
 	if (!(ofl & F_OVRR_GAMELOG)) {
-		build_data_path(DEFF_DIRLOG, GAMELOG, DEFPATH_LOGS);
+		build_data_path(DEFF_GAMELOG, GAMELOG, DEFPATH_LOGS);
 	}
 
 	if (!(ofl & F_OVRR_GE1LOG)) {
-		build_data_path(DEFF_DIRLOG, GE1LOG, DEFPATH_LOGS);
+		build_data_path(DEFF_GEN1, GE1LOG, DEFPATH_LOGS);
 	}
 
 	snprintf(SITEROOT, PATH_MAX, "%s%s", GLROOT, SITEROOT_N);
