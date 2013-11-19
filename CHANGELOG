@@ -95,6 +95,8 @@
  *   - % Dirlog rebuild (-r) quits if folders file missing, instead of forcing full rescan (rev. 62)
  *   - ~ sfvgen (--sfv) placed files in parent dirs of target (rev. 63)
  *   - ~ Fix timestamps to be represented as signed integers (rev. 64)
+ *   - ~ Fix integer type representation relating to various logs (rev. 65) 
+ *   - ~ Default log path building was broken (rev. 66)
  *
  * v1.8
  *
