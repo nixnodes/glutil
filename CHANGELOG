@@ -93,7 +93,8 @@
  *   - ~ file_crc32 mis-calculated data larger than 26214400 bytes (rev. 61)
  *   - ! file_crc32 optimized for performance (rev. 61)
  *   - % Dirlog rebuild (-r) quits if folders file missing, instead of forcing full rescan (rev. 62)
- *   - ~ sfvgen (--sfv) placed files in parent dirs of target (rev. 63) 
+ *   - ~ sfvgen (--sfv) placed files in parent dirs of target (rev. 63)
+ *   - ~ Fix timestamps to be represented as signed integers (rev. 64)
  *
  * v1.8
  *
