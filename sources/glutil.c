@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-66
+ * Version     : 1.9-67
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 66
+#define VER_REVISION 67
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -6150,13 +6150,13 @@ int online_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\n",
+						"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\x9%d\n",
 						data->username, data->host, (int32_t) data->groupid,
 						(int32_t) data->login_time, data->tagline,
 						(int16_t) data->ssl_flag, (int32_t) data->procid,
 						(ulint64_t) data->bytes_xfer,
 						(ulint64_t) data->bytes_txfer, (ulint64_t) kbps,
-						data->status, data->currentdir);
+						data->status, data->currentdir, data->tstart.tv_sec);
 	} else {
 		if (gfl & F_OPT_FORMAT_COMP) {
 			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
@@ -9633,6 +9633,7 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
 #define _MC_GLOB_DIR 		"dir"
 #define _MC_GLOB_BASEDIR 	"basedir"
+#define _MC_GLOB_DIRNAME 	"ndir"
 #define _MC_GLOB_MODE 		"mode"
 #define _MC_GLOB_PID 		"pid"
 #define _MC_GLOB_USER		"user"
@@ -10219,6 +10220,9 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 		char *s_buffer = strdup(data->currentdir), *base = basename(s_buffer);
 		strcp_s(output, max_size, base);
 		free(s_buffer);
+	} else if (!strncmp(match, _MC_GLOB_DIRNAME, 4)) {
+		strcp_s(output, max_size, data->currentdir);
+		g_dirname(output);
 	} else if (!strncmp(match, _MC_GLOB_USER, 4)) {
 		strcp_s(output, max_size, data->username);
 	} else if (!strncmp(match, _MC_GLOB_TAG, 3)) {
@@ -10249,6 +10253,8 @@ char* ref_to_val_online_ps(void *arg, char *match, char *output,
 		return data->host;
 	} else if (!strncmp(match, _MC_GLOB_DIR, 3)) {
 		return data->currentdir;
+	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
+		return g_basename(data->currentdir);
 	} else {
 		if (!ref_to_val_online(arg, match, output, max_size)) {
 			return output;
