@@ -98,6 +98,7 @@
  *   - ~ Fix integer type representation relating to various logs (rev. 65) 
  *   - ~ Default log path building was broken (rev. 66)
  *   - + Add 'ndir' field, see MANUAL (ONLINE users) (rev. 67)
+ *   - ~ Matching comparison logic not taking all params into account in certain cases (rev. 68)
  *
  * v1.8
  *
