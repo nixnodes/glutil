@@ -65,8 +65,9 @@ EXEMPTSITEOPS=1
 ## Enforce only on files matching this expression
 FILES_ENFORCED="\.(r([0-9]{1,3}|ar)|mkv|avi|mp((e|())g|[34]))$"
 #
-## Do NOT enforce paths matching this expression
-PATHS_FILTERED="\/(sample|cover(s|)|proof)(($)|\/)"
+## Do NOT enforce paths matching this expression,
+## case-insensitive
+PATHS_FILTERED="\/(sample|cover(s|())|proof)(($)|\/)"
 #
 ## Do not enforce when only one user is uploading
 ## into a certain directory
@@ -128,7 +129,7 @@ echo $6 | egrep -q '^STOR' || exit 1
 [ -n "$FILES_ENFORCED" ] && {
 	echo $6 | egrep -q "${FILES_ENFORCED}" || exit 1
 }
-[ -n "$PATHS_FILTERED" ] && echo $9 | egrep -q "${PATHS_FILTERED}" && exit 1
+[ -n "$PATHS_FILTERED" ] && echo $9 | egrep -qi "${PATHS_FILTERED}" && exit 1
 
 [ -n "$EXEMPTUSERS" ] && echo "$3" | egrep -q "^(${EXEMPTUSERS})\$" && {
 	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
