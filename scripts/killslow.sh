@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:6
+#@REVISION:7
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -180,11 +180,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		ban_user $GLUSER 0 $8 ${10} $7 $0
 		SHOULDKILL=1
 		kill $4 && {
-			[ $WIPE_FILE -eq 1 ] && [ -f "${15}${9}" ] && rm -f "${15}${9}"
-			[ $WIPE_FROM_DUPELOG -eq 1 ] && {
-				g_FILE=`echo "${6}" | cut -f 2- -d " "`
-				[ -n "$g_FILE" ]  && $7 -e dupefile match "file,$g_FILE" and match "user,${3}" --loglevel=6 -vvv -ff
-			}
+			[ $WIPE_FILE -eq 1 ] && [ -f "${15}${9}" ] && rm -f "${15}${9}"			
 			KILLED=1 && rm /tmp/du-ks/$4
 		}
 	}
@@ -206,6 +202,10 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 			[ -f "$gllog" ] && echo "`date "+%a %b %e %T %Y"` KILLSLOW: \"$GLUSER\" \"$4\" \"$DRATE\" \"$MINRATE\" \"$UNDERTIME\" \"$FORCEKILL\" \"$9\" \"$1\" \"$(echo "$6" | sed 's/^STOR //')\" \"$1\" \"${12}\" \"${13}\"" >> $gllog || 
 				echo "[`date "+%T %D"`] ERROR: could not log to glftpd.log" >> $LOG
 		}   	
+		[ $WIPE_FROM_DUPELOG -eq 1 ] && {
+			g_FILE=`echo "${6}" | cut -f 2- -d " "`
+			[ -n "$g_FILE" ]  && $7 -e dupefile match "file,$g_FILE" and match "user,${3}" --loglevel=6 -vvv -ff
+		}
     fi    	
 elif [ $SLOW -eq 1 ]; then
 	touch "/tmp/du-ks/$4"
