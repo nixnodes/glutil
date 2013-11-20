@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-69
+ * Version     : 1.9-70
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 69
+#define VER_REVISION 70
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -4065,6 +4065,7 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 #define F_XRF_GET_CTIME		(a32 << 11)
 #define F_XRF_GET_MINOR		(a32 << 12)
 #define F_XRF_GET_MAJOR		(a32 << 13)
+#define F_XRF_GET_SPARSE	(a32 << 14)
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
@@ -4080,6 +4081,7 @@ typedef struct ___d_xref {
 	uint32_t crc32;
 	uint32_t major;
 	uint32_t minor;
+	float sparseness;
 	_d_xref_ct ct[GM_MAX + 1];
 } _d_xref, *__d_xref;
 
@@ -4211,6 +4213,11 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 			if (aa_rh->p_xref.flags & F_XRF_GET_MAJOR) {
 				aa_rh->p_xref.major = major(aa_rh->p_xref.st.st_dev);
 			}
+			if (aa_rh->p_xref.flags & F_XRF_GET_SPARSE) {
+				aa_rh->p_xref.sparseness = ((float) aa_rh->p_xref.st.st_blksize
+						* (float) aa_rh->p_xref.st.st_blocks
+						/ (float) aa_rh->p_xref.st.st_size);
+			}
 		}
 	}
 
@@ -4231,12 +4238,12 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 	}
 
 	/*if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
-		__d_xref_ct x_ptr = &aa_rh->p_xref.ct[0];
-		while (x_ptr->active) {
-			x_ptr->curtime = time(NULL) + x_ptr->ct_off;
-			x_ptr++;
-		}
-	}*/
+	 __d_xref_ct x_ptr = &aa_rh->p_xref.ct[0];
+	 while (x_ptr->active) {
+	 x_ptr->curtime = time(NULL) + x_ptr->ct_off;
+	 x_ptr++;
+	 }
+	 }*/
 }
 
 int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
@@ -5037,10 +5044,10 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 		l_end:
 
 		/*if ((_gm->flags & F_GM_NAND) && ptr->next
-				&& !((p_md_obj) ptr->next)->next && r == 1) {
-			r_p = 1;
-			break;
-		}*/
+		 && !((p_md_obj) ptr->next)->next && r == 1) {
+		 r_p = 1;
+		 break;
+		 }*/
 
 		if (_p_gm && _p_gm->g_oper_ptr) {
 			r_p = _p_gm->g_oper_ptr(r_p, r);
@@ -8492,6 +8499,15 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 					(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
 					(uint16_t) ((st.st_mode & S_IRWXO)));
 		}
+	} else if (!strncmp(match, "sparse", 6)) {
+		struct stat st;
+		if (lstat(data->name, &st)) {
+			return 1;
+		} else {
+			snprintf(output, max_size, "%f",
+					((float) st.st_blksize * (float) st.st_blocks
+							/ (float) st.st_size));
+		}
 	} else if (!strncmp(match, "crc32", 5)) {
 		uint32_t crc32;
 		file_crc32(data->name, &crc32);
@@ -8580,6 +8596,10 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		*output = sizeof(data->major);
 		data->flags |= F_XRF_GET_MAJOR | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->major;
+	} else if (!strncmp(match, "sparse", 6)) {
+		*output = -1;
+		data->flags |= F_XRF_GET_SPARSE | F_XRF_DO_STAT;
+		return &((__d_xref) NULL)->sparseness;
 	} else if (!strncmp(match, "inode", 5)) {
 		*output = sizeof(data->st.st_ino);
 		data->flags |= F_XRF_DO_STAT;
@@ -8632,7 +8652,7 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		switch (match[7]) {
 			case 0x2D:;
 			//data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
-			data->ct[xrf_cto].curtime =  time(NULL) - atoi(&match[8]);
+			data->ct[xrf_cto].curtime = time(NULL) - atoi(&match[8]);
 			break;
 			case 0x2B:;
 			//data->ct[xrf_cto].ct_off = atoi(&match[8]);
