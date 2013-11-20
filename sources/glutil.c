@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-68
+ * Version     : 1.9-69
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 68
+#define VER_REVISION 69
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -4230,13 +4230,13 @@ void g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type) {
 		file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
 	}
 
-	if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
+	/*if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
 		__d_xref_ct x_ptr = &aa_rh->p_xref.ct[0];
 		while (x_ptr->active) {
 			x_ptr->curtime = time(NULL) + x_ptr->ct_off;
 			x_ptr++;
 		}
-	}
+	}*/
 }
 
 int g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
@@ -8631,10 +8631,12 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 		data->ct[xrf_cto].active = 1;
 		switch (match[7]) {
 			case 0x2D:;
-			data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
+			//data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
+			data->ct[xrf_cto].curtime =  time(NULL) - atoi(&match[8]);
 			break;
 			case 0x2B:;
-			data->ct[xrf_cto].ct_off = atoi(&match[8]);
+			//data->ct[xrf_cto].ct_off = atoi(&match[8]);
+			data->ct[xrf_cto].curtime = time(NULL) + atoi(&match[8]);
 			break;
 		}
 		data->flags |= F_XRF_GET_CTIME;
