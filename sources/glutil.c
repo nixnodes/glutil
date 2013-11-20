@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-70
+ * Version     : 1.9-71
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 70
+#define VER_REVISION 71
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -8649,14 +8649,15 @@ void *ref_to_val_ptr_x(void *arg, char *match, size_t *output) {
 			return NULL;
 		}
 		data->ct[xrf_cto].active = 1;
+		data->ct[xrf_cto].curtime = time(NULL);
 		switch (match[7]) {
 			case 0x2D:;
 			//data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
-			data->ct[xrf_cto].curtime = time(NULL) - atoi(&match[8]);
+			data->ct[xrf_cto].curtime -= atoi(&match[8]);
 			break;
 			case 0x2B:;
 			//data->ct[xrf_cto].ct_off = atoi(&match[8]);
-			data->ct[xrf_cto].curtime = time(NULL) + atoi(&match[8]);
+			data->ct[xrf_cto].curtime += atoi(&match[8]);
 			break;
 		}
 		data->flags |= F_XRF_GET_CTIME;
