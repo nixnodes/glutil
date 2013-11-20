@@ -44,6 +44,7 @@ FLAGS:
    glconf     S     Path to glftpd.conf per glconf.h
    curtime    S     Seconds passed since Epoch
   
+  
 ; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
 
    path       S     Full path
@@ -59,6 +60,7 @@ FLAGS:
    gid        I     Uroup ID of owner
    blksize    I     Blocksize for filesystem I/O
    blocks     I     Number of 512B blocks allocated
+   sparse     F     File's sparseness.
    atime      I     Time of last access
    mtime      I     Time of last modification
    ctime      I     Time of last status change
@@ -73,6 +75,7 @@ FLAGS:
    dec-crc32  S     CRC32 of file (decimal)
    curtime    I     Seconds passed since Epoch (when LOM matching, trailing +/- increase/decrease this value, e.g curtime-3600, curtime+7200, ..)
   
+
 ; DIRLOG
 
    dir        S     The name of the dir (fullpath)
