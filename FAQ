@@ -101,7 +101,7 @@ glutil -m tvrage-f-d --arg1='\/(TV-SD|TV-HD|TV-DVDRIP|ARCHIVE\/TV-HD|ARCHIVE\/TV
 Seems when I run the imdb_get.sh macro the imdb info isn't getting pulled from the web.  The script works perfectly fine
 outside of chroot.  How do I fix this?
 ------------------------------------------------------------------------------------------------------------------------
-This is a missing lib issue.  In the chroot environment sometimes resolving doesn't work.  Simply copy the two files
+This is a missing lib issue.  In the chroot environment DNS resolving sometimes doesn't work.  Simply copy the two files
 libnss_files.so.2 libnss_dns.so.2 to your /glftpd/lib folder and try again.  Also it is really important to have an up to
 date version of xmllint ( 20707 and up ).
 
@@ -155,7 +155,8 @@ a long time)
 
 glutil -x /glftpd/site -recursive -xdev ilom "ctime > curtime-604800 && mode==10 || mode==8" and iregexi basepath,"linux" --batch
 Do a recursive search for files or symlinks in /glftpd/site, that contain the word 'linux' in filename
-(case-insensitive) and are not older than 7 days (604800 secs). Prints to stdout
+(case-insensitive) and are not older than 7 days (604800 secs). Stays on the current filesystem.
+Prints to stdout.
 Type glutil --info -vv to see the list of modes that can be matched against.
 
 
