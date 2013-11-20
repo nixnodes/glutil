@@ -101,6 +101,7 @@
  *   - ~ Matching comparison logic not taking all params into account in certain cases (rev. 68)
  *   - % Do not retrieve current time each cycle (-x, 'curtime') (rev. 69)
  *   - + Add 'sparse' field (FILESYSTEM) (rev. 70)
+ *   - ~ 'curtime' with no math (+-) operators was always 0 (since rev.69) (rev. 71)
  *
  * v1.8
  *
