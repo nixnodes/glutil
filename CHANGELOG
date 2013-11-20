@@ -100,6 +100,7 @@
  *   - + Add 'ndir' field, see MANUAL (ONLINE users) (rev. 67)
  *   - ~ Matching comparison logic not taking all params into account in certain cases (rev. 68)
  *   - % Do not retrieve current time each cycle (-x, 'curtime') (rev. 69)
+ *   - + Add 'sparse' field (FILESYSTEM) (rev. 70)
  *
  * v1.8
  *
