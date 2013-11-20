@@ -1,5 +1,5 @@
 Created : 09/29/2013
-Updated : 09/29/2013
+Updated : 20/11/2013
 
 What the hell is glutil?
 ------------------------
@@ -142,12 +142,22 @@ This will print out all movies with comedy genre of scores greater than 6.
 glutil -h --iregexi name,"Hell On Wheels" 
 This will print out the tvrage info stored in the tv.log, case insensative.
 
-glutil -e dirlog --ftime -vvv --regex ".*[\/]{2,}.*"
+glutil -e dirlog -vvv --regex "[\/]{2,}"
 This will remove from the dirlog what is in the regex.  In this case it would remove any entries with repeating 
 back-slashes"
 
 glutil -n --lom "time < $(expr $(date +%s) - 604800)"
 This will output all the entries in the nukelog that are under 7 days.
+
+glutil -p imatch basedir,"Some.Dir.LA-LA"
+Finds dupes in dirlog - all match params apply. If no explicit match is given, it dupefinds for all records (can take
+a long time)
+
+glutil -x /glftpd/site -recursive -xdev ilom "ctime > curtime-604800 && mode==10 || mode==8" and iregexi basepath,"linux" --batch
+Do a recursive search for files or symlinks in /glftpd/site, that contain the word 'linux' in filename
+(case-insensitive) and are not older than 7 days (604800 secs). Prints to stdout
+Type glutil --info -vv to see the list of modes that can be matched against.
+
 
 glutil is supposed to be able to show me game ratings, how is that done?
 ------------------------------------------------------------------------
