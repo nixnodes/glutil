@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:23
+#@REVISION:24
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -31,7 +31,7 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-1.9-43 or above
+## Requires: - glutil-1.9-74 or above
 ##           - libxml2 v2.7.7 or above 
 ##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
@@ -313,7 +313,8 @@ GENRE=`get_field genre`
 VOTES=`echo $(get_field imdbVotes) | tr -d ','`
 [ -z "$VOTES" ] && VOTES=0
 YEAR=`get_field year | tr -d ' '`
-[ -z "$YEAR" ] && YEAR="N/A"
+[ -z "$YEAR" ] && YEAR=0
+echo "$YEAR" | egrep -q '^[0-9]{4}$' || YEAR=0
 RATED=`get_field rated`
 [ -z "$RATED" ] && RATED="N/A"
 ACTORS=`get_field actors`
