@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:24
+#@REVISION:25
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -314,7 +314,7 @@ VOTES=`echo $(get_field imdbVotes) | tr -d ','`
 [ -z "$VOTES" ] && VOTES=0
 YEAR=`get_field year | tr -d ' '`
 [ -z "$YEAR" ] && YEAR=0
-echo "$YEAR" | egrep -q '^[0-9]{4}$' || YEAR=0
+echo "$YEAR" | egrep -q '^[0-9]{1,4}$' || YEAR=0
 RATED=`get_field rated`
 [ -z "$RATED" ] && RATED="N/A"
 ACTORS=`get_field actors`
@@ -337,13 +337,13 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb --regex "$DIR_E" --silent || {
+                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb --regex "$DIR_E" --silent || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
                 }
         elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
-                $2 --imdblog="$3$LAPPEND" -a imatch "imdbid,$iid" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb match "imdbid,$iid" --silent || {
+                $2 --imdblog="$3$LAPPEND" -a imatch "imdbid,$iid" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb match "imdbid,$iid" -vvv || {
                         echo "ERROR: $iid: Failed removing old record - $iid" && exit 1
                 }
         fi
