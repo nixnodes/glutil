@@ -77,13 +77,13 @@ DENY_IMDBID_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_IMDBID_DUPE=1)
-RECORD_MAX_AGE=14
+RECORD_MAX_AGE=1
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
 #
 ## Verbose output
-VERBOSE=0
+VERBOSE=1
 #
 ## Allowed types regular expression (per omdbapi)
 OMDB_ALLOWED_TYPES="movie|N\/A"
