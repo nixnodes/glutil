@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-71
+ * Version     : 1.9-72
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -160,7 +160,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 71
+#define VER_REVISION 72
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -199,6 +199,8 @@ typedef unsigned long long int ulint64_t;
 #define PATH_MAX 4096
 #endif
 
+#define GM_MAX				16384
+
 #define a64					((ulint64_t) 1)
 #define a32					((uint32_t) 1)
 
@@ -213,7 +215,8 @@ typedef struct ___d_imdb {
 	float rating; /* IMDB Rating */
 	uint32_t votes; /* IMDB Votes */
 	char genres[255]; /* List of genres (comma delimited) */
-	char year[6];
+	uint16_t year;
+	uint8_t _d_unused_m[4];
 	char title[128];
 	int32_t released;
 	uint32_t runtime;
@@ -222,7 +225,7 @@ typedef struct ___d_imdb {
 	char director[64];
 	char synopsis[198];
 	/* ------------- */
-	char _d_unused[32]; /* Reserved for future use */
+	uint8_t _d_unused_e[32]; /* Reserved for future use */
 
 } _d_imdb, *__d_imdb;
 
@@ -231,7 +234,7 @@ typedef struct ___d_game {
 	int32_t timestamp;
 	float rating;
 	/* ------------- */
-	char _d_unused[512]; /* Reserved for future use */
+	uint8_t _d_unused[512]; /* Reserved for future use */
 
 } _d_game, *__d_game;
 
@@ -254,7 +257,7 @@ typedef struct ___d_tvrage {
 	uint16_t startyear;
 	uint16_t endyear;
 	char network[72];
-	char _d_unused[180]; /* Reserved for future use */
+	uint8_t _d_unused[180]; /* Reserved for future use */
 } _d_tvrage, *__d_tvrage;
 
 typedef struct ___d_generic_s2044 {
@@ -429,6 +432,21 @@ typedef struct ___d_xref_ct {
 	time_t curtime;
 	int ct_off;
 } _d_xref_ct, *__d_xref_ct;
+
+typedef struct ___d_xref {
+	char name[PATH_MAX];
+	struct stat st;
+	uint8_t type;
+	uint8_t r, w, x;
+	uint8_t uperm, gperm, operm;
+	uint16_t perm;
+	uint32_t flags;
+	uint32_t crc32;
+	uint32_t major;
+	uint32_t minor;
+	float sparseness;
+	_d_xref_ct ct[GM_MAX + 1];
+} _d_xref, *__d_xref;
 
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
@@ -711,7 +729,6 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define MAX_EXEC_STR 			262144
 
 #define	PIPE_READ_MAX			0x2000
-#define GM_MAX					16384
 #define MAX_DATAIN_F			(V_MB*32)
 
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
@@ -1140,7 +1157,7 @@ int execv_stdout_redir = -1;
 
 int g_regex_flags = REG_EXTENDED;
 
-long long int max_datain_f = MAX_DATAIN_F;
+size_t max_datain_f = MAX_DATAIN_F;
 
 char *hpd_up =
 		"glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
@@ -1266,7 +1283,7 @@ char *hpd_up =
 				"  -y, --followlinks     Follow symbolic links (default is skip)\n"
 				"  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
 				"  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
-				"  --memlimita=<bytes>   Maximum ASCII input data file size\n"
+				"  --memlimita=<bytes>   Maximum ASCII input data file size (ignored)\n"
 				"  --shmem [--shmdestroy] [--shmdestonexit] [--shmreload]\n"
 				"                        Instead of internal memory, use the shared memory segment to buffer log data\n"
 				"                           This is usefull as an inter-process caching mechanism, allowing other glutil\n"
@@ -1769,13 +1786,11 @@ int opt_execv(void *arg, int m) {
 	return 0;
 }
 
-FILE *pf_infile = NULL;
 char infile_p[PATH_MAX];
 
 int opt_g_infile(void *arg, int m) {
 	g_cpg(arg, infile_p, m, PATH_MAX);
 
-	pf_infile = fopen(infile_p, "rb");
 	return 0;
 }
 
@@ -2565,7 +2580,7 @@ int g_init(int argc, char **argv);
 
 char *g_dgetf(char *str);
 
-int m_load_input(__g_handle hdl, char *input);
+int m_load_input_n(__g_handle hdl, FILE *input);
 
 off_t s_string_r(char *input, char *m);
 
@@ -3024,10 +3039,6 @@ int g_shutdown(void *arg) {
 
 	if (exec_str) {
 		free(exec_str);
-	}
-
-	if (pf_infile) {
-		fclose(pf_infile);
 	}
 
 	if (exec_v) {
@@ -3577,35 +3588,36 @@ int g_print_info(void) {
 	print_str(MSG_NL);
 	print_str(" DATA SRC   BLOCK SIZE(B)   \n"
 			"--------------------------\n");
-	print_str(" DIRLOG          %d        \n", DL_SZ);
-	print_str(" NUKELOG         %d        \n", NL_SZ);
-	print_str(" DUPEFILE        %d        \n", DF_SZ);
-	print_str(" LASTONLOG       %d        \n", LO_SZ);
-	print_str(" ONELINERS       %d        \n", LO_SZ);
-	print_str(" IMDBLOG         %d        \n", ID_SZ);
-	print_str(" GAMELOG         %d        \n", GM_SZ);
-	print_str(" TVLOG           %d        \n", TV_SZ);
-	print_str(" GE1             %d        \n", G1_SZ);
-	print_str(" ONLINE(SHR)     %d        \n", OL_SZ);
+	print_str(" DIRLOG         %d\t\n", DL_SZ);
+	print_str(" NUKELOG        %d\t\n", NL_SZ);
+	print_str(" DUPEFILE       %d\t\n", DF_SZ);
+	print_str(" LASTONLOG      %d\t\n", LO_SZ);
+	print_str(" ONELINERS      %d\t\n", LO_SZ);
+	print_str(" IMDBLOG        %d\t\n", ID_SZ);
+	print_str(" GAMELOG        %d\t\n", GM_SZ);
+	print_str(" TVLOG          %d\t\n", TV_SZ);
+	print_str(" GE1            %d\t\n", G1_SZ);
+	print_str(" ONLINE(SHR)    %d\t\n", OL_SZ);
 	print_str(MSG_NL);
 	if (gfl & F_OPT_VERBOSE) {
 		print_str("  TYPE         SIZE(B)   \n"
 				"-------------------------\n");
-		print_str(" off_t            %d      \n", (sizeof(off_t)));
-		print_str(" uintaa_t         %d      \n", (sizeof(uintaa_t)));
-		print_str(" uint8_t          %d      \n", (sizeof(uint8_t)));
-		print_str(" uint16_t         %d      \n", (sizeof(uint16_t)));
-		print_str(" uint32_t         %d      \n", (sizeof(uint32_t)));
-		print_str(" uint64_t         %d      \n", (sizeof(uint64_t)));
-		print_str(" size_t           %d      \n", (sizeof(size_t)));
+		print_str(" off_t            %d\t\n", (sizeof(off_t)));
+		print_str(" uintaa_t         %d\t\n", (sizeof(uintaa_t)));
+		print_str(" uint8_t          %d\t\n", (sizeof(uint8_t)));
+		print_str(" uint16_t         %d\t\n", (sizeof(uint16_t)));
+		print_str(" uint32_t         %d\t\n", (sizeof(uint32_t)));
+		print_str(" uint64_t         %d\t\n", (sizeof(uint64_t)));
+		print_str(" size_t           %d\t\n", (sizeof(size_t)));
 		print_str(MSG_NL);
-		print_str(" void *           %d      \n", PTRSZ);
+		print_str(" void *           %d\t\n", PTRSZ);
 		print_str(MSG_NL);
-		print_str(" mda              %d      \n", sizeof(mda));
-		print_str(" md_obj           %d      \n", sizeof(md_obj));
-		print_str(" _g_handle        %d      \n", sizeof(_g_handle));
-		print_str(" _g_match         %d      \n", sizeof(_g_match));
-		print_str(" _g_lom           %d      \n", sizeof(_g_lom));
+		print_str(" mda              %d\t\n", sizeof(mda));
+		print_str(" md_obj           %d\t\n", sizeof(md_obj));
+		print_str(" _g_handle        %d\t\n", sizeof(_g_handle));
+		print_str(" _g_match         %d\t\n", sizeof(_g_match));
+		print_str(" _g_lom           %d\t\n", sizeof(_g_lom));
+		print_str(" _d_xref          %d\t\n", sizeof(_d_xref));
 		print_str(MSG_NL);
 	}
 
@@ -3919,16 +3931,20 @@ int d_write(char *arg) {
 		return 3;
 	}
 
-	FILE *in;
+	FILE *in, *pf_infile = NULL;
+	struct stat st;
 
-	if (pf_infile) {
+	errno = 0;
+	if (!lstat(infile_p, &st)) {
+		pf_infile = fopen(infile_p, "rb");
+	}
+
+	if (pf_infile && !errno) {
 		in = pf_infile;
 	} else {
 		in = stdin;
 		g_act_1.flags |= F_GH_FROMSTDIN;
 	}
-
-	off_t fsz = 0;
 
 	int r;
 
@@ -3937,22 +3953,12 @@ int d_write(char *arg) {
 	}
 
 	if (!(gfl & F_OPT_MODE_BINARY)) {
-		char *buffer = malloc(max_datain_f);
-		if (!(fsz = read_file(NULL, buffer, max_datain_f, 0, in))) {
-			print_str("ERROR: %s: could not read input data\n", datafile);
-			ret = 4;
-			free(buffer);
-			goto end;
-		}
-
-		if ((r = m_load_input(&g_act_1, buffer))) {
+		if ((r = m_load_input_n(&g_act_1, in))) {
 			print_str("ERROR: %s: [%d]: could not parse input data\n", datafile,
 					r);
 			ret = 5;
-			free(buffer);
 			goto end;
 		}
-		free(buffer);
 	} else {
 		if (!(g_act_1.flags & F_GH_FROMSTDIN)) {
 			g_act_1.total_sz = get_file_size(infile_p);
@@ -4035,6 +4041,10 @@ int d_write(char *arg) {
 
 	end:
 
+	if (pf_infile) {
+		fclose(pf_infile);
+	}
+
 	return ret;
 }
 
@@ -4069,21 +4079,6 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
-
-typedef struct ___d_xref {
-	char name[PATH_MAX];
-	struct stat st;
-	uint8_t type;
-	uint8_t r, w, x;
-	uint8_t uperm, gperm, operm;
-	uint16_t perm;
-	uint32_t flags;
-	uint32_t crc32;
-	uint32_t major;
-	uint32_t minor;
-	float sparseness;
-	_d_xref_ct ct[GM_MAX + 1];
-} _d_xref, *__d_xref;
 
 typedef void (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
 
@@ -6231,7 +6226,7 @@ int imdb_format_block(void *iarg, char *output) {
 	if (gfl & F_OPT_FORMAT_BATCH) {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%s\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\n",
+						"IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%hu\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\n",
 						data->dirname, data->title, data->timestamp,
 						data->imdb_id, data->rating, data->votes, data->genres,
 						data->year, data->released, data->runtime, data->rated,
@@ -6239,7 +6234,7 @@ int imdb_format_block(void *iarg, char *output) {
 	} else {
 		c =
 				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"IMDB: %s: %s (%s): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
+						"IMDB: %s: %s (%hu): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
 						data->dirname, data->title, data->year, buffer2,
 						data->imdb_id, data->rating, data->votes, data->genres,
 						buffer3, data->runtime, data->rated, data->actors,
@@ -6558,7 +6553,6 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 		return 1;
 	}
 
-	bzero(hdl->s_buffer, PATH_MAX - 1);
 	snprintf(hdl->s_buffer, PATH_MAX - 1, "%s.%d.dtm", file, getpid());
 	snprintf(buffer, PATH_MAX - 1, "%s.bk", file);
 
@@ -6610,16 +6604,10 @@ int rebuild_data_file(char *file, __g_handle hdl) {
 		print_str("NOTICE: %s: flushing data to disk..\n", hdl->s_buffer);
 	}
 
-	hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-
-	if (!file_exists(file)) {
-		if (stat(file, &st)) {
-			print_str(
-					"WARNING: %s: [%d]: could not get stats from data file!\n",
-					errno, file);
-		} else {
-			hdl->st_mode = st.st_mode;
-		}
+	if (!lstat(file, &st)) {
+		hdl->st_mode = st.st_mode;
+	} else {
+		hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 	}
 
 	if (gfl & F_OPT_VERBOSE2) {
@@ -7893,6 +7881,10 @@ off_t read_file(char *file, void *buffer, size_t read_max, off_t offset,
 	FILE *fp = _fp;
 
 	if (!_fp) {
+		if (!file) {
+			return 0;
+		}
+
 		off_t a_fsz = get_file_size(file);
 
 		if (!a_fsz)
@@ -8746,7 +8738,21 @@ int g_is_higher_f(float s, float d) {
 	return 1;
 }
 
+int g_is_higher_d(double s, double d) {
+	if (s > d) {
+		return 0;
+	}
+	return 1;
+}
+
 int g_is_lower_f(float s, float d) {
+	if (s < d) {
+		return 0;
+	}
+	return 1;
+}
+
+int g_is_lower_d(double s, double d) {
 	if (s < d) {
 		return 0;
 	}
@@ -8813,6 +8819,10 @@ float g_tf_ptr(void *base, size_t offset) {
 	return *((float*) (base + offset));
 }
 
+float g_td_ptr(void *base, size_t offset) {
+	return *((double*) (base + offset));
+}
+
 #define MAX_SORT_LOOPS				MAX_uint64_t
 
 #define F_INT_GSORT_LOOP_DID_SORT	(a32 << 1)
@@ -8865,6 +8875,55 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 	}
 
 	return 0;
+}
+
+int g_sortd_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
+	int (*m_op)(float s, float d) = cb1;
+	double (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+
+	p_md_obj ptr, ptr_n;
+	int r = 0;
+	uint64_t ml_i;
+	uint32_t ml_f = 0;
+	double t_b, t_b_n;
+
+	for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++) {
+		ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
+		ptr = md_first(m_ptr);
+		while (ptr && ptr->next) {
+			ptr_n = (p_md_obj) ptr->next;
+
+			t_b = g_t_ptr_c(ptr->ptr, off);
+			t_b_n = g_t_ptr_c(ptr_n->ptr, off);
+
+			if (!m_op(t_b, t_b_n)) {
+				ptr = md_swap_s(m_ptr, ptr, ptr_n);
+				if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
+					ml_f |= F_INT_GSORT_LOOP_DID_SORT;
+				}
+			} else {
+				ptr = ptr->next;
+			}
+		}
+
+		if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT)) {
+			break;
+		}
+
+		if (!(ml_f & F_INT_GSORT_DID_SORT)) {
+			ml_f |= F_INT_GSORT_DID_SORT;
+		}
+	}
+
+	if (!(ml_f & F_INT_GSORT_DID_SORT)) {
+		return -1;
+	}
+
+	if (!r && (flags & F_GSORT_RESETPOS)) {
+		m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
+	}
+
+	return r;
 }
 
 int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
@@ -8959,6 +9018,18 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 	}
 
 	switch (vb) {
+	case -2:
+		switch (flags & F_GSORT_ORDER) {
+		case F_GSORT_DESC:
+			m_op = g_is_lower_d;
+			break;
+		case F_GSORT_ASC:
+			m_op = g_is_higher_d;
+			break;
+		}
+		g_t_ptr_c = g_td_ptr;
+		g_s_ex = g_sortd_exec;
+		break;
 	case -1:
 		switch (flags & F_GSORT_ORDER) {
 		case F_GSORT_DESC:
@@ -9803,6 +9874,7 @@ void *ref_to_val_ptr_online(void *arg, char *match, size_t *output) {
 
 #define _MC_IMDB_RELEASED		"released"
 #define _MC_IMDB_VOTES			"votes"
+#define _MC_IMDB_YEAR			"year"
 
 void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
 	__d_imdb data = (__d_imdb) arg;
@@ -9822,13 +9894,15 @@ void *ref_to_val_ptr_imdb(void *arg, char *match, size_t *output) {
 	} else if (!strncmp(match, _MC_IMDB_VOTES, 5)) {
 		*output = sizeof(data->votes);
 		return &data->votes;
+	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
+		*output = sizeof(data->year);
+		return &data->year;
 	}
 
 	return NULL;
 }
 
 void *ref_to_val_ptr_game(void *arg, char *match, size_t *output) {
-
 	__d_game data = (__d_game) arg;
 
 	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
@@ -10286,7 +10360,6 @@ char* ref_to_val_online_ps(void *arg, char *match, char *output,
 	return NULL;
 }
 
-#define _MC_IMDB_YEAR		"year"
 #define _MC_IMDB_ACTORS		"actors"
 #define _MC_IMDB_TITLE		"title"
 #define _MC_IMDB_IMDBID		"imdbid"
@@ -10312,6 +10385,8 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		snprintf(output, max_size, "%u", data->runtime);
 	} else if (!strncmp(match, _MC_IMDB_RELEASED, 8)) {
 		snprintf(output, max_size, "%d", (int32_t) data->released);
+	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
+		snprintf(output, max_size, "%hu", data->year);
 	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		return g_l_fmode(data->dirname, max_size, output);
 	} else if (!strncmp(match, _MC_GLOB_BASEDIR, 7)) {
@@ -10330,8 +10405,6 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 		strcp_s(output, max_size, data->dirname);
 	} else if (!strncmp(match, _MC_IMDB_ACTORS, 6)) {
 		strcp_s(output, max_size, data->actors);
-	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
-		strcp_s(output, max_size, data->year);
 	} else if (!strncmp(match, _MC_IMDB_SYNOPSIS, 4)) {
 		strcp_s(output, max_size, data->synopsis);
 	} else if (!strncmp(match, "x:", 2)) {
@@ -10367,8 +10440,6 @@ char* ref_to_val_imdb_ps(void *arg, char *match, char *output, size_t max_size) 
 		return data->dirname;
 	} else if (!strncmp(match, _MC_IMDB_ACTORS, 6)) {
 		return data->actors;
-	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
-		return data->year;
 	} else if (!strncmp(match, _MC_IMDB_SYNOPSIS, 4)) {
 		return data->synopsis;
 	} else {
@@ -10871,9 +10942,10 @@ off_t s_string_r(char *input, char *m) {
 }
 
 #define MAX_SDENTRY_LEN		20000
+#define MAX_SENTRY_LEN		1024
 
-int m_load_input(__g_handle hdl, char *input) {
-	g_setjmp(0, "m_load_input", NULL, NULL);
+int m_load_input_n(__g_handle hdl, FILE *input) {
+	g_setjmp(0, "m_load_input_n", NULL, NULL);
 
 	if (!hdl->w_buffer.objects) {
 		md_init(&hdl->w_buffer, 256);
@@ -10887,86 +10959,72 @@ int m_load_input(__g_handle hdl, char *input) {
 		return -2;
 	}
 
-	off_t p_c = 0, p_n, p_l;
 	char *buffer = malloc(MAX_SDENTRY_LEN + 1);
+	buffer[0] = 0x0;
 
-	mda md_s = { 0 };
-	p_md_obj ptr;
+	int i, rf = -9;
 
-	int i, rs, rf = 0;
+	char *l_ptr;
+	void *st_buffer = NULL;
+	uint32_t rw = 0, c = 0;
 
-	while ((p_n = s_string(input, "\n\n", p_c)) > p_c) {
-		p_l = p_n - p_c;
+	while ((l_ptr = fgets(buffer, MAX_SDENTRY_LEN, input)) != NULL) {
+		rf = 1;
 
-		if (p_l < 2) {
-			goto e_loop;
-		}
-
-		if (p_l > MAX_SDENTRY_LEN) {
-			if (gfl & F_OPT_VERBOSE2) {
-				print_str(
-						"WARNING: DATA IMPORT: failed processing input, too large [%llu]\n",
-						(uint64_t) p_l);
+		if (buffer[0] == 0xA) {
+			if (!rw) {
+				if (c) {
+					rf = 0;
+				}
+				break;
 			}
-			rf++;
+			if (rw == hdl->d_memb) {
+				rw = 0;
+				rf = 0;
+				c++;
+			} else {
+				print_str(
+						"ERROR: DATA IMPORT: [%d/%d] parameter count mismatch\n",
+						rw, hdl->d_memb);
+				break;
+			}
+
 			continue;
 		}
 
-		strncpy(buffer, &input[p_c], p_l);
-		bzero(&buffer[p_l], 1);
-
-		p_c = p_n + 2;
-
-		md_init(&md_s, 32);
-
-		if ((rs = split_string(buffer, 0xA, &md_s)) != hdl->d_memb) {
-			if (gfl & F_OPT_VERBOSE2) {
-				print_str(
-						"WARNING: DATA IMPORT: [%d/%d] parameter count mismatch\n",
-						rs, hdl->d_memb);
-			}
-			rf++;
-			goto e_loop;
+		if (!rw || !st_buffer) {
+			st_buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
 		}
 
-		ptr = md_s.objects;
-		char *s_ptr;
-		uint32_t rw = 0;
-		void *st_buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
-
-		if (!st_buffer) {
-			rf++;
-			goto e_loop;
+		i = 0;
+		while (l_ptr[i] && l_ptr[i] != 0x20) {
+			i++;
 		}
 
-		while (ptr) {
-			s_ptr = (char*) ptr->ptr;
-			i = 0;
-			while (s_ptr[i] && s_ptr[i] != 0x20) {
-				i++;
-			}
+		memset(&l_ptr[i], 0x0, 1);
 
-			memset(&s_ptr[i], 0x0, 1);
-			char *s_p1 = &s_ptr[i + 1];
-
-			int bd = hdl->g_proc0(st_buffer, s_ptr, s_p1);
-			if (!bd && (gfl & F_OPT_VERBOSE)) {
-				print_str("WARNING: DATA IMPORT: failed extracting '%s'\n",
-						s_ptr);
-			}
-
-			rw += (uint32_t) bd;
-			ptr = ptr->next;
+		while (l_ptr[i] == 0x20) {
+			i++;
 		}
 
-		if (rw != hdl->d_memb) {
-			md_unlink(&hdl->w_buffer, hdl->w_buffer.pos);
-			rf++;
+		char *s_p1 = &l_ptr[i + 1];
+
+		size_t s_p1_l = strlen(s_p1);
+		if (s_p1[s_p1_l - 1] == 0xA) {
+			s_p1[s_p1_l - 1] = 0x0;
+			s_p1_l--;
 		}
 
-		e_loop:
+		if (!s_p1_l) {
+			print_str("WARNING: DATA IMPORT: null value '%s'\n", l_ptr);
+		}
 
-		md_g_free(&md_s);
+		int bd = hdl->g_proc0(st_buffer, l_ptr, s_p1);
+		if (!bd) {
+			print_str("ERROR: DATA IMPORT: failed extracting '%s'\n", l_ptr);
+			rf = 3;
+		}
+		rw += 1;
 	}
 
 	free(buffer);
@@ -11410,17 +11468,18 @@ int gcb_imdbh(void *buffer, char *key, char *val) {
 		}
 		ptr->votes = v_ui;
 		return 1;
+	} else if (k_l == 4 && !strncmp(key, _MC_IMDB_YEAR, 4)) {
+		uint16_t v_ui = (uint16_t) strtol(val, NULL, 10);
+		if ( errno == ERANGE) {
+			return 0;
+		}
+		ptr->year = v_ui;
+		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_GLOB_GENRE, 5)) {
 		if (!(v_l = strlen(val))) {
 			return 0;
 		}
 		memcpy(ptr->genres, val, v_l > 254 ? 254 : v_l);
-		return 1;
-	} else if (k_l == 4 && !strncmp(key, _MC_IMDB_YEAR, 4)) {
-		if (!(v_l = strlen(val))) {
-			return 0;
-		}
-		memcpy(ptr->year, val, v_l > 4 ? 4 : v_l);
 		return 1;
 	} else if (k_l == 5 && !strncmp(key, _MC_IMDB_TITLE, 5)) {
 		if (!(v_l = strlen(val))) {
