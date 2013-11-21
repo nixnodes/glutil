@@ -215,6 +215,7 @@ FLAGS:
    time       I     Creation time since epoch (man 2 time)
    score      F     Game score
    
+   
 ; GENERIC-1 (ge1)
 
    i32        I     32-bit integer field
@@ -223,6 +224,34 @@ FLAGS:
    ge3        S     -||-
    ge4        S     -||-
    ge5        S     -||-
+   ge6        S     -||-
+   ge7        S     -||-
+   ge8        S     -||-
+   
+
+; GENERIC-2 (ge2)
+
+   i1         I     32-bit signed integer field
+   i2         I     -||-
+   i3         I     -||-
+   i4         I     -||-
+   u1         I     32-bit unsigned integer field
+   u2         I     -||-
+   u3         I     -||-
+   u4         I     -||-
+   ul1        I     64-bit unsigned integer field
+   ul2        I     -||-
+   ul3        I     -||-
+   ul4        I     -||-
+   f1         I     float field
+   f2         I     -||-
+   f3         I     -||-
+   f4         I     -||-
+   ge1        S     255 byte signed character field
+   ge2        S     -||-
+   ge3        S     -||-
+   ge4        S     -||-
+   ge5        S     128 byte signed character field
    ge6        S     -||-
    ge7        S     -||-
    ge8        S     -||-
