@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:14
+#@REVISION:15
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -239,20 +239,23 @@ adjust_tc() {
 NAME=`get_field $SNAME`
 [ -n "$TITLE_WIPE_CHARS" ] && NAME=`echo "$NAME" | sed -r "s/[${TITLE_WIPE_CHARS}]+//g"`
 [ -z "$NAME" ] && echo "ERROR: $QUERY: $TD: could not extract show name, fatal.." && exit 1
+
 GENRES=`get_field_t '/genres//genre[.]'`
+COUNTRY=`get_field "$SCOUNTRY"`
+[ -z "$COUNTRY" ] && COUNTRY="N/A"
+NETWORK=`get_field "network[@country='$COUNTRY']"`
 
 $RECODE --version 2&> /dev/null && {
 	NAME=`echo $NAME | $RECODE -f HTML_4.0`
 	GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
-	
+	NETWORK=`echo $NETWORK | $RECODE -f HTML_4.0`
 }
 
 [ -z "$GENRES" ] && GENRES="N/A"
+[ -z "$NETWORK" ] && NETWORK="N/A"
 
 STATUS=`get_field status`
 [ -z "$STATUS" ] && STATUS="N/A"
-COUNTRY=`get_field "$SCOUNTRY"`
-[ -z "$COUNTRY" ] && COUNTRY="N/A"
 SEASONS=`get_field seasons`
 [ -z "$SEASONS" ] && SEASONS=0
 CLASS=`get_field classification`
@@ -276,8 +279,7 @@ STARTYEAR=`echo "$ZZ_SD" | rev | cut -d "/" -f1 | rev`
 ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
 [ -z "$ENDYEAR" ] && ENDYEAR=0
 
-NETWORK=`get_field "network[@country='$COUNTRY']"`
-[ -z "$NETWORK" ] && NETWORK="N/A"
+
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
