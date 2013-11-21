@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-74
+ * Version     : 1.9-75
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 74
+#define VER_REVISION 75
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2842,11 +2842,11 @@ uintaa_t md_relink(pmda md) {
 
 p_md_obj md_first(pmda md) {
 
-	if (md->first && md->first != md->objects) {
+	/*if (md->first && md->first != md->objects) {
 		if (md->first->ptr) {
 			return md->first;
 		}
-	}
+	}*/
 
 	off_t off = 0;
 	p_md_obj ptr = md->objects;
@@ -2957,12 +2957,12 @@ void *md_unlink(pmda md, p_md_obj md_o) {
 	}
 
 	/*if (md->first == md_o && !md->first->prev) {
-	 if (md_o->next) {
-	 md->first = md_o->next;
-	 } else {
-	 md->first = md->objects;
-	 }
-	 }*/
+		if (md_o->next) {
+			md->first = md_o->next;
+		} else {
+			md->first = md->objects;
+		}
+	}*/
 
 	md->offset--;
 	if (md->pos == md_o && c_ptr) {
@@ -5308,6 +5308,9 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 		if (gfl & F_OPT_KILL_GLOBAL) {
 			goto r_end;
 		}
+
+		g_act_1.max_hits = 0;
+		g_act_1.max_results = 0;
 
 		if (g_act_1.j_offset == 2) {
 			g_act_1.buffer.r_pos = md_last(&g_act_1.buffer);
@@ -8960,7 +8963,7 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 }
 
 int g_sortd_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
-	int (*m_op)(float s, float d) = cb1;
+	int (*m_op)(double s, double d) = cb1;
 	double (*g_t_ptr_c)(void *base, size_t offset) = cb2;
 
 	p_md_obj ptr, ptr_n;
