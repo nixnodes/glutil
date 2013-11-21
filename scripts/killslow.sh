@@ -17,14 +17,13 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:8
+#@REVISION:9
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
 ## Requires: - glutil-1.9-68 or above
 ##           - date, kill, expr, sleep, stat
-#
 ## Usage (manual): /glroot/bin/glutil -w --loop=1 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
 ## Usage (macro): ./glutil -m killslow
@@ -54,6 +53,7 @@ LOG="/var/log/killslow.log"
 VERBOSE=0
 #
 ## Ban user after violating minimum speed limit (seconds)
+## Setting 0 disables ban after kick
 BANUSER=15 
 #
 ## Exempt users list
@@ -97,16 +97,18 @@ ban_user() {
 		[ -z "$5" ] && return 0	
 		[ -z "$6" ] && return 0		
 		[ $BANUSER -lt 1 ] && return 0			
-		egrep -q '^FLAGS .*6' $4/$1 && return 0
+		egrep -q '^FLAGS .*6' "$4/$1 && return 0
 		[ -n "$LOG" ] && echo "[`date "+%T %D"`] DISABLE USER: $1 for $BANUSER seconds.." >> $LOG
-		sed -r 's/^FLAGS .*$/&6/' "$4/$1" > /tmp/ks.$1.$$.dtm &&	
-			cat /tmp/ks.$1.$$.dtm > $4/$1 &&			
-				$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"
+		sed -r 's/^FLAGS .*$/&6/' "$4/$1" > /tmp/ks.$1.$$.dtm && {
+			cat /tmp/ks.$1.$$.dtm > $4/$1
+			$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"	
+		}
+		
 		rm /tmp/ks.$1.$$.dtm
 		
 		return 0
 	elif [ $2 -eq 1 ]; then
-		egrep -q '^FLAGS .*6' $4/$1 || return 0
+		egrep -q '^FLAGS .*6' "$4/$1" || return 0
 		[ -n "$LOG" ] && echo "[`date "+%T %D"`] ENABLE USER: $1" >> $LOG
 		g_FLAGS=`cat "$4/$1" | egrep '^FLAGS ' | tr -d '6'`
 		[ -z "$g_FLAGS" ] && return 1
@@ -147,7 +149,7 @@ if [ $BXFER -lt 1 ]; then
 fi
 
 [ $IGNORE_LONE_RANGER -eq 1 ] && {
-	glutil -w --batch match "user,${3}" or iregex status,"^STOR\ " and ilom "bxfer" and imatch "ndir,${14}" | egrep -q "^ONLINE" || {
+	$7 -w --batch match "user,${3}" or iregex status,"^STOR\ " and ilom "bxfer" and imatch "ndir,${14}" | egrep -q "^ONLINE" || {
 		#echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
 		[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
 		exit 1
