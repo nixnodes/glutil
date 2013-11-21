@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 72
+#define VER_REVISION 73
 #define VER_STR ""
 
 #ifndef _STDINT_H
