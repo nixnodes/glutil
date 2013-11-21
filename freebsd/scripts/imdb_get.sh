@@ -2,12 +2,12 @@
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
 #@REVISION:8
-#@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
-#@MACRO:imdb-d:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}"
-#@MACRO:imdb-su:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}"
-#@MACRO:imdb-su-id:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}"
-#@MACRO:imdb-su-f1:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" iregex "dir,\/"
-#@MACRO:imdb-e:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' 0 0"
+#@MACRO:imdb-f:{m:exe} -x {m:arg1} --silent --dir --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@MACRO:imdb-d-f:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}"
+#@MACRO:imdb-su-f:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}"
+#@MACRO:imdb-su-id-f:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}"
+#@MACRO:imdb-su-f1-f:{m:exe} -a --silent -v --loglevel=5 --preexec "{m:exe} -v --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" iregex "dir,\/"
+#@MACRO:imdb-e-f:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' 0 0"
 #
 ## Install script dependencies + libs into glftpd root (requires mlocate)
 #
