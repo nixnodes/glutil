@@ -105,6 +105,7 @@
  *   - % Changed 'year' field type from char[8] to unsigned short (rev. 72)
  *   - %! Text data loading more efficient (rev. 72)
  *   - + GENERIC-2 log-type (rev. 73)
+ *   - ~ Misaligned imdblog header (since rev.72) (rev. 74)
  *
  * v1.8
  *
