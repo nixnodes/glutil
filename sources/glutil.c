@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.9-73
+ * Version     : 1.9-74
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 9
-#define VER_REVISION 73
+#define VER_REVISION 74
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -222,7 +222,7 @@ typedef struct ___d_imdb {
 	uint32_t votes; /* IMDB Votes */
 	char genres[255]; /* List of genres (comma delimited) */
 	uint16_t year;
-	uint8_t _d_unused_m[4];
+	uint8_t _d_unused_m[3];
 	char title[128];
 	int32_t released;
 	uint32_t runtime;
