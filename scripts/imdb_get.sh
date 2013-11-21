@@ -344,7 +344,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
                 $2 --imdblog="$3$LAPPEND" -a imatch "imdbid,$iid" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup -e imdb match "imdbid,$iid" --silent || {
-                        echo "ERROR: $iid: Failed removing old record" && exit 1
+                        echo "ERROR: $iid: Failed removing old record - $iid" && exit 1
                 }
         fi
 
