@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.10
+ * Version     : 1.10-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 10
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1226,14 +1226,15 @@ char *hpd_up =
 				"                        Parse specified log to stdout\n"
 				"  -t                    Parse all user files inside /ftp-data/users\n"
 				"  -g                    Parse all group files inside /ftp-data/groups\n"
-				"  -x <root dir> [--recursive] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>] [--fd]\n"
+				"  -x <root dir> [-R] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>] [--fd]\n"
 				"                        Parses filesystem and processes each item found with internal filters/hooks\n"
-				"                          --dir scans directories only\n"
-				"                          --file scans files only (default is both dirs and files)\n"
-				"                          --cdir processes only the root directory itself\n"
-				"                          --maxdepth limits how deep into the directory tree recursor descends\n"
-				"                          --mindepth does not process levels lesser than <limit>\n"
-				"                          --fd applies filters before recursor descends into subdirectory\n"
+				"                          --dir - scan directories only\n"
+				"                          --file - scan files only (default is both dirs and files)\n"
+				"                          --cdir - process only the root directory itself\n"
+				"                          --maxdepth - limit how deep into the directory tree recursor descends\n"
+				"                          --mindepth - do not process levels lesser than <limit>\n"
+				"                          --fd - apply filters before recursor descends into subdirectory\n"
+				"                          --recursive (-R) - traverse the whole <root dir> directory tree\n"
 				"\n Input:\n"
 				"  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
 				"                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -2728,14 +2729,14 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"-file", opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0,
 		"-dir", opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0,
 		"--loopmax", opt_loop_max, (void*) 1, "--ghost", opt_check_ghost,
-		(void*) 0, "-q", opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1,
-		"-recursive", opt_g_recursive, (void*) 0, "--recursive",
-		opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-		opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
-		opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
-		"--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
-		(void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1", NULL, (void*) 1,
-		"--arg1", NULL, (void*) 1, "-arg2",
+		(void*) 0, "-q", opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1, "-R",
+		opt_g_recursive, (void*) 0, "-recursive", opt_g_recursive, (void*) 0,
+		"--recursive", opt_g_recursive, (void*) 0, "-g", opt_dump_grps,
+		(void*) 0, "-t", opt_dump_users, (void*) 0, "--backup", opt_backup,
+		(void*) 1, "-b", opt_backup, (void*) 1, "--postexec", opt_g_postexec,
+		(void*) 1, "--preexec", opt_g_preexec, (void*) 1, "--usleep",
+		opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1",
+		NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
 		NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
 		"--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
 		opt_g_imatch, (void*) 1, "imatch", opt_g_imatch, (void*) 1, "match",
@@ -9994,7 +9995,8 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 		bzero(right, MAX_LOM_VLEN + 1);
 		bzero(comp, 4);
 		bzero(oper, 4);
-		while (is_ascii_alphanumeric((uint8_t) ptr[0]) && ptr[0] != 0x2D && ptr[0] != 0x2B) {
+		while (is_ascii_alphanumeric((uint8_t) ptr[0]) && ptr[0] != 0x2D
+				&& ptr[0] != 0x2B) {
 			ptr++;
 		}
 
