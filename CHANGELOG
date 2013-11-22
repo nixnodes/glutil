@@ -5,6 +5,10 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v1.10:
+ *
+ *   - + LOM/sorting signed integer processing support
+ *
  * v1.9
  *
  *   - + --maxres, --maxhit, --ifres and --ifhit (see --help for details)
@@ -106,6 +110,7 @@
  *   - %! Text data loading more efficient (rev. 72)
  *   - + GENERIC-2 log-type (rev. 73)
  *   - ~ Misaligned imdblog header (since rev.72) (rev. 74)
+ *   - ~ --max[res|hit] not working with --sort (rev. 75)
  *
  * v1.8
  *
