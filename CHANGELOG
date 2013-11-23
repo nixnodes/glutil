@@ -8,6 +8,7 @@
  * v1.11:
  *
  *   - %! Rewrote matching routines to be more efficient
+ *   - ~ -x --cdir segfaulting (rev. 1)
  *
  * v1.10:
  *
