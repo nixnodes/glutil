@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-5
+ * Version     : 1.11-6
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -355,7 +355,8 @@ typedef struct config_header {
 	mda data;
 } cfg_h, *p_cfg_h;
 
-typedef int (*__d_exec)(void *buffer, void *callback, char *ex_str, void *hdl);
+typedef int
+(*__d_exec)(void *buffer, void *callback, char *ex_str, void *hdl);
 
 typedef struct ___execv {
 	int argc;
@@ -367,11 +368,18 @@ typedef struct ___execv {
 
 #define MAX_VAR_LEN				4096
 
-typedef void (*__g_ipcbm)(void *hdl, pmda md, int *r_p);
-typedef int (*__g_proc_t)(void *, char *, char *, size_t);
-typedef void *(*__g_proc_v)(void *, char *, char *, size_t);
-typedef char * (*__g_proc_t_ps)(void *, char *, char *, size_t);
-typedef void *(*__d_ref_to_pv)(void *arg, char *match, int *output);
+typedef void
+(*__g_ipcbm)(void *hdl, pmda md, int *r_p);
+typedef int
+(*__g_proc_t)(void *, char *, char *, size_t);
+typedef void *
+(*__g_proc_v)(void *, char *, char *, size_t);
+typedef char *
+(*__g_proc_t_ps)(void *, char *, char *, size_t);
+typedef void *
+(*__d_ref_to_pv)(void *arg, char *match, int *output);
+typedef void (*_d_omfp)(void *hdl, void *ptr, char *sbuffer);
+typedef int (*_d_proc3)(void *, char *);
 
 typedef struct g_handle {
 	FILE *fh;
@@ -397,7 +405,8 @@ typedef struct g_handle {
 	__g_proc_t_ps g_proc1_ps;
 	__d_ref_to_pv g_proc2;
 	__g_proc_v g_proc1_lookup;
-	int (*g_proc3)(void *, char *);
+	_d_proc3 g_proc3, g_proc3_batch;
+	_d_omfp g_proc4;
 	size_t j_offset, jm_offset;
 	int d_memb;
 	void *_x_ref;
@@ -425,10 +434,14 @@ typedef struct sig_jmp_buf {
 	void *callback, *arg;
 } sigjmp, *p_sigjmp;
 
-typedef float (*g_tf_p)(void *base, size_t offset);
-typedef uint64_t (*g_t_p)(void *base, size_t offset);
-typedef int64_t (*g_ts_p)(void *base, size_t offset);
-typedef int (*g_op)(int s, int d);
+typedef float
+(*g_tf_p)(void *base, size_t offset);
+typedef uint64_t
+(*g_t_p)(void *base, size_t offset);
+typedef int64_t
+(*g_ts_p)(void *base, size_t offset);
+typedef int
+(*g_op)(int s, int d);
 
 typedef struct ___g_lom {
 	int result;
@@ -440,10 +453,14 @@ typedef struct ___g_lom {
 	g_ts_p g_ts_ptr_right;
 	g_tf_p g_tf_ptr_left;
 	g_tf_p g_tf_ptr_right;
-	int (*g_icomp_ptr)(uint64_t s, uint64_t d);
-	int (*g_iscomp_ptr)(int64_t s, int64_t d);
-	int (*g_fcomp_ptr)(float s, float d);
-	int (*g_lom_vp)(void *d_ptr, void * lom);
+	int
+	(*g_icomp_ptr)(uint64_t s, uint64_t d);
+	int
+	(*g_iscomp_ptr)(int64_t s, int64_t d);
+	int
+	(*g_fcomp_ptr)(float s, float d);
+	int
+	(*g_lom_vp)(void *d_ptr, void * lom);
 	g_op g_oper_ptr;
 	uint64_t t_left, t_right;
 	int64_t ts_left, ts_right;
@@ -811,7 +828,8 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #ifdef GLCONF
 char GLCONF_I[PATH_MAX] = { GLCONF };
 #else
-char GLCONF_I[PATH_MAX] = {0};
+char GLCONF_I[PATH_MAX] =
+{	0};
 #endif
 
 #define _MC_GLOB_DIR 			"dir"
@@ -875,7 +893,8 @@ void g_setjmp(uint32_t flags, char *type, void *callback, void *arg) {
 	return;
 }
 
-void *g_memcpy(void *dest, const void *src, size_t n) {
+void *
+g_memcpy(void *dest, const void *src, size_t n) {
 	void *ret = NULL;
 	e_pop(&g_sigjmp);
 	g_sigjmp.flags = 0;
@@ -887,7 +906,8 @@ void *g_memcpy(void *dest, const void *src, size_t n) {
 	return ret;
 }
 
-void *g_memmove(void *dest, const void *src, size_t n) {
+void *
+g_memmove(void *dest, const void *src, size_t n) {
 	void *ret = NULL;
 	e_pop(&g_sigjmp);
 	g_sigjmp.flags = 0;
@@ -899,7 +919,8 @@ void *g_memmove(void *dest, const void *src, size_t n) {
 	return ret;
 }
 
-char *g_strncpy(char *dest, const char *src, size_t n) {
+char *
+g_strncpy(char *dest, const char *src, size_t n) {
 	char *ret = NULL;
 	e_pop(&g_sigjmp);
 	g_sigjmp.flags = 0;
@@ -945,7 +966,8 @@ size_t g_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
 	return ret;
 }
 
-FILE *gg_fopen(const char *path, const char *mode) {
+FILE *
+gg_fopen(const char *path, const char *mode) {
 	FILE *ret = NULL;
 	e_pop(&g_sigjmp);
 	g_sigjmp.flags |= F_SIGERR_CONTINUE;
@@ -1027,8 +1049,8 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 		s_ptr3 = ", resuming execution..";
 	}
 
-	printf("EXCEPTION: %s: [%s] [%s] [%d]%s%s\n", s_ptr1, g_sigjmp.type, s_ptr2,
-			siginfo->si_errno, buffer1, s_ptr3);
+	fprintf(stderr, "EXCEPTION: %s: [%s] [%s] [%d]%s%s\n", s_ptr1,
+			g_sigjmp.type, s_ptr2, siginfo->si_errno, buffer1, s_ptr3);
 
 	usleep(450000);
 
@@ -1044,7 +1066,8 @@ void sighdl_error(int sig, siginfo_t* siginfo, void* context) {
 	exit(siginfo->si_errno);
 }
 
-struct tm *get_localtime(void) {
+struct tm *
+get_localtime(void) {
 	time_t t = time(NULL);
 	return localtime(&t);
 }
@@ -1128,8 +1151,9 @@ int print_str(const char * volatile buf, ...) {
 		vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
 		w_log(wl_buffer, (char*) buf);
 	}
+	char iserr = strncmp(buf, "ERROR:", 6);
 
-	if (gfl & F_OPT_PS_SILENT) {
+	if (iserr && (gfl & F_OPT_PS_SILENT)) {
 		return 0;
 	}
 
@@ -1137,14 +1161,14 @@ int print_str(const char * volatile buf, ...) {
 	va_start(al, buf);
 
 	if (gfl & F_OPT_PS_TIME) {
-		if (!strncmp(buf, "ERROR:", 6)) {
+		if (!iserr) {
 			vfprintf(stderr, d_buffer_2, al);
 		} else {
 			vprintf(d_buffer_2, al);
 		}
 
 	} else {
-		if (!strncmp(buf, "ERROR:", 6)) {
+		if (!iserr) {
 			vfprintf(stderr, buf, al);
 		} else {
 			vprintf(buf, al);
@@ -1415,22 +1439,37 @@ char *hpd_up =
 				"  --logfile=<file>      Override default log file path\n"
 				"\n";
 
-int md_init(pmda md, int nm);
-p_md_obj md_first(pmda md);
-int split_string(char *, char, pmda);
-off_t s_string(char *input, char *m, off_t offset);
-int is_ascii_text(uint8_t in);
-int is_ascii_lowercase_text(uint8_t in);
-int is_ascii_uppercase_text(uint8_t in);
-int is_ascii_alphanumeric(uint8_t in_c);
-void *md_alloc(pmda md, int b);
+int
+md_init(pmda md, int nm);
+p_md_obj
+md_first(pmda md);
+int
+split_string(char *, char, pmda);
+off_t
+s_string(char *input, char *m, off_t offset);
+int
+is_ascii_text(uint8_t in);
+int
+is_ascii_lowercase_text(uint8_t in);
+int
+is_ascii_uppercase_text(uint8_t in);
+int
+is_ascii_alphanumeric(uint8_t in_c);
+void *
+md_alloc(pmda md, int b);
 __g_match g_global_register_match(void);
-int g_oper_and(int s, int d);
-int g_oper_or(int s, int d);
-char **build_argv(char *args, size_t max, int *c);
-int find_absolute_path(char *exec, char *output);
-int g_do_exec(void *, void *, char*, void *hdl);
-int g_do_exec_v(void *buffer, void *p_hdl, char *ex_str, void *hdl);
+int
+g_oper_and(int s, int d);
+int
+g_oper_or(int s, int d);
+char **
+build_argv(char *args, size_t max, int *c);
+int
+find_absolute_path(char *exec, char *output);
+int
+g_do_exec(void *, void *, char*, void *hdl);
+int
+g_do_exec_v(void *buffer, void *p_hdl, char *ex_str, void *hdl);
 
 int g_cpg(void *arg, void *out, int m, size_t sz) {
 	char *buffer;
@@ -1456,14 +1495,16 @@ int g_cpg(void *arg, void *out, int m, size_t sz) {
 
 	return 0;
 }
-void *g_pg(void *arg, int m) {
+void *
+g_pg(void *arg, int m) {
 	if (m == 2) {
 		return (char *) arg;
 	}
 	return ((char **) arg)[0];
 }
 
-char *g_pd(void *arg, int m, size_t l) {
+char *
+g_pd(void *arg, int m, size_t l) {
 	char *buffer = (char*) g_pg(arg, m);
 	char *ptr = NULL;
 	size_t a_l = strlen(buffer);
@@ -1687,7 +1728,7 @@ int opt_g_sfv(void *arg, int m) {
 }
 
 int opt_batch_output_formatting(void *arg, int m) {
-	gfl |= F_OPT_FORMAT_BATCH;
+	gfl |= F_OPT_FORMAT_BATCH | F_OPT_PS_SILENT;
 	return 0;
 }
 
@@ -1768,8 +1809,7 @@ int opt_recursive_update_records(void *arg, int m) {
 }
 
 int opt_raw_dump(void *arg, int m) {
-	gfl |= F_OPT_MODE_RAWDUMP;
-	gfl |= F_OPT_PS_SILENT;
+	gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT;
 	return 0;
 }
 
@@ -2234,25 +2274,31 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 
 int opt_g_operator_or(void *arg, int m) {
 	__g_match pgm = (__g_match) _match_rr_l.ptr;
-	if (!pgm) {
+	if (!pgm)
+	{
 		return 7100;
 	}
-	switch (_match_rr_l.flags & F_LM_TYPES) {
+	switch (_match_rr_l.flags & F_LM_TYPES)
+	{
 
 		case F_LM_CPRG:
 		;
-		if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+		if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1)
+		{
 			pgm->g_oper_ptr = g_oper_and;
 		}
-		else {
+		else
+		{
 			pgm->g_oper_ptr = g_oper_or;
 		}
 		break;
 		case F_LM_LOM:;
-		if (pgm->flags & F_GM_IMATCH) {
+		if (pgm->flags & F_GM_IMATCH)
+		{
 			pgm->g_oper_ptr = g_oper_and;
 		}
-		else {
+		else
+		{
 			pgm->g_oper_ptr = g_oper_or;
 		}
 		break;
@@ -2266,25 +2312,31 @@ int opt_g_operator_or(void *arg, int m) {
 
 int opt_g_operator_and(void *arg, int m) {
 	__g_match pgm = (__g_match) _match_rr_l.ptr;
-	if (!pgm) {
+	if (!pgm)
+	{
 		return 6100;
 	}
-	switch (_match_rr_l.flags & F_LM_TYPES) {
+	switch (_match_rr_l.flags & F_LM_TYPES)
+	{
 
 		case F_LM_CPRG:
 		;
-		if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1) {
+		if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1)
+		{
 			pgm->g_oper_ptr = g_oper_or;
 		}
-		else {
+		else
+		{
 			pgm->g_oper_ptr = g_oper_and;
 		}
 		break;
 		case F_LM_LOM:;
-		if (pgm->flags & F_GM_IMATCH) {
+		if (pgm->flags & F_GM_IMATCH)
+		{
 			pgm->g_oper_ptr = g_oper_or;
 		}
-		else {
+		else
+		{
 			pgm->g_oper_ptr = g_oper_and;
 		}
 		break;
@@ -2516,22 +2568,36 @@ int opt_membuffer_limit_in(void *arg, int m) {
 }
 
 /* generic types */
-typedef int _d_ag_handle_i(__g_handle);
-typedef int _d_achar_i(char *);
-typedef int _d_avoid_i(void);
+typedef int
+_d_ag_handle_i(__g_handle);
+typedef int
+_d_achar_i(char *);
+typedef int
+_d_avoid_i(void);
 
 /* specific types */
-typedef int __d_enum_cb(char *, unsigned char, void *, __g_eds);
-typedef int __d_ref_to_val(void *, char *, char *, size_t);
-typedef char *__d_ref_to_val_ps(void *, char *, char *, size_t);
-typedef int __d_format_block(void *, char *);
-typedef uint64_t __d_dlfind(char *, int, uint32_t, void *);
-typedef pmda __d_cfg(pmda md, char * file);
-typedef int __d_mlref(void *buffer, char *key, char *val);
-typedef uint64_t __g_t_ptr(void *base, size_t offset);
-typedef void *__d_ref_to_pval(void *arg, char *match, int *output);
-typedef char *__g_proc_rv(void *arg, char *match, char *output, size_t max_size);
-typedef void *_d_rtv_lk(void *arg, char *match, char *output, size_t max_size);
+typedef int
+__d_enum_cb(char *, unsigned char, void *, __g_eds);
+typedef int
+__d_ref_to_val(void *, char *, char *, size_t);
+typedef char *
+__d_ref_to_val_ps(void *, char *, char *, size_t);
+typedef int
+__d_format_block(void *, char *);
+typedef uint64_t
+__d_dlfind(char *, int, uint32_t, void *);
+typedef pmda
+__d_cfg(pmda md, char * file);
+typedef int
+__d_mlref(void *buffer, char *key, char *val);
+typedef uint64_t
+__g_t_ptr(void *base, size_t offset);
+typedef void *
+__d_ref_to_pval(void *arg, char *match, int *output);
+typedef char *
+__g_proc_rv(void *arg, char *match, char *output, size_t max_size);
+typedef void *
+_d_rtv_lk(void *arg, char *match, char *output, size_t max_size);
 
 __g_t_ptr g_t8_ptr, g_t16_ptr, g_t32_ptr, g_t64_ptr;
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close, g_shm_cleanup;
@@ -2637,97 +2703,161 @@ _d_rtv_lk ref_to_val_lk_dirlog, ref_to_val_lk_nukelog, ref_to_val_lk_dupefile,
 		ref_to_val_lk_game, ref_to_val_lk_tvrage, ref_to_val_lk_gen1,
 		ref_to_val_lk_gen2;
 
-off_t file_crc32(char *, uint32_t *);
-void g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
-int data_backup_records(char*);
-ssize_t file_copy(char *, char *, char *, uint32_t);
+off_t
+file_crc32(char *, uint32_t *);
+void
+g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
+int
+data_backup_records(char*);
+ssize_t
+file_copy(char *, char *, char *, uint32_t);
 
-int release_generate_block(char *, ear *);
-off_t get_file_size(char *);
-char **process_macro(void *, char **);
-char *generate_chars(size_t, char, char*);
-time_t get_file_creation_time(struct stat *);
-int dirlog_write_record(struct dirlog *, off_t, int);
+int
+release_generate_block(char *, ear *);
+off_t
+get_file_size(char *);
+char **
+process_macro(void *, char **);
+char *
+generate_chars(size_t, char, char*);
+time_t
+get_file_creation_time(struct stat *);
+int
+dirlog_write_record(struct dirlog *, off_t, int);
 
-char *string_replace(char *, char *, char *, char *, size_t);
-int enum_dir(char *, void *, void *, int, __g_eds);
-int update_records(char *, int);
-off_t read_file(char *, void *, size_t, off_t, FILE *);
-int option_crc32(void *, int);
+char *
+string_replace(char *, char *, char *, char *, size_t);
+int
+enum_dir(char *, void *, void *, int, __g_eds);
+int
+update_records(char *, int);
+off_t
+read_file(char *, void *, size_t, off_t, FILE *);
+int
+option_crc32(void *, int);
 
-int load_cfg(pmda md, char * file, uint32_t flags, pmda *res);
-int free_cfg_rf(pmda md);
+int
+load_cfg(pmda md, char * file, uint32_t flags, pmda *res);
+int
+free_cfg_rf(pmda md);
 
-int reg_match(char *, char *, int);
+int
+reg_match(char *, char *, int);
 
-int delete_file(char *, unsigned char, void *);
+int
+delete_file(char *, unsigned char, void *);
 
-int write_file_text(char *, char *);
+int
+write_file_text(char *, char *);
 
-size_t str_match(char *, char *);
-size_t exec_and_wait_for_output(char*, char*);
+size_t
+str_match(char *, char *);
+size_t
+exec_and_wait_for_output(char*, char*);
 
-p_md_obj get_cfg_opt(char *, pmda, pmda*);
+p_md_obj
+get_cfg_opt(char *, pmda, pmda*);
 
-uint64_t nukelog_find(char *, int, struct nukelog *);
-int parse_args(int argc, char **argv, void*fref_t[]);
+uint64_t
+nukelog_find(char *, int, struct nukelog *);
+int
+parse_args(int argc, char **argv, void*fref_t[]);
 
-int process_opt(char *, void *, void *, int);
+int
+process_opt(char *, void *, void *, int);
 
-int g_fopen(char *, char *, uint32_t, __g_handle);
-void *g_read(void *buffer, __g_handle, size_t);
-int process_exec_string(char *, char *, size_t, void *, void*);
-int process_exec_args(void *data, __g_handle hdl);
+int
+g_fopen(char *, char *, uint32_t, __g_handle);
+void *
+g_read(void *buffer, __g_handle, size_t);
+int
+process_exec_string(char *, char *, size_t, void *, void*);
+int
+process_exec_args(void *data, __g_handle hdl);
 
-int is_char_uppercase(char);
-char *g_basename(char *input);
-char *g_dirname(char *input);
-void sig_handler(int);
-void child_sig_handler(int, siginfo_t*, void*);
-int flush_data_md(__g_handle, char *);
-int rebuild(void *);
-int rebuild_data_file(char *, __g_handle);
+int
+is_char_uppercase(char);
+char *
+g_basename(char *input);
+char *
+g_dirname(char *input);
+void
+sig_handler(int);
+void
+child_sig_handler(int, siginfo_t*, void*);
+int
+flush_data_md(__g_handle, char *);
+int
+rebuild(void *);
+int
+rebuild_data_file(char *, __g_handle);
 
-int g_bmatch(void *, __g_handle, pmda md);
-int do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback);
+int
+g_bmatch(void *, __g_handle, pmda md);
+int
+do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback);
 
-size_t g_load_data_md(void *, size_t, char *, __g_handle hdl);
-int g_load_record(__g_handle, const void *);
-int remove_repeating_chars(char *string, char c);
+size_t
+g_load_data_md(void *, size_t, char *, __g_handle hdl);
+int
+g_load_record(__g_handle, const void *);
+int
+remove_repeating_chars(char *string, char c);
 
-int g_buffer_into_memory(char *, __g_handle);
-int g_print_stats(char *, uint32_t, size_t);
+int
+g_buffer_into_memory(char *, __g_handle);
+int
+g_print_stats(char *, uint32_t, size_t);
 
-int load_data_md(pmda md, char *file, __g_handle hdl);
-int g_shmap_data(__g_handle, key_t);
-int g_map_shm(__g_handle, key_t);
-int gen_md_data_ref(__g_handle hdl, pmda md, off_t count);
-int gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count);
-int is_memregion_null(void *addr, size_t size);
+int
+load_data_md(pmda md, char *file, __g_handle hdl);
+int
+g_shmap_data(__g_handle, key_t);
+int
+g_map_shm(__g_handle, key_t);
+int
+gen_md_data_ref(__g_handle hdl, pmda md, off_t count);
+int
+gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count);
+int
+is_memregion_null(void *addr, size_t size);
 
-char *build_data_path(char *, char *, char *);
-void *ref_to_val_get_cfgval(char *, char *, char *, int, char *, size_t);
+char *
+build_data_path(char *, char *, char *);
+void *
+ref_to_val_get_cfgval(char *, char *, char *, int, char *, size_t);
 
-int get_relative_path(char *, char *, char *);
+int
+get_relative_path(char *, char *, char *);
 
-void free_cfg(pmda);
+void
+free_cfg(pmda);
 
-int g_init(int argc, char **argv);
+int
+g_init(int argc, char **argv);
 
-char *g_dgetf(char *str);
+char *
+g_dgetf(char *str);
 
-int m_load_input_n(__g_handle hdl, FILE *input);
+int
+m_load_input_n(__g_handle hdl, FILE *input);
 
-off_t s_string_r(char *input, char *m);
+off_t
+s_string_r(char *input, char *m);
 
-int g_bin_compare(const void *p1, const void *p2, off_t size);
+int
+g_bin_compare(const void *p1, const void *p2, off_t size);
 
-typedef int __d_icomp(uint64_t s, uint64_t d);
-typedef int __d_fcomp(float s, float d);
+typedef int
+__d_icomp(uint64_t s, uint64_t d);
+typedef int
+__d_fcomp(float s, float d);
 
-int rtv_q(void *query, char *output, size_t max_size);
+int
+rtv_q(void *query, char *output, size_t max_size);
 
-char *strcp_s(char *dest, size_t max_size, char *source);
+char *
+strcp_s(char *dest, size_t max_size, char *source);
 
 __d_icomp g_is_higher, g_is_lower, g_is_higherorequal, g_is_equal,
 		g_is_not_equal, g_is_lowerorequal, g_is_not, g_is, g_is_lower_2,
@@ -2736,43 +2866,61 @@ __d_fcomp g_is_lower_f, g_is_higher_f, g_is_higherorequal_f, g_is_equal_f,
 		g_is_lower_f_2, g_is_higher_f_2, g_is_not_equal_f, g_is_lowerorequal_f,
 		g_is_f, g_is_not_f;
 
-int g_sort(__g_handle hdl, char *field, uint32_t flags);
-int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
-int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
-int g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
+int
+g_sort(__g_handle hdl, char *field, uint32_t flags);
+int
+g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
+int
+g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
+int
+g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
 		uint32_t flags);
-int do_sort(__g_handle hdl, char *field, uint32_t flags);
-void g_ipcbm(void *, pmda md, int *r_p);
+int
+do_sort(__g_handle hdl, char *field, uint32_t flags);
+void
+g_ipcbm(void *, pmda md, int *r_p);
 
-int g_filter(__g_handle hdl, pmda md);
+int
+g_filter(__g_handle hdl, pmda md);
 
-int g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
+int
+g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 		size_t comp_l, char *oper, size_t oper_l, __g_match match, __g_lom *ret,
 		uint32_t flags);
 
-int g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
+int
+g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
 
-int g_load_lom(__g_handle hdl);
-int g_load_strm(__g_handle hdl);
+int
+g_load_lom(__g_handle hdl);
+int
+g_load_strm(__g_handle hdl);
 
-int g_proc_mr(__g_handle hdl);
-int md_copy(pmda source, pmda dest, size_t block_sz);
-int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
+int
+g_proc_mr(__g_handle hdl);
+int
+md_copy(pmda source, pmda dest, size_t block_sz);
+int
+g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 		uint32_t flags);
 
 #define R_SHMAP_ALREADY_EXISTS	(a32 << 1)
 #define R_SHMAP_FAILED_ATTACH	(a32 << 2)
 #define R_SHMAP_FAILED_SHMAT	(a32 << 3)
 
-void *shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
+void *
+shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
 		int *shmid);
 
-size_t d_xref_ct_fe(__d_xref_ct input, size_t sz);
+size_t
+d_xref_ct_fe(__d_xref_ct input, size_t sz);
 
-typedef int __d_lom_vp(void *d_ptr, void *_lom);
+typedef int
+__d_lom_vp(void *d_ptr, void *_lom);
 
 __d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var_float;
-int g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
+int
+g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
 
 void *prio_f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "--raw",
 		opt_raw_dump, (void*) 0, "silent", opt_silent, (void*) 0, "--silent",
@@ -2971,7 +3119,8 @@ p_md_obj md_last(pmda md) {
 
 #define MDA_MDALLOC_RE	0x1
 
-void *md_alloc(pmda md, int b) {
+void *
+md_alloc(pmda md, int b) {
 	int flags = 0;
 
 	if (md->offset >= md->count) {
@@ -3034,7 +3183,8 @@ void *md_alloc(pmda md, int b) {
 	return md->pos->ptr;
 }
 
-void *md_unlink(pmda md, p_md_obj md_o) {
+void *
+md_unlink(pmda md, p_md_obj md_o) {
 	if (!md_o) {
 		return NULL;
 	}
@@ -3071,7 +3221,8 @@ void *md_unlink(pmda md, p_md_obj md_o) {
 	return (void*) c_ptr;
 }
 
-void *md_swap(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
+void *
+md_swap(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
 	if (!md_o1 || !md_o2) {
 		return NULL;
 	}
@@ -3107,7 +3258,8 @@ void *md_swap(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
 	return md_o2->next;
 }
 
-void *md_swap_s(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
+void *
+md_swap_s(pmda md, p_md_obj md_o1, p_md_obj md_o2) {
 	void *ptr = md_o1->ptr;
 	md_o1->ptr = md_o2->ptr;
 	md_o2->ptr = ptr;
@@ -3238,11 +3390,13 @@ int g_cleanup(__g_handle hdl) {
 
 		while (ptr) {
 			__g_match g_ptr = (__g_match) ptr->ptr;
-			if ( g_ptr->flags & F_GM_ISLOM) {
+			if ( g_ptr->flags & F_GM_ISLOM)
+			{
 				md_g_free(&g_ptr->lom);
 
 			}
-			if ( g_ptr->flags & F_GM_ISREGEX) {
+			if ( g_ptr->flags & F_GM_ISREGEX)
+			{
 				regfree(&g_ptr->preg);
 			}
 			ptr = ptr->next;
@@ -3273,7 +3427,8 @@ int g_cleanup(__g_handle hdl) {
 	return r;
 }
 
-char *build_data_path(char *file, char *path, char *sd) {
+char *
+build_data_path(char *file, char *path, char *sd) {
 	char *ret = path;
 
 	size_t p_l = strlen(path);
@@ -3798,7 +3953,8 @@ int g_print_info(void) {
 	return 0;
 }
 
-char **process_macro(void * arg, char **out) {
+char **
+process_macro(void * arg, char **out) {
 	g_setjmp(0, "process_macro", NULL, NULL);
 	if (!arg) {
 		print_str("ERROR: missing data type argument (-m <macro name>)\n");
@@ -3889,7 +4045,8 @@ char **process_macro(void * arg, char **out) {
 	return s_ptr;
 }
 
-char **build_argv(char *args, size_t max, int *c) {
+char **
+build_argv(char *args, size_t max, int *c) {
 	char **ptr = (char **) calloc(max, sizeof(char **));
 
 	size_t args_l = strlen(args);
@@ -3972,7 +4129,8 @@ char **build_argv(char *args, size_t max, int *c) {
 	return ptr;
 }
 
-char *g_dgetf(char *str) {
+char *
+g_dgetf(char *str) {
 	if (!str) {
 		return NULL;
 	}
@@ -4234,8 +4392,10 @@ int g_bin_compare(const void *p1, const void *p2, off_t size) {
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
 
-typedef void (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
-typedef void (*__d_xproc_out)(char *desc, char *name);
+typedef void
+(*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
+typedef void
+(*__d_xproc_out)(char *desc, char *name);
 
 typedef struct ___std_rh_0 {
 	uint8_t rt_m;
@@ -4449,65 +4609,82 @@ void g_xproc_rc(char *name, void *aa_rh, __g_eds eds) {
 int g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds) {
 	__std_rh aa_rh = (__std_rh) arg;
 
-	switch (type) {
+	switch (type)
+	{
 		case DT_REG:;
-		if (aa_rh->flags & F_PD_MATCHREG) {
-			if (g_xproc_m("FILE", type, name, aa_rh, eds)) {
+		if (aa_rh->flags & F_PD_MATCHREG)
+		{
+			if (g_xproc_m("FILE", type, name, aa_rh, eds))
+			{
 				break;
 			}
-			if (aa_rh->xproc_out) {
+			if (aa_rh->xproc_out)
+			{
 				aa_rh->xproc_out("FILE", aa_rh->p_xref.name);
 			}
 		}
 		break;
 		case DT_DIR:;
 
-		if (aa_rh->xproc_rcl0) {
+		if (aa_rh->xproc_rcl0)
+		{
 			aa_rh->xproc_rcl0(name, (void*)aa_rh, eds);
 		}
 
-		if ((gfl & F_OPT_KILL_GLOBAL) ) {
+		if ((gfl & F_OPT_KILL_GLOBAL) )
+		{
 			break;
 		}
 
-		if (aa_rh->flags & F_PD_MATCHDIR) {
-			if (g_xproc_m("DIR", type, name, aa_rh, eds)) {
+		if (aa_rh->flags & F_PD_MATCHDIR)
+		{
+			if (g_xproc_m("DIR", type, name, aa_rh, eds))
+			{
 				break;
 			}
-			if (aa_rh->xproc_out) {
+			if (aa_rh->xproc_out)
+			{
 				aa_rh->xproc_out("DIR", aa_rh->p_xref.name);
 			}
 		}
 
-		if (aa_rh->xproc_rcl1) {
+		if (aa_rh->xproc_rcl1)
+		{
 			aa_rh->xproc_rcl1(name, (void*)aa_rh, eds);
 		}
 
 		break;
 		case DT_LNK:;
-		if (!(gfl & F_OPT_FOLLOW_LINKS)) {
-			if (g_xproc_m("LINK", type, name, aa_rh, eds)) {
+		if (!(gfl & F_OPT_FOLLOW_LINKS))
+		{
+			if (g_xproc_m("LINK", type, name, aa_rh, eds))
+			{
 				break;
 			}
-			if (aa_rh->xproc_out) {
+			if (aa_rh->xproc_out)
+			{
 				aa_rh->xproc_out("LINK", aa_rh->p_xref.name);
 			}
 		}
-		else {
+		else
+		{
 			char b_spl[PATH_MAX];
 			ssize_t b_spl_l;
-			if ( (b_spl_l=readlink(name, b_spl, PATH_MAX)) > 0 ) {
+			if ( (b_spl_l=readlink(name, b_spl, PATH_MAX)) > 0 )
+			{
 				b_spl[b_spl_l] = 0x0;
 
 				char *p_spl;
 
-				if (stat(name, &aa_rh->p_xref.st)) {
+				if (stat(name, &aa_rh->p_xref.st))
+				{
 					break;
 				}
 
 				uint8_t dt_mode=IFTODT(aa_rh->p_xref.st.st_mode);
 
-				if (dt_mode == DT_DIR && (p_spl=strstr(name, b_spl)) && p_spl == name) {
+				if (dt_mode == DT_DIR && (p_spl=strstr(name, b_spl)) && p_spl == name)
+				{
 					print_str("ERROR: %s: filesystem loop detected inside '%s'\n", name, b_spl);
 					break;
 				}
@@ -5147,23 +5324,30 @@ int g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm) {
 		i++;
 		lom->g_lom_vp(d_ptr, (void*)lom);
 
-		if (!p_lom && lom->result && !ptr->next) {
+		if (!p_lom && lom->result && !ptr->next)
+		{
 			return !lom->result;
 		}
 
-		if ( p_lom && p_lom->g_oper_ptr ) {
-			if (!(r_p = p_lom->g_oper_ptr(r_p, lom->result))) {
-				if ( !ptr->next) {
+		if ( p_lom && p_lom->g_oper_ptr )
+		{
+			if (!(r_p = p_lom->g_oper_ptr(r_p, lom->result)))
+			{
+				if ( !ptr->next)
+				{
 					return 1;
 				}
 			}
-			else {
-				if (!ptr->next) {
+			else
+			{
+				if (!ptr->next)
+				{
 					return !r_p;
 				}
 			}
 		}
-		else {
+		else
+		{
 			r_p = lom->result;
 		}
 
@@ -5247,14 +5431,19 @@ int g_bmatch(void *d_ptr, __g_handle hdl, pmda md) {
 void g_ipcbm(void *ptr, pmda md, int *r_p) {
 	__g_handle hdl = (__g_handle) ptr;
 
-	if (!*r_p) {
-		if (hdl->flags & F_GH_IFRES) {
+	if (!*r_p)
+	{
+		if (hdl->flags & F_GH_IFRES)
+		{
 			hdl->flags ^= F_GH_IFRES;
 			*r_p = 1;
 		}
 		md->rescnt++;
-	} else {
-		if (hdl->flags & F_GH_IFHIT) {
+	}
+	else
+	{
+		if (hdl->flags & F_GH_IFHIT)
+		{
 			hdl->flags ^= F_GH_IFHIT;
 			*r_p = 0;
 		}
@@ -5438,8 +5627,8 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	void *ptr;
 
 	char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8];
-	off_t c = 0;
-	int re_c;
+	size_t c = 0;
+	//int re_c;
 
 	g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
 
@@ -5464,38 +5653,40 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 			}
 
 			c++;
-			if (gfl & F_OPT_MODE_RAWDUMP) {
-				fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
-			} else {
+			g_act_1.g_proc4((void*) &g_act_1, ptr, sbuffer);
 
-				if (g_act_1.flags & F_GH_ISONLINE) {
+			/*if (gfl & F_OPT_MODE_RAWDUMP) {
+			 fwrite((void*) ptr, g_act_1.block_sz, 1, stdout);
+			 } else {
 
-					if (!(re_c = g_act_1.g_proc3(ptr, sbuffer))) {
-						goto end;
-					}
-					if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
-						print_str(
-								"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
-										"|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
-										"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+			 if (g_act_1.flags & F_GH_ISONLINE) {
 
-					}
-				} else {
-					re_c = g_act_1.g_proc3(ptr, sbuffer);
-				}
+			 if (!(re_c = g_act_1.g_proc3(ptr, sbuffer))) {
+			 goto end;
+			 }
+			 if (c == 1 && (gfl & F_OPT_FORMAT_COMP)) {
+			 print_str(
+			 "+-------------------------------------------------------------------------------------------------------------------------------------------\n"
+			 "|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
+			 "|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
 
-				if (re_c) {
-					print_str("%s", sbuffer);
-				} else {
-					print_str("ERROR: %s: zero-length formatted result\n",
-							g_act_1.file);
-				}
-			}
+			 }
+			 } else {
+			 re_c = g_act_1.g_proc3(ptr, sbuffer);
+			 }
+
+			 if (re_c) {
+			 print_str("%s", sbuffer);
+			 } else {
+			 print_str("ERROR: %s: zero-length formatted result\n",
+			 g_act_1.file);
+			 }
+			 }*/
 		}
 
 	}
 
-	end:
+	//end:
 
 	if (gfl & F_OPT_MODE_RAWDUMP) {
 		fflush(stdout);
@@ -5503,11 +5694,11 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 
 	g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
-	if (!(gfl & F_OPT_FORMAT_BATCH) && !(gfl & F_OPT_FORMAT_COMP)
-			&& !(g_act_1.flags & F_GH_ISONLINE)) {
+	if (!(gfl & F_OPT_FORMAT_COMP) && !(g_act_1.flags & F_GH_ISONLINE)) {
 		print_str("STATS: %s: read %llu/%llu records\n", file,
 				(unsigned long long int) c,
-				!g_act_1.buffer.count ? c : g_act_1.buffer.count);
+				!g_act_1.buffer.count ?
+						(unsigned long long int) c : g_act_1.buffer.count);
 	}
 
 	if ((gfl & F_OPT_NOFQ) && !c) {
@@ -5523,6 +5714,26 @@ int g_print_stats(char *file, uint32_t flags, size_t block_sz) {
 	g_close(&g_act_1);
 
 	return EXITVAL;
+}
+
+void g_omfp_norm(void *hdl, void *ptr, char *sbuffer) {
+	((__g_handle ) hdl)->g_proc3(ptr, sbuffer);
+}
+
+void g_omfp_batch(void *hdl, void *ptr, char *sbuffer) {
+	((__g_handle ) hdl)->g_proc3(ptr, sbuffer);
+}
+
+void g_omfp_raw(void * hdl, void *ptr, char *sbuffer) {
+	fwrite(ptr, ((__g_handle ) hdl)->block_sz, 1, stdout);
+
+}
+
+void g_omfp_ocomp(void * hdl, void *ptr, char *sbuffer) {
+	((__g_handle ) hdl)->g_proc3(ptr, sbuffer);
+
+	fwrite(sbuffer, 1, strlen(sbuffer), stdout);
+
 }
 
 #define 	ACT_WRITE_BUFFER_MEMBERS	10000
@@ -5785,7 +5996,8 @@ int parse_args(int argc, char **argv, void*fref_t[]) {
 }
 
 int process_opt(char *opt, void *arg, void *reference_array, int m) {
-	int (*proc_opt_generic)(void *arg, int m);
+	int
+	(*proc_opt_generic)(void *arg, int m);
 	int i = 0;
 	p_ora ora = (p_ora) reference_array;
 
@@ -6144,25 +6356,18 @@ int dirlog_format_block(void *iarg, char *output) {
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
-	int c;
+	return print_str(
+			"DIRLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
+			base, (ulint64_t) (data->bytes / 1024 / 1024), data->files, buffer2,
+			data->uploader, data->group, data->status);
+}
 
-	if (gfl & F_OPT_FORMAT_BATCH) {
+int dirlog_format_block_batch(void *iarg, char *output) {
+	struct dirlog *data = (struct dirlog *) iarg;
+	return printf("DIRLOG\x9%s\x9%llu\x9%hu\x9%d\x9%hu\x9%hu\x9%hu\n",
+			data->dirname, (ulint64_t) data->bytes, data->files,
+			(int32_t) data->uptime, data->uploader, data->group, data->status);
 
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DIRLOG\x9%s\x9%llu\x9%hu\x9%d\x9%hu\x9%hu\x9%hu\n",
-				data->dirname, (ulint64_t) data->bytes, data->files,
-				(int32_t) data->uptime, data->uploader, data->group,
-				data->status);
-	} else {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"DIRLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
-						base, (ulint64_t) (data->bytes / 1024 / 1024),
-						data->files, buffer2, data->uploader, data->group,
-						data->status);
-	}
-
-	return c;
 }
 
 int nukelog_format_block(void *iarg, char *output) {
@@ -6181,25 +6386,21 @@ int nukelog_format_block(void *iarg, char *output) {
 	time_t t_t = (time_t) data->nuketime;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%d\x9%hu\n",
-				data->dirname, data->reason, data->mult, data->bytes,
-				!data->status ? data->nuker : data->unnuker, data->nukee,
-				(int32_t) data->nuketime, data->status);
-	} else {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, nukee: %s - %s\n",
-						base, !data->status ? "NUKED" : "UNNUKED", data->reason,
-						data->bytes, data->mult,
-						!data->status ? "nuker" : "unnuker",
-						!data->status ? data->nuker : data->unnuker,
-						data->nukee, buffer2);
-	}
 
-	return c;
+	return print_str(
+			"NUKELOG: %s - %s, reason: '%s' [%.2f MB] - factor: %hu, %s: %s, nukee: %s - %s\n",
+			base, !data->status ? "NUKED" : "UNNUKED", data->reason,
+			data->bytes, data->mult, !data->status ? "nuker" : "unnuker",
+			!data->status ? data->nuker : data->unnuker, data->nukee, buffer2);
+
+}
+
+int nukelog_format_block_batch(void *iarg, char *output) {
+	struct nukelog *data = (struct nukelog *) iarg;
+	return printf("NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%d\x9%hu\n",
+			data->dirname, data->reason, data->mult, data->bytes,
+			!data->status ? data->nuker : data->unnuker, data->nukee,
+			(int32_t) data->nuketime, data->status);
 }
 
 int dupefile_format_block(void *iarg, char *output) {
@@ -6210,18 +6411,17 @@ int dupefile_format_block(void *iarg, char *output) {
 	time_t t_t = (time_t) data->timeup;
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DUPEFILE\x9%s\x9%s\x9%d\n", data->filename, data->uploader,
-				(int32_t) data->timeup);
-	} else {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"DUPEFILE: %s - uploader: %s, time: %s\n", data->filename,
-				data->uploader, buffer2);
-	}
 
-	return c;
+	return print_str("DUPEFILE: %s - uploader: %s, time: %s\n", data->filename,
+			data->uploader, buffer2);
+
+}
+
+int dupefile_format_block_batch(void *iarg, char *output) {
+	struct dupefile *data = (struct dupefile *) iarg;
+	return printf("DUPEFILE\x9%s\x9%s\x9%d\n", data->filename, data->uploader,
+			(int32_t) data->timeup);
+
 }
 
 int lastonlog_format_block(void *iarg, char *output) {
@@ -6237,23 +6437,22 @@ int lastonlog_format_block(void *iarg, char *output) {
 
 	memcpy(buffer4, data->stats, sizeof(data->stats));
 
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"LASTONLOG\x9%s\x9%s\x9%s\x9%d\x9%d\x9%lu\x9%lu\x9%s\n",
-				data->uname, data->gname, data->tagline, (int32_t) data->logon,
-				(int32_t) data->logoff, (unsigned long) data->upload,
-				(unsigned long) data->download, buffer4);
-	} else {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %lu/%lu B, changes: %s\n",
-						data->uname, data->gname, data->tagline, buffer2,
-						buffer3, (unsigned long) data->upload,
-						(unsigned long) data->download, buffer4);
-	}
+	return print_str(
+			"LASTONLOG: user: %s/%s [%s] - logon: %s, logoff: %s - up/down: %lu/%lu B, changes: %s\n",
+			data->uname, data->gname, data->tagline, buffer2, buffer3,
+			(unsigned long) data->upload, (unsigned long) data->download,
+			buffer4);
 
-	return c;
+}
+
+int lastonlog_format_block_batch(void *iarg, char *output) {
+	struct lastonlog *data = (struct lastonlog *) iarg;
+	char buffer4[12] = { 0 };
+	memcpy(buffer4, data->stats, sizeof(data->stats));
+	return printf("LASTONLOG\x9%s\x9%s\x9%s\x9%d\x9%d\x9%lu\x9%lu\x9%s\n",
+			data->uname, data->gname, data->tagline, (int32_t) data->logon,
+			(int32_t) data->logoff, (unsigned long) data->upload,
+			(unsigned long) data->download, buffer4);
 }
 
 int oneliner_format_block(void *iarg, char *output) {
@@ -6265,19 +6464,16 @@ int oneliner_format_block(void *iarg, char *output) {
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONELINER\x9%s\x9%s\x9%s\x9%d\x9%s\n", data->uname, data->gname,
-				data->tagline, (int32_t) data->timestamp, data->message);
-	} else {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
-				data->uname, data->gname, data->tagline, buffer2,
-				data->message);
-	}
+	return print_str("ONELINER: user: %s/%s [%s] - time: %s, message: %s\n",
+			data->uname, data->gname, data->tagline, buffer2, data->message);
 
-	return c;
+}
+
+int oneliner_format_block_batch(void *iarg, char *output) {
+	struct oneliner *data = (struct oneliner *) iarg;
+	return printf("ONELINER\x9%s\x9%s\x9%s\x9%d\x9%s\n", data->uname,
+			data->gname, data->tagline, (int32_t) data->timestamp,
+			data->message);
 }
 
 #define FMT_SP_OFF 	30
@@ -6308,66 +6504,91 @@ int online_format_block(void *iarg, char *output) {
 		ltime = 0;
 	}
 
-	int c = 0;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\x9%d\n",
-						data->username, data->host, (int32_t) data->groupid,
-						(int32_t) data->login_time, data->tagline,
-						(int16_t) data->ssl_flag, (int32_t) data->procid,
-						(ulint64_t) data->bytes_xfer,
-						(ulint64_t) data->bytes_txfer, (ulint64_t) kbps,
-						data->status, data->currentdir, data->tstart.tv_sec);
-	} else {
-		if (gfl & F_OPT_FORMAT_COMP) {
-			char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
-			char d_buffer[255] = { 0 };
+	return print_str("[ONLINE]\n"
+			"    User:            %s\n"
+			"    Host:            %s\n"
+			"    GID:             %u\n"
+			"    Login:           %s (%us)\n"
+			"    Tag:             %s\n"
+			"    SSL:             %s\n"
+			"    PID:             %u\n"
+			"    XFER:            %lld Bytes\n"
+			"    Rate:            %.2f KB/s\n"
+			"    Status:          %s\n"
+			"    CWD:             %s\n\n", data->username, data->host,
+			(uint32_t) data->groupid, buffer2, (uint32_t) ltime, data->tagline,
+			(!data->ssl_flag ?
+					"NO" :
+					(data->ssl_flag == 1 ?
+							"YES" :
+							(data->ssl_flag == 2 ? "YES (DATA)" : "UNKNOWN"))),
+			(uint32_t) data->procid, (ulint64_t) data->bytes_xfer, kbps,
+			data->status, data->currentdir);
 
-			snprintf(d_buffer, 254, "%u", (uint32_t) ltime);
-			size_t d_len1 = strlen(d_buffer);
-			snprintf(d_buffer, 254, "%.2f", kbps);
-			size_t d_len2 = strlen(d_buffer);
-			snprintf(d_buffer, 254, "%u", data->procid);
-			size_t d_len3 = strlen(d_buffer);
-			generate_chars(
-					54
-							- (strlen(data->username) + strlen(data->host)
-									+ d_len3 + 1), 0x20, sp_buffer);
-			generate_chars(10 - d_len1, 0x20, sp_buffer2);
-			generate_chars(13 - d_len2, 0x20, sp_buffer3);
-			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-					"| %s!%s/%u%s |        %us%s |     %.2fKB/s%s |  %s\n",
-					data->username, data->host, data->procid, sp_buffer,
-					(uint32_t) ltime, sp_buffer2, kbps, sp_buffer3,
-					data->status);
-		} else {
-			c = snprintf(output, MAX_G_PRINT_STATS_BUFFER, "[ONLINE]\n"
-					"    User:            %s\n"
-					"    Host:            %s\n"
-					"    GID:             %u\n"
-					"    Login:           %s (%us)\n"
-					"    Tag:             %s\n"
-					"    SSL:             %s\n"
-					"    PID:             %u\n"
-					"    XFER:            %lld Bytes\n"
-					"    Rate:            %.2f KB/s\n"
-					"    Status:          %s\n"
-					"    CWD:             %s\n\n", data->username, data->host,
-					(uint32_t) data->groupid, buffer2, (uint32_t) ltime,
-					data->tagline,
-					(!data->ssl_flag ?
-							"NO" :
-							(data->ssl_flag == 1 ?
-									"YES" :
-									(data->ssl_flag == 2 ?
-											"YES (DATA)" : "UNKNOWN"))),
-					(uint32_t) data->procid, (ulint64_t) data->bytes_xfer, kbps,
-					data->status, data->currentdir);
-		}
+}
+
+int online_format_block_batch(void *iarg, char *output) {
+	struct ONLINE *data = (struct ONLINE *) iarg;
+	int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
+	float kb = (data->bytes_xfer / 1024), kbps = 0.0;
+
+	if (tdiff > 0 && kb > 0) {
+		kbps = kb / (float) tdiff;
+	}
+	return printf(
+			"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\x9%d\n",
+			data->username, data->host, (int32_t) data->groupid,
+			(int32_t) data->login_time, data->tagline, (int16_t) data->ssl_flag,
+			(int32_t) data->procid, (ulint64_t) data->bytes_xfer,
+			(ulint64_t) data->bytes_txfer, (ulint64_t) kbps, data->status,
+			data->currentdir, data->tstart.tv_sec);
+
+}
+
+int online_format_block_comp(void *iarg, char *output) {
+	char buffer2[255] = { 0 };
+
+	struct ONLINE *data = (struct ONLINE *) iarg;
+
+	time_t t_t = (time_t) data->login_time;
+
+	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
+
+	if (!strlen(data->username)) {
+		return 0;
 	}
 
-	return c;
+	int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
+	float kb = (data->bytes_xfer / 1024), kbps = 0.0;
+
+	if (tdiff > 0 && kb > 0) {
+		kbps = kb / (float) tdiff;
+	}
+
+	time_t ltime = time(NULL) - (time_t) data->login_time;
+
+	if (ltime < 0) {
+		ltime = 0;
+	}
+
+	char sp_buffer[255], sp_buffer2[255], sp_buffer3[255];
+	char d_buffer[255] = { 0 };
+
+	snprintf(d_buffer, 254, "%u", (uint32_t) ltime);
+	size_t d_len1 = strlen(d_buffer);
+	snprintf(d_buffer, 254, "%.2f", kbps);
+	size_t d_len2 = strlen(d_buffer);
+	snprintf(d_buffer, 254, "%u", data->procid);
+	size_t d_len3 = strlen(d_buffer);
+	generate_chars(
+			54 - (strlen(data->username) + strlen(data->host) + d_len3 + 1),
+			0x20, sp_buffer);
+	generate_chars(10 - d_len1, 0x20, sp_buffer2);
+	generate_chars(13 - d_len2, 0x20, sp_buffer3);
+	return printf("| %s!%s/%u%s |        %us%s |     %.2fKB/s%s |  %s\n",
+			data->username, data->host, data->procid, sp_buffer,
+			(uint32_t) ltime, sp_buffer2, kbps, sp_buffer3, data->status);
+
 }
 
 #define STD_FMT_DATE_STR  	"%d %b %Y"
@@ -6382,26 +6603,22 @@ int imdb_format_block(void *iarg, char *output) {
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 	strftime(buffer3, 255, STD_FMT_DATE_STR, localtime(&t_t2));
 
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%hu\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\n",
-						data->dirname, data->title, data->timestamp,
-						data->imdb_id, data->rating, data->votes, data->genres,
-						data->year, data->released, data->runtime, data->rated,
-						data->actors, data->director, data->synopsis);
-	} else {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"IMDB: %s: %s (%hu): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
-						data->dirname, data->title, data->year, buffer2,
-						data->imdb_id, data->rating, data->votes, data->genres,
-						buffer3, data->runtime, data->rated, data->actors,
-						data->director);
-	}
+	return print_str(
+			"IMDB: %s: %s (%hu): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
+			data->dirname, data->title, data->year, buffer2, data->imdb_id,
+			data->rating, data->votes, data->genres, buffer3, data->runtime,
+			data->rated, data->actors, data->director);
 
-	return c;
+}
+
+int imdb_format_block_batch(void *iarg, char *output) {
+	__d_imdb data = (__d_imdb) iarg;
+	return printf(
+			"IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%hu\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\n",
+			data->dirname, data->title, data->timestamp, data->imdb_id,
+			data->rating, data->votes, data->genres, data->year, data->released,
+			data->runtime, data->rated, data->actors, data->director,
+			data->synopsis);
 }
 
 int game_format_block(void *iarg, char *output) {
@@ -6413,18 +6630,16 @@ int game_format_block(void *iarg, char *output) {
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"GAMELOG\x9%s\x9%d\x9%.1f\n", data->dirname,
-				(int32_t) data->timestamp, data->rating);
-	} else {
-		c = snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-				"GAMELOG: %s: created: %s - rating: %.1f\n", data->dirname,
-				buffer2, data->rating);
-	}
+	return print_str("GAMELOG: %s: created: %s - rating: %.1f\n", data->dirname,
+			buffer2, data->rating);
 
-	return c;
+}
+
+int game_format_block_batch(void *iarg, char *output) {
+	__d_game data = (__d_game) iarg;
+	return printf("GAMELOG\x9%s\x9%d\x9%.1f\n", data->dirname,
+			(int32_t) data->timestamp, data->rating);
+
 }
 
 int tv_format_block(void *iarg, char *output) {
@@ -6436,33 +6651,37 @@ int tv_format_block(void *iarg, char *output) {
 
 	strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
-	int c;
-	if (gfl & F_OPT_FORMAT_BATCH) {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"TVRAGE\x9%s\x9%d\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%d\x9%d\x9%s\x9%s\x9%hu\x9%hu\x9%hu\x9%s\n",
-						data->dirname, data->timestamp, data->name, data->class,
-						data->showid, data->link, data->status, data->airday,
-						data->airtime, data->runtime, data->started,
-						data->ended, data->genres, data->country, data->seasons,
-						data->startyear, data->endyear, data->network);
-	} else {
-		c =
-				snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-						"TVRAGE: %s: created: %s - %s/%s [%u] - runtime: %u min - status: %s - country: %s - genres: %s\n",
-						data->dirname, buffer2, data->name, data->class,
-						data->showid, data->runtime, data->status,
-						data->country, data->genres);
-	}
+	return print_str(
+			"TVRAGE: %s: created: %s - %s/%s [%u] - runtime: %u min - status: %s - country: %s - genres: %s\n",
+			data->dirname, buffer2, data->name, data->class, data->showid,
+			data->runtime, data->status, data->country, data->genres);
 
-	return c;
+}
+
+int tv_format_block_batch(void *iarg, char *output) {
+	__d_tvrage data = (__d_tvrage) iarg;
+	return printf("TVRAGE\x9%s\x9%d\x9%s\x9%s\x9%u\x9%s\x9%s\x9%s\x9%s\x9%u\x9%d\x9%d\x9%s\x9%s\x9%hu\x9%hu\x9%hu\x9%s\n",
+			data->dirname, data->timestamp, data->name, data->class,
+			data->showid, data->link, data->status, data->airday,
+			data->airtime, data->runtime, data->started,
+			data->ended, data->genres, data->country, data->seasons,
+			data->startyear, data->endyear, data->network);
+
 }
 
 int gen1_format_block(void *iarg, char *output) {
 	__d_generic_s2044 data = (__d_generic_s2044) iarg;
 
-	return snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-			"GENERIC1\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+	return print_str("GENERIC1\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+			data->i32, data->s_1, data->s_2, data->s_3, data->s_4,
+			data->s_5, data->s_6, data->s_7, data->s_8);
+
+}
+
+int gen1_format_block_batch(void *iarg, char *output) {
+	__d_generic_s2044 data = (__d_generic_s2044) iarg;
+
+	return printf("GENERIC1\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
 			data->i32, data->s_1, data->s_2, data->s_3, data->s_4,
 			data->s_5, data->s_6, data->s_7, data->s_8);
 
@@ -6471,8 +6690,7 @@ int gen1_format_block(void *iarg, char *output) {
 int gen2_format_block(void *iarg, char *output) {
 	__d_generic_s1644 data = (__d_generic_s1644) iarg;
 
-	return snprintf(output, MAX_G_PRINT_STATS_BUFFER,
-			"GENERIC2\x9%llu\x9%llu\x9%llu\x9%llu\x9%f\x9%f\x9%f\x9%f\x9%d\x9%d\x9%d\x9%d\x9%u\x9%u\x9%u\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+	return print_str("GENERIC2\x9%llu\x9%llu\x9%llu\x9%llu\x9%f\x9%f\x9%f\x9%f\x9%d\x9%d\x9%d\x9%d\x9%u\x9%u\x9%u\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
 			(ulint64_t)data->ui64_1,(ulint64_t)data->ui64_2,(ulint64_t)data->ui64_3,(ulint64_t)data->ui64_4, data->f_1,data->f_2,data->f_3,data->f_4,
 			data->i32_1, data->i32_2, data->i32_3, data->i32_4,data->ui32_1,
 			data->ui32_2, data->ui32_3, data->ui32_4, data->s_1, data->s_2, data->s_3, data->s_4,
@@ -6480,7 +6698,19 @@ int gen2_format_block(void *iarg, char *output) {
 
 }
 
-char *generate_chars(size_t num, char chr, char*buffer) {
+int gen2_format_block_batch(void *iarg, char *output) {
+	__d_generic_s1644 data = (__d_generic_s1644) iarg;
+
+	return printf("GENERIC2\x9%llu\x9%llu\x9%llu\x9%llu\x9%f\x9%f\x9%f\x9%f\x9%d\x9%d\x9%d\x9%d\x9%u\x9%u\x9%u\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+			(ulint64_t)data->ui64_1,(ulint64_t)data->ui64_2,(ulint64_t)data->ui64_3,(ulint64_t)data->ui64_4, data->f_1,data->f_2,data->f_3,data->f_4,
+			data->i32_1, data->i32_2, data->i32_3, data->i32_4,data->ui32_1,
+			data->ui32_2, data->ui32_3, data->ui32_4, data->s_1, data->s_2, data->s_3, data->s_4,
+			data->s_5, data->s_6, data->s_7, data->s_8);
+
+}
+
+char *
+generate_chars(size_t num, char chr, char*buffer) {
 	g_setjmp(0, "generate_chars", NULL, NULL);
 	bzero(buffer, 255);
 	if (num < 1 || num > 254) {
@@ -6515,7 +6745,8 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 		return dirlog_find_old(dirn, mode, flags, callback);
 	}
 
-	int (*callback_f)(struct dirlog *) = callback;
+	int
+	(*callback_f)(struct dirlog *) = callback;
 
 	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return MAX_uint64_t;
@@ -6570,7 +6801,8 @@ uint64_t dirlog_find(char *dirn, int mode, uint32_t flags, void *callback) {
 }
 
 uint64_t dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback) {
-	int (*callback_f)(struct dirlog *data) = callback;
+	int
+	(*callback_f)(struct dirlog *data) = callback;
 
 	if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1)) {
 		return MAX_uint64_t;
@@ -6641,7 +6873,8 @@ size_t str_match(char *input, char *match) {
 	return -1;
 }
 
-char *string_replace(char *input, char *match, char *with, char *output,
+char *
+string_replace(char *input, char *match, char *with, char *output,
 		size_t max_out) {
 	size_t i_l = strlen(input), w_l = strlen(with), m_l = strlen(match);
 
@@ -7081,7 +7314,8 @@ int gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count) {
 	return 0;
 }
 
-typedef int (*__g_mdref)(__g_handle hdl, pmda md, off_t count);
+typedef int
+(*__g_mdref)(__g_handle hdl, pmda md, off_t count);
 
 int load_data_md(pmda md, char *file, __g_handle hdl) {
 	g_setjmp(0, "load_data_md", NULL, NULL);
@@ -7217,6 +7451,8 @@ int g_map_shm(__g_handle hdl, key_t ipc) {
 	hdl->g_proc1_lookup = ref_to_val_lk_online;
 	hdl->g_proc2 = ref_to_val_ptr_online;
 	hdl->g_proc3 = online_format_block;
+	hdl->g_proc3_batch = online_format_block_batch;
+	hdl->g_proc4 = g_omfp_norm;
 	hdl->jm_offset = (size_t) &((struct ONLINE*) NULL)->username;
 	//hdl->g_proc1_ps = ref_to_val_online_ps;
 
@@ -7415,6 +7651,8 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_dirlog;
 		hdl->g_proc2 = ref_to_val_ptr_dirlog;
 		hdl->g_proc3 = dirlog_format_block;
+		hdl->g_proc3_batch = dirlog_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_DIRLOG;
 		hdl->jm_offset = (size_t) &((struct dirlog*) NULL)->dirname;
 		//hdl->g_proc1_ps = ref_to_val_dirlog_ps;
@@ -7427,6 +7665,8 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_nukelog;
 		hdl->g_proc2 = ref_to_val_ptr_nukelog;
 		hdl->g_proc3 = nukelog_format_block;
+		hdl->g_proc3_batch = nukelog_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_NUKELOG;
 		hdl->jm_offset = (size_t) &((struct nukelog*) NULL)->dirname;
 		//hdl->g_proc1_ps = ref_to_val_nukelog_ps;
@@ -7439,6 +7679,8 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_dupefile;
 		hdl->g_proc2 = ref_to_val_ptr_dupefile;
 		hdl->g_proc3 = dupefile_format_block;
+		hdl->g_proc3_batch = dupefile_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_DUPEFILE;
 		hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
 		//hdl->g_proc1_ps = ref_to_val_dupefile_ps;
@@ -7451,6 +7693,8 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_lastonlog;
 		hdl->g_proc2 = ref_to_val_ptr_lastonlog;
 		hdl->g_proc3 = lastonlog_format_block;
+		hdl->g_proc3_batch = lastonlog_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_LASTONLOG;
 		hdl->jm_offset = (size_t) &((struct lastonlog*) NULL)->uname;
 		//hdl->g_proc1_ps = ref_to_val_lastonlog_ps;
@@ -7463,6 +7707,8 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_oneliners;
 		hdl->g_proc2 = ref_to_val_ptr_oneliners;
 		hdl->g_proc3 = oneliner_format_block;
+		hdl->g_proc3_batch = oneliner_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_ONELINERS;
 		hdl->jm_offset = (size_t) &((struct oneliner*) NULL)->uname;
 		//hdl->g_proc1_ps = ref_to_val_oneliners_ps;
@@ -7475,10 +7721,14 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_imdb;
 		hdl->g_proc2 = ref_to_val_ptr_imdb;
 		hdl->g_proc3 = imdb_format_block;
+		hdl->g_proc3_batch = imdb_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_IMDBLOG;
 		hdl->jm_offset = (size_t) &((__d_imdb) NULL)->dirname;
 		//hdl->g_proc1_ps = ref_to_val_imdb_ps;
-	} else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG))) {
+	}
+	else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG)))
+	{
 		hdl->flags |= F_GH_ISGAME;
 		hdl->block_sz = GM_SZ;
 		hdl->d_memb = 3;
@@ -7487,10 +7737,14 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_game;
 		hdl->g_proc2 = ref_to_val_ptr_game;
 		hdl->g_proc3 = game_format_block;
+		hdl->g_proc3_batch = game_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_GAMELOG;
 		hdl->jm_offset = (size_t) &((__d_game) NULL)->dirname;
 		//hdl->g_proc1_ps = ref_to_val_game_ps;
-	} else if (!strncmp(hdl->file, TVLOG, strlen(TVLOG))) {
+	}
+	else if (!strncmp(hdl->file, TVLOG, strlen(TVLOG)))
+	{
 		hdl->flags |= F_GH_ISTVRAGE;
 		hdl->block_sz = TV_SZ;
 		hdl->d_memb = 18;
@@ -7499,10 +7753,14 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_tvrage;
 		hdl->g_proc2 = ref_to_val_ptr_tv;
 		hdl->g_proc3 = tv_format_block;
+		hdl->g_proc3_batch = tv_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_TVRAGELOG;
 		hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
 		//hdl->g_proc1_ps = ref_to_val_tv_ps;
-	} else if (!strncmp(hdl->file, GE1LOG, strlen(GE1LOG))) {
+	}
+	else if (!strncmp(hdl->file, GE1LOG, strlen(GE1LOG)))
+	{
 		hdl->flags |= F_GH_ISGENERIC1;
 		hdl->block_sz = G1_SZ;
 		hdl->d_memb = 9;
@@ -7511,10 +7769,14 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_gen1;
 		hdl->g_proc2 = ref_to_val_ptr_gen1;
 		hdl->g_proc3 = gen1_format_block;
+		hdl->g_proc3_batch = gen1_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_GEN1LOG;
 		hdl->jm_offset = (size_t) &((__d_generic_s2044) NULL)->s_1;
 		//hdl->g_proc1_ps = ref_to_val_gen2_ps;
-	} else if (!strncmp(hdl->file, GE2LOG, strlen(GE2LOG))) {
+	}
+	else if (!strncmp(hdl->file, GE2LOG, strlen(GE2LOG)))
+	{
 		hdl->flags |= F_GH_ISGENERIC2;
 		hdl->block_sz = G2_SZ;
 		hdl->d_memb = 24;
@@ -7523,10 +7785,14 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc1_lookup = ref_to_val_lk_gen2;
 		hdl->g_proc2 = ref_to_val_ptr_gen2;
 		hdl->g_proc3 = gen2_format_block;
+		hdl->g_proc3_batch = gen2_format_block_batch;
+		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_GEN2LOG;
 		hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
 		//hdl->g_proc1_ps = ref_to_val_gen2_ps;
-	} else {
+	}
+	else
+	{
 		return 1;
 	}
 
@@ -7736,7 +8002,8 @@ int g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl) {
 	}
 }
 
-void *g_read(void *buffer, __g_handle hdl, size_t size) {
+void *
+g_read(void *buffer, __g_handle hdl, size_t size) {
 	if (hdl->buffer.count) {
 		hdl->buffer.pos = hdl->buffer.r_pos;
 		if (!hdl->buffer.pos) {
@@ -7852,7 +8119,8 @@ int dirlog_write_record(struct dirlog *buffer, off_t offset, int whence) {
 	return 0;
 }
 
-typedef int (*__d_edscb)(char *, unsigned char, void *, __g_eds);
+typedef int
+(*__d_edscb)(char *, unsigned char, void *, __g_eds);
 
 int enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds) {
 	__d_edscb callback_f = (__d_edscb ) cb;
@@ -8236,8 +8504,9 @@ off_t file_crc32(char *file, uint32_t *crc_out) {
 
 #define MAX_CFGV_RES_LENGTH			50000
 
-void *ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags,
-		char *out, size_t max) {
+void *
+ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
+		size_t max) {
 
 	char buffer[PATH_MAX];
 
@@ -8517,119 +8786,122 @@ int ref_to_val_generic(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_generic_nukestr(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_nukestr(void *arg, char *match, char *output, size_t max_size) {
 	if (NUKESTR) {
 		snprintf(output, max_size, NUKESTR, "");
 	}
 	return output;
 }
 
-char *dt_rval_generic_procid(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_procid(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", getpid());
 	return output;
 }
 
-char *dt_rval_generic_ipc(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_generic_ipc(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", getpid());
 	return output;
 }
 
-char *dt_rval_generic_usroot(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_usroot(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
 	DEFPATH_USERS);
 	remove_repeating_chars(output, 0x2F);
 	return output;
 }
 
-char *dt_rval_generic_logroot(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_logroot(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%s/%s/%s", GLROOT, FTPDATA,
 	DEFPATH_LOGS);
 	remove_repeating_chars(output, 0x2F);
 	return output;
 }
 
-char *dt_rval_generic_memlimit(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_memlimit(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu", db_max_size);
 	return output;
 }
 
-char *dt_rval_generic_curtime(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_curtime(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) time(NULL));
 	return output;
 }
 
-char *dt_rval_q(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_q(void *arg, char *match, char *output, size_t max_size) {
 	if (rtv_q(&match[2], output, max_size)) {
 		output[0] = 0x0;
 	}
 	return output;
 }
 
-char *dt_rval_generic_exe(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_generic_exe(void *arg, char *match, char *output, size_t max_size) {
 	if (self_get_path(output)) {
 		strcp_s(output, max_size, "UNKNOWN");
 	}
 	return output;
 }
 
-char *dt_rval_generic_glroot(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_glroot(void *arg, char *match, char *output, size_t max_size) {
 	return GLROOT;
 }
 
-char *dt_rval_generic_siteroot(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_siteroot(void *arg, char *match, char *output, size_t max_size) {
 	return SITEROOT;
 }
 
-char *dt_rval_generic_siterootn(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_siterootn(void *arg, char *match, char *output, size_t max_size) {
 	return SITEROOT_N;
 }
 
-char *dt_rval_generic_ftpdata(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_ftpdata(void *arg, char *match, char *output, size_t max_size) {
 	return FTPDATA;
 }
 
-char *dt_rval_generic_imdbfile(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_imdbfile(void *arg, char *match, char *output, size_t max_size) {
 	return IMDBLOG;
 }
 
-char *dt_rval_generic_tvfile(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_tvfile(void *arg, char *match, char *output, size_t max_size) {
 	return TVLOG;
 }
 
-char *dt_rval_generic_gamefile(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_gamefile(void *arg, char *match, char *output, size_t max_size) {
 	return GAMELOG;
 }
 
-char *dt_rval_generic_spec1(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_spec1(void *arg, char *match, char *output, size_t max_size) {
 	return b_spec1;
 }
 
-char *dt_rval_generic_glconf(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_glconf(void *arg, char *match, char *output, size_t max_size) {
 	return GLCONF_I;
 }
 
-char *dt_rval_generic_logfile(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_generic_logfile(void *arg, char *match, char *output, size_t max_size) {
 	return LOGFILE;
 }
 
-void *ref_to_val_lk_generic(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size) {
 	if (!strncmp(match, "nukestr", 7)) {
 		return dt_rval_generic_nukestr;
 	} else if (!strncmp(match, "procid", 6)) {
@@ -8672,7 +8944,8 @@ void *ref_to_val_lk_generic(void *arg, char *match, char *output,
 	return NULL;
 }
 
-char *strcp_s(char *dest, size_t max_size, char *source) {
+char *
+strcp_s(char *dest, size_t max_size, char *source) {
 	size_t s_l = strlen(source);
 	s_l >= max_size ? s_l = max_size - 1 : s_l;
 	dest[s_l] = 0x0;
@@ -8870,154 +9143,185 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_x_path(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_path(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_xref) arg)->name;
 }
 
-char *dt_rval_x_basepath(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_basepath(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((__d_xref) arg)->name);
 }
 
-char *dt_rval_x_dirpath(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_dirpath(void *arg, char *match, char *output, size_t max_size) {
 	strcp_s(output, max_size, ((__d_xref) arg)->name);
 	g_dirname(output);
 	return output;
 }
 
-char *dt_rval_c(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_c(void *arg, char *match, char *output, size_t max_size) {
 	g_rtval_ex(((__d_xref) arg)->name, &match[2], max_size, output,
 	F_CFGV_BUILD_FULL_STRING);
 	return output;
 }
 
-char *dt_rval_x_size(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_size(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu", (ulint64_t) get_file_size(((__d_xref) arg)->name));
 	return output;
 }
 
-char *dt_rval_x_mode(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_mode(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", (unsigned short) ((__d_xref) arg)->type);
 	return output;
 }
 
-char *dt_rval_x_devid(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_devid(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_dev);
 	return output;
 }
 
-char *dt_rval_x_minor(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_minor(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", minor(((__d_xref) arg)->st.st_dev));
 	return output;
 }
 
-char *dt_rval_x_major(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_major(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", major(((__d_xref) arg)->st.st_dev));
 	return output;
 }
 
-char *dt_rval_x_inode(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_inode(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_ino);
 	return output;
 }
 
-char *dt_rval_x_links(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_links(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_nlink);
 	return output;
 }
 
-char *dt_rval_x_uid(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_uid(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_uid);
 	return output;
 }
 
-char *dt_rval_x_gid(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_gid(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_gid);
 	return output;
 }
 
-char *dt_rval_x_blksize(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_blksize(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_blksize);
 	return output;
 }
 
-char *dt_rval_x_blocks(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_blocks(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_blocks);
 	return output;
 }
 
-char *dt_rval_x_atime(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_atime(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_atime);
 	return output;
 }
 
-char *dt_rval_x_ctime(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_ctime(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_ctime);
 	return output;
 }
 
-char *dt_rval_x_mtime(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_mtime(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_mtime);
 	return output;
 }
 
-char *dt_rval_x_isread(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_isread(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hhu", ((__d_xref) arg)->r);
 	return output;
 }
 
-char *dt_rval_x_iswrite(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_iswrite(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hhu", ((__d_xref) arg)->w);
 	return output;
 }
 
-char *dt_rval_x_isexec(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_isexec(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hhu", ((__d_xref) arg)->x);
 	return output;
 }
 
-char *dt_rval_x_uperm(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_uperm(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->uperm);
 	return output;
 }
 
-char *dt_rval_x_gperm(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_gperm(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->gperm);
 	return output;
 }
 
-char *dt_rval_x_operm(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_operm(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->operm);
 	return output;
 }
 
-char *dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu%hu%hu", (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
 	return output;
 }
 
-char *dt_rval_x_sparse(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_sparse(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%f", ((float) ((__d_xref) arg)->st.st_blksize * (float) ((__d_xref) arg)->st.st_blocks
 	/ (float) ((__d_xref) arg)->st.st_size));
 	return output;
 }
 
-char *dt_rval_x_crc32(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_crc32(void *arg, char *match, char *output, size_t max_size) {
 	uint32_t crc32;
-	if (file_crc32(((__d_xref) arg)->name, &crc32) ) {
+	if (file_crc32(((__d_xref) arg)->name, &crc32) )
+	{
 		snprintf(output, max_size, "%.8X", crc32);
 	}
 	return output;
 }
 
-char *dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size) {
 	uint32_t crc32;
-	if (file_crc32(((__d_xref) arg)->name, &crc32) ) {
+	if (file_crc32(((__d_xref) arg)->name, &crc32) )
+	{
 		snprintf(output, max_size, "%u", crc32);
 	}
 	return output;
 }
 
-void* ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size) {
+void*
+ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -9028,222 +9332,344 @@ void* ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size) {
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_size;
-	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_GLOB_MODE, 4))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_DT_MODE;
 		}
 		return dt_rval_x_mode;
-	} else if (!strncmp(match, _MC_X_DEVID, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_DEVID, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_devid;
-	} else if (!strncmp(match, _MC_X_MINOR, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_MINOR, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT |F_XRF_GET_MINOR;
 		}
 		return dt_rval_x_minor;
-	} else if (!strncmp(match, _MC_X_MAJOR, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_MAJOR, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT |F_XRF_GET_MAJOR;
 		}
 		return dt_rval_x_major;
-	} else if (!strncmp(match, _MC_X_INODE, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_INODE, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_inode;
-	} else if (!strncmp(match, _MC_X_LINKS, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_LINKS, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_links;
-	} else if (!strncmp(match, _MC_X_UID, 3)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_UID, 3))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_uid;
-	} else if (!strncmp(match, _MC_X_GID, 3)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_GID, 3))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_gid;
-	} else if (!strncmp(match, _MC_X_BLKSIZE, 7)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_BLKSIZE, 7))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_blksize;
-	} else if (!strncmp(match, _MC_X_BLOCKS, 6)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_BLOCKS, 6))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_blocks;
-	} else if (!strncmp(match, _MC_X_ATIME, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_ATIME, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_atime;
-	} else if (!strncmp(match, _MC_X_CTIME, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_CTIME, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_ctime;
-	} else if (!strncmp(match, _MC_X_MTIME, 5)) {
-		if ( arg) {
+	}
+	else if (!strncmp(match, _MC_X_MTIME, 5))
+	{
+		if ( arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_mtime;
-	} else if (!strncmp(match, _MC_X_ISREAD, 6)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_ISREAD, 6))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_READ;
 		}
 		return dt_rval_x_isread;
-	} else if (!strncmp(match, _MC_X_ISWRITE, 7)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_ISWRITE, 7))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_WRITE;
 		}
 		return dt_rval_x_iswrite;
-	} else if (!strncmp(match, _MC_X_ISEXEC, 6)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_ISEXEC, 6))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_EXEC;
 		}
 		return dt_rval_x_isexec;
-	} else if (!strncmp(match, _MC_X_UPERM, 5)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_UPERM, 5))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
 		}
 		return dt_rval_x_uperm;
-	} else if (!strncmp(match, _MC_X_GPERM, 5)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_GPERM, 5))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
 		}
 		return dt_rval_x_gperm;
-	} else if (!strncmp(match, _MC_X_OPERM, 5)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_OPERM, 5))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
 		}
 		return dt_rval_x_operm;
-	} else if (!strncmp(match, _MC_X_PERM, 4)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_PERM, 4))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_GPERM | F_XRF_GET_UPERM | F_XRF_GET_OPERM;
 		}
 		return dt_rval_x_perm;
-	} else if (!strncmp(match, _MC_X_SPARSE, 6)) {
-		if (arg) {
+	}
+	else if (!strncmp(match, _MC_X_SPARSE, 6))
+	{
+		if (arg)
+		{
 			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
 		}
 		return dt_rval_x_sparse;
-	} else if (!strncmp(match, _MC_X_CRC32, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_CRC32, 5))
+	{
 		return dt_rval_x_crc32;
-	} else if (!strncmp(match, _MC_X_DCRC32, 9)) {
+	}
+	else if (!strncmp(match, _MC_X_DCRC32, 9))
+	{
 		return dt_rval_x_deccrc32;
-	} else if (!strncmp(match, "c:", 2)) {
+	}
+	else if (!strncmp(match, "c:", 2))
+	{
 		return dt_rval_c;
-	} else if (!strncmp(match, _MC_X_BASEPATH, 8)) {
+	}
+	else if (!strncmp(match, _MC_X_BASEPATH, 8))
+	{
 		return dt_rval_x_basepath;
-	} else if (!strncmp(match, _MC_X_DIRPATH, 7)) {
+	}
+	else if (!strncmp(match, _MC_X_DIRPATH, 7))
+	{
 		return dt_rval_x_dirpath;
-	} else if (!strncmp(match, _MC_X_PATH, 4)) {
+	}
+	else if (!strncmp(match, _MC_X_PATH, 4))
+	{
 		return dt_rval_x_path;
 	}
 
 	return NULL;
 }
 
-void *ref_to_val_ptr_x(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_x(void *arg, char *match, int *output) {
 	__d_xref data = (__d_xref) arg;
 
-	if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
+	if (!strncmp(match, _MC_GLOB_SIZE, 4))
+	{
 		*output = sizeof(data->st.st_size);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_size;
-	} else if (!strncmp(match,_MC_GLOB_MODE, 4)) {
+	}
+	else if (!strncmp(match,_MC_GLOB_MODE, 4))
+	{
 		*output = sizeof(data->type);
 		data->flags |= F_XRF_GET_DT_MODE;
 		return &((__d_xref) NULL)->type;
-	} else if (!strncmp(match, _MC_X_ISREAD, 6)) {
+	}
+	else if (!strncmp(match, _MC_X_ISREAD, 6))
+	{
 		*output = ~((int) sizeof(data->r));
 		data->flags |= F_XRF_GET_READ;
 		return &((__d_xref) NULL)->r;
-	} else if (!strncmp(match, _MC_X_ISWRITE, 7)) {
+	}
+	else if (!strncmp(match, _MC_X_ISWRITE, 7))
+	{
 		*output = ~((int) sizeof(data->w));
 		data->flags |= F_XRF_GET_WRITE;
 		return &((__d_xref) NULL)->w;
-	} else if (!strncmp(match, _MC_X_ISEXEC, 6)) {
+	}
+	else if (!strncmp(match, _MC_X_ISEXEC, 6))
+	{
 		*output = ~((int) sizeof(data->x));
 		data->flags |= F_XRF_GET_EXEC;
 		return &((__d_xref) NULL)->x;
-	} else if (!strncmp(match, _MC_X_UPERM, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_UPERM, 5))
+	{
 		*output = sizeof(data->uperm);
 		data->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->uperm;
-	} else if (!strncmp(match, _MC_X_GPERM, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_GPERM, 5))
+	{
 		*output = sizeof(data->gperm);
 		data->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->gperm;
-	} else if (!strncmp(match, _MC_X_OPERM, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_OPERM, 5))
+	{
 		*output = sizeof(data->operm);
 		data->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->operm;
-	} else if (!strncmp(match, _MC_X_DEVID, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_DEVID, 5))
+	{
 		*output = sizeof(data->st.st_dev);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_dev;
-	} else if (!strncmp(match, _MC_X_MINOR, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_MINOR, 5))
+	{
 		*output = sizeof(data->minor);
 		data->flags |= F_XRF_GET_MINOR | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->minor;
-	} else if (!strncmp(match, _MC_X_MAJOR, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_MAJOR, 5))
+	{
 		*output = sizeof(data->major);
 		data->flags |= F_XRF_GET_MAJOR | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->major;
-	} else if (!strncmp(match, _MC_X_SPARSE, 6)) {
+	}
+	else if (!strncmp(match, _MC_X_SPARSE, 6))
+	{
 		*output = -32;
 		data->flags |= F_XRF_GET_SPARSE | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->sparseness;
-	} else if (!strncmp(match, _MC_X_INODE, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_INODE, 5))
+	{
 		*output = sizeof(data->st.st_ino);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_ino;
-	} else if (!strncmp(match, _MC_X_LINKS, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_LINKS, 5))
+	{
 		*output = sizeof(data->st.st_nlink);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_nlink;
-	} else if (!strncmp(match, _MC_X_UID, 3)) {
+	}
+	else if (!strncmp(match, _MC_X_UID, 3))
+	{
 		*output = sizeof(data->st.st_uid);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_uid;
-	} else if (!strncmp(match, _MC_X_GID, 3)) {
+	}
+	else if (!strncmp(match, _MC_X_GID, 3))
+	{
 		*output = sizeof(data->st.st_gid);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_gid;
-	} else if (!strncmp(match, _MC_X_BLKSIZE, 7)) {
+	}
+	else if (!strncmp(match, _MC_X_BLKSIZE, 7))
+	{
 		*output = sizeof(data->st.st_blksize);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_blksize;
-	} else if (!strncmp(match, _MC_X_BLOCKS, 6)) {
+	}
+	else if (!strncmp(match, _MC_X_BLOCKS, 6))
+	{
 		*output = sizeof(data->st.st_blocks);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_blocks;
-	} else if (!strncmp(match, _MC_X_ATIME, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_ATIME, 5))
+	{
 		*output = ~((int) sizeof(data->st.st_atime));
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_atime;
-	} else if (!strncmp(match, _MC_X_CTIME, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_CTIME, 5))
+	{
 		*output = ~((int) sizeof(data->st.st_ctime));
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_ctime;
-	} else if (!strncmp(match, _MC_X_MTIME, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_MTIME, 5))
+	{
 		*output = ~((int) sizeof(data->st.st_mtime));
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_mtime;
-	} else if (!strncmp(match, _MC_X_CRC32, 5)) {
+	}
+	else if (!strncmp(match, _MC_X_CRC32, 5))
+	{
 		*output = sizeof(data->crc32);
 		data->flags |= F_XRF_GET_CRC32;
 		return &((__d_xref) NULL)->crc32;
-	} else if (!strncmp(match, "curtime", 7)) {
+	}
+	else if (!strncmp(match, "curtime", 7))
+	{
 		size_t xrf_cto = d_xref_ct_fe(&data->ct[0], GM_MAX);
-		if (xrf_cto == -1) {
+		if (xrf_cto == -1)
+		{
 			print_str("ERROR: ct slot limit exceeded!\n");
 			gfl = F_OPT_KILL_GLOBAL;
 			EXITVAL = 4;
@@ -9251,7 +9677,8 @@ void *ref_to_val_ptr_x(void *arg, char *match, int *output) {
 		}
 		data->ct[xrf_cto].active = 1;
 		data->ct[xrf_cto].curtime = time(NULL);
-		switch (match[7]) {
+		switch (match[7])
+		{
 			case 0x2D:;
 			//data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
 			data->ct[xrf_cto].curtime -= atoi(&match[8]);
@@ -9504,8 +9931,10 @@ float g_td_ptr(void *base, size_t offset) {
 #define F_INT_GSORT_DID_SORT		(a32 << 2)
 
 int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
-	int (*m_op)(uint64_t s, uint64_t d) = cb1;
-	uint64_t (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+	int
+	(*m_op)(uint64_t s, uint64_t d) = cb1;
+	uint64_t
+	(*g_t_ptr_c)(void *base, size_t offset) = cb2;
 
 	p_md_obj ptr, ptr_n;
 
@@ -9553,8 +9982,10 @@ int g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 }
 
 int g_sortis_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
-	int (*m_op)(int64_t s, int64_t d) = cb1;
-	int64_t (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+	int
+	(*m_op)(int64_t s, int64_t d) = cb1;
+	int64_t
+	(*g_t_ptr_c)(void *base, size_t offset) = cb2;
 
 	p_md_obj ptr, ptr_n;
 
@@ -9602,8 +10033,10 @@ int g_sortis_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) 
 }
 
 int g_sortd_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
-	int (*m_op)(double s, double d) = cb1;
-	double (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+	int
+	(*m_op)(double s, double d) = cb1;
+	double
+	(*g_t_ptr_c)(void *base, size_t offset) = cb2;
 
 	p_md_obj ptr, ptr_n;
 	int r = 0;
@@ -9651,8 +10084,10 @@ int g_sortd_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
 }
 
 int g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2) {
-	int (*m_op)(float s, float d) = cb1;
-	float (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+	int
+	(*m_op)(float s, float d) = cb1;
+	float
+	(*g_t_ptr_c)(void *base, size_t offset) = cb2;
 
 	p_md_obj ptr, ptr_n;
 	int r = 0;
@@ -9703,7 +10138,8 @@ int g_sort(__g_handle hdl, char *field, uint32_t flags) {
 	g_setjmp(0, "g_sort", NULL, NULL);
 	void *m_op = NULL, *g_t_ptr_c = NULL;
 
-	int (*g_s_ex)(pmda, size_t, uint32_t, void *, void *) = NULL;
+	int
+	(*g_s_ex)(pmda, size_t, uint32_t, void *, void *) = NULL;
 	pmda m_ptr;
 
 	if (!hdl) {
@@ -10389,6 +10825,20 @@ int g_proc_mr(__g_handle hdl) {
 		}
 	}
 
+	if (gfl & F_OPT_MODE_RAWDUMP) {
+		hdl->g_proc4 = g_omfp_raw;
+	} else if (gfl & F_OPT_FORMAT_BATCH) {
+		hdl->g_proc3 = hdl->g_proc3_batch;
+		hdl->g_proc4 = g_omfp_batch;
+	} else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP)) {
+		hdl->g_proc4 = g_omfp_ocomp;
+		hdl->g_proc3 = online_format_block_comp;
+		print_str(
+				"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
+						"|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
+						"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+	}
+
 	return 0;
 }
 
@@ -10406,9 +10856,11 @@ int g_load_lom(__g_handle hdl) {
 	int r, ret, c = 0;
 	while (ptr) {
 		_m_ptr = (__g_match) ptr->ptr;
-		if ( _m_ptr->flags & F_GM_ISLOM ) {
+		if ( _m_ptr->flags & F_GM_ISLOM )
+		{
 			if ((r = g_process_lom_string(hdl, _m_ptr->data, _m_ptr, &ret,
-									_m_ptr->flags))) {
+									_m_ptr->flags)))
+			{
 				print_str("ERROR: %s: [%d] [%d]: could not load LOM string\n",
 						hdl->file, r, ret);
 				rt = 1;
@@ -10449,35 +10901,45 @@ int g_load_strm(__g_handle hdl) {
 
 	while (ptr) {
 		_m_ptr = (__g_match) ptr->ptr;
-		if ( (_m_ptr->flags & F_GM_ISREGEX) || (_m_ptr->flags & F_GM_ISMATCH) ) {
+		if ( (_m_ptr->flags & F_GM_ISREGEX) || (_m_ptr->flags & F_GM_ISMATCH) )
+		{
 			i = 0;
 			char *s_ptr = _m_ptr->data;
 			while ((s_ptr[i] != 0x2C || (s_ptr[i] == 0x2C && s_ptr[i - 1] == 0x5C))
-					&& i < (size_t) 4096) {
+					&& i < (size_t) 4096)
+			{
 				i++;
 			}
 
-			if (s_ptr[i] == 0x2C && i != (off_t) 4096) {
-				if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, s_ptr, hdl->mv1_b, MAX_VAR_LEN))) {
+			if (s_ptr[i] == 0x2C && i != (off_t) 4096)
+			{
+				if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, s_ptr, hdl->mv1_b, MAX_VAR_LEN)))
+				{
 					_m_ptr->field = s_ptr;
 					s_ptr[i] = 0x0;
 					s_ptr = &s_ptr[i + 1];
-				} else {
-					if ( !hdl->g_proc1_lookup ) {
+				}
+				else
+				{
+					if ( !hdl->g_proc1_lookup )
+					{
 						print_str("ERROR: %s: MPARSE: lookup failed for '%s', no lookup table exists\n", hdl->file, s_ptr);
 						return 11;
 					}
-					if ( gfl & F_OPT_VERBOSE3) {
+					if ( gfl & F_OPT_VERBOSE3)
+					{
 						print_str("WARNING: %s: could not lookup field '%s', assuming it wasn't requested..\n", hdl->file, s_ptr);
 					}
 				}
 			}
 
 			_m_ptr->match = s_ptr;
-			if (_m_ptr->flags & F_GM_ISREGEX) {
+			if (_m_ptr->flags & F_GM_ISREGEX)
+			{
 				int re;
 				if ((re = regcomp(&_m_ptr->preg, _m_ptr->match,
-										(_m_ptr->regex_flags | g_regex_flags | REG_NOSUB)))) {
+										(_m_ptr->regex_flags | g_regex_flags | REG_NOSUB))))
+				{
 					print_str("ERROR: %s: regex compilation failed : %d\n", hdl->file, re);
 					return 3;
 				}
@@ -10634,7 +11096,8 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
 #define _MC_DIRLOG_FILES	"files"
 
-void *ref_to_val_ptr_dirlog(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_dirlog(void *arg, char *match, int *output) {
 	struct dirlog *data = (struct dirlog *) arg;
 
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
@@ -10661,7 +11124,8 @@ void *ref_to_val_ptr_dirlog(void *arg, char *match, int *output) {
 
 #define _MC_NUKELOG_MULT	"mult"
 
-void *ref_to_val_ptr_nukelog(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_nukelog(void *arg, char *match, int *output) {
 
 	struct nukelog *data = (struct nukelog *) arg;
 
@@ -10681,7 +11145,8 @@ void *ref_to_val_ptr_nukelog(void *arg, char *match, int *output) {
 	return NULL;
 }
 
-void *ref_to_val_ptr_dupefile(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_dupefile(void *arg, char *match, int *output) {
 
 	struct dupefile *data = (struct dupefile *) arg;
 
@@ -10692,7 +11157,8 @@ void *ref_to_val_ptr_dupefile(void *arg, char *match, int *output) {
 	return NULL;
 }
 
-void *ref_to_val_ptr_lastonlog(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_lastonlog(void *arg, char *match, int *output) {
 	struct lastonlog *data = (struct lastonlog *) arg;
 
 	if (!strncmp(match, _MC_GLOB_LOGON, 5)) {
@@ -10711,7 +11177,8 @@ void *ref_to_val_ptr_lastonlog(void *arg, char *match, int *output) {
 	return NULL;
 }
 
-void *ref_to_val_ptr_oneliners(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_oneliners(void *arg, char *match, int *output) {
 
 	struct oneliner *data = (struct oneliner *) arg;
 
@@ -10729,7 +11196,8 @@ void *ref_to_val_ptr_oneliners(void *arg, char *match, int *output) {
 #define _MC_ONLINE_LUPDT	"lupdtime"
 #define _MC_ONLINE_LXFRT	"lxfertime"
 
-void *ref_to_val_ptr_online(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_online(void *arg, char *match, int *output) {
 
 	struct ONLINE *data = (struct ONLINE *) arg;
 
@@ -10766,25 +11234,37 @@ void *ref_to_val_ptr_online(void *arg, char *match, int *output) {
 #define _MC_IMDB_VOTES			"votes"
 #define _MC_IMDB_YEAR			"year"
 
-void *ref_to_val_ptr_imdb(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_imdb(void *arg, char *match, int *output) {
 	__d_imdb data = (__d_imdb) arg;
 
-	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
+	if (!strncmp(match, _MC_GLOB_SCORE, 5))
+	{
 		*output = -32;
 		return &data->rating;
-	} else if (!strncmp(match, _MC_IMDB_RELEASED, 8)) {
+	}
+	else if (!strncmp(match, _MC_IMDB_RELEASED, 8))
+	{
 		*output = ~((int) sizeof(data->released));
 		return &data->released;
-	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
+	}
+	else if (!strncmp(match, _MC_GLOB_RUNTIME, 7))
+	{
 		*output = sizeof(data->runtime);
 		return &data->runtime;
-	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
+	}
+	else if (!strncmp(match, _MC_GLOB_TIME, 4))
+	{
 		*output = ~((int) sizeof(data->timestamp));
 		return &data->timestamp;
-	} else if (!strncmp(match, _MC_IMDB_VOTES, 5)) {
+	}
+	else if (!strncmp(match, _MC_IMDB_VOTES, 5))
+	{
 		*output = sizeof(data->votes);
 		return &data->votes;
-	} else if (!strncmp(match, _MC_IMDB_YEAR, 4)) {
+	}
+	else if (!strncmp(match, _MC_IMDB_YEAR, 4))
+	{
 		*output = sizeof(data->year);
 		return &data->year;
 	}
@@ -10792,13 +11272,17 @@ void *ref_to_val_ptr_imdb(void *arg, char *match, int *output) {
 	return NULL;
 }
 
-void *ref_to_val_ptr_game(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_game(void *arg, char *match, int *output) {
 	__d_game data = (__d_game) arg;
 
-	if (!strncmp(match, _MC_GLOB_SCORE, 5)) {
+	if (!strncmp(match, _MC_GLOB_SCORE, 5))
+	{
 		*output = -32;
 		return &data->rating;
-	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
+	}
+	else if (!strncmp(match, _MC_GLOB_TIME, 4))
+	{
 		*output = ~((int)sizeof(data->timestamp));
 		return &data->timestamp;
 	}
@@ -10813,32 +11297,48 @@ void *ref_to_val_ptr_game(void *arg, char *match, int *output) {
 #define _MC_TV_SYEAR		"startyear"
 #define _MC_TV_EYEAR		"endyear"
 
-void *ref_to_val_ptr_tv(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_tv(void *arg, char *match, int *output) {
 
 	__d_tvrage data = (__d_tvrage) arg;
 
-	if (!strncmp(match, _MC_TV_STARTED, 7)) {
+	if (!strncmp(match, _MC_TV_STARTED, 7))
+	{
 		*output = ~((int)sizeof(data->started));
 		return &data->started;
-	} else if (!strncmp(match, _MC_GLOB_RUNTIME, 7)) {
+	}
+	else if (!strncmp(match, _MC_GLOB_RUNTIME, 7))
+	{
 		*output = sizeof(data->runtime);
 		return &data->runtime;
-	} else if (!strncmp(match, _MC_GLOB_TIME, 4)) {
+	}
+	else if (!strncmp(match, _MC_GLOB_TIME, 4))
+	{
 		*output = ~((int) sizeof(data->timestamp));
 		return &data->timestamp;
-	} else if (!strncmp(match, _MC_TV_ENDED, 5)) {
+	}
+	else if (!strncmp(match, _MC_TV_ENDED, 5))
+	{
 		*output = ~((int) sizeof(data->ended));
 		return &data->ended;
-	} else if (!strncmp(match, _MC_TV_SHOWID, 6)) {
+	}
+	else if (!strncmp(match, _MC_TV_SHOWID, 6))
+	{
 		*output = sizeof(data->showid);
 		return &data->showid;
-	} else if (!strncmp(match, _MC_TV_SEASONS, 7)) {
+	}
+	else if (!strncmp(match, _MC_TV_SEASONS, 7))
+	{
 		*output = sizeof(data->seasons);
 		return &data->seasons;
-	} else if (!strncmp(match, _MC_TV_SYEAR, 9)) {
+	}
+	else if (!strncmp(match, _MC_TV_SYEAR, 9))
+	{
 		*output = sizeof(data->startyear);
 		return &data->startyear;
-	} else if (!strncmp(match, _MC_TV_EYEAR, 7)) {
+	}
+	else if (!strncmp(match, _MC_TV_EYEAR, 7))
+	{
 		*output = sizeof(data->endyear);
 		return &data->endyear;
 	}
@@ -10846,10 +11346,12 @@ void *ref_to_val_ptr_tv(void *arg, char *match, int *output) {
 	return NULL;
 }
 
-void *ref_to_val_ptr_gen1(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_gen1(void *arg, char *match, int *output) {
 	__d_generic_s2044 data = (__d_generic_s2044) arg;
 
-	if (!strcmp(match, "i32")) {
+	if (!strcmp(match, "i32"))
+	{
 		*output = sizeof(data->i32);
 		return &data->i32;
 	}
@@ -10882,65 +11384,99 @@ void *ref_to_val_ptr_gen1(void *arg, char *match, int *output) {
 #define _MC_GE_GE7	"ge7"
 #define _MC_GE_GE8	"ge8"
 
-void *ref_to_val_ptr_gen2(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_gen2(void *arg, char *match, int *output) {
 	__d_generic_s1644 data = (__d_generic_s1644) arg;
-	if (!strncmp(match, _MC_GE_I1, 2)) {
+	if (!strncmp(match, _MC_GE_I1, 2))
+	{
 		*output = ~((int) sizeof(data->i32_1));
 		return &data->i32_1;
-	} else if (!strncmp(match, _MC_GE_I2, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_I2, 2))
+	{
 		*output = ~((int) sizeof(data->i32_2));
 		return &data->i32_2;
-	} else if (!strncmp(match, _MC_GE_I3, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_I3, 2))
+	{
 		*output = ~((int) sizeof(data->i32_3));
 		return &data->i32_3;
-	} else if (!strncmp(match, _MC_GE_I4, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_I4, 2))
+	{
 		*output = ~((int) sizeof(data->i32_4));
 		return &data->i32_4;
-	} else if (!strncmp(match, _MC_GE_U1, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_U1, 2))
+	{
 		*output = sizeof(data->ui32_1);
 		return &data->ui32_1;
-	} else if (!strncmp(match, _MC_GE_U2, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_U2, 2))
+	{
 		*output = sizeof(data->ui32_1);
 		return &data->ui32_2;
-	} else if (!strncmp(match, _MC_GE_U3, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_U3, 2))
+	{
 		*output = sizeof(data->ui32_1);
 		return &data->ui32_3;
-	} else if (!strncmp(match, _MC_GE_U4, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_U4, 2))
+	{
 		*output = sizeof(data->ui32_1);
 		return &data->ui32_4;
-	} else if (!strncmp(match, _MC_GE_F1, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_F1, 2))
+	{
 		*output = -1;
 		return &data->f_1;
-	} else if (!strncmp(match, _MC_GE_F2, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_F2, 2))
+	{
 		*output = -1;
 		return &data->f_2;
-	} else if (!strncmp(match, _MC_GE_F3, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_F3, 2))
+	{
 		*output = -1;
 		return &data->f_3;
-	} else if (!strncmp(match, _MC_GE_F4, 2)) {
+	}
+	else if (!strncmp(match, _MC_GE_F4, 2))
+	{
 		*output = -1;
 		return &data->f_4;
-	} else if (!strncmp(match, _MC_GE_UL1, 3)) {
+	}
+	else if (!strncmp(match, _MC_GE_UL1, 3))
+	{
 		*output = sizeof(data->ui64_1);
 		return &data->ui64_1;
-	} else if (!strncmp(match, _MC_GE_UL2, 3)) {
+	}
+	else if (!strncmp(match, _MC_GE_UL2, 3))
+	{
 		*output = sizeof(data->ui64_2);
 		return &data->ui64_2;
-	} else if (!strncmp(match, _MC_GE_UL3, 3)) {
+	}
+	else if (!strncmp(match, _MC_GE_UL3, 3))
+	{
 		*output = sizeof(data->ui64_3);
 		return &data->ui64_3;
-	} else if (!strncmp(match, _MC_GE_UL4, 3)) {
+	}
+	else if (!strncmp(match, _MC_GE_UL4, 3))
+	{
 		*output = sizeof(data->ui64_4);
 		return &data->ui64_4;
 	}
 	return NULL;
 }
 
-void *ref_to_val_ptr_dummy(void *arg, char *match, int *output) {
+void *
+ref_to_val_ptr_dummy(void *arg, char *match, int *output) {
 	return NULL;
 }
 
-char *g_basename(char *input) {
+char *
+g_basename(char *input) {
 	char *b_ptr = strrchr(input, 0x2F);
 
 	if (!b_ptr) {
@@ -10949,7 +11485,8 @@ char *g_basename(char *input) {
 	return b_ptr + 1;
 }
 
-char *g_dirname(char *input) {
+char *
+g_dirname(char *input) {
 	char *b_ptr = strrchr(input, 0x2F);
 	if (!b_ptr) {
 		input[0] = 0x0;
@@ -10998,56 +11535,61 @@ int ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_dirlog_user(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_dirlog_user(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((struct dirlog *) arg)->uploader);
 	return output;
 }
 
-char *dt_rval_dirlog_group(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dirlog_group(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((struct dirlog *) arg)->group);
 	return output;
 }
 
-char *dt_rval_dirlog_files(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dirlog_files(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((struct dirlog *) arg)->files);
 	return output;
 }
 
-char *dt_rval_dirlog_size(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_dirlog_size(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu",
 			(ulint64_t) ((struct dirlog *) arg)->bytes);
 	return output;
 }
 
-char *dt_rval_dirlog_status(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dirlog_status(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((struct dirlog *) arg)->status);
 	return output;
 }
 
-char *dt_rval_dirlog_time(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_dirlog_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((struct dirlog *) arg)->uptime);
 	return output;
 }
 
-char *dt_rval_dirlog_mode_e(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dirlog_mode_e(void *arg, char *match, char *output, size_t max_size) {
 	g_l_fmode(((struct dirlog *) arg)->dirname, max_size, output);
 	return output;
 }
 
-char *dt_rval_dirlog_dir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_dirlog_dir(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct dirlog *) arg)->dirname;
 }
 
-char *dt_rval_dirlog_basedir(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dirlog_basedir(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((struct dirlog *) arg)->dirname);
 }
 
-char *dt_rval_xg(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_xg(void *arg, char *match, char *output, size_t max_size) {
 	_d_xref xref_t = { { 0 } };
 	snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
 			((struct dirlog *) arg)->dirname);
@@ -11055,15 +11597,16 @@ char *dt_rval_xg(void *arg, char *match, char *output, size_t max_size) {
 	return output;
 }
 
-char *dt_rval_x(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_x(void *arg, char *match, char *output, size_t max_size) {
 	_d_xref xref_t = { { 0 } };
 	strcp_s(xref_t.name, sizeof(xref_t.name), ((struct dirlog *) arg)->dirname);
 	ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
 	return output;
 }
 
-void *ref_to_val_lk_dirlog(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -11142,68 +11685,69 @@ int ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_nukelog_size(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_size(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%.2f", (float) ((struct nukelog *) arg)->bytes);
 	return output;
 }
 
-char *dt_rval_nukelog_time(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct nukelog *) arg)->nuketime);
 	return output;
 }
 
-char *dt_rval_nukelog_status(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_status(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((struct nukelog *) arg)->status);
 	return output;
 }
 
-char *dt_rval_nukelog_mult(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_mult(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((struct nukelog *) arg)->mult);
 	return output;
 }
 
-char *dt_rval_nukelog_mode_e(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_mode_e(void *arg, char *match, char *output, size_t max_size) {
 	g_l_fmode(((struct nukelog *) arg)->dirname, max_size, output);
 	return output;
 }
 
-char *dt_rval_nukelog_dir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_nukelog_dir(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct nukelog *) arg)->dirname;
 }
 
-char *dt_rval_nukelog_basedir_e(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_basedir_e(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((struct nukelog *) arg)->dirname);
 }
 
-char *dt_rval_nukelog_nuker(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_nuker(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct nukelog *) arg)->nuker;
 }
 
-char *dt_rval_nukelog_nukee(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_nukee(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct nukelog *) arg)->nukee;
 }
 
-char *dt_rval_nukelog_unnuker(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_unnuker(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct nukelog *) arg)->unnuker;
 }
 
-char *dt_rval_nukelog_reason(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_nukelog_reason(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct nukelog *) arg)->reason;
 }
 
-void *ref_to_val_lk_nukelog(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_nukelog(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -11259,25 +11803,25 @@ int ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_dupefile_time(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dupefile_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct dupefile *) arg)->timeup);
 	return output;
 }
 
-char *dt_rval_dupefile_file(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dupefile_file(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct dupefile *) arg)->filename;
 }
 
-char *dt_rval_dupefile_user(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_dupefile_user(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct dupefile *) arg)->uploader;
 }
 
-void *ref_to_val_lk_dupefile(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_dupefile(void *arg, char *match, char *output, size_t max_size) {
 	if (!strncmp(match, _MC_GLOB_TIME, 4)) {
 		return dt_rval_dupefile_time;
 	} else if (!strncmp(match, _MC_GLOB_FILE, 4)) {
@@ -11288,8 +11832,8 @@ void *ref_to_val_lk_dupefile(void *arg, char *match, char *output,
 	return NULL;
 }
 
-char* ref_to_val_dupefile_ps(void *arg, char *match, char *output,
-		size_t max_size) {
+char*
+ref_to_val_dupefile_ps(void *arg, char *match, char *output, size_t max_size) {
 	struct dupefile *data = (struct dupefile *) arg;
 
 	if (!strncmp(match, _MC_GLOB_FILE, 4)) {
@@ -11356,35 +11900,37 @@ int ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size) 
 	return 0;
 }
 
-char *dt_rval_lastonlog_logon(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_logon(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct lastonlog *) arg)->logon);
 	return output;
 }
 
-char *dt_rval_lastonlog_logoff(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_logoff(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct lastonlog *) arg)->logoff);
 	return output;
 }
 
-char *dt_rval_lastonlog_upload(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_upload(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%lu",
 			(unsigned long) ((struct lastonlog *) arg)->upload);
 	return output;
 }
 
-char *dt_rval_lastonlog_download(void *arg, char *match, char *output,
+char *
+dt_rval_lastonlog_download(void *arg, char *match, char *output,
 		size_t max_size) {
 	snprintf(output, max_size, "%lu",
 			(unsigned long) ((struct lastonlog *) arg)->download);
 	return output;
 }
 
-char *dt_rval_config(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_config(void *arg, char *match, char *output, size_t max_size) {
 	char *buffer = malloc(max_size + 1);
 	void *ptr = ref_to_val_get_cfgval(((struct lastonlog *) arg)->uname, match,
 	DEFPATH_USERS,
@@ -11407,28 +11953,28 @@ char *dt_rval_config(void *arg, char *match, char *output, size_t max_size) {
 	return output;
 }
 
-char *dt_rval_lastonlog_user(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_user(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct lastonlog *) arg)->uname;
 }
 
-char *dt_rval_lastonlog_group(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_group(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct lastonlog *) arg)->gname;
 }
 
-char *dt_rval_lastonlog_stats(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_stats(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct lastonlog *) arg)->stats;
 }
 
-char *dt_rval_lastonlog_tag(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_lastonlog_tag(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct lastonlog *) arg)->tagline;
 }
 
-void *ref_to_val_lk_lastonlog(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_lastonlog(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -11480,35 +12026,35 @@ int ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size) 
 	return 0;
 }
 
-char *dt_rval_oneliners_time(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_oneliners_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct oneliner *) arg)->timestamp);
 	return output;
 }
 
-char *dt_rval_oneliners_user(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_oneliners_user(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct oneliner *) arg)->uname;
 }
 
-char *dt_rval_oneliners_group(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_oneliners_group(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct oneliner *) arg)->gname;
 }
 
-char *dt_rval_oneliners_tag(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_oneliners_tag(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct oneliner *) arg)->tagline;
 }
 
-char *dt_rval_oneliners_msg(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_oneliners_msg(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct oneliner *) arg)->message;
 }
 
-void *ref_to_val_lk_oneliners(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_oneliners(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -11593,58 +12139,62 @@ int ref_to_val_online(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_online_ssl(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_ssl(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hd", ((struct ONLINE *) arg)->ssl_flag);
 	return output;
 }
 
-char *dt_rval_online_group(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_group(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct ONLINE *) arg)->groupid);
 	return output;
 }
 
-char *dt_rval_online_time(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct ONLINE *) arg)->login_time);
 	return output;
 }
 
-char *dt_rval_online_lupdt(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_lupdt(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct ONLINE *) arg)->tstart.tv_sec);
 	return output;
 }
 
-char *dt_rval_online_lxfrt(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_lxfrt(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d",
 			(int32_t) ((struct ONLINE *) arg)->txfer.tv_sec);
 	return output;
 }
 
-char *dt_rval_online_bxfer(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_bxfer(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu",
 			(ulint64_t) ((struct ONLINE *) arg)->bytes_xfer);
 	return output;
 }
 
-char *dt_rval_online_btxfer(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_btxfer(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu",
 			(ulint64_t) ((struct ONLINE *) arg)->bytes_txfer);
 	return output;
 }
 
-char *dt_rval_online_pid(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_pid(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((struct ONLINE *) arg)->procid);
 	return output;
 }
 
-char *dt_rval_online_rate(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_rate(void *arg, char *match, char *output, size_t max_size) {
 	int32_t tdiff = (int32_t) time(NULL)
 			- ((struct ONLINE *) arg)->tstart.tv_sec;
 	uint32_t kbps = 0;
@@ -11656,39 +12206,44 @@ char *dt_rval_online_rate(void *arg, char *match, char *output, size_t max_size)
 	return output;
 }
 
-char *dt_rval_online_basedir(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_basedir(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((struct ONLINE *) arg)->currentdir);
 }
 
-char *dt_rval_online_ndir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_ndir(void *arg, char *match, char *output, size_t max_size) {
 	strcp_s(output, max_size, ((struct ONLINE *) arg)->currentdir);
 	return g_dirname(output);
 }
 
-char *dt_rval_online_user(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_user(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct ONLINE *) arg)->username;
 }
 
-char *dt_rval_online_tag(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_tag(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct ONLINE *) arg)->tagline;
 }
 
-char *dt_rval_online_status(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_online_status(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct ONLINE *) arg)->status;
 }
 
-char *dt_rval_online_host(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_host(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct ONLINE *) arg)->host;
 }
 
-char *dt_rval_online_dir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_online_dir(void *arg, char *match, char *output, size_t max_size) {
 	return ((struct ONLINE *) arg)->currentdir;
 }
 
-void *ref_to_val_lk_online(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_online(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -11792,83 +12347,95 @@ int ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_imdb_time(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_imdb) arg)->timestamp);
 	return output;
 }
 
-char *dt_rval_imdb_score(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_score(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%.1f", ((__d_imdb) arg)->rating);
 	return output;
 }
 
-char *dt_rval_imdb_votes(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_votes(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", (uint32_t) ((__d_imdb) arg)->votes);
 	return output;
 }
 
-char *dt_rval_imdb_runtime(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_imdb_runtime(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_imdb) arg)->runtime);
 	return output;
 }
 
-char *dt_rval_imdb_released(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_imdb_released(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_imdb) arg)->released);
 	return output;
 }
 
-char *dt_rval_imdb_year(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_year(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%hu", ((__d_imdb) arg)->year);
 	return output;
 }
 
-char *dt_rval_imdb_mode(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_mode(void *arg, char *match, char *output, size_t max_size) {
 	g_l_fmode(((__d_imdb) arg)->dirname, max_size, output);
 	return output;
 }
 
-char *dt_rval_imdb_basedir(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_imdb_basedir(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((__d_imdb) arg)->dirname);
 }
 
-char *dt_rval_imdb_dir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_dir(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->dirname;
 }
 
-char *dt_rval_imdb_imdbid(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_imdbid(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->imdb_id;
 }
 
-char *dt_rval_imdb_genre(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_genre(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->genres;
 }
 
-char *dt_rval_imdb_rated(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_rated(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->rated;
 }
 
-char *dt_rval_imdb_title(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_title(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->title;
 }
 
-char *dt_rval_imdb_director(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_imdb_director(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->director;
 }
 
-char *dt_rval_imdb_actors(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_imdb_actors(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->actors;
 }
 
-char *dt_rval_imdb_synopsis(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_imdb_synopsis(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_imdb) arg)->synopsis;
 }
 
-void *ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size) {
+void *
+ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -11945,31 +12512,36 @@ int ref_to_val_game(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_game_score(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_game_score(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%.1f", ((__d_game) arg)->rating);
 	return output;
 }
 
-char *dt_rval_game_time(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_game_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_game) arg)->timestamp);
 	return output;
 }
 
-char *dt_rval_game_mode(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_game_mode(void *arg, char *match, char *output, size_t max_size) {
 	g_l_fmode(((__d_game) arg)->dirname, max_size, output);
 	return output;
 }
 
-char *dt_rval_game_basedir(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_game_basedir(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((__d_game) arg)->dirname);
 }
 
-char *dt_rval_game_dir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_game_dir(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_game) arg)->dirname;
 }
 
-void *ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size) {
+void *
+ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -12062,112 +12634,117 @@ int ref_to_val_tv(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_tvrage_dir(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_tvrage_dir(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->dirname;
 }
 
-char *dt_rval_tvrage_basedir(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_basedir(void *arg, char *match, char *output, size_t max_size) {
 	return g_basename(((__d_tvrage) arg)->dirname);
 }
 
-char *dt_rval_tvrage_time(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_tvrage_time(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_tvrage) arg)->timestamp);
 	return output;
 }
 
-char *dt_rval_tvrage_ended(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_ended(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_tvrage) arg)->ended);
 	return output;
 }
 
-char *dt_rval_tvrage_started(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_started(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", (int32_t) ((__d_tvrage) arg)->started);
 	return output;
 }
 
-char *dt_rval_tvrage_seasons(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_seasons(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_tvrage) arg)->seasons);
 	return output;
 }
 
-char *dt_rval_tvrage_showid(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_showid(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_tvrage) arg)->showid);
 	return output;
 }
 
-char *dt_rval_tvrage_runtime(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_runtime(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_tvrage) arg)->runtime);
 	return output;
 }
 
-char *dt_rval_tvrage_startyear(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_startyear(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_tvrage) arg)->startyear);
 	return output;
 }
 
-char *dt_rval_tvrage_endyear(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_endyear(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_tvrage) arg)->endyear);
 	return output;
 }
 
-char *dt_rval_tvrage_mode(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_tvrage_mode(void *arg, char *match, char *output, size_t max_size) {
 	g_l_fmode(((__d_tvrage) arg)->dirname, max_size, output);
 	return output;
 }
 
-char *dt_rval_tvrage_airday(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_airday(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->airday;
 }
 
-char *dt_rval_tvrage_airtime(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_airtime(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->airtime;
 }
 
-char *dt_rval_tvrage_country(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_country(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->country;
 }
 
-char *dt_rval_tvrage_link(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_tvrage_link(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->link;
 }
 
-char *dt_rval_tvrage_name(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_tvrage_name(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->name;
 }
 
-char *dt_rval_tvrage_status(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_status(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->status;
 }
 
-char *dt_rval_tvrage_class(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_class(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->class;
 }
 
-char *dt_rval_tvrage_genre(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_genre(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->genres;
 }
 
-char *dt_rval_tvrage_network(void *arg, char *match, char *output,
-		size_t max_size) {
+char *
+dt_rval_tvrage_network(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_tvrage) arg)->network;
 }
 
-void *ref_to_val_lk_tvrage(void *arg, char *match, char *output,
-		size_t max_size) {
+void *
+ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -12252,44 +12829,54 @@ int ref_to_val_gen1(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_gen1_i32(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_i32(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_generic_s2044) arg)->i32);
 	return output;
 }
 
-char *dt_rval_gen1_ge1(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge1(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_1;
 }
 
-char *dt_rval_gen1_ge2(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge2(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_2;
 }
 
-char *dt_rval_gen1_ge3(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge3(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_3;
 }
 
-char *dt_rval_gen1_ge4(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge4(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_4;
 }
 
-char *dt_rval_gen1_ge5(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge5(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_5;
 }
 
-char *dt_rval_gen1_ge6(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge6(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_6;
 }
 
-char *dt_rval_gen1_ge7(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge7(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_7;
 }
 
-char *dt_rval_gen1_ge8(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen1_ge8(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s2044) arg)->s_8;
 }
 
-void *ref_to_val_lk_gen1(void *arg, char *match, char *output, size_t max_size) {
+void *
+ref_to_val_lk_gen1(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -12379,119 +12966,144 @@ int ref_to_val_gen2(void *arg, char *match, char *output, size_t max_size) {
 	return 0;
 }
 
-char *dt_rval_gen2_i1(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_i1(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", ((__d_generic_s1644) arg)->i32_1);
 	return output;
 }
 
-char *dt_rval_gen2_i2(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_i2(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", ((__d_generic_s1644) arg)->i32_2);
 	return output;
 }
 
-char *dt_rval_gen2_i3(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_i3(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", ((__d_generic_s1644) arg)->i32_3);
 	return output;
 }
 
-char *dt_rval_gen2_i4(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_i4(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%d", ((__d_generic_s1644) arg)->i32_4);
 	return output;
 }
 
-char *dt_rval_gen2_ui1(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ui1(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_generic_s1644) arg)->ui32_1);
 	return output;
 }
 
-char *dt_rval_gen2_ui2(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ui2(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_generic_s1644) arg)->ui32_2);
 	return output;
 }
 
-char *dt_rval_gen2_ui3(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ui3(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_generic_s1644) arg)->ui32_3);
 	return output;
 }
 
-char *dt_rval_gen2_ui4(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ui4(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%u", ((__d_generic_s1644) arg)->ui32_4);
 	return output;
 }
 
-char *dt_rval_gen2_uli1(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_uli1(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu", (ulint64_t) ((__d_generic_s1644) arg)->ui64_1);
 	return output;
 }
 
-char *dt_rval_gen2_uli2(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_uli2(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu", (ulint64_t) ((__d_generic_s1644) arg)->ui64_2);
 	return output;
 }
 
-char *dt_rval_gen2_uli3(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_uli3(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu", (ulint64_t) ((__d_generic_s1644) arg)->ui64_3);
 	return output;
 }
 
-char *dt_rval_gen2_uli4(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_uli4(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%llu", (ulint64_t) ((__d_generic_s1644) arg)->ui64_4);
 	return output;
 }
 
-char *dt_rval_gen2_f1(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_f1(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%f", ((__d_generic_s1644) arg)->f_1);
 	return output;
 }
 
-char *dt_rval_gen2_f2(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_f2(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%f", ((__d_generic_s1644) arg)->f_2);
 	return output;
 }
 
-char *dt_rval_gen2_f3(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_f3(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%f", ((__d_generic_s1644) arg)->f_3);
 	return output;
 }
 
-char *dt_rval_gen2_f4(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_f4(void *arg, char *match, char *output, size_t max_size) {
 	snprintf(output, max_size, "%f", ((__d_generic_s1644) arg)->f_4);
 	return output;
 }
 
-char *dt_rval_gen2_ge1(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge1(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_1;
 }
 
-char *dt_rval_gen2_ge2(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge2(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_2;
 }
 
-char *dt_rval_gen2_ge3(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge3(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_3;
 }
 
-char *dt_rval_gen2_ge4(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge4(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_4;
 }
 
-char *dt_rval_gen2_ge5(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge5(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_5;
 }
 
-char *dt_rval_gen2_ge6(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge6(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_6;
 }
 
-char *dt_rval_gen2_ge7(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge7(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_7;
 }
 
-char *dt_rval_gen2_ge8(void *arg, char *match, char *output, size_t max_size) {
+char *
+dt_rval_gen2_ge8(void *arg, char *match, char *output, size_t max_size) {
 	return ((__d_generic_s1644) arg)->s_8;
 }
 
-void *ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size) {
+void *
+ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size) {
 	void *ptr;
 	if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size))) {
 		return ptr;
@@ -12574,7 +13186,8 @@ int process_exec_args(void *data, __g_handle hdl) {
 int process_exec_string(char *input, char *output, size_t max_size,
 		void *callback, void *data) {
 
-	int (*call)(void *, char *, char *, size_t) = callback;
+	int
+	(*call)(void *, char *, char *, size_t) = callback;
 
 	size_t blen = strlen(input);
 
@@ -12698,7 +13311,8 @@ int g_shmap_data(__g_handle hdl, key_t ipc) {
 	return 0;
 }
 
-void *shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
+void *
+shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
 		int *shmid) {
 	g_setjmp(0, "shmap", NULL, NULL);
 
@@ -13847,7 +14461,8 @@ int is_ascii_uppercase_text(uint8_t in_c) {
 	return 1;
 }
 
-char *replace_char(char w, char r, char *string) {
+char *
+replace_char(char w, char r, char *string) {
 	int s_len = strlen(string), i;
 	for (i = 0; i < s_len + 100 && string[i] != 0; i++) {
 		if (string[i] == w) {
