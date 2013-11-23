@@ -11,6 +11,7 @@
  *   - ~ -x --cdir segfaulting (rev. 1)
  *   - ! Improved performance when searching certain filesystem fields (rev. 2)
  *   - % Refuse executing macro if no execution priviledges to file (rev. 3)
+ *   - % Impose limit on match filter strings (4096 bytes) (rev 4)
  *
  * v1.10:
  *
