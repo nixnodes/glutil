@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-3
+ * Version     : 1.11-4
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2057,7 +2057,7 @@ int opt_g_sort(void *arg, int m) {
 	}
 
 	if (_md_gsort.offset >= 64) {
-		return (a32 << 7);
+		return 4600;
 	}
 
 	md_init(&_md_gsort, 3);
@@ -2065,13 +2065,13 @@ int opt_g_sort(void *arg, int m) {
 	int r = split_string(buffer, 0x2C, &_md_gsort);
 
 	if (r != 3) {
-		return (a32 << 10);
+		return 4601;
 	}
 
 	p_md_obj ptr = md_first(&_md_gsort);
 
 	if (!ptr) {
-		return (a32 << 11);
+		return 4602;
 	}
 
 	char *s_ptr = (char*) ptr->ptr;
@@ -2079,7 +2079,7 @@ int opt_g_sort(void *arg, int m) {
 	if (!strncmp(s_ptr, "num", 3)) {
 		g_sort_flags |= F_GSORT_NUMERIC;
 	} else {
-		return (a32 << 12);
+		return 4603;
 	}
 
 	ptr = ptr->next;
@@ -2090,14 +2090,14 @@ int opt_g_sort(void *arg, int m) {
 	} else if (!strncmp(s_ptr, "asc", 3)) {
 		g_sort_flags |= F_GSORT_ASC;
 	} else {
-		return (a32 << 13);
+		return 4604;
 	}
 
 	ptr = ptr->next;
 	g_sort_field = (char*) ptr->ptr;
 
 	if (!strlen(g_sort_field)) {
-		return (a32 << 14);
+		return 4605;
 	}
 
 	g_sort_flags |= F_GSORT_RESETPOS;
@@ -2108,7 +2108,6 @@ int opt_g_sort(void *arg, int m) {
 }
 
 mda _match_rr = { 0 };
-mda _lom_strings = { 0 };
 
 typedef struct ___lom_strings_header {
 	uint32_t flags;
@@ -2132,6 +2131,9 @@ typedef struct ___last_match {
 
 _l_match _match_rr_l = { 0 };
 
+#define MAX_CPRG_STRING		4096
+#define MAX_LOM_STRING		4096
+
 int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 		uint32_t flags) {
 	char *buffer = g_pg(arg, m);
@@ -2142,7 +2144,9 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 		return 0;
 	}
 
-	a_i > 4096 ? a_i = 4096 : a_i;
+	if (a_i > MAX_CPRG_STRING) {
+		return 11400;
+	}
 
 	__g_match pgm = g_global_register_match();
 
@@ -2155,18 +2159,6 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 	strncpy(ptr, buffer, a_i);
 	strncpy((char*) pgm->b_data, buffer, a_i);
 
-	/*while ((ptr[i] != 0x2C || (ptr[i] == 0x2C && ptr[i - 1] == 0x5C))
-	 && i < (off_t) a_i) {
-	 i++;
-	 }
-
-	 if (ptr[i] == 0x2C && i != (off_t) a_i) {
-	 ptr[i] = 0x0;
-	 pgm->field = ptr;
-	 ptr = &ptr[i + 1];
-	 }*/
-
-	//pgm->match = ptr;
 	pgm->match_i_m = match_i_m;
 	pgm->reg_i_m = reg_i_m;
 	pgm->regex_flags = regex_flags;
@@ -2204,25 +2196,23 @@ int g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 int opt_g_lom(void *arg, int m, uint32_t flags) {
 	char *buffer = g_pg(arg, m);
 
-	if (_lom_strings.offset > 8100) {
-		return (a32 << 28);
-	}
-
 	size_t a_i = strlen(buffer);
 
 	if (!a_i) {
 		return 0;
 	}
 
-	a_i > 8190 ? a_i = 8190 : a_i;
+	if (a_i > MAX_LOM_STRING) {
+		return 8900;
+	}
 
 	__g_match pgm = g_global_register_match();
 
 	if (!pgm) {
-		return (a32 << 25);
+		return 8901;
 	}
 
-	pgm->flags |= flags | F_GM_ISLOM;
+	pgm->flags = flags | F_GM_ISLOM;
 	if (pgm->flags & F_GM_IMATCH) {
 		pgm->g_oper_ptr = g_oper_or;
 		pgm->flags |= F_GM_NOR;
@@ -2245,7 +2235,7 @@ int opt_g_lom(void *arg, int m, uint32_t flags) {
 int opt_g_operator_or(void *arg, int m) {
 	__g_match pgm = (__g_match) _match_rr_l.ptr;
 	if (!pgm) {
-		return (a32 << 26);
+		return 7100;
 	}
 	switch (_match_rr_l.flags & F_LM_TYPES) {
 
@@ -2267,7 +2257,7 @@ int opt_g_operator_or(void *arg, int m) {
 		}
 		break;
 		default:
-		return (a32 << 27);
+		return 7110;
 		break;
 	}
 	pgm->flags |= F_GM_NOR;
@@ -2277,7 +2267,7 @@ int opt_g_operator_or(void *arg, int m) {
 int opt_g_operator_and(void *arg, int m) {
 	__g_match pgm = (__g_match) _match_rr_l.ptr;
 	if (!pgm) {
-		return (a32 << 26);
+		return 6100;
 	}
 	switch (_match_rr_l.flags & F_LM_TYPES) {
 
@@ -2299,7 +2289,7 @@ int opt_g_operator_and(void *arg, int m) {
 		}
 		break;
 		default:
-		return (a32 << 27);
+		return 6110;
 		break;
 	}
 	pgm->flags |= F_GM_NAND;
@@ -3204,7 +3194,6 @@ int g_shutdown(void *arg) {
 
 	md_g_free(&_match_rr);
 	md_g_free(&_md_gsort);
-	md_g_free(&_lom_strings);
 
 	_p_macro_argc = 0;
 
