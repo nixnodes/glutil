@@ -10,6 +10,7 @@
  *   - %! Rewrote matching routines to be more efficient
  *   - ~ -x --cdir segfaulting (rev. 1)
  *   - ! Improved performance when searching certain filesystem fields (rev. 2)
+ *   - % Refuse executing macro if no execution priviledges to file (rev. 3)
  *
  * v1.10:
  *
