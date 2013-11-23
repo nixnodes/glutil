@@ -1,3 +1,5 @@
+Updated: 23/11/2013
+
 glutil can perform IO operations on glFTPd binary logs (any vanilla 
 binary file you can find in /logs folder), based on advanced filtering 
 methods. Aside from that, it has 'hooks' which you can use to capture 
@@ -17,6 +19,9 @@ used around variables (e.g. {dir}, {time}, ...)
   datalog records (used when injecting data into logs, -z).
   Some field names were changed.
   
+* NOTE: Fields are added all the time, check CHANGELOG or commit
+  history to see when they were added, except when using the latest
+  version
 
 FLAGS:
  
@@ -243,7 +248,7 @@ FLAGS:
    ul2        I     -||-
    ul3        I     -||-
    ul4        I     -||-
-   f1         I     float field
+   f1         I     32 bit floating point field
    f2         I     -||-
    f3         I     -||-
    f4         I     -||-
