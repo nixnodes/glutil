@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-4
+ * Version     : 1.11-5
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -645,6 +645,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_MINDEPTH 			(a64 << 59)
 #define F_OPT_XFD 				(a64 << 60)
 #define F_OPT_ZPRUNEDUP			(a64 << 61)
+#define F_OPT_PEX				(a64 << 62)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1271,7 +1272,7 @@ char *hpd_up =
 				"                           <folders> are passed relative to SITEROOT, separated by space\n"
 				"                           Use -f to overwrite existing entries\n"
 				"  -r [-u]               Rebuild dirlog based on filesystem data\n"
-				"                           .folders file (see README) defines a list of dirs in SITEROOT to scan\n"
+				"                           .folders file (see MANUAL) defines a list of dirs in SITEROOT to scan\n"
 				"                           -u only imports new records and does not truncate existing dirlog\n"
 				"                           -f ignores .folders file and does a full recursive scan\n"
 				"  -c, --check [--fix] [--ghost]\n"
@@ -1394,7 +1395,6 @@ char *hpd_up =
 				"  --ftime               Prepend formatted timestamps to output\n"
 				"  --log                 Force logging enabled\n"
 				"  --fork <command>      Fork process into background and execute <command>\n"
-				"                           Used only with when running macros (-m)\n"
 				"  --[u]sleep <timeout>  Wait for <timeout> before running\n"
 				"  --version             Print version and exit\n"
 				"\n"
@@ -2383,6 +2383,11 @@ int opt_g_xblk(void *arg, int m) {
 	return 0;
 }
 
+int opt_pex(void *arg, int m) {
+	gfl |= F_OPT_PEX;
+	return 0;
+}
+
 int opt_g_cdironly(void *arg, int m) {
 	gfl |= F_OPT_CDIRONLY;
 	return 0;
@@ -2871,6 +2876,7 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
 		(void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
 		"--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
+		"--glconf", opt_pex, (void*) 0,
 		NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -3330,7 +3336,7 @@ int g_init(int argc, char **argv) {
 	r = parse_args(argc, argv, f_ref);
 
 	if (r == -2 || r == -1) {
-		print_str("See --help\n");
+		print_str("Read ./glutil --help\n");
 		EXITVAL = 4;
 		return EXITVAL;
 	}
@@ -3342,6 +3348,12 @@ int g_init(int argc, char **argv) {
 	}
 
 	enable_logging();
+
+	if (ofl & F_ESREDIRFAILED) {
+		print_str("ERROR: could not open file to redirect execv stdout to\n");
+		EXITVAL = 2;
+		return EXITVAL;
+	}
 
 	if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
 			&& !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE)) {
@@ -3511,10 +3523,6 @@ int g_init(int argc, char **argv) {
 		}
 	}
 
-	if (ofl & F_ESREDIRFAILED) {
-		print_str("WARNING: could not open file to redirect execv stdout to\n");
-	}
-
 	if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE)) {
 		print_str("WARNING: performing dry run, no writing will be done\n");
 	}
@@ -3525,6 +3533,7 @@ int g_init(int argc, char **argv) {
 			print_str(
 					"ERROR: [%d] could not fork into background, terminating..\n",
 					errno);
+			EXITVAL = errno;
 			return errno;
 		}
 	}
@@ -3536,10 +3545,11 @@ int g_init(int argc, char **argv) {
 		int r_e = 0;
 		if ((r_e = g_do_exec(NULL, ref_to_val_generic, GLOBAL_PREEXEC, NULL))
 				== -1 || WEXITSTATUS(r_e)) {
-			if (gfl & F_OPT_VERBOSE) {
+			if (gfl & F_OPT_VERBOSE5) {
 				print_str("WARNING: [%d]: PREEXEC returned non-zero: '%s'\n",
 						WEXITSTATUS(r_e), GLOBAL_PREEXEC);
 			}
+			EXITVAL = WEXITSTATUS(r_e);
 			return 1;
 		}
 	}
