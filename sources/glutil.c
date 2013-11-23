@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11
+ * Version     : 1.11-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -4308,6 +4308,8 @@ int g_dump_gen(char *root) {
 		ret.flags |= F_PD_MATCHTYPES;
 	}
 
+	ret.rt_m = 1;
+
 	if (!file_exists(root)) {
 		ret.flags ^= F_PD_MATCHTYPES;
 		ret.flags |= F_PD_MATCHREG;
@@ -4315,23 +4317,27 @@ int g_dump_gen(char *root) {
 			print_str("NOTICE: %s is a file\n", root);
 		}
 		g_process_directory(root, DT_REG, &ret, &eds);
-		return ret.rt_m;
-	} else if ((gfl & F_OPT_CDIRONLY) && !dir_exists(root)) {
+		goto end;
+	}
+
+	if ((gfl & F_OPT_CDIRONLY) && !dir_exists(root)) {
 		ret.flags ^= F_PD_MATCHTYPES;
 		ret.flags |= F_PD_MATCHDIR;
+		ret.xproc_rcl0 = NULL;
+		ret.xproc_rcl1 = NULL;
 		if (gfl & F_OPT_VERBOSE) {
 			print_str("NOTICE: %s is a directory\n", root);
 		}
-		g_process_directory(root, DT_DIR, &ret, NULL);
-		return ret.rt_m;
+		g_process_directory(root, DT_DIR, &ret, &eds);
+		goto end;
 	}
 
 	snprintf(ret.root, PATH_MAX, "%s", root);
 	remove_repeating_chars(ret.root, 0x2F);
 
-	ret.rt_m = 1;
-
 	enum_dir(ret.root, g_process_directory, &ret, 0, &eds);
+
+	end:
 
 	if (!(gfl & F_OPT_FORMAT_BATCH)) {
 		print_str("STATS: %s: OK: %llu/%llu\n", ret.root,
