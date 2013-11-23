@@ -12,6 +12,10 @@
  *   - ! Improved performance when searching certain filesystem fields (rev. 2)
  *   - % Refuse executing macro if no execution priviledges to file (rev. 3)
  *   - % Impose limit on match filter strings (4096 bytes) (rev 4)
+ *   - % Return --preexec exit code (rev. 5)
+ *   - ! Optimize output performance when traversing logs (rev. 6)
+ *   - % Log output processing remodeled (rev. 6)
+ *   - % Exception notices print to stderr (rev. 6)
  *
  * v1.10:
  *
