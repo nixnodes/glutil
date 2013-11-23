@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-1
+ * Version     : 1.11-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -812,6 +812,23 @@ char GLCONF_I[PATH_MAX] = { GLCONF };
 #else
 char GLCONF_I[PATH_MAX] = {0};
 #endif
+
+#define _MC_GLOB_DIR 			"dir"
+#define _MC_GLOB_BASEDIR 		"basedir"
+#define _MC_GLOB_DIRNAME 		"ndir"
+#define _MC_GLOB_MODE 			"mode"
+#define _MC_GLOB_PID 			"pid"
+#define _MC_GLOB_USER			"user"
+#define _MC_GLOB_GROUP			"group"
+#define _MC_GLOB_TIME			"time"
+#define _MC_GLOB_SIZE			"size"
+#define _MC_GLOB_SCORE			"score"
+#define _MC_GLOB_RUNTIME		"runtime"
+#define _MC_GLOB_LOGON			"logon"
+#define _MC_GLOB_LOGOFF			"logoff"
+#define _MC_GLOB_DOWNLOAD		"download"
+#define _MC_GLOB_UPLOAD			"upload"
+#define _MC_GLOB_STATUS			"status"
 
 #define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
@@ -2622,7 +2639,8 @@ __g_proc_rv dt_rval_tvrage_dir, dt_rval_tvrage_basedir, dt_rval_tvrage_time,
 _d_rtv_lk ref_to_val_lk_dirlog, ref_to_val_lk_nukelog, ref_to_val_lk_dupefile,
 		ref_to_val_lk_lastonlog, ref_to_val_lk_oneliners, ref_to_val_lk_online,
 		ref_to_val_lk_generic, ref_to_val_lk_x, ref_to_val_lk_imdb,
-		ref_to_val_lk_game, ref_to_val_lk_tvrage, ref_to_val_lk_gen1, ref_to_val_lk_gen2;
+		ref_to_val_lk_game, ref_to_val_lk_tvrage, ref_to_val_lk_gen1,
+		ref_to_val_lk_gen2;
 
 off_t file_crc32(char *, uint32_t *);
 void g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
@@ -8662,6 +8680,32 @@ char *strcp_s(char *dest, size_t max_size, char *source) {
 	return strncpy(dest, source, s_l);
 }
 
+#define	_MC_X_DEVID		"devid"
+#define	_MC_X_MINOR		"minor"
+#define	_MC_X_MAJOR		"major"
+#define	_MC_X_INODE		"inode"
+#define	_MC_X_LINKS		"links"
+#define	_MC_X_BLKSIZE	"blksize"
+#define	_MC_X_BLOCKS	"blocks"
+#define	_MC_X_ATIME		"atime"
+#define	_MC_X_CTIME		"ctime"
+#define	_MC_X_MTIME		"mtime"
+#define	_MC_X_ISREAD	"isread"
+#define	_MC_X_ISWRITE	"iswrite"
+#define	_MC_X_ISEXEC	"isexec"
+#define	_MC_X_PERM		"perm"
+#define _MC_X_OPERM		"operm"
+#define _MC_X_GPERM		"gperm"
+#define _MC_X_UPERM		"uperm"
+#define _MC_X_SPARSE	"sparse"
+#define _MC_X_CRC32		"crc32"
+#define _MC_X_DCRC32	"dec-crc32"
+#define _MC_X_BASEPATH	"basepath"
+#define _MC_X_DIRPATH	"dirpath"
+#define _MC_X_PATH		"path"
+#define _MC_X_UID		"uid"
+#define _MC_X_GID		"gid"
+
 int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 	if (!ref_to_val_generic(NULL, match, output, max_size)) {
 		return 0;
@@ -8669,97 +8713,97 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 
 	__d_xref data = (__d_xref) arg;
 
-	if (!strncmp(match, "size", 4)) {
+	if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		snprintf(output, max_size, "%llu",
 				(ulint64_t) get_file_size(data->name));
-	} else if (!strncmp(match, "mode", 4)) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
-		snprintf(output, max_size, "%hu", (unsigned char) IFTODT(st.st_mode));
-	} else if (!strncmp(match, "devid", 5)) {
+		snprintf(output, max_size, "%hu", (unsigned short) IFTODT(st.st_mode));
+	} else if (!strncmp(match, _MC_X_DEVID, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_dev);
-	} else if (!strncmp(match, "minor", 5)) {
+	} else if (!strncmp(match, _MC_X_MINOR, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", minor(st.st_dev));
-	} else if (!strncmp(match, "major", 5)) {
+	} else if (!strncmp(match, _MC_X_MAJOR, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", major(st.st_dev));
-	} else if (!strncmp(match, "inode", 5)) {
+	} else if (!strncmp(match, _MC_X_INODE, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_ino);
-	} else if (!strncmp(match, "links", 5)) {
+	} else if (!strncmp(match, _MC_X_LINKS, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_nlink);
-	} else if (!strncmp(match, "uid", 3)) {
+	} else if (!strncmp(match, _MC_X_UID, 3)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_uid);
-	} else if (!strncmp(match, "gid", 3)) {
+	} else if (!strncmp(match, _MC_X_GID, 3)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_gid);
-	} else if (!strncmp(match, "blksize", 7)) {
+	} else if (!strncmp(match, _MC_X_BLKSIZE, 7)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_blksize);
-	} else if (!strncmp(match, "blocks", 6)) {
+	} else if (!strncmp(match, _MC_X_BLOCKS, 6)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%u", (uint32_t) st.st_blocks);
-	} else if (!strncmp(match, "atime", 5)) {
+	} else if (!strncmp(match, _MC_X_ATIME, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%d", (int32_t) st.st_atime);
-	} else if (!strncmp(match, "ctime", 5)) {
+	} else if (!strncmp(match, _MC_X_CTIME, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%d", (int32_t) st.st_ctime);
-	} else if (!strncmp(match, "mtime", 5)) {
+	} else if (!strncmp(match, _MC_X_MTIME, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
 		}
 		snprintf(output, max_size, "%d", (int32_t) st.st_mtime);
-	} else if (!strncmp(match, "isread", 6)) {
+	} else if (!strncmp(match, _MC_X_ISREAD, 6)) {
 		snprintf(output, max_size, "%hu",
 				(uint8_t) !(access(data->name, R_OK)));
-	} else if (!strncmp(match, "iswrite", 7)) {
+	} else if (!strncmp(match, _MC_X_ISWRITE, 7)) {
 		snprintf(output, max_size, "%hu",
 				(uint8_t) !(access(data->name, W_OK)));
-	} else if (!strncmp(match, "isexec", 6)) {
+	} else if (!strncmp(match, _MC_X_ISEXEC, 6)) {
 		snprintf(output, max_size, "%hu",
 				(uint8_t) !(access(data->name, X_OK)));
-	} else if (!strncmp(match, "uperm", 5)) {
+	} else if (!strncmp(match, _MC_X_UPERM, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			strcp_s(output, max_size, "-1");
@@ -8767,7 +8811,7 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			snprintf(output, max_size, "%hu",
 					(uint16_t) ((st.st_mode & S_IRWXU) >> 6));
 		}
-	} else if (!strncmp(match, "gperm", 5)) {
+	} else if (!strncmp(match, _MC_X_GPERM, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			strcp_s(output, max_size, "-1");
@@ -8775,7 +8819,7 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			snprintf(output, max_size, "%hu",
 					(uint16_t) ((st.st_mode & S_IRWXG) >> 3));
 		}
-	} else if (!strncmp(match, "operm", 5)) {
+	} else if (!strncmp(match, _MC_X_OPERM, 5)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			strcp_s(output, max_size, "-1");
@@ -8783,7 +8827,7 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 			snprintf(output, max_size, "%hu",
 					(uint16_t) ((st.st_mode & S_IRWXO)));
 		}
-	} else if (!strncmp(match, "perm", 4)) {
+	} else if (!strncmp(match, _MC_X_PERM, 4)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			strcp_s(output, max_size, "-1");
@@ -8793,7 +8837,7 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 					(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
 					(uint16_t) ((st.st_mode & S_IRWXO)));
 		}
-	} else if (!strncmp(match, "sparse", 6)) {
+	} else if (!strncmp(match, _MC_X_SPARSE, 6)) {
 		struct stat st;
 		if (lstat(data->name, &st)) {
 			return 1;
@@ -8802,23 +8846,23 @@ int ref_to_val_x(void *arg, char *match, char *output, size_t max_size) {
 					((float) st.st_blksize * (float) st.st_blocks
 							/ (float) st.st_size));
 		}
-	} else if (!strncmp(match, "crc32", 5)) {
+	} else if (!strncmp(match, _MC_X_CRC32, 5)) {
 		uint32_t crc32;
 		file_crc32(data->name, &crc32);
 		snprintf(output, max_size, "%.8X", crc32);
-	} else if (!strncmp(match, "dec-crc32", 9)) {
+	} else if (!strncmp(match, _MC_X_DCRC32, 9)) {
 		uint32_t crc32;
 		file_crc32(data->name, &crc32);
 		snprintf(output, max_size, "%u", crc32);
 	} else if (!strncmp(match, "c:", 2)) {
 		return g_rtval_ex(data->name, &match[2], max_size, output,
 		F_CFGV_BUILD_FULL_STRING);
-	} else if (!strncmp(match, "basepath", 8)) {
+	} else if (!strncmp(match, _MC_X_BASEPATH, 8)) {
 		strcp_s(output, max_size, g_basename(data->name));
-	} else if (!strncmp(match, "dirpath", 7)) {
+	} else if (!strncmp(match, _MC_X_DIRPATH, 7)) {
 		strcp_s(output, max_size, data->name);
 		g_dirname(output);
-	} else if (!strncmp(match, "path", 4)) {
+	} else if (!strncmp(match, _MC_X_PATH, 4)) {
 		strcp_s(output, max_size, data->name);
 	} else {
 		return 1;
@@ -8853,192 +8897,108 @@ char *dt_rval_x_size(void *arg, char *match, char *output, size_t max_size) {
 }
 
 char *dt_rval_x_mode(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%hu", (unsigned char) IFTODT(st.st_mode));
+	snprintf(output, max_size, "%hu", (unsigned short) ((__d_xref) arg)->type);
 	return output;
 }
 
 char *dt_rval_x_devid(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_dev);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_dev);
 	return output;
 }
 
 char *dt_rval_x_minor(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", minor(st.st_dev));
+	snprintf(output, max_size, "%u", minor(((__d_xref) arg)->st.st_dev));
 	return output;
 }
 
 char *dt_rval_x_major(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", major(st.st_dev));
+	snprintf(output, max_size, "%u", major(((__d_xref) arg)->st.st_dev));
 	return output;
 }
 
 char *dt_rval_x_inode(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_ino);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_ino);
 	return output;
 }
 
 char *dt_rval_x_links(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_nlink);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_nlink);
 	return output;
 }
 
 char *dt_rval_x_uid(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_uid);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_uid);
 	return output;
 }
 
 char *dt_rval_x_gid(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_gid);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_gid);
 	return output;
 }
 
 char *dt_rval_x_blksize(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_blksize);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_blksize);
 	return output;
 }
 
 char *dt_rval_x_blocks(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%u", (uint32_t) st.st_blocks);
+	snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_blocks);
 	return output;
 }
 
 char *dt_rval_x_atime(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%d", (int32_t) st.st_atime);
+	snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_atime);
 	return output;
 }
 
 char *dt_rval_x_ctime(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%d", (int32_t) st.st_ctime);
+	snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_ctime);
 	return output;
 }
 
 char *dt_rval_x_mtime(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	}
-	snprintf(output, max_size, "%d", (int32_t) st.st_mtime);
+	snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_mtime);
 	return output;
 }
 
 char *dt_rval_x_isread(void *arg, char *match, char *output, size_t max_size) {
-	snprintf(output, max_size, "%hu", (uint8_t) !(access(((__d_xref) arg)->name, R_OK)));
+	snprintf(output, max_size, "%hhu", ((__d_xref) arg)->r);
 	return output;
 }
 
 char *dt_rval_x_iswrite(void *arg, char *match, char *output, size_t max_size) {
-	snprintf(output, max_size, "%hu", (uint8_t) !(access(((__d_xref) arg)->name, W_OK)));
+	snprintf(output, max_size, "%hhu", ((__d_xref) arg)->w);
 	return output;
 }
 
 char *dt_rval_x_isexec(void *arg, char *match, char *output, size_t max_size) {
-	snprintf(output, max_size, "%hu", (uint8_t) !(access(((__d_xref) arg)->name, X_OK)));
+	snprintf(output, max_size, "%hhu", ((__d_xref) arg)->x);
 	return output;
 }
 
 char *dt_rval_x_uperm(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		strcp_s(output, max_size, "-1");
-	} else {
-		snprintf(output, max_size, "%hu",
-		(uint16_t) ((st.st_mode & S_IRWXU) >> 6));
-	}
+	snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->uperm);
 	return output;
 }
 
 char *dt_rval_x_gperm(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		strcp_s(output, max_size, "-1");
-	} else {
-		snprintf(output, max_size, "%hu",
-		(uint16_t) ((st.st_mode & S_IRWXG) >> 3));
-	}
+	snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->gperm);
 	return output;
 }
 
 char *dt_rval_x_operm(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		strcp_s(output, max_size, "-1");
-	} else {
-		snprintf(output, max_size, "%hu",
-		(uint16_t) ((st.st_mode & S_IRWXO)));
-	}
+	snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->operm);
 	return output;
 }
 
 char *dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		strcp_s(output, max_size, "-1");
-	} else {
-		snprintf(output, max_size, "%hu%hu%hu",
-		(uint16_t) ((st.st_mode & S_IRWXU) >> 6),
-		(uint16_t) ((st.st_mode & S_IRWXG) >> 3),
-		(uint16_t) ((st.st_mode & S_IRWXO)));
-	}
+	snprintf(output, max_size, "%hu%hu%hu", (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
 	return output;
 }
 
 char *dt_rval_x_sparse(void *arg, char *match, char *output, size_t max_size) {
-	struct stat st;
-	if (lstat(((__d_xref) arg)->name, &st)) {
-		return output;
-	} else {
-		snprintf(output, max_size, "%f",
-		((float) st.st_blksize * (float) st.st_blocks
-		/ (float) st.st_size));
-	}
+	snprintf(output, max_size, "%f", ((float) ((__d_xref) arg)->st.st_blksize * (float) ((__d_xref) arg)->st.st_blocks
+	/ (float) ((__d_xref) arg)->st.st_size));
 	return output;
 }
 
@@ -9064,61 +9024,127 @@ void* ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size) {
 		return ptr;
 	}
 
-	if (!strncmp(match, "size", 4)) {
+	if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_size;
-	} else if (!strncmp(match, "mode", 4)) {
+	} else if (!strncmp(match, _MC_GLOB_MODE, 4)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_DT_MODE;
+		}
 		return dt_rval_x_mode;
-	} else if (!strncmp(match, "devid", 5)) {
+	} else if (!strncmp(match, _MC_X_DEVID, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_devid;
-	} else if (!strncmp(match, "minor", 5)) {
+	} else if (!strncmp(match, _MC_X_MINOR, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT |F_XRF_GET_MINOR;
+		}
 		return dt_rval_x_minor;
-	} else if (!strncmp(match, "major", 5)) {
+	} else if (!strncmp(match, _MC_X_MAJOR, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT |F_XRF_GET_MAJOR;
+		}
 		return dt_rval_x_major;
-	} else if (!strncmp(match, "inode", 5)) {
+	} else if (!strncmp(match, _MC_X_INODE, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_inode;
-	} else if (!strncmp(match, "links", 5)) {
+	} else if (!strncmp(match, _MC_X_LINKS, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_links;
-	} else if (!strncmp(match, "uid", 3)) {
+	} else if (!strncmp(match, _MC_X_UID, 3)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_uid;
-	} else if (!strncmp(match, "gid", 3)) {
+	} else if (!strncmp(match, _MC_X_GID, 3)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_gid;
-	} else if (!strncmp(match, "blksize", 7)) {
+	} else if (!strncmp(match, _MC_X_BLKSIZE, 7)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_blksize;
-	} else if (!strncmp(match, "blocks", 6)) {
+	} else if (!strncmp(match, _MC_X_BLOCKS, 6)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_blocks;
-	} else if (!strncmp(match, "atime", 5)) {
+	} else if (!strncmp(match, _MC_X_ATIME, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_atime;
-	} else if (!strncmp(match, "ctime", 5)) {
+	} else if (!strncmp(match, _MC_X_CTIME, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_ctime;
-	} else if (!strncmp(match, "mtime", 5)) {
+	} else if (!strncmp(match, _MC_X_MTIME, 5)) {
+		if ( arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_mtime;
-	} else if (!strncmp(match, "isread", 6)) {
+	} else if (!strncmp(match, _MC_X_ISREAD, 6)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_READ;
+		}
 		return dt_rval_x_isread;
-	} else if (!strncmp(match, "iswrite", 7)) {
+	} else if (!strncmp(match, _MC_X_ISWRITE, 7)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_WRITE;
+		}
 		return dt_rval_x_iswrite;
-	} else if (!strncmp(match, "isexec", 6)) {
+	} else if (!strncmp(match, _MC_X_ISEXEC, 6)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_EXEC;
+		}
 		return dt_rval_x_isexec;
-	} else if (!strncmp(match, "uperm", 5)) {
+	} else if (!strncmp(match, _MC_X_UPERM, 5)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
+		}
 		return dt_rval_x_uperm;
-	} else if (!strncmp(match, "gperm", 5)) {
+	} else if (!strncmp(match, _MC_X_GPERM, 5)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
+		}
 		return dt_rval_x_gperm;
-	} else if (!strncmp(match, "operm", 5)) {
+	} else if (!strncmp(match, _MC_X_OPERM, 5)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
+		}
 		return dt_rval_x_operm;
-	} else if (!strncmp(match, "perm", 4)) {
+	} else if (!strncmp(match, _MC_X_PERM, 4)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_GPERM | F_XRF_GET_UPERM | F_XRF_GET_OPERM;
+		}
 		return dt_rval_x_perm;
-	} else if (!strncmp(match, "sparse", 6)) {
+	} else if (!strncmp(match, _MC_X_SPARSE, 6)) {
+		if (arg) {
+			((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+		}
 		return dt_rval_x_sparse;
-	} else if (!strncmp(match, "crc32", 5)) {
+	} else if (!strncmp(match, _MC_X_CRC32, 5)) {
 		return dt_rval_x_crc32;
-	} else if (!strncmp(match, "dec-crc32", 9)) {
+	} else if (!strncmp(match, _MC_X_DCRC32, 9)) {
 		return dt_rval_x_deccrc32;
 	} else if (!strncmp(match, "c:", 2)) {
 		return dt_rval_c;
-	} else if (!strncmp(match, "basepath", 8)) {
+	} else if (!strncmp(match, _MC_X_BASEPATH, 8)) {
 		return dt_rval_x_basepath;
-	} else if (!strncmp(match, "dirpath", 7)) {
+	} else if (!strncmp(match, _MC_X_DIRPATH, 7)) {
 		return dt_rval_x_dirpath;
-	} else if (!strncmp(match, "path", 4)) {
+	} else if (!strncmp(match, _MC_X_PATH, 4)) {
 		return dt_rval_x_path;
 	}
 
@@ -9128,91 +9154,91 @@ void* ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size) {
 void *ref_to_val_ptr_x(void *arg, char *match, int *output) {
 	__d_xref data = (__d_xref) arg;
 
-	if (!strncmp(match, "size", 4)) {
+	if (!strncmp(match, _MC_GLOB_SIZE, 4)) {
 		*output = sizeof(data->st.st_size);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_size;
-	} else if (!strncmp(match, "mode", 4)) {
+	} else if (!strncmp(match,_MC_GLOB_MODE, 4)) {
 		*output = sizeof(data->type);
 		data->flags |= F_XRF_GET_DT_MODE;
 		return &((__d_xref) NULL)->type;
-	} else if (!strncmp(match, "isread", 6)) {
+	} else if (!strncmp(match, _MC_X_ISREAD, 6)) {
 		*output = ~((int) sizeof(data->r));
 		data->flags |= F_XRF_GET_READ;
 		return &((__d_xref) NULL)->r;
-	} else if (!strncmp(match, "iswrite", 7)) {
+	} else if (!strncmp(match, _MC_X_ISWRITE, 7)) {
 		*output = ~((int) sizeof(data->w));
 		data->flags |= F_XRF_GET_WRITE;
 		return &((__d_xref) NULL)->w;
-	} else if (!strncmp(match, "isexec", 6)) {
+	} else if (!strncmp(match, _MC_X_ISEXEC, 6)) {
 		*output = ~((int) sizeof(data->x));
 		data->flags |= F_XRF_GET_EXEC;
 		return &((__d_xref) NULL)->x;
-	} else if (!strncmp(match, "uperm", 5)) {
+	} else if (!strncmp(match, _MC_X_UPERM, 5)) {
 		*output = sizeof(data->uperm);
 		data->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->uperm;
-	} else if (!strncmp(match, "gperm", 5)) {
+	} else if (!strncmp(match, _MC_X_GPERM, 5)) {
 		*output = sizeof(data->gperm);
 		data->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->gperm;
-	} else if (!strncmp(match, "operm", 5)) {
+	} else if (!strncmp(match, _MC_X_OPERM, 5)) {
 		*output = sizeof(data->operm);
 		data->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->operm;
-	} else if (!strncmp(match, "devid", 5)) {
+	} else if (!strncmp(match, _MC_X_DEVID, 5)) {
 		*output = sizeof(data->st.st_dev);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_dev;
-	} else if (!strncmp(match, "minor", 5)) {
+	} else if (!strncmp(match, _MC_X_MINOR, 5)) {
 		*output = sizeof(data->minor);
 		data->flags |= F_XRF_GET_MINOR | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->minor;
-	} else if (!strncmp(match, "major", 5)) {
+	} else if (!strncmp(match, _MC_X_MAJOR, 5)) {
 		*output = sizeof(data->major);
 		data->flags |= F_XRF_GET_MAJOR | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->major;
-	} else if (!strncmp(match, "sparse", 6)) {
+	} else if (!strncmp(match, _MC_X_SPARSE, 6)) {
 		*output = -32;
 		data->flags |= F_XRF_GET_SPARSE | F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->sparseness;
-	} else if (!strncmp(match, "inode", 5)) {
+	} else if (!strncmp(match, _MC_X_INODE, 5)) {
 		*output = sizeof(data->st.st_ino);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_ino;
-	} else if (!strncmp(match, "links", 5)) {
+	} else if (!strncmp(match, _MC_X_LINKS, 5)) {
 		*output = sizeof(data->st.st_nlink);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_nlink;
-	} else if (!strncmp(match, "uid", 3)) {
+	} else if (!strncmp(match, _MC_X_UID, 3)) {
 		*output = sizeof(data->st.st_uid);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_uid;
-	} else if (!strncmp(match, "gid", 3)) {
+	} else if (!strncmp(match, _MC_X_GID, 3)) {
 		*output = sizeof(data->st.st_gid);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_gid;
-	} else if (!strncmp(match, "blksize", 7)) {
+	} else if (!strncmp(match, _MC_X_BLKSIZE, 7)) {
 		*output = sizeof(data->st.st_blksize);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_blksize;
-	} else if (!strncmp(match, "blocks", 6)) {
+	} else if (!strncmp(match, _MC_X_BLOCKS, 6)) {
 		*output = sizeof(data->st.st_blocks);
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_blocks;
-	} else if (!strncmp(match, "atime", 5)) {
+	} else if (!strncmp(match, _MC_X_ATIME, 5)) {
 		*output = ~((int) sizeof(data->st.st_atime));
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_atime;
-	} else if (!strncmp(match, "ctime", 5)) {
+	} else if (!strncmp(match, _MC_X_CTIME, 5)) {
 		*output = ~((int) sizeof(data->st.st_ctime));
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_ctime;
-	} else if (!strncmp(match, "mtime", 5)) {
+	} else if (!strncmp(match, _MC_X_MTIME, 5)) {
 		*output = ~((int) sizeof(data->st.st_mtime));
 		data->flags |= F_XRF_DO_STAT;
 		return &((__d_xref) NULL)->st.st_mtime;
-	} else if (!strncmp(match, "crc32", 5)) {
+	} else if (!strncmp(match, _MC_X_CRC32, 5)) {
 		*output = sizeof(data->crc32);
 		data->flags |= F_XRF_GET_CRC32;
 		return &((__d_xref) NULL)->crc32;
@@ -10433,7 +10459,7 @@ int g_load_strm(__g_handle hdl) {
 			}
 
 			if (s_ptr[i] == 0x2C && i != (off_t) 4096) {
-				if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(NULL, s_ptr, hdl->mv1_b, MAX_VAR_LEN))) {
+				if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, s_ptr, hdl->mv1_b, MAX_VAR_LEN))) {
 					_m_ptr->field = s_ptr;
 					s_ptr[i] = 0x0;
 					s_ptr = &s_ptr[i + 1];
@@ -10606,23 +10632,6 @@ int g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
 	return 0;
 }
-
-#define _MC_GLOB_DIR 		"dir"
-#define _MC_GLOB_BASEDIR 	"basedir"
-#define _MC_GLOB_DIRNAME 	"ndir"
-#define _MC_GLOB_MODE 		"mode"
-#define _MC_GLOB_PID 		"pid"
-#define _MC_GLOB_USER		"user"
-#define _MC_GLOB_GROUP		"group"
-#define _MC_GLOB_TIME		"time"
-#define _MC_GLOB_SIZE		"size"
-#define _MC_GLOB_SCORE		"score"
-#define _MC_GLOB_RUNTIME	"runtime"
-#define _MC_GLOB_LOGON		"logon"
-#define _MC_GLOB_LOGOFF		"logoff"
-#define _MC_GLOB_DOWNLOAD	"download"
-#define _MC_GLOB_UPLOAD		"upload"
-#define _MC_GLOB_STATUS		"status"
 
 #define _MC_DIRLOG_FILES	"files"
 
