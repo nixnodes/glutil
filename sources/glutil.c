@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-2
+ * Version     : 1.11-3
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -13867,20 +13867,19 @@ int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 	off_t name_sz;
 	switch (type) {
 	case DT_REG:
+		if (access(name, X_OK)) {
+			if (gfl & F_OPT_VERBOSE5) {
+				print_str("MACRO: %s: could not exec (permission denied)\n",
+						name);
+			}
+			break;
+		}
+
 		name_sz = get_file_size(name);
 		if (!name_sz) {
 			break;
 		}
-		/*
-		 if (name_sz > SSD_MAX_FILE_SIZE) {
-		 if (gfl & F_OPT_VERBOSE2) {
-		 print_str(
-		 "MACRO: %s: file is too big (%llu bytes) and will not be processed\n",
-		 name, (ulint64_t) name_sz);
-		 }
-		 break;
-		 }
-		 */
+
 		FILE *fh = fopen(name, "r");
 
 		if (!fh) {
@@ -13927,7 +13926,8 @@ int ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds) {
 				}
 				bzero(ptr->s_ret, sizeof(ptr->s_ret));
 				strncpy(ptr->s_ret, &buffer[8 + pb_l], d_len);
-				strncpy(ptr->p_buf_2, name, strlen(name));
+
+				snprintf(ptr->p_buf_2, PATH_MAX, name);
 				ptr->ret = d_len;
 				gfl |= F_OPT_TERM_ENUM;
 				break;
