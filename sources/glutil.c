@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-6
+ * Version     : 1.11-7
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -405,7 +405,7 @@ typedef struct g_handle {
 	__g_proc_t_ps g_proc1_ps;
 	__d_ref_to_pv g_proc2;
 	__g_proc_v g_proc1_lookup;
-	_d_proc3 g_proc3, g_proc3_batch;
+	_d_proc3 g_proc3, g_proc3_batch, g_proc3_export;
 	_d_omfp g_proc4;
 	size_t j_offset, jm_offset;
 	int d_memb;
@@ -663,6 +663,7 @@ uint32_t crc32(uint32_t crc32, uint8_t *buf, size_t len) {
 #define F_OPT_XFD 				(a64 << 60)
 #define F_OPT_ZPRUNEDUP			(a64 << 61)
 #define F_OPT_PEX				(a64 << 62)
+#define F_OPT_FORMAT_EXPORT     (a64 << 63)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -1259,8 +1260,12 @@ char *hpd_up =
 				"\n"
 				"Main options:\n"
 				"\n Output:\n"
-				"  -d, [--raw] [--batch] Parse directory log and print to stdout in text/binary format\n"
+				"  -d, [--raw] [--batch] [--export|-E]\n"
+				"                        Parse directory log and print to stdout in text/binary format\n"
 				"                          (-vv prints dir nuke status from nukelog)\n"
+				"                         --batch         Prints with simple formatting\n"
+				"                         --export, -E    Prints in glutil export text format\n"
+				"                         --raw           Prints raw binary data to stdout\n"
 				"  -n, -||-              Parse nuke log to stdout\n"
 				"  -i, -||-              Parse dupe file to stdout\n"
 				"  -l, -||-              Parse last-on log to stdout\n"
@@ -1406,7 +1411,6 @@ char *hpd_up =
 				"  --xblk                Ignores files/dirs on non-block devices\n"
 				"                           Applies to -r, -t, -g, -x (can apply to other modes)\n"
 				"  --rev                 Reverses the order in which records are processed\n"
-				"  --batch               Prints with simple formatting\n"
 				"  --ipc <key>           Override gl's shared memory segment key setting\n"
 				"  --daemon              Fork process into background\n"
 				"  --loop <interval>     Loops the given operation\n"
@@ -1729,6 +1733,11 @@ int opt_g_sfv(void *arg, int m) {
 
 int opt_batch_output_formatting(void *arg, int m) {
 	gfl |= F_OPT_FORMAT_BATCH | F_OPT_PS_SILENT;
+	return 0;
+}
+
+int opt_export_output_formatting(void *arg, int m) {
+	gfl |= F_OPT_FORMAT_EXPORT | F_OPT_PS_SILENT;
 	return 0;
 }
 
@@ -2630,6 +2639,19 @@ __d_format_block lastonlog_format_block, dupefile_format_block,
 		oneliner_format_block, online_format_block, nukelog_format_block,
 		dirlog_format_block, imdb_format_block, game_format_block,
 		tv_format_block, gen1_format_block, gen2_format_block;
+
+__d_format_block lastonlog_format_block_batch,
+		dupefile_format_block_batch, oneliner_format_block_batch,
+		online_format_block_batch, nukelog_format_block_batch,
+		dirlog_format_block_batch, imdb_format_block_batch,
+		game_format_block_batch, tv_format_block_batch, gen1_format_block_batch,
+		gen2_format_block_batch;
+
+__d_format_block lastonlog_format_block_exp, dupefile_format_block_exp,
+		oneliner_format_block_exp, online_format_block_exp, nukelog_format_block_exp,
+		dirlog_format_block_exp, imdb_format_block_exp, game_format_block_exp,
+		tv_format_block_exp, gen1_format_block_exp, gen2_format_block_exp;
+
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
 __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
@@ -2990,41 +3012,42 @@ void *f_ref[] = { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and,
 		"regexi", opt_g_regexi, (void*) 1, "--regexi", opt_g_regexi, (void*) 1,
 		"regex", opt_g_regex, (void*) 1, "--regex", opt_g_regex, (void*) 1,
 		"-e", opt_rebuild, (void*) 1, "--comp", opt_compact_output_formatting,
-		(void*) 0, "--batch", opt_batch_output_formatting, (void*) 0, "-y",
-		opt_g_followlinks, (void*) 0, "--allowsymbolic", opt_g_followlinks,
-		(void*) 0, "--followlinks", opt_g_followlinks, (void*) 0,
-		"--allowlinks", opt_g_followlinks, (void*) 0, "--execv", opt_execv,
-		(void*) 1, "-execv", opt_execv, (void*) 1, "-exec", opt_exec, (void*) 1,
-		"--exec", opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u",
-		opt_g_update, (void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1,
-		"--memlimita", opt_membuffer_limit_in, (void*) 1, "-p",
-		opt_dirlog_chk_dupe, (void*) 0, "--dupechk", opt_dirlog_chk_dupe,
-		(void*) 0, "--nobuffer", opt_g_nobuffering, (void*) 0, "-n",
-		opt_dirlog_dump_nukelog, (void*) 0, "--help", print_help, (void*) 0,
-		"--version", print_version, (void*) 0, "--folders",
-		opt_dirlog_sections_file, (void*) 1, "--dirlog", opt_dirlog_file,
-		(void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--siteroot",
-		opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1, "--nowrite",
-		opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv, (void*) 0, "--crc32",
-		option_crc32, (void*) 1, "--nobackup", opt_nobackup, (void*) 0, "-c",
-		opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
-		"--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
-		"-f", opt_g_force, (void*) 0, "-ff", opt_g_force2, (void*) 0, "-s",
-		opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
-		(void*) 0, "--shmem", opt_g_shmem, (void*) 0, "--shmreload",
-		opt_g_shmreload, (void*) 0, "--loadq", opt_g_loadq, (void*) 0,
-		"--shmdestroy", opt_g_shmdestroy, (void*) 0, "--shmdestonexit",
-		opt_g_shmdestroyonexit, (void*) 0, "--maxres", opt_g_maxresults,
-		(void*) 1, "--maxhit", opt_g_maxhits, (void*) 1, "--ifres", opt_g_ifres,
-		(void*) 0, "--ifhit", opt_g_ifhit, (void*) 0, "--ifrhe", opt_g_ifrh_e,
-		(void*) 0, "--nofq", opt_g_nofq, (void*) 0, "--esredir",
-		opt_execv_stdout_redir, (void*) 1, "--noglconf", opt_g_noglconf,
-		(void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1, "-maxdepth",
-		opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth, (void*) 1,
-		"-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
-		(void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
-		"--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
-		"--glconf", opt_pex, (void*) 0,
+		(void*) 0, "--batch", opt_batch_output_formatting, (void*) 0, "-E",
+		opt_export_output_formatting, (void*) 0, "--export",
+		opt_export_output_formatting, (void*) 0, "-y", opt_g_followlinks,
+		(void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
+		"--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
+		opt_g_followlinks, (void*) 0, "--execv", opt_execv, (void*) 1, "-execv",
+		opt_execv, (void*) 1, "-exec", opt_exec, (void*) 1, "--exec", opt_exec,
+		(void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update, (void*) 0,
+		"--memlimit", opt_membuffer_limit, (void*) 1, "--memlimita",
+		opt_membuffer_limit_in, (void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0,
+		"--dupechk", opt_dirlog_chk_dupe, (void*) 0, "--nobuffer",
+		opt_g_nobuffering, (void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0,
+		"--help", print_help, (void*) 0, "--version", print_version, (void*) 0,
+		"--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
+		opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
+		"--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot,
+		(void*) 1, "--nowrite", opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv,
+		(void*) 0, "--crc32", option_crc32, (void*) 1, "--nobackup",
+		opt_nobackup, (void*) 0, "-c", opt_dirlog_check, (void*) 0, "--check",
+		opt_dirlog_check, (void*) 0, "--dump", opt_dirlog_dump, (void*) 0, "-d",
+		opt_dirlog_dump, (void*) 0, "-f", opt_g_force, (void*) 0, "-ff",
+		opt_g_force2, (void*) 0, "-s", opt_update_single_record, (void*) 1,
+		"-r", opt_recursive_update_records, (void*) 0, "--shmem", opt_g_shmem,
+		(void*) 0, "--shmreload", opt_g_shmreload, (void*) 0, "--loadq",
+		opt_g_loadq, (void*) 0, "--shmdestroy", opt_g_shmdestroy, (void*) 0,
+		"--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
+		opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
+		"--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
+		"--ifrhe", opt_g_ifrh_e, (void*) 0, "--nofq", opt_g_nofq, (void*) 0,
+		"--esredir", opt_execv_stdout_redir, (void*) 1, "--noglconf",
+		opt_g_noglconf, (void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1,
+		"-maxdepth", opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth,
+		(void*) 1, "-mindepth", opt_g_mindepth, (void*) 1, "--noereg",
+		opt_g_noereg, (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd,
+		(void*) 0, "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file,
+		(void*) 1, "--glconf", opt_pex, (void*) 0,
 		NULL, NULL, NULL };
 
 int md_init(pmda md, int nm) {
@@ -4908,9 +4931,7 @@ int dirlog_update_record(char *argv) {
 
 		char buffer[MAX_G_PRINT_STATS_BUFFER] = { 0 };
 
-		if (dirlog_format_block(arg.dirlog, buffer) > 0) {
-			print_str(buffer);
-		}
+		dirlog_format_block(arg.dirlog, buffer);
 
 		end:
 
@@ -6191,9 +6212,8 @@ int proc_section(char *name, unsigned char type, void *arg, __g_eds eds) {
 
 			char buffer[MAX_G_PRINT_STATS_BUFFER] = { 0 };
 
-			if ((gfl & F_OPT_VERBOSE)
-					&& dirlog_format_block(iarg->dirlog, buffer) > 0) {
-				print_str(buffer);
+			if ((gfl & F_OPT_VERBOSE)) {
+				dirlog_format_block(iarg->dirlog, buffer);
 			}
 
 			if (gfl & F_OPT_FORCE) {
@@ -6370,6 +6390,19 @@ int dirlog_format_block_batch(void *iarg, char *output) {
 
 }
 
+int dirlog_format_block_exp(void *iarg, char *output) {
+	struct dirlog *data = (struct dirlog *) iarg;
+	return printf("dir %s\n"
+			"size %llu\n"
+			"files %hu\n"
+			"time %d\n"
+			"user %hu\n"
+			"group %hu\n"
+			"status %hu\n\n", data->dirname, (ulint64_t) data->bytes,
+			data->files, (int32_t) data->uptime, data->uploader, data->group,
+			data->status);
+}
+
 int nukelog_format_block(void *iarg, char *output) {
 	char buffer2[255] = { 0 };
 
@@ -6397,9 +6430,23 @@ int nukelog_format_block(void *iarg, char *output) {
 
 int nukelog_format_block_batch(void *iarg, char *output) {
 	struct nukelog *data = (struct nukelog *) iarg;
-	return printf("NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%d\x9%hu\n",
-			data->dirname, data->reason, data->mult, data->bytes,
-			!data->status ? data->nuker : data->unnuker, data->nukee,
+	return printf("NUKELOG\x9%s\x9%s\x9%hu\x9%.2f\x9%s\x9%s\x9%s\x9%d\x9%hu\n",
+			data->dirname, data->reason, data->mult, data->bytes, data->nuker,
+			data->unnuker, data->nukee, (int32_t) data->nuketime, data->status);
+}
+
+int nukelog_format_block_exp(void *iarg, char *output) {
+	struct nukelog *data = (struct nukelog *) iarg;
+	return printf("dir %s\n"
+			"reason %s\n"
+			"mult %hu\n"
+			"size %.2f\n"
+			"nuker %s\n"
+			"unnuker %s\n"
+			"nukee %s\n"
+			"time %d\n"
+			"status %hu\n\n", data->dirname, data->reason, data->mult,
+			data->bytes, data->nuker, data->unnuker, data->nukee,
 			(int32_t) data->nuketime, data->status);
 }
 
@@ -6420,6 +6467,15 @@ int dupefile_format_block(void *iarg, char *output) {
 int dupefile_format_block_batch(void *iarg, char *output) {
 	struct dupefile *data = (struct dupefile *) iarg;
 	return printf("DUPEFILE\x9%s\x9%s\x9%d\n", data->filename, data->uploader,
+			(int32_t) data->timeup);
+
+}
+
+int dupefile_format_block_exp(void *iarg, char *output) {
+	struct dupefile *data = (struct dupefile *) iarg;
+	return printf("file %s\n"
+			"user %s\n"
+			"time %d\n\n", data->filename, data->uploader,
 			(int32_t) data->timeup);
 
 }
@@ -6455,6 +6511,23 @@ int lastonlog_format_block_batch(void *iarg, char *output) {
 			(unsigned long) data->download, buffer4);
 }
 
+int lastonlog_format_block_exp(void *iarg, char *output) {
+	struct lastonlog *data = (struct lastonlog *) iarg;
+	char buffer4[12] = { 0 };
+	memcpy(buffer4, data->stats, sizeof(data->stats));
+	return printf("user %s\n"
+			"group %s\n"
+			"tag %s\n"
+			"logon %d\n"
+			"logoff %d\n"
+			"upload %lu\n"
+			"download %lu\n"
+			"stats %s\n\n", data->uname, data->gname, data->tagline,
+			(int32_t) data->logon, (int32_t) data->logoff,
+			(unsigned long) data->upload, (unsigned long) data->download,
+			buffer4);
+}
+
 int oneliner_format_block(void *iarg, char *output) {
 	char buffer2[255] = { 0 };
 
@@ -6474,6 +6547,16 @@ int oneliner_format_block_batch(void *iarg, char *output) {
 	return printf("ONELINER\x9%s\x9%s\x9%s\x9%d\x9%s\n", data->uname,
 			data->gname, data->tagline, (int32_t) data->timestamp,
 			data->message);
+}
+
+int oneliner_format_block_exp(void *iarg, char *output) {
+	struct oneliner *data = (struct oneliner *) iarg;
+	return printf("user %s\n"
+			"group %s\n"
+			"tag %s\n"
+			"time %d\n"
+			"msg %s\n\n", data->uname, data->gname, data->tagline,
+			(int32_t) data->timestamp, data->message);
 }
 
 #define FMT_SP_OFF 	30
@@ -6536,12 +6619,43 @@ int online_format_block_batch(void *iarg, char *output) {
 		kbps = kb / (float) tdiff;
 	}
 	return printf(
-			"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\x9%d\n",
+			"ONLINE\x9%s\x9%s\x9%d\x9%d\x9%s\x9%hd\x9%d\x9%llu\x9%llu\x9%llu\x9%s\x9%s\x9%d\x9%d\n",
 			data->username, data->host, (int32_t) data->groupid,
 			(int32_t) data->login_time, data->tagline, (int16_t) data->ssl_flag,
 			(int32_t) data->procid, (ulint64_t) data->bytes_xfer,
 			(ulint64_t) data->bytes_txfer, (ulint64_t) kbps, data->status,
-			data->currentdir, data->tstart.tv_sec);
+			data->currentdir, (int32_t) data->tstart.tv_sec,
+			(int32_t) data->txfer.tv_sec);
+
+}
+
+int online_format_block_exp(void *iarg, char *output) {
+	struct ONLINE *data = (struct ONLINE *) iarg;
+	int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
+	float kb = (data->bytes_xfer / 1024), kbps = 0.0;
+
+	if (tdiff > 0 && kb > 0) {
+		kbps = kb / (float) tdiff;
+	}
+	return printf("user %s\n"
+			"host %s\n"
+			"group %d\n"
+			"time %d\n"
+			"tag %s\n"
+			"ssl %hd\n"
+			"pid %d\n"
+			"bxfer %llu\n"
+			"btxfer %llu\n"
+			"kbps %llu\n"
+			"status %s\n"
+			"dir %s\n"
+			"lupdtime %d\n"
+			"lxfertime %d\n\n", data->username, data->host,
+			(int32_t) data->groupid, (int32_t) data->login_time, data->tagline,
+			(int16_t) data->ssl_flag, (int32_t) data->procid,
+			(ulint64_t) data->bytes_xfer, (ulint64_t) data->bytes_txfer,
+			(ulint64_t) kbps, data->status, data->currentdir,
+			(int32_t) data->tstart.tv_sec, (int32_t) data->txfer.tv_sec);
 
 }
 
@@ -6621,6 +6735,29 @@ int imdb_format_block_batch(void *iarg, char *output) {
 			data->synopsis);
 }
 
+int imdb_format_block_exp(void *iarg, char *output) {
+	__d_imdb data = (__d_imdb) iarg;
+	return printf(
+			"dir %s\n"
+			"title %s\n"
+			"time %d\n"
+			"imdbid %s\n"
+			"score %.1f\n"
+			"votes %u\n"
+			"genre %s\n"
+			"year %hu\n"
+			"released %d\n"
+			"runtime %u\n"
+			"rated %s\n"
+			"actors %s\n"
+			"director %s\n"
+			"plot %s\n\n",
+			data->dirname, data->title, data->timestamp, data->imdb_id,
+			data->rating, data->votes, data->genres, data->year, data->released,
+			data->runtime, data->rated, data->actors, data->director,
+			data->synopsis);
+}
+
 int game_format_block(void *iarg, char *output) {
 	char buffer2[255] = { 0 };
 
@@ -6638,6 +6775,15 @@ int game_format_block(void *iarg, char *output) {
 int game_format_block_batch(void *iarg, char *output) {
 	__d_game data = (__d_game) iarg;
 	return printf("GAMELOG\x9%s\x9%d\x9%.1f\n", data->dirname,
+			(int32_t) data->timestamp, data->rating);
+
+}
+
+int game_format_block_exp(void *iarg, char *output) {
+	__d_game data = (__d_game) iarg;
+	return printf("dir %s\n"
+			"time %d\n"
+			"score %.1f\n\n", data->dirname,
 			(int32_t) data->timestamp, data->rating);
 
 }
@@ -6669,6 +6815,34 @@ int tv_format_block_batch(void *iarg, char *output) {
 
 }
 
+int tv_format_block_exp(void *iarg, char *output) {
+	__d_tvrage data = (__d_tvrage) iarg;
+	return printf("dir %s\n"
+			"time %d\n"
+			"name %s\n"
+			"class %s\n"
+			"showid %u\n"
+			"link %s\n"
+			"status %s\n"
+			"airday %s\n"
+			"airtime %s\n"
+			"runtime %u\n"
+			"started %d\n"
+			"ended %d\n"
+			"genre %s\n"
+			"country %s\n"
+			"seasons %hu\n"
+			"startyear %hu\n"
+			"endyear %hu\n"
+			"network %s\n\n",
+			data->dirname, data->timestamp, data->name, data->class,
+			data->showid, data->link, data->status, data->airday,
+			data->airtime, data->runtime, data->started,
+			data->ended, data->genres, data->country, data->seasons,
+			data->startyear, data->endyear, data->network);
+
+}
+
 int gen1_format_block(void *iarg, char *output) {
 	__d_generic_s2044 data = (__d_generic_s2044) iarg;
 
@@ -6682,6 +6856,23 @@ int gen1_format_block_batch(void *iarg, char *output) {
 	__d_generic_s2044 data = (__d_generic_s2044) iarg;
 
 	return printf("GENERIC1\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+			data->i32, data->s_1, data->s_2, data->s_3, data->s_4,
+			data->s_5, data->s_6, data->s_7, data->s_8);
+
+}
+
+int gen1_format_block_exp(void *iarg, char *output) {
+	__d_generic_s2044 data = (__d_generic_s2044) iarg;
+
+	return printf("i32 %u\n"
+			"ge1 %s\n"
+			"ge2 %s\n"
+			"ge3 %s\n"
+			"ge4 %s\n"
+			"ge5 %s\n"
+			"ge6 %s\n"
+			"ge7 %s\n"
+			"ge8 %s\n\n",
 			data->i32, data->s_1, data->s_2, data->s_3, data->s_4,
 			data->s_5, data->s_6, data->s_7, data->s_8);
 
@@ -6702,6 +6893,40 @@ int gen2_format_block_batch(void *iarg, char *output) {
 	__d_generic_s1644 data = (__d_generic_s1644) iarg;
 
 	return printf("GENERIC2\x9%llu\x9%llu\x9%llu\x9%llu\x9%f\x9%f\x9%f\x9%f\x9%d\x9%d\x9%d\x9%d\x9%u\x9%u\x9%u\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+			(ulint64_t)data->ui64_1,(ulint64_t)data->ui64_2,(ulint64_t)data->ui64_3,(ulint64_t)data->ui64_4, data->f_1,data->f_2,data->f_3,data->f_4,
+			data->i32_1, data->i32_2, data->i32_3, data->i32_4,data->ui32_1,
+			data->ui32_2, data->ui32_3, data->ui32_4, data->s_1, data->s_2, data->s_3, data->s_4,
+			data->s_5, data->s_6, data->s_7, data->s_8);
+
+}
+
+int gen2_format_block_exp(void *iarg, char *output) {
+	__d_generic_s1644 data = (__d_generic_s1644) iarg;
+
+	return printf("ul1 %llu\n"
+			"ul2 %llu\n"
+			"ul3 %llu\n"
+			"ul4 %llu\n"
+			"f1 %f\n"
+			"f2 %f\n"
+			"f3 %f\n"
+			"f4 %f\n"
+			"i1 %d\n"
+			"i2 %d\n"
+			"i3 %d\n"
+			"i4 %d\n"
+			"u1 %u\n"
+			"u2 %u\n"
+			"u3 %u\n"
+			"u4 %u\n"
+			"ge1 %s\n"
+			"ge2 %s\n"
+			"ge3 %s\n"
+			"ge4 %s\n"
+			"ge5 %s\n"
+			"ge6 %s\n"
+			"ge7 %s\n"
+			"ge8 %s\n\n",
 			(ulint64_t)data->ui64_1,(ulint64_t)data->ui64_2,(ulint64_t)data->ui64_3,(ulint64_t)data->ui64_4, data->f_1,data->f_2,data->f_3,data->f_4,
 			data->i32_1, data->i32_2, data->i32_3, data->i32_4,data->ui32_1,
 			data->ui32_2, data->ui32_3, data->ui32_4, data->s_1, data->s_2, data->s_3, data->s_4,
@@ -7652,6 +7877,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_dirlog;
 		hdl->g_proc3 = dirlog_format_block;
 		hdl->g_proc3_batch = dirlog_format_block_batch;
+		hdl->g_proc3_export = dirlog_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_DIRLOG;
 		hdl->jm_offset = (size_t) &((struct dirlog*) NULL)->dirname;
@@ -7666,6 +7892,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_nukelog;
 		hdl->g_proc3 = nukelog_format_block;
 		hdl->g_proc3_batch = nukelog_format_block_batch;
+		hdl->g_proc3_export = nukelog_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_NUKELOG;
 		hdl->jm_offset = (size_t) &((struct nukelog*) NULL)->dirname;
@@ -7680,6 +7907,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_dupefile;
 		hdl->g_proc3 = dupefile_format_block;
 		hdl->g_proc3_batch = dupefile_format_block_batch;
+		hdl->g_proc3_export = dupefile_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_DUPEFILE;
 		hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
@@ -7694,6 +7922,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_lastonlog;
 		hdl->g_proc3 = lastonlog_format_block;
 		hdl->g_proc3_batch = lastonlog_format_block_batch;
+		hdl->g_proc3_export = lastonlog_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_LASTONLOG;
 		hdl->jm_offset = (size_t) &((struct lastonlog*) NULL)->uname;
@@ -7708,6 +7937,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_oneliners;
 		hdl->g_proc3 = oneliner_format_block;
 		hdl->g_proc3_batch = oneliner_format_block_batch;
+		hdl->g_proc3_export = oneliner_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_ONELINERS;
 		hdl->jm_offset = (size_t) &((struct oneliner*) NULL)->uname;
@@ -7722,6 +7952,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_imdb;
 		hdl->g_proc3 = imdb_format_block;
 		hdl->g_proc3_batch = imdb_format_block_batch;
+		hdl->g_proc3_export = imdb_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_IMDBLOG;
 		hdl->jm_offset = (size_t) &((__d_imdb) NULL)->dirname;
@@ -7738,6 +7969,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_game;
 		hdl->g_proc3 = game_format_block;
 		hdl->g_proc3_batch = game_format_block_batch;
+		hdl->g_proc3_export = game_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_GAMELOG;
 		hdl->jm_offset = (size_t) &((__d_game) NULL)->dirname;
@@ -7754,6 +7986,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_tv;
 		hdl->g_proc3 = tv_format_block;
 		hdl->g_proc3_batch = tv_format_block_batch;
+		hdl->g_proc3_export = tv_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_TVRAGELOG;
 		hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
@@ -7770,6 +8003,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_gen1;
 		hdl->g_proc3 = gen1_format_block;
 		hdl->g_proc3_batch = gen1_format_block_batch;
+		hdl->g_proc3_export = gen1_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_GEN1LOG;
 		hdl->jm_offset = (size_t) &((__d_generic_s2044) NULL)->s_1;
@@ -7786,6 +8020,7 @@ int determine_datatype(__g_handle hdl) {
 		hdl->g_proc2 = ref_to_val_ptr_gen2;
 		hdl->g_proc3 = gen2_format_block;
 		hdl->g_proc3_batch = gen2_format_block_batch;
+		hdl->g_proc3_export = gen2_format_block_exp;
 		hdl->g_proc4 = g_omfp_norm;
 		hdl->ipc_key = IPC_KEY_GEN2LOG;
 		hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
@@ -10837,6 +11072,8 @@ int g_proc_mr(__g_handle hdl) {
 				"+-------------------------------------------------------------------------------------------------------------------------------------------\n"
 						"|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
 						"|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+	} else if (gfl & F_OPT_FORMAT_EXPORT) {
+		hdl->g_proc3 = hdl->g_proc3_export;
 	}
 
 	return 0;
