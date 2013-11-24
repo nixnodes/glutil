@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:9
+#@REVISION:10
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -54,7 +54,7 @@ VERBOSE=0
 #
 ## Ban user after violating minimum speed limit (seconds)
 ## Setting 0 disables ban after kick
-BANUSER=15 
+BANUSER=20 
 #
 ## Exempt users list
 EXEMPTUSERS="user1|user2"
@@ -97,10 +97,10 @@ ban_user() {
 		[ -z "$5" ] && return 0	
 		[ -z "$6" ] && return 0		
 		[ $BANUSER -lt 1 ] && return 0			
-		egrep -q '^FLAGS .*6' "$4/$1 && return 0
+		egrep -q '^FLAGS .*6' "$4/$1" && return 0
 		[ -n "$LOG" ] && echo "[`date "+%T %D"`] DISABLE USER: $1 for $BANUSER seconds.." >> $LOG
 		sed -r 's/^FLAGS .*$/&6/' "$4/$1" > /tmp/ks.$1.$$.dtm && {
-			cat /tmp/ks.$1.$$.dtm > $4/$1
+			cp "/tmp/ks.$1.$$.dtm" "$4/$1"
 			$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"	
 		}
 		
@@ -113,7 +113,7 @@ ban_user() {
 		g_FLAGS=`cat "$4/$1" | egrep '^FLAGS ' | tr -d '6'`
 		[ -z "$g_FLAGS" ] && return 1
 		sed -r "s/^FLAGS .*/$g_FLAGS/" "$4/$1" > /tmp/ks.$1.$$.dtm &&
-			cat /tmp/ks.$1.$$.dtm > $4/$1 &&
+			cp "/tmp/ks.$1.$$.dtm" "$4/$1" &&
 				rm /tmp/ks.$1.$$.dtm	
 		
 	fi
@@ -126,15 +126,15 @@ elif [[ "$1" == "unban" ]]; then
 	ban_user $2 1 $3 $4 && exit 1
 fi
 
-echo $6 | egrep -q '^STOR' || exit 1
+echo "$6" | egrep -q '^STOR' || exit 1
 
 [ -n "$FILES_ENFORCED" ] && {
-	echo $6 | egrep -q "${FILES_ENFORCED}" || exit 1
+	echo "$6" | egrep -q "${FILES_ENFORCED}" || exit 1
 }
-[ -n "$PATHS_FILTERED" ] && echo $9 | egrep -qi "${PATHS_FILTERED}" && exit 1
+[ -n "$PATHS_FILTERED" ] && echo "$9" | egrep -qi "${PATHS_FILTERED}" && exit 1
 
 [ -n "$EXEMPTUSERS" ] && echo "$3" | egrep -q "^(${EXEMPTUSERS})\$" && {
-	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
+	[ -f "/tmp/du-ks/$4" ] && rm /tmp/du-ks/$4
 	exit 1
 }
 [ $EXEMPTSITEOPS -eq 1 ] && echo "$8" | grep -q 1 && exit 1
@@ -144,7 +144,7 @@ echo $6 | egrep -q '^STOR' || exit 1
 BXFER=$1
 
 if [ $BXFER -lt 1 ]; then
-	[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4 
+	[ -f "/tmp/du-ks/$4" ] && rm /tmp/du-ks/$4 
 	exit 1
 fi
 
