@@ -16,6 +16,7 @@
  *   - ! Optimize output performance when traversing logs (rev. 6)
  *   - % Log output processing remodeled (rev. 6)
  *   - % Exception notices print to stderr (rev. 6)
+ *   - + Export output (-E) (rev. 7)
  *
  * v1.10:
  *
