@@ -17,6 +17,7 @@
  *   - % Log output processing remodeled (rev. 6)
  *   - % Exception notices print to stderr (rev. 6)
  *   - + Export output (-E) (rev. 7)
+ *   - % --[i]lom accepts hexadecimal values (rev. 8)
  *
  * v1.10:
  *
