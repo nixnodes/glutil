@@ -205,10 +205,10 @@ typedef unsigned long long int ulint64_t;
 #define PATH_MAX 4096
 #endif
 
-#define GM_MAX				16384
+#define GM_MAX			16384
 
-#define a64					((ulint64_t) 1)
-#define a32					((uint32_t) 1)
+#define a64			((ulint64_t) 1)
+#define a32			((uint32_t) 1)
 
 /* -------------------------------------------- */
 
@@ -344,12 +344,12 @@ typedef struct mda_object
 //	unsigned char flags;
 }*p_md_obj, md_obj;
 
-#define F_MDA_REFPTR		(a32 << 1)
+#define F_MDA_REFPTR		        (a32 << 1)
 #define F_MDA_FREE			(a32 << 2)
 #define F_MDA_REUSE			(a32 << 3)
-#define F_MDA_WAS_REUSED	(a32 << 4)
+#define F_MDA_WAS_REUSED	        (a32 << 4)
 #define F_MDA_EOF			(a32 << 5)
-#define F_MDA_FIRST_REUSED  (a32 << 6)
+#define F_MDA_FIRST_REUSED              (a32 << 6)
 
 typedef struct mda_header
 {
@@ -598,7 +598,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 
 #define PTRSZ 				(sizeof(void*))
 
-#define REG_MATCHES_MAX	 	4
+#define REG_MATCHES_MAX	 	        4
 
 #define UPD_MODE_RECURSIVE 		0x1
 #define UPD_MODE_SINGLE			0x2
@@ -607,7 +607,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define UPD_MODE_DUMP_NUKE		0x5
 #define UPD_MODE_DUPE_CHK		0x6
 #define UPD_MODE_REBUILD		0x7
-#define UPD_MODE_DUMP_DUPEF 	0x8
+#define UPD_MODE_DUMP_DUPEF 	        0x8
 #define UPD_MODE_DUMP_LON		0x9
 #define UPD_MODE_DUMP_ONEL		0xA
 #define UPD_MODE_DUMP_ONL		0xB
@@ -622,9 +622,9 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define UPD_MODE_DUMP_IMDB		0x14
 #define UPD_MODE_DUMP_GAME		0x15
 #define UPD_MODE_DUMP_TV		0x16
-#define UPD_MODE_DUMP_GENERIC	0x17
+#define UPD_MODE_DUMP_GENERIC	        0x17
 
-#define PRIO_UPD_MODE_MACRO 	0x1001
+#define PRIO_UPD_MODE_MACRO 	        0x1001
 #define PRIO_UPD_MODE_INFO 		0x1002
 
 /* -- flags -- */
@@ -633,22 +633,22 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_OPT_VERBOSE 			(a64 << 2)
 #define F_OPT_VERBOSE2 			(a64 << 3)
 #define F_OPT_VERBOSE3 			(a64 << 4)
-#define F_OPT_SFV	 			(a64 << 5)
+#define F_OPT_SFV	 		(a64 << 5)
 #define F_OPT_NOWRITE			(a64 << 6)
 #define F_OPT_NOBUFFER			(a64 << 7)
 #define F_OPT_UPDATE			(a64 << 8)
-#define F_OPT_FIX				(a64 << 9)
+#define F_OPT_FIX			(a64 << 9)
 #define F_OPT_FOLLOW_LINKS		(a64 << 10)
 #define F_OPT_FORMAT_BATCH		(a64 << 11)
 #define F_OPT_KILL_GLOBAL		(a64 << 12)
-#define F_OPT_MODE_RAWDUMP  	(a64 << 13)
+#define F_OPT_MODE_RAWDUMP  	        (a64 << 13)
 #define F_OPT_HAS_G_REGEX		(a64 << 14)
 #define F_OPT_VERBOSE4 			(a64 << 15)
 #define F_OPT_WBUFFER			(a64 << 16)
 #define F_OPT_FORCEWSFV			(a64 << 17)
-#define F_OPT_FORMAT_COMP   	(a64 << 18)
+#define F_OPT_FORMAT_COMP   	        (a64 << 18)
 #define F_OPT_DAEMONIZE			(a64 << 19)
-#define F_OPT_LOOP				(a64 << 20)
+#define F_OPT_LOOP			(a64 << 20)
 #define F_OPT_LOOPEXEC			(a64 << 21)
 #define F_OPT_PS_SILENT			(a64 << 22)
 #define F_OPT_PS_TIME			(a64 << 23)
@@ -662,19 +662,19 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_OPT_POSTEXEC			(a64 << 31)
 #define F_OPT_NOBACKUP			(a64 << 32)
 #define F_OPT_C_GHOSTONLY		(a64 << 33)
-#define F_OPT_XDEV				(a64 << 34)
-#define F_OPT_XBLK				(a64 << 35)
+#define F_OPT_XDEV			(a64 << 34)
+#define F_OPT_XBLK			(a64 << 35)
 #define F_OPT_MATCHQ			(a64 << 36)
 #define F_OPT_IMATCHQ			(a64 << 37)
 #define F_OPT_CDIRONLY			(a64 << 38)
-#define F_OPT_SORT 				(a64 << 39)
+#define F_OPT_SORT 			(a64 << 39)
 #define F_OPT_HASLOM			(a64 << 40)
 #define F_OPT_HAS_G_LOM			(a64 << 41)
 #define F_OPT_FORCE2 			(a64 << 42)
 #define F_OPT_VERBOSE5 			(a64 << 43)
 #define F_OPT_SHAREDMEM			(a64 << 44)
 #define F_OPT_SHMRELOAD			(a64 << 45)
-#define F_OPT_LOADQ				(a64 << 46)
+#define F_OPT_LOADQ			(a64 << 46)
 #define F_OPT_SHMDESTROY		(a64 << 47)
 #define F_OPT_SHMDESTONEXIT		(a64 << 48)
 #define F_OPT_MODE_BINARY		(a64 << 49)
@@ -683,15 +683,15 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_OPT_HASMAXHIT			(a64 << 52)
 #define F_OPT_HASMAXRES			(a64 << 53)
 #define F_OPT_PROCREV			(a64 << 54)
-#define F_OPT_NOFQ				(a64 << 55)
+#define F_OPT_NOFQ			(a64 << 55)
 #define F_OPT_IFRH_E			(a64 << 56)
 #define F_OPT_NOGLCONF			(a64 << 57)
 #define F_OPT_MAXDEPTH 			(a64 << 58)
 #define F_OPT_MINDEPTH 			(a64 << 59)
-#define F_OPT_XFD 				(a64 << 60)
+#define F_OPT_XFD 			(a64 << 60)
 #define F_OPT_ZPRUNEDUP			(a64 << 61)
-#define F_OPT_PEX				(a64 << 62)
-#define F_OPT_FORMAT_EXPORT     (a64 << 63)
+#define F_OPT_PEX			(a64 << 62)
+#define F_OPT_FORMAT_EXPORT             (a64 << 63)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -700,7 +700,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_DL_FOPEN_REWIND		(a32 << 3)
 #define F_DL_FOPEN_SHM			(a32 << 4)
 
-#define F_EARG_SFV 				(a32 << 1)
+#define F_EARG_SFV 			(a32 << 1)
 #define F_EAR_NOVERB			(a32 << 2)
 
 #define F_FC_MSET_SRC			(a32 << 1)
@@ -708,7 +708,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 
 #define F_GH_NOMEM  			(a64 << 1)
 #define F_GH_ISDIRLOG			(a64 << 2)
-#define F_GH_EXEC				(a64 << 3)
+#define F_GH_EXEC			(a64 << 3)
 #define F_GH_ISNUKELOG			(a64 << 4)
 #define F_GH_FFBUFFER			(a64 << 5)
 #define F_GH_WAPPEND			(a64 << 6)
@@ -717,36 +717,36 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_GH_ISDUPEFILE			(a64 << 9)
 #define F_GH_ISLASTONLOG		(a64 << 10)
 #define F_GH_ISONELINERS		(a64 << 11)
-#define F_GH_ONSHM				(a64 << 12)
+#define F_GH_ONSHM			(a64 << 12)
 #define F_GH_ISONLINE			(a64 << 13)
-#define F_GH_ISIMDB				(a64 << 14)
-#define F_GH_ISGAME				(a64 << 15)
-#define F_GH_ISFSX				(a64 << 16)
+#define F_GH_ISIMDB			(a64 << 14)
+#define F_GH_ISGAME			(a64 << 15)
+#define F_GH_ISFSX			(a64 << 16)
 #define F_GH_ISTVRAGE			(a64 << 17)
 #define F_GH_ISGENERIC1			(a64 << 18)
-#define F_GH_SHM				(a64 << 19)
-#define F_GH_SHMRB				(a64 << 20)
+#define F_GH_SHM			(a64 << 19)
+#define F_GH_SHMRB			(a64 << 20)
 #define F_GH_SHMDESTROY			(a64 << 21)
 #define F_GH_SHMDESTONEXIT		(a64 << 22)
 #define F_GH_FROMSTDIN			(a64 << 23)
-#define F_GH_HASLOM				(a64 << 24)
+#define F_GH_HASLOM			(a64 << 24)
 #define F_GH_HASMATCHES			(a64 << 25)
-#define F_GH_HASEXC				(a64 << 26)
+#define F_GH_HASEXC			(a64 << 26)
 #define F_GH_APFILT 			(a64 << 27)
 #define F_GH_HASMAXRES			(a64 << 28)
 #define F_GH_HASMAXHIT			(a64 << 29)
-#define F_GH_IFRES				(a64 << 30)
-#define F_GH_IFHIT				(a64 << 31)
+#define F_GH_IFRES			(a64 << 30)
+#define F_GH_IFHIT			(a64 << 31)
 #define F_GH_ISGENERIC2			(a64 << 32)
 #define F_GH_HASSTRM			(a64 << 33)
 
 /* these bits determine log type */
-#define F_GH_ISTYPE				(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
+#define F_GH_ISTYPE			(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
 
-#define F_GH_ISSHM				(F_GH_SHM|F_GH_ONSHM)
-#define F_GH_ISMP				(F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
+#define F_GH_ISSHM			(F_GH_SHM|F_GH_ONSHM)
+#define F_GH_ISMP			(F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
 
-#define F_OVRR_IPC				(a32 << 1)
+#define F_OVRR_IPC			(a32 << 1)
 #define F_OVRR_GLROOT			(a32 << 2)
 #define F_OVRR_SITEROOT			(a32 << 3)
 #define F_OVRR_DUPEFILE			(a32 << 4)
@@ -761,7 +761,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_OVRR_GE1LOG			(a32 << 13)
 #define F_OVRR_LOGFILE			(a32 << 14)
 #define F_ESREDIRFAILED			(a32 << 15)
-#define F_BM_TERM				(a32 << 16)
+#define F_BM_TERM			(a32 << 16)
 #define F_OVRR_GE2LOG			(a32 << 17)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
@@ -771,9 +771,9 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_PD_MATCHTYPES			(F_PD_MATCHDIR|F_PD_MATCHREG)
 
 #define F_GSORT_DESC			(a32 << 1)
-#define F_GSORT_ASC				(a32 << 2)
+#define F_GSORT_ASC			(a32 << 2)
 #define F_GSORT_RESETPOS		(a32 << 3)
-#define F_GSORT_NUMERIC	    	(a32 << 4)
+#define F_GSORT_NUMERIC	    	        (a32 << 4)
 
 #define F_GSORT_ORDER			(F_GSORT_DESC|F_GSORT_ASC)
 
@@ -784,49 +784,49 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 
 #define F_GM_ISREGEX			(a32 << 1)
 #define F_GM_ISMATCH			(a32 << 2)
-#define F_GM_ISLOM				(a32 << 3)
-#define F_GM_IMATCH				(a32 << 4)
-#define F_GM_NAND				(a32 << 5)
-#define F_GM_NOR				(a32 << 6)
+#define F_GM_ISLOM			(a32 << 3)
+#define F_GM_IMATCH			(a32 << 4)
+#define F_GM_NAND			(a32 << 5)
+#define F_GM_NOR			(a32 << 6)
 
-#define F_GM_TYPES				(F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
+#define F_GM_TYPES			(F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
 
 #define F_LOM_LVAR_KNOWN		(a32 << 1)
 #define F_LOM_RVAR_KNOWN		(a32 << 2)
-#define F_LOM_FLOAT				(a32 << 3)
-#define F_LOM_INT				(a32 << 4)
+#define F_LOM_FLOAT			(a32 << 3)
+#define F_LOM_INT			(a32 << 4)
 #define F_LOM_HASOPER			(a32 << 5)
 #define F_LOM_FLOAT_DBL			(a32 << 6)
-#define F_LOM_INT_S				(a32 << 7)
+#define F_LOM_INT_S			(a32 << 7)
 
-#define F_LOM_TYPES				(F_LOM_FLOAT|F_LOM_INT|F_LOM_INT_S)
+#define F_LOM_TYPES			(F_LOM_FLOAT|F_LOM_INT|F_LOM_INT_S)
 #define F_LOM_VAR_KNOWN			(F_LOM_LVAR_KNOWN|F_LOM_RVAR_KNOWN)
 
 #define F_EDS_ROOTMINSET		(a32 << 1)
-#define F_EDS_KILL				(a32 << 2)
+#define F_EDS_KILL			(a32 << 2)
 
 /* -- end flags -- */
 
-#define V_MB					0x100000
+#define V_MB				0x100000
 
-#define DL_SZ 					sizeof(struct dirlog)
-#define NL_SZ 					sizeof(struct nukelog)
-#define DF_SZ 					sizeof(struct dupefile)
-#define LO_SZ 					sizeof(struct lastonlog)
-#define OL_SZ 					sizeof(struct oneliner)
-#define ON_SZ 					sizeof(struct ONLINE)
-#define ID_SZ 					sizeof(_d_imdb)
-#define GM_SZ 					sizeof(_d_game)
-#define TV_SZ 					sizeof(_d_tvrage)
-#define G1_SZ 					sizeof(_d_generic_s2044)
-#define G2_SZ 					sizeof(_d_generic_s1644)
+#define DL_SZ 				sizeof(struct dirlog)
+#define NL_SZ 				sizeof(struct nukelog)
+#define DF_SZ 				sizeof(struct dupefile)
+#define LO_SZ 				sizeof(struct lastonlog)
+#define OL_SZ 				sizeof(struct oneliner)
+#define ON_SZ 				sizeof(struct ONLINE)
+#define ID_SZ 				sizeof(_d_imdb)
+#define GM_SZ 				sizeof(_d_game)
+#define TV_SZ 				sizeof(_d_tvrage)
+#define G1_SZ 				sizeof(_d_generic_s2044)
+#define G2_SZ 				sizeof(_d_generic_s1644)
 
 #define CRC_FILE_READ_BUFFER_SIZE 	64512
-#define	DB_MAX_SIZE 				((long long int)1073741824)   /* max file size allowed to load into memory */
-#define MAX_EXEC_STR 				262144
+#define	DB_MAX_SIZE 			((long long int)1073741824)   /* max file size allowed to load into memory */
+#define MAX_EXEC_STR 			262144
 
-#define	PIPE_READ_MAX				0x2000
-#define MAX_DATAIN_F				(V_MB*32)
+#define	PIPE_READ_MAX			0x2000
+#define MAX_DATAIN_F			(V_MB*32)
 #define MAX_G_PRINT_STATS_BUFFER	8192
 
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
@@ -845,14 +845,14 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define DEFF_LASTONLOG  		"laston.log"
 #define DEFF_DUPEFILE 			"dupefile"
 #define DEFF_ONELINERS 			"oneliners.log"
-#define DEFF_DULOG	 			"glutil.log"
-#define DEFF_IMDB	 			"imdb.log"
+#define DEFF_DULOG	 		"glutil.log"
+#define DEFF_IMDB	 		"imdb.log"
 #define DEFF_GAMELOG 			"game.log"
-#define DEFF_TV 				"tv.log"
-#define DEFF_GEN1 				"gen1.log"
-#define DEFF_GEN2 				"gen2.log"
+#define DEFF_TV 			"tv.log"
+#define DEFF_GEN1 			"gen1.log"
+#define DEFF_GEN2 			"gen2.log"
 
-#define NUKESTR_DEF				"NUKED-%s"
+#define NUKESTR_DEF			"NUKED-%s"
 
 #ifdef GLCONF
 char GLCONF_I[PATH_MAX] =
@@ -1143,7 +1143,7 @@ get_localtime(void)
 }
 
 #define F_MSG_TYPE_ANY		 	MAX_uint32_t
-#define F_MSG_TYPE_EXCEPTION 	(a32 << 1)
+#define F_MSG_TYPE_EXCEPTION 	        (a32 << 1)
 #define F_MSG_TYPE_ERROR 		(a32 << 2)
 #define F_MSG_TYPE_WARNING 		(a32 << 3)
 #define F_MSG_TYPE_NOTICE		(a32 << 4)
