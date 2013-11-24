@@ -1,4 +1,4 @@
-#@REVISION:27
+#@REVISION:28
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -82,7 +82,7 @@
 #
 #@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} votes - {genres} ]"` {m:arg1}
 #
-# <dirlog-to-ascii>
+# <dirlog-to-ascii> *DEPRECATED - added export option (-E) to glutil, see --help*
 #
 ## Converts dirlog into ASCII format, suitable
 ## for re-injection using -z
@@ -106,9 +106,10 @@
 #@MACRO:dirlog-to-ascii:{m:exe} -d --dirlog={m:q:dirlog@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}` 
 #@MACRO:imdb-to-ascii:{m:exe} -a --imdblog={m:q:imdb@file} --imdblog={imdbfile} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nimdbid {imdbid}\nplot {plot}\nscore {score}\ngenre {genre}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n"` {m:arg2} --silent --postexec `echo  "" >> {m:arg1}` 
 #@MACRO:tvrage-to-ascii:{m:exe} -h --tvlog={m:q:tvrage@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenre {genre}\nstatus {status}\nstartyear {startyear}\nendyear {endyear}\nnetwork {network}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}`
-
+#
+##
 #@MACRO:tvrage-to-sql:{m:exe} -h --tvlog={m:q:tvrage@file} silent --execv `echo "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('{name}', '{link}', '{country}', '{started}', '{ended}', '{seasons}', '{status}', '{runtime}', '{airtime}', '{airday}', '{class}', '{genres}', '{showid}', '{time}', '{network}', '{dir}', '{startyear}', '{endyear}');"` --esredir "{m:arg1}"
-
+#
 #
 ## <dirlog-clean-dupes>
 #
@@ -190,6 +191,8 @@
 ## These are basically for editing the 
 ##   binary logs by hand
 #
+## Requires: glutil 1.11-7
+#
 ## Usage:
 #
 #    glutil -m edit-dirlog [-arg1=<regex>]
@@ -197,7 +200,7 @@
 ## -arg1 is optional, used to select 
 ##   specific entries to edit
 #
-#@MACRO:edit-dirlog:{m:exe} noop silent --preexec `if ! {m:exe} -q dirlog --dirlog={m:q:dirlog@file} iregex dir,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -m dirlog-to-ascii --dirlog={m:q:dirlog@file} -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"dir,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -v && {m:exe} -e dirlog --nobackup --dirlog={m:q:dirlog@file} -ff --nofq regex dir,"{m:arg1}" silent && {m:exe} -z dirlog --nobackup --dirlog={m:q:dirlog@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
-#@MACRO:edit-tvrage:{m:exe} noop silent --preexec `if ! {m:exe} --tvlog={m:q:tvrage@file} -q tvrage iregex name,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -m tvrage-to-ascii --tvlog={m:q:tvrage@file} -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"name,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -v && {m:exe} -e tvrage --nobackup --tvlog={m:q:tvrage@file} -ff --nofq regex name,"{m:arg1}" silent && {m:exe} --nobackup --tvlog={m:q:tvrage@file} -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
-#@MACRO:edit-imdb:{m:exe} noop silent --preexec `if ! {m:exe}  -q imdb --imdblog={m:q:imdb@file} iregex title,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -m imdb-to-ascii --imdblog={m:q:imdb@file} -arg1=/tmp/glutil.ef.$$ -arg2="iregex \"title,{m:arg1}\""; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --imdblog={m:q:imdb@file} --backup imdb -v && {m:exe} -e imdb --nobackup --imdblog={m:q:imdb@file} -ff --nofq regex title,"{m:arg1}" silent && {m:exe} -z imdb --nobackup --imdblog={m:q:imdb@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-dirlog:{m:exe} noop silent --preexec `if ! {m:exe} -q dirlog --dirlog={m:q:dirlog@file} iregex dir,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q dirlog -E --dirlog={m:q:dirlog@file}  iregex "dir,{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -v && {m:exe} -e dirlog --nobackup --dirlog={m:q:dirlog@file} -ff --nofq regex dir,"{m:arg1}" silent && {m:exe} -z dirlog --nobackup --dirlog={m:q:dirlog@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-tvrage:{m:exe} noop silent --preexec `if ! {m:exe} -q tvrage --tvlog={m:q:tvrage@file}  iregex name,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q tvrage -E --tvlog={m:q:tvrage@file} iregex "name,{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -v && {m:exe} -e tvrage --nobackup --tvlog={m:q:tvrage@file} -ff --nofq regex name,"{m:arg1}" silent && {m:exe} --nobackup --tvlog={m:q:tvrage@file} -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:edit-imdb:{m:exe} noop silent --preexec `if ! {m:exe}  -q imdb --imdblog={m:q:imdb@file} iregex title,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q imdb -E --imdblog={m:q:imdb@file} iregex "title,{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --imdblog={m:q:imdb@file} --backup imdb -v && {m:exe} -e imdb --nobackup --imdblog={m:q:imdb@file} -ff --nofq regex title,"{m:arg1}" silent && {m:exe} -z imdb --nobackup --imdblog={m:q:imdb@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
 #
