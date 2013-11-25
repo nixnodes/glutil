@@ -48,6 +48,8 @@ FLAGS:
    memlimit   S     Maximum number of bytes that can be buffered
    glconf     S     Path to glftpd.conf per glconf.h
    curtime    S     Seconds passed since Epoch
+   :TAB       S     Horizontal tab
+   :NL        S     New line
   
   
 ; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
