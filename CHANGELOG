@@ -16,6 +16,9 @@
  *   - ~ Loglevels aligned one place lower than requested (rev. 4)
  *   - %! Argument processing faster (rev. 4)
  *   - ~ User file data fetch broken (since 1.11) (rev. 5)
+ *   - ~ x:/xg: reference fields not working (except for dirlog) (since 1.11) (rev. 6)
+ *   - + Add generic fields (:TAB/:NL) (rev. 7)
+ *   - + Add -printf (rev. 7)
  *
  * v1.11:
  *
