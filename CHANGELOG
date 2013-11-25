@@ -21,6 +21,7 @@
  *   - ~ Some field lookups in GENERIC-2 log were broken (rev. 9)
  *   - % Returns bad if error opening log (-q) (rev. 9)
  *   - % --nofq does not affect exit code (rev. 10)
+ *   - ~ Usage of uninitialized resource (rev. 11) 
  *
  * v1.10:
  *
