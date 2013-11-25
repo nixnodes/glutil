@@ -32,7 +32,7 @@
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-1.11-8 or above
+## Requires: - glutil-1.11-10 or above
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
