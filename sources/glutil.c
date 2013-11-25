@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-6
+ * Version     : 1.12-7
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 6
+#define VER_REVISION 7
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -197,6 +197,9 @@ typedef unsigned long long int ulint64_t;
 #define __STR_ARCH	"i686"
 #define __AA_SPFH 	"%.8X"
 #endif
+
+#define MSG_NL                  "\n"
+#define MSG_TAB                  "\t"
 
 #define MAX_uint64_t 		((uint64_t) -1)
 #define MAX_uint32_t 		((uint32_t) -1)
@@ -707,6 +710,8 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_OPT_FORMAT_EXPORT             (a64 << 63)
 
 #define F_OPT_PRINT                     (a64 << 1)
+#define F_OPT_STDIN                     (a64 << 2)
+#define F_OPT_PRINTF                    (a64 << 3)
 
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
@@ -894,6 +899,8 @@ char GLCONF_I[PATH_MAX] =
 #define _MC_GLOB_DOWNLOAD		"download"
 #define _MC_GLOB_UPLOAD			"upload"
 #define _MC_GLOB_STATUS			"status"
+#define _MC_GLOB_XREF                   "x:"
+#define _MC_GLOB_XGREF                  "xg:"
 
 #define F_SIGERR_CONTINUE 		0x1  /* continue after exception */
 
@@ -912,7 +919,7 @@ sigjmp g_sigjmp =
     {
       {
         { 0 } } } };
-uint64_t gfl_0 = 0x0, gfl = F_OPT_WBUFFER;
+uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;
 FILE *fd_log = NULL;
 char LOGFILE[PATH_MAX] =
@@ -2124,9 +2131,32 @@ opt_print(void *arg, int m)
 {
   if ((_print_ptr = g_pg(arg, m)))
     {
-      gfl_0 |= F_OPT_PRINT;
+      gfl0 |= F_OPT_PRINT;
+      return 0;
     }
-  return 0;
+  return 4250;
+}
+
+int
+opt_printf(void *arg, int m)
+{
+  if ((_print_ptr = g_pg(arg, m)))
+    {
+      gfl0 |= F_OPT_PRINTF;
+      return 0;
+    }
+  return 4250;
+}
+
+int
+opt_stdin(void *arg, int m)
+{
+  if ((_print_ptr = g_pg(arg, m)))
+    {
+      gfl0 |= F_OPT_STDIN;
+      return 0;
+    }
+  return 4250;
 }
 
 int
@@ -3137,8 +3167,8 @@ __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
 
 __g_proc_rv dt_rval_dirlog_user, dt_rval_dirlog_group, dt_rval_dirlog_files,
     dt_rval_dirlog_size, dt_rval_dirlog_status, dt_rval_dirlog_time,
-    dt_rval_dirlog_mode_e, dt_rval_dirlog_dir, dt_rval_xg_dirlog, dt_rval_x_dirlog,
-    dt_rval_dirlog_basedir;
+    dt_rval_dirlog_mode_e, dt_rval_dirlog_dir, dt_rval_xg_dirlog,
+    dt_rval_x_dirlog, dt_rval_dirlog_basedir;
 
 __g_proc_rv dt_rval_nukelog_size, dt_rval_nukelog_time, dt_rval_nukelog_status,
     dt_rval_nukelog_mult, dt_rval_nukelog_mode_e, dt_rval_nukelog_dir,
@@ -3206,7 +3236,7 @@ _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
     is_ascii_hexadecimal, is_ascii_uppercase_text;
 
 _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
-    g_xproc_print_d, g_xproc_print;
+    g_omfp_eassemblef, g_xproc_print_d, g_xproc_print;
 
 off_t
 file_crc32(char *, uint32_t *);
@@ -3470,10 +3500,11 @@ void *f_ref[] =
       (void*) 0, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
       opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
       opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-print",
-      opt_print, (void*) 1, "--print", opt_print, (void*) 1, "-b", opt_backup,
-      (void*) 1, "--postexec", opt_g_postexec, (void*) 1, "--preexec",
-      opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep",
-      opt_g_sleep, (void*) 1, "-arg1",
+      opt_print, (void*) 1, "-printf", opt_printf, (void*) 1, "--print",
+      opt_print, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
+      opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
+      "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
+      "-arg1",
       NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
       NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
       "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
@@ -4575,8 +4606,6 @@ main(int argc, char *argv[])
   return EXITVAL;
 }
 
-#define MSG_NL 	"\n"
-
 int
 g_print_info(void)
 {
@@ -5234,9 +5263,13 @@ g_preproc_xhdl(__std_rh ret)
     {
       ret->xproc_out = g_xproc_print;
     }
-  else if ((gfl_0 & F_OPT_PRINT))
+  else if ((gfl0 & F_OPT_PRINT))
     {
       ret->xproc_out = g_omfp_eassemble;
+    }
+  else if ((gfl0 & F_OPT_PRINTF))
+    {
+      ret->xproc_out = g_omfp_eassemblef;
     }
   else
     {
@@ -6796,6 +6829,21 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
   printf("%s\n", b_glob);
 }
 
+void
+g_omfp_eassemblef(void *hdl, void *ptr, char *sbuffer)
+{
+  char *s_ptr;
+  if (!(s_ptr = g_exech_build_string(ptr, &((__g_handle ) hdl)->print_mech,
+      (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+    {
+      print_str("ERROR: could not assemble print string\n");
+      gfl |= F_OPT_KILL_GLOBAL;
+      return;
+    }
+
+  printf("%s", b_glob);
+}
+
 #define 	ACT_WRITE_BUFFER_MEMBERS	10000
 
 int
@@ -7021,8 +7069,8 @@ process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
 
   while (ora->option)
     {
-      if (strlen(ora->option) == strlen(opt)
-          && !strncmp(ora->option, opt, strlen(ora->option)))
+      size_t oo_l = strlen(ora->option);
+      if (oo_l == strlen(opt) && !strncmp(ora->option, opt, oo_l))
         {
           if (ora->function)
             {
@@ -10952,6 +11000,21 @@ dt_rval_generic_logfile(void *arg, char *match, char *output, size_t max_size)
   return LOGFILE;
 }
 
+char *
+dt_rval_generic_newline(void *arg, char *match, char *output, size_t max_size)
+{
+  return MSG_NL;
+}
+
+char *
+dt_rval_generic_tab(void *arg, char *match, char *output, size_t max_size)
+{
+  return MSG_TAB;
+}
+
+#define MSG_GENERIC_NL          ":NL"
+#define MSG_GENERIC_TAB         ":TAB"
+
 void *
 ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size)
 {
@@ -10986,6 +11049,14 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size)
   else if (!strncmp(match, "q:", 2))
     {
       return dt_rval_q;
+    }
+  else if (!strncmp(match, MSG_GENERIC_NL, 3))
+    {
+      return dt_rval_generic_newline;
+    }
+  else if (!strncmp(match, MSG_GENERIC_TAB, 4))
+    {
+      return dt_rval_generic_tab;
     }
   else if (!strncmp(match, "exe", 3))
     {
@@ -13527,17 +13598,17 @@ g_proc_mr(__g_handle hdl)
     {
       hdl->g_proc3 = hdl->g_proc3_batch;
     }
-  else if ((gfl_0 & F_OPT_PRINT))
+  else if ((gfl0 & F_OPT_PRINT) || (gfl0 & F_OPT_PRINTF))
     {
       if (!hdl->print_mech.offset && _print_ptr)
         {
           size_t pp_l = strlen(_print_ptr);
-          //printf(";:: %s : %d\n", _print_ptr, strlen(_print_ptr));
-          /*if (!pp_l || _print_ptr[0] == 0xA)
-           {
-           print_str("ERROR: %s: empty -print command\n", hdl->file);
-           return 2010;
-           }*/
+
+          if (!pp_l || _print_ptr[0] == 0xA)
+            {
+              print_str("ERROR: %s: empty -print command\n", hdl->file);
+              return 2010;
+            }
           if (pp_l > MAX_EXEC_STR)
             {
               print_str("ERROR: %s: -print string too large\n", hdl->file);
@@ -13550,7 +13621,14 @@ g_proc_mr(__g_handle hdl)
               return 2009;
             }
         }
-      hdl->g_proc4 = g_omfp_eassemble;
+      if ((gfl0 & F_OPT_PRINT))
+        {
+          hdl->g_proc4 = g_omfp_eassemble;
+        }
+      else
+        {
+          hdl->g_proc4 = g_omfp_eassemblef;
+        }
     }
   else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP))
     {
@@ -14410,8 +14488,6 @@ dt_rval_x_dirlog(void *arg, char *match, char *output, size_t max_size)
   return output;
 }
 
-
-
 void *
 ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
 {
@@ -14457,11 +14533,11 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_dirlog_mode_e;
     }
-  else if (!strncmp(match, "x:", 2))
+  else if (!strncmp(match, _MC_GLOB_XREF, 2))
     {
       return dt_rval_x_dirlog;
     }
-  else if (!strncmp(match, "xg:", 3))
+  else if (!strncmp(match, _MC_GLOB_XGREF, 3))
     {
       return dt_rval_xg_dirlog;
     }
@@ -14620,11 +14696,11 @@ ref_to_val_lk_nukelog(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_nukelog_reason;
     }
-  else if (!strncmp(match, "x:", 2))
+  else if (!strncmp(match, _MC_GLOB_XREF, 2))
     {
       return dt_rval_x_nukelog;
     }
-  else if (!strncmp(match, "xg:", 3))
+  else if (!strncmp(match, _MC_GLOB_XGREF, 3))
     {
       return dt_rval_xg_nukelog;
     }
@@ -15214,8 +15290,7 @@ dt_rval_imdb_xg(void *arg, char *match, char *output, size_t max_size)
   _d_xref xref_t =
     {
       { 0 } };
-  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
-      ((__d_imdb) arg)->dirname);
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT, ((__d_imdb) arg)->dirname);
   ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
   return output;
 }
@@ -15293,11 +15368,11 @@ ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_imdb_synopsis;
     }
-  else if (!strncmp(match, "x:", 2))
+  else if (!strncmp(match, _MC_GLOB_XREF, 2))
     {
       return dt_rval_imdb_x;
     }
-  else if (!strncmp(match, "xg:", 3))
+  else if (!strncmp(match, _MC_GLOB_XGREF, 3))
     {
       return dt_rval_imdb_xg;
     }
@@ -15354,8 +15429,7 @@ dt_rval_game_xg(void *arg, char *match, char *output, size_t max_size)
   _d_xref xref_t =
     {
       { 0 } };
-  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
-      ((__d_game) arg)->dirname);
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT, ((__d_game) arg)->dirname);
   ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
   return output;
 }
@@ -15389,11 +15463,11 @@ ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_game_dir;
     }
-  else if (!strncmp(match, "x:", 2))
+  else if (!strncmp(match, _MC_GLOB_XREF, 2))
     {
       return dt_rval_game_x;
     }
-  else if (!strncmp(match, "xg:", 3))
+  else if (!strncmp(match, _MC_GLOB_XGREF, 3))
     {
       return dt_rval_game_xg;
     }
@@ -15554,8 +15628,7 @@ dt_rval_tvrage_xg(void *arg, char *match, char *output, size_t max_size)
   _d_xref xref_t =
     {
       { 0 } };
-  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
-      ((__d_tvrage) arg)->dirname);
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT, ((__d_tvrage) arg)->dirname);
   ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
   return output;
 }
@@ -15648,11 +15721,11 @@ ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_tvrage_network;
     }
-  else if (!strncmp(match, "x:", 2))
+  else if (!strncmp(match, _MC_GLOB_XREF, 2))
     {
       return dt_rval_tvrage_x;
     }
-  else if (!strncmp(match, "xg:", 3))
+  else if (!strncmp(match, _MC_GLOB_XGREF, 3))
     {
       return dt_rval_tvrage_xg;
     }
