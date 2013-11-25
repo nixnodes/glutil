@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-10
+ * Version     : 1.11-11
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 10
+#define VER_REVISION 11
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -16536,13 +16536,13 @@ process_exec_string(char *input, char *output, size_t max_size, void *callback,
   char buffer[255] =
     { 0 }, buffer2[MAX_VAR_LEN] =
     { 0 };
-  int i, i2, pi, r, f;
+  int i, i2, pi, r = 0, f;
 
   for (i = 0, pi = 0; i < blen; i++, pi++)
     {
       if (input[i] == 0x7B)
         {
-          for (i2 = 0, i++, f = 0; i < blen && i2 < 255; i++, i2++)
+          for (i2 = 0, i++, f = 0, r = 0; i < blen && i2 < 255; i++, i2++)
             {
               if (input[i] == 0x7D)
                 {
