@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-9
+ * Version     : 1.11-10
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3248,7 +3248,6 @@ int
 process_exec_string(char *, char *, size_t, void *, void*);
 int
 process_exec_args(void *data, __g_handle hdl);
-
 int
 is_char_uppercase(char);
 char *
@@ -4902,10 +4901,10 @@ rebuild(void *arg)
           (ulint64_t) g_act_1.rw);
     }
 
-  if ((gfl & F_OPT_NOFQ) && !(g_act_1.flags & F_GH_APFILT))
+  /*if ((gfl & F_OPT_NOFQ) && !(g_act_1.flags & F_GH_APFILT))
     {
       return 6;
-    }
+    }*/
 
   return 0;
 }
@@ -6399,7 +6398,6 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p))
     {
-      EXITVAL = 1;
       ofl |= F_BM_TERM;
       gfl |= F_OPT_KILL_GLOBAL;
     }
@@ -6694,9 +6692,9 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
       fflush(stdout);
     }
 
-  g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
+ // g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
-  if (!(gfl & F_OPT_FORMAT_COMP) && !(g_act_1.flags & F_GH_ISONLINE))
+  if (!(g_act_1.flags & F_GH_ISONLINE))
     {
       print_str("STATS: %s: read %llu/%llu records\n", file,
           (unsigned long long int) c,
@@ -6704,8 +6702,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
               (unsigned long long int) c : g_act_1.buffer.count);
     }
 
-  if ((gfl & F_OPT_NOFQ) && !c)
-    {
+  if (!c) {
       EXITVAL = 1;
     }
 
@@ -9554,9 +9551,10 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
       return 1;
     }
 
-  if (g_proc_mr(hdl)) {
+  if (g_proc_mr(hdl))
+    {
       return 32;
-  }
+    }
 
   hdl->fh = fd;
 
@@ -16544,7 +16542,7 @@ process_exec_string(char *input, char *output, size_t max_size, void *callback,
     {
       if (input[i] == 0x7B)
         {
-          for (i2 = 0, i++, r = 0, f = 0; i < blen && i2 < 255; i++, i2++)
+          for (i2 = 0, i++, f = 0; i < blen && i2 < 255; i++, i2++)
             {
               if (input[i] == 0x7D)
                 {
