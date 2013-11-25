@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12
+ * Version     : 1.12-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -406,6 +406,7 @@ typedef struct g_handle
   off_t max_results, max_hits;
   __g_ipcbm ifrh_l0, ifrh_l1;
   _execv exec_args;
+  mda print_mech;
   void *data;
   char s_buffer[PATH_MAX];
   char mv1_b[MAX_VAR_LEN];
@@ -705,6 +706,8 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_OPT_PEX			(a64 << 62)
 #define F_OPT_FORMAT_EXPORT             (a64 << 63)
 
+#define F_OPT_PRINT                     (a64 << 1)
+
 #define F_OPT_HASMATCH			(F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
 
 #define F_DL_FOPEN_BUFFER		(a32 << 1)
@@ -909,7 +912,7 @@ sigjmp g_sigjmp =
     {
       {
         { 0 } } } };
-uint64_t gfl = F_OPT_WBUFFER;
+uint64_t gfl_0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;
 FILE *fd_log = NULL;
 char LOGFILE[PATH_MAX] =
@@ -1387,30 +1390,32 @@ int g_regex_flags = REG_EXTENDED;
 
 size_t max_datain_f = MAX_DATAIN_F;
 
+char b_glob[MAX_EXEC_STR + 1];
+
 char *hpd_up =
     "glFTPd binary logs utility, version %d.%d-%d%s-%s\n"
         "\n"
         "Main options:\n"
         "\n Output:\n"
-        "  -d, [--raw] [--batch] [--export|-E]\n"
+        "  -d, [--raw] [--batch] [--export|-E] [-print]\n"
         "                        Parse directory log and print to stdout in text/binary format\n"
         "                          (-vv prints dir nuke status from nukelog)\n"
         "                         --batch         Prints with simple formatting\n"
         "                         --export, -E    Prints in glutil export text format\n"
         "                         --raw           Prints raw binary data to stdout\n"
-        "  -n, -||-              Parse nuke log to stdout\n"
-        "  -i, -||-              Parse dupe file to stdout\n"
-        "  -l, -||-              Parse last-on log to stdout\n"
-        "  -o, -||-              Parse oneliners to stdout\n"
-        "  -a, -||-              Parse iMDB log to stdout\n"
-        "  -k, -||-              Parse game log to stdout\n"
-        "  -h, -||-              Parse tvrage log to stdout\n"
-        "  -w  -||- [--comp]     Parse online users data from shared memory to stdout\n"
-        "  -q <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--raw] [--batch]\n"
-        "                        Parse specified log to stdout\n"
+        "  -n, -||-              Parse nuke log\n"
+        "  -i, -||-              Parse dupe file\n"
+        "  -l, -||-              Parse last-on log\n"
+        "  -o, -||-              Parse oneliners\n"
+        "  -a, -||-              Parse iMDB log\n"
+        "  -k, -||-              Parse game log\n"
+        "  -h, -||-              Parse tvrage log\n"
+        "  -w  -||- [--comp]     Parse online users data from shared memory\n"
+        "  -q <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1|ge2> [--raw] [--batch] [--export|-E] [-print]\n"
+        "                        Parse specified log\n"
         "  -t                    Parse all user files inside /ftp-data/users\n"
         "  -g                    Parse all group files inside /ftp-data/groups\n"
-        "  -x <root dir> [-R] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>] [--fd]\n"
+        "  -x <root dir> [-R] ([--dir]|[--file]|[--cdir]) [--maxdepth=<limit>] [--mindepth=<limit>] [--fd] [-print]\n"
         "                        Parses filesystem and processes each item found with internal filters/hooks\n"
         "                          --dir - scan directories only\n"
         "                          --file - scan files only (default is both dirs and files)\n"
@@ -1419,6 +1424,7 @@ char *hpd_up =
         "                          --mindepth - process only when recursor depth is over <limit>\n"
         "                          --fd - apply filters before recursor descends into subdirectory\n"
         "                          --recursive (-R) - traverse the whole <root dir> directory tree\n"
+        "  -print <fmt string>   Format output using {var} directives (see MANUAL for a field list)\n"
         "\n Input:\n"
         "  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
         "                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -2110,6 +2116,16 @@ opt_backup(void *arg, int m)
 {
   p_argv_off = g_pg(arg, m);
   updmode = UPD_MODE_BACKUP;
+  return 0;
+}
+
+char *_print_ptr = NULL;
+
+int
+opt_print(void *arg, int m)
+{
+  _print_ptr = g_pg(arg, m);
+  gfl_0 |= F_OPT_PRINT;
   return 0;
 }
 
@@ -3049,6 +3065,7 @@ typedef int
 _d_is_am(uint8_t in_c);
 typedef int
 (*__d_is_am)(uint8_t in_c);
+
 /* specific types */
 typedef int
 __d_enum_cb(char *, unsigned char, void *, __g_eds);
@@ -3072,6 +3089,8 @@ typedef char *
 __g_proc_rv(void *arg, char *match, char *output, size_t max_size);
 typedef void *
 _d_rtv_lk(void *arg, char *match, char *output, size_t max_size);
+typedef void
+_d_omfp_fp(void *hdl, void *ptr, char *sbuffer);
 
 __g_t_ptr g_t8_ptr, g_t16_ptr, g_t32_ptr, g_t64_ptr;
 _d_ag_handle_i g_cleanup, gh_rewind, determine_datatype, g_close, g_shm_cleanup;
@@ -3191,6 +3210,9 @@ _d_rtv_lk ref_to_val_lk_dirlog, ref_to_val_lk_nukelog, ref_to_val_lk_dupefile,
 
 _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
     is_ascii_hexadecimal, is_ascii_uppercase_text;
+
+_d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
+    g_xproc_print_d, g_xproc_print;
 
 off_t
 file_crc32(char *, uint32_t *);
@@ -3455,10 +3477,11 @@ void *f_ref[] =
       opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1, "-R", opt_g_recursive,
       (void*) 0, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
       opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-b",
-      opt_backup, (void*) 1, "--postexec", opt_g_postexec, (void*) 1,
-      "--preexec", opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep,
-      (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1",
+      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-print",
+      opt_print, (void*) 1, "--print", opt_print, (void*) 1, "-b", opt_backup,
+      (void*) 1, "--postexec", opt_g_postexec, (void*) 1, "--preexec",
+      opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep",
+      opt_g_sleep, (void*) 1, "-arg1",
       NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
       NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
       "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
@@ -5177,20 +5200,20 @@ typedef struct ___std_rh_0
   _g_handle hdl;
   _d_xref p_xref;
   __d_xproc_rc xproc_rcl0, xproc_rcl1;
-  __d_xproc_out xproc_out;
+  _d_omfp xproc_out;
   char root[PATH_MAX];
 } _std_rh, *__std_rh;
 
 void
-g_xproc_print_d(char *desc, char *name)
+g_xproc_print_d(void *hdl, void *ptr, char *sbuffer)
 {
-  print_str("%s: %s\n", desc, name);
+  print_str("%s\n", sbuffer);
 }
 
 void
-g_xproc_print(char *desc, char *name)
+g_xproc_print(void *hdl, void *ptr, char *sbuffer)
 {
-  printf("%s\n", name);
+  printf("%s\n", sbuffer);
 }
 
 void
@@ -5211,6 +5234,10 @@ g_preproc_xhdl(__std_rh ret)
   if ((gfl & F_OPT_FORMAT_BATCH))
     {
       ret->xproc_out = g_xproc_print;
+    }
+  else if ((gfl_0 & F_OPT_PRINT))
+    {
+      ret->xproc_out = g_omfp_eassemble;
     }
   else
     {
@@ -5399,8 +5426,7 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
 }
 
 int
-g_xproc_m(char *s_type, unsigned char type, char *name, __std_rh aa_rh,
-    __g_eds eds)
+g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds)
 {
   if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth)
     {
@@ -5439,13 +5465,13 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
       case DT_REG:;
       if (aa_rh->flags & F_PD_MATCHREG)
         {
-          if (g_xproc_m("FILE", type, name, aa_rh, eds))
+          if (g_xproc_m(type, name, aa_rh, eds))
             {
               break;
             }
           if (aa_rh->xproc_out)
             {
-              aa_rh->xproc_out("FILE", aa_rh->p_xref.name);
+              aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
             }
         }
       break;
@@ -5463,13 +5489,13 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
 
       if (aa_rh->flags & F_PD_MATCHDIR)
         {
-          if (g_xproc_m("DIR", type, name, aa_rh, eds))
+          if (g_xproc_m(type, name, aa_rh, eds))
             {
               break;
             }
           if (aa_rh->xproc_out)
             {
-              aa_rh->xproc_out("DIR", aa_rh->p_xref.name);
+              aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
             }
         }
 
@@ -5482,13 +5508,13 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
       case DT_LNK:;
       if (!(gfl & F_OPT_FOLLOW_LINKS))
         {
-          if (g_xproc_m("LINK", type, name, aa_rh, eds))
+          if (g_xproc_m(type, name, aa_rh, eds))
             {
               break;
             }
           if (aa_rh->xproc_out)
             {
-              aa_rh->xproc_out("LINK", aa_rh->p_xref.name);
+              aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
             }
         }
       else
@@ -6754,8 +6780,22 @@ g_omfp_raw(void * hdl, void *ptr, char *sbuffer)
 void
 g_omfp_ocomp(void * hdl, void *ptr, char *sbuffer)
 {
-  ((__g_handle ) hdl)->g_proc3(ptr, sbuffer);
-  fwrite(sbuffer, 1, strlen(sbuffer), stdout);
+  ((__g_handle ) hdl)->g_proc3(ptr, NULL);
+}
+
+void
+g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
+{
+  char *s_ptr;
+  if (!(s_ptr = g_exech_build_string(ptr, &((__g_handle ) hdl)->print_mech,
+      (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+    {
+      print_str("ERROR: could not assemble print string\n");
+      gfl |= F_OPT_KILL_GLOBAL;
+      return;
+    }
+
+  printf("%s\n", b_glob);
 }
 
 #define 	ACT_WRITE_BUFFER_MEMBERS	10000
@@ -9688,8 +9728,6 @@ g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl)
   return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
 }
 
-char b_glob[MAX_EXEC_STR + 1];
-
 int
 g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
 {
@@ -9729,6 +9767,20 @@ g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
     {
       return -1;
     }
+}
+
+int
+g_do_print(void *buffer, void *callback, char *ex_str, void *hdl)
+{
+  char *ptr;
+  if (!(ptr = g_exech_build_string(buffer, &((__g_handle ) hdl)->exec_args.mech,
+      (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+    {
+      b_glob[0] = 0x0;
+      return -2;
+    }
+
+  return system(b_glob);
 }
 
 int
@@ -13244,11 +13296,9 @@ char *
 g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
     size_t maxlen)
 {
-  p_md_obj ptr = md_first(mech);
+  p_md_obj ptr = mech->objects;
   __d_exec_ch ch_ptr;
-  char *s_ptr = output;
 
-  char s_b0[MAX_VAR_LEN];
   size_t cw = 0;
 
   while (ptr)
@@ -13256,21 +13306,22 @@ g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
       ch_ptr = (__d_exec_ch ) ptr->ptr;
       if (!ch_ptr->callback)
         {
-          if (ch_ptr->len)
+          if (!ch_ptr->len)
             {
-              if (cw + ch_ptr->len >= maxlen)
-                {
-                  print_str(M_EXECH_DCNBT, hdl->file);
-                  break;
-                }
-              strncpy(s_ptr, ch_ptr->st_ptr, ch_ptr->len);
-              s_ptr += ch_ptr->len;
-              cw += ch_ptr->len;
+              goto end_l;
             }
+          if (cw + ch_ptr->len >= maxlen)
+            {
+              print_str(M_EXECH_DCNBT, hdl->file);
+              break;
+            }
+          strncpy(output, ch_ptr->st_ptr, ch_ptr->len);
+          output += ch_ptr->len;
+          cw += ch_ptr->len;
         }
       else
         {
-          char *rs_ptr = ch_ptr->callback(d_ptr, ch_ptr->st_ptr, s_b0,
+          char *rs_ptr = ch_ptr->callback(d_ptr, ch_ptr->st_ptr, hdl->mv1_b,
           MAX_VAR_LEN);
           if (rs_ptr)
             {
@@ -13280,14 +13331,20 @@ g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
                   print_str(M_EXECH_DCNBT, hdl->file);
                   break;
                 }
-              strncpy(s_ptr, rs_ptr, rs_len);
-              s_ptr += rs_len;
+              if (!rs_len)
+                {
+                  goto end_l;
+                }
+              strncpy(output, rs_ptr, rs_len);
+              output += rs_len;
               cw += rs_len;
             }
         }
+      end_l:
+
       ptr = ptr->next;
     }
-  s_ptr[0] = 0x0;
+  output[0] = 0x0;
   return output;
 }
 
@@ -13466,7 +13523,7 @@ g_proc_mr(__g_handle hdl)
                   hdl->exec_args.argv_c[0]);
             }
         }
-      else
+      else if (!hdl->exec_args.mech.offset)
         {
           if ((r = g_compile_exech(&hdl->exec_args.mech, hdl, exec_str)))
             {
@@ -13477,6 +13534,16 @@ g_proc_mr(__g_handle hdl)
         }
     }
 
+  if (_print_ptr && !hdl->print_mech.offset)
+    {
+      if ((r = g_compile_exech(&hdl->print_mech, hdl, _print_ptr)))
+        {
+          print_str("ERROR: %s: [%d]: could not compile print string\n",
+              hdl->file, r);
+          return 2009;
+        }
+    }
+
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
       hdl->g_proc4 = g_omfp_raw;
@@ -13484,6 +13551,10 @@ g_proc_mr(__g_handle hdl)
   else if (gfl & F_OPT_FORMAT_BATCH)
     {
       hdl->g_proc3 = hdl->g_proc3_batch;
+    }
+  else if (gfl_0 & F_OPT_PRINT)
+    {
+      hdl->g_proc4 = g_omfp_eassemble;
     }
   else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP))
     {
