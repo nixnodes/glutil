@@ -5,6 +5,14 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v1.12:
+ *
+ *   - %! -exec[v] arguments pre-compile
+ *   - + -print, see --help (rev. 1)
+ *   - ~ Alot of smaller fixes (rev. 1)
+ *   - ~ Fixes and code cleanup (rev. 2)
+ *   - ~ Get file creation time on properly (rev. 3)
+ *
  * v1.11:
  *
  *   - %! Rewrote matching routines to be more efficient
@@ -21,7 +29,7 @@
  *   - ~ Some field lookups in GENERIC-2 log were broken (rev. 9)
  *   - % Returns bad if error opening log (-q) (rev. 9)
  *   - % --nofq does not affect exit code (rev. 10) (affects scripts, update them)
- *   - ~ Usage of uninitialized resource (rev. 11) 
+ *   - ~ Usage of uninitialized resource (rev. 11)
  *
  * v1.10:
  *
