@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-2
+ * Version     : 1.12-3
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -5177,6 +5177,7 @@ g_bin_compare(const void *p1, const void *p2, off_t size)
 #define F_XRF_GET_MINOR		(a32 << 12)
 #define F_XRF_GET_MAJOR		(a32 << 13)
 #define F_XRF_GET_SPARSE	(a32 << 14)
+#define F_XRF_GET_STCTIME       (a32 << 15)
 
 #define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES	(F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
@@ -5367,6 +5368,11 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
         }
       else
         {
+          if (aa_rh->p_xref.flags & F_XRF_GET_STCTIME)
+            {
+              aa_rh->p_xref.st.st_ctime = get_file_creation_time(
+                  &aa_rh->p_xref.st);
+            }
           if (aa_rh->p_xref.flags & F_XRF_GET_UPERM)
             {
               aa_rh->p_xref.uperm = (aa_rh->p_xref.st.st_mode & S_IRWXU) >> 6;
@@ -9353,7 +9359,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = NL_SZ;
       hdl->d_memb = 9;
       hdl->g_proc0 = gcb_nukelog;
-     // hdl->g_proc1 = ref_to_val_nukelog;
+      // hdl->g_proc1 = ref_to_val_nukelog;
       hdl->g_proc1_lookup = ref_to_val_lk_nukelog;
       hdl->g_proc2 = ref_to_val_ptr_nukelog;
       hdl->g_proc3 = nukelog_format_block;
@@ -11207,7 +11213,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size)
         {
           return 1;
         }
-      snprintf(output, max_size, "%d", (int32_t) st.st_ctime);
+      snprintf(output, max_size, "%d", (int32_t) get_file_creation_time(&st));
     }
   else if (!strncmp(match, _MC_X_MTIME, 5))
     {
@@ -11649,7 +11655,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size)
     {
       if ( arg)
         {
-          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_STCTIME;
         }
       return dt_rval_x_ctime;
     }
@@ -11875,7 +11881,7 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
   else if (!strncmp(match, _MC_X_CTIME, 5))
     {
       *output = ~((int) sizeof(data->st.st_ctime));
-      data->flags |= F_XRF_DO_STAT;
+      data->flags |= F_XRF_DO_STAT|F_XRF_GET_STCTIME;
       return &((__d_xref) NULL)->st.st_ctime;
     }
   else if (!strncmp(match, _MC_X_MTIME, 5))
@@ -14317,7 +14323,6 @@ g_dirname(char *input)
   return input;
 }
 
-
 char *
 dt_rval_dirlog_user(void *arg, char *match, char *output, size_t max_size)
 {
@@ -14463,8 +14468,6 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
 #define _MC_NUKELOG_UNNUKER		"unnuker"
 #define _MC_NUKELOG_NUKEE		"nukee"
 #define _MC_NUKELOG_REASON		"reason"
-
-
 
 char *
 dt_rval_nukelog_size(void *arg, char *match, char *output, size_t max_size)
@@ -14639,7 +14642,6 @@ ref_to_val_lk_dupefile(void *arg, char *match, char *output, size_t max_size)
     }
   return NULL;
 }
-
 
 #define _MC_LASTONLOG_STATS  	"stats"
 #define _MC_GLOB_TAG		"tag"
