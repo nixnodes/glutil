@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-1
+ * Version     : 1.12-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3107,12 +3107,6 @@ __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
     ref_to_val_generic, ref_to_val_macro, ref_to_val_imdb, ref_to_val_game,
     ref_to_val_tv, ref_to_val_x, ref_to_val_gen1, ref_to_val_gen2;
 
-__d_ref_to_val_ps ref_to_val_dirlog_ps, ref_to_val_nukelog_ps,
-    ref_to_val_dupefile_ps, ref_to_val_lastonlog_ps, ref_to_val_oneliners_ps,
-    ref_to_val_online_ps, ref_to_val_imdb_ps, ref_to_val_game_ps,
-    ref_to_val_tv_ps, ref_to_val_gen1_ps, ref_to_val_x_ps,
-    ref_to_val_generic_ps, ref_to_val_gen2_ps;
-
 __d_ref_to_pval ref_to_val_ptr_dirlog, ref_to_val_ptr_nukelog,
     ref_to_val_ptr_oneliners, ref_to_val_ptr_online, ref_to_val_ptr_imdb,
     ref_to_val_ptr_game, ref_to_val_ptr_lastonlog, ref_to_val_ptr_dupefile,
@@ -5252,9 +5246,8 @@ g_preproc_xhdl(__std_rh ret)
     }
 
   ret->hdl.flags |= F_GH_ISFSX;
-  ret->hdl.g_proc1 = ref_to_val_x;
+  //ret->hdl.g_proc1 = ref_to_val_x;
   ret->hdl.g_proc1_lookup = ref_to_val_lk_x;
-  //ret->hdl.g_proc1_ps = ref_to_val_x_ps;
   ret->hdl.jm_offset = (size_t) ((__d_xref ) NULL)->name;
   ret->hdl.g_proc2 = ref_to_val_ptr_x;
   ret->hdl._x_ref = &ret->p_xref;
@@ -6697,20 +6690,16 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   void *ptr;
 
-  char sbuffer[MAX_G_PRINT_STATS_BUFFER + 8];
   size_t c = 0;
 
   g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
 
   g_act_1.buffer.offset = 0;
 
-  while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz)))
+  if (!sigsetjmp(g_sigjmp.env, 1))
     {
-      if (!sigsetjmp(g_sigjmp.env, 1))
+      while ((ptr = g_read(buffer, &g_act_1, g_act_1.block_sz)))
         {
-          g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL,
-          NULL);
-
           if ((gfl & F_OPT_KILL_GLOBAL))
             {
               break;
@@ -6728,10 +6717,9 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
             }
 
           c++;
-          g_act_1.g_proc4((void*) &g_act_1, ptr, sbuffer);
+          g_act_1.g_proc4((void*) &g_act_1, ptr, NULL);
 
         }
-
     }
 
   if (gfl & F_OPT_MODE_RAWDUMP)
@@ -9108,7 +9096,7 @@ g_map_shm(__g_handle hdl, key_t ipc)
   hdl->flags |= F_GH_ISONLINE;
   hdl->d_memb = 3;
 
-  hdl->g_proc1 = ref_to_val_online;
+  //hdl->g_proc1 = ref_to_val_online;
   hdl->g_proc1_lookup = ref_to_val_lk_online;
   hdl->g_proc2 = ref_to_val_ptr_online;
   hdl->g_proc3 = online_format_block;
@@ -9349,7 +9337,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = DL_SZ;
       hdl->d_memb = 7;
       hdl->g_proc0 = gcb_dirlog;
-      hdl->g_proc1 = ref_to_val_dirlog;
+      //hdl->g_proc1 = ref_to_val_dirlog;
       hdl->g_proc1_lookup = ref_to_val_lk_dirlog;
       hdl->g_proc2 = ref_to_val_ptr_dirlog;
       hdl->g_proc3 = dirlog_format_block;
@@ -9365,7 +9353,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = NL_SZ;
       hdl->d_memb = 9;
       hdl->g_proc0 = gcb_nukelog;
-      hdl->g_proc1 = ref_to_val_nukelog;
+     // hdl->g_proc1 = ref_to_val_nukelog;
       hdl->g_proc1_lookup = ref_to_val_lk_nukelog;
       hdl->g_proc2 = ref_to_val_ptr_nukelog;
       hdl->g_proc3 = nukelog_format_block;
@@ -9381,7 +9369,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = DF_SZ;
       hdl->d_memb = 3;
       hdl->g_proc0 = gcb_dupefile;
-      hdl->g_proc1 = ref_to_val_dupefile;
+      //hdl->g_proc1 = ref_to_val_dupefile;
       hdl->g_proc1_lookup = ref_to_val_lk_dupefile;
       hdl->g_proc2 = ref_to_val_ptr_dupefile;
       hdl->g_proc3 = dupefile_format_block;
@@ -9397,7 +9385,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = LO_SZ;
       hdl->d_memb = 8;
       hdl->g_proc0 = gcb_lastonlog;
-      hdl->g_proc1 = ref_to_val_lastonlog;
+      //hdl->g_proc1 = ref_to_val_lastonlog;
       hdl->g_proc1_lookup = ref_to_val_lk_lastonlog;
       hdl->g_proc2 = ref_to_val_ptr_lastonlog;
       hdl->g_proc3 = lastonlog_format_block;
@@ -9413,7 +9401,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = OL_SZ;
       hdl->d_memb = 5;
       hdl->g_proc0 = gcb_oneliner;
-      hdl->g_proc1 = ref_to_val_oneliners;
+      //hdl->g_proc1 = ref_to_val_oneliners;
       hdl->g_proc1_lookup = ref_to_val_lk_oneliners;
       hdl->g_proc2 = ref_to_val_ptr_oneliners;
       hdl->g_proc3 = oneliner_format_block;
@@ -9429,7 +9417,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = ID_SZ;
       hdl->d_memb = 14;
       hdl->g_proc0 = gcb_imdbh;
-      hdl->g_proc1 = ref_to_val_imdb;
+      //hdl->g_proc1 = ref_to_val_imdb;
       hdl->g_proc1_lookup = ref_to_val_lk_imdb;
       hdl->g_proc2 = ref_to_val_ptr_imdb;
       hdl->g_proc3 = imdb_format_block;
@@ -9445,7 +9433,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = GM_SZ;
       hdl->d_memb = 3;
       hdl->g_proc0 = gcb_game;
-      hdl->g_proc1 = ref_to_val_game;
+      //hdl->g_proc1 = ref_to_val_game;
       hdl->g_proc1_lookup = ref_to_val_lk_game;
       hdl->g_proc2 = ref_to_val_ptr_game;
       hdl->g_proc3 = game_format_block;
@@ -9461,7 +9449,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = TV_SZ;
       hdl->d_memb = 18;
       hdl->g_proc0 = gcb_tv;
-      hdl->g_proc1 = ref_to_val_tv;
+      //hdl->g_proc1 = ref_to_val_tv;
       hdl->g_proc1_lookup = ref_to_val_lk_tvrage;
       hdl->g_proc2 = ref_to_val_ptr_tv;
       hdl->g_proc3 = tv_format_block;
@@ -9477,7 +9465,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = G1_SZ;
       hdl->d_memb = 9;
       hdl->g_proc0 = gcb_gen1;
-      hdl->g_proc1 = ref_to_val_gen1;
+      //hdl->g_proc1 = ref_to_val_gen1;
       hdl->g_proc1_lookup = ref_to_val_lk_gen1;
       hdl->g_proc2 = ref_to_val_ptr_gen1;
       hdl->g_proc3 = gen1_format_block;
@@ -9493,7 +9481,7 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = G2_SZ;
       hdl->d_memb = 24;
       hdl->g_proc0 = gcb_gen2;
-      hdl->g_proc1 = ref_to_val_gen2;
+      //hdl->g_proc1 = ref_to_val_gen2;
       hdl->g_proc1_lookup = ref_to_val_lk_gen2;
       hdl->g_proc2 = ref_to_val_ptr_gen2;
       hdl->g_proc3 = gen2_format_block;
@@ -10672,7 +10660,7 @@ rtv_q(void *query, char *output, size_t max_size)
   int r = 0;
   char *rtv_q = (char*) ptr->ptr;
 
-  if (!strncmp(rtv_q, "size", 4))
+  if (!strncmp(rtv_q, _MC_GLOB_SIZE, 4))
     {
       snprintf(output, max_size, "%llu", (ulint64_t) get_file_size(rtv_l));
     }
@@ -10720,7 +10708,7 @@ rtv_q(void *query, char *output, size_t max_size)
 
       snprintf(output, max_size, "%u", (uint32_t) hdl.block_sz);
     }
-  else if (!strncmp(rtv_q, "mode", 4))
+  else if (!strncmp(rtv_q, _MC_GLOB_MODE, 4))
     {
       return g_l_fmode_n(rtv_l, max_size, output);
     }
@@ -14329,74 +14317,6 @@ g_dirname(char *input)
   return input;
 }
 
-int
-ref_to_val_dirlog(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  struct dirlog *data = (struct dirlog *) arg;
-
-  if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      snprintf(output, max_size, "%hu", data->uploader);
-    }
-  else if (!strncmp(match, _MC_GLOB_GROUP, 5))
-    {
-      snprintf(output, max_size, "%hu", data->group);
-    }
-  else if (!strncmp(match, _MC_DIRLOG_FILES, 5))
-    {
-      snprintf(output, max_size, "%hu", data->files);
-    }
-  else if (!strncmp(match, _MC_GLOB_SIZE, 4))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->bytes);
-    }
-  else if (!strncmp(match, _MC_GLOB_STATUS, 6))
-    {
-      snprintf(output, max_size, "%hu", data->status);
-    }
-  else if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->uptime);
-    }
-  else if (!strncmp(match, _MC_GLOB_MODE, 4))
-    {
-      return g_l_fmode(data->dirname, max_size, output);
-    }
-  else if (!strncmp(match, _MC_GLOB_DIR, 3))
-    {
-      strcp_s(output, max_size, data->dirname);
-    }
-  else if (!strncmp(match, "x:", 2))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      strcp_s(xref_t.name, PATH_MAX, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
-    }
-  else if (!strncmp(match, "xg:", 3))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      snprintf(xref_t.name, PATH_MAX, "%s%s", GLROOT, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
-    }
-  else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
-    {
-      strcp_s(output, max_size, g_basename(data->dirname));
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
 
 char *
 dt_rval_dirlog_user(void *arg, char *match, char *output, size_t max_size)
@@ -14491,6 +14411,7 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
     {
       return ptr;
     }
+
   if (!strncmp(match, _MC_GLOB_USER, 4))
     {
       return dt_rval_dirlog_user;
@@ -14543,82 +14464,7 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
 #define _MC_NUKELOG_NUKEE		"nukee"
 #define _MC_NUKELOG_REASON		"reason"
 
-int
-ref_to_val_nukelog(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
 
-  struct nukelog *data = (struct nukelog *) arg;
-
-  if (!strncmp(match, _MC_GLOB_SIZE, 4))
-    {
-      snprintf(output, max_size, "%f", (float) data->bytes);
-    }
-  else if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->nuketime);
-    }
-  else if (!strncmp(match, _MC_GLOB_STATUS, 6))
-    {
-      snprintf(output, max_size, "%hu", data->status);
-    }
-  else if (!strncmp(match, _MC_NUKELOG_MULT, 4))
-    {
-      snprintf(output, max_size, "%hu", data->mult);
-    }
-  else if (!strncmp(match, _MC_GLOB_MODE, 4))
-    {
-      return g_l_fmode(data->dirname, max_size, output);
-    }
-  else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
-    {
-      strcp_s(output, max_size, g_basename(data->dirname));
-    }
-  else if (!strncmp(match, _MC_NUKELOG_NUKER, 5))
-    {
-      strcp_s(output, max_size, data->nuker);
-    }
-  else if (!strncmp(match, _MC_NUKELOG_NUKEE, 5))
-    {
-      strcp_s(output, max_size, data->nukee);
-    }
-  else if (!strncmp(match, _MC_NUKELOG_UNNUKER, 7))
-    {
-      strcp_s(output, max_size, data->unnuker);
-    }
-  else if (!strncmp(match, _MC_NUKELOG_REASON, 6))
-    {
-      strcp_s(output, max_size, data->reason);
-    }
-  else if (!strncmp(match, _MC_GLOB_DIR, 3))
-    {
-      strcp_s(output, max_size, data->dirname);
-    }
-  else if (!strncmp(match, "x:", 2))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      strcp_s(xref_t.name, PATH_MAX, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
-    }
-  else if (!strncmp(match, "xg:", 3))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      snprintf(xref_t.name, PATH_MAX, "%s%s", GLROOT, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
 
 char *
 dt_rval_nukelog_size(void *arg, char *match, char *output, size_t max_size)
@@ -14757,35 +14603,6 @@ ref_to_val_lk_nukelog(void *arg, char *match, char *output, size_t max_size)
 
 #define _MC_GLOB_FILE	"file"
 
-int
-ref_to_val_dupefile(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  struct dupefile *data = (struct dupefile *) arg;
-
-  if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->timeup);
-    }
-  else if (!strncmp(match, _MC_GLOB_FILE, 4))
-    {
-      strcp_s(output, max_size, data->filename);
-    }
-  else if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      strcp_s(output, max_size, data->uploader);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
-
 char *
 dt_rval_dupefile_time(void *arg, char *match, char *output, size_t max_size)
 {
@@ -14823,104 +14640,9 @@ ref_to_val_lk_dupefile(void *arg, char *match, char *output, size_t max_size)
   return NULL;
 }
 
-char*
-ref_to_val_dupefile_ps(void *arg, char *match, char *output, size_t max_size)
-{
-  struct dupefile *data = (struct dupefile *) arg;
-
-  if (!strncmp(match, _MC_GLOB_FILE, 4))
-    {
-      return data->filename;
-    }
-  else if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      return data->uploader;
-    }
-  else
-    {
-      if (!ref_to_val_dupefile(arg, match, output, max_size))
-        {
-          return output;
-        }
-    }
-  return NULL;
-}
 
 #define _MC_LASTONLOG_STATS  	"stats"
-#define _MC_GLOB_TAG			"tag"
-
-int
-ref_to_val_lastonlog(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  struct lastonlog *data = (struct lastonlog *) arg;
-
-  if (!strncmp(match, _MC_GLOB_LOGON, 5))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->logon);
-    }
-  else if (!strncmp(match, _MC_GLOB_LOGOFF, 6))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->logoff);
-    }
-  else if (!strncmp(match, _MC_GLOB_UPLOAD, 6))
-    {
-      snprintf(output, max_size, "%lu", (unsigned long) data->upload);
-    }
-  else if (!strncmp(match, _MC_GLOB_DOWNLOAD, 8))
-    {
-      snprintf(output, max_size, "%lu", (unsigned long) data->download);
-    }
-  else if (!is_char_uppercase(match[0]))
-    {
-      char *buffer = malloc(max_size + 1);
-      void *ptr = ref_to_val_get_cfgval(data->uname, match,
-      DEFPATH_USERS,
-      F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
-      if (ptr && strlen(ptr) < max_size)
-        {
-          strcp_s(output, max_size, (char*) ptr);
-          free(buffer);
-          return 0;
-        }
-
-      ptr = ref_to_val_get_cfgval(data->gname, match, DEFPATH_GROUPS,
-      F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
-      if (ptr && strlen(ptr) < max_size)
-        {
-          strcp_s(output, max_size, (char*) ptr);
-          free(buffer);
-          return 0;
-        }
-      free(buffer);
-      return 1;
-    }
-  else if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      strcp_s(output, max_size, data->uname);
-    }
-  else if (!strncmp(match, _MC_GLOB_GROUP, 5))
-    {
-      strcp_s(output, max_size, data->gname);
-    }
-  else if (!strncmp(match, _MC_LASTONLOG_STATS, 5))
-    {
-      strcp_s(output, max_size, data->stats);
-    }
-  else if (!strncmp(match, _MC_GLOB_TAG, 3))
-    {
-      strcp_s(output, max_size, data->tagline);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
+#define _MC_GLOB_TAG		"tag"
 
 char *
 dt_rval_lastonlog_logon(void *arg, char *match, char *output, size_t max_size)
@@ -15054,43 +14776,6 @@ ref_to_val_lk_lastonlog(void *arg, char *match, char *output, size_t max_size)
 
 #define _MC_ONELINERS_MSG	"msg"
 
-int
-ref_to_val_oneliners(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  struct oneliner *data = (struct oneliner *) arg;
-
-  if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->timestamp);
-    }
-  else if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      strcp_s(output, max_size, data->uname);
-    }
-  else if (!strncmp(match, _MC_GLOB_GROUP, 5))
-    {
-      strcp_s(output, max_size, data->gname);
-    }
-  else if (!strncmp(match, _MC_GLOB_TAG, 3))
-    {
-      strcp_s(output, max_size, data->tagline);
-    }
-  else if (!strncmp(match, _MC_ONELINERS_MSG, 3))
-    {
-      strcp_s(output, max_size, data->message);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
-
 char *
 dt_rval_oneliners_time(void *arg, char *match, char *output, size_t max_size)
 {
@@ -15155,110 +14840,6 @@ ref_to_val_lk_oneliners(void *arg, char *match, char *output, size_t max_size)
 }
 
 #define _MC_ONLINE_HOST		"host"
-
-int
-ref_to_val_online(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  struct ONLINE *data = (struct ONLINE *) arg;
-
-  if (!strncmp(match, _MC_ONLINE_SSL, 3))
-    {
-      snprintf(output, max_size, "%hd", data->ssl_flag);
-    }
-  else if (!strncmp(match, _MC_GLOB_GROUP, 5))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->groupid);
-    }
-  else if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->login_time);
-    }
-  else if (!strncmp(match, _MC_ONLINE_LUPDT, 8))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->tstart.tv_sec);
-    }
-  else if (!strncmp(match, _MC_ONLINE_LXFRT, 9))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->txfer.tv_sec);
-    }
-  else if (!strncmp(match, _MC_ONLINE_BXFER, 5))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_xfer);
-    }
-  else if (!strncmp(match, _MC_ONLINE_BTXFER, 6))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->bytes_txfer);
-    }
-  else if (!strncmp(match, _MC_GLOB_PID, 3))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->procid);
-    }
-  else if (!strcmp(match, "rate"))
-    {
-      int32_t tdiff = (int32_t) time(NULL) - data->tstart.tv_sec;
-      uint32_t kbps = 0;
-
-      if (tdiff > 0 && data->bytes_xfer > 0)
-        {
-          kbps = data->bytes_xfer / tdiff;
-        }
-      snprintf(output, max_size, "%u", kbps);
-    }
-  else if (!is_char_uppercase(match[0]))
-    {
-      char *buffer = malloc(max_size + 1);
-      void *ptr = ref_to_val_get_cfgval(data->username, match,
-      DEFPATH_USERS,
-      F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
-      if (ptr && strlen(ptr) < max_size)
-        {
-          strcp_s(output, max_size, (char*) ptr);
-        }
-      free(buffer);
-      return 0;
-    }
-  else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
-    {
-      char *s_buffer = strdup(data->currentdir), *base = basename(s_buffer);
-      strcp_s(output, max_size, base);
-      free(s_buffer);
-    }
-  else if (!strncmp(match, _MC_GLOB_DIRNAME, 4))
-    {
-      strcp_s(output, max_size, data->currentdir);
-      g_dirname(output);
-    }
-  else if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      strcp_s(output, max_size, data->username);
-    }
-  else if (!strncmp(match, _MC_GLOB_TAG, 3))
-    {
-      strcp_s(output, max_size, data->tagline);
-    }
-  else if (!strncmp(match, _MC_GLOB_STATUS, 6))
-    {
-      strcp_s(output, max_size, data->status);
-    }
-  else if (!strncmp(match, _MC_ONLINE_HOST, 4))
-    {
-      strcp_s(output, max_size, data->host);
-    }
-  else if (!strncmp(match, _MC_GLOB_DIR, 3))
-    {
-      strcp_s(output, max_size, data->currentdir);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
 
 char *
 dt_rval_online_ssl(void *arg, char *match, char *output, size_t max_size)
@@ -15465,103 +15046,6 @@ ref_to_val_lk_online(void *arg, char *match, char *output, size_t max_size)
 #define _MC_IMDB_DIRECT		"director"
 #define _MC_IMDB_SYNOPSIS	"plot"
 
-int
-ref_to_val_imdb(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  __d_imdb data = (__d_imdb) arg;
-
-  if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->timestamp);
-    }
-  else if (!strncmp(match, _MC_GLOB_SCORE, 5))
-    {
-      snprintf(output, max_size, "%.1f", data->rating);
-    }
-  else if (!strncmp(match, _MC_IMDB_VOTES, 5))
-    {
-      snprintf(output, max_size, "%u", (uint32_t) data->votes);
-    }
-  else if (!strncmp(match, _MC_GLOB_RUNTIME, 7))
-    {
-      snprintf(output, max_size, "%u", data->runtime);
-    }
-  else if (!strncmp(match, _MC_IMDB_RELEASED, 8))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->released);
-    }
-  else if (!strncmp(match, _MC_IMDB_YEAR, 4))
-    {
-      snprintf(output, max_size, "%hu", data->year);
-    }
-  else if (!strncmp(match, _MC_GLOB_MODE, 4))
-    {
-      return g_l_fmode(data->dirname, max_size, output);
-    }
-  else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
-    {
-      strcp_s(output, max_size, g_basename(data->dirname));
-    }
-  else if (!strncmp(match, _MC_IMDB_IMDBID, 6))
-    {
-      strcp_s(output, max_size, data->imdb_id);
-    }
-  else if (!strncmp(match, _MC_GLOB_GENRE, 5))
-    {
-      strcp_s(output, max_size, data->genres);
-    }
-  else if (!strncmp(match, _MC_IMDB_RATED, 5))
-    {
-      strcp_s(output, max_size, data->rated);
-    }
-  else if (!strncmp(match, _MC_IMDB_TITLE, 5))
-    {
-      strcp_s(output, max_size, data->title);
-    }
-  else if (!strncmp(match, _MC_IMDB_DIRECT, 8))
-    {
-      strcp_s(output, max_size, data->director);
-    }
-  else if (!strncmp(match, _MC_GLOB_DIR, 3))
-    {
-      strcp_s(output, max_size, data->dirname);
-    }
-  else if (!strncmp(match, _MC_IMDB_ACTORS, 6))
-    {
-      strcp_s(output, max_size, data->actors);
-    }
-  else if (!strncmp(match, _MC_IMDB_SYNOPSIS, 4))
-    {
-      strcp_s(output, max_size, data->synopsis);
-    }
-  else if (!strncmp(match, "x:", 2))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      strcp_s(xref_t.name, PATH_MAX, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
-    }
-  else if (!strncmp(match, "xg:", 3))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      snprintf(xref_t.name, PATH_MAX, "%s%s", GLROOT, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
-
 char *
 dt_rval_imdb_time(void *arg, char *match, char *output, size_t max_size)
 {
@@ -15749,59 +15233,6 @@ ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size)
   return NULL;
 }
 
-int
-ref_to_val_game(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  __d_game data = (__d_game) arg;
-
-  if (!strncmp(match, _MC_GLOB_SCORE, 5))
-    {
-      snprintf(output, max_size, "%.1f", data->rating);
-    }
-  else if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->timestamp);
-    }
-  else if (!strncmp(match, _MC_GLOB_MODE, 4))
-    {
-      return g_l_fmode(data->dirname, max_size, output);
-    }
-  else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
-    {
-      strcp_s(output, max_size, g_basename(data->dirname));
-    }
-  else if (!strncmp(match, _MC_GLOB_DIR, 3))
-    {
-      strcp_s(output, max_size, data->dirname);
-    }
-  else if (!strncmp(match, "x:", 2))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      strcp_s(xref_t.name, PATH_MAX, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
-    }
-  else if (!strncmp(match, "xg:", 3))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      snprintf(xref_t.name, PATH_MAX, "%s%s", GLROOT, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
-
 char *
 dt_rval_game_score(void *arg, char *match, char *output, size_t max_size)
 {
@@ -15882,119 +15313,6 @@ ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size)
 #define _MC_TV_NAME		"name"
 #define _MC_TV_CLASS		"class"
 #define _MC_TV_NETWORK		"network"
-
-int
-ref_to_val_tv(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  __d_tvrage data = (__d_tvrage) arg;
-
-  if (!strncmp(match, _MC_GLOB_TIME, 4))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->timestamp);
-    }
-  else if (!strncmp(match, _MC_TV_ENDED, 5))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->ended);
-    }
-  else if (!strncmp(match, _MC_TV_STARTED, 7))
-    {
-      snprintf(output, max_size, "%d", (int32_t) data->started);
-    }
-  else if (!strncmp(match, _MC_TV_SEASONS, 7))
-    {
-      snprintf(output, max_size, "%u", data->seasons);
-    }
-  else if (!strncmp(match, _MC_TV_SHOWID, 6))
-    {
-      snprintf(output, max_size, "%u", data->showid);
-    }
-  else if (!strncmp(match, _MC_GLOB_RUNTIME, 7))
-    {
-      snprintf(output, max_size, "%u", data->runtime);
-    }
-  else if (!strncmp(match, _MC_TV_SYEAR, 9))
-    {
-      snprintf(output, max_size, "%u", data->startyear);
-    }
-  else if (!strncmp(match, _MC_TV_EYEAR, 7))
-    {
-      snprintf(output, max_size, "%u", data->endyear);
-    }
-  else if (!strncmp(match, _MC_GLOB_MODE, 4))
-    {
-      return g_l_fmode(data->dirname, max_size, output);
-    }
-  else if (!strncmp(match, _MC_GLOB_DIR, 3))
-    {
-      strcp_s(output, max_size, data->dirname);
-    }
-  else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
-    {
-      strcp_s(output, max_size, g_basename(data->dirname));
-    }
-  else if (!strncmp(match, _MC_TV_AIRDAY, 6))
-    {
-      strcp_s(output, max_size, data->airday);
-    }
-  else if (!strncmp(match, _MC_TV_AIRTIME, 7))
-    {
-      strcp_s(output, max_size, data->airtime);
-    }
-  else if (!strncmp(match, _MC_TV_COUNTRY, 7))
-    {
-      strcp_s(output, max_size, data->country);
-    }
-  else if (!strncmp(match, _MC_TV_LINK, 4))
-    {
-      strcp_s(output, max_size, data->link);
-    }
-  else if (!strncmp(match, _MC_TV_NAME, 4))
-    {
-      strcp_s(output, max_size, data->name);
-    }
-  else if (!strncmp(match, _MC_GLOB_STATUS, 6))
-    {
-      strcp_s(output, max_size, data->status);
-    }
-  else if (!strncmp(match, _MC_TV_CLASS, 5))
-    {
-      strcp_s(output, max_size, data->class);
-    }
-  else if (!strncmp(match, _MC_GLOB_GENRE, 5))
-    {
-      strcp_s(output, max_size, data->genres);
-    }
-  else if (!strncmp(match, _MC_TV_NETWORK, 7))
-    {
-      strcp_s(output, max_size, data->network);
-    }
-  else if (!strncmp(match, "x:", 2))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      strcp_s(xref_t.name, PATH_MAX, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
-    }
-  else if (!strncmp(match, "xg:", 3))
-    {
-      _d_xref xref_t =
-        {
-          { 0 } };
-      snprintf(xref_t.name, PATH_MAX, "%s%s", GLROOT, data->dirname);
-      return ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
 
 char *
 dt_rval_tvrage_dir(void *arg, char *match, char *output, size_t max_size)
@@ -16225,59 +15543,6 @@ ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size)
   return NULL;
 }
 
-int
-ref_to_val_gen1(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  __d_generic_s2044 data = (__d_generic_s2044) arg;
-
-  if (!strncmp(match, "i32", 3))
-    {
-      snprintf(output, max_size, "%u", data->i32);
-    }
-  else if (!strncmp(match, _MC_GE_GE1, 3))
-    {
-      strcp_s(output, max_size, data->s_1);
-    }
-  else if (!strncmp(match, _MC_GE_GE2, 3))
-    {
-      strcp_s(output, max_size, data->s_2);
-    }
-  else if (!strncmp(match, _MC_GE_GE3, 3))
-    {
-      strcp_s(output, max_size, data->s_3);
-    }
-  else if (!strncmp(match, _MC_GE_GE4, 3))
-    {
-      strcp_s(output, max_size, data->s_4);
-    }
-  else if (!strncmp(match, _MC_GE_GE5, 3))
-    {
-      strcp_s(output, max_size, data->s_5);
-    }
-  else if (!strncmp(match, _MC_GE_GE6, 3))
-    {
-      strcp_s(output, max_size, data->s_6);
-    }
-  else if (!strncmp(match, _MC_GE_GE7, 3))
-    {
-      strcp_s(output, max_size, data->s_7);
-    }
-  else if (!strncmp(match, _MC_GE_GE8, 3))
-    {
-      strcp_s(output, max_size, data->s_8);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
-}
-
 char *
 dt_rval_gen1_i32(void *arg, char *match, char *output, size_t max_size)
 {
@@ -16380,119 +15645,6 @@ ref_to_val_lk_gen1(void *arg, char *match, char *output, size_t max_size)
     }
 
   return NULL;
-}
-
-int
-ref_to_val_gen2(void *arg, char *match, char *output, size_t max_size)
-{
-  if (!ref_to_val_generic(NULL, match, output, max_size))
-    {
-      return 0;
-    }
-
-  __d_generic_s1644 data = (__d_generic_s1644) arg;
-
-  if (!strncmp(match, _MC_GE_I1, 2))
-    {
-      snprintf(output, max_size, "%d", data->i32_1);
-    }
-  else if (!strncmp(match, _MC_GE_I2, 2))
-    {
-      snprintf(output, max_size, "%d", data->i32_2);
-    }
-  else if (!strncmp(match, _MC_GE_I3, 2))
-    {
-      snprintf(output, max_size, "%d", data->i32_3);
-    }
-  else if (!strncmp(match, _MC_GE_I4, 2))
-    {
-      snprintf(output, max_size, "%d", data->i32_4);
-    }
-  else if (!strncmp(match, _MC_GE_U1, 2))
-    {
-      snprintf(output, max_size, "%u", data->ui32_1);
-    }
-  else if (!strncmp(match, _MC_GE_U2, 2))
-    {
-      snprintf(output, max_size, "%u", data->ui32_2);
-    }
-  else if (!strncmp(match, _MC_GE_U3, 2))
-    {
-      snprintf(output, max_size, "%u", data->ui32_3);
-    }
-  else if (!strncmp(match, _MC_GE_U4, 2))
-    {
-      snprintf(output, max_size, "%u", data->ui32_4);
-    }
-  else if (!strncmp(match, _MC_GE_F1, 2))
-    {
-      snprintf(output, max_size, "%f", data->f_1);
-    }
-  else if (!strncmp(match, _MC_GE_F2, 2))
-    {
-      snprintf(output, max_size, "%f", data->f_2);
-    }
-  else if (!strncmp(match, _MC_GE_F3, 2))
-    {
-      snprintf(output, max_size, "%f", data->f_3);
-    }
-  else if (!strncmp(match, _MC_GE_F4, 2))
-    {
-      snprintf(output, max_size, "%f", data->f_4);
-    }
-  else if (!strncmp(match, _MC_GE_UL1, 3))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_1);
-    }
-  else if (!strncmp(match, _MC_GE_UL2, 3))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_2);
-    }
-  else if (!strncmp(match, _MC_GE_UL3, 3))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_3);
-    }
-  else if (!strncmp(match, _MC_GE_UL4, 3))
-    {
-      snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_4);
-    }
-  else if (!strncmp(match, _MC_GE_GE1, 3))
-    {
-      strcp_s(output, max_size, data->s_1);
-    }
-  else if (!strncmp(match, _MC_GE_GE2, 3))
-    {
-      strcp_s(output, max_size, data->s_2);
-    }
-  else if (!strncmp(match, _MC_GE_GE3, 3))
-    {
-      strcp_s(output, max_size, data->s_3);
-    }
-  else if (!strncmp(match, _MC_GE_GE4, 3))
-    {
-      strcp_s(output, max_size, data->s_4);
-    }
-  else if (!strncmp(match, _MC_GE_GE5, 3))
-    {
-      strcp_s(output, max_size, data->s_5);
-    }
-  else if (!strncmp(match, _MC_GE_GE6, 3))
-    {
-      strcp_s(output, max_size, data->s_6);
-    }
-  else if (!strncmp(match, _MC_GE_GE7, 3))
-    {
-      strcp_s(output, max_size, data->s_7);
-    }
-  else if (!strncmp(match, _MC_GE_GE8, 3))
-    {
-      strcp_s(output, max_size, data->s_8);
-    }
-  else
-    {
-      return 1;
-    }
-  return 0;
 }
 
 char *
