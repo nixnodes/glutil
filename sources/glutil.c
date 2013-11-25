@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-7
+ * Version     : 1.12-8
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 7
+#define VER_REVISION 8
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1430,6 +1430,7 @@ char *hpd_up =
         "                          --fd - apply filters before recursor descends into subdirectory\n"
         "                          --recursive (-R) - traverse the whole <root dir> directory tree\n"
         "  -print <fmt string>   Format output using {var} directives (see MANUAL for a field list)\n"
+        "  -printf <fmt string>  Same as -printf, only does not print a new line character at the end\n"
         "\n Input:\n"
         "  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
         "                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -3501,10 +3502,10 @@ void *f_ref[] =
       opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
       opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-print",
       opt_print, (void*) 1, "-printf", opt_printf, (void*) 1, "--print",
-      opt_print, (void*) 1, "-b", opt_backup, (void*) 1, "--postexec",
-      opt_g_postexec, (void*) 1, "--preexec", opt_g_preexec, (void*) 1,
-      "--usleep", opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1,
-      "-arg1",
+      opt_print, (void*) 1, "--printf", opt_printf, (void*) 1, "-b", opt_backup,
+      (void*) 1, "--postexec", opt_g_postexec, (void*) 1, "--preexec",
+      opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep",
+      opt_g_sleep, (void*) 1, "-arg1",
       NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
       NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
       "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
