@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:27
+#@REVISION:28
 #@MACRO:imdb:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -32,7 +32,7 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-1.9-74 or above
+## Requires: - glutil-1.11-8 or above
 ##           - libxml2 v2.7.7 or above 
 ##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
@@ -338,15 +338,19 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-                $2 --imdblog="$3$LAPPEND" -a --iregex "$DIR_E" --imatchq --silent || $2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb --regex "$DIR_E" --silent || {
+                 [ -e "$3$LAPPEND" ] && {
+               	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb --regex "$DIR_E" --silent || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
+                	}
                 }
         elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
-                $2 --imdblog="$3$LAPPEND" -a imatch "imdbid,${iid}" --imatchq --silent || $2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb match "imdbid,${iid}" --silent || {
-                        echo "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
-                }
+                [ -e "$3$LAPPEND" ] && {
+               		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb match "imdbid,${iid}" --silent || {
+                   	     echo "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
+               		}
+               	}
         fi
 
 	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
