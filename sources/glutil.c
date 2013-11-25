@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-11
+ * Version     : 1.12
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -165,8 +165,8 @@
 #endif
 
 #define VER_MAJOR 1
-#define VER_MINOR 11
-#define VER_REVISION 11
+#define VER_MINOR 12
+#define VER_REVISION 0
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -375,6 +375,7 @@ typedef struct ___execv
   char **argv, **argv_c;
   char exec_v_path[PATH_MAX];
   mda ac_ref;
+  mda mech;
   __d_exec exc;
 } _execv, *__execv;
 
@@ -386,8 +387,6 @@ typedef int
 (*__g_proc_t)(void *, char *, char *, size_t);
 typedef void *
 (*__g_proc_v)(void *, char *, char *, size_t);
-typedef char *
-(*__g_proc_t_ps)(void *, char *, char *, size_t);
 typedef void *
 (*__d_ref_to_pv)(void *arg, char *match, int *output);
 typedef void
@@ -418,7 +417,7 @@ typedef struct g_handle
   int
   (*g_proc0)(void *, char *, char *);
   __g_proc_t g_proc1;
-  __g_proc_t_ps g_proc1_ps;
+  __g_proc_v g_proc1_ps;
   __d_ref_to_pv g_proc2;
   __g_proc_v g_proc1_lookup;
   _d_proc3 g_proc3, g_proc3_batch, g_proc3_export;
@@ -497,7 +496,7 @@ typedef struct ___g_match_h
   regex_t preg;
   mda lom;
   g_op g_oper_ptr;
-  __g_proc_t_ps pmstr_cb;
+  __g_proc_v pmstr_cb;
   char data[5120];
   char b_data[5120];
 } _g_match, *__g_match;
@@ -532,6 +531,19 @@ typedef struct ___d_xref
   float sparseness;
   _d_xref_ct ct[GM_MAX + 1];
 } _d_xref, *__d_xref;
+
+typedef struct ___d_exec_ch
+{
+  char *st_ptr;
+  size_t len;
+  __g_proc_v callback;
+} _d_exec_ch, *__d_exec_ch;
+
+typedef struct ___d_argv_ch
+{
+  int cindex;
+  mda mech;
+} _d_argv_ch, *__d_argv_ch;
 
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
@@ -763,6 +775,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_ESREDIRFAILED			(a32 << 15)
 #define F_BM_TERM			(a32 << 16)
 #define F_OVRR_GE2LOG			(a32 << 17)
+#define F_SREDIRFAILED                  (a32 << 18)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -1588,6 +1601,8 @@ int
 g_do_exec(void *, void *, char*, void *hdl);
 int
 g_do_exec_v(void *buffer, void *p_hdl, char *ex_str, void *hdl);
+int
+g_do_exec_fb(void *buffer, void *p_hdl, char *ex_str, void *hdl);
 
 int
 g_cpg(void *arg, void *out, int m, size_t sz)
@@ -2102,7 +2117,7 @@ int
 opt_exec(void *arg, int m)
 {
   exec_str = g_pd(arg, m, MAX_EXEC_STR);
-  exc = g_do_exec;
+  exc = g_do_exec_fb;
   return 0;
 }
 
@@ -3247,7 +3262,7 @@ g_read(void *buffer, __g_handle, size_t);
 int
 process_exec_string(char *, char *, size_t, void *, void*);
 int
-process_exec_args(void *data, __g_handle hdl);
+process_execv_args(void *data, __g_handle hdl);
 int
 is_char_uppercase(char);
 char *
@@ -3394,6 +3409,12 @@ __d_lom_vp(void *d_ptr, void *_lom);
 __d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var_float;
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
+
+int
+g_compile_exech(pmda mech, __g_handle hdl, char *instr);
+char *
+g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *outstr,
+    size_t maxlen);
 
 void *prio_f_ref[] =
   { "noop", g_opt_mode_noop, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
@@ -3958,19 +3979,25 @@ g_cleanup(__g_handle hdl)
 
   if (hdl->exec_args.ac_ref.objects)
     {
+      __d_argv_ch ach;
       ptr = md_first(&hdl->exec_args.ac_ref);
       while (ptr)
         {
-          int *t = (int*) ptr->ptr;
-          free(hdl->exec_args.argv_c[*t]);
+          ach = (__d_argv_ch) ptr->ptr;
+          free(hdl->exec_args.argv_c[ach->cindex]);
+          md_g_free(&ach->mech);
           ptr = ptr->next;
         }
+
       if (hdl->exec_args.argv_c)
         {
           free(hdl->exec_args.argv_c);
         }
+
       r += md_g_free(&hdl->exec_args.ac_ref);
     }
+
+  md_g_free(&hdl->exec_args.mech);
 
   if (!(hdl->flags & F_GH_ISSHM) && hdl->data)
     {
@@ -4086,7 +4113,7 @@ g_init(int argc, char **argv)
     }
 
   if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
-      && !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE))
+      && !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE2))
     {
       print_str("INIT: glutil %d.%d-%d%s-%s starting [PID: %d]\n",
       VER_MAJOR,
@@ -4902,9 +4929,9 @@ rebuild(void *arg)
     }
 
   /*if ((gfl & F_OPT_NOFQ) && !(g_act_1.flags & F_GH_APFILT))
-    {
-      return 6;
-    }*/
+   {
+   return 6;
+   }*/
 
   return 0;
 }
@@ -5369,14 +5396,6 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
     {
       file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
     }
-
-  /*if (aa_rh->p_xref.flags & F_XRF_GET_CTIME) {
-   __d_xref_ct x_ptr = &aa_rh->p_xref.ct[0];
-   while (x_ptr->active) {
-   x_ptr->curtime = time(NULL) + x_ptr->ct_off;
-   x_ptr++;
-   }
-   }*/
 }
 
 int
@@ -5606,10 +5625,10 @@ dirlog_check_dupe(void)
             {
               if (!ch)
                 {
-                  print_str("\rDUPE %s               \n", d_ptr->dirname);
+                  printf("\r%s               \n", d_ptr->dirname);
                   ch++;
                 }
-              print_str("\rDUPE %s               \n", dd_ptr->dirname);
+              printf("\r%s               \n", dd_ptr->dirname);
               if (gfl & F_OPT_VERBOSE)
                 {
                   e_t = time(NULL);
@@ -5766,7 +5785,9 @@ dirlog_update_record(char *argv)
       g_close(&g_act_1);
       ptr = ptr->next;
     }
-  r_end: md_g_free(&dirchain);
+  r_end:
+
+  md_g_free(&dirchain);
 
   if (dl_stats.bw || (gfl & F_OPT_VERBOSE4))
     {
@@ -6382,11 +6403,11 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           && WEXITSTATUS(
               r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl)))
         {
-          if ((gfl & F_OPT_VERBOSE5))
-            {
-              print_str("WARNING: external call returned non-zero: [%d]\n",
-                  WEXITSTATUS(r_e));
-            }
+          /*if ((gfl & F_OPT_VERBOSE5))
+           {
+           print_str("WARNING: external call returned non-zero: [%d]\n",
+           WEXITSTATUS(r_e));
+           }*/
           r_p = 1;
         }
     }
@@ -6692,7 +6713,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
       fflush(stdout);
     }
 
- // g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
+  // g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
   if (!(g_act_1.flags & F_GH_ISONLINE))
     {
@@ -6702,7 +6723,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
               (unsigned long long int) c : g_act_1.buffer.count);
     }
 
-  if (!c) {
+  if (!c)
+    {
       EXITVAL = 1;
     }
 
@@ -6848,8 +6870,6 @@ rebuild_dirlog(void)
       print_str(
           "ERROR: unable to read folders file '%s', read MANUAL on how to set it up, or use -f (force) to do a full rescan (not compatible with -u (update))..\n",
           DU_FLD, SITEROOT);
-      //gfl |= F_OPT_FORCE;
-      //update_records(SITEROOT, 0);
       goto r_end;
     }
 
@@ -9055,7 +9075,6 @@ g_map_shm(__g_handle hdl, key_t ipc)
   hdl->g_proc3_batch = online_format_block_batch;
   hdl->g_proc4 = g_omfp_norm;
   hdl->jm_offset = (size_t) &((struct ONLINE*) NULL)->username;
-  //hdl->g_proc1_ps = ref_to_val_online_ps;
 
   return 0;
 }
@@ -9299,7 +9318,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_DIRLOG;
       hdl->jm_offset = (size_t) &((struct dirlog*) NULL)->dirname;
-      //hdl->g_proc1_ps = ref_to_val_dirlog_ps;
     }
   else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG)))
     {
@@ -9316,7 +9334,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_NUKELOG;
       hdl->jm_offset = (size_t) &((struct nukelog*) NULL)->dirname;
-      //hdl->g_proc1_ps = ref_to_val_nukelog_ps;
     }
   else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE)))
     {
@@ -9333,7 +9350,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_DUPEFILE;
       hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
-      //hdl->g_proc1_ps = ref_to_val_dupefile_ps;
     }
   else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG)))
     {
@@ -9350,7 +9366,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_LASTONLOG;
       hdl->jm_offset = (size_t) &((struct lastonlog*) NULL)->uname;
-      //hdl->g_proc1_ps = ref_to_val_lastonlog_ps;
     }
   else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS)))
     {
@@ -9367,7 +9382,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_ONELINERS;
       hdl->jm_offset = (size_t) &((struct oneliner*) NULL)->uname;
-      //hdl->g_proc1_ps = ref_to_val_oneliners_ps;
     }
   else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG)))
     {
@@ -9384,7 +9398,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_IMDBLOG;
       hdl->jm_offset = (size_t) &((__d_imdb) NULL)->dirname;
-      //hdl->g_proc1_ps = ref_to_val_imdb_ps;
     }
   else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG)))
     {
@@ -9401,7 +9414,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_GAMELOG;
       hdl->jm_offset = (size_t) &((__d_game) NULL)->dirname;
-      //hdl->g_proc1_ps = ref_to_val_game_ps;
     }
   else if (!strncmp(hdl->file, TVLOG, strlen(TVLOG)))
     {
@@ -9418,7 +9430,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_TVRAGELOG;
       hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
-      //hdl->g_proc1_ps = ref_to_val_tv_ps;
     }
   else if (!strncmp(hdl->file, GE1LOG, strlen(GE1LOG)))
     {
@@ -9435,7 +9446,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_GEN1LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s2044) NULL)->s_1;
-      //hdl->g_proc1_ps = ref_to_val_gen2_ps;
     }
   else if (!strncmp(hdl->file, GE2LOG, strlen(GE2LOG)))
     {
@@ -9452,7 +9462,6 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_GEN2LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
-      //hdl->g_proc1_ps = ref_to_val_gen2_ps;
     }
   else
     {
@@ -9675,7 +9684,7 @@ int
 g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl)
 {
   __g_handle hdl = (__g_handle) p_hdl;
-  process_exec_args(buffer, hdl);
+  process_execv_args(buffer, hdl);
   return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
 }
 
@@ -9720,6 +9729,52 @@ g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
     {
       return -1;
     }
+}
+
+int
+g_do_exec_fb(void *buffer, void *callback, char *ex_str, void *hdl)
+{
+  char *ptr;
+  if (!(ptr = g_exech_build_string(buffer, &((__g_handle ) hdl)->exec_args.mech,
+      (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+    {
+      b_glob[0] = 0x0;
+      return -2;
+    }
+
+  return system(b_glob);
+}
+
+int
+process_execv_args(void *data, __g_handle hdl)
+{
+  g_setjmp(0, "process_execv_args", NULL, NULL);
+
+  p_md_obj ptr = md_first(&hdl->exec_args.ac_ref);
+
+  __d_argv_ch ach;
+  char *s_ptr;
+  while (ptr)
+    {
+
+      ach = (__d_argv_ch) ptr->ptr;
+
+      if (!(s_ptr = g_exech_build_string(data, &ach->mech,
+                  hdl, hdl->exec_args.argv_c[ach->cindex], 8191)))
+        {
+
+          hdl->exec_args.argv_c[ach->cindex][0] = 0x0;
+        }
+
+      /*if (process_exec_string(hdl->exec_args.argv[ach->cindex],
+       hdl->exec_args.argv_c[ach->cindex], 8191, (void*) hdl->g_proc1, data))
+       {
+       }*/
+
+      ptr = ptr->next;
+    }
+
+  return 0;
 }
 
 void *
@@ -10180,8 +10235,6 @@ read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
 int
 file_exists(char *file)
 {
-  g_setjmp(0, "file_exists", NULL, NULL);
-
   int r = get_file_type(file);
 
   if (r == DT_REG)
@@ -13104,13 +13157,148 @@ md_copy(pmda source, pmda dest, size_t block_sz)
   return 0;
 }
 
+#define MAX_EXEC_VAR_NAME_LEN   64
+
+int
+g_compile_exech(pmda mech, __g_handle hdl, char *instr)
+{
+  size_t in_l = strlen(instr), pl, p1, vl1;
+  char *in_ptr = instr;
+
+  md_init(mech, 16);
+  __d_exec_ch ptr = md_alloc(mech, sizeof(_d_exec_ch));
+
+  if (!ptr)
+    {
+      return 1;
+    }
+
+  ptr->st_ptr = in_ptr;
+
+  for (p1 = 0, pl = 0; p1 < in_l; p1++, in_ptr++, pl++)
+    {
+      if (in_ptr[0] == 0x7B)
+        {
+          ptr->len = pl;
+          pl = 0;
+          ptr = md_alloc(mech, sizeof(_d_exec_ch));
+          if (!ptr)
+            {
+              return 9;
+            }
+
+          do_gcb: ;
+
+          in_ptr++;
+          ptr->st_ptr = in_ptr;
+          vl1 = 0;
+          ptr->callback = hdl->g_proc1_lookup(hdl->_x_ref, ptr->st_ptr, NULL,
+              0);
+
+          if (!ptr->callback)
+            {
+              return 10;
+            }
+
+          while (in_ptr[0] != 0x7D && in_ptr[0])
+            {
+              in_ptr++;
+              vl1++;
+            }
+          if (!in_ptr[0])
+            {
+              return 11;
+            }
+          /*if (vl1 >= MAX_EXEC_VAR_NAME_LEN)
+           {
+           return 12;
+           }*/
+          ptr->len = vl1;
+          ptr = md_alloc(mech, sizeof(_d_exec_ch));
+          if (!ptr)
+            {
+              return 13;
+            }
+          if (in_ptr[1] == 0x7B)
+            {
+              in_ptr++;
+              goto do_gcb;
+            }
+          else
+            {
+              in_ptr++;
+              ptr->st_ptr = in_ptr;
+            }
+        }
+    }
+
+  ptr->len = pl;
+
+  return 0;
+
+}
+
+#define M_EXECH_DCNBT   "ERROR: %s: could not build exec string, output too large\n"
+
+char *
+g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
+    size_t maxlen)
+{
+  p_md_obj ptr = md_first(mech);
+  __d_exec_ch ch_ptr;
+  char *s_ptr = output;
+
+  char s_b0[MAX_VAR_LEN];
+  size_t cw = 0;
+
+  while (ptr)
+    {
+      ch_ptr = (__d_exec_ch ) ptr->ptr;
+      if (!ch_ptr->callback)
+        {
+          if (ch_ptr->len)
+            {
+              if (cw + ch_ptr->len >= maxlen)
+                {
+                  print_str(M_EXECH_DCNBT, hdl->file);
+                  break;
+                }
+              strncpy(s_ptr, ch_ptr->st_ptr, ch_ptr->len);
+              s_ptr += ch_ptr->len;
+              cw += ch_ptr->len;
+            }
+        }
+      else
+        {
+          char *rs_ptr = ch_ptr->callback(d_ptr, ch_ptr->st_ptr, s_b0,
+          MAX_VAR_LEN);
+          if (rs_ptr)
+            {
+              size_t rs_len = strlen(rs_ptr);
+              if (cw + rs_len >= maxlen)
+                {
+                  print_str(M_EXECH_DCNBT, hdl->file);
+                  break;
+                }
+              strncpy(s_ptr, rs_ptr, rs_len);
+              s_ptr += rs_len;
+              cw += rs_len;
+            }
+        }
+      ptr = ptr->next;
+    }
+  s_ptr[0] = 0x0;
+  return output;
+}
+
 int
 g_build_argv_c(__g_handle hdl)
 {
   md_init(&hdl->exec_args.ac_ref, hdl->exec_args.argc);
 
   hdl->exec_args.argv_c = calloc(amax / sizeof(char*), sizeof(char**));
-  int i, *t;
+  int i, r;
+  __d_argv_ch ach;
   char *ptr;
   for (i = 0; i < hdl->exec_args.argc && hdl->exec_args.argv[i]; i++)
     {
@@ -13121,8 +13309,12 @@ g_build_argv_c(__g_handle hdl)
           size_t t_l = strlen(hdl->exec_args.argv[i]);
           strncpy(hdl->exec_args.argv_c[i], hdl->exec_args.argv[i],
               t_l > 8191 ? 8191 : t_l);
-          t = md_alloc(&hdl->exec_args.ac_ref, sizeof(int));
-          *t = i;
+          ach = md_alloc(&hdl->exec_args.ac_ref, sizeof(_d_argv_ch));
+          ach->cindex = i;
+          if ((r = g_compile_exech(&ach->mech, hdl, hdl->exec_args.argv[i])))
+            {
+              return r;
+            }
         }
       else
         {
@@ -13132,7 +13324,7 @@ g_build_argv_c(__g_handle hdl)
 
   if (!i)
     {
-      return 1;
+      return -1;
     }
 
   return 0;
@@ -13242,6 +13434,7 @@ g_proc_mr(__g_handle hdl)
             }
           hdl->flags |= F_GH_HASEXC;
         }
+      int r;
       if (exec_v && !hdl->exec_args.argv)
         {
           hdl->exec_args.argv = exec_v;
@@ -13253,14 +13446,12 @@ g_proc_mr(__g_handle hdl)
               return 2001;
             }
 
-          if (g_build_argv_c(hdl))
+          if ((r = g_build_argv_c(hdl)))
             {
-              print_str("ERROR: %s: failed building exec arguments\n",
-                  hdl->file);
+              print_str("ERROR: %s: [%d]: failed building exec arguments\n",
+                  hdl->file, r);
               return 2005;
             }
-
-          int r;
 
           if ((r = find_absolute_path(hdl->exec_args.argv_c[0],
               hdl->exec_args.exec_v_path)))
@@ -13273,6 +13464,15 @@ g_proc_mr(__g_handle hdl)
                 }
               snprintf(hdl->exec_args.exec_v_path, PATH_MAX, "%s",
                   hdl->exec_args.argv_c[0]);
+            }
+        }
+      else
+        {
+          if ((r = g_compile_exech(&hdl->exec_args.mech, hdl, exec_str)))
+            {
+              print_str("ERROR: %s: [%d]: could not compile exec string\n",
+                  hdl->file, r);
+              return 2008;
             }
         }
     }
@@ -13583,7 +13783,8 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
         }
 
       *ret = g_build_lom_packet(hdl, left, r_ptr, c_ptr, comp_l, o_ptr, oper_l,
-          _gm, NULL, flags);
+          _gm,
+          NULL, flags);
 
       if (*ret)
         {
@@ -15606,8 +15807,8 @@ ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size)
 #define _MC_TV_AIRDAY		"airday"
 #define _MC_TV_AIRTIME		"airtime"
 #define _MC_TV_COUNTRY		"country"
-#define _MC_TV_LINK			"link"
-#define _MC_TV_NAME			"name"
+#define _MC_TV_LINK		"link"
+#define _MC_TV_NAME		"name"
 #define _MC_TV_CLASS		"class"
 #define _MC_TV_NETWORK		"network"
 
@@ -16493,31 +16694,6 @@ ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size)
 }
 
 int
-process_exec_args(void *data, __g_handle hdl)
-{
-  g_setjmp(0, "process_exec_args", NULL, NULL);
-
-  p_md_obj ptr = md_first(&hdl->exec_args.ac_ref);
-
-  int *t;
-  while (ptr)
-    {
-
-      t = (int*) ptr->ptr;
-
-      if (process_exec_string(hdl->exec_args.argv[*t],
-          hdl->exec_args.argv_c[*t], 8191, (void*) hdl->g_proc1, data))
-        {
-          bzero(hdl->exec_args.argv_c[*t], 8192);
-        }
-
-      ptr = ptr->next;
-    }
-
-  return 0;
-}
-
-int
 process_exec_string(char *input, char *output, size_t max_size, void *callback,
     void *data)
 {
@@ -16749,9 +16925,7 @@ shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
 pmda
 search_cfg_rf(pmda md, char * file)
 {
-  g_setjmp(0, "search_cfg_rf", NULL, NULL);
   p_md_obj ptr = md_first(md);
-  g_setjmp(0, "search_cfg_rf-2", NULL, NULL);
   p_cfg_r ptr_c;
   size_t fn_len = strlen(file);
   while (ptr)
@@ -16769,7 +16943,6 @@ search_cfg_rf(pmda md, char * file)
 pmda
 register_cfg_rf(pmda md, char *file)
 {
-  g_setjmp(0, "register_cfg_rf", NULL, NULL);
   if (!md->count)
     {
       if (md_init(md, 128))
