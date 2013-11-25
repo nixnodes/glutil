@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:16
+#@REVISION:17
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -32,7 +32,7 @@
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-1.11-10 or above
+## Requires: - glutil-1.11-11 or above
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
@@ -91,9 +91,9 @@ TVRAGE_SEARCH_BY_YEAR=1
 #
 ## TVRage services api key (leave blank if you don't know
 ## what this is)
-TVRAGE_API_KEY=""
+TVRAGE_API_KEY="uezdic9NFcgutJbLyZln"
 #
-VERBOSE=0
+VERBOSE=1
 #
 ## Wipes given characters out from show name, before
 ## writing the log (regex)
