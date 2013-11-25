@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-3
+ * Version     : 1.12-4
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1234,8 +1234,6 @@ w_log(char *w, char *ow)
 int
 print_str(const char * volatile buf, ...)
 {
-  g_setjmp(0, "print_str", NULL, NULL);
-  ;
   char d_buffer_2[PSTR_MAX + 1];
   va_list al;
   va_start(al, buf);
@@ -1246,15 +1244,15 @@ print_str(const char * volatile buf, ...)
       snprintf(d_buffer_2, PSTR_MAX, "[%.2u-%.2u-%.2u %.2u:%.2u:%.2u] %s",
           (tm.tm_year + 1900) % 100, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
           tm.tm_min, tm.tm_sec, buf);
+      if (fd_log)
+        {
+          char wl_buffer[PSTR_MAX + 1];
+          vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
+          w_log(wl_buffer, (char*) buf);
+        }
     }
 
-  if ((gfl & F_OPT_PS_LOGGING) && fd_log)
-    {
-      char wl_buffer[PSTR_MAX + 1];
-      vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
-      w_log(wl_buffer, (char*) buf);
-    }
-  char iserr = strncmp(buf, "ERROR:", 6);
+  char iserr = !(buf[0] == 0x45 && (buf[1] == 0x52 || buf[1] == 0x58));
 
   if (iserr && (gfl & F_OPT_PS_SILENT))
     {
@@ -1695,7 +1693,7 @@ opt_g_loglvl(void *arg, int m)
   int lvl = atoi(buffer), i;
   uint32_t t_LOGLVL = 0;
 
-  for (i = 0; i < lvl; i++)
+  for (i = -1; i < lvl; i++)
     {
       t_LOGLVL <<= 1;
       t_LOGLVL |= 0x1;
@@ -3100,7 +3098,7 @@ _d_avoid_i dirlog_check_dupe, rebuild_dirlog, dirlog_check_records,
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists,
     dirlog_update_record, g_dump_ug, g_dump_gen, d_write, d_gen_dump;
 
-__d_enum_cb proc_section, proc_release, ssd_4macro, g_process_directory;
+__d_enum_cb proc_section, proc_directory, ssd_4macro, g_process_directory;
 
 __d_ref_to_val ref_to_val_dirlog, ref_to_val_nukelog, ref_to_val_dupefile,
     ref_to_val_lastonlog, ref_to_val_oneliners, ref_to_val_online,
@@ -3267,10 +3265,8 @@ uint64_t
 nukelog_find(char *, int, struct nukelog *);
 int
 parse_args(int argc, char **argv, void*fref_t[]);
-
 int
-process_opt(char *, void *, void *, int);
-
+process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret);
 int
 g_fopen(char *, char *, uint32_t, __g_handle);
 void *
@@ -4167,7 +4163,7 @@ g_init(int argc, char **argv)
           if (ptr && !(ofl & F_OVRR_GLROOT))
             {
               snprintf(GLROOT, PATH_MAX, "%s", (char*) ptr->ptr);
-              if ((gfl & F_OPT_VERBOSE4))
+              if ((gfl & F_OPT_VERBOSE5))
                 {
                   print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
                 }
@@ -4178,7 +4174,7 @@ g_init(int argc, char **argv)
           if (ptr && !(ofl & F_OVRR_SITEROOT))
             {
               snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
-              if ((gfl & F_OPT_VERBOSE4))
+              if ((gfl & F_OPT_VERBOSE5))
                 {
                   print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
                       SITEROOT_N);
@@ -4190,7 +4186,7 @@ g_init(int argc, char **argv)
           if (ptr)
             {
               snprintf(FTPDATA, PATH_MAX, "%s", (char*) ptr->ptr);
-              if ((gfl & F_OPT_VERBOSE4))
+              if ((gfl & F_OPT_VERBOSE5))
                 {
                   print_str("NOTICE: GLCONF: using 'ftp-data': %s\n", FTPDATA);
                 }
@@ -4202,7 +4198,7 @@ g_init(int argc, char **argv)
             {
               NUKESTR = calloc(255, 1);
               NUKESTR = string_replace(ptr->ptr, "%N", "%s", NUKESTR, 255);
-              if ((gfl & F_OPT_VERBOSE4))
+              if ((gfl & F_OPT_VERBOSE5))
                 {
                   print_str("NOTICE: GLCONF: using 'nukedir_style': %s\n",
                       NUKESTR);
@@ -4521,10 +4517,10 @@ g_init(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-  g_setjmp(0, "main", NULL, NULL);
   char **p_argv = (char**) argv;
   int r;
 
+  g_setjmp(0, "main", NULL, NULL);
   if ((r = setup_sighandlers()))
     {
       print_str(
@@ -4535,7 +4531,12 @@ main(int argc, char *argv[])
 
   _p_macro_argc = argc;
 
-  parse_args(argc, argv, prio_f_ref);
+  if ((r = parse_args(argc, argv, prio_f_ref)) > 0)
+    {
+      print_str("ERROR: [%d] processing arguments failed\n", r);
+      EXITVAL = 2;
+      g_shutdown(NULL);
+    }
 
   enable_logging();
 
@@ -7008,106 +7009,7 @@ rebuild_dirlog(void)
 }
 
 int
-parse_args(int argc, char **argv, void*fref_t[])
-{
-  g_setjmp(0, "parse_args", NULL, NULL);
-  int i, oi, vi, ret, r, c = 0;
-
-  char *c_arg;
-  mda cmd_lt =
-    { 0 };
-
-  p_ora ora = (p_ora) fref_t;
-
-  for (i = 1, ret = 0; i < argc; i++, r = 0)
-    {
-      c_arg = argv[i];
-      bzero(&cmd_lt, sizeof(mda));
-      md_init(&cmd_lt, 256);
-
-      if ((r = split_string(c_arg, 0x3D, &cmd_lt)) == 2)
-        {
-          c_arg = (char*) cmd_lt.objects->ptr;
-        }
-
-      if ((vi = process_opt(c_arg, NULL, fref_t, 1)) < 0)
-        {
-          if (fref_t != prio_f_ref)
-            {
-              print_str("ERROR: [%d] invalid argument '%s'\n", vi, c_arg);
-              ret = -2;
-              goto end;
-            }
-          else
-            {
-              continue;
-            }
-
-        }
-
-      if (r == 2)
-        {
-          ret |= process_opt(c_arg, ((p_md_obj) cmd_lt.objects->next)->ptr,
-              fref_t, 2);
-
-          c++;
-        }
-      else
-        {
-          oi = i;
-          uintaa_t vp;
-          void *buffer = NULL;
-
-          if ((vp = (uintaa_t) ora[vi].arg_cnt))
-            {
-              if (vp < 0 || vp > 8192)
-                {
-                  print_str("ERROR: '%s' bad reference array [%llu]\n", argv[i],
-                      (ulint64_t) ((i + vp) - (argc - 1)));
-                  c = -3;
-                  goto end;
-                }
-              if (i + vp > argc - 1)
-                {
-                  if (fref_t != prio_f_ref)
-                    {
-                      print_str(
-                          "ERROR: '%s' missing argument parameters [%llu]\n",
-                          argv[i], (ulint64_t) ((i + vp) - (argc - 1)));
-                      c = 0;
-                      goto end;
-                    }
-                  else
-                    {
-                      continue;
-                    }
-
-                }
-              buffer = &argv[i + 1];
-              i += vp;
-
-            }
-          ret |= process_opt(argv[oi], buffer, fref_t, 0);
-
-          c++;
-        }
-      md_g_free(&cmd_lt);
-
-    }
-  end:
-
-  md_g_free(&cmd_lt);
-
-  if (!c)
-    {
-      return -1;
-    }
-
-  return ret;
-}
-
-int
-process_opt(char *opt, void *arg, void *reference_array, int m)
+process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
 {
   int
   (*proc_opt_generic)(void *arg, int m);
@@ -7119,22 +7021,15 @@ process_opt(char *opt, void *arg, void *reference_array, int m)
       if (strlen(ora->option) == strlen(opt)
           && !strncmp(ora->option, opt, strlen(ora->option)))
         {
-          if (m == 1)
-            return i;
+          if (ora->function)
+            {
+              proc_opt_generic = ora->function;
+              *ret = i;
+              return proc_opt_generic(arg, m);
+            }
           else
             {
-              if (ora->function)
-                {
-                  proc_opt_generic = ora->function;
-                  if (proc_opt_generic)
-                    {
-                      return proc_opt_generic(arg, m);
-                    }
-                }
-              else
-                {
-                  return -4;
-                }
+              return -4;
             }
         }
 
@@ -7142,6 +7037,86 @@ process_opt(char *opt, void *arg, void *reference_array, int m)
       i++;
     }
   return -2;
+}
+
+int
+parse_args(int argc, char **argv, void*fref_t[])
+{
+  g_setjmp(0, "parse_args", NULL, NULL);
+  int vi, ret, c = 0;
+
+  int i;
+
+  char *c_arg;
+
+  p_ora ora = (p_ora) fref_t;
+
+  for (i = 1, ret = 0; i < argc; i++, vi = -1)
+    {
+      c_arg = argv[i];
+
+      char *p_iseq = strchr(c_arg, 0x3D);
+
+      if (p_iseq)
+        {
+          char bp_opt[64];
+          size_t p_isl = p_iseq - c_arg;
+          p_isl > sizeof(bp_opt) ? p_isl = sizeof(bp_opt) : 0;
+          strncpy(bp_opt, c_arg, p_isl);
+          bp_opt[p_isl] = 0x0;
+          c_arg = bp_opt;
+          p_iseq++;
+
+          if ((ret = process_opt_n(c_arg, p_iseq, fref_t, 2, &vi)))
+            {
+              if (fref_t != prio_f_ref)
+                {
+                  print_str("ERROR: [%d] invalid argument '%s'\n", ret, c_arg);
+                  c = -2;
+                  goto end;
+                }
+            }
+          goto ll_end;
+
+        }
+      else
+        {
+          if ((ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi)))
+            {
+              if (fref_t != prio_f_ref)
+                {
+                  print_str("ERROR: [%d] invalid argument '%s'\n", ret, c_arg);
+                  c = -2;
+                  goto end;
+                }
+
+              //goto ll_end;
+
+            }
+          else
+            {
+              c++;
+            }
+
+        }
+
+      if (vi > -1)
+        {
+          uintaa_t ic = (uintaa_t) ora[vi].arg_cnt;
+          //printf(":: %llu\n", ic);
+          i += (int) ic;
+        }
+
+      ll_end: ;
+    }
+  end:
+
+  if (!c)
+    {
+      return -1;
+    }
+
+  return ret;
 }
 
 int
@@ -7167,7 +7142,7 @@ update_records(char *dirname, int depth)
 }
 
 int
-proc_release(char *name, unsigned char type, void *arg, __g_eds eds)
+proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
 {
   ear *iarg = (ear*) arg;
   uint32_t crc32 = 0;
@@ -7229,7 +7204,7 @@ proc_release(char *name, unsigned char type, void *arg, __g_eds eds)
         enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
       }
 
-    enum_dir(name, proc_release, iarg, 0, eds);
+    enum_dir(name, proc_directory, iarg, 0, eds);
     break;
     }
 
@@ -7416,7 +7391,7 @@ release_generate_block(char *name, ear *iarg)
   _g_eds eds =
     { 0 };
 
-  if ((r = enum_dir(name, proc_release, iarg, 0, &eds)) < 1
+  if ((r = enum_dir(name, proc_directory, iarg, 0, &eds)) < 1
       || !iarg->dirlog->files)
     {
       if (gfl & F_OPT_VERBOSE)
@@ -13208,20 +13183,25 @@ md_copy(pmda source, pmda dest, size_t block_sz)
 int
 g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 {
-  size_t in_l = strlen(instr), pl, p1, vl1;
+  size_t pl, p1, vl1;
   char *in_ptr = instr;
+
+  if (!in_ptr[0])
+    {
+      return 1;
+    }
 
   md_init(mech, 16);
   __d_exec_ch ptr = md_alloc(mech, sizeof(_d_exec_ch));
 
   if (!ptr)
     {
-      return 1;
+      return 4;
     }
 
   ptr->st_ptr = in_ptr;
 
-  for (p1 = 0, pl = 0; p1 < in_l; p1++, in_ptr++, pl++)
+  for (p1 = 0, pl = 0; in_ptr[0]; p1++, in_ptr++, pl++)
     {
       if (in_ptr[0] == 0x7B)
         {
@@ -13243,6 +13223,9 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 
           if (!ptr->callback)
             {
+              //printf("%X - %X - %d/%d\n", ptr->st_ptr, instr, p1, strlen(instr));
+              // printf("%X - %X - %d/%d - %d\n", in_ptr, &instr[p1], p1,
+              //   strlen(instr), in_ptr - instr);
               return 10;
             }
 
@@ -13259,6 +13242,7 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
            {
            return 12;
            }*/
+
           ptr->len = vl1;
           ptr = md_alloc(mech, sizeof(_d_exec_ch));
           if (!ptr)
