@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-4
+ * Version     : 1.12-5
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2122,8 +2122,10 @@ char *_print_ptr = NULL;
 int
 opt_print(void *arg, int m)
 {
-  _print_ptr = g_pg(arg, m);
-  gfl_0 |= F_OPT_PRINT;
+  if ((_print_ptr = g_pg(arg, m)))
+    {
+      gfl_0 |= F_OPT_PRINT;
+    }
   return 0;
 }
 
@@ -3146,9 +3148,9 @@ __g_proc_rv dt_rval_nukelog_size, dt_rval_nukelog_time, dt_rval_nukelog_status,
 __g_proc_rv dt_rval_dupefile_time, dt_rval_dupefile_file, dt_rval_dupefile_user;
 
 __g_proc_rv dt_rval_lastonlog_logon, dt_rval_lastonlog_logoff,
-    dt_rval_lastonlog_upload, dt_rval_lastonlog_download, dt_rval_config,
-    dt_rval_lastonlog_user, dt_rval_lastonlog_user, dt_rval_lastonlog_group,
-    dt_rval_lastonlog_stats, dt_rval_lastonlog_tag;
+    dt_rval_lastonlog_upload, dt_rval_lastonlog_download,
+    dt_rval_lastonlog_config, dt_rval_lastonlog_user, dt_rval_lastonlog_user,
+    dt_rval_lastonlog_group, dt_rval_lastonlog_stats, dt_rval_lastonlog_tag;
 
 __g_proc_rv dt_rval_generic_nukestr, dt_rval_generic_procid,
     dt_rval_generic_ipc, dt_rval_generic_usroot, dt_rval_generic_logroot,
@@ -3171,7 +3173,7 @@ __g_proc_rv dt_rval_online_ssl, dt_rval_online_group, dt_rval_online_time,
     dt_rval_online_btxfer, dt_rval_online_pid, dt_rval_online_rate,
     dt_rval_online_basedir, dt_rval_online_ndir, dt_rval_online_user,
     dt_rval_online_tag, dt_rval_online_status, dt_rval_online_host,
-    dt_rval_online_dir;
+    dt_rval_online_dir, dt_rval_online_config;
 
 __g_proc_rv dt_rval_oneliners_time, dt_rval_oneliners_user,
     dt_rval_oneliners_group, dt_rval_oneliners_tag, dt_rval_oneliners_msg;
@@ -4087,8 +4089,9 @@ enable_logging(void)
   return;
 }
 
-#define F_LCONF_NORF 	0x1
-#define MSG_INIT_PATH_OVERR 	"NOTICE: %s path set to '%s'\n"
+#define F_LCONF_NORF 	                0x1
+#define MSG_INIT_PATH_OVERR 	        "NOTICE: %s path set to '%s'\n"
+#define MSG_INIT_CMDLINE_ERROR          "ERROR: [%d] processing command line arguments failed\n"
 
 int
 g_init(int argc, char **argv)
@@ -4111,7 +4114,7 @@ g_init(int argc, char **argv)
 
   if (r > 0)
     {
-      print_str("ERROR: [%d] processing command line arguments failed\n", r);
+      print_str(MSG_INIT_CMDLINE_ERROR, r);
       EXITVAL = 2;
       return EXITVAL;
     }
@@ -4533,7 +4536,7 @@ main(int argc, char *argv[])
 
   if ((r = parse_args(argc, argv, prio_f_ref)) > 0)
     {
-      print_str("ERROR: [%d] processing arguments failed\n", r);
+      print_str(MSG_INIT_CMDLINE_ERROR, r);
       EXITVAL = 2;
       g_shutdown(NULL);
     }
@@ -7061,7 +7064,7 @@ parse_args(int argc, char **argv, void*fref_t[])
         {
           char bp_opt[64];
           size_t p_isl = p_iseq - c_arg;
-          p_isl > sizeof(bp_opt) ? p_isl = sizeof(bp_opt) : 0;
+          p_isl > 63 ? p_isl = 63 : 0;
           strncpy(bp_opt, c_arg, p_isl);
           bp_opt[p_isl] = 0x0;
           c_arg = bp_opt;
@@ -7102,9 +7105,7 @@ parse_args(int argc, char **argv, void*fref_t[])
 
       if (vi > -1)
         {
-          uintaa_t ic = (uintaa_t) ora[vi].arg_cnt;
-          //printf(":: %llu\n", ic);
-          i += (int) ic;
+          i += (int) (uintaa_t) ora[vi].arg_cnt;
         }
 
       ll_end: ;
@@ -13512,16 +13513,6 @@ g_proc_mr(__g_handle hdl)
         }
     }
 
-  if (_print_ptr && !hdl->print_mech.offset)
-    {
-      if ((r = g_compile_exech(&hdl->print_mech, hdl, _print_ptr)))
-        {
-          print_str("ERROR: %s: [%d]: could not compile print string\n",
-              hdl->file, r);
-          return 2009;
-        }
-    }
-
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
       hdl->g_proc4 = g_omfp_raw;
@@ -13530,8 +13521,29 @@ g_proc_mr(__g_handle hdl)
     {
       hdl->g_proc3 = hdl->g_proc3_batch;
     }
-  else if (gfl_0 & F_OPT_PRINT)
+  else if ((gfl_0 & F_OPT_PRINT))
     {
+      if (!hdl->print_mech.offset && _print_ptr)
+        {
+          size_t pp_l = strlen(_print_ptr);
+          //printf(";:: %s : %d\n", _print_ptr, strlen(_print_ptr));
+          /*if (!pp_l || _print_ptr[0] == 0xA)
+           {
+           print_str("ERROR: %s: empty -print command\n", hdl->file);
+           return 2010;
+           }*/
+          if (pp_l > MAX_EXEC_STR)
+            {
+              print_str("ERROR: %s: -print string too large\n", hdl->file);
+              return 2004;
+            }
+          if ((r = g_compile_exech(&hdl->print_mech, hdl, _print_ptr)))
+            {
+              print_str("ERROR: %s: [%d]: could not compile print string\n",
+                  hdl->file, r);
+              return 2009;
+            }
+        }
       hdl->g_proc4 = g_omfp_eassemble;
     }
   else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP))
@@ -14663,30 +14675,30 @@ dt_rval_lastonlog_download(void *arg, char *match, char *output,
 }
 
 char *
-dt_rval_config(void *arg, char *match, char *output, size_t max_size)
+dt_rval_lastonlog_config(void *arg, char *match, char *output, size_t max_size)
 {
-  char *buffer = malloc(max_size + 1);
-  void *ptr = ref_to_val_get_cfgval(((struct lastonlog *) arg)->uname, match,
+  char p_b0[64];
+  int ic = 0;
+
+  while (match[ic] != 0x7D && ic < 64)
+    {
+      p_b0[ic] = match[ic];
+      ic++;
+    }
+
+  p_b0[ic] = 0x0;
+
+  void *ptr = ref_to_val_get_cfgval(((struct lastonlog *) arg)->uname, p_b0,
   DEFPATH_USERS,
-  F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
-  if (ptr && strlen(ptr) < max_size)
+  F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, output, max_size);
+  if (ptr)
     {
-      strcp_s(output, max_size, (char*) ptr);
-      goto end;
+      return ptr;
     }
 
-  ptr = ref_to_val_get_cfgval(((struct lastonlog *) arg)->gname, match,
+  return ref_to_val_get_cfgval(((struct lastonlog *) arg)->gname, p_b0,
   DEFPATH_GROUPS,
-  F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, buffer, max_size);
-  if (ptr && strlen(ptr) < max_size)
-    {
-      strcp_s(output, max_size, (char*) ptr);
-    }
-
-  end:
-
-  free(buffer);
-  return output;
+  F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, output, max_size);
 }
 
 char *
@@ -14739,7 +14751,7 @@ ref_to_val_lk_lastonlog(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!is_char_uppercase(match[0]))
     {
-      return dt_rval_config;
+      return dt_rval_lastonlog_config;
     }
   else if (!strncmp(match, _MC_GLOB_USER, 4))
     {
@@ -14903,6 +14915,25 @@ dt_rval_online_rate(void *arg, char *match, char *output, size_t max_size)
 }
 
 char *
+dt_rval_online_config(void *arg, char *match, char *output, size_t max_size)
+{
+  char p_b0[64];
+  int ic = 0;
+
+  while (match[ic] != 0x7D && ic < 64)
+    {
+      p_b0[ic] = match[ic];
+      ic++;
+    }
+
+  p_b0[ic] = 0x0;
+
+  return ref_to_val_get_cfgval(((struct ONLINE *) arg)->username, p_b0,
+  DEFPATH_USERS,
+  F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, output, max_size);
+}
+
+char *
 dt_rval_online_basedir(void *arg, char *match, char *output, size_t max_size)
 {
   return g_basename(((struct ONLINE *) arg)->currentdir);
@@ -14985,13 +15016,13 @@ ref_to_val_lk_online(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_online_pid;
     }
-  else if (!strcmp(match, "rate"))
+  else if (!strncmp(match, "rate", 4))
     {
       return dt_rval_online_rate;
     }
   else if (!is_char_uppercase(match[0]))
     {
-      return dt_rval_config;
+      return dt_rval_online_config;
     }
   else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
     {
