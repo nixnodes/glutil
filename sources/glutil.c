@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.11-8
+ * Version     : 1.11-9
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 11
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1546,20 +1546,22 @@ char *hpd_up =
         "  --version             Print version and exit\n"
         "\n"
         "Directory and file:\n"
-        "  --glroot=<path>       Override default glFTPd root path\n"
-        "  --siteroot=<path>     Override default site root path (relative to glFTPd root)\n"
-        "  --dirlog=<file>       Override default path to directory log\n"
-        "  --nukelog=<file>      Override default path to nuke log\n"
-        "  --dupefile=<file>     Override default path to dupe file\n"
-        "  --lastonlog=<file>    Override default path to last-on log\n"
-        "  --oneliners=<file>    Override default path to oneliners file\n"
-        "  --imdblog=<file>      Override default path to iMDB log\n"
-        "  --gamelog=<file>      Override default path to game log\n"
-        "  --tvlog=<file>        Override default path to TVRAGE log\n"
-        "  --glconf=<file>       Override path to glftpd.conf (set using glconf.h by default)\n"
-        "  --folders=<file>      Override default path to folders file (contains sections and depths,\n"
+        "  --glroot=<path>       glFTPd root path\n"
+        "  --siteroot=<path>     Site root path (relative to glFTPd root)\n"
+        "  --dirlog=<file>       Path to directory log\n"
+        "  --nukelog=<file>      Path to nuke log\n"
+        "  --dupefile=<file>     Path to dupe file\n"
+        "  --lastonlog=<file>    Path to last-on log\n"
+        "  --oneliners=<file>    Path to oneliners file\n"
+        "  --imdblog=<file>      Path to iMDB log\n"
+        "  --gamelog=<file>      Path to game log\n"
+        "  --tvlog=<file>        Path to TVRAGE log\n"
+        "  --ge1log=<file>       Path to GENERIC1 log\n"
+        "  --ge12og=<file>       Path to GENERIC2 log\n"
+        "  --glconf=<file>       Path to glftpd.conf (set using glconf.h by default)\n"
+        "  --folders=<file>      Path to folders file (contains sections and depths,\n"
         "                           used on recursive imports)\n"
-        "  --logfile=<file>      Override default log file path\n"
+        "  --logfile=<file>      Log file path\n"
         "\n";
 
 int
@@ -6562,7 +6564,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   if (g_fopen(file, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
     {
-      return 0;
+      return 2;
     }
 
   if (gfl & F_OPT_LOADQ)
@@ -6826,7 +6828,10 @@ rebuild_dirlog(void)
     { 0 }, buffer2 =
     { 0 };
 
-  g_proc_mr(&g_act_1);
+  if (g_proc_mr(&g_act_1))
+    {
+      return 12;
+    }
 
   if (gfl & F_OPT_FORCE)
     {
@@ -9549,7 +9554,9 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
       return 1;
     }
 
-  g_proc_mr(hdl);
+  if (g_proc_mr(hdl)) {
+      return 32;
+  }
 
   hdl->fh = fd;
 
@@ -13342,6 +13349,8 @@ g_load_lom(__g_handle hdl)
     {
       print_str("ERROR: %s: [%d] LOM specified, but none could be loaded\n",
           hdl->file, rt);
+      gfl |= F_OPT_KILL_GLOBAL;
+      EXITVAL = 1;
 
     }
 
@@ -13976,22 +13985,22 @@ ref_to_val_ptr_gen2(void *arg, char *match, int *output)
     }
   else if (!strncmp(match, _MC_GE_F1, 2))
     {
-      *output = -1;
+      *output = -32;
       return &data->f_1;
     }
   else if (!strncmp(match, _MC_GE_F2, 2))
     {
-      *output = -1;
+      *output = -32;
       return &data->f_2;
     }
   else if (!strncmp(match, _MC_GE_F3, 2))
     {
-      *output = -1;
+      *output = -32;
       return &data->f_3;
     }
   else if (!strncmp(match, _MC_GE_F4, 2))
     {
-      *output = -1;
+      *output = -32;
       return &data->f_4;
     }
   else if (!strncmp(match, _MC_GE_UL1, 3))
@@ -16161,19 +16170,19 @@ ref_to_val_gen2(void *arg, char *match, char *output, size_t max_size)
     {
       snprintf(output, max_size, "%f", data->f_4);
     }
-  else if (!strncmp(match, _MC_GE_UL1, 2))
+  else if (!strncmp(match, _MC_GE_UL1, 3))
     {
       snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_1);
     }
-  else if (!strncmp(match, _MC_GE_UL2, 2))
+  else if (!strncmp(match, _MC_GE_UL2, 3))
     {
       snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_2);
     }
-  else if (!strncmp(match, _MC_GE_UL3, 2))
+  else if (!strncmp(match, _MC_GE_UL3, 3))
     {
       snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_3);
     }
-  else if (!strncmp(match, _MC_GE_UL4, 2))
+  else if (!strncmp(match, _MC_GE_UL4, 3))
     {
       snprintf(output, max_size, "%llu", (ulint64_t) data->ui64_4);
     }
@@ -16433,19 +16442,19 @@ ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size)
     {
       return dt_rval_gen2_f4;
     }
-  else if (!strncmp(match, _MC_GE_UL1, 2))
+  else if (!strncmp(match, _MC_GE_UL1, 3))
     {
       return dt_rval_gen2_uli1;
     }
-  else if (!strncmp(match, _MC_GE_UL2, 2))
+  else if (!strncmp(match, _MC_GE_UL2, 3))
     {
       return dt_rval_gen2_uli2;
     }
-  else if (!strncmp(match, _MC_GE_UL3, 2))
+  else if (!strncmp(match, _MC_GE_UL3, 3))
     {
       return dt_rval_gen2_uli3;
     }
-  else if (!strncmp(match, _MC_GE_UL4, 2))
+  else if (!strncmp(match, _MC_GE_UL4, 3))
     {
       return dt_rval_gen2_uli4;
     }
