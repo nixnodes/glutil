@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:15
+#@REVISION:16
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -32,7 +32,7 @@
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-1.9-58 or above
+## Requires: - glutil-1.11-8 or above
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
@@ -81,7 +81,7 @@ DENY_TVID_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1)
-RECORD_MAX_AGE=30
+RECORD_MAX_AGE=14
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -280,19 +280,22 @@ ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
 [ -z "$ENDYEAR" ] && ENDYEAR=0
 
 
-
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
 	if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
-		$2 --tvlog="$3$LAPPEND" -h --iregex "$DIR_E" --imatchq --silent || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" --silent || { 
+		
+	 	$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" --nofq --silent || { 
 			echo "ERROR: $DIR_E: Failed removing old record"; exit 1 
 		}
+		
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
-		$2 --tvlog="$3$LAPPEND" -h ilom "showid=$SHOWID" --imatchq --silent || $2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage lom "showid=$SHOWID" --silent || {
-			echo "ERROR: $SHOWID: Failed removing old record"; exit 1 
+		[ -e "$3$LAPPEND" ] && {
+			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage lom "showid=$SHOWID" --nofq --silent || {
+				echo "ERROR: $SHOWID: Failed removing old record"; exit 1 
+			}
 		}
 	fi	
 	
