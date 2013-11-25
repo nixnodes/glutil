@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-5
+ * Version     : 1.12-6
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 5
+#define VER_REVISION 6
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -3137,7 +3137,7 @@ __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
 
 __g_proc_rv dt_rval_dirlog_user, dt_rval_dirlog_group, dt_rval_dirlog_files,
     dt_rval_dirlog_size, dt_rval_dirlog_status, dt_rval_dirlog_time,
-    dt_rval_dirlog_mode_e, dt_rval_dirlog_dir, dt_rval_xg, dt_rval_x,
+    dt_rval_dirlog_mode_e, dt_rval_dirlog_dir, dt_rval_xg_dirlog, dt_rval_x_dirlog,
     dt_rval_dirlog_basedir;
 
 __g_proc_rv dt_rval_nukelog_size, dt_rval_nukelog_time, dt_rval_nukelog_status,
@@ -3374,7 +3374,7 @@ int
 g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
 int
 g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
-int
+char *
 g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
     uint32_t flags);
 int
@@ -11293,7 +11293,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "c:", 2))
     {
-      return g_rtval_ex(data->name, &match[2], max_size, output,
+      g_rtval_ex(data->name, &match[2], max_size, output,
       F_CFGV_BUILD_FULL_STRING);
     }
   else if (!strncmp(match, _MC_X_BASEPATH, 8))
@@ -11338,11 +11338,21 @@ dt_rval_x_dirpath(void *arg, char *match, char *output, size_t max_size)
 }
 
 char *
-dt_rval_c(void *arg, char *match, char *output, size_t max_size)
+dt_rval_x_c(void *arg, char *match, char *output, size_t max_size)
 {
-  g_rtval_ex(((__d_xref) arg)->name, &match[2], max_size, output,
+  char p_b0[64];
+  int ic = 0;
+
+  while (match[ic] != 0x7D && ic < 64)
+    {
+      p_b0[ic] = match[ic];
+      ic++;
+    }
+
+  p_b0[ic] = 0x0;
+
+  return g_rtval_ex(((__d_xref) arg)->name, &p_b0[2], max_size, output,
   F_CFGV_BUILD_FULL_STRING);
-  return output;
 }
 
 char *
@@ -11717,7 +11727,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "c:", 2))
     {
-      return dt_rval_c;
+      return dt_rval_x_c;
     }
   else if (!strncmp(match, _MC_X_BASEPATH, 8))
     {
@@ -11918,23 +11928,19 @@ d_xref_ct_fe(__d_xref_ct input, size_t sz)
   return -1;
 }
 
-int
+char *
 g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
     uint32_t flags)
 {
-  char *buffer = malloc(max_size + 1);
   void *ptr = ref_to_val_get_cfgval(arg, match,
-  NULL, flags, buffer, max_size);
-  if (ptr && strlen(ptr) < max_size)
-    {
-      strcp_s(output, max_size, (char*) ptr);
-    }
-  else
+  NULL, flags, output, max_size);
+  if (!ptr)
     {
       output[0] = 0x0;
+      ptr = output;
     }
-  free(buffer);
-  return 0;
+
+  return ptr;
 }
 
 int
@@ -14382,7 +14388,7 @@ dt_rval_dirlog_basedir(void *arg, char *match, char *output, size_t max_size)
 }
 
 char *
-dt_rval_xg(void *arg, char *match, char *output, size_t max_size)
+dt_rval_xg_dirlog(void *arg, char *match, char *output, size_t max_size)
 {
   _d_xref xref_t =
     {
@@ -14394,7 +14400,7 @@ dt_rval_xg(void *arg, char *match, char *output, size_t max_size)
 }
 
 char *
-dt_rval_x(void *arg, char *match, char *output, size_t max_size)
+dt_rval_x_dirlog(void *arg, char *match, char *output, size_t max_size)
 {
   _d_xref xref_t =
     {
@@ -14403,6 +14409,8 @@ dt_rval_x(void *arg, char *match, char *output, size_t max_size)
   ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
   return output;
 }
+
+
 
 void *
 ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
@@ -14451,11 +14459,11 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "x:", 2))
     {
-      return dt_rval_x;
+      return dt_rval_x_dirlog;
     }
   else if (!strncmp(match, "xg:", 3))
     {
-      return dt_rval_xg;
+      return dt_rval_xg_dirlog;
     }
   return NULL;
 }
@@ -14537,6 +14545,29 @@ dt_rval_nukelog_reason(void *arg, char *match, char *output, size_t max_size)
   return ((struct nukelog *) arg)->reason;
 }
 
+char *
+dt_rval_x_nukelog(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  strcp_s(xref_t.name, sizeof(xref_t.name), ((struct nukelog *) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+  return output;
+}
+
+char *
+dt_rval_xg_nukelog(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
+      ((struct nukelog *) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
+  return output;
+}
+
 void *
 ref_to_val_lk_nukelog(void *arg, char *match, char *output, size_t max_size)
 {
@@ -14591,11 +14622,11 @@ ref_to_val_lk_nukelog(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "x:", 2))
     {
-      return dt_rval_x;
+      return dt_rval_x_nukelog;
     }
   else if (!strncmp(match, "xg:", 3))
     {
-      return dt_rval_xg;
+      return dt_rval_xg_nukelog;
     }
   return NULL;
 }
@@ -15166,6 +15197,29 @@ dt_rval_imdb_synopsis(void *arg, char *match, char *output, size_t max_size)
   return ((__d_imdb) arg)->synopsis;
 }
 
+char *
+dt_rval_imdb_x(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  strcp_s(xref_t.name, sizeof(xref_t.name), ((__d_imdb) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+  return output;
+}
+
+char *
+dt_rval_imdb_xg(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
+      ((__d_imdb) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
+  return output;
+}
+
 void *
 ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size)
 {
@@ -15241,11 +15295,11 @@ ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "x:", 2))
     {
-      return dt_rval_x;
+      return dt_rval_imdb_x;
     }
   else if (!strncmp(match, "xg:", 3))
     {
-      return dt_rval_xg;
+      return dt_rval_imdb_xg;
     }
   return NULL;
 }
@@ -15283,6 +15337,29 @@ dt_rval_game_dir(void *arg, char *match, char *output, size_t max_size)
   return ((__d_game) arg)->dirname;
 }
 
+char *
+dt_rval_game_x(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  strcp_s(xref_t.name, sizeof(xref_t.name), ((__d_game) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+  return output;
+}
+
+char *
+dt_rval_game_xg(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
+      ((__d_game) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
+  return output;
+}
+
 void *
 ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size)
 {
@@ -15314,11 +15391,11 @@ ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "x:", 2))
     {
-      return dt_rval_x;
+      return dt_rval_game_x;
     }
   else if (!strncmp(match, "xg:", 3))
     {
-      return dt_rval_xg;
+      return dt_rval_game_xg;
     }
   return NULL;
 }
@@ -15460,6 +15537,29 @@ dt_rval_tvrage_network(void *arg, char *match, char *output, size_t max_size)
   return ((__d_tvrage) arg)->network;
 }
 
+char *
+dt_rval_tvrage_x(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  strcp_s(xref_t.name, sizeof(xref_t.name), ((__d_tvrage) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[2], output, max_size);
+  return output;
+}
+
+char *
+dt_rval_tvrage_xg(void *arg, char *match, char *output, size_t max_size)
+{
+  _d_xref xref_t =
+    {
+      { 0 } };
+  snprintf(xref_t.name, sizeof(xref_t.name), "%s%s", GLROOT,
+      ((__d_tvrage) arg)->dirname);
+  ref_to_val_x((void*) &xref_t, &match[3], output, max_size);
+  return output;
+}
+
 void *
 ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size)
 {
@@ -15550,11 +15650,11 @@ ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size)
     }
   else if (!strncmp(match, "x:", 2))
     {
-      return dt_rval_x;
+      return dt_rval_tvrage_x;
     }
   else if (!strncmp(match, "xg:", 3))
     {
-      return dt_rval_xg;
+      return dt_rval_tvrage_xg;
     }
 
   return NULL;
