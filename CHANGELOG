@@ -15,6 +15,7 @@
  *   - ~ -exec[v]/-print compiler overflow on input string (rev. 4)
  *   - ~ Loglevels aligned one place lower than requested (rev. 4)
  *   - %! Argument processing faster (rev. 4)
+ *   - ~ User file data fetch broken (since 1.11) (rev. 5)
  *
  * v1.11:
  *
