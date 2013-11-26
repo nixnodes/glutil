@@ -19,6 +19,8 @@
  *   - ~ x:/xg: reference fields not working (except for dirlog) (since 1.11) (rev. 6)
  *   - + Add generic fields (:TAB/:NL) (rev. 7)
  *   - + Add -printf (rev. 7)
+ *   - + --stdin, log parsing (-q,-d,..) reads data from stdin (rev. 9)
+ *   - ~ Made format literal for a printf (rev. 10)
  *
  * v1.11:
  *
