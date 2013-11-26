@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-10
+ * Version     : 1.12-11
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 10
+#define VER_REVISION 11
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -10466,15 +10466,15 @@ file_crc32(char *file, uint32_t *crc_out)
   FILE *fp;
 
   size_t r;
-  uint8_t *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE), *ptr = buffer;
 
   *crc_out = 0x0;
 
   if ((fp = fopen(file, "rb")) == NULL)
     {
-      free(buffer);
       return 0;
     }
+
+  uint8_t *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE), *ptr = buffer;
 
   uint32_t crc = MAX_uint32_t;
 
@@ -11643,10 +11643,8 @@ char *
 dt_rval_x_crc32(void *arg, char *match, char *output, size_t max_size)
 {
   uint32_t crc32;
-  if (file_crc32(((__d_xref) arg)->name, &crc32) )
-    {
-      snprintf(output, max_size, "%.8X", crc32);
-    }
+  file_crc32(((__d_xref) arg)->name, &crc32);
+  snprintf(output, max_size, "%.8X", crc32);
   return output;
 }
 
@@ -11654,10 +11652,8 @@ char *
 dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size)
 {
   uint32_t crc32;
-  if (file_crc32(((__d_xref) arg)->name, &crc32) )
-    {
-      snprintf(output, max_size, "%u", crc32);
-    }
+  file_crc32(((__d_xref) arg)->name, &crc32);
+  snprintf(output, max_size, "%u", crc32);
   return output;
 }
 
