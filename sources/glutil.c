@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-12
+ * Version     : 1.12-13
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -782,7 +782,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_GH_ISGENERIC3                 (a64 << 34)
 
 /* these bits determine log type */
-#define F_GH_ISTYPE			(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
+#define F_GH_ISTYPE			(F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
 
 #define F_GH_ISSHM			(F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP			(F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
@@ -8277,7 +8277,7 @@ gen3_format_block(void *iarg, char *output)
 {
   __d_generic_s800 data = (__d_generic_s800) iarg;
 
-  return print_str("GENERIC1\x9%u\x9%u\x9%s\x9%s\x9%d\x9%d\x9%ull\x9%ull\x9%s\x9%s\n",
+  return print_str("GENERIC3\x9%u\x9%u\x9%s\x9%s\x9%d\x9%d\x9%llu\x9%llu\x9%s\x9%s\n",
       data->ui32_1, data->ui32_2, data->s_1, data->s_2, data->i32_1,
       data->i32_2, (ulint64_t)data->ui64_1, (ulint64_t)data->ui64_2, data->s_3, data->s_4);
 
@@ -8288,7 +8288,7 @@ gen3_format_block_batch(void *iarg, char *output)
 {
   __d_generic_s800 data = (__d_generic_s800) iarg;
 
-  return printf("GENERIC1\x9%u\x9%u\x9%s\x9%s\x9%d\x9%d\x9%llu\x9%llu\x9%s\x9%s\n",
+  return printf("GENERIC3\x9%u\x9%u\x9%s\x9%s\x9%d\x9%d\x9%llu\x9%llu\x9%s\x9%s\n",
       data->ui32_1, data->ui32_2, data->s_1, data->s_2, data->i32_1,
       data->i32_2, (ulint64_t)data->ui64_1, (ulint64_t)data->ui64_2, data->s_3, data->s_4);
 
@@ -8300,7 +8300,7 @@ gen3_format_block_exp(void *iarg, char *output)
   __d_generic_s800 data = (__d_generic_s800) iarg;
 
   return printf("u1 %u\n"
-      "u1 %u\n"
+      "u2 %u\n"
       "ge1 %s\n"
       "ge2 %s\n"
       "i1 %d\n"
