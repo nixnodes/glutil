@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-9
+ * Version     : 1.12-10
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -17986,7 +17986,7 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
             bzero(ptr->s_ret, sizeof(ptr->s_ret));
             strncpy(ptr->s_ret, &buffer[8 + pb_l], d_len);
 
-            snprintf(ptr->p_buf_2, PATH_MAX, name);
+            snprintf(ptr->p_buf_2, PATH_MAX, "%s", name);
             ptr->ret = d_len;
             gfl |= F_OPT_TERM_ENUM;
             break;
