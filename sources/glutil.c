@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-13
+ * Version     : 1.12-14
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 13
+#define VER_REVISION 14
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -440,7 +440,6 @@ typedef struct g_handle
   struct shmid_ds ipcbuf;
   int
   (*g_proc0)(void *, char *, char *);
-  __g_proc_t g_proc1;
   __g_proc_v g_proc1_ps;
   __d_ref_to_pv g_proc2;
   __g_proc_v g_proc1_lookup;
@@ -3362,7 +3361,7 @@ rebuild_data_file(char *, __g_handle);
 int
 g_bmatch(void *, __g_handle, pmda md);
 int
-do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback);
+do_match(__g_handle hdl, void *d_ptr, __g_match _gm);
 
 size_t
 g_load_data_md(void *, size_t, char *, __g_handle hdl);
@@ -6248,7 +6247,7 @@ dirlog_check_records(void)
 }
 
 int
-do_match(__g_handle hdl, void *d_ptr, __g_match _gm, void *callback)
+do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 {
   char *mstr;
 
@@ -6483,7 +6482,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
             }
         }
 
-      r = do_match(hdl, d_ptr, _gm, (void*) hdl->g_proc1);
+      r = do_match(hdl, d_ptr, _gm);
 
       l_end:
 
@@ -6511,13 +6510,8 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
       if (hdl->exec_args.exc
           && WEXITSTATUS(
-              r_e = hdl->exec_args.exc(d_ptr, (void*) hdl->g_proc1, NULL, (void*)hdl)))
+              r_e = hdl->exec_args.exc(d_ptr, (void*) NULL, NULL, (void*)hdl)))
         {
-          /*if ((gfl & F_OPT_VERBOSE5))
-           {
-           print_str("WARNING: external call returned non-zero: [%d]\n",
-           WEXITSTATUS(r_e));
-           }*/
           r_p = 1;
         }
     }
