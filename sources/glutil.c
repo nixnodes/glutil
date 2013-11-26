@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-14
+ * Version     : 1.12-15
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 14
+#define VER_REVISION 15
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2623,6 +2623,10 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 {
   char *buffer = g_pg(arg, m);
 
+  if (!buffer) {
+      return 1113;
+  }
+
   size_t a_i = strlen(buffer);
 
   if (!a_i)
@@ -2632,14 +2636,14 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
 
   if (a_i > MAX_CPRG_STRING)
     {
-      return 11400;
+      return 1114;
     }
 
   __g_match pgm = g_global_register_match();
 
   if (!pgm)
     {
-      return 11000;
+      return 1114;
     }
 
   char *ptr = (char*) pgm->data;
@@ -7164,7 +7168,7 @@ parse_args(int argc, char **argv, void*fref_t[])
             {
               if (fref_t != prio_f_ref)
                 {
-                  print_str("ERROR: [%d] invalid argument '%s'\n", ret, c_arg);
+                  print_str("ERROR: [%d] malformed/invalid argument '%s'\n", ret, c_arg);
                   c = -2;
                   goto end;
                 }
@@ -7178,7 +7182,7 @@ parse_args(int argc, char **argv, void*fref_t[])
             {
               if (fref_t != prio_f_ref)
                 {
-                  print_str("ERROR: [%d] invalid argument '%s'\n", ret, c_arg);
+                  print_str("ERROR: [%d] alformed/invalid argument '%s'\n", ret, c_arg);
                   c = -2;
                   goto end;
                 }
