@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-11
+ * Version     : 1.12-12
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -70,6 +70,7 @@
 #define IPC_KEY_TVRAGELOG 	0xDEAD1700
 #define IPC_KEY_GEN1LOG 	0xDEAD1800
 #define IPC_KEY_GEN2LOG 	0xDEAD1900
+#define IPC_KEY_GEN3LOG         0xDEAD2000
 
 /*
  * log file path
@@ -129,6 +130,11 @@
 #define ge2_log "/glftpd/ftp-data/logs/gen2.log"
 #endif
 
+/* generic 3 log file path */
+#ifndef ge3_log
+#define ge3_log "/glftpd/ftp-data/logs/gen3.log"
+#endif
+
 /* see README file about this */
 #ifndef du_fld
 #define du_fld "/glftpd/bin/glutil.folders"
@@ -166,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 11
+#define VER_REVISION 12
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -313,6 +319,20 @@ typedef struct ___d_generic_s1644
   char s_7[128];
   char s_8[128];
 } _d_generic_s1644, *__d_generic_s1644;
+
+typedef struct ___d_generic_s800
+{
+  int32_t i32_1;
+  int32_t i32_2;
+  uint32_t ui32_1;
+  uint32_t ui32_2;
+  uint64_t ui64_1;
+  uint64_t ui64_2;
+  char s_1[255];
+  char s_2[255];
+  char s_3[128];
+  char s_4[128];
+} _d_generic_s800, *__d_generic_s800;
 
 #pragma pack(pop)
 
@@ -759,6 +779,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_GH_IFHIT			(a64 << 31)
 #define F_GH_ISGENERIC2			(a64 << 32)
 #define F_GH_HASSTRM			(a64 << 33)
+#define F_GH_ISGENERIC3                 (a64 << 34)
 
 /* these bits determine log type */
 #define F_GH_ISTYPE			(F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -784,6 +805,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_BM_TERM			(a32 << 16)
 #define F_OVRR_GE2LOG			(a32 << 17)
 #define F_SREDIRFAILED                  (a32 << 18)
+#define F_OVRR_GE3LOG                   (a32 << 19)
 
 #define F_PD_RECURSIVE 			(a32 << 1)
 #define F_PD_MATCHDIR			(a32 << 2)
@@ -841,6 +863,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define TV_SZ 				sizeof(_d_tvrage)
 #define G1_SZ 				sizeof(_d_generic_s2044)
 #define G2_SZ 				sizeof(_d_generic_s1644)
+#define G3_SZ                           sizeof(_d_generic_s800)
 
 #define CRC_FILE_READ_BUFFER_SIZE 	64512
 #define	DB_MAX_SIZE 			((long long int)1073741824)   /* max file size allowed to load into memory */
@@ -872,6 +895,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define DEFF_TV 			"tv.log"
 #define DEFF_GEN1 			"gen1.log"
 #define DEFF_GEN2 			"gen2.log"
+#define DEFF_GEN3                       "gen3.log"
 
 #define NUKESTR_DEF			"NUKED-%s"
 
@@ -1349,6 +1373,8 @@ char GE1LOG[PATH_MAX] =
   { ge1_log };
 char GE2LOG[PATH_MAX] =
   { ge2_log };
+char GE3LOG[PATH_MAX] =
+  { ge3_log };
 char *LOOPEXEC = NULL;
 long long int db_max_size = DB_MAX_SIZE;
 key_t SHM_IPC = (key_t) shm_ipc;
@@ -2427,6 +2453,17 @@ opt_GE2LOG(void *arg, int m)
 }
 
 int
+opt_GE3LOG(void *arg, int m)
+{
+  if (!(ofl & F_OVRR_GE3LOG))
+    {
+      g_cpg(arg, GE3LOG, m, PATH_MAX);
+      ofl |= F_OVRR_GE3LOG;
+    }
+  return 0;
+}
+
+int
 opt_rebuild(void *arg, int m)
 {
   p_argv_off = g_pg(arg, m);
@@ -3139,7 +3176,7 @@ __d_ref_to_pval ref_to_val_ptr_dirlog, ref_to_val_ptr_nukelog,
     ref_to_val_ptr_oneliners, ref_to_val_ptr_online, ref_to_val_ptr_imdb,
     ref_to_val_ptr_game, ref_to_val_ptr_lastonlog, ref_to_val_ptr_dupefile,
     ref_to_val_ptr_tv, ref_to_val_ptr_dummy, ref_to_val_ptr_gen1,
-    ref_to_val_ptr_x, ref_to_val_ptr_gen2;
+    ref_to_val_ptr_x, ref_to_val_ptr_gen2, ref_to_val_ptr_gen3;
 
 __d_format_block lastonlog_format_block, dupefile_format_block,
     oneliner_format_block, online_format_block, nukelog_format_block,
@@ -3161,7 +3198,7 @@ __d_format_block lastonlog_format_block_exp, dupefile_format_block_exp,
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 __d_cfg search_cfg_rf, register_cfg_rf;
 __d_mlref gcb_dirlog, gcb_nukelog, gcb_imdbh, gcb_oneliner, gcb_dupefile,
-    gcb_lastonlog, gcb_game, gcb_tv, gcb_gen1, gcb_gen2;
+    gcb_lastonlog, gcb_game, gcb_tv, gcb_gen1, gcb_gen2, gcb_gen3;
 
 __g_proc_rv dt_rval_dirlog_user, dt_rval_dirlog_group, dt_rval_dirlog_files,
     dt_rval_dirlog_size, dt_rval_dirlog_status, dt_rval_dirlog_time,
@@ -3228,7 +3265,7 @@ _d_rtv_lk ref_to_val_lk_dirlog, ref_to_val_lk_nukelog, ref_to_val_lk_dupefile,
     ref_to_val_lk_lastonlog, ref_to_val_lk_oneliners, ref_to_val_lk_online,
     ref_to_val_lk_generic, ref_to_val_lk_x, ref_to_val_lk_imdb,
     ref_to_val_lk_game, ref_to_val_lk_tvrage, ref_to_val_lk_gen1,
-    ref_to_val_lk_gen2;
+    ref_to_val_lk_gen2, ref_to_val_lk_gen3;
 
 _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
     is_ascii_hexadecimal, is_ascii_uppercase_text;
@@ -3470,12 +3507,13 @@ void *prio_f_ref[] =
       prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
       "--logfile", opt_log_file, (void*) 1, "--log", opt_logging, (void*) 0,
       "--dirlog", opt_dirlog_file, (void*) 1, "--ge1log", opt_GE1LOG, (void*) 1,
-      "--ge2log", opt_GE2LOG, (void*) 1, "--gamelog", opt_gamelog, (void*) 1,
-      "--tvlog", opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1,
-      "--oneliners", opt_oneliner, (void*) 1, "--lastonlog", opt_lastonlog,
-      (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--siteroot",
-      opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1, "--noglconf",
-      opt_g_noglconf, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
+      "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log", opt_GE3LOG, (void*) 1,
+      "--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
+      "--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
+      (void*) 1, "--lastonlog", opt_lastonlog, (void*) 1, "--nukelog",
+      opt_nukelog_file, (void*) 1, "--siteroot", opt_siteroot, (void*) 1,
+      "--glroot", opt_glroot, (void*) 1, "--noglconf", opt_g_noglconf,
+      (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
       NULL, NULL, NULL };
 
 void *f_ref[] =
@@ -3518,18 +3556,19 @@ void *f_ref[] =
       opt_g_loopexec, (void*) 1, "--loop", opt_g_loop, (void*) 1, "--daemon",
       opt_g_daemonize, (void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc",
       opt_shmipc, (void*) 1, "-l", opt_lastonlog_dump, (void*) 0, "--ge1log",
-      opt_GE1LOG, (void*) 1, "--ge2log", opt_GE2LOG, (void*) 1, "--gamelog",
-      opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1, "--imdblog",
-      opt_imdblog, (void*) 1, "--oneliners", opt_oneliner, (void*) 1, "-o",
-      opt_oneliner_dump, (void*) 0, "--lastonlog", opt_lastonlog, (void*) 1,
-      "-i", opt_dupefile_dump, (void*) 0, "--dupefile", opt_dupefile, (void*) 1,
-      "--nowbuffer", opt_g_buffering, (void*) 0, "--raw", opt_raw_dump,
-      (void*) 0, "--binary", opt_binary, (void*) 0, "iregexi", opt_g_iregexi,
-      (void*) 1, "--iregexi", opt_g_iregexi, (void*) 1, "iregex", opt_g_iregex,
-      (void*) 1, "--iregex", opt_g_iregex, (void*) 1, "regexi", opt_g_regexi,
-      (void*) 1, "--regexi", opt_g_regexi, (void*) 1, "regex", opt_g_regex,
-      (void*) 1, "--regex", opt_g_regex, (void*) 1, "-e", opt_rebuild,
-      (void*) 1, "--comp", opt_compact_output_formatting, (void*) 0, "--batch",
+      opt_GE1LOG, (void*) 1, "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log",
+      opt_GE3LOG, (void*) 1, "--gamelog", opt_gamelog, (void*) 1, "--tvlog",
+      opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1, "--oneliners",
+      opt_oneliner, (void*) 1, "-o", opt_oneliner_dump, (void*) 0,
+      "--lastonlog", opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump,
+      (void*) 0, "--dupefile", opt_dupefile, (void*) 1, "--nowbuffer",
+      opt_g_buffering, (void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary",
+      opt_binary, (void*) 0, "iregexi", opt_g_iregexi, (void*) 1, "--iregexi",
+      opt_g_iregexi, (void*) 1, "iregex", opt_g_iregex, (void*) 1, "--iregex",
+      opt_g_iregex, (void*) 1, "regexi", opt_g_regexi, (void*) 1, "--regexi",
+      opt_g_regexi, (void*) 1, "regex", opt_g_regex, (void*) 1, "--regex",
+      opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
+      opt_compact_output_formatting, (void*) 0, "--batch",
       opt_batch_output_formatting, (void*) 0, "-E",
       opt_export_output_formatting, (void*) 0, "--export",
       opt_export_output_formatting, (void*) 0, "-y", opt_g_followlinks,
@@ -4307,6 +4346,11 @@ g_init(int argc, char **argv)
       build_data_path(DEFF_GEN2, GE2LOG, DEFPATH_LOGS);
     }
 
+  if (!(ofl & F_OVRR_GE3LOG))
+    {
+      build_data_path(DEFF_GEN3, GE3LOG, DEFPATH_LOGS);
+    }
+
   snprintf(SITEROOT, PATH_MAX, "%s%s", GLROOT, SITEROOT_N);
   remove_repeating_chars(SITEROOT, 0x2F);
 
@@ -4626,6 +4670,7 @@ g_print_info(void)
   print_str(" TVLOG          %d\t\n", TV_SZ);
   print_str(" GE1            %d\t\n", G1_SZ);
   print_str(" GE2            %d\t\n", G2_SZ);
+  print_str(" GE3            %d\t\n", G3_SZ);
   print_str(" ONLINE(SHR)    %d\t\n", OL_SZ);
   print_str(MSG_NL);
   if (gfl & F_OPT_VERBOSE)
@@ -4926,6 +4971,10 @@ g_dgetf(char *str)
   else if (!strncmp(str, "ge2", 3))
     {
       return GE2LOG;
+    }
+  else if (!strncmp(str, "ge3", 3))
+    {
+      return GE3LOG;
     }
   return NULL;
 }
@@ -8223,6 +8272,48 @@ gen2_format_block_exp(void *iarg, char *output)
 
 }
 
+int
+gen3_format_block(void *iarg, char *output)
+{
+  __d_generic_s800 data = (__d_generic_s800) iarg;
+
+  return print_str("GENERIC1\x9%u\x9%u\x9%s\x9%s\x9%d\x9%d\x9%ull\x9%ull\x9%s\x9%s\n",
+      data->ui32_1, data->ui32_2, data->s_1, data->s_2, data->i32_1,
+      data->i32_2, (ulint64_t)data->ui64_1, (ulint64_t)data->ui64_2, data->s_3, data->s_4);
+
+}
+
+int
+gen3_format_block_batch(void *iarg, char *output)
+{
+  __d_generic_s800 data = (__d_generic_s800) iarg;
+
+  return printf("GENERIC1\x9%u\x9%u\x9%s\x9%s\x9%d\x9%d\x9%llu\x9%llu\x9%s\x9%s\n",
+      data->ui32_1, data->ui32_2, data->s_1, data->s_2, data->i32_1,
+      data->i32_2, (ulint64_t)data->ui64_1, (ulint64_t)data->ui64_2, data->s_3, data->s_4);
+
+}
+
+int
+gen3_format_block_exp(void *iarg, char *output)
+{
+  __d_generic_s800 data = (__d_generic_s800) iarg;
+
+  return printf("u1 %u\n"
+      "u1 %u\n"
+      "ge1 %s\n"
+      "ge2 %s\n"
+      "i1 %d\n"
+      "i2 %d\n"
+      "ul1 %llu\n"
+      "ul2 %llu\n"
+      "ge3 %s\n"
+      "ge4 %s\n\n"
+      , data->ui32_1, data->ui32_2, data->s_1, data->s_2, data->i32_1,
+      data->i32_2, (ulint64_t)data->ui64_1, (ulint64_t)data->ui64_2, data->s_3, data->s_4);
+
+}
+
 char *
 generate_chars(size_t num, char chr, char*buffer)
 {
@@ -9418,7 +9509,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = DL_SZ;
       hdl->d_memb = 7;
       hdl->g_proc0 = gcb_dirlog;
-      //hdl->g_proc1 = ref_to_val_dirlog;
       hdl->g_proc1_lookup = ref_to_val_lk_dirlog;
       hdl->g_proc2 = ref_to_val_ptr_dirlog;
       hdl->g_proc3 = dirlog_format_block;
@@ -9434,7 +9524,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = NL_SZ;
       hdl->d_memb = 9;
       hdl->g_proc0 = gcb_nukelog;
-      // hdl->g_proc1 = ref_to_val_nukelog;
       hdl->g_proc1_lookup = ref_to_val_lk_nukelog;
       hdl->g_proc2 = ref_to_val_ptr_nukelog;
       hdl->g_proc3 = nukelog_format_block;
@@ -9450,7 +9539,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = DF_SZ;
       hdl->d_memb = 3;
       hdl->g_proc0 = gcb_dupefile;
-      //hdl->g_proc1 = ref_to_val_dupefile;
       hdl->g_proc1_lookup = ref_to_val_lk_dupefile;
       hdl->g_proc2 = ref_to_val_ptr_dupefile;
       hdl->g_proc3 = dupefile_format_block;
@@ -9466,7 +9554,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = LO_SZ;
       hdl->d_memb = 8;
       hdl->g_proc0 = gcb_lastonlog;
-      //hdl->g_proc1 = ref_to_val_lastonlog;
       hdl->g_proc1_lookup = ref_to_val_lk_lastonlog;
       hdl->g_proc2 = ref_to_val_ptr_lastonlog;
       hdl->g_proc3 = lastonlog_format_block;
@@ -9482,7 +9569,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = OL_SZ;
       hdl->d_memb = 5;
       hdl->g_proc0 = gcb_oneliner;
-      //hdl->g_proc1 = ref_to_val_oneliners;
       hdl->g_proc1_lookup = ref_to_val_lk_oneliners;
       hdl->g_proc2 = ref_to_val_ptr_oneliners;
       hdl->g_proc3 = oneliner_format_block;
@@ -9498,7 +9584,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = ID_SZ;
       hdl->d_memb = 14;
       hdl->g_proc0 = gcb_imdbh;
-      //hdl->g_proc1 = ref_to_val_imdb;
       hdl->g_proc1_lookup = ref_to_val_lk_imdb;
       hdl->g_proc2 = ref_to_val_ptr_imdb;
       hdl->g_proc3 = imdb_format_block;
@@ -9514,7 +9599,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = GM_SZ;
       hdl->d_memb = 3;
       hdl->g_proc0 = gcb_game;
-      //hdl->g_proc1 = ref_to_val_game;
       hdl->g_proc1_lookup = ref_to_val_lk_game;
       hdl->g_proc2 = ref_to_val_ptr_game;
       hdl->g_proc3 = game_format_block;
@@ -9530,7 +9614,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = TV_SZ;
       hdl->d_memb = 18;
       hdl->g_proc0 = gcb_tv;
-      //hdl->g_proc1 = ref_to_val_tv;
       hdl->g_proc1_lookup = ref_to_val_lk_tvrage;
       hdl->g_proc2 = ref_to_val_ptr_tv;
       hdl->g_proc3 = tv_format_block;
@@ -9546,7 +9629,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = G1_SZ;
       hdl->d_memb = 9;
       hdl->g_proc0 = gcb_gen1;
-      //hdl->g_proc1 = ref_to_val_gen1;
       hdl->g_proc1_lookup = ref_to_val_lk_gen1;
       hdl->g_proc2 = ref_to_val_ptr_gen1;
       hdl->g_proc3 = gen1_format_block;
@@ -9562,7 +9644,6 @@ determine_datatype(__g_handle hdl)
       hdl->block_sz = G2_SZ;
       hdl->d_memb = 24;
       hdl->g_proc0 = gcb_gen2;
-      //hdl->g_proc1 = ref_to_val_gen2;
       hdl->g_proc1_lookup = ref_to_val_lk_gen2;
       hdl->g_proc2 = ref_to_val_ptr_gen2;
       hdl->g_proc3 = gen2_format_block;
@@ -9571,6 +9652,21 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_GEN2LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
+    }
+  else if (!strncmp(hdl->file, GE3LOG, strlen(GE3LOG)))
+    {
+      hdl->flags |= F_GH_ISGENERIC3;
+      hdl->block_sz = G3_SZ;
+      hdl->d_memb = 10;
+      hdl->g_proc0 = gcb_gen3;
+      hdl->g_proc1_lookup = ref_to_val_lk_gen3;
+      hdl->g_proc2 = ref_to_val_ptr_gen3;
+      hdl->g_proc3 = gen3_format_block;
+      hdl->g_proc3_batch = gen3_format_block_batch;
+      hdl->g_proc3_export = gen3_format_block_exp;
+      hdl->g_proc4 = g_omfp_norm;
+      hdl->ipc_key = IPC_KEY_GEN3LOG;
+      hdl->jm_offset = (size_t) &((__d_generic_s800) NULL)->s_1;
     }
   else
     {
@@ -14425,6 +14521,45 @@ ref_to_val_ptr_gen2(void *arg, char *match, int *output)
 }
 
 void *
+ref_to_val_ptr_gen3(void *arg, char *match, int *output)
+{
+  __d_generic_s800 data = (__d_generic_s800) arg;
+  if (!strncmp(match, _MC_GE_I1, 2))
+    {
+      *output = ~((int) sizeof(data->i32_1));
+      return &data->i32_1;
+    }
+  else if (!strncmp(match, _MC_GE_I2, 2))
+    {
+      *output = ~((int) sizeof(data->i32_2));
+      return &data->i32_2;
+    }
+
+  else if (!strncmp(match, _MC_GE_U1, 2))
+    {
+      *output = sizeof(data->ui32_1);
+      return &data->ui32_1;
+    }
+  else if (!strncmp(match, _MC_GE_U2, 2))
+    {
+      *output = sizeof(data->ui32_1);
+      return &data->ui32_2;
+    }
+  else if (!strncmp(match, _MC_GE_UL1, 3))
+    {
+      *output = sizeof(data->ui64_1);
+      return &data->ui64_1;
+    }
+  else if (!strncmp(match, _MC_GE_UL2, 3))
+    {
+      *output = sizeof(data->ui64_2);
+      return &data->ui64_2;
+    }
+
+  return NULL;
+}
+
+void *
 ref_to_val_ptr_dummy(void *arg, char *match, int *output)
 {
   return NULL;
@@ -16160,6 +16295,125 @@ ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size)
   return NULL;
 }
 
+char *
+dt_rval_gen3_i1(void *arg, char *match, char *output, size_t max_size)
+{
+  snprintf(output, max_size, "%d", ((__d_generic_s800) arg)->i32_1);
+  return output;
+}
+
+char *
+dt_rval_gen3_i2(void *arg, char *match, char *output, size_t max_size)
+{
+  snprintf(output, max_size, "%d", ((__d_generic_s800) arg)->i32_2);
+  return output;
+}
+
+char *
+dt_rval_gen3_ui1(void *arg, char *match, char *output, size_t max_size)
+{
+  snprintf(output, max_size, "%u", ((__d_generic_s800) arg)->ui32_1);
+  return output;
+}
+
+char *
+dt_rval_gen3_ui2(void *arg, char *match, char *output, size_t max_size)
+{
+  snprintf(output, max_size, "%u", ((__d_generic_s800) arg)->ui32_2);
+  return output;
+}
+
+char *
+dt_rval_gen3_uli1(void *arg, char *match, char *output, size_t max_size)
+{
+  snprintf(output, max_size, "%llu", (ulint64_t) ((__d_generic_s800) arg)->ui64_1);
+  return output;
+}
+
+char *
+dt_rval_gen3_uli2(void *arg, char *match, char *output, size_t max_size)
+{
+  snprintf(output, max_size, "%llu", (ulint64_t) ((__d_generic_s800) arg)->ui64_2);
+  return output;
+}
+
+char *
+dt_rval_gen3_ge1(void *arg, char *match, char *output, size_t max_size)
+{
+  return ((__d_generic_s800) arg)->s_1;
+}
+
+char *
+dt_rval_gen3_ge2(void *arg, char *match, char *output, size_t max_size)
+{
+  return ((__d_generic_s800) arg)->s_2;
+}
+
+char *
+dt_rval_gen3_ge3(void *arg, char *match, char *output, size_t max_size)
+{
+  return ((__d_generic_s800) arg)->s_3;
+}
+
+char *
+dt_rval_gen3_ge4(void *arg, char *match, char *output, size_t max_size)
+{
+  return ((__d_generic_s800) arg)->s_4;
+}
+
+void *
+ref_to_val_lk_gen3(void *arg, char *match, char *output, size_t max_size)
+{
+  void *ptr;
+  if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size)))
+    {
+      return ptr;
+    }
+
+  if (!strncmp(match, _MC_GE_I1, 2))
+    {
+      return dt_rval_gen3_i1;
+    }
+  else if (!strncmp(match, _MC_GE_I2, 2))
+    {
+      return dt_rval_gen3_i2;
+    }
+  else if (!strncmp(match, _MC_GE_U1, 2))
+    {
+      return dt_rval_gen3_ui1;
+    }
+  else if (!strncmp(match, _MC_GE_U2, 2))
+    {
+      return dt_rval_gen3_ui2;
+    }
+  else if (!strncmp(match, _MC_GE_UL1, 3))
+    {
+      return dt_rval_gen3_uli1;
+    }
+  else if (!strncmp(match, _MC_GE_UL2, 3))
+    {
+      return dt_rval_gen3_uli2;
+    }
+  else if (!strncmp(match, _MC_GE_GE1, 3))
+    {
+      return dt_rval_gen3_ge1;
+    }
+  else if (!strncmp(match, _MC_GE_GE2, 3))
+    {
+      return dt_rval_gen3_ge2;
+    }
+  else if (!strncmp(match, _MC_GE_GE3, 3))
+    {
+      return dt_rval_gen3_ge3;
+    }
+  else if (!strncmp(match, _MC_GE_GE4, 3))
+    {
+      return dt_rval_gen3_ge4;
+    }
+
+  return NULL;
+}
+
 int
 process_exec_string(char *input, char *output, size_t max_size, void *callback,
     void *data)
@@ -17530,7 +17784,7 @@ gcb_gen2(void *buffer, char *key, char *val)
     }
   else if (k_l == 2 && !strncmp(key, _MC_GE_U1, 2))
     {
-      uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
       if ( errno == ERANGE)
         {
           return 0;
@@ -17540,7 +17794,7 @@ gcb_gen2(void *buffer, char *key, char *val)
     }
   else if (k_l == 2 && !strncmp(key, _MC_GE_U2, 2))
     {
-      uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
       if ( errno == ERANGE)
         {
           return 0;
@@ -17550,7 +17804,7 @@ gcb_gen2(void *buffer, char *key, char *val)
     }
   else if (k_l == 2 && !strncmp(key, _MC_GE_U3, 2))
     {
-      uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
       if ( errno == ERANGE)
         {
           return 0;
@@ -17560,7 +17814,7 @@ gcb_gen2(void *buffer, char *key, char *val)
     }
   else if (k_l == 2 && !strncmp(key, _MC_GE_U4, 2))
     {
-      uint32_t v_ui = (uint32_t) strtol(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
       if ( errno == ERANGE)
         {
           return 0;
@@ -17648,6 +17902,115 @@ gcb_gen2(void *buffer, char *key, char *val)
       ptr->ui64_4 = v_ul;
       return 1;
     }
+  return 0;
+}
+
+int
+gcb_gen3(void *buffer, char *key, char *val)
+{
+  size_t k_l = strlen(key), v_l;
+  __d_generic_s800 ptr = (__d_generic_s800) buffer;
+  errno = 0;
+
+  if (k_l == 3 && !strncmp(key, _MC_GE_GE1, 3))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return 0;
+        }
+      memcpy(ptr->s_1, val, v_l > 254 ? 254 : v_l);
+      return 1;
+    }
+  else if (k_l == 3 && !strncmp(key, _MC_GE_GE2, 3))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return 0;
+        }
+      memcpy(ptr->s_2, val, v_l > 254 ? 254 : v_l);
+      return 1;
+    }
+  else if (k_l == 3 && !strncmp(key, _MC_GE_GE3, 3))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return 0;
+        }
+      memcpy(ptr->s_3, val, v_l > 254 ? 254 : v_l);
+      return 1;
+    }
+  else if (k_l == 3 && !strncmp(key, _MC_GE_GE4, 3))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return 0;
+        }
+      memcpy(ptr->s_4, val, v_l > 254 ? 254 : v_l);
+      return 1;
+    }
+  else if (k_l == 2 && !strncmp(key, _MC_GE_I1, 2))
+    {
+      int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return 0;
+        }
+      ptr->i32_1 = v_ui;
+      return 1;
+    }
+  else if (k_l == 2 && !strncmp(key, _MC_GE_I2, 2))
+    {
+      int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return 0;
+        }
+      ptr->i32_2 = v_ui;
+      return 1;
+    }
+
+  else if (k_l == 2 && !strncmp(key, _MC_GE_U1, 2))
+    {
+      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return 0;
+        }
+      ptr->ui32_1 = v_ui;
+      return 1;
+    }
+  else if (k_l == 2 && !strncmp(key, _MC_GE_U2, 2))
+    {
+      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return 0;
+        }
+      ptr->ui32_2 = v_ui;
+      return 1;
+    }
+
+  else if (k_l == 3 && !strncmp(key, _MC_GE_UL1, 3))
+    {
+      uint64_t v_ul = (uint64_t) strtoull(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return 0;
+        }
+      ptr->ui64_1 = v_ul;
+      return 1;
+    }
+  else if (k_l == 3 && !strncmp(key, _MC_GE_UL2, 3))
+    {
+      uint64_t v_ul = (uint64_t) strtoull(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return 0;
+        }
+      ptr->ui64_2 = v_ul;
+      return 1;
+    }
+
   return 0;
 }
 
