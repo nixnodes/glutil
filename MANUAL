@@ -264,6 +264,20 @@ FLAGS:
    ge8        S     -||-
   
   
+  ; GENERIC-3 (ge3)
+
+   i1         I     32-bit signed integer field
+   i2         I     -||-
+   u1         I     32-bit unsigned integer field
+   u2         I     -||-
+   ul1        I     64-bit unsigned integer field
+   ul2        I     -||-
+   ge1        S     255 byte signed character field
+   ge2        S     -||-
+   ge3        S     128 byte signed character field
+   ge4        S     -||-
+
+  
   
  MAIN INPUT/OUTPUT OPERATIONS:
 
