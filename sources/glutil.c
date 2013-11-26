@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-8
+ * Version     : 1.12-9
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -166,7 +166,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -1431,6 +1431,7 @@ char *hpd_up =
         "                          --recursive (-R) - traverse the whole <root dir> directory tree\n"
         "  -print <fmt string>   Format output using {var} directives (see MANUAL for a field list)\n"
         "  -printf <fmt string>  Same as -printf, only does not print a new line character at the end\n"
+        "  --stdin               Read data from stdin\n"
         "\n Input:\n"
         "  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
         "                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
@@ -2152,12 +2153,8 @@ opt_printf(void *arg, int m)
 int
 opt_stdin(void *arg, int m)
 {
-  if ((_print_ptr = g_pg(arg, m)))
-    {
-      gfl0 |= F_OPT_STDIN;
-      return 0;
-    }
-  return 4250;
+  gfl0 |= F_OPT_STDIN;
+  return 0;
 }
 
 int
@@ -3501,7 +3498,8 @@ void *f_ref[] =
       (void*) 0, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
       opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
       opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-print",
-      opt_print, (void*) 1, "-printf", opt_printf, (void*) 1, "--print",
+      opt_print, (void*) 1, "-printf", opt_printf, (void*) 1, "-stdin",
+      opt_stdin, (void*) 0, "--stdin", opt_stdin, (void*) 0, "--print",
       opt_print, (void*) 1, "--printf", opt_printf, (void*) 1, "-b", opt_backup,
       (void*) 1, "--postexec", opt_g_postexec, (void*) 1, "--preexec",
       opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep",
@@ -8872,14 +8870,14 @@ size_t
 g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 {
   g_setjmp(0, "g_load_data_md", NULL, NULL);
-  size_t fr, c_fr = 0;
+  size_t fr = 0;
+  off_t c_fr = 0;
   FILE *fh;
 
   if (!(hdl->flags & F_GH_FROMSTDIN))
     {
       if (!(fh = fopen(file, "rb")))
         {
-
           return 0;
         }
     }
@@ -8888,10 +8886,37 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
       fh = stdin;
     }
 
-  unsigned char *b_output = (unsigned char*) output;
-  while ((fr = fread(&b_output[c_fr], 1, max - c_fr, fh)))
+  uint8_t *b_output = (uint8_t*) hdl->data;
+  while (!feof(fh) && !ferror(fh))
     {
-      c_fr += fr;
+      if ((hdl->flags & F_GH_FROMSTDIN))
+        {
+          if (!fr && !(hdl->total_sz - c_fr))
+            {
+//              printf("Data still waiting..\n");
+              hdl->total_sz *= 2;
+              hdl->data = realloc(hdl->data, hdl->total_sz);
+              b_output = hdl->data;
+            }
+        }
+      else
+        {
+          if (!(hdl->total_sz - c_fr))
+            {
+              break;
+            }
+        }
+      fr = fread(&b_output[c_fr], 1, hdl->total_sz - c_fr, fh);
+      if (fr > 0)
+        {
+          c_fr += fr;
+        }
+
+    }
+
+  if (ferror(fh))
+    {
+      //c_fr = 0;
     }
 
   if (!(hdl->flags & F_GH_FROMSTDIN))
@@ -9024,6 +9049,12 @@ load_data_md(pmda md, char *file, __g_handle hdl)
         }
       count = hdl->total_sz / hdl->block_sz;
     }
+  else if (hdl->flags & F_GH_FROMSTDIN)
+    {
+      count = 32;
+      hdl->total_sz = count * hdl->block_sz;
+      hdl->data = malloc(count * hdl->block_sz);
+    }
   else
     {
       if (!hdl->total_sz)
@@ -9046,8 +9077,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
     }
   else
     {
-      if (!((hdl->flags & F_GH_SHM) && (sh_ret & R_SHMAP_ALREADY_EXISTS))
-          || ((hdl->flags & F_GH_SHM) && (hdl->flags & F_GH_SHMRB)))
+      if (!((sh_ret & R_SHMAP_ALREADY_EXISTS)) || ((hdl->flags & F_GH_SHMRB)))
         {
           if ((b_read = g_load_data_md(hdl->data, hdl->total_sz, file, hdl))
               % hdl->block_sz || !b_read)
@@ -9152,46 +9182,54 @@ g_buffer_into_memory(char *file, __g_handle hdl)
       return 0;
     }
 
-  struct stat st;
-
-  if (stat(file, &st) == -1)
+  if (gfl0 & F_OPT_STDIN)
     {
-      if (!(gfl & F_OPT_SHAREDMEM))
+      hdl->flags |= F_GH_FROMSTDIN;
+    }
+
+  struct stat st =
+    { 0 };
+
+  if (!(hdl->flags & F_GH_FROMSTDIN))
+    {
+      if (stat(file, &st) == -1)
         {
-          print_str(
-              "ERROR: %s: [%d] unable to get information from data file\n",
-              file,
-              errno);
-          return 2;
+          if (!(gfl & F_OPT_SHAREDMEM))
+            {
+              print_str(
+                  "ERROR: %s: [%d] unable to get information from data file\n",
+                  file,
+                  errno);
+              return 2;
+            }
+          else
+            {
+              flags |= F_GBM_SHM_NO_DATAFILE;
+            }
         }
-      else
+
+      if (!(flags & F_GBM_SHM_NO_DATAFILE))
         {
-          flags |= F_GBM_SHM_NO_DATAFILE;
+          if (!st.st_size)
+            {
+              print_str("WARNING: %s: 0-byte data file\n", file);
+              return 3;
+            }
+
+          if (st.st_size > db_max_size)
+            {
+              print_str(
+                  "WARNING: %s: disabling memory buffering, file too big (%lld MB max)\n",
+                  file, db_max_size / 1024 / 1024);
+              hdl->flags |= F_GH_NOMEM;
+              return 5;
+            }
+
+          hdl->total_sz = st.st_size;
         }
     }
 
-  if (!(flags & F_GBM_SHM_NO_DATAFILE))
-    {
-      if (!st.st_size)
-        {
-          print_str("WARNING: %s: 0-byte data file\n", file);
-          return 3;
-        }
-
-      if (st.st_size > db_max_size)
-        {
-          print_str(
-              "WARNING: %s: disabling memory buffering, file too big (%lld MB max)\n",
-              file, db_max_size / 1024 / 1024);
-          hdl->flags |= F_GH_NOMEM;
-          return 5;
-        }
-
-      hdl->total_sz = st.st_size;
-    }
-
-  bzero(hdl->file, PATH_MAX);
-  strncpy(hdl->file, file, strlen(file));
+  strncpy(hdl->file, file, strlen(file) + 1);
 
   if (determine_datatype(hdl))
     {
@@ -9230,8 +9268,12 @@ g_buffer_into_memory(char *file, __g_handle hdl)
     }
   else
     {
-      bzero(hdl->file, PATH_MAX);
-      strncpy(hdl->file, "SHM", 3);
+      strncpy(hdl->file, "SHM", 4);
+    }
+
+  if (gfl0 & F_OPT_STDIN)
+    {
+      strncpy(hdl->file, "stdin", 7);
     }
 
   if (gfl & F_OPT_SHAREDMEM)
@@ -9310,29 +9352,37 @@ g_buffer_into_memory(char *file, __g_handle hdl)
 
   if (gfl & F_OPT_VERBOSE2)
     {
-      print_str("NOTICE: %s: %s [%llu records] [%llu bytes]\n", file,
-          (hdl->flags & F_GH_SHM) ?
-              hdl->shmid == -1 && !(hdl->flags & F_GH_SHMRB) ?
-                  "loading data into shared memory segment" :
-              (hdl->flags & F_GH_SHMRB) ?
-                  "re-loading data into shared memory segment" :
-                  "mapping shared memory segment"
-              :
-              "loading data file into memory",
-          (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
-              (uint64_t) (hdl->ipcbuf.shm_segsz / hdl->block_sz) :
-              (uint64_t) (hdl->total_sz / hdl->block_sz),
-          (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
-              (ulint64_t) hdl->ipcbuf.shm_segsz : (ulint64_t) hdl->total_sz);
+      if (gfl0 & F_OPT_STDIN)
+        {
+          print_str("NOTICE: loading from stdin..\n");
+        }
+      else
+        {
+          print_str("NOTICE: %s: %s [%llu records] [%llu bytes]\n", hdl->file,
+              (hdl->flags & F_GH_SHM) ?
+                  hdl->shmid == -1 && !(hdl->flags & F_GH_SHMRB) ?
+                      "loading data into shared memory segment" :
+                  (hdl->flags & F_GH_SHMRB) ?
+                      "re-loading data into shared memory segment" :
+                      "mapping shared memory segment"
+                  :
+                  "loading data file into memory",
+              (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
+                  (uint64_t) (hdl->ipcbuf.shm_segsz / hdl->block_sz) :
+                  (uint64_t) (hdl->total_sz / hdl->block_sz),
+              (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
+                  (ulint64_t) hdl->ipcbuf.shm_segsz :
+                  (ulint64_t) hdl->total_sz);
+        }
     }
 
   errno = 0;
   int r;
-  if ((r = load_data_md(&hdl->buffer, file, hdl)))
+  if ((r = load_data_md(&hdl->buffer, hdl->file, hdl)))
     {
       print_str(
           "ERROR: %s: [%llu/%llu] [%llu] [%u] could not load data!%s [%d] [%d]\n",
-          file, (ulint64_t) hdl->buffer.count,
+          hdl->file, (ulint64_t) hdl->buffer.count,
           (ulint64_t) (hdl->total_sz / hdl->block_sz), hdl->total_sz,
           hdl->block_sz,
           (hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
@@ -9341,18 +9391,18 @@ g_buffer_into_memory(char *file, __g_handle hdl)
     }
   else
     {
-      if (!(flags & F_GBM_SHM_NO_DATAFILE))
+      if (!(flags & F_GBM_SHM_NO_DATAFILE) && !(hdl->flags & F_GH_FROMSTDIN))
         {
           if (tot_sz != hdl->total_sz)
             {
               print_str(
                   "WARNING: %s: [%llu/%llu] actual data loaded was not the same size as source data file\n",
-                  file, (uint64_t) hdl->total_sz, (uint64_t) tot_sz);
+                  hdl->file, (uint64_t) hdl->total_sz, (uint64_t) tot_sz);
             }
         }
       if (gfl & F_OPT_VERBOSE2)
         {
-          print_str("NOTICE: %s: loaded %llu records\n", file,
+          print_str("NOTICE: %s: loaded %llu records\n", hdl->file,
               (uint64_t) hdl->buffer.count);
         }
     }
@@ -9588,15 +9638,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
       return 2;
     }
 
-  hdl->total_sz = get_file_size(file);
-
-  if (!hdl->total_sz)
-    {
-      print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
-    }
-
-  bzero(hdl->file, PATH_MAX);
-  strncpy(hdl->file, file, strlen(file));
+  strncpy(hdl->file, file, strlen(file) + 1);
 
   if (determine_datatype(hdl))
     {
@@ -9604,19 +9646,34 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
       return 3;
     }
 
-  if (hdl->total_sz % hdl->block_sz)
-    {
-      print_str(MSG_GEN_DFCORRU, file, (ulint64_t) hdl->total_sz,
-          hdl->block_sz);
-      return 4;
-    }
-
   FILE *fd;
 
-  if (!(fd = fopen(file, mode)))
+  if (!(gfl0 & F_OPT_STDIN))
     {
-      print_str(MSG_GEN_NODFILE, file, "not available");
-      return 1;
+      hdl->total_sz = get_file_size(file);
+
+      if (!hdl->total_sz)
+        {
+          print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
+        }
+
+      if (hdl->total_sz % hdl->block_sz)
+        {
+          print_str(MSG_GEN_DFCORRU, file, (ulint64_t) hdl->total_sz,
+              hdl->block_sz);
+          return 4;
+        }
+
+      if (!(fd = fopen(file, mode)))
+        {
+          print_str(MSG_GEN_NODFILE, file, "not available");
+          return 1;
+        }
+    }
+  else
+    {
+      fd = stdin;
+      strncpy(hdl->file, "stdin", 7);
     }
 
   if (g_proc_mr(hdl))
@@ -9638,7 +9695,7 @@ g_close(__g_handle hdl)
   dl_stats.bw += hdl->bw;
   dl_stats.rw += hdl->rw;
 
-  if (hdl->fh)
+  if (hdl->fh && !(hdl->flags & F_GH_FROMSTDIN))
     {
       fclose(hdl->fh);
       hdl->fh = NULL;
