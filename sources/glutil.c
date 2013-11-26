@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-15
+ * Version     : 1.12-16
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 15
+#define VER_REVISION 16
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -2891,7 +2891,7 @@ opt_dirlog_sections_file(void *arg, int m)
 int
 print_version(void *arg, int m)
 {
-  print_str("glutil-%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
+  print_str("glutil_%d.%d-%d%s-%s\n", VER_MAJOR, VER_MINOR,
   VER_REVISION, VER_STR, __STR_ARCH);
   updmode = UPD_MODE_NOOP;
   return 0;
