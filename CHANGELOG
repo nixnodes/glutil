@@ -21,6 +21,10 @@
  *   - + Add -printf (rev. 7)
  *   - + --stdin, log parsing (-q,-d,..) reads data from stdin (rev. 9)
  *   - ~ Made format literal for a printf (rev. 10)
+ *   - ~ {crc32} returning empty strings instead of zeroes (rev. 11)
+ *   - + Add GENERIC-3 log (rev. 12)
+ *   - ~ Fix GENERIC-3 log (rev. 13)
+ *   - % Remove deprecated field in __g_handle (rev. 14)
  *
  * v1.11:
  *
