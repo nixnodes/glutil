@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-18
+ * Version     : 1.12-19
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 18
+#define VER_REVISION 19
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -511,11 +511,18 @@ typedef struct ___g_lom
   size_t t_l_off, t_r_off;
 } _g_lom, *__g_lom;
 
+typedef float
+(*_d_t32_f_vg)(ulint64_t *i);
+typedef ulint64_t
+(*_d_f_t32_vg)(float *i);
+
 typedef struct ___d_drt_h
 {
   uint32_t flags;
   char direc[32];
   __g_proc_v fp_rval1;
+  uint32_t t_1;
+  char c_1;
 } _d_drt_h, *__d_drt_h;
 
 typedef struct ___g_match_h
@@ -3293,7 +3300,6 @@ _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
 
 void *
 as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc);
-
 
 char *
 g_get_stf(char *match);
@@ -11634,7 +11640,7 @@ dt_rval_x_size(void *arg, char *match, char *output, size_t max_size,
 {
 
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      (ulint64_t) get_file_size(((__d_xref) arg)->name), ((__d_drt_h)mppd)->direc);
+      (ulint64_t) get_file_size(((__d_xref) arg)->name));
   return output;
 }
 
@@ -11845,7 +11851,6 @@ g_get_stf(char *match)
 void *
 as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
 {
-
   if (defdc)
     {
       match = g_get_stf(match);
@@ -11857,8 +11862,7 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
               size_t i = 0;
               mppd->direc[i] = 0x25;
               i++;
-              while (match[0] != 0x25 && match[0] != 0x7D && match[0]
-                  && i < sizeof(mppd->direc) - 2)
+              while (match[0] != 0x7D && match[0] && i < sizeof(mppd->direc) - 2)
                 {
                   mppd->direc[i] = match[0];
                   i++;
@@ -11899,6 +11903,22 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
+char *
+dt_rval_spec_gc(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  if (_mppd->t_1 > max_size)
+    {
+      _mppd->t_1 = max_size;
+    }
+
+  memset(output, _mppd->c_1, _mppd->t_1);
+  output[_mppd->t_1] = 0x0;
+
+  return output;
+}
+
 void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd, __g_proc_v ref_to_val_lk_p)
@@ -11932,6 +11952,56 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           }
         return as_ref_to_val_lk(match, dt_rval_spec_slen, mppd, NULL);
         break;
+      case 0x63:
+        ;
+        char b_c[64];
+        size_t b_l = 0;
+        b_c[0] = 0x0;
+        while (match[0] != 0x3A && match[0])
+          {
+            if (b_l < 64)
+              {
+                b_c[b_l] = match[0];
+              }
+            b_l++;
+            match++;
+          }
+        if (match[0] != 0x3A)
+          {
+            return NULL;
+          }
+        match++;
+        if (match[0] == 0x5C)
+          {
+            match++;
+            switch (match[0])
+              {
+            case 0x6E:
+              mppd->c_1 = 0xA;
+              break;
+            case 0x72:
+              mppd->c_1 = 0xD;
+              break;
+            case 0x5C:
+              mppd->c_1 = 0x5C;
+              break;
+            case 0x74:
+              mppd->c_1 = 0x9;
+              break;
+            case 0x73:
+              mppd->c_1 = 0x20;
+              break;
+            default:
+              return NULL;
+              }
+          }
+        else
+          {
+            mppd->c_1 = match[0];
+          }
+        mppd->t_1 = strtoul(b_c, NULL, 10);
+        return dt_rval_spec_gc;
+        break;
         }
     }
   return NULL;
@@ -11946,8 +12016,6 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     {
       return ptr;
     }
-
-  // __d_drt_h _mppd = (__d_drt_h ) mppd;
 
   if (!strncmp(match, _MC_GLOB_SIZE, 4))
     {
