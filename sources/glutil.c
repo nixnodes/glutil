@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-17
+ * Version     : 1.12-18
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 17
+#define VER_REVISION 18
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -511,12 +511,12 @@ typedef struct ___g_lom
   size_t t_l_off, t_r_off;
 } _g_lom, *__g_lom;
 
-
 typedef struct ___d_drt_h
 {
   uint32_t flags;
-  char direc[8];
-}_d_drt_h, *__d_drt_h;
+  char direc[32];
+  __g_proc_v fp_rval1;
+} _d_drt_h, *__d_drt_h;
 
 typedef struct ___g_match_h
 {
@@ -3165,6 +3165,7 @@ typedef char *
 __g_proc_rv(void *arg, char *match, char *output, size_t max_size, void *mppd);
 typedef void *
 _d_rtv_lk(void *arg, char *match, char *output, size_t max_size, void *mppd);
+
 typedef void
 _d_omfp_fp(void *hdl, void *ptr, char *sbuffer);
 
@@ -3244,6 +3245,12 @@ __g_proc_rv dt_rval_x_path, dt_rval_x_basepath, dt_rval_x_dirpath, dt_rval_c,
     dt_rval_x_uperm, dt_rval_x_gperm, dt_rval_x_operm, dt_rval_x_perm,
     dt_rval_x_sparse, dt_rval_x_crc32, dt_rval_x_deccrc32;
 
+__g_proc_rv dt_rval_spec_slen;
+
+void *
+ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd, __g_proc_v ref_to_val_lk);
+
 __g_proc_rv dt_rval_online_ssl, dt_rval_online_group, dt_rval_online_time,
     dt_rval_online_lupdt, dt_rval_online_lxfrt, dt_rval_online_bxfer,
     dt_rval_online_btxfer, dt_rval_online_pid, dt_rval_online_rate,
@@ -3283,6 +3290,13 @@ _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
 
 _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
     g_omfp_eassemblef, g_xproc_print_d, g_xproc_print;
+
+void *
+as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc);
+
+
+char *
+g_get_stf(char *match);
 
 off_t
 file_crc32(char *, uint32_t *);
@@ -6264,7 +6278,8 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 
   if (_gm->pmstr_cb)
     {
-      mstr = _gm->pmstr_cb(d_ptr, _gm->field, hdl->mv1_b, MAX_VAR_LEN, &_gm->dtr);
+      mstr = _gm->pmstr_cb(d_ptr, _gm->field, hdl->mv1_b, MAX_VAR_LEN,
+          &_gm->dtr);
     }
   else
     {
@@ -10754,39 +10769,6 @@ g_l_fmode_n(char *path, size_t max_size, char *output)
   return 0;
 }
 
-char *
-g_get_stf(char *match)
-{
-  while (match[0] != 0x7D && match[0] != 0x23 && match[0])
-    {
-      match++;
-    }
-  if (match[0] == 0x23)
-    {
-      match++;
-      return match;
-    }
-  return NULL;
-}
-
-void *
-as_ref_to_val_lk(char *match, void *c1, void *c2, void *c3, void *c4)
-{
-  match = g_get_stf(match);
-  if (match)
-    {
-      if (*match == 0x58)
-        {
-          return c2;
-        }
-      if (*match == 0x78)
-        {
-          return c3;
-        }
-    }
-  return c1;
-}
-
 int
 ref_to_val_macro(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -11318,6 +11300,7 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
     {
       return dt_rval_generic_glconf;
     }
+
   return NULL;
 }
 
@@ -11649,7 +11632,9 @@ char *
 dt_rval_x_size(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%llu", (ulint64_t) get_file_size(((__d_xref) arg)->name));
+
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) get_file_size(((__d_xref) arg)->name), ((__d_drt_h)mppd)->direc);
   return output;
 }
 
@@ -11657,7 +11642,7 @@ char *
 dt_rval_x_mode(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hu", (unsigned short) ((__d_xref) arg)->type);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->type);
   return output;
 }
 
@@ -11665,7 +11650,7 @@ char *
 dt_rval_x_devid(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_dev);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_dev);
   return output;
 }
 
@@ -11673,7 +11658,8 @@ char *
 dt_rval_x_minor(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", minor(((__d_xref) arg)->st.st_dev));
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      minor(((__d_xref) arg)->st.st_dev));
   return output;
 }
 
@@ -11681,7 +11667,8 @@ char *
 dt_rval_x_major(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", major(((__d_xref) arg)->st.st_dev));
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      major(((__d_xref) arg)->st.st_dev));
   return output;
 }
 
@@ -11689,7 +11676,7 @@ char *
 dt_rval_x_inode(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_ino);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_ino);
   return output;
 }
 
@@ -11697,21 +11684,21 @@ char *
 dt_rval_x_links(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_nlink);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_nlink);
   return output;
 }
 
 char *
 dt_rval_x_uid(void *arg, char *match, char *output, size_t max_size, void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_uid);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_uid);
   return output;
 }
 
 char *
 dt_rval_x_gid(void *arg, char *match, char *output, size_t max_size, void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_gid);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_gid);
   return output;
 }
 
@@ -11719,7 +11706,7 @@ char *
 dt_rval_x_blksize(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_blksize);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_blksize);
   return output;
 }
 
@@ -11727,7 +11714,7 @@ char *
 dt_rval_x_blocks(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%u", (uint32_t) ((__d_xref) arg)->st.st_blocks);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_blocks);
   return output;
 }
 
@@ -11735,7 +11722,7 @@ char *
 dt_rval_x_atime(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_atime);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (int32_t) ((__d_xref) arg)->st.st_atime);
   return output;
 }
 
@@ -11743,7 +11730,7 @@ char *
 dt_rval_x_ctime(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_ctime);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (int32_t) ((__d_xref) arg)->st.st_ctime);
   return output;
 }
 
@@ -11751,7 +11738,7 @@ char *
 dt_rval_x_mtime(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%d", (int32_t) ((__d_xref) arg)->st.st_mtime);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (int32_t) ((__d_xref) arg)->st.st_mtime);
   return output;
 }
 
@@ -11759,7 +11746,7 @@ char *
 dt_rval_x_isread(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hhu", ((__d_xref) arg)->r);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->r);
   return output;
 }
 
@@ -11767,7 +11754,7 @@ char *
 dt_rval_x_iswrite(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hhu", ((__d_xref) arg)->w);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->w);
   return output;
 }
 
@@ -11775,7 +11762,7 @@ char *
 dt_rval_x_isexec(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hhu", ((__d_xref) arg)->x);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->x);
   return output;
 }
 
@@ -11783,7 +11770,7 @@ char *
 dt_rval_x_uperm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->uperm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->uperm);
   return output;
 }
 
@@ -11791,7 +11778,7 @@ char *
 dt_rval_x_gperm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->gperm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->gperm);
   return output;
 }
 
@@ -11799,7 +11786,7 @@ char *
 dt_rval_x_operm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hu", (uint16_t) ((__d_xref) arg)->operm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->operm);
   return output;
 }
 
@@ -11807,7 +11794,7 @@ char *
 dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hu%hu%hu", (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
   return output;
 }
 
@@ -11815,7 +11802,7 @@ char *
 dt_rval_x_sparse(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%f", ((float) ((__d_xref) arg)->st.st_blksize * (float) ((__d_xref) arg)->st.st_blocks
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((float) ((__d_xref) arg)->st.st_blksize * (float) ((__d_xref) arg)->st.st_blocks
   / (float) ((__d_xref) arg)->st.st_size));
   return output;
 }
@@ -11826,7 +11813,7 @@ dt_rval_x_crc32(void *arg, char *match, char *output, size_t max_size,
 {
   uint32_t crc32;
   file_crc32(((__d_xref) arg)->name, &crc32);
-  snprintf(output, max_size, "%.8X", crc32);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, crc32);
   return output;
 }
 
@@ -11836,8 +11823,118 @@ dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size,
 {
   uint32_t crc32;
   file_crc32(((__d_xref) arg)->name, &crc32);
-  snprintf(output, max_size, "%u", crc32);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, crc32);
   return output;
+}
+
+char *
+g_get_stf(char *match)
+{
+  while (match[0] != 0x7D && match[0] != 0x23 && match[0])
+    {
+      match++;
+    }
+  if (match[0] == 0x23)
+    {
+      match++;
+      return match;
+    }
+  return NULL;
+}
+
+void *
+as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
+{
+
+  if (defdc)
+    {
+      match = g_get_stf(match);
+
+      if (match)
+        {
+          if (strncmp("%s", defdc, 2))
+            {
+              size_t i = 0;
+              mppd->direc[i] = 0x25;
+              i++;
+              while (match[0] != 0x25 && match[0] != 0x7D && match[0]
+                  && i < sizeof(mppd->direc) - 2)
+                {
+                  mppd->direc[i] = match[0];
+                  i++;
+                  match++;
+                }
+
+              if (1 < strlen(mppd->direc))
+                {
+                  mppd->direc[i] = 0x0;
+                  goto ct;
+                }
+            }
+          //printf(":: %s\n", match);
+        }
+
+      strncpy(mppd->direc, defdc, strlen(defdc) + 1);
+    }
+
+  ct:
+
+  return c;
+}
+
+char *
+dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match, output, max_size, mppd);
+
+  if (p_o)
+    {
+      snprintf(output, max_size, "%zu", strlen(p_o));
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
+  return output;
+}
+
+void *
+ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd, __g_proc_v ref_to_val_lk_p)
+{
+  match++;
+  char *id = match;
+  size_t i = 0;
+  while (match[0] != 0x3A && match[0])
+    {
+      i++;
+      match++;
+    }
+  if (match[0] != 0x3A)
+    {
+      return NULL;
+    }
+  match++;
+  if (i == 1)
+    {
+      switch (id[0])
+        {
+      case 0x6C:
+        if (match[0] == 0x0)
+          {
+            return NULL;
+          }
+        mppd->fp_rval1 = ref_to_val_lk_p(arg, match, output, max_size, mppd);
+        if (!mppd->fp_rval1)
+          {
+            return NULL;
+          }
+        return as_ref_to_val_lk(match, dt_rval_spec_slen, mppd, NULL);
+        break;
+        }
+    }
+  return NULL;
 }
 
 void*
@@ -11850,13 +11947,15 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
       return ptr;
     }
 
+  // __d_drt_h _mppd = (__d_drt_h ) mppd;
+
   if (!strncmp(match, _MC_GLOB_SIZE, 4))
     {
       if (arg)
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_size;
+      return as_ref_to_val_lk(match, dt_rval_x_size ,(__d_drt_h)mppd, "%llu");
     }
   else if (!strncmp(match, _MC_GLOB_MODE, 4))
     {
@@ -11864,7 +11963,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_DT_MODE;
         }
-      return dt_rval_x_mode;
+      return as_ref_to_val_lk(match, dt_rval_x_mode ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_DEVID, 5))
     {
@@ -11872,7 +11971,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_devid;
+      return as_ref_to_val_lk(match, dt_rval_x_devid ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_MINOR, 5))
     {
@@ -11880,7 +11979,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT |F_XRF_GET_MINOR;
         }
-      return dt_rval_x_minor;
+      return as_ref_to_val_lk(match, dt_rval_x_minor ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_MAJOR, 5))
     {
@@ -11888,7 +11987,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT |F_XRF_GET_MAJOR;
         }
-      return dt_rval_x_major;
+      return as_ref_to_val_lk(match, dt_rval_x_major ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_INODE, 5))
     {
@@ -11896,7 +11995,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_inode;
+      return as_ref_to_val_lk(match, dt_rval_x_inode ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_LINKS, 5))
     {
@@ -11904,7 +12003,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_links;
+      return as_ref_to_val_lk(match, dt_rval_x_links ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_UID, 3))
     {
@@ -11912,7 +12011,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_uid;
+      return as_ref_to_val_lk(match, dt_rval_x_uid ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_GID, 3))
     {
@@ -11920,7 +12019,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_gid;
+      return as_ref_to_val_lk(match, dt_rval_x_gid ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_BLKSIZE, 7))
     {
@@ -11928,7 +12027,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_blksize;
+      return as_ref_to_val_lk(match, dt_rval_x_blksize ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_BLOCKS, 6))
     {
@@ -11936,7 +12035,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_blocks;
+      return as_ref_to_val_lk(match, dt_rval_x_blocks ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_ATIME, 5))
     {
@@ -11944,7 +12043,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_atime;
+      return as_ref_to_val_lk(match, dt_rval_x_atime ,(__d_drt_h)mppd, "%d");
     }
   else if (!strncmp(match, _MC_X_CTIME, 5))
     {
@@ -11952,7 +12051,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_STCTIME;
         }
-      return dt_rval_x_ctime;
+      return as_ref_to_val_lk(match, dt_rval_x_ctime ,(__d_drt_h)mppd, "%d");
     }
   else if (!strncmp(match, _MC_X_MTIME, 5))
     {
@@ -11960,7 +12059,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_mtime;
+      return as_ref_to_val_lk(match, dt_rval_x_mtime ,(__d_drt_h)mppd, "%d");
     }
   else if (!strncmp(match, _MC_X_ISREAD, 6))
     {
@@ -11968,7 +12067,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_READ;
         }
-      return dt_rval_x_isread;
+      return as_ref_to_val_lk(match, dt_rval_x_isread ,(__d_drt_h)mppd, "%hhu");
     }
   else if (!strncmp(match, _MC_X_ISWRITE, 7))
     {
@@ -11976,7 +12075,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_WRITE;
         }
-      return dt_rval_x_iswrite;
+      return as_ref_to_val_lk(match, dt_rval_x_iswrite ,(__d_drt_h)mppd, "%hhu");
     }
   else if (!strncmp(match, _MC_X_ISEXEC, 6))
     {
@@ -11984,7 +12083,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_EXEC;
         }
-      return dt_rval_x_isexec;
+      return as_ref_to_val_lk(match, dt_rval_x_isexec ,(__d_drt_h)mppd, "%hhu");
     }
   else if (!strncmp(match, _MC_X_UPERM, 5))
     {
@@ -11992,7 +12091,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
         }
-      return dt_rval_x_uperm;
+      return as_ref_to_val_lk(match, dt_rval_x_uperm ,(__d_drt_h)mppd, "%hu");
     }
   else if (!strncmp(match, _MC_X_GPERM, 5))
     {
@@ -12000,7 +12099,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
         }
-      return dt_rval_x_gperm;
+      return as_ref_to_val_lk(match, dt_rval_x_gperm ,(__d_drt_h)mppd, "%hu");
     }
   else if (!strncmp(match, _MC_X_OPERM, 5))
     {
@@ -12008,7 +12107,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
         }
-      return dt_rval_x_operm;
+      return as_ref_to_val_lk(match, dt_rval_x_operm ,(__d_drt_h)mppd, "%hu");
     }
   else if (!strncmp(match, _MC_X_PERM, 4))
     {
@@ -12016,7 +12115,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_GPERM | F_XRF_GET_UPERM | F_XRF_GET_OPERM;
         }
-      return dt_rval_x_perm;
+      return as_ref_to_val_lk(match, dt_rval_x_perm ,(__d_drt_h)mppd, "%hu%hu%hu");
     }
   else if (!strncmp(match, _MC_X_SPARSE, 6))
     {
@@ -12024,31 +12123,35 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
         }
-      return dt_rval_x_sparse;
+      return as_ref_to_val_lk(match, dt_rval_x_sparse ,(__d_drt_h)mppd, "%f");
     }
   else if (!strncmp(match, _MC_X_CRC32, 5))
     {
-      return dt_rval_x_crc32;
+      return as_ref_to_val_lk(match, dt_rval_x_crc32 ,(__d_drt_h)mppd, "%.8X");
     }
   else if (!strncmp(match, _MC_X_DCRC32, 9))
     {
-      return dt_rval_x_deccrc32;
+      return as_ref_to_val_lk(match, dt_rval_x_deccrc32 ,(__d_drt_h)mppd, "%u");
+    }
+  else if (!strncmp(match, _MC_X_BASEPATH, 8))
+    {
+      return as_ref_to_val_lk(match, dt_rval_x_basepath ,(__d_drt_h)mppd, "%s");
+    }
+  else if (!strncmp(match, _MC_X_DIRPATH, 7))
+    {
+      return as_ref_to_val_lk(match, dt_rval_x_dirpath ,(__d_drt_h)mppd, "%s");
+    }
+  else if (!strncmp(match, _MC_X_PATH, 4))
+    {
+      return as_ref_to_val_lk(match, dt_rval_x_path ,(__d_drt_h)mppd, "%s");
     }
   else if (!strncmp(match, "c:", 2))
     {
       return dt_rval_x_c;
     }
-  else if (!strncmp(match, _MC_X_BASEPATH, 8))
+  else if (!strncmp(match, "?", 1))
     {
-      return dt_rval_x_basepath;
-    }
-  else if (!strncmp(match, _MC_X_DIRPATH, 7))
-    {
-      return dt_rval_x_dirpath;
-    }
-  else if (!strncmp(match, _MC_X_PATH, 4))
-    {
-      return dt_rval_x_path;
+      return ref_to_val_af(arg, match, output, max_size, (__d_drt_h)mppd, ref_to_val_lk_x);
     }
 
   return NULL;
@@ -13534,13 +13637,11 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
           in_ptr++;
           ptr->st_ptr = in_ptr;
           vl1 = 0;
-          ptr->callback = hdl->g_proc1_lookup(hdl->_x_ref, ptr->st_ptr, NULL, 0, &ptr->dtr);
+          ptr->callback = hdl->g_proc1_lookup(hdl->_x_ref, ptr->st_ptr, NULL, 0,
+              &ptr->dtr);
 
           if (!ptr->callback)
             {
-              //printf("%X - %X - %d/%d\n", ptr->st_ptr, instr, p1, strlen(instr));
-              // printf("%X - %X - %d/%d - %d\n", in_ptr, &instr[p1], p1,
-              //   strlen(instr), in_ptr - instr);
               return 10;
             }
 
@@ -13564,7 +13665,8 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
             {
               return 13;
             }
-          if (in_ptr[1] == 0x7B)
+
+          if (in_ptr[1] && in_ptr[1] == 0x7B)
             {
               in_ptr++;
               goto do_gcb;
@@ -13573,6 +13675,11 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
             {
               in_ptr++;
               ptr->st_ptr = in_ptr;
+            }
+
+          if (!in_ptr[0])
+            {
+              break;
             }
         }
     }
@@ -16690,23 +16797,19 @@ ref_to_val_lk_gen3(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_GE_U1, 2))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen3_ui1, dt_rval_gen3_ui1_hex,
-          dt_rval_gen3_ui1_shex, NULL);
+      return as_ref_to_val_lk(match, dt_rval_gen3_ui1, (__d_drt_h) mppd, "%u");
     }
   else if (!strncmp(match, _MC_GE_U2, 2))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen3_ui2, dt_rval_gen3_ui2_hex,
-          dt_rval_gen3_ui2_shex, NULL);
+      return as_ref_to_val_lk(match, dt_rval_gen3_ui2 , (__d_drt_h) mppd, "%u");
     }
   else if (!strncmp(match, _MC_GE_UL1, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen3_uli1, dt_rval_gen3_uli1_hex,
-          dt_rval_gen3_uli1_shex, NULL);
+      return as_ref_to_val_lk(match, dt_rval_gen3_uli1, (__d_drt_h) mppd, "%llu");
     }
   else if (!strncmp(match, _MC_GE_UL2, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen3_uli2, dt_rval_gen3_uli2_hex,
-          dt_rval_gen3_uli2_shex, NULL);
+      return as_ref_to_val_lk(match, dt_rval_gen3_uli2, (__d_drt_h) mppd, "%llu");
     }
   else if (!strncmp(match, _MC_GE_GE1, 3))
     {
