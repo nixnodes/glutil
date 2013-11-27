@@ -25,6 +25,10 @@
  *   - + Add GENERIC-3 log (rev. 12)
  *   - ~ Fix GENERIC-3 log (rev. 13)
  *   - % Remove deprecated field in __g_handle (rev. 14)
+ *   - ~ String matcher cmdline arguments segfaulting when empty (since rev.4) (rev. 15)
+ *   - % Slightly changed --version output (rev. 16)
+ *   - ~ Format string compiler exceeding bounds on input (rev. 17)
+ *   - + Implement extended arguments to format directives, first draft (-x only) (rev. 18)
  *
  * v1.11:
  *
