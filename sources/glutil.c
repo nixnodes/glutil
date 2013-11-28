@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 1.12-20
+ * Version     : 1.12-21
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 1
 #define VER_MINOR 12
-#define VER_REVISION 20
+#define VER_REVISION 21
 #define VER_STR ""
 
 #ifndef _STDINT_H
@@ -11869,8 +11869,6 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
           if (strncmp("%s", defdc, 2))
             {
               size_t i = 0;
-              /*mppd->direc[i] = 0x25;
-               i++;*/
               while (match[0] != 0x7D && match[0] && i < sizeof(mppd->direc) - 2)
                 {
                   mppd->direc[i] = match[0];
@@ -11884,7 +11882,6 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
                   goto ct;
                 }
             }
-          //printf(":: %s\n", match);
         }
       if (mppd->direc[0] == 0x0)
         {
@@ -12006,13 +12003,13 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         break;
       case 0x74:
         ;
-        int vb;
         strncpy(mppd->direc, "%d/%h/%Y %H:%M:%S", 18);
-        mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
-            mppd);
+        as_ref_to_val_lk(match, NULL, mppd, "%d/%h/%Y %H:%M:%S");
         if (is_ascii_numeric((uint8_t) match[0]) && match[0] != 0x2B
             && match[0] != 0x2D)
           {
+            int vb;
+
             mppd->vp_off1 = (size_t) mppd->hdl->g_proc2(mppd->hdl->_x_ref,
                 match, &vb);
             switch (id[1])
