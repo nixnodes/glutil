@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:10
+#@REVISION:11
 #@MACRO:killslow:{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -101,10 +101,10 @@ ban_user() {
 		[ -n "$LOG" ] && echo "[`date "+%T %D"`] DISABLE USER: $1 for $BANUSER seconds.." >> $LOG
 		sed -r 's/^FLAGS .*$/&6/' "$4/$1" > /tmp/ks.$1.$$.dtm && {
 			cp "/tmp/ks.$1.$$.dtm" "$4/$1"
-			$5 --sleep $BANUSER --fork "$6 unban $1 0 $4"	
+			$5 --fork "$6 unban $1 0 $4"	
 		}
 		
-		rm /tmp/ks.$1.$$.dtm
+		rm -f /tmp/ks.$1.$$.dtm
 		
 		return 0
 	elif [ $2 -eq 1 ]; then
@@ -114,15 +114,17 @@ ban_user() {
 		[ -z "$g_FLAGS" ] && return 1
 		sed -r "s/^FLAGS .*/$g_FLAGS/" "$4/$1" > /tmp/ks.$1.$$.dtm &&
 			cp "/tmp/ks.$1.$$.dtm" "$4/$1" &&
-				rm /tmp/ks.$1.$$.dtm	
+				rm -f /tmp/ks.$1.$$.dtm	
 		
 	fi
 	return 0
 }
 
-if [[ "$1" == "ban" ]]; then
+if [[ "$1" == "ban" ]]; then	
 	ban_user $2 0 $3 $4 $5 $0 && exit 1
 elif [[ "$1" == "unban" ]]; then
+	trap "rm -f /tmp/du-ks/$4; ban_user $2 1 $3 $4; exit 2" 2 15 9 6
+	sleep $BANUSER
 	ban_user $2 1 $3 $4 && exit 1
 fi
 
@@ -134,7 +136,7 @@ echo "$6" | egrep -q '^STOR' || exit 1
 [ -n "$PATHS_FILTERED" ] && echo "$9" | egrep -qi "${PATHS_FILTERED}" && exit 1
 
 [ -n "$EXEMPTUSERS" ] && echo "$3" | egrep -q "^(${EXEMPTUSERS})\$" && {
-	[ -f "/tmp/du-ks/$4" ] && rm /tmp/du-ks/$4
+	[ -f "/tmp/du-ks/$4" ] && rm -f /tmp/du-ks/$4
 	exit 1
 }
 [ $EXEMPTSITEOPS -eq 1 ] && echo "$8" | grep -q 1 && exit 1
@@ -144,17 +146,19 @@ echo "$6" | egrep -q '^STOR' || exit 1
 BXFER=$1
 
 if [ $BXFER -lt 1 ]; then
-	[ -f "/tmp/du-ks/$4" ] && rm /tmp/du-ks/$4 
+	[ -f "/tmp/du-ks/$4" ] && rm -f /tmp/du-ks/$4 
 	exit 1
 fi
 
 [ $IGNORE_LONE_RANGER -eq 1 ] && {
 	$7 -w --batch match "user,${3}" or iregex status,"^STOR\ " and ilom "bxfer" and imatch "ndir,${14}" | egrep -q "^ONLINE" || {
 		#echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
-		[ -f /tmp/du-ks/$4 ] && rm /tmp/du-ks/$4
+		[ -f /tmp/du-ks/$4 ] && rm -f /tmp/du-ks/$4
 		exit 1
 	}
 }
+
+trap "rm -f /tmp/du-ks/$4; exit 2" 2 15 9 6
 
 DRATE=$5
 LUPDT=$2
@@ -183,7 +187,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		SHOULDKILL=1
 		kill $4 && {
 			[ $WIPE_FILE -eq 1 ] && [ -f "${15}${9}" ] && rm -f "${15}${9}"			
-			KILLED=1 && rm /tmp/du-ks/$4
+			KILLED=1 && rm -f /tmp/du-ks/$4
 		}
 	}
 	if [ $KILLED -eq 1 ]; then 
@@ -212,11 +216,11 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 elif [ $SLOW -eq 1 ]; then
 	touch "/tmp/du-ks/$4"
 elif [ $SLOW -eq 0 ] && [ -f "/tmp/du-ks/$4" ]; then
- 	rm "/tmp/du-ks/$4"
+ 	rm -f "/tmp/du-ks/$4"
 fi
 
 [ $SHOULDKILL -eq 1 ] && [ $KILLED -eq 0 ] && echo "[`date "+%T %D"`] ERROR: Sending SIGTERM to PID $4 ($GLUSER) failed!" >> $LOG && 
-	[ -f "/tmp/du-ks/$4" ] && rm "/tmp/du-ks/$4"
+	[ -f "/tmp/du-ks/$4" ] && rm -f "/tmp/du-ks/$4"
 
 exit 1
 
