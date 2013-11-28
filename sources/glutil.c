@@ -4657,9 +4657,21 @@ g_init(int argc, char **argv)
   return EXITVAL;
 }
 
+void
+g_math_add_u8(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) + *((uint64_t*) d);
+}
+
+
 int
 main(int argc, char *argv[])
 {
+  uint64_t la = 434;
+  uint64_t la2 = 22;
+  uint64_t res;
+  g_math_add_u8(&la,&la2, &res);
+  printf("%hhu %hhu: %llu\n", la, la2, res);
   char **p_argv = (char**) argv;
   int r;
 
@@ -12853,11 +12865,7 @@ g_oper_or(int s, int d)
   return (s || d);
 }
 
-void
-g_math_add_u8(void * s, void * d, void *o)
-{
-  *((uint8_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
-}
+
 
 uint64_t
 g_math_add_u(uint64_t s, uint64_t d)
