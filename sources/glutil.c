@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.0-2d
+ * Version     : 2.0-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -173,7 +173,7 @@
 #define VER_MAJOR 2
 #define VER_MINOR 0
 #define VER_REVISION 2
-#define VER_STR "d"
+#define VER_STR ""
 
 #ifndef _STDINT_H
 typedef unsigned char uint8_t;
