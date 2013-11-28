@@ -12,6 +12,8 @@
  *   -    See MANUAL for more information
  *   -
  *   - + ref_to_val_lk_generic processes all directives (rev. 1)
+ *   - ~ g_load_strm wrote to restricted memory (rev. 2)
+ *   - ~ dt_rval_x_c was broken, replaced with dt_rval_c (rev. 2)
  *
  * v1.12:
  *
