@@ -5,6 +5,12 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.0:
+ *
+ *   - + Extended format/regex/match directives;
+ *   -    Apply to -printf, --[i]regex[i] and --[i]match
+ *   -    See MANUAL for more information
+ *
  * v1.12:
  *
  *   - %! -exec[v] arguments pre-compile
@@ -33,6 +39,7 @@
  *   - % Remove unecessary 10240 byte buffer from _g_match (rev. 20)
  *   - + Format date and time of any signed 32bit field or static value (extended directives) (rev. 20)
  *   - %! Disable auto log path detection on startup (rev. 20)
+ *   - ~ Format date and time not accepting fmt string in certain cases (rev. 21)
  *
  * v1.11:
  *
