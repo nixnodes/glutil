@@ -110,7 +110,6 @@
 ##
 #@MACRO:tvrage-to-sql:{m:exe} -h --tvlog={m:q:tvrage@file} silent --execv `echo "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('{name}', '{link}', '{country}', '{started}', '{ended}', '{seasons}', '{status}', '{runtime}', '{airtime}', '{airday}', '{class}', '{genres}', '{showid}', '{time}', '{network}', '{dir}', '{startyear}', '{endyear}');"` --esredir "{m:arg1}"
 #
-#
 ## <dirlog-clean-dupes>
 #
 ## ## Requires glutil-1.9-9
