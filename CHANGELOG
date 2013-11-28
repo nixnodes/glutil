@@ -29,6 +29,10 @@
  *   - % Slightly changed --version output (rev. 16)
  *   - ~ Format string compiler exceeding bounds on input (rev. 17)
  *   - + Implement extended arguments to format directives, first draft (-x only) (rev. 18)
+ *   - + Add character generator to format directives (rev. 19)
+ *   - % Remove unecessary 10240 byte buffer from _g_match (rev. 20)
+ *   - + Format date and time of any signed 32bit field or static value (extended directives) (rev. 20)
+ *   - %! Disable auto log path detection on startup (rev. 20)
  *
  * v1.11:
  *
