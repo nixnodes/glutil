@@ -10,6 +10,8 @@
  *   - + Extended format/regex/match directives;
  *   -    Apply to -printf, --[i]regex[i] and --[i]match
  *   -    See MANUAL for more information
+ *   -
+ *   - + ref_to_val_lk_generic processes all directives (rev. 1)
  *
  * v1.12:
  *
