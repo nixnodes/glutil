@@ -597,8 +597,8 @@ typedef float
 
 typedef void *
 (*g_t_pg)(void *base, size_t offset);
-typedef void *
-(*g_op_tg)(void *s, void *d);
+typedef void
+(*g_op_tg)(void *s, void *d, void *o);
 
 typedef struct ___g_math
 {
@@ -12851,6 +12851,12 @@ int
 g_oper_or(int s, int d)
 {
   return (s || d);
+}
+
+void
+g_math_add_u8(void * s, void * d, void *o)
+{
+  *((uint8_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
 }
 
 uint64_t
