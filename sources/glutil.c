@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.0d
+ * Version     : 2.0-2d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 0
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -525,7 +525,9 @@ typedef struct ___d_drt_h
   time_t ts_1;
   char c_1;
   size_t vp_off1;
+  size_t vp_off2;
   __g_handle hdl;
+  char *match;
 } _d_drt_h, *__d_drt_h;
 
 typedef struct ___g_match_h
@@ -6301,13 +6303,13 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
       mstr = (char*) (d_ptr + hdl->jm_offset);
     }
 
-  if (!mstr)
-    {
-      print_str("ERROR: could not get match string\n");
-      gfl |= F_OPT_KILL_GLOBAL;
-      ofl |= F_BM_TERM;
-      return 0;
-    }
+  /*if (!mstr)
+   {
+   print_str("ERROR: could not get match string\n");
+   gfl |= F_OPT_KILL_GLOBAL;
+   ofl |= F_BM_TERM;
+   return 0;
+   }*/
 
   int r = 0;
   if ((_gm->flags & F_GM_ISMATCH))
@@ -6324,6 +6326,7 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
       goto end;
     }
   int rr;
+
   if ((_gm->flags & F_GM_ISREGEX)
       && (rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->reg_i_m)
     {
@@ -7220,8 +7223,8 @@ parse_args(int argc, char **argv, void*fref_t[])
             {
               if (fref_t != prio_f_ref)
                 {
-                  print_str("ERROR: [%d] alformed/invalid argument '%s'\n", ret,
-                      c_arg);
+                  print_str("ERROR: [%d] malformed/invalid argument '%s'\n",
+                      ret, c_arg);
                   c = -2;
                   goto end;
                 }
@@ -11071,7 +11074,7 @@ char *
 dt_rval_generic_procid(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, getpid());
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, getpid());
   return output;
 }
 
@@ -11079,7 +11082,7 @@ char *
 dt_rval_generic_ipc(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, getpid());
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, getpid());
   return output;
 }
 
@@ -11107,7 +11110,7 @@ char *
 dt_rval_generic_memlimit(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, db_max_size);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, db_max_size);
   return output;
 }
 
@@ -11115,7 +11118,7 @@ char *
 dt_rval_generic_curtime(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (int32_t) time(NULL));
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (int32_t) time(NULL));
   return output;
 }
 
@@ -11650,12 +11653,12 @@ dt_rval_x_dirpath(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
-dt_rval_x_c(void *arg, char *match, char *output, size_t max_size, void *mppd)
+dt_rval_c(void *arg, char *match, char *output, size_t max_size, void *mppd)
 {
-  char p_b0[64];
+  char p_b0[128];
   int ic = 0;
-
-  while (match[ic] != 0x7D && ic < 64)
+  match = ((__d_drt_h ) mppd)->match;
+  while (match[ic] != 0x7D && match[ic] != 0x2C && ic < 127 && match[ic])
     {
       p_b0[ic] = match[ic];
       ic++;
@@ -11663,8 +11666,9 @@ dt_rval_x_c(void *arg, char *match, char *output, size_t max_size, void *mppd)
 
   p_b0[ic] = 0x0;
 
-  return g_rtval_ex(((__d_xref) arg)->name, &p_b0[2], max_size, output,
-  F_CFGV_BUILD_FULL_STRING);
+  return g_rtval_ex((char *) (arg + (((__d_drt_h ) mppd)->vp_off2)), p_b0,
+      max_size, output,
+      F_CFGV_BUILD_FULL_STRING);
 }
 
 char *
@@ -12353,7 +12357,9 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, "c:", 2))
     {
-      return dt_rval_x_c;
+      ((__d_drt_h ) mppd)->vp_off2 = (size_t)((__d_xref) NULL)->name;
+      ((__d_drt_h ) mppd)->match = match+2;
+      return dt_rval_c;
     }
 
   return NULL;
@@ -14272,7 +14278,7 @@ g_load_strm(__g_handle hdl)
           i = 0;
           char *s_ptr = _m_ptr->data;
           while ((s_ptr[i] != 0x2C || (s_ptr[i] == 0x2C && s_ptr[i - 1] == 0x5C))
-              && i < (size_t) 4096)
+              && i < 4096 && s_ptr[i])
             {
               i++;
             }
@@ -14283,7 +14289,6 @@ g_load_strm(__g_handle hdl)
               if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, s_ptr, hdl->mv1_b, MAX_VAR_LEN, &_m_ptr->dtr)))
                 {
                   _m_ptr->field = s_ptr;
-                  s_ptr[i] = 0x0;
                   s_ptr = &s_ptr[i + 1];
                 }
               else
@@ -14301,6 +14306,7 @@ g_load_strm(__g_handle hdl)
             }
 
           _m_ptr->match = s_ptr;
+
           if (_m_ptr->flags & F_GM_ISREGEX)
             {
               int re;
