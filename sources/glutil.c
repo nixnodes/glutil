@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.0-2
+ * Version     : 2.0-3d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,8 +172,8 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 0
-#define VER_REVISION 2
-#define VER_STR ""
+#define VER_REVISION 3
+#define VER_STR "d"
 
 #ifndef _STDINT_H
 typedef unsigned char uint8_t;
@@ -587,6 +587,30 @@ typedef struct ___d_argv_ch
   int cindex;
   mda mech;
 } _d_argv_ch, *__d_argv_ch;
+
+typedef uint64_t
+(*g_op_tu)(uint64_t s, uint64_t d);
+typedef int64_t
+(*g_op_ts)(int64_t s, int64_t d);
+typedef float
+(*g_op_tf)(float s, float d);
+
+typedef void *
+(*g_t_pg)(void *base, size_t offset);
+typedef void *
+(*g_op_tg)(void *s, void *d);
+
+typedef struct ___g_math
+{
+  uint32_t flags;
+  g_t_pg g_t_ptr;
+  g_op_tg op_t;
+  uint64_t v_t;
+  int64_t v_ts;
+  float v_tf;
+  size_t l_off;
+
+} _g_math, *__g_math;
 
 /*
  * CRC-32 polynomial 0x04C11DB7 (0xEDB88320)
@@ -3509,6 +3533,8 @@ int
 md_copy(pmda source, pmda dest, size_t block_sz);
 int
 g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
+    uint32_t flags);
+g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
     uint32_t flags);
 
 #define R_SHMAP_ALREADY_EXISTS	(a32 << 1)
@@ -6444,10 +6470,32 @@ g_lom_var_uint(void *d_ptr, void *_lom)
   return 0;
 }
 
+uint64_t
+g_math_res_u(__g_handle hdl, void *d_ptr, pmda mdm)
+{
+  p_md_obj ptr = mdm.objects;
+  __g_math math, p_math = NULL;
+
+  int r_p = 1, i = 0;
+
+  while (ptr)
+    {
+      if (p_math) {
+          math->g_t_ptr(d_ptr, math->l_off);
+          p_math->g_t_ptr(d_ptr, p_math->l_off);
+          math->op_tu(p_math->g_t_ptr(d_ptr, p_math->l_off), math->g_t_ptr(d_ptr, math->l_off));
+      }
+      p_math = math;
+      ptr = ptr->next;
+    }
+
+  return 1;
+}
+
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 {
-  p_md_obj ptr = md_first(&_gm->lom);
+  p_md_obj ptr = _gm->lom.objects;
   __g_lom lom, p_lom = NULL;
 
   int r_p = 1, i = 0;
@@ -12806,6 +12854,90 @@ g_oper_or(int s, int d)
 }
 
 uint64_t
+g_math_add_u(uint64_t s, uint64_t d)
+{
+  return s + d;
+}
+
+int64_t
+g_math_add_s(int64_t s, int64_t d)
+{
+  return s + d;
+}
+
+float
+g_math_add_f(float s, float d)
+{
+  return s + d;
+}
+
+uint64_t
+g_math_sub_u(uint64_t s, uint64_t d)
+{
+  return s - d;
+}
+
+int64_t
+g_math_sub_s(int64_t s, int64_t d)
+{
+  return s - d;
+}
+
+float
+g_math_sub_f(float s, float d)
+{
+  return s - d;
+}
+
+uint64_t
+g_math_mult_u(uint64_t s, uint64_t d)
+{
+  return s * d;
+}
+
+int64_t
+g_math_mult_s(int64_t s, int64_t d)
+{
+  return s * d;
+}
+
+float
+g_math_mult_f(float s, float d)
+{
+  return s * d;
+}
+
+uint64_t
+g_math_div_u(uint64_t s, uint64_t d)
+{
+  return s * d;
+}
+
+int64_t
+g_math_div_s(int64_t s, int64_t d)
+{
+  return s / d;
+}
+
+float
+g_math_div_f(float s, float d)
+{
+  return s / d;
+}
+
+uint64_t
+g_math_rem_u(uint64_t s, uint64_t d)
+{
+  return s % d;
+}
+
+int64_t
+g_math_rem_s(int64_t s, int64_t d)
+{
+  return s % d;
+}
+
+uint64_t
 g_t8_ptr(void *base, size_t offset)
 {
   return (uint64_t) *((uint8_t*) (base + offset));
@@ -12864,6 +12996,15 @@ g_td_ptr(void *base, size_t offset)
 {
   return *((double*) (base + offset));
 }
+
+/////////////////////////
+
+void *
+g_ig_p(void *base, size_t offset)
+{
+  return (base + offset);
+}
+
 
 #define MAX_SORT_LOOPS				MAX_uint64_t
 
@@ -13484,6 +13625,264 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
 
   return 0;
 
+}
+
+
+
+#define F_MATH_INT              (a32 << 1)
+#define F_MATH_INT_S            (a32 << 2)
+#define F_MATH_FLOAT            (a32 << 3)
+
+#define F_MATH_TYPES            (F_MATH_INT|F_MATH_INT_S|F_MATH_FLOAT)
+
+#define F_FMATH_VAR_KNOWN       (a32 << 1)
+
+int
+g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math lom, uint32_t flags)
+{
+  g_setjmp(0, "g_get_math_g_t_ptr", NULL, NULL);
+
+  int vb = 0;
+
+  size_t off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
+
+  if (!vb)
+    {
+      errno = 0;
+      uint32_t t_f = 0;
+      int base;
+
+      if (!(lom->flags & F_MATH_TYPES))
+        {
+          if (field[0] == 0x2D || field[0] == 0x2B)
+            {
+              lom->flags |= F_MATH_INT_S;
+            }
+          else if (s_string(field, ".", 0))
+            {
+              lom->flags |= F_MATH_FLOAT;
+            }
+          else
+            {
+              lom->flags |= F_MATH_INT;
+            }
+        }
+
+      if (!g_sfc(is_ascii_hexadecimal, field, strlen(field)))
+        {
+          base = 16;
+        }
+      else
+        {
+          base = 10;
+        }
+
+      switch (lom->flags & F_MATH_TYPES)
+        {
+      case F_MATH_INT:
+        lom->v_t = (uint64_t) strtoll(field, NULL, base);
+        //lom->g_lom_vp = g_lom_var_uint;
+        break;
+      case F_MATH_INT_S:
+        lom->v_ts = (int64_t) strtoll(field, NULL, base);
+        //lom->g_lom_vp = g_lom_var_int;
+        break;
+      case F_MATH_FLOAT:
+        lom->v_tf = (float) strtof(field, NULL);
+        //lom->g_lom_vp = g_lom_var_float;
+        break;
+        }
+      t_f |= F_FMATH_VAR_KNOWN;
+
+      if (errno == ERANGE)
+        {
+          return 4;
+        }
+
+      lom->flags |= t_f;
+
+      return 0;
+    }
+
+  if (off > hdl->block_sz)
+    {
+      return 601;
+    }
+
+  /*switch (vb)
+    {
+  case -32:
+    lom->g_tf_ptr = g_tf_ptr;
+    //lom->g_lom_vp = g_lom_var_float;
+    lom->flags |= F_MATH_FLOAT
+    ;
+    break;
+  case -2:
+    lom->g_ts_ptr = g_ts8_ptr;
+    //lom->g_lom_vp = g_lom_var_int;
+    lom->flags |= F_MATH_INT_S
+    ;
+    break;
+  case -3:
+
+    lom->g_ts_ptr = g_ts16_ptr;
+
+    //lom->g_lom_vp = g_lom_var_int;
+    lom->flags |= F_MATH_INT_S
+    ;
+    break;
+  case -5:
+
+    lom->g_ts_ptr = g_ts32_ptr;
+
+    //lom->g_lom_vp = g_lom_var_int;
+    lom->flags |= F_MATH_INT_S
+    ;
+    break;
+  case -9:
+
+    lom->g_ts_ptr = g_ts64_ptr;
+
+    //lom->g_lom_vp = g_lom_var_int;
+    lom->flags |= F_MATH_INT_S
+    ;
+    break;
+  case 1:
+
+    lom->g_t_ptr = g_t8_ptr;
+
+    //lom->g_lom_vp = g_lom_var_uint;
+    lom->flags |= F_MATH_INT
+    ;
+    break;
+  case 2:
+
+    lom->g_t_ptr = g_t16_ptr;
+
+    //lom->g_lom_vp = g_lom_var_uint;
+    lom->flags |= F_MATH_INT
+    ;
+    break;
+  case 4:
+
+    lom->g_t_ptr = g_t32_ptr;
+
+    //lom->g_lom_vp = g_lom_var_uint;
+    lom->flags |= F_MATH_INT
+    ;
+    break;
+  case 8:
+
+    lom->g_t_ptr = g_t64_ptr;
+
+    //lom->g_lom_vp = g_lom_var_uint;
+    lom->flags |= F_MATH_INT
+    ;
+    break;
+  default:
+    return 608;
+    break;
+    }*/
+
+  lom->l_off = off;
+
+  return 0;
+
+}
+
+int
+g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
+    __g_math *ret, uint32_t flags)
+{
+  g_setjmp(0, "g_build_math_packet", NULL, NULL);
+  int rt = 0;
+  md_init(mdm, 16);
+
+  __g_math math = (__g_math ) md_alloc(mdm, sizeof(_g_math));
+
+  if (!math)
+    {
+      rt = 1;
+      goto end;
+    }
+
+  int r = 0;
+
+  if ((r = g_get_math_g_t_ptr(hdl, field, math, 0)))
+    {
+      rt = r;
+      goto end;
+    }
+
+  if ((math->flags & F_MATH_FLOAT)
+      && ((math->flags & F_MATH_INT) | (math->flags & F_MATH_INT_S)))
+    {
+      math->flags ^= (F_MATH_INT | F_MATH_INT_S);
+    }
+  else if ((math->flags & F_MATH_INT) && (math->flags & F_MATH_INT_S))
+    {
+      math->flags ^= F_MATH_INT;
+    }
+
+  if (!(math->flags & F_MATH_TYPES))
+    {
+      rt = 6;
+      goto end;
+    }
+
+  if (oper)
+    {
+      if (oper == 0x2B)
+        {
+          switch (math->flags & F_MATH_TYPES)
+            {
+          case F_MATH_FLOAT:
+            math->op_tf = g_math_add_f;
+            break;
+          case F_MATH_INT:
+            math->op_tu = g_math_add_u;
+            break;
+          case F_MATH_INT_S:
+            math->op_ts = g_math_add_s;
+            break;
+            }
+
+        }
+      else if (oper == 0x2D)
+        {
+          switch (math->flags & F_MATH_TYPES)
+            {
+          case F_MATH_FLOAT:
+            math->op_tf = g_math_sub_f;
+            break;
+          case F_MATH_INT:
+            math->op_tu = g_math_sub_u;
+            break;
+          case F_MATH_INT_S:
+            math->op_ts = g_math_sub_s;
+            break;
+            }
+        }
+      else
+        {
+          rt = 11;
+          goto end;
+        }
+    }
+
+  if (ret)
+    {
+      *ret = math;
+    }
+
+  end:
+
+  if (rt)
+    {
+      md_unlink(mdm, mdm->pos);
+    }
+
+  return rt;
 }
 
 int
@@ -14343,20 +14742,73 @@ g_load_strm(__g_handle hdl)
   return rt;
 }
 
-#define MAX_LOM_VLEN 	254
+#define MAX_VLEN    254
+/*
+int
+g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
+    uint32_t flags)
+{
+  g_setjmp(0, "g_process_math_string", NULL, NULL);
+  char *ptr = string, left[MAX_VLEN + 1], oper = 0x0;
+  size_t i;
+  while (ptr[0])
+    {
+      if (ptr[0] == 0x0)
+        {
+          break;
+        }
 
+      while (ptr[0] == 0x20)
+        {
+          ptr++;
+        }
+      i = 0;
+      while (ptr[0] != 0x2B && ptr[0] != 0x2D && ptr[0])
+        {
+          left[i] = ptr[0];
+          i++;
+          ptr++;
+        }
+
+      if (!i)
+        {
+          return 1;
+        }
+
+      left[i] = 0x0;
+
+      *ret = g_build_math_packet(hdl, left, oper, mdm,
+      NULL, flags);
+
+      if (*ret)
+        {
+          return 6;
+        }
+
+      while (ptr[0] == 0x20)
+        {
+          ptr++;
+        }
+
+      oper = ptr[0];
+
+    }
+
+  return 0;
+}
+*/
 int
 g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
     uint32_t flags)
 {
   g_setjmp(0, "g_process_lom_string", NULL, NULL);
   char *ptr = string, *w_ptr;
-  char left[MAX_LOM_VLEN + 1], right[MAX_LOM_VLEN + 1], comp[4], oper[4];
+  char left[MAX_VLEN + 1], right[MAX_VLEN + 1], comp[4], oper[4];
   int i;
   while (ptr[0])
     {
-      bzero(left, MAX_LOM_VLEN + 1);
-      bzero(right, MAX_LOM_VLEN + 1);
+      bzero(left, MAX_VLEN + 1);
+      bzero(right, MAX_VLEN + 1);
       bzero(comp, 4);
       bzero(oper, 4);
       while (is_ascii_alphanumeric((uint8_t) ptr[0]) && ptr[0] != 0x2D
@@ -14374,7 +14826,7 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
           ptr++;
         }
 
-      if (i > MAX_LOM_VLEN)
+      if (i > MAX_VLEN)
         {
           return 1;
         }
@@ -14424,7 +14876,7 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
           ptr++;
         }
 
-      if (i > MAX_LOM_VLEN)
+      if (i > MAX_VLEN)
         {
           return 3;
         }
