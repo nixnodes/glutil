@@ -6469,7 +6469,7 @@ g_lom_var_uint(void *d_ptr, void *_lom)
 
   return 0;
 }
-
+/*
 uint64_t
 g_math_res_u(__g_handle hdl, void *d_ptr, pmda mdm)
 {
@@ -6491,7 +6491,7 @@ g_math_res_u(__g_handle hdl, void *d_ptr, pmda mdm)
 
   return 1;
 }
-
+*/
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 {
@@ -13830,7 +13830,7 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
       goto end;
     }
 
-  if (oper)
+ /* if (oper)
     {
       if (oper == 0x2B)
         {
@@ -13868,7 +13868,7 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
           rt = 11;
           goto end;
         }
-    }
+    }*/
 
   if (ret)
     {
