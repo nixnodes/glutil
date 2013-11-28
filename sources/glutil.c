@@ -173,7 +173,7 @@
 #define VER_MAJOR 2
 #define VER_MINOR 0
 #define VER_REVISION 0
-#define VER_STR ""
+#define VER_STR "b"
 
 #ifndef _STDINT_H
 typedef unsigned char uint8_t;
