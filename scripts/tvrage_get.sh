@@ -91,7 +91,7 @@ TVRAGE_SEARCH_BY_YEAR=1
 #
 ## TVRage services api key (leave blank if you don't know
 ## what this is)
-TVRAGE_API_KEY="uezdic9NFcgutJbLyZln"
+TVRAGE_API_KEY=""
 #
 VERBOSE=1
 #
