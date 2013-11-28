@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.0
+ * Version     : 2.0d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,8 +172,8 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 0
-#define VER_REVISION 0
-#define VER_STR "b"
+#define VER_REVISION 1
+#define VER_STR "d"
 
 #ifndef _STDINT_H
 typedef unsigned char uint8_t;
@@ -11071,7 +11071,7 @@ char *
 dt_rval_generic_procid(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%d", getpid());
+  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, getpid());
   return output;
 }
 
@@ -11079,7 +11079,7 @@ char *
 dt_rval_generic_ipc(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%d", getpid());
+  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, getpid());
   return output;
 }
 
@@ -11107,7 +11107,7 @@ char *
 dt_rval_generic_memlimit(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%llu", db_max_size);
+  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, db_max_size);
   return output;
 }
 
@@ -11115,7 +11115,7 @@ char *
 dt_rval_generic_curtime(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%d", (int32_t) time(NULL));
+  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (int32_t) time(NULL));
   return output;
 }
 
@@ -11233,87 +11233,107 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
 {
   if (!strncmp(match, "nukestr", 7))
     {
-      return dt_rval_generic_nukestr;
+      return as_ref_to_val_lk(match, dt_rval_generic_nukestr, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "procid", 6))
     {
-      return dt_rval_generic_procid;
+      return as_ref_to_val_lk(match, dt_rval_generic_procid, (__d_drt_h ) mppd,
+          "%d");
     }
   else if (!strncmp(match, "ipc", 3))
     {
-      return dt_rval_generic_ipc;
+      return as_ref_to_val_lk(match, dt_rval_generic_ipc, (__d_drt_h ) mppd,
+          "%d");
     }
   else if (!strncmp(match, "usroot", 6))
     {
-      return dt_rval_generic_usroot;
+      return as_ref_to_val_lk(match, dt_rval_generic_usroot, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "logroot", 7))
     {
-      return dt_rval_generic_logroot;
+      return as_ref_to_val_lk(match, dt_rval_generic_logroot, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "memlimit", 8))
     {
-      return dt_rval_generic_memlimit;
+      return as_ref_to_val_lk(match, dt_rval_generic_memlimit,
+          (__d_drt_h ) mppd, "%llu");
     }
   else if (!strncmp(match, "curtime", 7))
     {
-      return dt_rval_generic_curtime;
+      return as_ref_to_val_lk(match, dt_rval_generic_curtime, (__d_drt_h ) mppd,
+          "%d");
     }
   else if (!strncmp(match, "q:", 2))
     {
-      return dt_rval_q;
+      return as_ref_to_val_lk(match, dt_rval_q, (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, MSG_GENERIC_NL, 3))
     {
-      return dt_rval_generic_newline;
+      return as_ref_to_val_lk(match, dt_rval_generic_newline, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, MSG_GENERIC_TAB, 4))
     {
-      return dt_rval_generic_tab;
+      return as_ref_to_val_lk(match, dt_rval_generic_tab, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "exe", 3))
     {
-      return dt_rval_generic_exe;
+      return as_ref_to_val_lk(match, dt_rval_generic_exe, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "glroot", 6))
     {
-      return dt_rval_generic_glroot;
+      return as_ref_to_val_lk(match, dt_rval_generic_glroot, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "siteroot", 8))
     {
-      return dt_rval_generic_siteroot;
+      return as_ref_to_val_lk(match, dt_rval_generic_siteroot,
+          (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, "siterootn", 9))
     {
-      return dt_rval_generic_siterootn;
+      return as_ref_to_val_lk(match, dt_rval_generic_siterootn,
+          (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, "ftpdata", 7))
     {
-      return dt_rval_generic_ftpdata;
+      return as_ref_to_val_lk(match, dt_rval_generic_ftpdata, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "logfile", 7))
     {
-      return dt_rval_generic_logfile;
+      return as_ref_to_val_lk(match, dt_rval_generic_logfile, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "imdbfile", 8))
     {
-      return dt_rval_generic_imdbfile;
+      return as_ref_to_val_lk(match, dt_rval_generic_imdbfile,
+          (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, "gamefile", 8))
     {
-      return dt_rval_generic_gamefile;
+      return as_ref_to_val_lk(match, dt_rval_generic_gamefile,
+          (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, "tvragefile", 10))
     {
-      return dt_rval_generic_tvfile;
+      return as_ref_to_val_lk(match, dt_rval_generic_tvfile, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "spec1", 5))
     {
-      return dt_rval_generic_spec1;
+      return as_ref_to_val_lk(match, dt_rval_generic_spec1, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "glconf", 6))
     {
-      return dt_rval_generic_glconf;
+      return as_ref_to_val_lk(match, dt_rval_generic_glconf, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, "?", 1))
     {
@@ -16189,7 +16209,8 @@ ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size,
 
   if (!strncmp(match, _MC_GLOB_SCORE, 5))
     {
-      return as_ref_to_val_lk(match, dt_rval_game_score, (__d_drt_h ) mppd, "%.1f");
+      return as_ref_to_val_lk(match, dt_rval_game_score, (__d_drt_h ) mppd,
+          "%.1f");
     }
   else if (!strncmp(match, _MC_GLOB_TIME, 4))
     {
@@ -16201,7 +16222,8 @@ ref_to_val_lk_game(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_game_basedir, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_game_basedir, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_DIR, 3))
     {
@@ -16410,83 +16432,103 @@ ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size,
     }
   if (!strncmp(match, _MC_GLOB_TIME, 4))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_time, (__d_drt_h ) mppd, "%d");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_time, (__d_drt_h ) mppd,
+          "%d");
     }
   else if (!strncmp(match, _MC_TV_ENDED, 5))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_ended, (__d_drt_h ) mppd, "%d");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_ended, (__d_drt_h ) mppd,
+          "%d");
     }
   else if (!strncmp(match, _MC_TV_STARTED, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_started, (__d_drt_h ) mppd, "%d");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_started, (__d_drt_h ) mppd,
+          "%d");
     }
   else if (!strncmp(match, _MC_TV_SEASONS, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_seasons, (__d_drt_h ) mppd, "%hu");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_seasons, (__d_drt_h ) mppd,
+          "%hu");
     }
   else if (!strncmp(match, _MC_TV_SHOWID, 6))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_showid, (__d_drt_h ) mppd, "%u");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_showid, (__d_drt_h ) mppd,
+          "%u");
     }
   else if (!strncmp(match, _MC_GLOB_RUNTIME, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_runtime, (__d_drt_h ) mppd, "%u");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_runtime, (__d_drt_h ) mppd,
+          "%u");
     }
   else if (!strncmp(match, _MC_TV_SYEAR, 9))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_startyear, (__d_drt_h ) mppd, "%hu");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_startyear,
+          (__d_drt_h ) mppd, "%hu");
     }
   else if (!strncmp(match, _MC_TV_EYEAR, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_endyear, (__d_drt_h ) mppd, "%hu");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_endyear, (__d_drt_h ) mppd,
+          "%hu");
     }
   else if (!strncmp(match, _MC_GLOB_MODE, 4))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_mode, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_mode, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_DIR, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_dir, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_dir, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_basedir, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_basedir, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_AIRDAY, 6))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_airday, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_airday, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_AIRTIME, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_airtime, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_airtime, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_COUNTRY, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_country, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_country, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_LINK, 4))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_link, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_link, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_NAME, 4))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_name, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_name, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_STATUS, 6))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_status, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_status, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_CLASS, 5))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_class, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_class, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_GENRE, 5))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_genre, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_genre, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_TV_NETWORK, 7))
     {
-      return as_ref_to_val_lk(match, dt_rval_tvrage_network, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_tvrage_network, (__d_drt_h ) mppd,
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_XREF, 2))
     {
@@ -16504,7 +16546,7 @@ char *
 dt_rval_gen1_i32(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s2044) arg)->i32);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s2044) arg)->i32);
   return output;
 }
 
@@ -16611,7 +16653,6 @@ ref_to_val_lk_gen1(void *arg, char *match, char *output, size_t max_size,
       return as_ref_to_val_lk(match, dt_rval_gen1_ge8, (__d_drt_h ) mppd, "%s");
     }
 
-
   return NULL;
 }
 
@@ -16619,7 +16660,7 @@ char *
 dt_rval_gen2_i1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->i32_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->i32_1);
   return output;
 }
 
@@ -16627,7 +16668,7 @@ char *
 dt_rval_gen2_i2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->i32_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->i32_2);
   return output;
 }
 
@@ -16635,7 +16676,7 @@ char *
 dt_rval_gen2_i3(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->i32_3);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->i32_3);
   return output;
 }
 
@@ -16643,7 +16684,7 @@ char *
 dt_rval_gen2_i4(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->i32_4);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->i32_4);
   return output;
 }
 
@@ -16651,7 +16692,7 @@ char *
 dt_rval_gen2_ui1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->ui32_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->ui32_1);
   return output;
 }
 
@@ -16659,7 +16700,7 @@ char *
 dt_rval_gen2_ui2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->ui32_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->ui32_2);
   return output;
 }
 
@@ -16667,7 +16708,7 @@ char *
 dt_rval_gen2_ui3(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->ui32_3);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->ui32_3);
   return output;
 }
 
@@ -16675,7 +16716,7 @@ char *
 dt_rval_gen2_ui4(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->ui32_4);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->ui32_4);
   return output;
 }
 
@@ -16683,7 +16724,8 @@ char *
 dt_rval_gen2_uli1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (ulint64_t) ((__d_generic_s1644) arg)->ui64_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) ((__d_generic_s1644) arg)->ui64_1);
   return output;
 }
 
@@ -16691,7 +16733,8 @@ char *
 dt_rval_gen2_uli2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (ulint64_t) ((__d_generic_s1644) arg)->ui64_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) ((__d_generic_s1644) arg)->ui64_2);
   return output;
 }
 
@@ -16699,7 +16742,8 @@ char *
 dt_rval_gen2_uli3(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (ulint64_t) ((__d_generic_s1644) arg)->ui64_3);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) ((__d_generic_s1644) arg)->ui64_3);
   return output;
 }
 
@@ -16707,7 +16751,8 @@ char *
 dt_rval_gen2_uli4(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (ulint64_t) ((__d_generic_s1644) arg)->ui64_4);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) ((__d_generic_s1644) arg)->ui64_4);
   return output;
 }
 
@@ -16715,7 +16760,7 @@ char *
 dt_rval_gen2_f1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->f_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->f_1);
   return output;
 }
 
@@ -16723,7 +16768,7 @@ char *
 dt_rval_gen2_f2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->f_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->f_2);
   return output;
 }
 
@@ -16731,7 +16776,7 @@ char *
 dt_rval_gen2_f3(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->f_3);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->f_3);
   return output;
 }
 
@@ -16739,7 +16784,7 @@ char *
 dt_rval_gen2_f4(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s1644) arg)->f_4);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s1644) arg)->f_4);
   return output;
 }
 
@@ -16861,19 +16906,23 @@ ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_GE_UL1, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen2_uli1, (__d_drt_h ) mppd, "%llu");
+      return as_ref_to_val_lk(match, dt_rval_gen2_uli1, (__d_drt_h ) mppd,
+          "%llu");
     }
   else if (!strncmp(match, _MC_GE_UL2, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen2_uli2, (__d_drt_h ) mppd, "%llu");
+      return as_ref_to_val_lk(match, dt_rval_gen2_uli2, (__d_drt_h ) mppd,
+          "%llu");
     }
   else if (!strncmp(match, _MC_GE_UL3, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen2_uli3, (__d_drt_h ) mppd, "%llu");
+      return as_ref_to_val_lk(match, dt_rval_gen2_uli3, (__d_drt_h ) mppd,
+          "%llu");
     }
   else if (!strncmp(match, _MC_GE_UL4, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen2_uli4, (__d_drt_h ) mppd, "%llu");
+      return as_ref_to_val_lk(match, dt_rval_gen2_uli4, (__d_drt_h ) mppd,
+          "%llu");
     }
   else if (!strncmp(match, _MC_GE_GE1, 3))
     {
@@ -16915,7 +16964,7 @@ char *
 dt_rval_gen3_i1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s800) arg)->i32_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_1);
   return output;
 }
 
@@ -16923,7 +16972,7 @@ char *
 dt_rval_gen3_i2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s800) arg)->i32_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_2);
   return output;
 }
 
@@ -16931,16 +16980,15 @@ char *
 dt_rval_gen3_ui1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s800) arg)->ui32_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->ui32_1);
   return output;
 }
-
 
 char *
 dt_rval_gen3_ui2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, ((__d_generic_s800) arg)->ui32_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->ui32_2);
   return output;
 }
 
@@ -16948,19 +16996,19 @@ char *
 dt_rval_gen3_uli1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (ulint64_t) ((__d_generic_s800) arg)->ui64_1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) ((__d_generic_s800) arg)->ui64_1);
   return output;
 }
-
 
 char *
 dt_rval_gen3_uli2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h)mppd)->direc, (ulint64_t) ((__d_generic_s800) arg)->ui64_2);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (ulint64_t) ((__d_generic_s800) arg)->ui64_2);
   return output;
 }
-
 
 char *
 dt_rval_gen3_ge1(void *arg, char *match, char *output, size_t max_size,
