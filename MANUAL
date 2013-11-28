@@ -81,6 +81,7 @@ FLAGS:
    crc32      I     CRC32 of file (hexadecimal)
    dec-crc32  S     CRC32 of file (decimal)
    curtime    I     Seconds passed since Epoch (when LOM matching, trailing +/- increase/decrease this value, e.g curtime-3600, curtime+7200, ..)
+   c:<key>    S     Retrieve line starting with <key>, followed by a space or tab (meant for glftpd config files)
   
 
 ; DIRLOG
