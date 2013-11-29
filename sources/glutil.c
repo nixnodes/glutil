@@ -3534,6 +3534,7 @@ md_copy(pmda source, pmda dest, size_t block_sz);
 int
 g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
     uint32_t flags);
+int
 g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
     uint32_t flags);
 
@@ -6473,7 +6474,7 @@ g_lom_var_uint(void *d_ptr, void *_lom)
 uint64_t
 g_math_res_u(__g_handle hdl, void *d_ptr, pmda mdm)
 {
-  p_md_obj ptr = mdm.objects;
+  /*p_md_obj ptr = mdm.objects;
   __g_math math, p_math = NULL;
 
   int r_p = 1, i = 0;
@@ -6487,7 +6488,7 @@ g_math_res_u(__g_handle hdl, void *d_ptr, pmda mdm)
       }
       p_math = math;
       ptr = ptr->next;
-    }
+    }*/
 
   return 1;
 }
@@ -12856,25 +12857,55 @@ g_oper_or(int s, int d)
 void
 g_math_add_u8(void * s, void * d, void *o)
 {
-  *((uint8_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
+  *((uint64_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
 }
 
-uint64_t
-g_math_add_u(uint64_t s, uint64_t d)
+void
+g_math_add_u16(void * s, void * d, void *o)
 {
-  return s + d;
+  *((uint64_t*) o) = *((uint16_t*) s) + *((uint16_t*) d);
 }
 
-int64_t
-g_math_add_s(int64_t s, int64_t d)
+void
+g_math_add_u32(void * s, void * d, void *o)
 {
-  return s + d;
+  *((uint64_t*) o) = *((uint32_t*) s) + *((uint32_t*) d);
 }
 
-float
-g_math_add_f(float s, float d)
+void
+g_math_add_u64(void * s, void * d, void *o)
 {
-  return s + d;
+  *((uint64_t*) o) = *((uint64_t*) s) + *((uint64_t*) d);
+}
+
+void
+g_math_add_s8(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int8_t*) s) + *((int8_t*) d);
+}
+
+void
+g_math_add_s16(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int16_t*) s) + *((int16_t*) d);
+}
+
+void
+g_math_add_s32(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int32_t*) s) + *((int32_t*) d);
+}
+
+void
+g_math_add_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) + *((int64_t*) d);
+}
+
+void
+g_math_add_f(void * s, void * d, void *o)
+{
+  *((float*) o) = *((float*) s) + *((float*) d);
 }
 
 uint64_t
@@ -13836,7 +13867,7 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
       goto end;
     }
 
-  if (oper)
+  /*if (oper)
     {
       if (oper == 0x2B)
         {
@@ -13874,7 +13905,7 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
           rt = 11;
           goto end;
         }
-    }
+    }*/
 
   if (ret)
     {
