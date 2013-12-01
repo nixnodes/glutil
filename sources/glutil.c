@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.0-3d
+ * Version     : 2.1-0
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -171,8 +171,8 @@
 #endif
 
 #define VER_MAJOR 2
-#define VER_MINOR 0
-#define VER_REVISION 3
+#define VER_MINOR 1
+#define VER_REVISION 0
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -528,6 +528,7 @@ typedef struct ___d_drt_h
   size_t vp_off2;
   __g_handle hdl;
   char *match;
+  mda math;
 } _d_drt_h, *__d_drt_h;
 
 typedef struct ___g_match_h
@@ -603,13 +604,12 @@ typedef void
 typedef struct ___g_math
 {
   uint32_t flags;
-  g_t_pg g_t_ptr;
+  //g_t_pg g_t_ptr;
+  void **_m_p;
   g_op_tg op_t;
-  uint64_t v_t;
-  int64_t v_ts;
-  float v_tf;
   size_t l_off;
-
+  uint8_t vstor[8];
+  int vb;
 } _g_math, *__g_math;
 
 /*
@@ -890,6 +890,14 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 
 #define F_EDS_ROOTMINSET		(a32 << 1)
 #define F_EDS_KILL			(a32 << 2)
+
+#define F_MATH_INT                      (a32 << 1)
+#define F_MATH_INT_S                    (a32 << 2)
+#define F_MATH_FLOAT                    (a32 << 3)
+
+#define F_MATH_TYPES                    (F_MATH_INT|F_MATH_INT_S|F_MATH_FLOAT)
+
+#define F_MATH_VAR_KNOWN               (a32 << 4)
 
 /* -- end flags -- */
 
@@ -3376,6 +3384,10 @@ int
 free_cfg_rf(pmda md);
 
 int
+g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
+    uint32_t flags);
+
+int
 reg_match(char *, char *, int);
 
 int
@@ -3534,9 +3546,6 @@ md_copy(pmda source, pmda dest, size_t block_sz);
 int
 g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
     uint32_t flags);
-int
-g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
-    uint32_t flags);
 
 #define R_SHMAP_ALREADY_EXISTS	(a32 << 1)
 #define R_SHMAP_FAILED_ATTACH	(a32 << 2)
@@ -3562,7 +3571,315 @@ char *
 g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *outstr,
     size_t maxlen);
 
-void *prio_f_ref[] =
+int
+g_math_res(void *d_ptr, pmda mdm, void *res);
+
+void
+g_arith_add_u8(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
+}
+
+void
+g_arith_rem_u8(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint8_t*) s) - *((uint8_t*) d);
+}
+
+void
+g_arith_mult_u8(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint8_t*) s) * *((uint8_t*) d);
+}
+
+void
+g_arith_div_u8(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint8_t*) s) / *((uint8_t*) d);
+}
+
+void
+g_arith_mod_u8(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint8_t*) s) % *((uint8_t*) d);
+}
+
+static void *_m_u8[] =
+  { g_arith_add_u8, g_arith_rem_u8, g_arith_mult_u8, g_arith_div_u8,
+      g_arith_mod_u8 };
+
+void
+g_arith_add_u16(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint16_t*) s) + *((uint16_t*) d);
+}
+
+void
+g_arith_rem_u16(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint16_t*) s) - *((uint16_t*) d);
+}
+
+void
+g_arith_mult_u16(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint16_t*) s) * *((uint16_t*) d);
+}
+
+void
+g_arith_div_u16(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint16_t*) s) / *((uint16_t*) d);
+}
+
+void
+g_arith_mod_u16(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint16_t*) s) % *((uint16_t*) d);
+}
+
+static void *_m_u16[] =
+  { g_arith_add_u16, g_arith_rem_u16, g_arith_mult_u16, g_arith_div_u16,
+      g_arith_mod_u16 };
+
+void
+g_arith_add_u32(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint32_t*) s) + *((uint32_t*) d);
+}
+
+void
+g_arith_rem_u32(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint32_t*) s) - *((uint32_t*) d);
+}
+
+void
+g_arith_mult_u32(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint32_t*) s) * *((uint32_t*) d);
+}
+
+void
+g_arith_div_u32(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint32_t*) s) / *((uint32_t*) d);
+}
+
+void
+g_arith_mod_u32(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint32_t*) s) % *((uint32_t*) d);
+}
+
+static void *_m_u32[] =
+  { g_arith_add_u32, g_arith_rem_u32, g_arith_mult_u32, g_arith_div_u32,
+      g_arith_mod_u32 };
+
+void
+g_arith_add_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) + *((uint64_t*) d);
+}
+
+void
+g_arith_rem_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) - *((uint64_t*) d);
+}
+
+void
+g_arith_mult_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) * *((uint64_t*) d);
+}
+
+void
+g_arith_div_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) / *((uint64_t*) d);
+}
+
+void
+g_arith_mod_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) % *((uint64_t*) d);
+}
+
+static void *_m_u64[] =
+  { g_arith_add_u64, g_arith_rem_u64, g_arith_mult_u64, g_arith_div_u64,
+      g_arith_mod_u64 };
+
+void
+g_arith_add_s8(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int8_t*) s) + *((int8_t*) d);
+}
+
+void
+g_arith_rem_s8(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int8_t*) s) - *((int8_t*) d);
+}
+
+void
+g_arith_mult_s8(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int8_t*) s) * *((int8_t*) d);
+}
+
+void
+g_arith_div_s8(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int8_t*) s) / *((int8_t*) d);
+}
+
+void
+g_arith_mod_s8(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int8_t*) s) % *((int8_t*) d);
+}
+
+static void *_m_s8[] =
+  { g_arith_add_s8, g_arith_rem_s8, g_arith_mult_s8, g_arith_div_s8,
+      g_arith_mod_s8 };
+
+void
+g_arith_add_s16(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int16_t*) s) + *((int16_t*) d);
+}
+
+void
+g_arith_rem_s16(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int16_t*) s) - *((int16_t*) d);
+}
+
+void
+g_arith_mult_s16(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int16_t*) s) * *((int16_t*) d);
+}
+
+void
+g_arith_div_s16(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int16_t*) s) / *((int16_t*) d);
+}
+
+void
+g_arith_mod_s16(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int16_t*) s) % *((int16_t*) d);
+}
+
+static void *_m_s16[] =
+  { g_arith_add_s16, g_arith_rem_s16, g_arith_mult_s16, g_arith_div_s16,
+      g_arith_mod_s16 };
+
+void
+g_arith_add_s32(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int32_t*) s) + *((int32_t*) d);
+}
+
+void
+g_arith_rem_s32(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int32_t*) s) - *((int32_t*) d);
+}
+
+void
+g_arith_mult_s32(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int32_t*) s) * *((int32_t*) d);
+}
+
+void
+g_arith_div_s32(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int32_t*) s) / *((int32_t*) d);
+}
+
+void
+g_arith_mod_s32(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int32_t*) s) % *((int32_t*) d);
+}
+
+static void *_m_s32[] =
+  { g_arith_add_s32, g_arith_rem_s32, g_arith_mult_s32, g_arith_div_s32,
+      g_arith_mod_s32 };
+
+void
+g_arith_add_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) + *((int64_t*) d);
+}
+
+void
+g_arith_rem_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) - *((int64_t*) d);
+}
+
+void
+g_arith_mult_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) * *((int64_t*) d);
+}
+
+void
+g_arith_div_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) / *((int64_t*) d);
+}
+
+void
+g_arith_mod_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) % *((int64_t*) d);
+}
+
+static void *_m_s64[] =
+  { g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
+      g_arith_mod_s64 };
+
+void
+g_arith_add_f(void * s, void * d, void *o)
+{
+  *((float*) o) = *((float*) s) + *((float*) d);
+}
+
+void
+g_arith_rem_f(void * s, void * d, void *o)
+{
+  *((float*) o) = *((float*) s) - *((float*) d);
+}
+
+void
+g_arith_mult_f(void * s, void * d, void *o)
+{
+  *((float*) o) = *((float*) s) * *((float*) d);
+}
+
+void
+g_arith_div_f(void * s, void * d, void *o)
+{
+  *((float*) o) = *((float*) s) / *((float*) d);
+}
+
+void
+g_arith_dummy(void * s, void * d, void *o)
+{
+  *((float*) o) = 1.0;
+}
+
+static void *_m_f[] =
+  { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy };
+
+static void *prio_f_ref[] =
   { "noop", g_opt_mode_noop, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
       "silent", opt_silent, (void*) 0, "--silent", opt_silent, (void*) 0,
       "-arg1", opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2",
@@ -3583,7 +3900,7 @@ void *prio_f_ref[] =
       (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
       NULL, NULL, NULL };
 
-void *f_ref[] =
+static void *f_ref[] =
   { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and, (void*) 0,
       "or", opt_g_operator_or, (void*) 0, "--rev", opt_g_reverse, (void*) 0,
       "lom", opt_g_lom_match, (void*) 1, "--lom", opt_g_lom_match, (void*) 1,
@@ -4750,6 +5067,10 @@ g_print_info(void)
       print_str(" uint16_t         %d\t\n", (sizeof(uint16_t)));
       print_str(" uint32_t         %d\t\n", (sizeof(uint32_t)));
       print_str(" uint64_t         %d\t\n", (sizeof(uint64_t)));
+      print_str(" ulong int        %d\t\n", (sizeof(unsigned long int)));
+      print_str(" ulong long int   %d\t\n", (sizeof(unsigned long long int)));
+      print_str(" int32_t          %d\t\n", (sizeof(int32_t)));
+      print_str(" int64_t          %d\t\n", (sizeof(int64_t)));
       print_str(" size_t           %d\t\n", (sizeof(size_t)));
       print_str(" float            %d\t\n", (sizeof(float)));
       print_str(" double           %d\t\n", (sizeof(double)));
@@ -5406,6 +5727,7 @@ g_preproc_xhdl(__std_rh ret)
   ret->hdl.g_proc2 = ref_to_val_ptr_x;
   ret->hdl._x_ref = &ret->p_xref;
   ret->hdl.block_sz = sizeof(_d_xref);
+  strncpy(ret->hdl.file, "FILESYSTEM", 12);
 }
 
 int
@@ -6471,26 +6793,54 @@ g_lom_var_uint(void *d_ptr, void *_lom)
   return 0;
 }
 
-uint64_t
-g_math_res_u(__g_handle hdl, void *d_ptr, pmda mdm)
+int
+g_math_res(void *d_ptr, pmda mdm, void *res)
 {
-  /*p_md_obj ptr = mdm.objects;
-  __g_math math, p_math = NULL;
+  p_md_obj ptr = mdm->objects;
+  __g_math math = (__g_math ) ptr->ptr, p_math = NULL;
+  void *c_ptr = NULL;
 
-  int r_p = 1, i = 0;
+  int r = 1;
+
+  //bzero(res, 8);
+
+  p_math = (__g_math ) ptr->ptr;
+  ptr = ptr->next;
+
+  if ((math->flags & F_MATH_VAR_KNOWN))
+    {
+      c_ptr = &math->vstor;
+    }
+  else
+    {
+      c_ptr = d_ptr + math->l_off;
+    }
+
+  memcpy(res, c_ptr, math->vb);
 
   while (ptr)
     {
-      if (p_math) {
-          math->g_t_ptr(d_ptr, math->l_off);
-          p_math->g_t_ptr(d_ptr, p_math->l_off);
-          math->op_tu(p_math->g_t_ptr(d_ptr, p_math->l_off), math->g_t_ptr(d_ptr, math->l_off));
-      }
+      math = (__g_math ) ptr->ptr;
+
+      if ((math->flags & F_MATH_VAR_KNOWN))
+        {
+          c_ptr = &math->vstor;
+        }
+      else
+        {
+          c_ptr = d_ptr + math->l_off;
+        }
+
+      p_math->op_t(res, c_ptr, res);
+
       p_math = math;
       ptr = ptr->next;
-    }*/
 
-  return 1;
+      //printf("%d\n", *(int32_t*) res);
+
+    }
+
+  return r;
 }
 
 int
@@ -11946,7 +12296,8 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
           if (strncmp("%s", defdc, 2))
             {
               size_t i = 0;
-              while (match[0] != 0x7D && match[0] && i < sizeof(mppd->direc) - 2)
+              while (match[0] != 0x7D && match[0] != 0x2C && match[0]
+                  && i < sizeof(mppd->direc) - 2)
                 {
                   mppd->direc[i] = match[0];
                   i++;
@@ -12039,6 +12390,42 @@ dt_rval_spec_tf_gm(void *arg, char *match, char *output, size_t max_size,
 {
   strftime(output, max_size, ((__d_drt_h ) mppd)->direc,
       gmtime(&((__d_drt_h ) mppd)->ts_1));
+  return output;
+}
+
+char *
+dt_rval_spec_math_u(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
+  snprintf(output, max_size, "%llu", *(long long unsigned int*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_s(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = (void*) &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
+  snprintf(output, max_size, "%lld", *(long long int*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_f(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
+  snprintf(output, max_size, "%f", *(float*) v_ptr);
   return output;
 }
 
@@ -12157,6 +12544,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
             match++;
           }
         b_c[b_l] = 0x0;
+
         if (match[0] != 0x3A)
           {
             return NULL;
@@ -12192,7 +12580,58 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           }
         mppd->t_1 = strtoul(b_c, NULL, 10);
         return dt_rval_spec_gc;
-        break;
+      case 0x6D:
+        ;
+        char m_b[1024];
+        size_t i = 0;
+
+        while (match[0] != 0x7D && match[0] != 0x2C && match[0] && i < 1024)
+          {
+            m_b[i] = match[0];
+            i++;
+            match++;
+          }
+
+        if (match[0] != 0x7D && match[0] != 0x2C)
+          {
+            return NULL;
+          }
+        m_b[i] = 0x0;
+
+        int m_ret, m_ret2;
+
+        if ((m_ret2 = g_process_math_string(mppd->hdl, m_b, &mppd->math, &m_ret,
+            0)))
+          {
+            printf("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
+                m_ret);
+            return NULL;
+          }
+        mppd->direc[0] = 0x25;
+
+        if (mppd->math.offset)
+          {
+            switch (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_TYPES)
+              {
+            case F_MATH_INT:
+              /*              mppd->direc[1] = 0x6C;
+               mppd->direc[2] = 0x75;
+               mppd->direc[3] = 0x0;*/
+              return as_ref_to_val_lk(match, dt_rval_spec_math_u, mppd, NULL);
+              break;
+            case F_MATH_INT_S:
+              /* mppd->direc[1] = 0x6C;
+               mppd->direc[2] = 0x64;
+               mppd->direc[3] = 0x0; */
+              return as_ref_to_val_lk(match, dt_rval_spec_math_s, mppd, NULL);
+              break;
+            case F_MATH_FLOAT:
+              /* mppd->direc[1] = 0x66;
+               mppd->direc[2] = 0x0; */
+              return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, NULL);
+              break;
+              }
+          }
         }
     }
   return NULL;
@@ -12854,126 +13293,6 @@ g_oper_or(int s, int d)
   return (s || d);
 }
 
-void
-g_math_add_u8(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
-}
-
-void
-g_math_add_u16(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint16_t*) s) + *((uint16_t*) d);
-}
-
-void
-g_math_add_u32(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint32_t*) s) + *((uint32_t*) d);
-}
-
-void
-g_math_add_u64(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint64_t*) s) + *((uint64_t*) d);
-}
-
-void
-g_math_add_s8(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int8_t*) s) + *((int8_t*) d);
-}
-
-void
-g_math_add_s16(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int16_t*) s) + *((int16_t*) d);
-}
-
-void
-g_math_add_s32(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int32_t*) s) + *((int32_t*) d);
-}
-
-void
-g_math_add_s64(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int64_t*) s) + *((int64_t*) d);
-}
-
-void
-g_math_add_f(void * s, void * d, void *o)
-{
-  *((float*) o) = *((float*) s) + *((float*) d);
-}
-
-uint64_t
-g_math_sub_u(uint64_t s, uint64_t d)
-{
-  return s - d;
-}
-
-int64_t
-g_math_sub_s(int64_t s, int64_t d)
-{
-  return s - d;
-}
-
-float
-g_math_sub_f(float s, float d)
-{
-  return s - d;
-}
-
-uint64_t
-g_math_mult_u(uint64_t s, uint64_t d)
-{
-  return s * d;
-}
-
-int64_t
-g_math_mult_s(int64_t s, int64_t d)
-{
-  return s * d;
-}
-
-float
-g_math_mult_f(float s, float d)
-{
-  return s * d;
-}
-
-uint64_t
-g_math_div_u(uint64_t s, uint64_t d)
-{
-  return s * d;
-}
-
-int64_t
-g_math_div_s(int64_t s, int64_t d)
-{
-  return s / d;
-}
-
-float
-g_math_div_f(float s, float d)
-{
-  return s / d;
-}
-
-uint64_t
-g_math_rem_u(uint64_t s, uint64_t d)
-{
-  return s % d;
-}
-
-int64_t
-g_math_rem_s(int64_t s, int64_t d)
-{
-  return s % d;
-}
-
 uint64_t
 g_t8_ptr(void *base, size_t offset)
 {
@@ -13041,7 +13360,6 @@ g_ig_p(void *base, size_t offset)
 {
   return (base + offset);
 }
-
 
 #define MAX_SORT_LOOPS				MAX_uint64_t
 
@@ -13477,7 +13795,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
         switch (lom->flags & F_LOM_TYPES)
           {
         case F_LOM_INT:
-          lom->t_left = (uint64_t) strtoll(field, NULL, base);
+          lom->t_left = (uint64_t) strtoull(field, NULL, base);
           lom->g_lom_vp = g_lom_var_uint;
           break;
         case F_LOM_INT_S:
@@ -13495,7 +13813,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
         switch (lom->flags & F_LOM_TYPES)
           {
         case F_LOM_INT:
-          lom->t_right = (uint64_t) strtoll(field, NULL, base);
+          lom->t_right = (uint64_t) strtoull(field, NULL, base);
           lom->g_lom_vp = g_lom_var_uint;
           break;
         case F_LOM_INT_S:
@@ -13664,18 +13982,8 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
 
 }
 
-
-
-#define F_MATH_INT              (a32 << 1)
-#define F_MATH_INT_S            (a32 << 2)
-#define F_MATH_FLOAT            (a32 << 3)
-
-#define F_MATH_TYPES            (F_MATH_INT|F_MATH_INT_S|F_MATH_FLOAT)
-
-#define F_FMATH_VAR_KNOWN       (a32 << 1)
-
 int
-g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math lom, uint32_t flags)
+g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
 {
   g_setjmp(0, "g_get_math_g_t_ptr", NULL, NULL);
 
@@ -13689,19 +13997,19 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math lom, uint32_t flags)
       uint32_t t_f = 0;
       int base;
 
-      if (!(lom->flags & F_MATH_TYPES))
+      if (!(math->flags & F_MATH_TYPES))
         {
           if (field[0] == 0x2D || field[0] == 0x2B)
             {
-              lom->flags |= F_MATH_INT_S;
+              math->flags |= F_MATH_INT_S;
             }
           else if (s_string(field, ".", 0))
             {
-              lom->flags |= F_MATH_FLOAT;
+              math->flags |= F_MATH_FLOAT;
             }
           else
             {
-              lom->flags |= F_MATH_INT;
+              math->flags |= F_MATH_INT;
             }
         }
 
@@ -13714,29 +14022,35 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math lom, uint32_t flags)
           base = 10;
         }
 
-      switch (lom->flags & F_MATH_TYPES)
+      void *v_stor = &math->vstor;
+
+      switch (math->flags & F_MATH_TYPES)
         {
       case F_MATH_INT:
-        lom->v_t = (uint64_t) strtoll(field, NULL, base);
-        //lom->g_lom_vp = g_lom_var_uint;
+        *((uint64_t*) v_stor) = (uint64_t) strtoull(field, NULL, base);
+        math->_m_p = _m_u64;
+        math->vb = sizeof(uint64_t);
         break;
       case F_MATH_INT_S:
-        lom->v_ts = (int64_t) strtoll(field, NULL, base);
-        //lom->g_lom_vp = g_lom_var_int;
+        *((int64_t*) v_stor) = (int64_t) strtoll(field, NULL, base);
+        math->_m_p = _m_s64;
+        math->vb = sizeof(int64_t);
         break;
       case F_MATH_FLOAT:
-        lom->v_tf = (float) strtof(field, NULL);
-        //lom->g_lom_vp = g_lom_var_float;
+        *((float*) v_stor) = (float) strtof(field, NULL);
+        math->_m_p = _m_f;
+        math->vb = sizeof(float);
         break;
         }
-      t_f |= F_FMATH_VAR_KNOWN;
+
+      t_f |= F_MATH_VAR_KNOWN;
 
       if (errno == ERANGE)
         {
           return 4;
         }
 
-      lom->flags |= t_f;
+      math->flags |= t_f;
 
       return 0;
     }
@@ -13746,82 +14060,59 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math lom, uint32_t flags)
       return 601;
     }
 
-  /*switch (vb)
+  switch (vb)
     {
   case -32:
-    lom->g_tf_ptr = g_tf_ptr;
-    //lom->g_lom_vp = g_lom_var_float;
-    lom->flags |= F_MATH_FLOAT
-    ;
+    math->_m_p = _m_f;
+    math->flags |= F_MATH_FLOAT;
+    math->vb = sizeof(float);
     break;
   case -2:
-    lom->g_ts_ptr = g_ts8_ptr;
-    //lom->g_lom_vp = g_lom_var_int;
-    lom->flags |= F_MATH_INT_S
-    ;
+    math->_m_p = _m_s8;
+    math->flags |= F_MATH_INT_S;
+    math->vb = sizeof(int8_t);
     break;
   case -3:
-
-    lom->g_ts_ptr = g_ts16_ptr;
-
-    //lom->g_lom_vp = g_lom_var_int;
-    lom->flags |= F_MATH_INT_S
-    ;
+    math->_m_p = _m_s16;
+    math->flags |= F_MATH_INT_S;
+    math->vb = sizeof(int16_t);
     break;
   case -5:
-
-    lom->g_ts_ptr = g_ts32_ptr;
-
-    //lom->g_lom_vp = g_lom_var_int;
-    lom->flags |= F_MATH_INT_S
-    ;
+    math->_m_p = _m_s32;
+    math->flags |= F_MATH_INT_S;
+    math->vb = sizeof(int32_t);
     break;
   case -9:
-
-    lom->g_ts_ptr = g_ts64_ptr;
-
-    //lom->g_lom_vp = g_lom_var_int;
-    lom->flags |= F_MATH_INT_S
-    ;
+    math->_m_p = _m_s64;
+    math->flags |= F_MATH_INT_S;
+    math->vb = sizeof(int64_t);
     break;
   case 1:
-
-    lom->g_t_ptr = g_t8_ptr;
-
-    //lom->g_lom_vp = g_lom_var_uint;
-    lom->flags |= F_MATH_INT
-    ;
+    math->_m_p = _m_u8;
+    math->flags |= F_MATH_INT;
+    math->vb = sizeof(uint8_t);
     break;
   case 2:
-
-    lom->g_t_ptr = g_t16_ptr;
-
-    //lom->g_lom_vp = g_lom_var_uint;
-    lom->flags |= F_MATH_INT
-    ;
+    math->_m_p = _m_u16;
+    math->flags |= F_MATH_INT;
+    math->vb = sizeof(uint16_t);
     break;
   case 4:
-
-    lom->g_t_ptr = g_t32_ptr;
-
-    //lom->g_lom_vp = g_lom_var_uint;
-    lom->flags |= F_MATH_INT
-    ;
+    math->_m_p = _m_u32;
+    math->flags |= F_MATH_INT;
+    math->vb = sizeof(uint32_t);
     break;
   case 8:
-
-    lom->g_t_ptr = g_t64_ptr;
-
-    //lom->g_lom_vp = g_lom_var_uint;
-    lom->flags |= F_MATH_INT
-    ;
+    math->_m_p = _m_u64;
+    math->flags |= F_MATH_INT;
+    math->vb = sizeof(uint64_t);
     break;
   default:
     return 608;
     break;
-    }*/
+    }
 
-  lom->l_off = off;
+  math->l_off = off;
 
   return 0;
 
@@ -13851,61 +14142,45 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
       goto end;
     }
 
-  if ((math->flags & F_MATH_FLOAT)
-      && ((math->flags & F_MATH_INT) | (math->flags & F_MATH_INT_S)))
-    {
-      math->flags ^= (F_MATH_INT | F_MATH_INT_S);
-    }
-  else if ((math->flags & F_MATH_INT) && (math->flags & F_MATH_INT_S))
-    {
-      math->flags ^= F_MATH_INT;
-    }
-
   if (!(math->flags & F_MATH_TYPES))
     {
       rt = 6;
       goto end;
     }
 
-  /*if (oper)
+  if (math->_m_p)
     {
       if (oper == 0x2B)
         {
-          switch (math->flags & F_MATH_TYPES)
-            {
-          case F_MATH_FLOAT:
-            math->op_tf = g_math_add_f;
-            break;
-          case F_MATH_INT:
-            math->op_tu = g_math_add_u;
-            break;
-          case F_MATH_INT_S:
-            math->op_ts = g_math_add_s;
-            break;
-            }
+          math->op_t = math->_m_p[0];
 
         }
       else if (oper == 0x2D)
         {
-          switch (math->flags & F_MATH_TYPES)
+          math->op_t = math->_m_p[1];
+        }
+      else if (oper == 0x2A)
+        {
+          math->op_t = math->_m_p[2];
+        }
+      else if (oper == 0x2F)
+        {
+          math->op_t = math->_m_p[3];
+        }
+      else if (oper == 0x25)
+        {
+          if ((math->flags & F_MATH_FLOAT))
             {
-          case F_MATH_FLOAT:
-            math->op_tf = g_math_sub_f;
-            break;
-          case F_MATH_INT:
-            math->op_tu = g_math_sub_u;
-            break;
-          case F_MATH_INT_S:
-            math->op_ts = g_math_sub_s;
-            break;
+              rt = 14;
+              goto end;
             }
+          math->op_t = math->_m_p[4];
         }
       else
         {
-          rt = 11;
-          goto end;
+          math->op_t = NULL;
         }
-    }*/
+    }
 
   if (ret)
     {
@@ -14749,7 +15024,7 @@ g_load_strm(__g_handle hdl)
               if ((re = regcomp(&_m_ptr->preg, _m_ptr->match,
                           (_m_ptr->regex_flags | g_regex_flags | REG_NOSUB))))
                 {
-                  print_str("ERROR: %s: regex compilation failed : %d\n", hdl->file, re);
+                  print_str("ERROR: %s: [%d]: regex compilation failed : %s\n", hdl->file, re, _m_ptr->match);
                   return 3;
                 }
             }
@@ -14780,7 +15055,17 @@ g_load_strm(__g_handle hdl)
 }
 
 #define MAX_VLEN    254
-/*
+
+int
+is_ascii_arith_oper(char c)
+{
+  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25)
+    {
+      return 0;
+    }
+  return 1;
+}
+
 int
 g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
     uint32_t flags)
@@ -14800,8 +15085,12 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
           ptr++;
         }
       i = 0;
-      while (ptr[0] != 0x2B && ptr[0] != 0x2D && ptr[0])
+      while (is_ascii_arith_oper(ptr[0]) && ptr[0])
         {
+          if (ptr[0] == 0x23)
+            {
+              return 2;
+            }
           left[i] = ptr[0];
           i++;
           ptr++;
@@ -14814,6 +15103,21 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
 
       left[i] = 0x0;
 
+      /*while (ptr[0] == 0x20)
+       {
+       ptr++;
+       }*/
+
+      if (ptr[0])
+        {
+          oper = ptr[0];
+          ptr++;
+        }
+      else
+        {
+          oper = 0x0;
+        }
+
       *ret = g_build_math_packet(hdl, left, oper, mdm,
       NULL, flags);
 
@@ -14821,19 +15125,11 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
         {
           return 6;
         }
-
-      while (ptr[0] == 0x20)
-        {
-          ptr++;
-        }
-
-      oper = ptr[0];
-
     }
 
   return 0;
 }
-*/
+
 int
 g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
     uint32_t flags)
