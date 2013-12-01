@@ -350,7 +350,7 @@ FLAGS:
 					\\		Literal backslash ('\')
 					
 			?t	{?t:<field>#<conversion specs>}
-					Using field data, formats (GMT) an unix timestamp into a readable string 
+					Using field data, formats an unix timestamp into a readable string (GMT)
 					according to the <format> specification. 
 					See 'man 3 strftime' for conversion	specifications (passed after #). If 
 					no conversion specifier characters are given, format defaults to: '%d/%h/%Y %H:%M:%S'
