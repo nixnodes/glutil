@@ -5,6 +5,13 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.1:
+ * 
+ *   - + Arithmetic pre-processor (-print[f] only)
+ *   - %! LOM argument processing more efficient (rev. 1) 
+ *   - ~ Memleak: -print bytecode header memory not freed (rev. 2)
+ *   - ~ Field values were not interpreted properly (arithmetic pre-processor) (rev. 3)
+ *
  * v2.0:
  *
  *   - + Extended format/regex/match directives;

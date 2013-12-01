@@ -280,7 +280,7 @@ FLAGS:
 
   
   
- MAIN INPUT/OUTPUT OPERATIONS:
+ INPUT/OUTPUT OPERATIONS:
 
 
  * Parse/dump:
@@ -307,15 +307,82 @@ FLAGS:
 	The user must ensure shared segment be updated promply, whenever log data on disk changes. Even though glutil
 	automatically updates the segment when log/segment sizes do not match, it doesn't detect content changes; 
 	
-		glutil -q <logname> --shmem --shmdestroy --loadq -vv
+		-q <logname> --shmem --shmdestroy --loadq -vv
 		
 		Load the data into segment (-q, --shmem), force segment be destroyed and re-allocated (--shmdestroy), 
 		quit right after loading, don't do anything else (--loadq)
 		
-		glutil -q <logname> --shmem --shmreload --loadq -vv
+		-q <logname> --shmem --shmreload --loadq -vv
 	
 	All match/hook operators apply.	
 	
+	
+	Specific options:
+	
+	-print <format>
+			Print <format> on stdout. Directives must be enclosed in {}. Field names that can be referenced
+			are listed above. Only fields respective to the log being processed are valid, with the exception
+			of generic fields, which are available globally.
+			
+			For example, assume we are processing the nukelog:						
+				-n ilom "status=0" -print '{basedir} was NUKED {mult}x by {nuker} on {?tl:time#%d %h at %H:%M}'
+				
+			This returns only nuked releases (status=0):				
+				Some.Folder-TAG was NUKED 3x by someuser on 30 Jun at 11:07 
+				
+			'time' field (unix timestamp) is formatted using strftime (man 3 strftime)
+			
+			
+			Extended directives:
+			
+			[?<directive>:]arg[:arg2:..][#<format>]
+			
+			?c	{?c:<num repeat>:<char>}					
+					Character generator. Example use: '{?c:3:\t}' - prints three tab's.
+					
+					Escapes are:
+					
+					\n		New line
+					\t		Horizontal tab
+					\r		Carriage return
+					\s		Space
+					\\		Literal backslash ('\')
+					
+			?t	{?t:<field>#<conversion specs>}
+					Using field data, formats (GMT) an unix timestamp into a readable string according to 
+					the <format> specification. 
+					See 'man 3 strftime' for conversion	specifications (passed after #). If no conversion
+					specifier characters are given, format defaults to: '%d/%h/%Y %H:%M:%S'
+					
+			?tl		Same as '?t', only the timestamp is converted relative to the user's specified timezone.
+					
+			?l	{?l:<field>}
+					Prints the length of the field data based output string. Applies to integer fields too, measuring
+					their length in string form.
+					
+			?m	{?m:<expression>}
+					Simple arithmetics, compatible with all integer fields.
+					
+					Example:
+						-d -print '{?m:size/1024/1024}MB in {files} files, {?m:size/files/1024/1024}MB avg per file {?c:2:\t} {basedir}' ilom 'files > 0'
+						
+					Output:
+						...
+						356MB in 28 files, 12MB avg per file 		 Some.Folder-TAG
+						...
+					
+						
+			If <format> is defined, it gets passed to the standard C printf family function which outputs the requested 
+			field, however some extended directives, e.g. '?t' use <format> for other purposes ('?l' doesn't use it at all).
+			It applies to all integer fields. Be very careful when using this, for security reasons users should never be 
+			allowed to specify this option freely.
+			
+			
+			These directives can also be applied to string filters (--[i]regex[i]/--[i]lom):			
+				glutil -d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
+				
+			Prints out only what was created on 23'rd of September, custom formatted.
+			
 	
  * Write:
 
@@ -340,11 +407,11 @@ FLAGS:
 	
 	For example:
 	
-		glutil -d --regexi dir,"Smallville" or --lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
+		-d --regexi dir,"Smallville" or --lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
 		
 	would produce the same result as:
 	
-		glutil -e dirlog --regexi dir,"Smallville" or --lom "size == 0 || files == 0"
+		-e dirlog --regexi dir,"Smallville" or --lom "size == 0 || files == 0"
 		
 	These examples would filter any dirlog record including 'Smallville' in directory name (case insentitive) and any 
 	directories with size/files zero, writing results back to data log.
@@ -362,7 +429,8 @@ FLAGS:
 	(64-bit file size, not taking filesystem limits into account).
 	
 	All match/hook operators apply.
-
+	
+	
 
  EXTRACTING DATA FROM BINARY LOGS:
 
