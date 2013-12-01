@@ -13,6 +13,7 @@
  *   - ~ Field values were not interpreted properly (arithmetic pre-processor) (rev. 3)
  *   - ~ ref_to_val_ptr_gen1 failing to match field name (rev. 4)
  *   - % Replaced strcmp with strncmp in ref_to_val_macro (rev. 5)
+ *   - + Add GENERIC-4 log (rev. 6)
  *
  * v2.0:
  *
