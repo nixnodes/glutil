@@ -1,4 +1,4 @@
-Updated: 23/11/2013
+Updated: 1/12/2013
 
 glutil can perform IO operations on glFTPd binary logs (any vanilla 
 binary file you can find in /logs folder), based on advanced filtering 
