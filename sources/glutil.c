@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-4d
+ * Version     : 2.1-5d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 4
+#define VER_REVISION 5
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -11192,7 +11192,7 @@ int
 ref_to_val_macro(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  if (!strcmp(match, "m:exe"))
+  if (!strncmp(match, "m:exe", 5))
     {
       if (self_get_path(output))
         {
