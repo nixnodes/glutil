@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-3d
+ * Version     : 2.1-4d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 3
+#define VER_REVISION 4
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -15583,7 +15583,7 @@ ref_to_val_ptr_gen1(void *arg, char *match, int *output)
 {
   __d_generic_s2044 data = (__d_generic_s2044) arg;
 
-  if (!strcmp(match, "i32"))
+  if (!strncmp(match, "i32", 3))
     {
       *output = sizeof(data->i32);
       return &data->i32;
