@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-2
+ * Version     : 2.1-3d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 2
+#define VER_REVISION 3
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -3334,7 +3334,8 @@ _d_rtv_lk ref_to_val_lk_dirlog, ref_to_val_lk_nukelog, ref_to_val_lk_dupefile,
     ref_to_val_lk_gen2, ref_to_val_lk_gen3;
 
 _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
-    is_ascii_hexadecimal, is_ascii_uppercase_text,is_ascii_numhex, is_ascii_numeric, is_ascii_numeric_float;
+    is_ascii_hexadecimal, is_ascii_uppercase_text, is_ascii_numhex,
+    is_ascii_numeric, is_ascii_numeric_float;
 
 _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
     g_omfp_eassemblef, g_xproc_print_d, g_xproc_print;
@@ -3604,9 +3605,9 @@ g_arith_mod_u8(void * s, void * d, void *o)
   *((uint64_t*) o) = *((uint8_t*) s) % *((uint8_t*) d);
 }
 
-static void *_m_u8[] =
+/*static void *_m_u8[] =
   { g_arith_add_u8, g_arith_rem_u8, g_arith_mult_u8, g_arith_div_u8,
-      g_arith_mod_u8 };
+      g_arith_mod_u8 };*/
 
 void
 g_arith_add_u16(void * s, void * d, void *o)
@@ -3638,9 +3639,9 @@ g_arith_mod_u16(void * s, void * d, void *o)
   *((uint64_t*) o) = *((uint16_t*) s) % *((uint16_t*) d);
 }
 
-static void *_m_u16[] =
+/*static void *_m_u16[] =
   { g_arith_add_u16, g_arith_rem_u16, g_arith_mult_u16, g_arith_div_u16,
-      g_arith_mod_u16 };
+      g_arith_mod_u16 };*/
 
 void
 g_arith_add_u32(void * s, void * d, void *o)
@@ -3672,9 +3673,9 @@ g_arith_mod_u32(void * s, void * d, void *o)
   *((uint64_t*) o) = *((uint32_t*) s) % *((uint32_t*) d);
 }
 
-static void *_m_u32[] =
+/*static void *_m_u32[] =
   { g_arith_add_u32, g_arith_rem_u32, g_arith_mult_u32, g_arith_div_u32,
-      g_arith_mod_u32 };
+      g_arith_mod_u32 };*/
 
 void
 g_arith_add_u64(void * s, void * d, void *o)
@@ -3740,9 +3741,9 @@ g_arith_mod_s8(void * s, void * d, void *o)
   *((int64_t*) o) = *((int8_t*) s) % *((int8_t*) d);
 }
 
-static void *_m_s8[] =
+/*static void *_m_s8[] =
   { g_arith_add_s8, g_arith_rem_s8, g_arith_mult_s8, g_arith_div_s8,
-      g_arith_mod_s8 };
+      g_arith_mod_s8 };*/
 
 void
 g_arith_add_s16(void * s, void * d, void *o)
@@ -3774,9 +3775,9 @@ g_arith_mod_s16(void * s, void * d, void *o)
   *((int64_t*) o) = *((int16_t*) s) % *((int16_t*) d);
 }
 
-static void *_m_s16[] =
+/*static void *_m_s16[] =
   { g_arith_add_s16, g_arith_rem_s16, g_arith_mult_s16, g_arith_div_s16,
-      g_arith_mod_s16 };
+      g_arith_mod_s16 };*/
 
 void
 g_arith_add_s32(void * s, void * d, void *o)
@@ -3808,9 +3809,9 @@ g_arith_mod_s32(void * s, void * d, void *o)
   *((int64_t*) o) = *((int32_t*) s) % *((int32_t*) d);
 }
 
-static void *_m_s32[] =
+/*static void *_m_s32[] =
   { g_arith_add_s32, g_arith_rem_s32, g_arith_mult_s32, g_arith_div_s32,
-      g_arith_mod_s32 };
+      g_arith_mod_s32 };*/
 
 void
 g_arith_add_s64(void * s, void * d, void *o)
@@ -6804,13 +6805,17 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
   p_math = (__g_math ) ptr->ptr;
   ptr = ptr->next;
 
+  uint8_t v_b[8];
+
   if ((math->flags & F_MATH_VAR_KNOWN))
     {
       c_ptr = &math->vstor;
     }
   else
     {
-      c_ptr = d_ptr + math->l_off;
+      bzero((void*) v_b, 8);
+      memcpy((void*) v_b, d_ptr + math->l_off, math->vb);
+      c_ptr = (void*) v_b;
     }
 
   memcpy(res, c_ptr, math->vb);
@@ -6825,7 +6830,9 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
         }
       else
         {
-          c_ptr = d_ptr + math->l_off;
+          bzero((void*) v_b, 8);
+          memcpy((void*) v_b, d_ptr + math->l_off, math->vb);
+          c_ptr = (void*) v_b;
         }
 
       p_math->op_t(res, c_ptr, res);
@@ -7254,7 +7261,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   if (!(g_act_1.flags & F_GH_ISONLINE))
     {
-      print_str("STATS: %s: read %llu/%llu records\n", file,
+      print_str("STATS: %s: processed %llu/%llu records\n", file,
           (unsigned long long int) c,
           !g_act_1.buffer.count ?
               (unsigned long long int) c : g_act_1.buffer.count);
@@ -13739,24 +13746,29 @@ g_sfc(_d_is_am *cb, char *in, int len)
   return 1;
 }
 
-size_t g_hexstrlen (char *in) {
-  size_t c  = 0;
-  while (in[0] && !is_ascii_numhex((uint8_t)in[0])) {
+size_t
+g_hexstrlen(char *in)
+{
+  size_t c = 0;
+  while (in[0] && !is_ascii_numhex((uint8_t) in[0]))
+    {
       in++;
       c++;
-  }
+    }
   return c;
 }
 
-size_t g_floatstrlen (char *in) {
-  size_t c  = 0;
-  while (in[0] && !is_ascii_numeric_float((uint8_t)in[0])) {
+size_t
+g_floatstrlen(char *in)
+{
+  size_t c = 0;
+  while (in[0] && !is_ascii_numeric_float((uint8_t) in[0]))
+    {
       in++;
       c++;
-  }
+    }
   return c;
 }
-
 
 #define F_GLT_LEFT		(a32 << 1)
 #define F_GLT_RIGHT		(a32 << 2)
@@ -14082,17 +14094,17 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
     math->vb = sizeof(float);
     break;
   case -2:
-    math->_m_p = _m_s8;
+    math->_m_p = _m_s64;
     math->flags |= F_MATH_INT_S;
     math->vb = sizeof(int8_t);
     break;
   case -3:
-    math->_m_p = _m_s16;
+    math->_m_p = _m_s64;
     math->flags |= F_MATH_INT_S;
     math->vb = sizeof(int16_t);
     break;
   case -5:
-    math->_m_p = _m_s32;
+    math->_m_p = _m_s64;
     math->flags |= F_MATH_INT_S;
     math->vb = sizeof(int32_t);
     break;
@@ -14102,17 +14114,17 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
     math->vb = sizeof(int64_t);
     break;
   case 1:
-    math->_m_p = _m_u8;
+    math->_m_p = _m_u64;
     math->flags |= F_MATH_INT;
     math->vb = sizeof(uint8_t);
     break;
   case 2:
-    math->_m_p = _m_u16;
+    math->_m_p = _m_u64;
     math->flags |= F_MATH_INT;
     math->vb = sizeof(uint16_t);
     break;
   case 4:
-    math->_m_p = _m_u32;
+    math->_m_p = _m_u64;
     math->flags |= F_MATH_INT;
     math->vb = sizeof(uint32_t);
     break;
@@ -18170,6 +18182,10 @@ off_t
 s_string(char *input, char *m, off_t offset, size_t i_l)
 {
   off_t i, m_l = strlen(m);
+  if (!i_l)
+    {
+      return offset;
+    }
   for (i = offset; i <= i_l - m_l; i++)
     {
       if (!strncmp(&input[i], m, m_l))
@@ -19714,7 +19730,8 @@ is_ascii_hexadecimal(uint8_t in_c)
 int
 is_ascii_numhex(uint8_t in_c)
 {
-  if ((in_c >= 0x30 && in_c <= 0x39) || (in_c >= 0x41 && in_c <= 0x46) || (in_c >= 0x61 && in_c <= 0x66))
+  if ((in_c >= 0x30 && in_c <= 0x39) || (in_c >= 0x41 && in_c <= 0x46)
+      || (in_c >= 0x61 && in_c <= 0x66))
     {
       return 0;
     }
