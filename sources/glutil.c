@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-0
+ * Version     : 2.1-1
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 0
+#define VER_REVISION 1
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -1674,7 +1674,7 @@ md_first(pmda md);
 int
 split_string(char *, char, pmda);
 off_t
-s_string(char *input, char *m, off_t offset);
+s_string(char *input, char *m, off_t offset, size_t i_l);
 void *
 md_alloc(pmda md, int b);
 __g_match
@@ -3334,7 +3334,7 @@ _d_rtv_lk ref_to_val_lk_dirlog, ref_to_val_lk_nukelog, ref_to_val_lk_dupefile,
     ref_to_val_lk_gen2, ref_to_val_lk_gen3;
 
 _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
-    is_ascii_hexadecimal, is_ascii_uppercase_text, is_ascii_numeric;
+    is_ascii_hexadecimal, is_ascii_uppercase_text,is_ascii_numhex, is_ascii_numeric, is_ascii_numeric_float;
 
 _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
     g_omfp_eassemblef, g_xproc_print_d, g_xproc_print;
@@ -6800,10 +6800,6 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
   __g_math math = (__g_math ) ptr->ptr, p_math = NULL;
   void *c_ptr = NULL;
 
-  int r = 1;
-
-  //bzero(res, 8);
-
   p_math = (__g_math ) ptr->ptr;
   ptr = ptr->next;
 
@@ -6836,11 +6832,9 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
       p_math = math;
       ptr = ptr->next;
 
-      //printf("%d\n", *(int32_t*) res);
-
     }
 
-  return r;
+  return 0;
 }
 
 int
@@ -12598,7 +12592,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           }
         m_b[i] = 0x0;
 
-        int m_ret, m_ret2;
+        int m_ret = 0, m_ret2;
 
         if ((m_ret2 = g_process_math_string(mppd->hdl, m_b, &mppd->math, &m_ret,
             0)))
@@ -13744,6 +13738,25 @@ g_sfc(_d_is_am *cb, char *in, int len)
   return 1;
 }
 
+size_t g_hexstrlen (char *in) {
+  size_t c  = 0;
+  while (in[0] && !is_ascii_numhex((uint8_t)in[0])) {
+      in++;
+      c++;
+  }
+  return c;
+}
+
+size_t g_floatstrlen (char *in) {
+  size_t c  = 0;
+  while (in[0] && !is_ascii_numeric_float((uint8_t)in[0])) {
+      in++;
+      c++;
+  }
+  return c;
+}
+
+
 #define F_GLT_LEFT		(a32 << 1)
 #define F_GLT_RIGHT		(a32 << 2)
 
@@ -13770,7 +13783,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
             {
               lom->flags |= F_LOM_INT_S;
             }
-          else if (s_string(field, ".", 0))
+          else if (s_string(field, ".", 0, g_floatstrlen(field)))
             {
               lom->flags |= F_LOM_FLOAT;
             }
@@ -13780,7 +13793,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
             }
         }
 
-      if (!g_sfc(is_ascii_hexadecimal, field, strlen(field)))
+      if (!g_sfc(is_ascii_hexadecimal, field, g_hexstrlen(field)))
         {
           base = 16;
         }
@@ -14003,7 +14016,7 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
             {
               math->flags |= F_MATH_INT_S;
             }
-          else if (s_string(field, ".", 0))
+          else if (s_string(field, ".", 0, g_floatstrlen(field)))
             {
               math->flags |= F_MATH_FLOAT;
             }
@@ -14013,7 +14026,7 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
             }
         }
 
-      if (!g_sfc(is_ascii_hexadecimal, field, strlen(field)))
+      if (!g_sfc(is_ascii_hexadecimal, field, g_hexstrlen(field)))
         {
           base = 16;
         }
@@ -14278,23 +14291,7 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
         }
 
     }
-  else if (comp_l == 2 && !strncmp(comp, "==", 1))
-    {
-      switch (lom->flags & F_LOM_TYPES)
-        {
-      case F_LOM_FLOAT:
-        lom->g_fcomp_ptr = g_is_equal_f;
-        break;
-      case F_LOM_INT:
-        lom->g_icomp_ptr = g_is_equal;
-        break;
-      case F_LOM_INT_S:
-        lom->g_iscomp_ptr = g_is_equal_s;
-        break;
-        }
-
-    }
-  else if (comp_l == 1 && !strncmp(comp, "=", 1))
+  else if ((comp_l == 1 || comp_l == 2) && !strncmp(comp, "=", 1))
     {
       switch (lom->flags & F_LOM_TYPES)
         {
@@ -14406,6 +14403,10 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
           lom->g_oper_ptr = g_oper_and;
         }
     }
+  else
+    {
+      lom->g_oper_ptr = g_oper_and;
+    }
 
   if (ret)
     {
@@ -14447,6 +14448,16 @@ g_global_register_match(void)
 
   return (__g_match ) md_alloc(&_match_rr, sizeof(_g_match));
 
+}
+
+int
+is_comp(char in)
+{
+  if (in == 0x21 || in == 0x3D || in == 0x3C || in == 0x3E)
+    {
+      return 0;
+    }
+  return 1;
 }
 
 int
@@ -15071,7 +15082,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
     uint32_t flags)
 {
   g_setjmp(0, "g_process_math_string", NULL, NULL);
-  char *ptr = string, left[MAX_VLEN + 1], oper = 0x0;
+  char *ptr = string, *left, oper = 0x0;
   size_t i;
   while (ptr[0])
     {
@@ -15085,13 +15096,14 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
           ptr++;
         }
       i = 0;
+      left = ptr;
       while (is_ascii_arith_oper(ptr[0]) && ptr[0])
         {
           if (ptr[0] == 0x23)
             {
               return 2;
             }
-          left[i] = ptr[0];
+          //left[i] = ptr[0];
           i++;
           ptr++;
         }
@@ -15101,7 +15113,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
           return 1;
         }
 
-      left[i] = 0x0;
+      //left[i] = 0x0;
 
       /*while (ptr[0] == 0x20)
        {
@@ -15135,64 +15147,65 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
     uint32_t flags)
 {
   g_setjmp(0, "g_process_lom_string", NULL, NULL);
-  char *ptr = string, *w_ptr;
-  char left[MAX_VLEN + 1], right[MAX_VLEN + 1], comp[4], oper[4];
-  int i;
+  char *ptr = string;
+  char c_b[3], o_b[3];
+  char *left, *right, *comp = c_b, *oper = o_b;
+  int comp_l, oper_l;
+
   while (ptr[0])
     {
-      bzero(left, MAX_VLEN + 1);
-      bzero(right, MAX_VLEN + 1);
-      bzero(comp, 4);
-      bzero(oper, 4);
-      while (is_ascii_alphanumeric((uint8_t) ptr[0]) && ptr[0] != 0x2D
-          && ptr[0] != 0x2B)
+      if (ptr[0] == 0x0)
         {
-          ptr++;
+          break;
         }
-
-      w_ptr = ptr;
-      i = 0;
-      while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E
-          || ptr[0] == 0x2B || ptr[0] == 0x2D)
-        {
-          i++;
-          ptr++;
-        }
-
-      if (i > MAX_VLEN)
-        {
-          return 1;
-        }
-
-      strncpy(left, w_ptr, i);
 
       while (ptr[0] == 0x20)
         {
           ptr++;
         }
 
-      i = 0;
+      left = ptr;
+      right = NULL;
+      oper = NULL;
+      comp = NULL;
+      comp_l = 0;
+      oper_l = 0;
 
-      w_ptr = ptr;
-      while (!is_opr(ptr[0]))
+      while (is_opr(ptr[0]) && ptr[0])
         {
           ptr++;
-          i++;
         }
 
-      if (i > 2)
+      if (!ptr[0])
         {
-          return 2;
+          goto build;
         }
 
-      if (get_opr(w_ptr) == 1)
+      if (!strncmp(ptr, "&&", 2) || !strncmp(ptr, "||", 2))
         {
-          strncpy(oper, w_ptr, i);
-          goto end_loop;
+          oper_l = 2;
+          oper = ptr;
+          goto build;
+        }
+
+      while (ptr[0] == 0x20)
+        {
+          ptr++;
+        }
+
+      if (!is_comp(ptr[0]))
+        {
+          comp = ptr;
         }
       else
         {
-          strncpy(comp, w_ptr, i);
+          comp = NULL;
+        }
+
+      while (!is_comp(ptr[0]))
+        {
+          ptr++;
+          comp_l++;
         }
 
       while (ptr[0] == 0x20)
@@ -15200,73 +15213,42 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
           ptr++;
         }
 
-      w_ptr = ptr;
-      i = 0;
-      while (!is_ascii_alphanumeric((uint8_t) ptr[0]) || ptr[0] == 0x2E
-          || ptr[0] == 0x2B || ptr[0] == 0x2D)
+      if (ptr[0] == 0x0)
         {
-          i++;
+          break;
+        }
+
+      right = ptr;
+
+      while (is_opr(ptr[0]) && ptr[0] && ptr[0] != 0x20)
+        {
           ptr++;
         }
 
-      if (i > MAX_VLEN)
+      if (!ptr[0])
         {
-          return 3;
+          goto build;
         }
-
-      strncpy(right, w_ptr, i);
 
       while (ptr[0] == 0x20)
         {
           ptr++;
         }
 
-      i = 0;
+      if (!strncmp(ptr, "&&", 2) || !strncmp(ptr, "||", 2))
+        {
+          oper_l = 2;
+          oper = ptr;
+        }
 
-      w_ptr = ptr;
       while (!is_opr(ptr[0]))
         {
           ptr++;
-          i++;
         }
 
-      if (i > 2)
-        {
-          return 4;
-        }
+      build:
 
-      if (get_opr(w_ptr) == 1)
-        {
-          strncpy(oper, w_ptr, i);
-        }
-
-      end_loop: ;
-
-      if (!strlen(left))
-        {
-          return 5;
-        }
-
-      char *r_ptr = (char*) right, *c_ptr = (char*) comp, *o_ptr = (char*) oper;
-
-      if (!strlen(r_ptr))
-        {
-          r_ptr = NULL;
-        }
-
-      size_t comp_l = strlen(comp), oper_l = strlen(oper);
-
-      if (!strlen(c_ptr))
-        {
-          c_ptr = NULL;
-        }
-
-      if (!strlen(o_ptr))
-        {
-          o_ptr = NULL;
-        }
-
-      *ret = g_build_lom_packet(hdl, left, r_ptr, c_ptr, comp_l, o_ptr, oper_l,
+      *ret = g_build_lom_packet(hdl, left, right, comp, comp_l, oper, oper_l,
           _gm,
           NULL, flags);
 
@@ -18184,9 +18166,9 @@ free_cfg_rf(pmda md)
 }
 
 off_t
-s_string(char *input, char *m, off_t offset)
+s_string(char *input, char *m, off_t offset, size_t i_l)
 {
-  off_t i, m_l = strlen(m), i_l = strlen(input);
+  off_t i, m_l = strlen(m);
   for (i = offset; i <= i_l - m_l; i++)
     {
       if (!strncmp(&input[i], m, m_l))
@@ -19708,9 +19690,30 @@ is_ascii_numeric(uint8_t in_c)
 }
 
 int
+is_ascii_numeric_float(uint8_t in_c)
+{
+  if ((in_c >= 0x30 && in_c <= 0x39) || in_c == 0x2E)
+    {
+      return 0;
+    }
+
+  return 1;
+}
+
+int
 is_ascii_hexadecimal(uint8_t in_c)
 {
   if ((in_c >= 0x41 && in_c <= 0x46) || (in_c >= 0x61 && in_c <= 0x66))
+    {
+      return 0;
+    }
+  return 1;
+}
+
+int
+is_ascii_numhex(uint8_t in_c)
+{
+  if ((in_c >= 0x30 && in_c <= 0x39) || (in_c >= 0x41 && in_c <= 0x46) || (in_c >= 0x61 && in_c <= 0x66))
     {
       return 0;
     }
