@@ -14,6 +14,8 @@
  *   - ~ ref_to_val_ptr_gen1 failing to match field name (rev. 4)
  *   - % Replaced strcmp with strncmp in ref_to_val_macro (rev. 5)
  *   - + Add GENERIC-4 log (rev. 6)
+ *   - % --raw with -z dumps loaded data to stdout (rev. 7)
+ *   - ~ Default match subject offset misaligned on GE4 (string matching) (rev. 8)
  *
  * v2.0:
  *
