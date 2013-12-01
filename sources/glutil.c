@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-1
+ * Version     : 2.1-2
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -172,7 +172,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 1
+#define VER_REVISION 2
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -4420,6 +4420,7 @@ g_cleanup(__g_handle hdl)
 
   r += md_g_free(&hdl->buffer);
   r += md_g_free(&hdl->w_buffer);
+  r += md_g_free(&hdl->print_mech);
 
   p_md_obj ptr;
 
@@ -4433,12 +4434,12 @@ g_cleanup(__g_handle hdl)
           if ( g_ptr->flags & F_GM_ISLOM)
             {
               md_g_free(&g_ptr->lom);
-
             }
           if ( g_ptr->flags & F_GM_ISREGEX)
             {
               regfree(&g_ptr->preg);
             }
+          md_g_free(&g_ptr->dtr.math);
           ptr = ptr->next;
         }
 
