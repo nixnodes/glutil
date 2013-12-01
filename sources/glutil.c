@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-6d
+ * Version     : 2.1-8d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -178,7 +178,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 6
+#define VER_REVISION 8
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -843,6 +843,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 #define F_GH_HASSTRM			(a64 << 33)
 #define F_GH_ISGENERIC3                 (a64 << 34)
 #define F_GH_ISGENERIC4                 (a64 << 35)
+#define F_GH_TOSTDOUT                   (a64 << 36)
 
 /* these bits determine log type */
 #define F_GH_ISTYPE			(F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
@@ -2182,7 +2183,7 @@ opt_recursive_update_records(void *arg, int m)
 int
 opt_raw_dump(void *arg, int m)
 {
-  gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT;
+  gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT | F_OPT_NOWRITE;;
   return 0;
 }
 
@@ -9402,7 +9403,7 @@ flush_data_md(__g_handle hdl, char *outfile)
 {
   g_setjmp(0, "flush_data_md", NULL, NULL);
 
-  if (gfl & F_OPT_NOWRITE)
+  if (!(gfl & F_OPT_MODE_RAWDUMP) && (gfl & F_OPT_NOWRITE))
     {
       return 0;
     }
@@ -9432,9 +9433,16 @@ flush_data_md(__g_handle hdl, char *outfile)
         }
     }
 
-  if ((fh = fopen(outfile, mode)) == NULL)
+  if (!(gfl & F_OPT_MODE_RAWDUMP))
     {
-      return 2;
+      if ((fh = fopen(outfile, mode)) == NULL)
+        {
+          return 2;
+        }
+    }
+  else
+    {
+      fh = stdout;
     }
 
   size_t v = (V_MB * 8) / hdl->block_sz;
@@ -9474,11 +9482,17 @@ flush_data_md(__g_handle hdl, char *outfile)
   g_setjmp(0, "flush_data_md(2)", NULL, NULL);
 
   free(buffer);
-  fclose(fh);
+  fflush(fh);
 
-  if (hdl->st_mode)
+  if (!(gfl & F_OPT_MODE_RAWDUMP))
     {
-      chmod(outfile, hdl->st_mode);
+      fclose(fh);
+
+      if (hdl->st_mode)
+        {
+          chmod(outfile, hdl->st_mode);
+        }
+
     }
 
   return ret;
@@ -10207,7 +10221,7 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc3_export = gen4_format_block_exp;
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_GEN4LOG;
-      hdl->jm_offset = (size_t) &((__d_generic_s800) NULL)->s_1;
+      hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
     }
   else
     {
@@ -14982,6 +14996,8 @@ g_proc_mr(__g_handle hdl)
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
       hdl->g_proc4 = g_omfp_raw;
+
+
     }
   else if (gfl & F_OPT_FORMAT_BATCH)
     {
