@@ -320,9 +320,10 @@ FLAGS:
 	Specific options:
 	
 	-print <format>
-			Print <format> on stdout. Directives must be enclosed in {}. Field names that can be referenced
-			are listed above. Only fields respective to the log being processed are valid, with the exception
-			of generic fields, which are available globally.
+			Print <format> on stdout. Directives must be enclosed in {}. Field names that 
+			can be referenced are listed above. Only fields respective to the log being 
+			processed are valid, with the exception of generic fields, which are available 
+			globally.
 			
 			For example, assume we are processing the nukelog:						
 				-n ilom "status=0" -print '{basedir} was NUKED {mult}x by {nuker} on {?tl:time#%d %h at %H:%M}'
@@ -349,16 +350,16 @@ FLAGS:
 					\\		Literal backslash ('\')
 					
 			?t	{?t:<field>#<conversion specs>}
-					Using field data, formats (GMT) an unix timestamp into a readable string according to 
-					the <format> specification. 
-					See 'man 3 strftime' for conversion	specifications (passed after #). If no conversion
-					specifier characters are given, format defaults to: '%d/%h/%Y %H:%M:%S'
+					Using field data, formats (GMT) an unix timestamp into a readable string 
+					according to the <format> specification. 
+					See 'man 3 strftime' for conversion	specifications (passed after #). If 
+					no conversion specifier characters are given, format defaults to: '%d/%h/%Y %H:%M:%S'
 					
 			?tl		Same as '?t', only the timestamp is converted relative to the user's specified timezone.
 					
 			?l	{?l:<field>}
-					Prints the length of the field data based output string. Applies to integer fields too, measuring
-					their length in string form.
+					Prints the length of the field data based output string. Applies to integer fields too, 
+					measuring their length in string form.
 					
 			?m	{?m:<expression>}
 					Simple arithmetics, compatible with all integer fields.
@@ -372,10 +373,10 @@ FLAGS:
 						...
 					
 						
-			If <format> is defined, it gets passed to the standard C printf family function which outputs the requested 
-			field, however some extended directives, e.g. '?t' use <format> for other purposes ('?l' doesn't use it at all).
-			It applies to all integer fields. Be very careful when using this, for security reasons users should never be 
-			allowed to specify this option freely.
+			If <format> is defined, it gets passed to the standard C printf family function which outputs 
+			the requested field, however some extended directives, e.g. '?t' use <format> for other purposes 
+			('?l' doesn't use it at all). It applies to all integer fields. Be very careful when using this, 
+			for security reasons users should never be allowed to specify this option freely.
 			
 			
 			These directives can also be applied to string filters (--[i]regex[i]/--[i]lom):			
