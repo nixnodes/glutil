@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 #@VERSION:0
-#@REVISION:4
+#@REVISION:5
 #
 ## Simple debugger script
 #
