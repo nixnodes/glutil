@@ -22,6 +22,8 @@
  *   - % #<format> works with arithmetics (extended directive '?m', see MANUAL) (rev. 9)
  *   - ~ Broke LOM and arithmetic pre-processor args float detection in rev. 9 (rev. 10)
  *   - ~ Properly align directives and data-type sizes on output (arith. preproc)  (rev. 10)
+ *   - % Non-field numerals given to arithmetic pre-processor are forced to same type as first argument (rev. 11)
+ *   - + Arithmetic pre-processor accepts bitwise operators (see MANUAL) (rev. 12)
  *
  * v2.0:
  *
