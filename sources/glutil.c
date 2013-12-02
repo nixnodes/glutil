@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-8d
+ * Version     : 2.1-9d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -178,7 +178,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 8
+#define VER_REVISION 9
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -945,7 +945,6 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 
 #define	PIPE_READ_MAX			0x2000
 #define MAX_DATAIN_F			(V_MB*32)
-#define MAX_G_PRINT_STATS_BUFFER	8192
 
 #define MSG_GEN_NODFILE 		"ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE 		"ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
@@ -3617,107 +3616,111 @@ g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *outstr,
 int
 g_math_res(void *d_ptr, pmda mdm, void *res);
 
-void
-g_arith_add_u8(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
-}
+/*
+ void
 
-void
-g_arith_rem_u8(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint8_t*) s) - *((uint8_t*) d);
-}
+ g_arith_add_u8(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint8_t*) s) + *((uint8_t*) d);
+ }
 
-void
-g_arith_mult_u8(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint8_t*) s) * *((uint8_t*) d);
-}
+ void
+ g_arith_rem_u8(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint8_t*) s) - *((uint8_t*) d);
+ }
 
-void
-g_arith_div_u8(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint8_t*) s) / *((uint8_t*) d);
-}
+ void
+ g_arith_mult_u8(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint8_t*) s) * *((uint8_t*) d);
+ }
 
-void
-g_arith_mod_u8(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint8_t*) s) % *((uint8_t*) d);
-}
+ void
+ g_arith_div_u8(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint8_t*) s) / *((uint8_t*) d);
+ }
 
-/*static void *_m_u8[] =
+ void
+ g_arith_mod_u8(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint8_t*) s) % *((uint8_t*) d);
+ }
+
+ static void *_m_u8[] =
  { g_arith_add_u8, g_arith_rem_u8, g_arith_mult_u8, g_arith_div_u8,
- g_arith_mod_u8 };*/
+ g_arith_mod_u8 };
 
-void
-g_arith_add_u16(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint16_t*) s) + *((uint16_t*) d);
-}
+ void
+ g_arith_add_u16(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint16_t*) s) + *((uint16_t*) d);
+ }
 
-void
-g_arith_rem_u16(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint16_t*) s) - *((uint16_t*) d);
-}
+ void
+ g_arith_rem_u16(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint16_t*) s) - *((uint16_t*) d);
+ }
 
-void
-g_arith_mult_u16(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint16_t*) s) * *((uint16_t*) d);
-}
+ void
+ g_arith_mult_u16(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint16_t*) s) * *((uint16_t*) d);
+ }
 
-void
-g_arith_div_u16(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint16_t*) s) / *((uint16_t*) d);
-}
+ void
+ g_arith_div_u16(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint16_t*) s) / *((uint16_t*) d);
+ }
 
-void
-g_arith_mod_u16(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint16_t*) s) % *((uint16_t*) d);
-}
+ void
+ g_arith_mod_u16(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint16_t*) s) % *((uint16_t*) d);
+ }
 
-/*static void *_m_u16[] =
+ static void *_m_u16[] =
  { g_arith_add_u16, g_arith_rem_u16, g_arith_mult_u16, g_arith_div_u16,
- g_arith_mod_u16 };*/
+ g_arith_mod_u16 };
 
-void
-g_arith_add_u32(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint32_t*) s) + *((uint32_t*) d);
-}
+ void
+ g_arith_add_u32(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint32_t*) s) + *((uint32_t*) d);
+ }
 
-void
-g_arith_rem_u32(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint32_t*) s) - *((uint32_t*) d);
-}
+ void
+ g_arith_rem_u32(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint32_t*) s) - *((uint32_t*) d);
+ }
 
-void
-g_arith_mult_u32(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint32_t*) s) * *((uint32_t*) d);
-}
+ void
+ g_arith_mult_u32(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint32_t*) s) * *((uint32_t*) d);
+ }
 
-void
-g_arith_div_u32(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint32_t*) s) / *((uint32_t*) d);
-}
+ void
+ g_arith_div_u32(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint32_t*) s) / *((uint32_t*) d);
+ }
 
-void
-g_arith_mod_u32(void * s, void * d, void *o)
-{
-  *((uint64_t*) o) = *((uint32_t*) s) % *((uint32_t*) d);
-}
+ void
+ g_arith_mod_u32(void * s, void * d, void *o)
+ {
+ *((uint64_t*) o) = *((uint32_t*) s) % *((uint32_t*) d);
+ }
 
-/*static void *_m_u32[] =
+ static void *_m_u32[] =
  { g_arith_add_u32, g_arith_rem_u32, g_arith_mult_u32, g_arith_div_u32,
- g_arith_mod_u32 };*/
+ g_arith_mod_u32 };
+
+ */
 
 void
 g_arith_add_u64(void * s, void * d, void *o)
@@ -3749,109 +3752,117 @@ g_arith_mod_u64(void * s, void * d, void *o)
   *((uint64_t*) o) = *((uint64_t*) s) % *((uint64_t*) d);
 }
 
+void
+g_arith_bin_and_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) & *((uint64_t*) d);
+}
+
 static void *_m_u64[] =
   { g_arith_add_u64, g_arith_rem_u64, g_arith_mult_u64, g_arith_div_u64,
-      g_arith_mod_u64 };
+      g_arith_mod_u64, g_arith_bin_and_u64 };
 
-void
-g_arith_add_s8(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int8_t*) s) + *((int8_t*) d);
-}
+/*
 
-void
-g_arith_rem_s8(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int8_t*) s) - *((int8_t*) d);
-}
+ void
+ g_arith_add_s8(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int8_t*) s) + *((int8_t*) d);
+ }
 
-void
-g_arith_mult_s8(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int8_t*) s) * *((int8_t*) d);
-}
+ void
+ g_arith_rem_s8(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int8_t*) s) - *((int8_t*) d);
+ }
 
-void
-g_arith_div_s8(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int8_t*) s) / *((int8_t*) d);
-}
+ void
+ g_arith_mult_s8(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int8_t*) s) * *((int8_t*) d);
+ }
 
-void
-g_arith_mod_s8(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int8_t*) s) % *((int8_t*) d);
-}
+ void
+ g_arith_div_s8(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int8_t*) s) / *((int8_t*) d);
+ }
 
-/*static void *_m_s8[] =
+ void
+ g_arith_mod_s8(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int8_t*) s) % *((int8_t*) d);
+ }
+
+ static void *_m_s8[] =
  { g_arith_add_s8, g_arith_rem_s8, g_arith_mult_s8, g_arith_div_s8,
- g_arith_mod_s8 };*/
+ g_arith_mod_s8 };
 
-void
-g_arith_add_s16(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int16_t*) s) + *((int16_t*) d);
-}
+ void
+ g_arith_add_s16(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int16_t*) s) + *((int16_t*) d);
+ }
 
-void
-g_arith_rem_s16(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int16_t*) s) - *((int16_t*) d);
-}
+ void
+ g_arith_rem_s16(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int16_t*) s) - *((int16_t*) d);
+ }
 
-void
-g_arith_mult_s16(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int16_t*) s) * *((int16_t*) d);
-}
+ void
+ g_arith_mult_s16(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int16_t*) s) * *((int16_t*) d);
+ }
 
-void
-g_arith_div_s16(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int16_t*) s) / *((int16_t*) d);
-}
+ void
+ g_arith_div_s16(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int16_t*) s) / *((int16_t*) d);
+ }
 
-void
-g_arith_mod_s16(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int16_t*) s) % *((int16_t*) d);
-}
+ void
+ g_arith_mod_s16(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int16_t*) s) % *((int16_t*) d);
+ }
 
-/*static void *_m_s16[] =
+ static void *_m_s16[] =
  { g_arith_add_s16, g_arith_rem_s16, g_arith_mult_s16, g_arith_div_s16,
- g_arith_mod_s16 };*/
+ g_arith_mod_s16 };
 
-void
-g_arith_add_s32(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int32_t*) s) + *((int32_t*) d);
-}
+ void
+ g_arith_add_s32(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int32_t*) s) + *((int32_t*) d);
+ }
 
-void
-g_arith_rem_s32(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int32_t*) s) - *((int32_t*) d);
-}
+ void
+ g_arith_rem_s32(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int32_t*) s) - *((int32_t*) d);
+ }
 
-void
-g_arith_mult_s32(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int32_t*) s) * *((int32_t*) d);
-}
+ void
+ g_arith_mult_s32(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int32_t*) s) * *((int32_t*) d);
+ }
 
-void
-g_arith_div_s32(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int32_t*) s) / *((int32_t*) d);
-}
+ void
+ g_arith_div_s32(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int32_t*) s) / *((int32_t*) d);
+ }
 
-void
-g_arith_mod_s32(void * s, void * d, void *o)
-{
-  *((int64_t*) o) = *((int32_t*) s) % *((int32_t*) d);
-}
+ void
+ g_arith_mod_s32(void * s, void * d, void *o)
+ {
+ *((int64_t*) o) = *((int32_t*) s) % *((int32_t*) d);
+ }
 
-/*static void *_m_s32[] =
+ static void *_m_s32[] =
  { g_arith_add_s32, g_arith_rem_s32, g_arith_mult_s32, g_arith_div_s32,
  g_arith_mod_s32 };*/
 
@@ -3885,9 +3896,15 @@ g_arith_mod_s64(void * s, void * d, void *o)
   *((int64_t*) o) = *((int64_t*) s) % *((int64_t*) d);
 }
 
+void
+g_arith_bin_and_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) & *((int64_t*) d);
+}
+
 static void *_m_s64[] =
   { g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
-      g_arith_mod_s64 };
+      g_arith_mod_s64, g_arith_bin_and_s64 };
 
 void
 g_arith_add_f(void * s, void * d, void *o)
@@ -3920,7 +3937,8 @@ g_arith_dummy(void * s, void * d, void *o)
 }
 
 static void *_m_f[] =
-  { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy };
+  { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy,
+      g_arith_dummy };
 
 static void *prio_f_ref[] =
   { "noop", g_opt_mode_noop, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
@@ -6324,10 +6342,8 @@ dirlog_update_record(char *argv)
           goto end;
         }
 
-      char buffer[MAX_G_PRINT_STATS_BUFFER] =
-        { 0 };
 
-      dirlog_format_block(arg.dirlog, buffer);
+      dirlog_format_block(arg.dirlog, NULL);
 
       end:
 
@@ -7906,12 +7922,9 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
               }
           }
 
-        char buffer[MAX_G_PRINT_STATS_BUFFER] =
-          { 0 };
-
         if ((gfl & F_OPT_VERBOSE))
           {
-            dirlog_format_block(iarg->dirlog, buffer);
+            dirlog_format_block(iarg->dirlog, NULL);
           }
 
         if (gfl & F_OPT_FORCE)
@@ -11126,7 +11139,7 @@ file_crc32(char *file, uint32_t *crc_out)
       return 0;
     }
 
-  uint8_t *buffer = malloc(CRC_FILE_READ_BUFFER_SIZE), *ptr = buffer;
+  uint8_t buffer[CRC_FILE_READ_BUFFER_SIZE], *ptr = buffer;
 
   uint32_t crc = MAX_uint32_t;
 
@@ -11145,14 +11158,12 @@ file_crc32(char *file, uint32_t *crc_out)
 
   if (ferror(fp))
     {
-      free(buffer);
       fclose(fp);
       return 0;
     }
 
   *crc_out = ~crc;
 
-  free(buffer);
   fclose(fp);
 
   return 1;
@@ -12362,8 +12373,7 @@ char *
 dt_rval_x_sparse(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((float) ((__d_xref) arg)->st.st_blksize * (float) ((__d_xref) arg)->st.st_blocks
-  / (float) ((__d_xref) arg)->st.st_size));
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->sparseness);
   return output;
 }
 
@@ -12371,9 +12381,7 @@ char *
 dt_rval_x_crc32(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  uint32_t crc32;
-  file_crc32(((__d_xref) arg)->name, &crc32);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, crc32);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->crc32);
   return output;
 }
 
@@ -12381,9 +12389,7 @@ char *
 dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  uint32_t crc32;
-  file_crc32(((__d_xref) arg)->name, &crc32);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, crc32);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->crc32);
   return output;
 }
 
@@ -12519,7 +12525,8 @@ dt_rval_spec_math_u(void *arg, char *match, char *output, size_t max_size,
     { 0 };
   void *v_ptr = &v_b;
   g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, "%llu", *(long long unsigned int*) v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      *(long long unsigned int*) v_ptr);
   return output;
 }
 
@@ -12531,7 +12538,8 @@ dt_rval_spec_math_s(void *arg, char *match, char *output, size_t max_size,
     { 0 };
   void *v_ptr = (void*) &v_b;
   g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
-  snprintf(output, max_size, "%lld", *(long long int*) v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      *(long long int*) v_ptr);
   return output;
 }
 
@@ -12543,7 +12551,7 @@ dt_rval_spec_math_f(void *arg, char *match, char *output, size_t max_size,
     { 0 };
   void *v_ptr = &v_b;
   g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, "%f", *(float*) v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(float*) v_ptr);
   return output;
 }
 
@@ -12725,7 +12733,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
                 m_ret);
             return NULL;
           }
-        mppd->direc[0] = 0x25;
+        //mppd->direc[0] = 0x25;
 
         if (mppd->math.offset)
           {
@@ -12735,19 +12743,18 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
               /*              mppd->direc[1] = 0x6C;
                mppd->direc[2] = 0x75;
                mppd->direc[3] = 0x0;*/
-              return as_ref_to_val_lk(match, dt_rval_spec_math_u, mppd, NULL);
-              break;
+              return as_ref_to_val_lk(id, dt_rval_spec_math_u, mppd, "%llu");
             case F_MATH_INT_S:
               /* mppd->direc[1] = 0x6C;
                mppd->direc[2] = 0x64;
                mppd->direc[3] = 0x0; */
-              return as_ref_to_val_lk(match, dt_rval_spec_math_s, mppd, NULL);
-              break;
+              return as_ref_to_val_lk(id, dt_rval_spec_math_s, mppd, "%lld");
             case F_MATH_FLOAT:
               /* mppd->direc[1] = 0x66;
                mppd->direc[2] = 0x0; */
-              return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, NULL);
-              break;
+              return as_ref_to_val_lk(id, dt_rval_spec_math_f, mppd, "%f");
+            default:
+              return NULL;
               }
           }
         }
@@ -12937,16 +12944,24 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     {
       if (arg)
         {
-          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_SPARSE;
         }
       return as_ref_to_val_lk(match, dt_rval_x_sparse ,(__d_drt_h)mppd, "%f");
     }
   else if (!strncmp(match, _MC_X_CRC32, 5))
     {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_GET_CRC32;
+        }
       return as_ref_to_val_lk(match, dt_rval_x_crc32 ,(__d_drt_h)mppd, "%.8X");
     }
   else if (!strncmp(match, _MC_X_DCRC32, 9))
     {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_GET_CRC32;
+        }
       return as_ref_to_val_lk(match, dt_rval_x_deccrc32 ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_BASEPATH, 8))
@@ -13904,7 +13919,17 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
     {
       errno = 0;
       uint32_t t_f = 0;
-      int base;
+      int base = 10;
+
+      if (field[0] == 0x30 && (field[1] == 0x78 || field[1] == 0x58))
+        {
+          if ((lom->flags & F_LOM_FLOAT))
+            {
+              return 201;
+            }
+          field = &field[2];
+          base = 16;
+        }
 
       if (!(lom->flags & F_LOM_TYPES))
         {
@@ -13912,7 +13937,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
             {
               lom->flags |= F_LOM_INT_S;
             }
-          else if (s_string(field, ".", 0, g_floatstrlen(field)))
+          else if (base == 10 && strchr(field, 0x2E))
             {
               lom->flags |= F_LOM_FLOAT;
             }
@@ -13920,15 +13945,6 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
             {
               lom->flags |= F_LOM_INT;
             }
-        }
-
-      if (!g_sfc(is_ascii_hexadecimal, field, g_hexstrlen(field)))
-        {
-          base = 16;
-        }
-      else
-        {
-          base = 10;
         }
 
       switch (flags & F_GLT_DIRECT)
@@ -14137,7 +14153,17 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
     {
       errno = 0;
       uint32_t t_f = 0;
-      int base;
+      int base = 10;
+
+      if (field[0] == 0x30 && (field[1] == 0x78 || field[1] == 0x58))
+        {
+          if (math->flags & F_MATH_FLOAT)
+            {
+              return 201;
+            }
+          field = &field[2];
+          base = 16;
+        }
 
       if (!(math->flags & F_MATH_TYPES))
         {
@@ -14145,7 +14171,7 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
             {
               math->flags |= F_MATH_INT_S;
             }
-          else if (s_string(field, ".", 0, g_floatstrlen(field)))
+          else if (base == 10 && strchr(field, 0x2E))
             {
               math->flags |= F_MATH_FLOAT;
             }
@@ -14153,15 +14179,6 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
             {
               math->flags |= F_MATH_INT;
             }
-        }
-
-      if (!g_sfc(is_ascii_hexadecimal, field, g_hexstrlen(field)))
-        {
-          base = 16;
-        }
-      else
-        {
-          base = 10;
         }
 
       void *v_stor = &math->vstor;
@@ -14318,6 +14335,15 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
             }
           math->op_t = math->_m_p[4];
         }
+      else if (oper == 0x26)
+        {
+          if ((math->flags & F_MATH_FLOAT))
+            {
+              rt = 15;
+              goto end;
+            }
+          math->op_t = math->_m_p[5];
+        }
       else
         {
           math->op_t = NULL;
@@ -14384,7 +14410,7 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
   if ((r = g_get_lom_g_t_ptr(hdl, r_ptr, lom, F_GLT_RIGHT)))
     {
-      rt = 4;
+      rt = r + 1;
       goto end;
     }
 
@@ -15198,9 +15224,10 @@ g_load_strm(__g_handle hdl)
 #define MAX_VLEN    254
 
 int
-is_ascii_arith_oper(char c)
+is_ascii_arith_bin_oper(char c)
 {
-  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25)
+  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25
+      || c == 0x26)
     {
       return 0;
     }
@@ -15216,7 +15243,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
   size_t i;
   while (ptr[0])
     {
-      if (ptr[0] == 0x0)
+      if (ptr[0] == 0x0 || ptr[0] == 0x23)
         {
           break;
         }
@@ -15227,13 +15254,13 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
         }
       i = 0;
       left = ptr;
-      while (is_ascii_arith_oper(ptr[0]) && ptr[0])
+      while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23)
         {
-          if (ptr[0] == 0x23)
-            {
-              return 2;
-            }
-          //left[i] = ptr[0];
+          /*if (ptr[0] == 0x23)
+           {
+           return 2;
+           }*/
+
           i++;
           ptr++;
         }
@@ -15243,14 +15270,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
           return 1;
         }
 
-      //left[i] = 0x0;
-
-      /*while (ptr[0] == 0x20)
-       {
-       ptr++;
-       }*/
-
-      if (ptr[0])
+      if (ptr[0] && ptr[0] != 0x23)
         {
           oper = ptr[0];
           ptr++;
