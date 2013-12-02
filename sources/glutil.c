@@ -10717,20 +10717,18 @@ enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds)
     }
 
   char buf[PATH_MAX];
-  struct stat st;
-
-  if (stat(dir, &st))
-    {
-      return -3;
-    }
 
   if (eds)
     {
+      if (stat(dir, &eds->st))
+        {
+          return -3;
+        }
+
       if (!(eds->flags & F_EDS_ROOTMINSET))
         {
-          eds->r_minor = minor(st.st_dev);
+          eds->r_minor = minor(eds->st.st_dev);
           eds->flags |= F_EDS_ROOTMINSET;
-          memcpy(&eds->st, &st, sizeof(struct stat));
         }
 
       if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
@@ -10740,7 +10738,7 @@ enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds)
           goto end;
         }
 
-      if ((gfl & F_OPT_XDEV) && minor(st.st_dev) != eds->r_minor)
+      if ((gfl & F_OPT_XDEV) && minor(eds->st.st_dev) != eds->r_minor)
         {
           r = -5;
           goto end;
@@ -10756,8 +10754,9 @@ enum_dir(char *dir, void *cb, void *arg, int f, __g_eds eds)
 
       size_t d_name_l = strlen(dirp->d_name);
 
-      if ((d_name_l == 1 && !strncmp(dirp->d_name, ".", 1))
-          || (d_name_l == 2 && !strncmp(dirp->d_name, "..", 2)))
+      if ((d_name_l == 1 && dirp->d_name[0] == 0x2E)
+          || (d_name_l == 2 && dirp->d_name[0] == 0x2E
+              && dirp->d_name[1] == 0x2E))
         {
           continue;
         }
