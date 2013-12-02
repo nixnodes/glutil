@@ -380,16 +380,14 @@ FLAGS:
 					fields, although floating point data types can only be added, subtracted,
 					multiplied and divided.
 					
-					Arithmetic operators:
-					
+					Arithmetic operators:					
 						+	Add
 						-	Subtract
 						*	Multiply
 						/	Divide
 						%	Modulo (integer remainder)
 						
-					Bitwise operators:
-					
+					Bitwise operators:					
 						&	AND
 						|	OR
 						^	XOR
