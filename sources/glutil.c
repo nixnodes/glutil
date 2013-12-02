@@ -919,7 +919,7 @@ crc32(uint32_t crc32, uint8_t *buf, size_t len)
 
 #define F_MATH_TYPES                    (F_MATH_INT|F_MATH_INT_S|F_MATH_FLOAT)
 
-#define F_MATH_VAR_KNOWN               (a32 << 4)
+#define F_MATH_VAR_KNOWN                (a32 << 4)
 
 /* -- end flags -- */
 
@@ -1540,11 +1540,12 @@ char *hpd_up =
         "  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
         "                        Rebuilds existing data file, based on filtering rules (see --exec,\n"
         "                          --[i]regex[i] and --[i]match\n"
-        "  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=/path/file] [--binary] [--prune]\n"
+        "  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=<file>] [--binary] [--prune] [--raw]\n"
         "                        Creates a binary record from ASCII data, inserting it into the specified log\n"
         "                          Captures input from stdin, unless --infile is set\n"
         "                        --binary expects a normal binary log as input and merges it\n"
         "                        --prune skips importing duplicate records (full binary compare)\n"
+        "                        --raw writes binary result to stdout\n"
         "\n Directory log:\n"
         "  -s <folders>          Import specific directories. Use quotation marks with multiple arguments\n"
         "                           <folders> are passed relative to SITEROOT, separated by space\n"
@@ -2183,7 +2184,8 @@ opt_recursive_update_records(void *arg, int m)
 int
 opt_raw_dump(void *arg, int m)
 {
-  gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT | F_OPT_NOWRITE;;
+  gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT | F_OPT_NOWRITE;
+  ;
   return 0;
 }
 
@@ -14996,7 +14998,6 @@ g_proc_mr(__g_handle hdl)
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
       hdl->g_proc4 = g_omfp_raw;
-
 
     }
   else if (gfl & F_OPT_FORMAT_BATCH)
