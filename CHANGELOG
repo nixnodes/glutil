@@ -20,6 +20,8 @@
  *   - ~! {crc32} calculated each time it was requested, instead of just once for a file (rev. 9)
  *   - % Hexadecimal numbers need to be given with 0x in front (LOM and arithmetic pre-processor) (rev. 9)
  *   - % #<format> works with arithmetics (extended directive '?m', see MANUAL) (rev. 9)
+ *   - ~ Broke LOM and arithmetic pre-processor args float detection in rev. 9 (rev. 10)
+ *   - ~ Properly align directives and data-type sizes on output (arith. preproc)  (rev. 10)
  *
  * v2.0:
  *
