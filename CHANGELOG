@@ -24,6 +24,7 @@
  *   - ~ Properly align directives and data-type sizes on output (arith. preproc)  (rev. 10)
  *   - % Non-field numerals given to arithmetic pre-processor are forced to same type as first argument (rev. 11)
  *   - + Arithmetic pre-processor accepts bitwise operators (see MANUAL) (rev. 12)
+ *   - %! Avoid copying and null-terminating strings where not needed (ref_to_val_af) (rev. 13)
  *
  * v2.0:
  *
