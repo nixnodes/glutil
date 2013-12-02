@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-11d
+ * Version     : 2.1-12d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -178,7 +178,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 11
+#define VER_REVISION 12
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -3759,10 +3759,34 @@ g_arith_bin_and_u64(void * s, void * d, void *o)
 {
   *((uint64_t*) o) = *((uint64_t*) s) & *((uint64_t*) d);
 }
+void
+g_arith_bin_or_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) | *((uint64_t*) d);
+}
+
+void
+g_arith_bin_xor_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) ^ *((uint64_t*) d);
+}
+
+void
+g_arith_bin_lshift_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) << *((uint64_t*) d);
+}
+
+void
+g_arith_bin_rshift_u64(void * s, void * d, void *o)
+{
+  *((uint64_t*) o) = *((uint64_t*) s) >> *((uint64_t*) d);
+}
 
 static void *_m_u64[] =
   { g_arith_add_u64, g_arith_rem_u64, g_arith_mult_u64, g_arith_div_u64,
-      g_arith_mod_u64, g_arith_bin_and_u64 };
+      g_arith_mod_u64, g_arith_bin_and_u64, g_arith_bin_or_u64,
+      g_arith_bin_xor_u64, g_arith_bin_lshift_u64, g_arith_bin_rshift_u64 };
 
 /*
 
@@ -3904,9 +3928,34 @@ g_arith_bin_and_s64(void * s, void * d, void *o)
   *((int64_t*) o) = *((int64_t*) s) & *((int64_t*) d);
 }
 
+void
+g_arith_bin_or_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) | *((int64_t*) d);
+}
+
+void
+g_arith_bin_xor_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) ^ *((int64_t*) d);
+}
+
+void
+g_arith_bin_lshift_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) << *((int64_t*) d);
+}
+
+void
+g_arith_bin_rshift_s64(void * s, void * d, void *o)
+{
+  *((int64_t*) o) = *((int64_t*) s) << *((int64_t*) d);
+}
+
 static void *_m_s64[] =
   { g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
-      g_arith_mod_s64, g_arith_bin_and_s64 };
+      g_arith_mod_s64, g_arith_bin_and_s64, g_arith_bin_or_s64,
+      g_arith_bin_xor_s64, g_arith_bin_lshift_s64, g_arith_bin_rshift_s64 };
 
 void
 g_arith_add_f(void * s, void * d, void *o)
@@ -3939,8 +3988,9 @@ g_arith_dummy(void * s, void * d, void *o)
 }
 
 static void *_m_f[] =
-  { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy,
-      g_arith_dummy };
+      { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f,
+          g_arith_dummy, g_arith_dummy, g_arith_dummy, g_arith_dummy,
+          g_arith_dummy, g_arith_dummy };
 
 static void *prio_f_ref[] =
   { "noop", g_opt_mode_noop, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
@@ -14381,9 +14431,10 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
       goto end;
     }
 
-  if (p_math) {
+  if (p_math)
+    {
       math->flags |= (p_math->flags & F_MATH_TYPES);
-  }
+    }
 
   if ((rt = g_get_math_g_t_ptr(hdl, field, math, 0)))
     {
@@ -14432,6 +14483,42 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
               goto end;
             }
           math->op_t = math->_m_p[5];
+        }
+      else if (oper == 0x7C)
+        {
+          if ((math->flags & F_MATH_FLOAT))
+            {
+              rt = 16;
+              goto end;
+            }
+          math->op_t = math->_m_p[6];
+        }
+      else if (oper == 0x5E)
+        {
+          if ((math->flags & F_MATH_FLOAT))
+            {
+              rt = 17;
+              goto end;
+            }
+          math->op_t = math->_m_p[7];
+        }
+      else if (oper == 0x3C)
+        {
+          if ((math->flags & F_MATH_FLOAT))
+            {
+              rt = 17;
+              goto end;
+            }
+          math->op_t = math->_m_p[8];
+        }
+      else if (oper == 0x3E)
+        {
+          if ((math->flags & F_MATH_FLOAT))
+            {
+              rt = 17;
+              goto end;
+            }
+          math->op_t = math->_m_p[9];
         }
       else
         {
@@ -15315,8 +15402,8 @@ g_load_strm(__g_handle hdl)
 int
 is_ascii_arith_bin_oper(char c)
 {
-  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25
-      || c == 0x26)
+  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25 || c == 0x26
+      || c == 0x7C || c == 0x5E || c == 0x3C || c == 0x3E)
     {
       return 0;
     }
@@ -15363,6 +15450,12 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
 
       if (ptr[0] && ptr[0] != 0x23)
         {
+          if ( ptr[0] == 0x3C || ptr[0] == 0x3E) {
+              if (ptr[0] != ptr[1]) {
+                  return 2;
+              }
+              ptr++;
+          }
           oper = ptr[0];
           ptr++;
         }
