@@ -1,6 +1,6 @@
 #!/bin/bash
 #@VERSION:0
-#@REVISION:5
+#@REVISION:6
 #
 ## Simple debugger script
 #
@@ -49,6 +49,11 @@ ge3_fields=("u1 u2 ge1 ge2 i1 i2 ul1 ul2 ge3 ge4")
 ge3_values=(11232	325211	bla	33f3	3432545	-2323	3435153343	2434325345	ggf	yyy)
 ge3_lom_fields=("u1 u2 i1 i2 ul1 ul2")
 ge3_lom_values=(11232	325211	3432545	-2323	3435153343 2434325345)
+
+ge4_fields=("u1 u2 ge1 ge2 i1 i2 ul1 ul2 ge3 ge4")
+ge4_values=(11232	325211	fd	ffffff3	3432545	-2323	3435153343	2434325345	ggf	yyy)
+ge4_lom_fields=("u1 u2 i1 i2 ul1 ul2")
+ge4_lom_values=(11232	325211	3432545	-2323	3435153343 2434325345)
 
 nukelog_fields=("dir reason mult size nuker unnuker nukee time status")
 nukelog_lom_fields=("mult size time status")
@@ -135,6 +140,8 @@ launch_test() {
 		lt_ft="ge2log"
 	elif [ "${lt_log}" = "ge3" ]; then
 		lt_ft="ge3log"
+	elif [ "${lt_log}" = "ge4" ]; then
+		lt_ft="ge4log"
 	else
 		lt_ft=${lt_log}
 	fi
@@ -232,6 +239,7 @@ launch_test game || t_quit ${?}
 launch_test ge1 || t_quit ${?}
 launch_test ge2 || t_quit ${?}
 launch_test ge3 || t_quit ${?}
+launch_test ge4 || t_quit ${?}
 
 # End 
 
