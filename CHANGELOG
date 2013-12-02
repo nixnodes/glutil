@@ -19,6 +19,7 @@
  *   - ! Optimize enum_dir (rev. 8)
  *   - ~! {crc32} calculated each time it was requested, instead of just once for a file (rev. 9)
  *   - % Hexadecimal numbers need to be given with 0x in front (LOM and arithmetic pre-processor) (rev. 9)
+ *   - % #<format> works with arithmetics (extended directive '?m', see MANUAL) (rev. 9)
  *
  * v2.0:
  *
