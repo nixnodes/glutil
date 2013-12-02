@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-12d
+ * Version     : 2.1-13d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -178,7 +178,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 12
+#define VER_REVISION 13
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -8182,7 +8182,7 @@ dirlog_format_block(void *iarg, char *output)
 
   return print_str(
       "DIRLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
-      base, (ulint64_t) (data->bytes / 1024 / 1024), data->files, buffer2,
+      base, (ulint64_t) (data->bytes / 1048576), data->files, buffer2,
       data->uploader, data->group, data->status);
 }
 
@@ -9917,7 +9917,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
             {
               print_str(
                   "WARNING: %s: disabling memory buffering, file too big (%lld MB max)\n",
-                  file, db_max_size / 1024 / 1024);
+                  file, db_max_size / 1048576);
               hdl->flags |= F_GH_NOMEM;
               return 5;
             }
@@ -12734,36 +12734,13 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           }
         else
           {
-            char b_c[65];
-            size_t b_l = 0;
-
-            while ((!is_ascii_numeric((uint8_t) match[0]) || match[0] == 0x2B
-                || match[0] == 0x2D) && match[0])
-              {
-                if (b_l < 64)
-                  {
-                    b_c[b_l] = match[0];
-                  }
-                else
-                  {
-                    break;
-                  }
-                b_l++;
-                match++;
-              }
-
-            if (match[0] == 0x0)
+            errno = 0;
+            mppd->ts_1 = (time_t) strtol(match, NULL, 10);
+            if (errno == ERANGE)
               {
                 return NULL;
               }
 
-            b_c[b_l] = 0x0;
-            if (!b_l || b_l == 64)
-              {
-                return NULL;
-              }
-
-            mppd->ts_1 = (time_t) strtol(b_c, NULL, 10);
             switch (id[1])
               {
             case 0x6C:
@@ -12778,25 +12755,19 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         break;
       case 0x63:
         ;
-        char b_c[65];
-        size_t b_l = 0;
-        b_c[0] = 0x0;
+        char *c = match;
         while (match[0] != 0x3A && match[0])
           {
-            if (b_l < 64)
-              {
-                b_c[b_l] = match[0];
-              }
-            b_l++;
             match++;
           }
-        b_c[b_l] = 0x0;
 
         if (match[0] != 0x3A)
           {
             return NULL;
           }
+
         match++;
+
         if (match[0] == 0x5C)
           {
             match++;
@@ -12825,36 +12796,26 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           {
             mppd->c_1 = match[0];
           }
-        mppd->t_1 = strtoul(b_c, NULL, 10);
-        return dt_rval_spec_gc;
-      case 0x6D:
-        ;
-        char m_b[1024];
-        size_t i = 0;
 
-        while (match[0] != 0x7D && match[0] != 0x2C && match[0] && i < 1024)
-          {
-            m_b[i] = match[0];
-            i++;
-            match++;
-          }
-
-        if (match[0] != 0x7D && match[0] != 0x2C)
+        errno = 0;
+        mppd->t_1 = strtoul(c, NULL, 10);
+        if (errno == ERANGE)
           {
             return NULL;
           }
-        m_b[i] = 0x0;
 
+        return dt_rval_spec_gc;
+      case 0x6D:
+        ;
         int m_ret = 0, m_ret2;
 
-        if ((m_ret2 = g_process_math_string(mppd->hdl, m_b, &mppd->math, &m_ret,
-            0)))
+        if ((m_ret2 = g_process_math_string(mppd->hdl, match, &mppd->math,
+            &m_ret, 0)))
           {
             printf("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
                 m_ret);
             return NULL;
           }
-        //mppd->direc[0] = 0x25;
 
         if (mppd->math.offset)
           {
@@ -12864,13 +12825,13 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
               switch (((__g_math ) mppd->math.objects->ptr)->vb)
                 {
               case 1:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_u8, mppd, "%hhu");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_u8, mppd, "%hhu");
               case 2:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_u16, mppd, "%hu");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_u16, mppd, "%hu");
               case 4:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_u32, mppd, "%u");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_u32, mppd, "%u");
               case 8:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_u64, mppd, "%llu");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_u64, mppd, "%llu");
               default:
                 return NULL;
                 }
@@ -12878,21 +12839,23 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
               switch (((__g_math ) mppd->math.objects->ptr)->vb)
                 {
               case 1:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_s8, mppd, "%hhd");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_s8, mppd, "%hhd");
               case 2:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_s16, mppd, "%hd");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_s16, mppd, "%hd");
               case 4:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_s32, mppd, "%d");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_s32, mppd, "%d");
               case 8:
-                return as_ref_to_val_lk(id, dt_rval_spec_math_s64, mppd, "%lld");
+                return as_ref_to_val_lk(match, dt_rval_spec_math_s64, mppd, "%lld");
               default:
                 return NULL;
                 }
             case F_MATH_FLOAT:
-              return as_ref_to_val_lk(id, dt_rval_spec_math_f, mppd, "%f");
+              return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, "%f");
             default:
               return NULL;
               }
+          } else {
+              return NULL;
           }
         }
     }
@@ -15419,7 +15382,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
   size_t i;
   while (ptr[0])
     {
-      if (ptr[0] == 0x0 || ptr[0] == 0x23)
+      if (ptr[0] == 0x0 || ptr[0] == 0x23 || ptr[0] == 0x7D)
         {
           break;
         }
@@ -15437,7 +15400,8 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
           ptr++;
         }
 
-      while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23)
+      while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23
+          && ptr[0] != 0x7D)
         {
           i++;
           ptr++;
@@ -15448,14 +15412,16 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
           return 1;
         }
 
-      if (ptr[0] && ptr[0] != 0x23)
+      if (ptr[0] && ptr[0] != 0x23 && ptr[0] != 0x7D)
         {
-          if ( ptr[0] == 0x3C || ptr[0] == 0x3E) {
-              if (ptr[0] != ptr[1]) {
+          if (ptr[0] == 0x3C || ptr[0] == 0x3E)
+            {
+              if (ptr[0] != ptr[1])
+                {
                   return 2;
-              }
+                }
               ptr++;
-          }
+            }
           oper = ptr[0];
           ptr++;
         }
