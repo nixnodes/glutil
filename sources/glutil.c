@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-10d
+ * Version     : 2.1-11d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -178,7 +178,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 10
+#define VER_REVISION 11
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -14372,6 +14372,7 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
   int rt = 0;
   md_init(mdm, 16);
 
+  __g_math p_math = (__g_math ) mdm->pos->ptr;
   __g_math math = (__g_math ) md_alloc(mdm, sizeof(_g_math));
 
   if (!math)
@@ -14380,11 +14381,12 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
       goto end;
     }
 
-  int r = 0;
+  if (p_math) {
+      math->flags |= (p_math->flags & F_MATH_TYPES);
+  }
 
-  if ((r = g_get_math_g_t_ptr(hdl, field, math, 0)))
+  if ((rt = g_get_math_g_t_ptr(hdl, field, math, 0)))
     {
-      rt = r;
       goto end;
     }
 
@@ -15339,19 +15341,17 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
         {
           ptr++;
         }
+
       i = 0;
       left = ptr;
+
       if (ptr[0] == 0x2B || ptr[0] == 0x2D)
         {
           ptr++;
         }
+
       while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23)
         {
-          /*if (ptr[0] == 0x23)
-           {
-           return 2;
-           }*/
-
           i++;
           ptr++;
         }
@@ -15365,10 +15365,6 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
         {
           oper = ptr[0];
           ptr++;
-          /*if (ptr[0] == 0x2B || ptr[0] == 0x2D)
-           {
-           ptr++;
-           }*/
         }
       else
         {
