@@ -2,7 +2,7 @@
  * ============================================================================
  * Name        : glutil
  * Authors     : nymfo, siska
- * Version     : 2.1-9d
+ * Version     : 2.1-10d
  * Description : glFTPd binary logs utility
  * ============================================================================
  *
@@ -178,7 +178,7 @@
 
 #define VER_MAJOR 2
 #define VER_MINOR 1
-#define VER_REVISION 9
+#define VER_REVISION 10
 #define VER_STR "d"
 
 #ifndef _STDINT_H
@@ -1702,6 +1702,8 @@ int
 split_string(char *, char, pmda);
 off_t
 s_string(char *input, char *m, off_t offset, size_t i_l);
+char *
+s_char(char *input, char c, size_t max);
 void *
 md_alloc(pmda md, int b);
 __g_match
@@ -6341,7 +6343,6 @@ dirlog_update_record(char *argv)
           ret = 6;
           goto end;
         }
-
 
       dirlog_format_block(arg.dirlog, NULL);
 
@@ -12518,28 +12519,98 @@ dt_rval_spec_tf_gm(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
-dt_rval_spec_math_u(void *arg, char *match, char *output, size_t max_size,
+dt_rval_spec_math_u64(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   unsigned char v_b[16] =
     { 0 };
   void *v_ptr = &v_b;
   g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      *(long long unsigned int*) v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint64_t*) v_ptr);
   return output;
 }
 
 char *
-dt_rval_spec_math_s(void *arg, char *match, char *output, size_t max_size,
+dt_rval_spec_math_u32(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint32_t*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_u16(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint16_t*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_u8(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint8_t*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_s64(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   unsigned char v_b[16] =
     { 0 };
   void *v_ptr = (void*) &v_b;
   g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      *(long long int*) v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int64_t*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_s32(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = (void*) &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int32_t*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_s16(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = (void*) &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int16_t*) v_ptr);
+  return output;
+}
+
+char *
+dt_rval_spec_math_s8(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = (void*) &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int8_t*) v_ptr);
   return output;
 }
 
@@ -12740,18 +12811,34 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
             switch (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_TYPES)
               {
             case F_MATH_INT:
-              /*              mppd->direc[1] = 0x6C;
-               mppd->direc[2] = 0x75;
-               mppd->direc[3] = 0x0;*/
-              return as_ref_to_val_lk(id, dt_rval_spec_math_u, mppd, "%llu");
+              switch (((__g_math ) mppd->math.objects->ptr)->vb)
+                {
+              case 1:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_u8, mppd, "%hhu");
+              case 2:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_u16, mppd, "%hu");
+              case 4:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_u32, mppd, "%u");
+              case 8:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_u64, mppd, "%llu");
+              default:
+                return NULL;
+                }
             case F_MATH_INT_S:
-              /* mppd->direc[1] = 0x6C;
-               mppd->direc[2] = 0x64;
-               mppd->direc[3] = 0x0; */
-              return as_ref_to_val_lk(id, dt_rval_spec_math_s, mppd, "%lld");
+              switch (((__g_math ) mppd->math.objects->ptr)->vb)
+                {
+              case 1:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_s8, mppd, "%hhd");
+              case 2:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_s16, mppd, "%hd");
+              case 4:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_s32, mppd, "%d");
+              case 8:
+                return as_ref_to_val_lk(id, dt_rval_spec_math_s64, mppd, "%lld");
+              default:
+                return NULL;
+                }
             case F_MATH_FLOAT:
-              /* mppd->direc[1] = 0x66;
-               mppd->direc[2] = 0x0; */
               return as_ref_to_val_lk(id, dt_rval_spec_math_f, mppd, "%f");
             default:
               return NULL;
@@ -13937,7 +14024,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
             {
               lom->flags |= F_LOM_INT_S;
             }
-          else if (base == 10 && strchr(field, 0x2E))
+          else if (base == 10 && s_char(field, 0x2E, g_floatstrlen(field)))
             {
               lom->flags |= F_LOM_FLOAT;
             }
@@ -14171,7 +14258,7 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
             {
               math->flags |= F_MATH_INT_S;
             }
-          else if (base == 10 && strchr(field, 0x2E))
+          else if (base == 10 && s_char(field, 0x2E, g_floatstrlen(field)))
             {
               math->flags |= F_MATH_FLOAT;
             }
@@ -15254,6 +15341,10 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
         }
       i = 0;
       left = ptr;
+      if (ptr[0] == 0x2B || ptr[0] == 0x2D)
+        {
+          ptr++;
+        }
       while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23)
         {
           /*if (ptr[0] == 0x23)
@@ -15274,6 +15365,10 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
         {
           oper = ptr[0];
           ptr++;
+          /*if (ptr[0] == 0x2B || ptr[0] == 0x2D)
+           {
+           ptr++;
+           }*/
         }
       else
         {
@@ -18483,6 +18578,22 @@ free_cfg_rf(pmda md)
     }
 
   return md_g_free(md);
+}
+
+char *
+s_char(char *input, char c, size_t max)
+{
+  size_t i = 0;
+  while (input[0] && i < max)
+    {
+      if (input[0] == c)
+        {
+          return input;
+        }
+      input++;
+      i++;
+    }
+  return NULL;
 }
 
 off_t
