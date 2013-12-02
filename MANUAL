@@ -387,7 +387,7 @@ FLAGS:
 						...
 					
 						
-			If <format> is defined, it gets passed to the standard C printf family function which outputs 
+			If #<format> is defined, it gets passed to the standard C printf family function which outputs 
 			the requested field, however some extended directives, e.g. '?t' use <format> for other purposes 
 			('?l' doesn't use it at all). It applies to all integer fields. Be very careful when using this, 
 			for security reasons users should never be allowed to specify this option freely.
