@@ -16,6 +16,7 @@
  *   - + Add GENERIC-4 log (rev. 6)
  *   - % --raw with -z dumps loaded data to stdout (rev. 7)
  *   - ~ Default match subject offset misaligned on GE4 (string matching) (rev. 8)
+ *   - ! Optimize enum_dir (rev. 8)
  *
  * v2.0:
  *
