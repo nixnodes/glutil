@@ -410,7 +410,7 @@ FLAGS:
 			
 			
 			These directives can also be applied to string filters (--[i]regex[i]/--[i]lom):			
-				glutil -d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
+				-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
 				
 			Prints out only what was created on 23'rd of September, custom formatted.
 			
