@@ -357,11 +357,11 @@ FLAGS:
 					
 					Escapes are:
 					
-					\n		New line
-					\t		Horizontal tab
-					\r		Carriage return
-					\s		Space
-					\\		Literal backslash ('\')
+					\n   New line
+					\t   Horizontal tab
+					\r   Carriage return
+					\s   Space
+					\\   Literal backslash ('\')
 					
 			?t	{?t:<field>#<conversion specs>}
 					Using field data, formats an unix timestamp into a readable string (GMT)
@@ -381,18 +381,18 @@ FLAGS:
 					multiplied and divided.
 					
 					Arithmetic operators:					
-						+ 	Add
-						- 	Subtract
-						* 	Multiply
-						/ 	Divide
-						% 	Modulo (integer remainder)
+						+   Add
+						-   Subtract
+						*   Multiply
+						/   Divide
+						%   Modulo (integer remainder)
 						
 					Bitwise operators:					
-						& 	AND
-						| 	OR
-						^ 	XOR
-						<<	Bitwise left shift
-						>> 	Bitwise right shift
+						&   AND
+						|   OR
+						^   XOR
+						<<  Bitwise left shift
+						>>  Bitwise right shift
 					
 					Example:
 						-d -print '{?m:size/1024/1024}MB in {files} files, {?m:size/files/1024/1024}MB avg per file {?c:2:\t} {basedir}' ilom 'files > 0'
