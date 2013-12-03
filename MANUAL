@@ -1,17 +1,18 @@
-Updated: 1/12/2013
+Updated: 3/12/2013
 
 glutil can perform IO operations on glFTPd binary logs (any vanilla 
-binary file you can find in /logs folder), based on advanced filtering 
-methods. Aside from that, it has 'hooks' which you can use to capture 
-data from binary logs and pass it to the shell. 
+binary file you can find in /logs folder), shared mem segment containing
+online users info, or the filesystem, based on advanced filtering 
+methods. Extensive formatting options are available, output can be
+passed along to the shell or written to stdout (see -exec[v] and -print[f]).
 
-Log's <field>'s are referenced using static variable names.
+Fields are referenced using static variable names.
 
-<field> is accepted by --[i]regex[i], --[i]match, --[i]lom, 
- --sort and --[pre|post|loop]exec (see --help)
+Fields are accepted by --[i]regex[i], --[i]match, --[i]lom, 
+ --sort, -exec family instructions and -print[f]  (see --help)
 
-Mind, that whenever passing arguments to --[..]exec, {} needs to be
-used around variables (e.g. {dir}, {time}, ...) 
+Mind, that whenever passing arguments to -exec[v] or -print[f], 
+{} enclosures to be used around variables (e.g. {dir}, {time}, ...) 
 
 * NOTE: As of 1.9-34, data log field names are guaranteed to be the
   same when reading and writing. For instance, filtering by a specific
@@ -412,7 +413,7 @@ FLAGS:
 			Extended directives can also be used with -exec[v] and string filters (--[i]regex[i]/--[i]lom):
 				-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"			
 				
-			Prints out only what was created on 23'rd of September, custom formatted.			
+			Prints only records created on 23'rd of September from the dirlog, custom formatted.			
 			
 	
  * Write:
