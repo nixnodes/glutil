@@ -391,8 +391,8 @@ FLAGS:
 						&	AND
 						|	OR
 						^	XOR
-						<<	Bitwise left shift
-						>>	Bitwise right shift
+						<< 	Bitwise left shift
+						>> 	Bitwise right shift
 					
 					Example:
 						-d -print '{?m:size/1024/1024}MB in {files} files, {?m:size/files/1024/1024}MB avg per file {?c:2:\t} {basedir}' ilom 'files > 0'
