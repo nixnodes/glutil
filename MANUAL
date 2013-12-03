@@ -409,12 +409,10 @@ FLAGS:
 			for security reasons users should never be allowed to specify this option freely.
 			
 			
-			These directives can also be used with string filters (--[i]regex[i]/--[i]lom)..	
-				-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
+			Extended directives can also be used with -exec[v] and string filters (--[i]regex[i]/--[i]lom):
+				-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"			
 				
-			..and with the -exec[v] option ..
-				
-			Prints out only what was created on 23'rd of September, custom formatted.
+			Prints out only what was created on 23'rd of September, custom formatted.			
 			
 	
  * Write:
