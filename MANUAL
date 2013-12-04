@@ -6,30 +6,35 @@ Updated: 4/12/2013
 
 	Read-only mode (operators:  -d, -n, -i, -l, -o, -w, -a, -k, -h, -q)
 	
-	This mode loads selected binary log into process memory pages or shared mem segment (--shmem) and 
-	displays the data in either normal (synopsis), --batch (full, tab delimited) or --raw (binary) formats.
+	This mode loads selected binary log into process memory pages or shared mem segment 
+	(--shmem) and displays the data in either normal (synopsis), --batch (full, tab delimited) 
+	or --raw (binary) formats.
 	
 	
-	--nobuffer turns memory buffering off and directly reads record by record using C native IO procedures (fread)	
+	--nobuffer turns memory buffering off and directly reads record by record using C native 
+	IO procedures (fread).
 	
-	Using --shmem, shared memory pages are used instead of locally allocated memory - loading there allows to
-	keep log data cached in memory, where other instances can access it thus avoiding having to allocate theirown
-	pages and filing them with the actual log data from filesystem. 
+	Using --shmem, shared memory pages are used instead of locally allocated memory - loading 
+	there allows to	keep log data cached in memory, where other instances can access it thus 
+	avoiding having to allocate theirown pages and filing them with the actual log data from 
+	the filesystem. 
 		
-	When the segment that belongs to a log file is non-existant, it's automatically created and filled with data.
-	If glutil detects log data file size is different from segment size or --shmdestroy is present, it automatically 
-	destroys the segment, forcing glutil to reallocate and reload it immediatelly after. 
+	When the segment that belongs to a log file is non-existant, it's automatically created 
+	and filled with data. If glutil detects log data file size is different from segment size 
+	or --shmdestroy is present, it automatically destroys the segment, forcing glutil to 
+	reallocate and reload it immediatelly after. 
 	
-	If data log size matches segment size and the segment exists, glutil will proceed using the segment and it's data
-	for all operations (segment data is NOT updated).
+	If data log size matches segment size and the segment exists, glutil will proceed using 
+	the segment and it's data for all operations (segment data is NOT updated).
 	
-	The user must ensure shared segment be updated promply, whenever log data on disk changes. Even though glutil
-	automatically updates the segment when log/segment sizes do not match, it doesn't detect content changes; 
+	The user must ensure shared segment be updated promply, whenever log data on disk changes.
+	Even though glutil automatically updates the segment when log/segment sizes do not match, 
+	it doesn't detect content changes; 
 	
 		-q <logname> --shmem --shmdestroy --loadq -vv
 		
-		Load the data into segment (-q, --shmem), force segment be destroyed and re-allocated (--shmdestroy), 
-		quit right after loading, don't do anything else (--loadq)
+		Load the data into segment (-q, --shmem), force segment be destroyed and re-allocated 
+		(--shmdestroy), quit right after loading, don't do anything else (--loadq)
 		
 		-q <logname> --shmem --shmreload --loadq -vv
 	
@@ -60,8 +65,8 @@ Updated: 4/12/2013
 
 	Write mode (operator: -z <logname> [--infile=/path/file])
 	 
-	Used to write one or more data log (specified by <logname>) records from a regular ASCII text file (see README
-	for examples).
+	Used to write one or more data log (specified by <logname>) records from a regular 
+	ASCII text file (see README	for examples).
 	
 	If --infile=<filename> is not set, stdin is expected to hold the input data.
 	
@@ -74,8 +79,8 @@ Updated: 4/12/2013
 	
 	Data is loaded into memory, passed via filters/hooks, then written back to log file.
 	
-	This is basically just for convinience, the same can be accomplished using --raw in parse mode and redirecting
-	stdout back to log file;
+	This is basically just for convinience, the same can be accomplished using --raw in 
+	parse mode and redirecting stdout back to log file;
 	
 	For example:
 	
@@ -85,20 +90,21 @@ Updated: 4/12/2013
 	
 		-e dirlog --regexi dir,"Someshow" or --lom "size == 0 || files == 0"
 		
-	These examples would filter any dirlog record including 'Smallville' in directory name (case insentitive) and any 
-	directories with size/files zero, writing results back to data log.
-	Using 'and' instead of 'or' between the match operators, would filter only stuff with both Smallvile in directory 
-	name and of size 0.
+	These examples would filter any dirlog record including 'Smallville' in directory 
+	name (case insentitive) and any directories with size/files zero, writing results 
+	back to data log. Using 'and' instead of 'or' between the match operators, would 
+	filter only stuff with both Smallvile in directory name and of size 0.
 	
-	There are however some advantages to using parsing operators with --raw, which are not available during rebuild mode;
+	There are however some advantages to using parsing operators with --raw, which are 
+	not available during rebuild mode;
 	
-	When in rebuild mode (-e), data must be buffered (either locally or in shared mem segment) in order to be processed, 
-	so data file size is limited with your RAM capacity (and with --memlimit argument or DB_MAX_SIZE macro in source, 512MB 
-	by default).
-	However, while parsing (-d, -n, ..), --nobuffer option can be used, turning buffering off and reading record by record 
-	using fget. 
-	Since glutil is set by default to compile with large file offsets, theoretically a massive file could be parsed
-	(64-bit file size, not taking filesystem limits into account).
+	When in rebuild mode (-e), data must be buffered (either locally or in shared mem 
+	segment) in order to be processed, so data file size is limited with your RAM capacity 
+	(and with --memlimit argument or DB_MAX_SIZE macro in source, 512MB by default).
+	However, while parsing (-d, -n, ..), --nobuffer option can be used, turning buffering 
+	off and reading record by record using fget. 
+	Since glutil is set by default to compile with large file offsets, theoretically a 
+	massive file could be parsed (64-bit file size, not taking filesystem limits into account).
 	
 	All match/hook operators apply.
 	
