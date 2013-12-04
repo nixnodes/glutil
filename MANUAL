@@ -1,4 +1,4 @@
-Updated: 3/12/2013
+Updated: 4/12/2013
 
 glutil can perform IO operations on glFTPd binary logs (any vanilla 
 binary file you can find in /logs folder), shared mem segment containing
@@ -490,7 +490,7 @@ FLAGS:
 	Char directives:
 	
 	{:t}	Horizontal tab
-   	{:n}	New line
+	{:n}	New line
 			
 				
 	If #<format> is defined, it gets passed to the standard C printf family function which outputs 
