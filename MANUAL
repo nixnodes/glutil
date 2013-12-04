@@ -49,9 +49,7 @@ FLAGS:
    memlimit   S     Maximum number of bytes that can be buffered
    glconf     S     Path to glftpd.conf per glconf.h
    curtime    S     Seconds passed since Epoch
-   :TAB       S     Horizontal tab
-   :NL        S     New line
-  
+
   
 ; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
 
@@ -349,71 +347,7 @@ FLAGS:
 			'time' field (unix timestamp) is formatted using strftime (man 3 strftime)
 			
 			
-			Extended directives:
-			
-			[?<directive>:]arg[:arg2:..][#<format>]
-			
-			?c	{?c:<num repeat>:<char>}					
-					Character generator. Example use: '{?c:3:\t}' - prints three tab's.
-					
-					Escapes are:
-					
-					\n   New line
-					\t   Horizontal tab
-					\r   Carriage return
-					\s   Space
-					\\   Literal backslash ('\')
-					
-			?t	{?t:<field>#<conversion specs>}
-					Using field data, formats an unix timestamp into a readable string (GMT)
-					according to the <format> specification. 
-					See 'man 3 strftime' for conversion	specifications (passed after #). If 
-					no conversion specifier characters are given, format defaults to: '%d/%h/%Y %H:%M:%S'
-					
-			?tl		Same as '?t', only the timestamp is converted relative to the user's specified timezone.
-					
-			?l	{?l:<field>}
-					Prints the length of the field data based output string. Applies to integer fields too, 
-					measuring their length in string form.
-					
-			?m	{?m:<expression>}
-					Simple arithmetic and bitwise operations, compatible with all integer
-					fields, although floating point data types can only be added, subtracted,
-					multiplied and divided.
-					
-					Arithmetic operators:					
-						+   Add
-						-   Subtract
-						*   Multiply
-						/   Divide
-						%   Modulo (integer remainder)
-						
-					Bitwise operators:					
-						&   AND
-						|   OR
-						^   XOR
-						<<  Bitwise left shift
-						>>  Bitwise right shift
-					
-					Example:
-						-d -print '{?m:size/1024/1024}MB in {files} files, {?m:size/files/1024/1024}MB avg per file {?c:2:\t} {basedir}' ilom 'files > 0'
-						
-					Output:
-						...
-						356MB in 28 files, 12MB avg per file 		 Some.Folder-TAG
-						...
-					
-						
-			If #<format> is defined, it gets passed to the standard C printf family function which outputs 
-			the requested field, however some extended directives, e.g. '?t' use <format> for other purposes 
-			('?l' doesn't use it at all). It applies to all integer fields. Be very careful when using this, 
-			for security reasons users should never be allowed to specify this option freely.
-			
-			
-			Extended directives can also be used with -exec[v] and string filters (--[i]regex[i]/--[i]lom):
-				-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"			
-				
-			Prints only records created on 23'rd of September from the dirlog, custom formatted.			
+			See 'EXTENDED DIRECTIVES' section below.
 			
 	
  * Write:
@@ -439,11 +373,11 @@ FLAGS:
 	
 	For example:
 	
-		-d --regexi dir,"Smallville" or --lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
+		-d --regexi dir,"Someshow" or --lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
 		
 	would produce the same result as:
 	
-		-e dirlog --regexi dir,"Smallville" or --lom "size == 0 || files == 0"
+		-e dirlog --regexi dir,"Someshow" or --lom "size == 0 || files == 0"
 		
 	These examples would filter any dirlog record including 'Smallville' in directory name (case insentitive) and any 
 	directories with size/files zero, writing results back to data log.
@@ -463,6 +397,119 @@ FLAGS:
 	All match/hook operators apply.
 	
 	
+ EXTENDED DIRECTIVES:
+			
+	[?<directive>:]arg[:arg2:..][#<format>]
+	
+	?c	 <num repeat>:<char>				
+			Character generator. Example use: '{?c:3:\t}' - prints three tab's.
+			
+			Escapes are:
+			
+			\n   New line
+			\t   Horizontal tab
+			\r   Carriage return
+			\s   Space
+			\\   Literal backslash ('\')
+			
+	?t	 <field>#<conversion specs>
+			Using field data, formats an unix timestamp into a readable 
+			string (GMT) according to the <format> specification. 
+			See 'man 3 strftime' for conversion	specifications (passed 
+			after #). If no conversion specifier characters are given, 
+			format defaults to: '%d/%h/%Y %H:%M:%S'
+			
+	?tl		Same as '?t', only the timestamp is converted relative to 
+			the user's specified timezone.
+			
+	?l	 <field>
+			Prints the length of the field data based output string. Applies to 
+			integer/float fields too, measuring their length in string form.
+			
+	?m	 <expression>
+			Simplistic arithmetic and bitwise operations, compatible with all 
+			integer fields. Floating point data types can only be added, subtracted,
+			multiplied and divided.
+			
+			Arithmetic operators:					
+				+   Add
+				-   Subtract
+				*   Multiply
+				/   Divide
+				%   Modulo (integer remainder)
+				
+			Bitwise operators:					
+				&   AND
+				|   OR
+				^   XOR
+				<<  Bitwise left shift
+				>>  Bitwise right shift
+			
+			Example:
+				-d -print '{?m:size/1024/1024}MB in {files} files, {?m:size/files/1024/1024}MB avg per file {?c:2:\t} {basedir}' ilom 'files > 0'
+				
+			Output:
+				...
+				356MB in 28 files, 12MB avg per file 		 Some.Folder-TAG
+				...
+				
+	?rs  [/[<flags>]]:<field>:<pattern>:<string>
+			Before outputing/filtering the string returned by <field>, substitute
+			part(s) matching regex <pattern> with <string>. 
+			Works on all integer/float fields.
+			
+			<flags> are:
+				i	Case insensitive
+				g 	Match every instance
+						
+						
+			Replace float dots in 'score' field with commas before 
+			printing to stdout:
+			
+				-a ilom "score>7.0" -print '{?rs:score:[.]:\,} {?c:1:\t}{title}'
+										
+			Output:				
+				7,7		Some Movie
+				...
+				
+			
+	?rd  [/[<flags>]]:<field>:<pattern>
+			Delete matching regex <pattern> from returned string.
+						
+			Remove any (..) tags that may be present in tvrage shownames, before
+			doing a regex query in tvlog for 'Some Show':
+			
+				-h -print '{name}' iregexi '?rd/ig:name:([ ]+|())\\(.*\\)([ ]+|()),^Some Show$'
+				
+			'Some Show (2004)' is matched as 'Some Show', without having to
+			wipe (2004) out of the database.
+			
+	Mind that ,:(){} always need to be escaped 
+	
+	
+	Char directives:
+	
+	{:t}	Horizontal tab
+   	{:n}	New line
+			
+				
+	If #<format> is defined, it gets passed to the standard C printf family function which outputs 
+	the requested field, however some extended directives, e.g. '?t' use <format> for other purposes 
+	('?l' doesn't use it at all). It applies to all integer fields. Be very careful when using this, 
+	for security reasons users should never be allowed to specify this option freely.
+	
+	
+	Extended directives can be used with with -exec[v], -print[f] and string filters 
+	(--[i]regex[i]/--[i]match):
+	
+		-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
+		
+		or
+		
+		-d imatch "?tl:time#%d %h,23 Sep" -execv "echo {basedir} was created \"{?tl:time#%d %h at %H:%M}\""			
+		
+	Prints only records created on 23'rd of September from the dirlog, custom formatted.
+
 
  EXTRACTING DATA FROM BINARY LOGS:
 

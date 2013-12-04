@@ -25,6 +25,7 @@
  *   - % Non-field numerals given to arithmetic pre-processor are forced to same type as first argument (rev. 11)
  *   - + Arithmetic pre-processor accepts bitwise operators (see MANUAL) (rev. 12)
  *   - %! Avoid copying and null-terminating strings where not needed (ref_to_val_af) (rev. 13)
+ *   - + ?rs and ?rd - regex string pre-processor (extended directives) (rev. 14)
  *
  * v2.0:
  *
