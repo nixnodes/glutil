@@ -1,0 +1,293 @@
+Updated: 4/12/2013
+
+glutil can perform IO operations on glFTPd binary logs (any vanilla 
+binary file you can find in /logs folder), shared mem segment containing
+online users info, or the filesystem, based on advanced filtering 
+methods. Extensive formatting options are available, output can be
+passed along to the shell or written to stdout (see -exec[v] and -print[f]).
+This document contains a full list of data fields that are available.
+
+Fields are referenced using static variable names and accepted by 
+--[i]regex[i], --[i]match, --[i]lom, --sort, -exec family instructions 
+and -print[f]  (see --help)
+
+Mind, that whenever passing arguments to -exec[v] or -print[f], 
+{} enclosures to be used around variables (e.g. {dir}, {time}, ...) 
+
+* NOTE: As of 1.9-34, data log field names are guaranteed to be the
+  same when reading and writing. For instance, filtering by a specific
+  field (regex,lom,..) takes the same field name argument as textform
+  datalog records (used when injecting data into logs, -z).
+  Some field names were changed.
+  
+* NOTE: Fields are added all the time, check CHANGELOG or commit
+  history to see when they were added, except when using the latest
+  version
+
+FLAGS:
+ 
+  S = string
+  I = integer
+  F = float
+  E = extra info (not part of actual data structure)
+
+|  FIELD  | TYPE |  DESCRIPTION                                       |
++---------+------+----------------------------------------------------+
+; GLOBAL (applies everywhere)
+
+   exe        S     Absolute path to self
+   procid     S     Self process id
+   ipc        S     glFTPd's IPC key set in system (or glutil)
+   glroot     S     glFTPd root path
+   siteroot   S     glFTPd site root path
+   ftpdata    S     glFTPd data path
+   logroot    S     Absolute path to logs folder
+   logfile    S     glutil log file path
+   imdbfile   S     iMDB log path
+   tvragefile S     TVRAGE log path
+   nukestr    S     glFTPd nuke string extracted from glftpd.conf
+   memlimit   S     Maximum number of bytes that can be buffered
+   glconf     S     Path to glftpd.conf per glconf.h
+   curtime    S     Seconds passed since Epoch
+   ?<..>      S     Extended directives (see MANUAL)
+
+  
+; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
+
+   path       S     Full path
+   basepath   S     Base path
+   size       S     Total size, in bytes
+   mode       I     File type (glutil --info -vv)
+   devid      I     ID of device containing file
+   major      I     Class ID of device
+   minor      I     ID of the device in class
+   inode      I     inode number
+   links      I     Number of hard links
+   uid        I     User ID of owner
+   gid        I     Uroup ID of owner
+   blksize    I     Blocksize for filesystem I/O
+   blocks     I     Number of 512B blocks allocated
+   sparse     F     File's sparseness.
+   atime      I     Time of last access
+   mtime      I     Time of last modification
+   ctime      I     Time of last status change
+   isread     I     1 = Read access, 0 = No read access, -1 = Operation failed
+   iswrite    I     1 = Write access, 0 = No write access, -1 = Operation failed
+   isexec     I     1 = Execute access, 0 = No execute access, -1 = Operation failed
+   uperm      I     User permission octet
+   gperm      I     Group permission octet
+   operm      I     Others permission octet
+   perm       S     File permissions string
+   crc32      I     CRC32 of file (hexadecimal)
+   dec-crc32  S     CRC32 of file (decimal)
+   curtime    I     Seconds passed since Epoch (when LOM matching, trailing +/- increase/decrease this value, e.g curtime-3600, curtime+7200, ..)
+   c:<key>    S     Retrieve line starting with <key>, followed by a space or tab (meant for glftpd config files)
+  
+
+; DIRLOG
+
+   dir        S     The name of the dir (fullpath)
+   mode       ES    File type (glutil --info -vv)
+   basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
+   time       I     Creation time since epoch (man 2 time)
+   user       I     The userid of the creator
+   group      I     The groupid of the primary group of the creator
+   files      I     The number of files inside the dir
+   size       I     The number of bytes in the dir   
+
+
+; NUKELOG
+
+   dir        S     The name of the dir (fullpath)
+   basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   mode       ES    File type (glutil --info -vv)
+   status     I     0 = NUKED, 1 = UNNUKED
+   time       I     The nuke time since epoch (man 2 time)
+   nuker      S     The name of the nuker
+   unnuker    S     The name of the unnuker
+   nukee      S     The name of the nukee
+   mult       I     The nuke multiplier
+   size       F     The number of bytes nuked
+   reason     S     The nuke reason
+
+
+; DUPEFILE
+ 
+   file       S     The file name
+   time       I     Creation time since epoch (man 2 time)
+   user       S     The name of the uploader
+
+
+; LASTONLOG
+ 
+   user       S     Username
+   group      S     Users primary group
+   tag        S     Users tagline
+   logon      I     Users logon time
+   logoff     I     Users logoff time
+   upload     I     Bytes uploaded
+   download   I     Bytes downloaded
+   stats      S     What did the user do ?
+
+
+; ONLINER
+   
+   user       S     The user that added the oneliner
+   group      S     The primary group of the user who added the oneliner
+   tag        S     The tagline of the user who added the oneliner
+   time       I     The time the message was added (epoch)
+   msg        S     The message (oneliner)
+
+
+; ONLINE (shared memory segment)
+
+   user       S     The username of the user
+   tag        S     The users tagline
+   time       I     The login time since the epoch (man 2 time)
+   status     I     The status of the user, idle, RETR, etc
+   host       S     The host the user is comming from (with ident)
+   dir        S     The users current dir (fullpath)
+   basedir    ES    The filename component of fullpath current dir (basepath)
+   ndir       ES    The directory component of fullpath current dir
+   ssl        I     0 = no ssl, 1 = ssl on control, 2 = ssl on control and data
+   group      I     The groupid of the users primary group
+   pid        I     The processor id of the process
+   lupdtime   I     Last update time since epoch (man 2 time)
+   lxfertime  I     The time of the last succesfull transfer
+   bxfer      I     Bytes transferred so far
+   btxfer     I     Bytes transferred in the last loop (speed limiting)
+   rate       I     Transfer rate in B/s, calculated from bxfer and lupdtime
+   
+; glutil specific: 
+ 
+; IMDB
+ 
+   dir        S     The directory name related to record
+   mode       ES    File type (glutil --info -vv)
+   basedir    ES    The directory name related to record (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   time       I     Creation time since epoch (man 2 time)
+   imdbid     S     iMDB object ID
+   score      F     iMDB score
+   votes      I     iMDB votes
+   genre      S     Listed genres
+   rated      S     Rating
+   title      S     Title
+   director   S     Director
+   actors     S     Actors
+   released   I     Released time since epoch (man 2 time)
+   runtime    I     Runtime 
+   year       I     Year of release | !*changed from string to integer in 1.9-72, update existing databases*!
+   plot       S     Plot/synopsis
+
+
+; TVRAGE
+ 
+   dir        S     The directory name related to record
+   basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   mode       ES    File type (glutil --info -vv)
+   time       I     Creation time since epoch (man 2 time)
+   showid     I     TVRAGE show id
+   name       S     Show name
+   link       S     TVRAGE link to show
+   country    S     Country of origin
+   airtime    S     Airing time
+   airday     S     Air day of the week
+   runtime    I     Show runtime in minutes
+   started    I     Show starting time since epoch
+   ended      I     Show ended time since epoch
+   startyear  I     Year show started
+   endyear    I     Year show ended
+   seasons    I     Total number of seasons
+   class      S     Show classification
+   genre      S     Show genres
+   network    S     Show network
+   status     S     Show status
+
+
+; GAME
+ 
+   dir        S     The directory name related to record
+   basedir    ES    The name of the dir (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   mode       ES    File type (glutil --info -vv)
+   time       I     Creation time since epoch (man 2 time)
+   score      F     Game score
+   
+   
+; GENERIC-1 (ge1)
+
+   i32        I     32-bit integer field
+   ge1        S     255 byte signed character field
+   ge2        S     -||-
+   ge3        S     -||-
+   ge4        S     -||-
+   ge5        S     -||-
+   ge6        S     -||-
+   ge7        S     -||-
+   ge8        S     -||-
+   
+
+; GENERIC-2 (ge2)
+
+   i1         I     32-bit signed integer field
+   i2         I     -||-
+   i3         I     -||-
+   i4         I     -||-
+   u1         I     32-bit unsigned integer field
+   u2         I     -||-
+   u3         I     -||-
+   u4         I     -||-
+   ul1        I     64-bit unsigned integer field
+   ul2        I     -||-
+   ul3        I     -||-
+   ul4        I     -||-
+   f1         I     32 bit floating point field
+   f2         I     -||-
+   f3         I     -||-
+   f4         I     -||-
+   ge1        S     255 byte signed character field
+   ge2        S     -||-
+   ge3        S     -||-
+   ge4        S     -||-
+   ge5        S     128 byte signed character field
+   ge6        S     -||-
+   ge7        S     -||-
+   ge8        S     -||-
+  
+  
+  ; GENERIC-3 (ge3)
+
+   i1         I     32-bit signed integer field
+   i2         I     -||-
+   u1         I     32-bit unsigned integer field
+   u2         I     -||-
+   ul1        I     64-bit unsigned integer field
+   ul2        I     -||-
+   ge1        S     255 byte signed character field
+   ge2        S     -||-
+   ge3        S     128 byte signed character field
+   ge4        S     -||-
+
+
+; GENERIC-4 (ge4)
+
+   i1         I     32-bit signed integer field
+   i2         I     -||-
+   u1         I     32-bit unsigned integer field
+   u2         I     -||-
+   ul1        I     64-bit unsigned integer field
+   ul2        I     -||-
+   ge1        S     4096 byte signed character field
+   ge2        S     255 byte signed character field
+   ge3        S     128 byte signed character field
+   ge4        S     -||-
