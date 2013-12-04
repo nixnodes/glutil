@@ -1537,7 +1537,7 @@ char *hpd_up =
         "                          --mindepth - process only when recursor depth is over <limit>\n"
         "                          --fd - apply filters before recursor descends into subdirectory\n"
         "                          --recursive (-R) - traverse the whole <root dir> directory tree\n"
-        "  -print <fmt string>   Format output using {var} directives (see MANUAL for a field list)\n"
+        "  -print <fmt string>   Format output using {var} directives (see DATA_STRUCTURES for a field list)\n"
         "  -printf <fmt string>  Same as -printf, only does not print a new line character at the end\n"
         "  --stdin               Read data from stdin\n"
         "\n Input:\n"
