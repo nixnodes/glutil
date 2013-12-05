@@ -1,6 +1,6 @@
 #!/bin/bash
 #@VERSION:0
-#@REVISION:6
+#@REVISION:7
 #
 ## Simple debugger script
 #
@@ -200,6 +200,19 @@ launch_test() {
 	}	
 	echo -n "$1: execv field translate:  "
 	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -execv "echo \"${lt_ms}\"" --imatchq silent`
+	lt_rv=`get_exec_vals "${lt_log}_values"`
+	[ "$lt_rf" == "$lt_rv" ]  && {
+		echo -e "   \tOK"
+	} || {
+		echo -e "   \tFAILED"
+		echo $lt_ms
+		echo $lt_rf
+		echo $lt_rv
+		return 1
+	}	
+	
+	echo -n "$1: print field translate:  "
+	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -print "${lt_ms}" --imatchq silent`
 	lt_rv=`get_exec_vals "${lt_log}_values"`
 	[ "$lt_rf" == "$lt_rv" ]  && {
 		echo -e "   \tOK"
