@@ -108,7 +108,7 @@ data_backup_records(char *file)
 
   if (!file)
     {
-      print_str("ERROR: null argument passed (this is likely a bug)\n");
+      print_str("ERROR: invalid log file\n");
       return -1;
     }
 
