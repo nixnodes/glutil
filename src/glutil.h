@@ -17,6 +17,7 @@
 #define OL_SZ                           sizeof(struct oneliner)
 #define ON_SZ                           sizeof(struct ONLINE)
 
+#include <g_conf.h>
 
 #include <t_glob.h>
 #include <l_sb.h>
