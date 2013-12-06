@@ -39,7 +39,6 @@
 
 #include <unistd.h>
 
-#include "glconf.h"
 
 char *
 g_dgetf(char *str)

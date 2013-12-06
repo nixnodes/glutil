@@ -14,8 +14,6 @@
 #include <str.h>
 #include <xref.h>
 
-#include "glconf.h"
-
 #include <errno.h>
 #include <time.h>
 

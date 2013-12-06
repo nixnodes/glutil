@@ -5,6 +5,8 @@
  *      Author: reboot
  */
 
+#include "glconf.h"
+
 #include <glutil.h>
 #include <l_error.h>
 #include <cfgv.h>

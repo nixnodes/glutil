@@ -14,7 +14,6 @@
 
 #include "lref_lastonlog.h"
 
-#include "glconf.h"
 
 #include <time.h>
 #include <errno.h>

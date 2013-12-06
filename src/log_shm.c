@@ -14,8 +14,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "glconf.h"
-
 int
 g_shmap_data(__g_handle hdl, key_t ipc)
 {

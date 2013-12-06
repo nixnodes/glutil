@@ -19,7 +19,6 @@
 #include "lref_dirlog.h"
 #include <misc.h>
 
-#include "glconf.h"
 
 #include <errno.h>
 #include <time.h>

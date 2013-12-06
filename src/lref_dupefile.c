@@ -11,7 +11,6 @@
 #include <lref_gen.h>
 #include "lref_dupefile.h"
 
-#include "glconf.h"
 
 #include <stdio.h>
 #include <time.h>
