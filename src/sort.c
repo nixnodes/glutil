@@ -6,7 +6,8 @@
  */
 
 #include <glutil.h>
-#include <sort_hdr.h>
+#include "sort_hdr.h"
+
 #include <arg_proc.h>
 #include <gv_off.h>
 #include <lc_oper.h>

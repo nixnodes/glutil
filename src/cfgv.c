@@ -5,15 +5,17 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include "cfgv.h"
+
 #include <l_sb.h>
 #include <glutil.h>
 #include <memory_t.h>
-#include <glutil.h>
 #include <str.h>
 #include <l_error.h>
 #include <x_f.h>
 
-#include <cfgv.h>
+
 
 char *
 g_rtval_ex(char *arg, char *match, size_t max_size, char *output,

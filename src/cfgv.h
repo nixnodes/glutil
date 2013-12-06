@@ -9,9 +9,11 @@
 #define CFGV_H_
 
 #include <glutil.h>
-#include <stdio.h>
+
 #include <memory_t.h>
 #include <fp_types.h>
+
+#include <stdio.h>
 
 #define F_CFGV_BUILD_FULL_STRING        (a32 << 1)
 #define F_CFGV_RETURN_MDA_OBJECT        (a32 << 2)

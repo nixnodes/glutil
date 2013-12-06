@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.13)
 
-AC_INIT(glutil, [2.2.2], [devel@nixnodes.net])
+AC_INIT(glutil, [2.2.3], [devel@nixnodes.net])
 
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE()

@@ -29,6 +29,7 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
 
 struct d_stats dl_stats =
   { 0 };

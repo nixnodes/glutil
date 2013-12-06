@@ -11,6 +11,8 @@
 
 #include <t_glob.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 
 #define F_MDA_REFPTR                    (a32 << 1)
 #define F_MDA_FREE                      (a32 << 2)

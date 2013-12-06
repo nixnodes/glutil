@@ -8,6 +8,8 @@
 #ifndef ARG_OPTS_H_
 #define ARG_OPTS_H_
 
+#include <glutil.h>
+
 int
 print_version_long(void *arg, int m);
 int

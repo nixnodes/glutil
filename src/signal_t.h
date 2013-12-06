@@ -10,6 +10,8 @@
 
 #define SIG_BREAK_TIMEOUT_NS (useconds_t)1000000.0
 
+#include <glutil.h>
+
 #include <signal.h>
 
 int

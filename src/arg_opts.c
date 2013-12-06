@@ -5,9 +5,9 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include "arg_opts.h"
 
-#include <glutil.h>
 #include <m_general.h>
 #include <m_string.h>
 #include <m_lom.h>
