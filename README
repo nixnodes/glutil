@@ -1,4 +1,4 @@
- General purpose glFTPd binary logs utility
+ General purpose glFTPd binary logs utilitythe same
 
   This tool aims to provide:
 
@@ -23,19 +23,20 @@
 
  INSTALLATION:
 
-  - Compile:
+  - Unpack and compile:
 
-      cp glutil.c /<glroot>/bin/sources
-      cd /<glroot>/bin/sources
-      cc glutil.c -o ../glutil -Wall -O3
+      tar -xf glutil..tar.bz2
+      cd glutil..
+      
+      cp /glroot/bin/sources/glconf.h src/
+      ./configure
+      make
+      make install
 
       Some warnings might pop up (should be safe)
       glconf.h (found in /bin/sources) is needed to compile properly,
-       make sure it is in the same folder or change it's location in 
-       glutil.c 
+       make sure it is in 'src/' folder.
        
-  - Placed in /<glroot>/bin/sources, 'installgl.sh' will compile it, 
-      since no additional headers are required.
 
  MAIN FEATURES:
 
