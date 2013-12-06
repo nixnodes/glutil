@@ -35,8 +35,6 @@ typedef int
 __d_ref_to_val(void *, char *, char *, size_t, void *mppd);
 typedef int
 __d_format_block(void *, char *);
-typedef uint64_t
-__d_dlfind(char *, int, uint32_t, void *);
 typedef pmda
 __d_cfg(pmda md, char * file);
 typedef int
