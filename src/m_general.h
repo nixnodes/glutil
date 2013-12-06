@@ -8,7 +8,12 @@
 #ifndef M_GENERAL_H_
 #define M_GENERAL_H_
 
+#include <glutil.h>
+
 #include <m_comp.h>
+#include <fp_types.h>
+#include <stdio.h>
+
 
 #define G_MATCH         ((int)0)
 #define G_NOMATCH       ((int)1)

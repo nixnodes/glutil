@@ -6,6 +6,7 @@
  */
 
 #include "m_general.h"
+#include <glutil.h>
 #include <m_lom.h>
 #include <m_string.h>
 #include <l_error.h>

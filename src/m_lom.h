@@ -5,6 +5,8 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include <t_glob.h>
 #include <stdint.h>
 
 #include <m_general.h>

@@ -8,6 +8,8 @@
 #ifndef LC_OPER_H_
 #define LC_OPER_H_
 
+#include <glutil.h>
+
 #include <stdio.h>
 #include <fp_types.h>
 

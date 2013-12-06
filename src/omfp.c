@@ -33,7 +33,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
     {
       return 2;
     }
-printf("term\n");
+
   if (gfl & F_OPT_LOADQ)
     {
       goto rc_end;

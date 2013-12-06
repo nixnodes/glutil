@@ -5,7 +5,8 @@
  *      Author: reboot
  */
 
-#include <lc_oper.h>
+#include <glutil.h>
+#include "lc_oper.h"
 
 int
 g_oper_and(int s, int d)
