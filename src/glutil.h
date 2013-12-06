@@ -8,6 +8,10 @@
 #ifndef GLUTIL_H_
 #define GLUTIL_H_
 
+#define _LARGEFILE64_SOURCE 1
+#define _LARGEFILE_SOURCE 1
+#define _FILE_OFFSET_BITS 64
+
 #include <glconf.h>
 
 #define DL_SZ                           sizeof(struct dirlog)
