@@ -1,7 +1,7 @@
  General purpose glFTPd binary logs utility
 
   This tool serves as an I/O mechanism between user's scripts and 
-  binary logs and online users data from the shared memory segment.
+  binary logs or online users data from the shared memory segment.
   Additionally, it can traverse a filesystem directory tree much the
   same way as it would other sources, honoring all of the the extensive 
   filtering options available, making it a powerfull filesystem search 
