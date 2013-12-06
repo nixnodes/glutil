@@ -10,7 +10,10 @@
 
 #define MSG_DEF_SHM     "SHARED MEMORY"
 
+#include <glutil.h>
+#include <sys/types.h>
 #include <sys/shm.h>
+#include <sys/ipc.h>
 
 #include <im_hdr.h>
 #include <log_io.h>

@@ -7,6 +7,7 @@
 
 #include "log_shm.h"
 #include <glutil.h>
+#include <im_hdr.h>
 #include <l_sb.h>
 #include <l_error.h>
 #include <lref_online.h>
@@ -14,6 +15,9 @@
 
 #include <sys/stat.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
 int
 g_shmap_data(__g_handle hdl, key_t ipc)
@@ -140,13 +144,14 @@ g_map_shm(__g_handle hdl, key_t ipc)
           MSG_DEF_SHM);
       return 1;
     }
-
   int r;
-
   if ((r = load_data_md(&hdl->buffer, NULL, hdl)))
     {
+printf("%d bla\n", r);
+
       if (((gfl & F_OPT_VERBOSE) && r != 1002) || (gfl & F_OPT_VERBOSE4))
         {
+
           print_str(
               "ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d] [%d]\n",
               MSG_DEF_SHM, (uint32_t) hdl->buffer.count,

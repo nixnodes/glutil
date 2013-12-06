@@ -13,6 +13,8 @@
 #define MAX_SDENTRY_LEN         20000
 #define MAX_SENTRY_LEN          1024
 
+#include <glutil.h>
+
 #include <stdint.h>
 
 #include <im_hdr.h>

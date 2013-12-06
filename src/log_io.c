@@ -28,6 +28,9 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
 long long int db_max_size = DB_MAX_SIZE;
 
@@ -38,6 +41,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   if (flags & F_DL_FOPEN_SHM)
     {
+
       if (g_map_shm(hdl, SHM_IPC))
         {
           return 12;
