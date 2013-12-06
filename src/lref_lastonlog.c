@@ -9,6 +9,7 @@
 #include <cfgv.h>
 #include <str.h>
 
+#include <glutil.h>
 #include <lref.h>
 #include <lref_gen.h>
 

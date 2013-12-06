@@ -6,6 +6,8 @@
  */
 
 #include "lref_onliners.h"
+
+#include <glutil.h>
 #include <mc_glob.h>
 #include <lref.h>
 #include <lref_gen.h>

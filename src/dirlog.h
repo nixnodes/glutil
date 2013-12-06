@@ -13,6 +13,7 @@
 #define MAX_WBUFFER_HOLD        100000
 
 #include <xref.h>
+#include <glutil.h>
 
 typedef struct e_arg
 {

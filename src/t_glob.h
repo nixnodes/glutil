@@ -70,15 +70,6 @@ typedef unsigned long long int ulint64_t;
 
 #define V_MB                            0x100000
 
-#include "glconf.h"
-
-#define DL_SZ                           sizeof(struct dirlog)
-#define NL_SZ                           sizeof(struct nukelog)
-#define DF_SZ                           sizeof(struct dupefile)
-#define LO_SZ                           sizeof(struct lastonlog)
-#define OL_SZ                           sizeof(struct oneliner)
-#define ON_SZ                           sizeof(struct ONLINE)
-
 
 #define CRC_FILE_READ_BUFFER_SIZE       64512
 

@@ -6,6 +6,7 @@
  */
 
 #include "log_shm.h"
+#include <glutil.h>
 #include <l_sb.h>
 #include <l_error.h>
 #include <lref_online.h>

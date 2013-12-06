@@ -7,6 +7,7 @@
 
 #include <mc_glob.h>
 
+#include <glutil.h>
 #include <lref.h>
 #include <lref_gen.h>
 #include "lref_dupefile.h"
