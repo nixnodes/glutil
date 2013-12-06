@@ -9,6 +9,7 @@
  *
  *   - % Automake
  *   - ~ -r and -w broken (since 2.2)
+ *   - LREF_ONLINE_H_ used in two different headers (rev. 3)
  *
  * v2.1:
  * 
