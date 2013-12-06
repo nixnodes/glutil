@@ -25,17 +25,18 @@
 
   - Unpack and compile:
 
-      tar -xf glutil..tar.bz2
-      cd glutil..
-      
+      git clone https://github.com/nixnodes/glutil.git      
       cp /glroot/bin/sources/glconf.h src/
-      ./configure
+      ./configure --prefix=/glroot
       make
-      make install
-
+      
       Some warnings might pop up (should be safe)
       glconf.h (found in /bin/sources) is needed to compile properly,
        make sure it is in 'src/' folder.
+      
+  - Install:
+      
+      make install      
        
 
  MAIN FEATURES:
