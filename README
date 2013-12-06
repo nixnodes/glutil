@@ -1,16 +1,12 @@
- General purpose glFTPd binary logs utilitythe same
+ General purpose glFTPd binary logs utility
 
-  This tool aims to provide:
-
-    - A way to clean up any glFTPd binary log and rebuild dirlog based on 
-        filesystem data
-    - Ability to pass along data from binary logs (and other sources) to the 
-        shell for further processing
-    - Ability to write any type of binary log data using an ASCII formatted 
-        text source
-    - Display data (filtered and sorted) from any supported binary log 
-        in various formats
-  
+  This tool serves as an I/O mechanism between user's scripts and 
+  binary logs and online users data from the shared memory segment.
+  Additionally, it can traverse a filesystem directory tree much the
+  same way as it would other sources, honoring all of the the extensive 
+  filtering options available, making it a powerfull filesystem search 
+  application.
+      
   Check /scripts folder in this repo for examples on what can be done 
     with this tool. This is a C source project, scripts are NOT required
     for any part of glutil to function.  However, scripts depend on 
@@ -19,7 +15,22 @@
     That said, they should work fine on most newer linux environments 
     and provide scripters with a base for porting to theirown select platforms.
 
-  See ./glutil --help for full list of flags with short descriptions.
+  See ./glutil --help for full list of options with short descriptions.
+
+ MAIN FEATURES:
+
+  - Import individual/missing records or rebuild entire dirlog based 
+      on file-system and nukelog data (read below)
+  - Rebuild existing binary glFTPd logs (see full list below) 
+      using regex/custom filtering methods and sorting
+  - Display various binary glFTPd logs/online users/config data 
+      (filtered/sorted) using custom formatting and pre-processing
+      hooks (-print, -execv)
+  - Execute external tools/scripts for each data record matched, passing 
+      along argument strings converted from binary data to shell (-execv)
+  - Write to any binary log, using an ASCII formatted text or binary 
+  	  source
+  - Calculate CRC32 hashes
 
  INSTALLATION:
 
@@ -39,24 +50,6 @@
       make install      
        
 
- MAIN FEATURES:
-
-  - Import individual/missing records or rebuild entire dirlog based 
-      on file-system and nukelog data (read below)
-  - Rebuild existing binary glFTPd logs (see full list below) 
-      using regex/custom filtering methods and sorting
-  - Display various binary glFTPd logs (filtered/sorted) in human 
-      readable formats
-  - Execute external tools/scripts for each data record found, passing 
-      along binary data as argument strings to shell (see --exec
-      in --help)
-  - Extract relevant data from config/users/groups files and pass along
-      as argument strings to shell
-  - Write to any binary log, using an ASCII formatted text source
-  - Compare dirlog data against filesystem/nukelog to spot differences and
-      fix them
-  - Search for duplicates in dirlog
-  - Generate SFV files inside respective folders
 
  SUPPORTED glFTPd BINARY LOGS (with default paths):
 
