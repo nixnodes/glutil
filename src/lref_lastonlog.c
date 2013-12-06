@@ -5,16 +5,14 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include "lref_lastonlog.h"
+
 #include <mc_glob.h>
 #include <cfgv.h>
 #include <str.h>
-
-#include <glutil.h>
 #include <lref.h>
 #include <lref_gen.h>
-
-#include "lref_lastonlog.h"
-
 
 #include <time.h>
 #include <errno.h>

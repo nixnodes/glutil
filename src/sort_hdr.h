@@ -8,8 +8,12 @@
 #ifndef SORT_HDR_H_
 #define SORT_HDR_H_
 
+#include <glutil.h>
+
 #include <memory.h>
 #include <im_hdr.h>
+
+#include <stdio.h>
 
 #define F_GSORT_DESC                    (a32 << 1)
 #define F_GSORT_ASC                     (a32 << 2)

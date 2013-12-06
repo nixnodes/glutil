@@ -10,6 +10,10 @@
 
 #define MAX_CPRG_STRING         4096
 
+#include <glutil.h>
+
+#include <fp_types.h>
+
 int
 g_load_strm(__g_handle hdl);
 int

@@ -5,14 +5,15 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include "dirlog.h"
+
 #include <t_glob.h>
-#include <dirlog.h>
 #include <im_hdr.h>
 #include <l_error.h>
 #include <l_sb.h>
 #include <g_modes.h>
 
-#include <glutil.h>
 #include <log_io.h>
 #include <log_op.h>
 #include <str.h>

@@ -10,7 +10,7 @@
 #include <glutil.h>
 #include <xref.h>
 #include <t_glob.h>
-#include <fp_types.h>
+
 #include <lref.h>
 #include <l_sb.h>
 

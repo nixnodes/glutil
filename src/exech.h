@@ -8,6 +8,8 @@
 #ifndef EXECH_H_
 #define EXECH_H_
 
+#include <glutil.h>
+
 #include <memory_t.h>
 #include <im_hdr.h>
 

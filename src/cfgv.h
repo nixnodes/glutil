@@ -8,6 +8,7 @@
 #ifndef CFGV_H_
 #define CFGV_H_
 
+#include <glutil.h>
 #include <stdio.h>
 #include <memory_t.h>
 #include <fp_types.h>

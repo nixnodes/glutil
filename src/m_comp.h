@@ -8,6 +8,7 @@
 #ifndef M_COMP_H_
 #define M_COMP_H_
 
+#include <glutil.h>
 #include <t_glob.h>
 #include <im_hdr.h>
 #include <regex.h>

@@ -7,6 +7,7 @@
 
 #include "lref_imdb.h"
 
+#include <glutil.h>
 #include <str.h>
 #include <lref.h>
 #include <lref_gen.h>

@@ -6,6 +6,7 @@
  */
 
 #include <l_sb.h>
+#include <glutil.h>
 #include <memory_t.h>
 #include <glutil.h>
 #include <str.h>

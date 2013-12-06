@@ -5,6 +5,7 @@
  *      Author: reboot
  */
 #include "m_comp.h"
+#include <glutil.h>
 
 #include <fp_types.h>
 #include <exec_t.h>
@@ -18,8 +19,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-
-#include <glutil.h>
 
 #include <stdlib.h>
 

@@ -7,6 +7,7 @@
 
 #include "lref_gen4.h"
 
+#include <glutil.h>
 #include <str.h>
 #include <lref.h>
 #include <lref_gen.h>

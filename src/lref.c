@@ -5,6 +5,7 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include <l_sb.h>
 #include <i_math.h>
 #include <log_op.h>

@@ -8,6 +8,8 @@
 #ifndef L_ERROR_H_
 #define L_ERROR_H_
 
+#include <glutil.h>
+
 #include <setjmp.h>
 #include <signal.h>
 

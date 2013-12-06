@@ -15,6 +15,8 @@
 #include <xref.h>
 #include <glutil.h>
 
+#include <stdio.h>
+
 typedef struct e_arg
 {
   int depth;

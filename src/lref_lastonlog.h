@@ -10,6 +10,10 @@
 
 #define _MC_LASTONLOG_STATS     "stats"
 
+#include <fp_types.h>
+
+#include <stdio.h>
+
 __d_ref_to_pval ref_to_val_ptr_lastonlog;
 
 _d_rtv_lk ref_to_val_lk_lastonlog;

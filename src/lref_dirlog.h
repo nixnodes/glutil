@@ -8,6 +8,9 @@
 #ifndef LREF_DIRLOG_H_
 #define LREF_DIRLOG_H_
 
+#include <glutil.h>
+
+#include <fp_types.h>
 
 #define _MC_DIRLOG_FILES        "files"
 

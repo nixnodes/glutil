@@ -8,6 +8,7 @@
 #ifndef LOG_OP_H_
 #define LOG_OP_H_
 
+#include <glutil.h>
 
 #include <fp_types.h>
 #include <im_hdr.h>

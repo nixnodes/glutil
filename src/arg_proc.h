@@ -8,6 +8,8 @@
 #ifndef ARG_PROC_H_
 #define ARG_PROC_H_
 
+#include <glutil.h>
+
 #include <stdio.h>
 
 void *

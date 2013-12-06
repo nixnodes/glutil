@@ -8,6 +8,8 @@
 #ifndef HTIME_H_
 #define HTIME_H_
 
+#include <time.h>
+
 struct tm *
 get_localtime(void);
 

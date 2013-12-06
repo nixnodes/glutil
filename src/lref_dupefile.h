@@ -8,6 +8,8 @@
 #ifndef LREF_DUPEFILE_H_
 #define LREF_DUPEFILE_H_
 
+#include <glutil.h>
+
 #include <fp_types.h>
 
 #define _MC_GLOB_FILE   "file"

@@ -14,7 +14,6 @@
 
 #include <glutil.h>
 
-
 #include <stdio.h>
 #include <xref.h>
 

@@ -4,10 +4,12 @@
  *  Created on: Dec 4, 2013
  *      Author: reboot
  */
+#include <glutil.h>
+#include "str.h"
 
 #include <t_glob.h>
 #include <l_error.h>
-#include <str.h>
+
 
 #include <regex.h>
 

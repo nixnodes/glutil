@@ -6,6 +6,7 @@
  */
 
 #include <exech.h>
+#include <glutil.h>
 
 #include <t_glob.h>
 

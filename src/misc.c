@@ -5,11 +5,11 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include <t_glob.h>
 #include <misc.h>
 #include <l_sb.h>
 #include <l_error.h>
-#include <glutil.h>
 #include <m_general.h>
 #include <xref.h>
 #include <arg_opts.h>

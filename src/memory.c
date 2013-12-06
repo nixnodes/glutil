@@ -5,6 +5,7 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include <memory_t.h>
 
 int

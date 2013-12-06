@@ -8,6 +8,8 @@
 #ifndef MISC_H_
 #define MISC_H_
 
+#include <glutil.h>
+
 #include <fp_types.h>
 
 #include <unistd.h>

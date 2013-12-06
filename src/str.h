@@ -12,6 +12,8 @@
 
 #include <fp_types.h>
 
+#include <stdio.h>
+
 _d_achar_p g_basename, g_dirname;
 
 _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,

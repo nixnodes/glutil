@@ -5,12 +5,12 @@
  *      Author: reboot
  */
 
-#include <t_glob.h>
+#include <glutil.h>
 #include "omfp.h"
 
+#include <glutil.h>
 #include <m_general.h>
 #include <sort_hdr.h>
-#include <glutil.h>
 #include <l_error.h>
 #include <log_io.h>
 #include <glutil.h>

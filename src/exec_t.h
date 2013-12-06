@@ -8,6 +8,8 @@
 #ifndef EXEC_H_
 #define EXEC_H_
 
+#include <glutil.h>
+
 #include <memory_t.h>
 #include <fp_types.h>
 

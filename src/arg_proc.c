@@ -7,6 +7,7 @@
 
 #include "arg_proc.h"
 #include "arg_opts.h"
+#include <glutil.h>
 
 #include <stdio.h>
 #include <string.h>
