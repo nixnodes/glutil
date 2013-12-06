@@ -19,6 +19,7 @@
 #include <lref.h>
 #include <log_op.h>
 #include <m_general.h>
+#include <t_glob.h>
 
 #include <dirent.h>
 #include <unistd.h>

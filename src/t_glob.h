@@ -8,6 +8,10 @@
 #ifndef T_GLOB_H_
 #define T_GLOB_H_
 
+#define _LARGEFILE64_SOURCE 1
+#define _LARGEFILE_SOURCE 1
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -16,7 +20,6 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <limits.h>
-
 
 
 #ifndef WEXITSTATUS
