@@ -6,8 +6,7 @@
  */
 
 
-#include <sys/stat.h>
-
+#include <glutil.h>
 #include <t_glob.h>
 #include <xref.h>
 #include <x_f.h>

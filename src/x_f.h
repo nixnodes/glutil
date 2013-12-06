@@ -8,10 +8,14 @@
 #ifndef X_F_H_
 #define X_F_H_
 
+#include <glutil.h>
 #include <fp_types.h>
 
 #include <time.h>
+#include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+
 
 #ifdef HAVE_ST_BIRTHTIME
 #define birthtime(x) x->st_birthtime
