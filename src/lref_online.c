@@ -5,9 +5,9 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include "lref_online.h"
 
-#include <glutil.h>
 #include <lref.h>
 #include <lref_gen.h>
 #include <cfgv.h>
