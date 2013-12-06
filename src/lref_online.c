@@ -10,7 +10,6 @@
 #include <lref_gen.h>
 #include <cfgv.h>
 #include <str.h>
-#include "glconf.h"
 
 #include <stdio.h>
 #include <time.h>

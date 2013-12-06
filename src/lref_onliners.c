@@ -10,8 +10,6 @@
 #include <lref.h>
 #include <lref_gen.h>
 
-#include "glconf.h"
-
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
