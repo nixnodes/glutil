@@ -13,14 +13,8 @@ Although glutil was primarily created to manipulate the dirlog, it evolved into 
 glutil --help | more is a perfect example of what glutil is capable of.  imdb , tvrage and game rating output is a nice
 feature.  Wouldn't it be nice to have your very own imdb/tvrage/game database locally on your shell?  Create a bash script
 that could easily archive based on ratings?  How about nuking based on language, country, rating, score, genre?  glutil
-has soo many possibilities.  glutil can watch your connected users in realtime.  Check out the MANUAL and README.
+has soo many possibilities.  glutil can watch your connected users in realtime.  Check out the MANUAL and DATA_STRUCTURES.
 
-How do I install glutil?
-------------------------
-step 1 : git clone https://github.com/nixnodes/glutil /tmp/glut.inst
-step 2 : cp -R /tmp/glut.inst/scripts /tmp/glut.inst/sources /tmp/glut.inst/misc /glftpd/bin
-step 3 : rm -Rf /tmp/glut.inst
-step 4 : cc /glftpd/bin/sources/glutil.c -o /glftpd/bin/glutil -Wall -O3
 
 How do I upgrade just the glutil.c file?
 ----------------------------------------
@@ -105,59 +99,59 @@ This is a missing lib issue.  In the chroot environment DNS resolving sometimes 
 libnss_files.so.2 libnss_dns.so.2 to your /glftpd/lib folder and try again.  Also it is really important to have an up to
 date version of xmllint ( 20707 and up ).
 
-Do you have any useful commands to help me see glutil's potential?
+Usage examples:
 ------------------------------------------------------------------
-Oh boy do I.  Take a gander at some of these!
 
-watch -n 1 ./glutil -w --comp
-This will watch in real time the users connecting and what they are doing, placing them info in a table.
+This will watch connected users in real time, organizing output into a table.
+	watch -n 1 ./glutil -w --comp
 
-glutil -w --comp --loop 10 --loopexec clear
 This will print out the users connected to the site and place in an organized table and loop it for 10 seconds,
 clearing the screen each time.
+	glutil -w --comp --loop 10 --loopexec clear
 
-glutil -r
 This will rebuild the entire dirlog.  A backup of original will be created.
+	glutil -r
 
-glutil -r -u -v --postexec "{exe} --check --fix --ghost -v"
 This will update the existing dirlog and remove enteries that no longer exist.  Great for fixing paths if directories
 have been moved.
+	glutil -r -u -v --postexec "{exe} --check --fix --ghost -v"
 
-glutil -d
 This will dump the dirlog in readable format to stdout.
+	glutil -d
 
-glutil -d -vv 
-This will dump the dirlog in readable format to stdout.  The move -v you use the more verbose information
-will be printed out.
+This will dump the dirlog in readable format to stdout.  
+The more -v you use the more verbose information will be printed out.
+	glutil -d -vv 
 
-glutil -w 
 Print the users that are online.
+	glutil -w 
 
-glutil -w -execv "echo \"username: {user} |  pid: {pid}\"" --loop 1 --loopexec "clear" --preexec "clear" --silent
-This will print out from shared memory username and pid and loop the information every 1 second.
+This will print out online users with pid and loop the information every 1 second.
+	glutil -w -print "username: {user} |  pid: {pid}" --loop 1 --loopexec "clear" --preexec "clear" --silent
 
-glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6
 This will print out all movies with comedy genre of scores greater than 6.
+	glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6
 
-glutil -h --iregexi name,"Hell On Wheels" 
 This will print out the tvrage info stored in the tv.log, case insensative.
+	glutil -h --iregexi name,"Hell On Wheels" 
 
-glutil -e dirlog -vvv --regex "[\/]{2,}"
-This will remove from the dirlog what is in the regex.  In this case it would remove any entries with repeating 
-back-slashes"
+Remove from the dirlog what is in the regex.  In this case it would remove any entries with repeating 
+back-slashes in path
+	glutil -e dirlog -vvv --regex "[\/]{2,}"
 
-glutil -n --lom "time < $(expr $(date +%s) - 604800)"
-This will output all the entries in the nukelog that are under 7 days.
+Output all the entries in the nukelog that are under 7 days of age.
+	glutil -n --lom "time < $(expr $(date +%s) - 604800)"
 
-glutil -p imatch basedir,"Some.Dir.LA-LA"
 Finds dupes in dirlog - all match params apply. If no explicit match is given, it dupefinds for all records (can take
 a long time)
+	glutil -p imatch basedir,"Some.Dir.LA-LA"
 
-glutil -x /glftpd/site -recursive -xdev ilom "ctime > curtime-604800 && mode==10 || mode==8" and iregexi basepath,"linux" --batch
-Do a recursive search for files or symlinks in /glftpd/site, that contain the word 'linux' in filename
-(case-insensitive) and are not older than 7 days (604800 secs). Stays on the current filesystem.
-Prints to stdout.
+Do a recursive search for files or symlinks in /glftpd/site, that contain the 
+word 'linux' in path (case-insensitive) and are not older than 7 days 
+(604800 secs). Stays on the current filesystem. Prints to stdout.
 Type glutil --info -vv to see the list of modes that can be matched against.
+
+	glutil -x /glftpd/site -recursive -xdev ilom "ctime > curtime-604800 && mode==10 || mode==8" and iregexi basepath,"linux" --batch
 
 
 glutil is supposed to be able to show me game ratings, how is that done?
