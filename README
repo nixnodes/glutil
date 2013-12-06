@@ -32,7 +32,7 @@
       
       Some warnings might pop up (should be safe)
       glconf.h (found in /bin/sources) is needed to compile properly,
-       make sure it is in 'src/' folder.
+      make sure to put it into 'src/' folder.
       
   - Install:
       
