@@ -5,8 +5,8 @@
  *      Author: reboot
  */
 
-#ifndef LREF_ONLINE_H_
-#define LREF_ONLINE_H_
+#ifndef LREF_ONLINERS_H_
+#define LREF_ONLINERS_H_
 
 #include <fp_types.h>
 
