@@ -8,11 +8,12 @@
 #ifndef XREF_H_
 #define XREF_H_
 
+#define _GNU_SOURCE
+
+#include <glutil.h>
 #include <t_glob.h>
 
 #include <im_hdr.h>
-
-#include <sys/stat.h>
 
 #define _MC_X_DEVID             "devid"
 #define _MC_X_MINOR             "minor"
@@ -80,6 +81,11 @@ typedef struct ___d_xref_ct
   int ct_off;
 } _d_xref_ct, *__d_xref_ct;
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
 typedef struct ___d_xref
 {
   char name[PATH_MAX];
@@ -95,6 +101,7 @@ typedef struct ___d_xref
   float sparseness;
   _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
+
 
 typedef struct ___g_eds
 {

@@ -7,22 +7,25 @@
 
 
 #include <glutil.h>
+#include <t_glob.h>
 #include <l_sb.h>
 #include <cfgv.h>
 #include <lref_gen.h>
 #include <x_f.h>
 #include <mc_glob.h>
-#include <xref.h>
+#include "xref.h"
 #include <omfp.h>
 #include <m_comp.h>
 #include <str.h>
 #include <lref.h>
 #include <log_op.h>
 #include <m_general.h>
-#include <t_glob.h>
 
-#include <dirent.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
 
 int
 g_l_fmode_n(char *path, size_t max_size, char *output)
@@ -1309,6 +1312,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
     { 0 };
   int r = 0, ir;
 
+
   DIR *dp = opendir(dir);
 
   if (!dp)
@@ -1318,9 +1322,10 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
 
   char buf[PATH_MAX];
 
+
   if (eds)
     {
-      if (stat(dir, &eds->st))
+      if (lstat(dir, &eds->st))
         {
           return -3;
         }
@@ -1328,7 +1333,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
       if (!(eds->flags & F_EDS_ROOTMINSET))
         {
           eds->r_minor = minor(eds->st.st_dev);
-          eds->flags |= F_EDS_ROOTMINSET;
+         eds->flags |= F_EDS_ROOTMINSET;
         }
 
       if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
@@ -1343,6 +1348,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
           r = -5;
           goto end;
         }
+
     }
 
   while ((dirp = readdir(dp)))
@@ -1360,9 +1366,10 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
         {
           continue;
         }
-
+	
       snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
-      remove_repeating_chars(buf, 0x2F);
+      
+	remove_repeating_chars(buf, 0x2F);
 
       if (dirp->d_type == DT_UNKNOWN)
         {

@@ -6,6 +6,7 @@
  */
 
 #include "signal_t.h"
+#include <glutil.h>
 #include <t_glob.h>
 #include <l_error.h>
 

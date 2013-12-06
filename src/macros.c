@@ -18,10 +18,13 @@
 #include <arg_proc.h>
 #include <lref.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
+
 
 char **
 process_macro(void * arg, char **out)
@@ -43,13 +46,13 @@ process_macro(void * arg, char **out)
       print_str("ERROR: could not get own path\n");
       return NULL;
     }
-
-  char *dirn = dirname(buffer);
+  char *dirn = g_dirname(buffer);
 
   _si_argv0 av =
     { 0 };
 
   av.ret = -1;
+
 
   if (strlen(a_ptr) > sizeof(av.p_buf_1))
     {

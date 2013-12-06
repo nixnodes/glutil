@@ -12,6 +12,9 @@
 #define SSD_MAX_LINE_PROC       15000
 //#define SSD_MAX_FILE_SIZE     (V_MB*32)
 
+#include <glutil.h>
+
+
 #include <stdio.h>
 #include <xref.h>
 
