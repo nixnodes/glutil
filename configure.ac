@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.68)
+AC_PREREQ(2.13)
 
 AC_INIT(glutil, [2.1-15d], [devel@nixnodes.net])
 
