@@ -5,6 +5,10 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.2:
+ *
+ *   - % Automake
+ *
  * v2.1:
  * 
  *   - + Arithmetic pre-processor (-print[f] only)
@@ -26,7 +30,7 @@
  *   - + Arithmetic pre-processor accepts bitwise operators (see MANUAL) (rev. 12)
  *   - %! Avoid copying and null-terminating strings where not needed (ref_to_val_af) (rev. 13)
  *   - + ?rs and ?rd - regex string pre-processor (extended directives) (rev. 14)
- *   - ~ != (isnot) comparison operator broken (LOM) (rev. 15) 
+ *   - ~ != (isnot) comparison operator broken (LOM) (rev. 15)
  *
  * v2.0:
  *
