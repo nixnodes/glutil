@@ -12,8 +12,8 @@
 
 #define MAX_WBUFFER_HOLD        100000
 
-#include <xref.h>
 #include <glutil.h>
+#include <xref.h>
 
 #include <stdio.h>
 

@@ -8,6 +8,8 @@
 #ifndef LREF_ONLINE_H_
 #define LREF_ONLINE_H_
 
+#include <fp_types.h>
+
 #define _MC_ONLINE_BTXFER       "btxfer"
 #define _MC_ONLINE_BXFER        "bxfer"
 #define _MC_ONLINE_GROUP        "group"
@@ -15,8 +17,6 @@
 #define _MC_ONLINE_LUPDT        "lupdtime"
 #define _MC_ONLINE_LXFRT        "lxfertime"
 #define _MC_ONLINE_HOST         "host"
-
-#include <fp_types.h>
 
 int
 online_format_block_comp(void *iarg, char *output);

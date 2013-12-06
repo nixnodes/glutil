@@ -137,7 +137,7 @@ char *hpd_up =
         "  -f                    Force operation where it applies (use -ff for greater effect)\n"
         "  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
         "  --nowrite             Perform a dry run, executing normally except no writing is done\n"
-        "  -b, --nobuffer        Disable data file memory buffering\n"
+        "  --nobuffer        Disable data file memory buffering\n"
         "  -y, --followlinks     Follow symbolic links (default is skip)\n"
         "  --nowbuffer           Disable write pre-caching (faster but less safe), applies to -r\n"
         "  --memlimit=<bytes>    Maximum file size that can be pre-buffered into memory\n"
