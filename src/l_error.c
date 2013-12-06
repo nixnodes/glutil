@@ -9,7 +9,6 @@
 #include <l_sb.h>
 #include <l_error.h>
 
-#include <error.h>
 #include <unistd.h>
 
 

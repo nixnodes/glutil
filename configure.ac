@@ -20,7 +20,7 @@ AC_CONFIG_SRCDIR([src/])
 #AC_CONFIG_HEADERS([config.h])
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdio.h stdarg.h unistd.h errno.h error.h dirent.h time.h \
+AC_CHECK_HEADERS([stdio.h stdarg.h unistd.h errno.h dirent.h time.h \
 				  	signal.h string.h regex.h libgen.h utime.h  limits.h setjmp.h \
 				  	fcntl.h sys/stat.h sys/wait.h sys/types.h sys/shm.h inttypes.h \
 				  	stdint.h "$PWD/src/glconf.h"],,AC_MSG_ERROR([missing required header file!]))
