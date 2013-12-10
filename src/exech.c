@@ -114,7 +114,7 @@ char *
 g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
     size_t maxlen)
 {
-  p_md_obj ptr = mech->objects;
+  p_md_obj ptr = md_first(mech);
   __d_exec_ch ch_ptr;
 
   size_t cw = 0;

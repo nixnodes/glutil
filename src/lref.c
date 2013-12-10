@@ -212,10 +212,6 @@ dt_rval_spec_math_f(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-#define MAX_REGSUB_OUT_LEN    32768
-
-char rs_o[MAX_REGSUB_OUT_LEN];
-
 char *
 dt_rval_spec_regsub_dg(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -843,7 +839,7 @@ rtv_q(void *query, char *output, size_t max_size)
       size_t rtv_ll = strlen(rtv_l);
 
       strncpy(hdl.file, rtv_l, rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
-      if (determine_datatype(&hdl))
+      if (determine_datatype(&hdl, hdl.file))
         {
           goto end;
         }
@@ -858,7 +854,7 @@ rtv_q(void *query, char *output, size_t max_size)
       size_t rtv_ll = strlen(rtv_l);
 
       strncpy(hdl.file, rtv_l, rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
-      if (determine_datatype(&hdl))
+      if (determine_datatype(&hdl, hdl.file))
         {
           goto end;
         }
@@ -873,7 +869,7 @@ rtv_q(void *query, char *output, size_t max_size)
       size_t rtv_ll = strlen(rtv_l);
 
       strncpy(hdl.file, rtv_l, rtv_ll > max_size - 1 ? max_size - 1 : rtv_ll);
-      if (determine_datatype(&hdl))
+      if (determine_datatype(&hdl, hdl.file))
         {
           goto end;
         }

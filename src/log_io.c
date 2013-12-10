@@ -5,8 +5,6 @@
  *      Author: reboot
  */
 
-
-
 #include <t_glob.h>
 #include <im_hdr.h>
 #include <glutil.h>
@@ -23,6 +21,8 @@
 #include <sort_hdr.h>
 #include <g_modes.h>
 #include <misc.h>
+#include <fp_types.h>
+#include <str.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -38,13 +38,12 @@ int
 g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 {
   g_setjmp(0, "g_fopen", NULL, NULL);
-
+  int r;
   if (flags & F_DL_FOPEN_SHM)
     {
-
-      if (g_map_shm(hdl, SHM_IPC))
+      if ((r = g_map_shm(hdl, SHM_IPC)))
         {
-          return 12;
+          return r;
         }
       if (g_proc_mr(hdl))
         {
@@ -61,7 +60,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
   if (!(gfl & F_OPT_NOBUFFER) && (flags & F_DL_FOPEN_BUFFER)
       && !(hdl->flags & F_GH_NOMEM))
     {
-      if (!g_buffer_into_memory(file, hdl))
+      if (!(r = g_buffer_into_memory(file, hdl)))
         {
           if (g_proc_mr(hdl))
             {
@@ -77,7 +76,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
         {
           if (!(hdl->flags & F_GH_NOMEM))
             {
-              return 11;
+              return r;
             }
         }
     }
@@ -95,7 +94,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   strncpy(hdl->file, file, strlen(file) + 1);
 
-  if (determine_datatype(hdl))
+  if (determine_datatype(hdl, hdl->file))
     {
       print_str(MSG_GEN_NODFILE, file, "could not determine data-type");
       return 3;
@@ -140,7 +139,6 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   return 0;
 }
-
 
 void *
 g_read(void *buffer, __g_handle hdl, size_t size)
@@ -227,7 +225,6 @@ g_close(__g_handle hdl)
 
   return 0;
 }
-
 
 int
 g_cleanup(__g_handle hdl)
@@ -379,7 +376,6 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
   return c_fr;
 }
 
-
 int
 load_data_md(pmda md, char *file, __g_handle hdl)
 {
@@ -390,7 +386,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
   if (!hdl->block_sz)
     {
-      return -2;
+      return 20102;
     }
 
   uint32_t sh_ret = 0;
@@ -415,15 +411,15 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
       if (sh_ret & R_SHMAP_FAILED_ATTACH)
         {
-          return -22;
+          return 20103;
         }
       if (sh_ret & R_SHMAP_FAILED_SHMAT)
         {
-          return -23;
+          return 20104;
         }
       if (!hdl->data)
         {
-          return -12;
+          return 20105;
         }
 
       if (sh_ret & R_SHMAP_ALREADY_EXISTS)
@@ -448,7 +444,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
     {
       if (!hdl->total_sz)
         {
-          return -3;
+          return 20106;
         }
       count = hdl->total_sz / hdl->block_sz;
       hdl->data = malloc(count * hdl->block_sz);
@@ -473,7 +469,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
             {
 
               md_g_free(md);
-              return -9;
+              return 20109;
             }
           if (b_read != hdl->total_sz)
             {
@@ -486,7 +482,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
   if (md_init(md, count))
     {
-      return -4;
+      return 20107;
     }
 
   md->flags |= F_MDA_REFPTR;
@@ -496,12 +492,11 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
   if (!md->count)
     {
-      return -5;
+      return 20108;
     }
 
   return 0;
 }
-
 
 int
 g_buffer_into_memory(char *file, __g_handle hdl)
@@ -533,7 +528,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
                   "ERROR: %s: [%d] unable to get information from data file\n",
                   file,
                   errno);
-              return 2;
+              return 20201;
             }
           else
             {
@@ -555,19 +550,25 @@ g_buffer_into_memory(char *file, __g_handle hdl)
                   "WARNING: %s: disabling memory buffering, file too big (%lld MB max)\n",
                   file, db_max_size / 1048576);
               hdl->flags |= F_GH_NOMEM;
-              return 5;
+              return 20202;
             }
 
           hdl->total_sz = st.st_size;
         }
     }
 
-  strncpy(hdl->file, file, strlen(file) + 1);
-
-  if (determine_datatype(hdl))
+  if (!hdl->file[0])
     {
-      print_str(MSG_BAD_DATATYPE, file);
-      return 6;
+      strcp_s(hdl->file, PATH_MAX, file);
+    }
+
+  if (!(hdl->flags & F_GH_ISTYPE))
+    {
+      if (determine_datatype(hdl, hdl->file))
+        {
+          print_str(MSG_BAD_DATATYPE, file);
+          return 20203;
+        }
     }
 
   if (gfl & F_OPT_SHMRELOAD)
@@ -593,7 +594,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
         {
           print_str(MSG_GEN_DFCORRU, file, (ulint64_t) st.st_size,
               hdl->block_sz);
-          return 12;
+          return 20204;
         }
 
       tot_sz = hdl->total_sz;
@@ -663,7 +664,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
               print_str(
                   "ERROR: %s: [IPC: 0x%.8X]: [%d]: could not get shared memory segment information from kernel\n",
                   hdl->file, hdl->ipc_key, errno);
-              return 21;
+              return 20205;
             }
           if ((gfl & F_OPT_VERBOSE2) && hdl->shmid != -1
               && (hdl->flags & F_GH_SHMRB))
@@ -679,7 +680,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           print_str(
               "ERROR: %s: [IPC: 0x%.8X]: failed loading data into shared memory segment: [%d]: no shared memory segment or data file available to load\n",
               hdl->file, hdl->ipc_key, errno);
-          return 22;
+          return 20206;
         }
     }
 
@@ -720,7 +721,8 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           hdl->block_sz,
           (hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
           errno);
-      return 4;
+
+      return 20209;
     }
   else
     {
@@ -790,7 +792,6 @@ gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count)
 
   return 0;
 }
-
 
 int
 rebuild_data_file(char *file, __g_handle hdl)
@@ -1022,7 +1023,6 @@ rebuild_data_file(char *file, __g_handle hdl)
   return ret;
 }
 
-
 int
 flush_data_md(__g_handle hdl, char *outfile)
 {
@@ -1123,7 +1123,6 @@ flush_data_md(__g_handle hdl, char *outfile)
   return ret;
 }
 
-
 int
 d_write(char *arg)
 {
@@ -1157,7 +1156,7 @@ d_write(char *arg)
 
   strncpy(g_act_1.file, datafile, strlen(datafile));
 
-  if (determine_datatype(&g_act_1))
+  if (determine_datatype(&g_act_1, g_act_1.file))
     {
       print_str(MSG_BAD_DATATYPE, datafile);
       return 3;
@@ -1302,7 +1301,6 @@ d_write(char *arg)
   return ret;
 }
 
-
 int
 m_load_input_n(__g_handle hdl, FILE *input)
 {
@@ -1346,8 +1344,12 @@ m_load_input_n(__g_handle hdl, FILE *input)
                 }
               break;
             }
-          if (rw == hdl->d_memb)
+          if (rw >= hdl->d_memb)
             {
+              if (hdl->gcb_post_proc)
+                {
+                  hdl->gcb_post_proc(st_buffer, (void*) hdl);
+                }
               rw = 0;
               rf = 0;
               c++;
@@ -1355,8 +1357,8 @@ m_load_input_n(__g_handle hdl, FILE *input)
           else
             {
               print_str(
-                  "ERROR: DATA IMPORT: [%d/%d] parameter count mismatch\n", rw,
-                  hdl->d_memb);
+                  "ERROR: DATA IMPORT: [%d/%d] missing mandatory parameters\n",
+                  rw, hdl->d_memb);
               break;
             }
 
@@ -1401,10 +1403,61 @@ m_load_input_n(__g_handle hdl, FILE *input)
           print_str("ERROR: DATA IMPORT: failed extracting '%s'\n", l_ptr);
           rf = 3;
         }
-      rw += 1;
+      else if (bd == -1)
+        {
+          rf = 4;
+        }
+      else
+        {
+          rw += bd;
+        }
     }
 
   free(buffer);
 
   return rf;
+}
+
+int
+g_enum_log(_d_enuml callback, __g_handle hdl, off_t *nres, void *arg)
+{
+  g_setjmp(0, "g_enum_log", NULL, NULL);
+
+  *nres = 0;
+
+  void *buffer = calloc(1, hdl->block_sz), *ptr;
+  int r = 1;
+
+  if (!sigsetjmp(g_sigjmp.env, 1))
+    {
+      while ((ptr = g_read(buffer, hdl, hdl->block_sz)))
+        {
+          if ((r = callback((void*) hdl, ptr, arg)))
+            {
+              if (r == -1)
+                {
+                  *nres = 1;
+                  break;
+                }
+              else if (r == -2)
+                {
+                  goto end;
+                }
+
+              continue;
+            }
+          *nres = *nres + 1;
+        }
+    }
+
+  if (*nres)
+    {
+      r = 0;
+    }
+
+  end:
+
+  free(buffer);
+
+  return r;
 }

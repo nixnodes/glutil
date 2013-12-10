@@ -10,6 +10,9 @@
 
 #include <fp_types.h>
 
+#include <stdint.h>
+#include <inttypes.h>
+
 #define _MC_IMDB_RELEASED               "released"
 #define _MC_IMDB_VOTES                  "votes"
 #define _MC_IMDB_YEAR                   "year"

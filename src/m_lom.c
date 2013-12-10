@@ -5,7 +5,6 @@
  *      Author: reboot
  */
 
-
 #include <m_lom.h>
 #include <glutil.h>
 #include <l_error.h>
@@ -67,7 +66,6 @@ g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
   return 1;
 }
 
-
 int
 g_load_lom(__g_handle hdl)
 {
@@ -120,7 +118,6 @@ g_load_lom(__g_handle hdl)
 
   return rt;
 }
-
 
 int
 g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
@@ -242,6 +239,76 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
   return 0;
 }
 
+void *_lcs_isequal[] =
+  { g_is_equal, g_is_equal_s, g_is_equal_f };
+
+int
+g_build_lom_packet_bare(__g_handle hdl, __g_match match, char *field,
+    void *right, void *comp_set[], g_op lop)
+{
+  md_init(&match->lom, 2);
+  int rt = 0;
+
+  __g_lom lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
+
+  if (!lom)
+    {
+      rt = 1;
+      goto end;
+    }
+
+  int vb = 0;
+
+  size_t off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
+
+  if (!vb) {
+      return 600;
+  }
+
+  if (off > hdl->block_sz)
+    {
+      rt = 601;
+      goto end;
+    }
+
+  int r;
+
+  if ((r = g_get_lom_alignment(lom, F_GLT_LEFT, &vb, off)))
+    {
+      rt = r;
+      goto end;
+    }
+
+  switch (lom->flags & F_LOM_TYPES)
+    {
+  case F_LOM_INT:
+    lom->g_icomp_ptr = comp_set[0];
+    lom->t_right = *(uint64_t*) right;
+    break;
+  case F_LOM_INT_S:
+    lom->g_iscomp_ptr = comp_set[1];
+    lom->ts_right = *(int64_t*) right;
+    break;
+  case F_LOM_FLOAT:
+    lom->g_fcomp_ptr = comp_set[2];
+    lom->tf_right = *(float*) right;
+    break;
+    }
+
+  lom->flags |= F_LOM_RVAR_KNOWN;
+  lom->g_oper_ptr = lop;
+
+  match->flags |= F_GM_ISLOM;
+
+  end:
+
+  if (rt)
+    {
+      md_unlink(&match->lom, match->lom.pos);
+    }
+
+  return rt;
+}
 
 int
 g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
@@ -469,7 +536,6 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
   return rt;
 }
 
-
 int
 g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
 {
@@ -566,7 +632,14 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
       return 601;
     }
 
-  switch (vb)
+  return g_get_lom_alignment(lom, flags, &vb, off);
+
+}
+
+int
+g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off)
+{
+  switch (*vb)
     {
   case -32:
     switch (flags & F_GLT_DIRECT)
@@ -701,9 +774,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
     }
 
   return 0;
-
 }
-
 
 int
 g_lom_var_float(void *d_ptr, void *_lom)
@@ -810,7 +881,6 @@ g_lom_var_uint(void *d_ptr, void *_lom)
 
   return 0;
 }
-
 
 int
 opt_g_lom(void *arg, int m, uint32_t flags)

@@ -10,8 +10,8 @@
 #include <t_glob.h>
 #include <l_error.h>
 
-
 #include <regex.h>
+#include <errno.h>
 
 char *
 g_basename(char *input)
@@ -80,8 +80,6 @@ strcp_s(char *dest, size_t max_size, char *source)
   dest[s_l] = 0x0;
   return strncpy(dest, source, s_l);
 }
-
-
 
 int
 is_ascii_text(uint8_t in_c)
@@ -181,7 +179,6 @@ is_ascii_arith_bin_oper(char c)
     }
   return 1;
 }
-
 
 char *
 s_char(char *input, char c, size_t max)
@@ -389,8 +386,6 @@ str_match(char *input, char *match)
   return -1;
 }
 
-
-
 int
 reg_match(char *expression, char *match, int flags)
 {
@@ -428,4 +423,99 @@ string_replace(char *input, char *match, char *with, char *output,
   strncpy(&output[m_off + w_l], &input[m_off + m_l], i_l - m_off - m_l);
 
   return output;
+}
+
+char *
+reg_getsubm(char *rs_p, char *pattern, int cflags, char *output, size_t max_out)
+{
+  regex_t preg;
+
+  output[0] = 0x0;
+
+  if ((errno = regcomp(&preg, pattern, cflags)))
+    {
+      return NULL;
+    }
+
+  regmatch_t rm[4];
+
+  if (!regexec(&preg, rs_p, 2, rm, 0))
+    {
+      size_t l_r = rm[0].rm_eo - rm[0].rm_so;
+
+      if (l_r < 1)
+        {
+          regfree(&preg);
+          return output;
+        }
+
+      if (l_r > max_out)
+        {
+          l_r = max_out;
+        }
+
+      strncpy(output, &rs_p[rm[0].rm_so], l_r);
+      output[l_r] = 0x0;
+    }
+
+  regfree(&preg);
+  return output;
+}
+
+char *
+reg_sub_d(char *rs_p, char *pattern, int cflags, char *output)
+{
+  regex_t preg;
+
+  output[0] = 0x0;
+
+  if ((errno = regcomp(&preg, pattern, cflags)))
+    {
+      return NULL;
+    }
+
+  size_t o_l = strlen(rs_p) + 1;
+
+  output = strncpy(output, rs_p, o_l);
+
+  regmatch_t rm[4];
+  char *m_p = output;
+
+  while (!regexec(&preg, m_p, 2, rm, 0))
+    {
+      if (rm[0].rm_so == rm[0].rm_eo)
+        {
+          //output[0] = 0x0;
+          regfree(&preg);
+          return output;
+        }
+      m_p = memmove(&m_p[rm[0].rm_so], &m_p[rm[0].rm_eo], o_l - rm[0].rm_eo);
+    }
+
+  regfree(&preg);
+  return output;
+}
+
+
+char *
+g_zerom_r(char *input, char m)
+{
+  size_t i_l = strlen(input);
+  input = &input[i_l - 1];
+  while (input[0] && input[0] == m)
+    {
+      input[0] = 0x0;
+      input--;
+    }
+  return input;
+}
+
+char *
+g_zerom(char *input, char m)
+{
+  while (input[0] && input[0] == m)
+    {
+      input++;
+    }
+  return input;
 }

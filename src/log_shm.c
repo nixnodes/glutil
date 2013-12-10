@@ -142,13 +142,11 @@ g_map_shm(__g_handle hdl, key_t ipc)
       print_str(
           "ERROR: %s: could not get IPC key, set manually (--ipc <key>)\n",
           MSG_DEF_SHM);
-      return 1;
+      return 101;
     }
   int r;
   if ((r = load_data_md(&hdl->buffer, NULL, hdl)))
     {
-printf("%d bla\n", r);
-
       if (((gfl & F_OPT_VERBOSE) && r != 1002) || (gfl & F_OPT_VERBOSE4))
         {
 
@@ -158,7 +156,7 @@ printf("%d bla\n", r);
               (uint32_t) (hdl->total_sz / hdl->block_sz),
               (uint32_t) hdl->total_sz, hdl->block_sz, r, errno);
         }
-      return 9;
+      return r;
     }
 
   if (gfl & F_OPT_VERBOSE2)

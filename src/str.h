@@ -61,5 +61,13 @@ str_match(char *input, char *match);
 
 int
 reg_match(char *expression, char *match, int flags);
+char *
+reg_sub_d(char *rs_p, char *pattern, int cflags, char *output);
+char *
+reg_getsubm(char *rs_p, char *pattern, int cflags, char *output, size_t max_out);
+char *
+g_zerom_r(char *input, char m);
+char *
+g_zerom(char *input, char m);
 
 #endif /* STR_H_ */

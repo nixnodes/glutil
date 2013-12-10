@@ -36,9 +36,10 @@
 #include <lref_gen2.h>
 #include <lref_gen3.h>
 #include <lref_gen4.h>
+#include <lref_sconf.h>
+#include <lref_gconf.h>
 
 #include <unistd.h>
-
 
 char *
 g_dgetf(char *str)
@@ -95,9 +96,16 @@ g_dgetf(char *str)
     {
       return GE4LOG;
     }
+  else if (!strncmp(str, "sconf", 5))
+    {
+      return SCONFLOG;
+    }
+  else if (!strncmp(str, "gconf", 5))
+    {
+      return GCONFLOG;
+    }
   return NULL;
 }
-
 
 int
 data_backup_records(char *file)
@@ -156,7 +164,6 @@ data_backup_records(char *file)
     }
   return 0;
 }
-
 
 int
 find_absolute_path(char *exec, char *output)
@@ -403,11 +410,10 @@ g_proc_mr(__g_handle hdl)
   return 0;
 }
 
-
 int
-determine_datatype(__g_handle hdl)
+determine_datatype(__g_handle hdl, char *file)
 {
-  if (!strncmp(hdl->file, DIRLOG, strlen(DIRLOG)))
+  if (!strncmp(file, DIRLOG, strlen(DIRLOG)))
     {
       hdl->flags |= F_GH_ISDIRLOG;
       hdl->block_sz = DL_SZ;
@@ -422,7 +428,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_DIRLOG;
       hdl->jm_offset = (size_t) &((struct dirlog*) NULL)->dirname;
     }
-  else if (!strncmp(hdl->file, NUKELOG, strlen(NUKELOG)))
+  else if (!strncmp(file, NUKELOG, strlen(NUKELOG)))
     {
       hdl->flags |= F_GH_ISNUKELOG;
       hdl->block_sz = NL_SZ;
@@ -437,7 +443,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_NUKELOG;
       hdl->jm_offset = (size_t) &((struct nukelog*) NULL)->dirname;
     }
-  else if (!strncmp(hdl->file, DUPEFILE, strlen(DUPEFILE)))
+  else if (!strncmp(file, DUPEFILE, strlen(DUPEFILE)))
     {
       hdl->flags |= F_GH_ISDUPEFILE;
       hdl->block_sz = DF_SZ;
@@ -452,7 +458,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_DUPEFILE;
       hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
     }
-  else if (!strncmp(hdl->file, LASTONLOG, strlen(LASTONLOG)))
+  else if (!strncmp(file, LASTONLOG, strlen(LASTONLOG)))
     {
       hdl->flags |= F_GH_ISLASTONLOG;
       hdl->block_sz = LO_SZ;
@@ -467,7 +473,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_LASTONLOG;
       hdl->jm_offset = (size_t) &((struct lastonlog*) NULL)->uname;
     }
-  else if (!strncmp(hdl->file, ONELINERS, strlen(ONELINERS)))
+  else if (!strncmp(file, ONELINERS, strlen(ONELINERS)))
     {
       hdl->flags |= F_GH_ISONELINERS;
       hdl->block_sz = OL_SZ;
@@ -482,7 +488,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_ONELINERS;
       hdl->jm_offset = (size_t) &((struct oneliner*) NULL)->uname;
     }
-  else if (!strncmp(hdl->file, IMDBLOG, strlen(IMDBLOG)))
+  else if (!strncmp(file, IMDBLOG, strlen(IMDBLOG)))
     {
       hdl->flags |= F_GH_ISIMDB;
       hdl->block_sz = ID_SZ;
@@ -497,7 +503,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_IMDBLOG;
       hdl->jm_offset = (size_t) &((__d_imdb) NULL)->dirname;
     }
-  else if (!strncmp(hdl->file, GAMELOG, strlen(GAMELOG)))
+  else if (!strncmp(file, GAMELOG, strlen(GAMELOG)))
     {
       hdl->flags |= F_GH_ISGAME;
       hdl->block_sz = GM_SZ;
@@ -512,7 +518,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_GAMELOG;
       hdl->jm_offset = (size_t) &((__d_game) NULL)->dirname;
     }
-  else if (!strncmp(hdl->file, TVLOG, strlen(TVLOG)))
+  else if (!strncmp(file, TVLOG, strlen(TVLOG)))
     {
       hdl->flags |= F_GH_ISTVRAGE;
       hdl->block_sz = TV_SZ;
@@ -527,7 +533,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_TVRAGELOG;
       hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
     }
-  else if (!strncmp(hdl->file, GE1LOG, strlen(GE1LOG)))
+  else if (!strncmp(file, GE1LOG, strlen(GE1LOG)))
     {
       hdl->flags |= F_GH_ISGENERIC1;
       hdl->block_sz = G1_SZ;
@@ -542,7 +548,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_GEN1LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s2044) NULL)->s_1;
     }
-  else if (!strncmp(hdl->file, GE2LOG, strlen(GE2LOG)))
+  else if (!strncmp(file, GE2LOG, strlen(GE2LOG)))
     {
       hdl->flags |= F_GH_ISGENERIC2;
       hdl->block_sz = G2_SZ;
@@ -557,7 +563,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_GEN2LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
     }
-  else if (!strncmp(hdl->file, GE3LOG, strlen(GE3LOG)))
+  else if (!strncmp(file, GE3LOG, strlen(GE3LOG)))
     {
       hdl->flags |= F_GH_ISGENERIC3;
       hdl->block_sz = G3_SZ;
@@ -572,7 +578,7 @@ determine_datatype(__g_handle hdl)
       hdl->ipc_key = IPC_KEY_GEN3LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s800) NULL)->s_1;
     }
-  else if (!strncmp(hdl->file, GE4LOG, strlen(GE4LOG)))
+  else if (!strncmp(file, GE4LOG, strlen(GE4LOG)))
     {
       hdl->flags |= F_GH_ISGENERIC4;
       hdl->block_sz = G4_SZ;
@@ -586,6 +592,36 @@ determine_datatype(__g_handle hdl)
       hdl->g_proc4 = g_omfp_norm;
       hdl->ipc_key = IPC_KEY_GEN4LOG;
       hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
+    }
+  else if (!strncmp(file, SCONFLOG, strlen(SCONFLOG)))
+    {
+      hdl->flags |= F_GH_ISSCONF;
+      hdl->block_sz = SC_SZ;
+      hdl->d_memb = 3;
+      hdl->g_proc0 = gcb_sconf;
+      hdl->g_proc1_lookup = ref_to_val_lk_sconf;
+      hdl->g_proc2 = ref_to_val_ptr_sconf;
+      hdl->g_proc3 = sconf_format_block;
+      hdl->g_proc3_batch = sconf_format_block_batch;
+      hdl->g_proc3_export = sconf_format_block_exp;
+      hdl->g_proc4 = g_omfp_norm;
+      hdl->ipc_key = IPC_KEY_SCONFLOG;
+      hdl->jm_offset = (size_t) &((__d_sconf) NULL)->field;
+    }
+  else if (!strncmp(file, GCONFLOG, strlen(GCONFLOG)))
+    {
+      hdl->flags |= F_GH_ISGCONF;
+      hdl->block_sz = GC_SZ;
+      hdl->d_memb = 4;
+      hdl->g_proc0 = gcb_gconf;
+      hdl->g_proc1_lookup = ref_to_val_lk_gconf;
+      hdl->g_proc2 = ref_to_val_ptr_gconf;
+      hdl->g_proc3 = gconf_format_block;
+      hdl->g_proc3_batch = gconf_format_block_batch;
+      hdl->g_proc3_export = gconf_format_block_exp;
+      hdl->g_proc4 = g_omfp_norm;
+      hdl->ipc_key = IPC_KEY_GCONFLOG;
+      hdl->jm_offset = (size_t) &((__d_gconf) NULL)->r_clean;
     }
   else
     {
@@ -608,7 +644,6 @@ d_gen_dump(char *arg)
 
   return g_print_stats(datafile, 0, 0);
 }
-
 
 int
 rebuild(void *arg)

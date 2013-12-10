@@ -29,17 +29,17 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
       return 1113;
     }
 
-  size_t a_i = strlen(buffer);
+  /*size_t a_i = strlen(buffer);
 
-  if (!a_i)
-    {
-      return 0;
-    }
+   if (!a_i)
+   {
+   return 0;
+   }
 
-  if (a_i > MAX_CPRG_STRING)
-    {
-      return 1114;
-    }
+   if (a_i > MAX_CPRG_STRING)
+   {
+   return 1114;
+   }*/
 
   __g_match pgm = g_global_register_match();
 
@@ -90,6 +90,58 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
   return 0;
 }
 
+int
+g_commit_strm_regex(__g_handle hdl, char *field, char *m, int reg_i_m,
+    int regex_flags, uint32_t flags)
+{
+  md_init(&hdl->_match_rr, 32);
+
+  int r = 0;
+
+  __g_match pgm = md_alloc(&hdl->_match_rr, sizeof(_g_match));
+
+  if (!pgm)
+    {
+      r = 3401;
+      goto end;
+    }
+
+  pgm->reg_i_m = reg_i_m;
+  pgm->regex_flags = regex_flags | REG_NOSUB;
+  pgm->flags = flags;
+
+  pgm->g_oper_ptr = g_oper_and;
+  pgm->flags |= F_GM_NAND;
+
+  pgm->dtr.hdl = hdl;
+
+  if (!(hdl->g_proc1_lookup
+      && (pgm->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, field, hdl->mv1_b,
+      MAX_VAR_LEN, &pgm->dtr))))
+    {
+      r = 3402;
+      goto end;
+    }
+  pgm->field = field;
+
+  int re;
+  if ((re = regcomp(&pgm->preg, m, pgm->regex_flags)))
+    {
+      r = 3403;
+      goto end;
+    }
+
+  pgm->match = m;
+
+  end:
+
+  if (r)
+    {
+      md_unlink(&hdl->_match_rr, hdl->_match_rr.pos);
+    }
+
+  return r;
+}
 
 int
 g_load_strm(__g_handle hdl)

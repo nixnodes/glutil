@@ -12,7 +12,6 @@
 
 
 
-#define MAX_VAR_LEN                             4096
 
 
 

@@ -26,7 +26,9 @@
 #include <t_glob.h>
 #include <l_sb.h>
 #include <im_hdr.h>
-#include <regex.h>
+
+#include <stdint.h>
+#include <inttypes.h>
 
 #define DEFF_DIRLOG                     "dirlog"
 #define DEFF_NUKELOG                    "nukelog"
@@ -85,7 +87,6 @@ uint32_t flags_udcfg;
 
 off_t max_hits;
 off_t max_results;
-
 
 int execv_stdout_redir;
 

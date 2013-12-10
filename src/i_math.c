@@ -17,7 +17,13 @@
 int
 g_math_res(void *d_ptr, pmda mdm, void *res)
 {
-  p_md_obj ptr = mdm->objects;
+  p_md_obj ptr = md_first(mdm);
+
+  if (!ptr)
+    {
+      return 0;
+    }
+
   __g_math math = (__g_math ) ptr->ptr, p_math = NULL;
   void *c_ptr = NULL;
 
@@ -737,7 +743,6 @@ static void *_m_s64[] =
   { g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
       g_arith_mod_s64, g_arith_bin_and_s64, g_arith_bin_or_s64,
       g_arith_bin_xor_s64, g_arith_bin_lshift_s64, g_arith_bin_rshift_s64 };
-
 
 void
 g_arith_add_f(void * s, void * d, void *o)

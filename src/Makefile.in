@@ -79,7 +79,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = glutil$(EXEEXT)
+bin_PROGRAMS = glutil$(EXEEXT) glutil-precheck$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -92,8 +92,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_glutil_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) main.$(OBJEXT) \
-	init.$(OBJEXT) macros.$(OBJEXT) l_error.$(OBJEXT) \
+am_glutil_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) init.$(OBJEXT) \
+	main.$(OBJEXT) macros.$(OBJEXT) l_error.$(OBJEXT) \
 	str.$(OBJEXT) memory.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) \
 	lc_oper.$(OBJEXT) x_f.$(OBJEXT) log_io.$(OBJEXT) \
 	log_shm.$(OBJEXT) gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
@@ -106,9 +106,29 @@ am_glutil_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) main.$(OBJEXT) \
 	lref_online.$(OBJEXT) lref_imdb.$(OBJEXT) \
 	lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) lref_gen1.$(OBJEXT) \
 	lref_gen2.$(OBJEXT) lref_gen3.$(OBJEXT) lref_gen4.$(OBJEXT) \
-	log_op.$(OBJEXT) omfp.$(OBJEXT) dirlog.$(OBJEXT)
+	lref_sconf.$(OBJEXT) lref_gconf.$(OBJEXT) log_op.$(OBJEXT) \
+	omfp.$(OBJEXT) dirlog.$(OBJEXT)
 glutil_OBJECTS = $(am_glutil_OBJECTS)
 glutil_LDADD = $(LDADD)
+am__dirstamp = $(am__leading_dot)dirstamp
+am_glutil_precheck_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) \
+	init.$(OBJEXT) pce/pce_init.$(OBJEXT) macros.$(OBJEXT) \
+	l_error.$(OBJEXT) str.$(OBJEXT) memory.$(OBJEXT) \
+	time.$(OBJEXT) misc.$(OBJEXT) lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
+	log_io.$(OBJEXT) log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
+	cfgv.$(OBJEXT) m_general.$(OBJEXT) sort.$(OBJEXT) \
+	m_string.$(OBJEXT) m_lom.$(OBJEXT) i_math.$(OBJEXT) \
+	arg_proc.$(OBJEXT) exech.$(OBJEXT) exec.$(OBJEXT) \
+	xref.$(OBJEXT) lref.$(OBJEXT) lref_gen.$(OBJEXT) \
+	lref_dirlog.$(OBJEXT) lref_nukelog.$(OBJEXT) \
+	lref_dupefile.$(OBJEXT) lref_lastonlog.$(OBJEXT) \
+	lref_onliners.$(OBJEXT) lref_online.$(OBJEXT) \
+	lref_imdb.$(OBJEXT) lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) \
+	lref_gen1.$(OBJEXT) lref_gen2.$(OBJEXT) lref_gen3.$(OBJEXT) \
+	lref_gen4.$(OBJEXT) lref_sconf.$(OBJEXT) lref_gconf.$(OBJEXT) \
+	log_op.$(OBJEXT) omfp.$(OBJEXT) pce/pce_proc.$(OBJEXT)
+glutil_precheck_OBJECTS = $(am_glutil_precheck_OBJECTS)
+glutil_precheck_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -137,8 +157,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(glutil_SOURCES)
-DIST_SOURCES = $(glutil_SOURCES)
+SOURCES = $(glutil_SOURCES) $(glutil_precheck_SOURCES)
+DIST_SOURCES = $(glutil_SOURCES) $(glutil_precheck_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -263,7 +283,8 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-glutil_SOURCES = signal.c arg_opts.c main.c init.c macros.c l_error.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c log_op.c omfp.c dirlog.c 
+glutil_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c log_op.c omfp.c dirlog.c 
+glutil_precheck_SOURCES = signal.c arg_opts.c init.c pce/pce_init.c macros.c l_error.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c
 all: all-am
 
 .SUFFIXES:
@@ -344,9 +365,24 @@ clean-binPROGRAMS:
 glutil$(EXEEXT): $(glutil_OBJECTS) $(glutil_DEPENDENCIES) $(EXTRA_glutil_DEPENDENCIES) 
 	@rm -f glutil$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(glutil_OBJECTS) $(glutil_LDADD) $(LIBS)
+pce/$(am__dirstamp):
+	@$(MKDIR_P) pce
+	@: > pce/$(am__dirstamp)
+pce/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) pce/$(DEPDIR)
+	@: > pce/$(DEPDIR)/$(am__dirstamp)
+pce/pce_init.$(OBJEXT): pce/$(am__dirstamp) \
+	pce/$(DEPDIR)/$(am__dirstamp)
+pce/pce_proc.$(OBJEXT): pce/$(am__dirstamp) \
+	pce/$(DEPDIR)/$(am__dirstamp)
+
+glutil-precheck$(EXEEXT): $(glutil_precheck_OBJECTS) $(glutil_precheck_DEPENDENCIES) $(EXTRA_glutil_precheck_DEPENDENCIES) 
+	@rm -f glutil-precheck$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(glutil_precheck_OBJECTS) $(glutil_precheck_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f pce/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -369,6 +405,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_dirlog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_dupefile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_game.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_gconf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_gen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_gen1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_gen2.Po@am__quote@
@@ -379,6 +416,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_nukelog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_online.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_onliners.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_sconf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lref_tvrage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_general.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_lom.Po@am__quote@
@@ -394,17 +432,21 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/x_f.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xref.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pce/$(DEPDIR)/pce_init.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@pce/$(DEPDIR)/pce_proc.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
@@ -524,6 +566,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f pce/$(DEPDIR)/$(am__dirstamp)
+	-rm -f pce/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -533,7 +577,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) pce/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -579,7 +623,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) pce/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

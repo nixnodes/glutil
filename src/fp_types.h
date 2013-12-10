@@ -63,7 +63,9 @@ typedef void
 (*_d_omfp)(void *hdl, void *ptr, char *sbuffer);
 typedef int
 (*_d_proc3)(void *, char *);
-
-
+typedef int
+(*_d_gcb_pp_hook)(void *, void *hdl);
+typedef int
+(*_d_enuml)(void *hdl, void *ptr, void *buffer);
 
 #endif /* FP_TYPES_H_ */

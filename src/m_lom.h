@@ -19,7 +19,6 @@
 
 #define F_LM_TYPES              (F_LM_CPRG|F_LM_LOM)
 
-
 #define F_LOM_LVAR_KNOWN                (a32 << 1)
 #define F_LOM_RVAR_KNOWN                (a32 << 2)
 #define F_LOM_FLOAT                     (a32 << 3)
@@ -64,8 +63,15 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
 int
 g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
+int
+g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off);
 
 int
 opt_g_lom(void *arg, int m, uint32_t flags);
+int
+g_build_lom_packet_bare(__g_handle hdl, __g_match match, char *field,
+    void *right, void *comp_set[], g_op lop);
+
+void *_lcs_isequal[3];
 
 #endif /* M_LOM_H_ */

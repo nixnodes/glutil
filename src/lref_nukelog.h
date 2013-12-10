@@ -8,7 +8,7 @@
 #ifndef LREF_NUKELOG_H_
 #define LREF_NUKELOG_H_
 
-#include <m_comp.h>
+#include <fp_types.h>
 
 #define _MC_NUKELOG_NUKER               "nuker"
 #define _MC_NUKELOG_UNNUKER             "unnuker"

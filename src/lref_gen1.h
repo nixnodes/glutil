@@ -10,6 +10,9 @@
 
 #include <fp_types.h>
 
+#include <stdint.h>
+#include <inttypes.h>
+
 __d_format_block gen1_format_block, gen1_format_block_batch,
     gen1_format_block_exp;
 

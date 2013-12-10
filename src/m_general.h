@@ -86,6 +86,7 @@ typedef struct ___g_match_h
   __g_proc_v pmstr_cb;
   _d_drt_h dtr;
   char *data;
+  void *hdl_ref;
 } _g_match, *__g_match;
 
 mda _match_rr;

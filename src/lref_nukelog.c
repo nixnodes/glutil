@@ -6,12 +6,12 @@
  */
 
 #include <glutil.h>
+#include "lref_nukelog.h"
 
-#include <glutil.h>
 #include <mc_glob.h>
 #include <lref.h>
 #include <lref_gen.h>
-#include "lref_nukelog.h"
+
 #include <str.h>
 #include <xref.h>
 

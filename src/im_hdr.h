@@ -46,9 +46,12 @@
 #define F_GH_ISGENERIC3                 (a64 << 34)
 #define F_GH_ISGENERIC4                 (a64 << 35)
 #define F_GH_TOSTDOUT                   (a64 << 36)
+#define F_GH_ISSCONF                    (a64 << 37)
+#define F_GH_LOCKED                     (a64 << 38)
+#define F_GH_ISGCONF                    (a64 << 39)
 
 /* these bits determine log type */
-#define F_GH_ISTYPE                     (F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
+#define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
 
 #define F_GH_ISSHM                      (F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP                       (F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
@@ -94,6 +97,7 @@ typedef struct g_handle
   __d_ref_to_pv g_proc2;
   __g_proc_v g_proc1_lookup;
   _d_proc3 g_proc3, g_proc3_batch, g_proc3_export;
+  _d_gcb_pp_hook gcb_post_proc;
   _d_omfp g_proc4;
   size_t j_offset, jm_offset;
   int d_memb;

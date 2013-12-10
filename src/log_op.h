@@ -19,7 +19,8 @@ g_dgetf(char *str);
 typedef int
 _d_ag_handle_i(__g_handle);
 
-_d_ag_handle_i determine_datatype;
+int
+determine_datatype(__g_handle hdl, char *file);
 int
 g_proc_mr(__g_handle hdl);
 int
