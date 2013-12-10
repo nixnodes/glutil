@@ -7,7 +7,7 @@
  *
  * v2.3.1:
  *
- *   - + Started glutil-precheck, on MKDIR filtering processor, uses any datasource available.
+ *   - + Started glutil-precheck, on MKDIR filtering processor, uses imdb/tvrage data logs.
  *
  * v2.2:
  *
