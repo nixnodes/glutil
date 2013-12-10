@@ -5,6 +5,10 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.3.1:
+ *
+ *   - + Started glutil-precheck, on MKDIR filtering processor, uses any datasource available.
+ *
  * v2.2:
  *
  *   - % Automake
