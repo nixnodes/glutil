@@ -66,8 +66,6 @@ pce_proc(char *subject)
   g_zerom_r(s_b_p, 0x2F);
   cl_dir = subject;
 
-  printf("%s\n", s_b_p);
-
   char s_lp[PATH_MAX];
 
   snprintf(s_lp, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS, s_b_p);
@@ -176,49 +174,9 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               return 0;
             }
 
-          if (!(pce_f & F_PCE_DONE_STR_PREPROC))
+          if ((r=pce_do_lookup(p_log, &dgetr) ) != 1)
             {
-              if (!pce_do_str_preproc(cl_dir))
-                {
-                  printf("200 glutil: unable to preprocess the directory string, aborting\n");
-                  return -1;
-                }
-              //printf("%s | %s\n", cl_sub, s_year);
-              pce_f |= F_PCE_DONE_STR_PREPROC;
-            }
-
-          if (s_year)
-            {
-              uint64_t year = (uint64_t)strtoul(s_year,NULL,10);
-              md_init(&p_log->_match_rr, 2);
-              __g_match tt_m = md_alloc(&p_log->_match_rr, sizeof(_g_match));
-              tt_m->g_oper_ptr = g_oper_and;
-              tt_m->flags |= F_GM_NAND;
-              tt_m->match_i_m = 0;
-
-              if ((r=g_build_lom_packet_bare(p_log, tt_m, _MC_IMDB_YEAR, &year, _lcs_isequal, g_oper_and )))
-                {
-                  printf("200 glutil: unable to commit lom match : %d\n", r);
-                  p_log->flags |= F_GH_LOCKED;
-                  return 0;
-                }
-            }
-
-          if ((r=g_commit_strm_regex(p_log, dgetr.d_field, cl_sub, 0, REG_EXTENDED|REG_ICASE, F_GM_ISREGEX)))
-            {
-              printf("200 glutil: unable to commit regex match : %d\n", r);
-              p_log->flags |= F_GH_LOCKED;
-              return 0;
-            }
-
-          off_t nres;
-
-          if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
-            {
-              printf("200 glutil: could not find match in '%s', code %d, %llu\n", p_log->file,
-                  r, (ulint64_t)nres);
-              p_log->flags |= F_GH_LOCKED;
-              return 0;
+              return r;
             }
         }
       else
@@ -294,6 +252,60 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
   return 0;
 }
 
+int
+pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
+{
+  int r;
+
+  if (!(pce_f & F_PCE_DONE_STR_PREPROC))
+    {
+      if (!pce_do_str_preproc(g_basename(cl_dir)))
+        {
+          printf(
+              "200 glutil: unable to preprocess the directory string, aborting\n");
+          return -1;
+        }
+      //printf("%s | %s\n", cl_sub, s_year);
+      pce_f |= F_PCE_DONE_STR_PREPROC;
+    }
+
+  if (s_year && dgetr->d_yf)
+    {
+      uint64_t year = (uint64_t) strtoul(s_year, NULL, 10);
+      md_init(&p_log->_match_rr, 2);
+      __g_match tt_m = md_alloc(&p_log->_match_rr, sizeof(_g_match));
+      tt_m->g_oper_ptr = g_oper_and;
+      tt_m->flags |= F_GM_NAND;
+      tt_m->match_i_m = 0;
+
+      if ((r = g_build_lom_packet_bare(p_log, tt_m, dgetr->d_yf, &year,
+          _lcs_isequal, g_oper_and)))
+        {
+          printf("200 glutil: unable to commit lom match : %d\n", r);
+          p_log->flags |= F_GH_LOCKED;
+          return 0;
+        }
+    }
+
+  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_sub, 0,
+  REG_EXTENDED | REG_ICASE, F_GM_ISREGEX)))
+    {
+      printf("200 glutil: unable to commit regex match : %d\n", r);
+      p_log->flags |= F_GH_LOCKED;
+      return 0;
+    }
+
+  off_t nres;
+
+  if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
+    {
+      printf("200 glutil: could not find match in '%s', code %d, %llu\n",
+          p_log->file, r, (ulint64_t) nres);
+      p_log->flags |= F_GH_LOCKED;
+      return 0;
+    }
+  return 1;
+}
 
 int
 pce_match_log(__g_handle hdl, __d_sconf sconf, int m_i_m)
@@ -387,11 +399,13 @@ pce_dgetlf(__d_dgetr dgetr, int logc)
   case 1:
     dgetr->pf |= F_GH_ISIMDB;
     dgetr->d_field = "title";
+    dgetr->d_yf = "year";
     return IMDBLOG;
     break;
   case 2:
     dgetr->pf |= F_GH_ISTVRAGE;
     dgetr->d_field = "name";
+    dgetr->d_yf = "startyear";
     return TVLOG;
     break;
     }
@@ -439,7 +453,6 @@ pce_do_str_preproc(char *subject)
   if (!(s_rs = reg_sub_d(subject, gconf->r_clean,
   REG_EXTENDED | REG_ICASE, cl_sub)))
     {
-      //printf("200 glutil: %s - unable to preprocess dirname '%s'\n", s_b, s_lp);
       return NULL;
     }
 
