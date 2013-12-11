@@ -205,7 +205,18 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           pce_process_lom_match(p_log, ptr);
           break;
           case 3:
-          pce_process_exec_match(p_log, ptr);
+          if ((r = pce_process_execv(p_log, ptr)))
+            {
+              print_str(
+                  "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
+                  r, ptr->match);
+              EXITVAL = 1;
+              if (ptr->message[0])
+                {
+                  printf("200 %s\n", ptr->message);
+                }
+              return -1;
+            }
           break;
           default:
           print_str("ERROR: '%s': (%s / %s): lookup requested but no match type given\n", p_log->file, ptr->field, ptr->match);
@@ -227,10 +238,17 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           i_m = REG_NOMATCH;
         }
 
-      int r;
-      if (!(r=pce_do_regex_match(ptr->match, cl_dir, REG_EXTENDED, i_m)))
+      int cflags = REG_EXTENDED;
+
+      if (ptr->icase)
         {
-          print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_g_sub, ptr->match);
+          cflags |= REG_ICASE;
+        }
+
+      int r;
+      if (!(r=pce_do_regex_match(ptr->match, cl_dir, cflags, i_m)))
+        {
+          print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
           EXITVAL = 1;
           if (ptr->message[0])
             {
@@ -292,7 +310,7 @@ pce_rescomp(int m_i)
 }
 
 int
-pce_process_exec_match(__g_handle hdl, __d_sconf ptr)
+pce_process_execv(__g_handle hdl, __d_sconf ptr)
 {
   _execv exec_args =
     { 0 };
@@ -310,21 +328,8 @@ pce_process_exec_match(__g_handle hdl, __d_sconf ptr)
           ptr->match);
       return 1;
     }
-  r = WEXITSTATUS(l_execv(exec_args.exec_v_path, exec_args.argv_c));
-  if (r)
-    {
-      print_str(
-          "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
-          r, ptr->match);
-      EXITVAL = 1;
-      if (ptr->message[0])
-        {
-          printf("200 %s\n", ptr->message);
-        }
-      return -1;
-    }
 
-  return r;
+  return WEXITSTATUS(l_execv(exec_args.exec_v_path, exec_args.argv_c));
 }
 
 int
@@ -515,8 +520,14 @@ pce_match_log(__g_handle hdl, __d_sconf sconf, int m_i_m)
     {
       return -14;
     }
-  // print_str("%s : %s\n", r_v, sconf->match);
-  return pce_do_regex_match(sconf->match, r_v, REG_EXTENDED | REG_ICASE, m_i_m);
+  int cflags = REG_EXTENDED;
+
+  if (sconf->icase)
+    {
+      cflags |= REG_ICASE;
+    }
+
+  return pce_do_regex_match(sconf->match, r_v, cflags, m_i_m);
 }
 
 int
@@ -651,10 +662,11 @@ pce_do_str_preproc(char *subject)
     }
 
   size_t cl_l = strlen(cl_sub);
-  if (cl_l >= sizeof(cl_sub) -1) {
+  if (cl_l >= sizeof(cl_sub) - 1)
+    {
       print_str("ERROR: could not preprocess string (prepend ^)\n");
       return NULL;
-  }
+    }
 
   memmove(&cl_sub[1], cl_sub, cl_l);
   cl_sub[0] = 0x5E;

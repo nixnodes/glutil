@@ -65,7 +65,7 @@ pce_pcl_stat(int r, __d_sconf ptr);
 
 typedef int _d_pce_plm(__g_handle hdl, __d_sconf ptr);
 
-_d_pce_plm pce_process_string_match, pce_process_lom_match, pce_process_exec_match;
+_d_pce_plm pce_process_string_match, pce_process_lom_match, pce_process_execv;
 
 mda g_opt;
 

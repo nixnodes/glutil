@@ -20,8 +20,8 @@ sconf_format_block(void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
-  return print_str("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
-      data->ui32_1, data->ui32_2, data->invert, data->type,data->lcomp, data->i32,
+  return print_str("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
+      data->ui32_1, data->ui32_2, data->invert, data->type, data->icase, data->lcomp, data->i32,
       data->ui64, data->field , data->match, data->message);
 
 }
@@ -31,8 +31,8 @@ sconf_format_block_batch(void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
-  return printf("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
-      data->ui32_1, data->ui32_2, data->invert, data->type,data->lcomp, data->i32,
+  return printf("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
+      data->ui32_1, data->ui32_2, data->invert, data->type, data->icase, data->lcomp, data->i32,
       data->ui64, data->field , data->match, data->message);
 
 }
@@ -46,13 +46,14 @@ sconf_format_block_exp(void *iarg, char *output)
       "u2 %u\n"
       "invert %hhu\n"
       "type %hhu\n"
+      "icase %hhu\n"
       "lcomp %hhu\n"
       "int %d\n"
       "uint64 %llu\n"
       "field %s\n"
       "match %s\n"
       "msg %s\n\n"
-      , data->ui32_1, data->ui32_2, data->invert, data->type, data->lcomp, data->i32,
+      , data->ui32_1, data->ui32_2, data->invert, data->type, data->icase, data->lcomp, data->i32,
       (ulint64_t)data->ui64, data->field , data->match, data->message);
 
 }
@@ -78,7 +79,7 @@ ref_to_val_ptr_sconf(void *arg, char *match, int *output)
     }
   else if (!strncmp(match, _MC_GE_U2, 2))
     {
-      *output = sizeof(data->ui32_1);
+      *output = sizeof(data->ui32_2);
       return &data->ui32_2;
     }
   else if (!strncmp(match, _MC_SCONF_INVERTM, 6))
@@ -94,7 +95,12 @@ ref_to_val_ptr_sconf(void *arg, char *match, int *output)
   else if (!strncmp(match, _MC_SCONF_LCOMP, 5))
     {
       *output = sizeof(data->type);
-      return &data->lcomp;
+      return &data->type;
+    }
+  else if (!strncmp(match, _MC_SCONF_ICASE, 5))
+    {
+      *output = sizeof(data->icase);
+      return &data->icase;
     }
   return NULL;
 }
@@ -151,6 +157,14 @@ dt_rval_sconf_lcomp(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->lcomp);
+  return output;
+}
+
+char *
+dt_rval_sconf_icase(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->icase);
   return output;
 }
 
@@ -223,7 +237,11 @@ ref_to_val_lk_sconf(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_SCONF_LCOMP, 5))
     {
-      return as_ref_to_val_lk(match, dt_rval_sconf_field, (__d_drt_h ) mppd, "%hhu");
+      return as_ref_to_val_lk(match, dt_rval_sconf_lcomp, (__d_drt_h ) mppd, "%hhu");
+    }
+  else if (!strncmp(match, _MC_SCONF_ICASE, 5))
+    {
+      return as_ref_to_val_lk(match, dt_rval_sconf_icase, (__d_drt_h ) mppd, "%hhu");
     }
 
   return NULL;
@@ -288,7 +306,7 @@ gcb_sconf(void *buffer, char *key, char *val)
       uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
       if ( errno == ERANGE)
         {
-          return 0;
+          return -1;
         }
       ptr->ui32_1 = v_ui;
       return -1;
@@ -298,7 +316,7 @@ gcb_sconf(void *buffer, char *key, char *val)
       uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
       if ( errno == ERANGE)
         {
-          return 0;
+          return -1;
         }
       ptr->ui32_2 = v_ui;
       return -1;
@@ -331,6 +349,16 @@ gcb_sconf(void *buffer, char *key, char *val)
           return -1;
         }
       ptr->lcomp = v_ui;
+      return -1;
+    }
+  else if (k_l == 5 && !strncmp(key, _MC_SCONF_ICASE, 5))
+    {
+      int8_t v_ui = (int8_t) strtol(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return -1;
+        }
+      ptr->icase = v_ui;
       return -1;
     }
 

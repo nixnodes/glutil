@@ -24,6 +24,7 @@
 #define _MC_SCONF_UINT64      "uint64"
 #define _MC_SCONF_MSG         "msg"
 #define _MC_SCONF_LCOMP       "lcomp"
+#define _MC_SCONF_ICASE       "icase"
 
 #define SCONF_MAX_MSG          512
 #define SCONF_MAX_REG_MATCH    32768
@@ -48,6 +49,7 @@ typedef struct ___d_sconf
   uint8_t invert;
   uint8_t type;
   uint8_t lcomp;
+  uint8_t icase;
   uint64_t ui64;
   char match[SCONF_MAX_REG_MATCH];
   char field[MAX_VAR_LEN];

@@ -1155,9 +1155,9 @@ void *prio_f_ref[] =
       "--ge4log", opt_GE4LOG, (void*) 1, "--gamelog", opt_gamelog, (void*) 1,
       "--tvlog", opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1,
       "--oneliners", opt_oneliner, (void*) 1, "--lastonlog", opt_lastonlog,
-      (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--siteroot",
-      "--sconf", opt_sconf, (void*) 1, "--gconf", opt_gconf, (void*) 1,
-      opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1, "--noglconf",
+      (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--sconf", opt_sconf,
+      (void*) 1, "--gconf", opt_gconf, (void*) 1, "--siteroot", opt_siteroot,
+      (void*) 1, "--glroot", opt_glroot, (void*) 1, "--noglconf",
       opt_g_noglconf, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
       NULL, NULL, NULL };
 
