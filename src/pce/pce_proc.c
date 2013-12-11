@@ -312,7 +312,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
   if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
     {
       pce_log("ERROR: could not find match '%s (%s)' in '%s', code %d, %llu\n",
-          cl_sub, s_year, p_log->file, r, (ulint64_t) nres);
+          cl_sub, s_year ? s_year : "no year", p_log->file, r, (ulint64_t) nres);
       p_log->flags |= F_GH_LOCKED;
       return 0;
     }

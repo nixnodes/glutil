@@ -240,7 +240,7 @@ gcb_sconf(void *buffer, char *key, char *val)
     {
       if (!(v_l = strlen(val)))
         {
-          return 0;
+          return -1;
         }
       memcpy(ptr->message, val, v_l >= SCONF_MAX_MSG ? SCONF_MAX_MSG - 1 : v_l);
       return -1;
