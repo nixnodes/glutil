@@ -24,6 +24,46 @@
 #define PSTR_MAX        (V_MB/4)
 
 int
+find_absolute_path(char *exec, char *output)
+{
+  char *env = getenv("PATH");
+
+  if (!env)
+    {
+      return 1;
+    }
+
+  mda s_p =
+    { 0 };
+
+  md_init(&s_p, 64);
+
+  int p_c = split_string(env, 0x3A, &s_p);
+
+  if (p_c < 1)
+    {
+      return 2;
+    }
+
+  p_md_obj ptr = md_first(&s_p);
+
+  while (ptr)
+    {
+      snprintf(output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
+      if (!access(output, R_OK | X_OK))
+        {
+          md_g_free(&s_p);
+          return 0;
+        }
+      ptr = ptr->next;
+    }
+
+  md_g_free(&s_p);
+
+  return 3;
+}
+
+int
 g_print_str(const char * volatile buf, ...)
 {
   char d_buffer_2[PSTR_MAX];

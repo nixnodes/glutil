@@ -193,6 +193,8 @@ typedef unsigned long long int ulint64_t;
 #define F_SREDIRFAILED                  (a32 << 18)
 #define F_OVRR_GE3LOG                   (a32 << 19)
 #define F_OVRR_GE4LOG                   (a32 << 20)
+#define F_OVRR_SCONF                    (a32 << 21)
+#define F_OVRR_GCONF                    (a32 << 22)
 
 uint64_t gfl0, gfl;
 uint32_t ofl;

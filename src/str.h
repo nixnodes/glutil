@@ -66,6 +66,9 @@ reg_sub_d(char *rs_p, char *pattern, int cflags, char *output);
 char *
 reg_getsubm(char *rs_p, char *pattern, int cflags, char *output, size_t max_out);
 char *
+reg_sub_g(char *subject, char *pattern, int cflags, char *output,
+    size_t max_size, char *rep);
+char *
 g_zerom_r(char *input, char m);
 char *
 g_zerom(char *input, char m);

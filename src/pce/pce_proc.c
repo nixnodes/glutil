@@ -21,17 +21,21 @@
 #include <m_string.h>
 #include <m_lom.h>
 #include <lc_oper.h>
+#include <exec_t.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
 #include <regex.h>
+#include <errno.h>
 
 _g_handle h_gconf =
   { 0 };
 __d_gconf gconf = NULL;
 
 uint32_t g_hflags = F_DL_FOPEN_BUFFER;
+
+char *cl_g_sub = cl_sub;
 
 int
 pce_proc(char *subject)
@@ -42,7 +46,7 @@ pce_proc(char *subject)
 
   if ((r = g_fopen(GCONFLOG, "r", F_DL_FOPEN_BUFFER, &h_gconf)))
     {
-      pce_log("ERROR: failed opening '%s', code %d\n", GCONFLOG, r);
+      print_str("ERROR: failed opening '%s', code %d\n", GCONFLOG, r);
       goto end;
     }
 
@@ -73,7 +77,7 @@ pce_proc(char *subject)
 
   if (file_exists(s_lp))
     {
-      pce_log("ERROR: %s - no section configuration exists at '%s'\n", s_b_p,
+      print_str("ERROR: %s - no section configuration exists at '%s'\n", s_b_p,
           s_lp);
       goto end;
     }
@@ -85,13 +89,13 @@ pce_proc(char *subject)
 
   if (determine_datatype(&h_sconf, SCONFLOG))
     {
-      pce_log("ERROR: SCONF: determine_datatype failed\n");
+      print_str("ERROR: SCONF: determine_datatype failed\n");
       goto end;
     }
 
   if ((r = g_fopen(s_lp, "r", F_DL_FOPEN_BUFFER, &h_sconf)))
     {
-      pce_log("ERROR: failed opening '%s', code %d\n", s_lp, r);
+      print_str("ERROR: failed opening '%s', code %d\n", s_lp, r);
       goto end;
     }
 
@@ -101,7 +105,7 @@ pce_proc(char *subject)
 
   if ((r = g_enum_log(pce_match_build, &h_sconf, &nres, &lh_ref)))
     {
-      pce_log("ERROR: failed processing records in '%s', code %d\n", s_lp, r);
+      print_str("ERROR: failed processing records in '%s', code %d\n", s_lp, r);
       goto end;
     }
 
@@ -173,7 +177,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
 
           if ((r=g_fopen(log_s, "r", F_DL_FOPEN_BUFFER, p_log)))
             {
-              pce_log("ERROR: failed opening '%s', code %d\n", log_s, r);
+              print_str("ERROR: failed opening '%s', code %d\n", log_s, r);
               p_log->flags |= F_GH_LOCKED;
               return 0;
             }
@@ -187,45 +191,38 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
         {
           if ((p_log->flags & F_GH_LOCKED))
             {
-              pce_log("NOTICE: '%s': this log has been locked\n", p_log->file );
+              print_str("NOTICE: '%s': this log has been locked, ignoring rule\n", p_log->file );
               return 0;
             }
         }
 
-      int i_m = 0;
-
-      if (ptr->i32_1 == 1)
+      switch(ptr->type)
         {
-          i_m = 0;
+          case 1:
+          pce_process_string_match(p_log, ptr);
+          break;
+          case 2:
+          pce_process_lom_match(p_log, ptr);
+          break;
+          case 3:
+          pce_process_exec_match(p_log, ptr);
+          break;
+          default:
+          print_str("ERROR: '%s': (%s / %s): lookup requested but no match type given\n", p_log->file, ptr->field, ptr->match);
+          return 0;
+          break;
         }
-      else if (ptr->i32_1 == 2)
-        {
-          i_m = REG_NOMATCH;
-        }
 
-      if (!(r=pce_match_log(p_log, ptr, i_m)))
+      if (EXITVAL)
         {
-          pce_log("WARNING: '%s': rule chain hit positive match (%s) (%s), blocking..\n", cl_sub, p_log->file, ptr->match);
-          EXITVAL = 1;
-          if (ptr->message[0])
-            {
-              printf("200 %s\n", ptr->message);
-            }
           return -1;
         }
-      else
-        {
-          pce_pcl_stat(r, ptr);
-        }
+
     }
   else
     {
       int i_m = 0;
-      if (ptr->i32_1 == 1)
-        {
-          i_m = 0;
-        }
-      else if (ptr->i32_1 == 2)
+      if (ptr->invert == 1)
         {
           i_m = REG_NOMATCH;
         }
@@ -233,7 +230,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
       int r;
       if (!(r=pce_do_regex_match(ptr->match, cl_dir, REG_EXTENDED, i_m)))
         {
-          pce_log("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_sub, ptr->match);
+          print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_g_sub, ptr->match);
           EXITVAL = 1;
           if (ptr->message[0])
             {
@@ -250,17 +247,189 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
   return 0;
 }
 
+int
+pce_dt(char *field, void *out)
+{
+  errno = 0;
+  if (field[0] == 0x2D || field[0] == 0x2B)
+    {
+      *((int64_t*) out) = (int64_t) strtoll(field, NULL, 10);
+    }
+  else if (s_char(field, 0x2E, g_floatstrlen(field)))
+    {
+      *((float*) out) = (float) strtof(field, NULL);
+    }
+  else
+    {
+      *((uint64_t*) out) = (uint64_t) strtoull(field, NULL, 10);
+    }
+  if (errno == ERANGE)
+    {
+      return 1;
+    }
+  return 0;
+}
+
+void *
+pce_rescomp(int m_i)
+{
+  switch (m_i)
+    {
+  case 1:
+    return _lcs_isequal;
+  case 2:
+    return _lcs_ishigher;
+  case 3:
+    return _lcs_islower;
+  case 4:
+    return _lcs_islowerorequal;
+  case 5:
+    return _lcs_ishigherorequal;
+  case 6:
+    return _lcs_isnotorequal;
+    }
+  return NULL;
+}
+
+int
+pce_process_exec_match(__g_handle hdl, __d_sconf ptr)
+{
+  _execv exec_args =
+    { 0 };
+  int r;
+
+  if ((r = g_init_execv_bare(&exec_args, hdl, ptr->match)))
+    {
+      print_str("ERROR: [%d]: g_init_execv_bare failed: '%s'\n", r, ptr->match);
+      return 1;
+    }
+
+  if ((r = process_execv_args_bare(hdl->buffer.pos->ptr, hdl, &exec_args)))
+    {
+      print_str("ERROR: [%d]: process_execv_args failed: '%s'\n", r,
+          ptr->match);
+      return 1;
+    }
+  r = WEXITSTATUS(l_execv(exec_args.exec_v_path, exec_args.argv_c));
+  if (r)
+    {
+      print_str(
+          "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
+          r, ptr->match);
+      EXITVAL = 1;
+      if (ptr->message[0])
+        {
+          printf("200 %s\n", ptr->message);
+        }
+      return -1;
+    }
+
+  return r;
+}
+
+int
+pce_process_lom_match(__g_handle hdl, __d_sconf ptr)
+{
+  int i_m = 1, r;
+
+  if (ptr->invert == 1)
+    {
+      i_m = 0;
+    }
+
+  _g_lom lom =
+    { 0 };
+
+  uint8_t match[8] =
+    { 0 };
+
+  if (pce_dt(ptr->match, &match))
+    {
+      print_str("ERROR: convert value %s to an integer type\n", ptr->match);
+      return 1;
+    }
+
+  void *_lcs = pce_rescomp(ptr->lcomp);
+
+  if (!_lcs)
+    {
+      print_str(
+          "ERROR: LOM: %s = %s: unable to determine comparison match type (lcomp : %d)\n",
+          ptr->field, ptr->match, ptr->lcomp);
+      return 1;
+    }
+
+  if ((r = g_build_lom_packet_bare(hdl, &lom, ptr->field, &match, _lcs,
+      g_oper_and)))
+    {
+      print_str("ERROR: LOM: %s = %s: unable to commit lom match : %d\n",
+          ptr->field, ptr->match, r);
+      return 1;
+    }
+
+  lom.g_lom_vp(hdl->buffer.pos->ptr, (void*) &lom);
+
+  if (lom.result == i_m)
+    {
+      print_str(
+          "WARNING: rule chain hit positive LOM match (%s == %s), blocking..\n",
+          ptr->field, ptr->match);
+      EXITVAL = 1;
+      if (ptr->message[0])
+        {
+          printf("200 %s\n", ptr->message);
+        }
+      return -1;
+    }
+  else
+    {
+      pce_pcl_stat(lom.result, ptr);
+    }
+
+  return 0;
+}
+
+int
+pce_process_string_match(__g_handle hdl, __d_sconf ptr)
+{
+  int i_m = 0, r;
+
+  if (ptr->invert == 1)
+    {
+      i_m = REG_NOMATCH;
+    }
+
+  if (!(r = pce_match_log(hdl, ptr, i_m)))
+    {
+      print_str(
+          "WARNING: '%s': rule chain hit positive REGEX match (pattern '%s' matches '%s'), blocking..\n",
+          hdl->file, ptr->match, cl_g_sub);
+      EXITVAL = 1;
+      if (ptr->message[0])
+        {
+          printf("200 %s\n", ptr->message);
+        }
+      return -1;
+    }
+  else
+    {
+      pce_pcl_stat(r, ptr);
+    }
+  return 0;
+}
+
 void
 pce_pcl_stat(int r, __d_sconf ptr)
 {
   if (r < 0)
     {
-      pce_log("ERROR: %d processing chain link (%s) (%s)\n", r, ptr->field,
+      print_str("ERROR: %d processing chain link (%s) (%s)\n", r, ptr->field,
           ptr->match);
     }
   else
     {
-      pce_log("NOTICE: chain link passed (%s) (%s)\n", ptr->field, ptr->match);
+      print_str("NOTICE: chain link passed (%s) (%s)\n", ptr->field,
+          ptr->match);
     }
 }
 
@@ -273,11 +442,11 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
     {
       if (!pce_do_str_preproc(g_basename(cl_dir)))
         {
-          pce_log(
+          print_str(
               "ERROR: unable to preprocess the directory string, aborting\n");
           return -1;
         }
-      //pce_log("%s | %s\n", cl_sub, s_year);
+      printf("%s | %s\n", cl_g_sub, s_year);
       pce_f |= F_PCE_DONE_STR_PREPROC;
     }
 
@@ -286,23 +455,26 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
       uint64_t year = (uint64_t) strtoul(s_year, NULL, 10);
       md_init(&p_log->_match_rr, 2);
       __g_match tt_m = md_alloc(&p_log->_match_rr, sizeof(_g_match));
+      md_init(&tt_m->lom, 2);
+      __g_lom lom = (__g_lom ) md_alloc(&tt_m->lom, sizeof(_g_lom));
       tt_m->g_oper_ptr = g_oper_and;
       tt_m->flags |= F_GM_NAND;
+      tt_m->flags |= F_GM_ISLOM;
       tt_m->match_i_m = 0;
 
-      if ((r = g_build_lom_packet_bare(p_log, tt_m, dgetr->d_yf, &year,
+      if ((r = g_build_lom_packet_bare(p_log, lom, dgetr->d_yf, &year,
           _lcs_isequal, g_oper_and)))
         {
-          pce_log(" ERROR: unable to commit lom match : %d\n", r);
+          print_str(" ERROR: unable to commit lom match : %d\n", r);
           p_log->flags |= F_GH_LOCKED;
           return 0;
         }
     }
 
-  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_sub, 0,
+  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_g_sub, 0,
   REG_EXTENDED | REG_ICASE, F_GM_ISREGEX)))
     {
-      pce_log("ERROR: unable to commit regex match : %d\n", r);
+      print_str("ERROR: unable to commit regex match : %d\n", r);
       p_log->flags |= F_GH_LOCKED;
       return 0;
     }
@@ -311,8 +483,10 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
 
   if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
     {
-      pce_log("ERROR: could not find match '%s (%s)' in '%s', code %d, %llu\n",
-          cl_sub, s_year ? s_year : "no year", p_log->file, r, (ulint64_t) nres);
+      print_str(
+          "ERROR: could not find anything matching pattern '%s (%s)' in '%s', code %d, %llu\n",
+          cl_g_sub, s_year ? s_year : "no year", p_log->file, r,
+          (ulint64_t) nres);
       p_log->flags |= F_GH_LOCKED;
       return 0;
     }
@@ -341,7 +515,7 @@ pce_match_log(__g_handle hdl, __d_sconf sconf, int m_i_m)
     {
       return -14;
     }
-  // pce_log("%s : %s\n", r_v, sconf->match);
+  // print_str("%s : %s\n", r_v, sconf->match);
   return pce_do_regex_match(sconf->match, r_v, REG_EXTENDED | REG_ICASE, m_i_m);
 }
 
@@ -353,7 +527,7 @@ pce_do_regex_match(char *pattern, char *match, int cflags, int m_i_m)
 
   if ((r = regcomp(&preg, pattern, cflags | REG_NOSUB)))
     {
-      pce_log("ERROR: could not compile pattern '%s'\n", pattern);
+      print_str("ERROR: could not compile pattern '%s'\n", pattern);
       return 0;
     }
 
@@ -461,15 +635,32 @@ pce_get_year_result(char *subject, char *output, size_t max_size)
 char*
 pce_do_str_preproc(char *subject)
 {
-  char *s_rs;
-  if (!(s_rs = reg_sub_d(subject, gconf->r_clean,
-  REG_EXTENDED | REG_ICASE, cl_sub)))
+
+  if (!(cl_g_sub = reg_sub_d(subject, gconf->r_clean,
+  REG_EXTENDED | REG_ICASE, cl_presub)))
     {
+      print_str("ERROR: could not preprocess string (r_clean)\n");
       return NULL;
     }
 
+  if (!(cl_g_sub = reg_sub_g(cl_g_sub, gconf->r_postproc,
+  REG_EXTENDED | REG_ICASE, cl_sub, sizeof(cl_sub), ".*")))
+    {
+      print_str("ERROR: could not preprocess string (r_postproc)\n");
+      return NULL;
+    }
+
+  size_t cl_l = strlen(cl_sub);
+  if (cl_l >= sizeof(cl_sub) -1) {
+      print_str("ERROR: could not preprocess string (prepend ^)\n");
+      return NULL;
+  }
+
+  memmove(&cl_sub[1], cl_sub, cl_l);
+  cl_sub[0] = 0x5E;
+
   s_year = pce_get_year_result(subject, cl_yr, sizeof(cl_yr));
 
-  return s_rs;
+  return cl_g_sub;
 }
 

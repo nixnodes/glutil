@@ -22,6 +22,7 @@
 #include <exech.h>
 #include <x_f.h>
 #include <log_io.h>
+#include <misc.h>
 
 #include <lref_dirlog.h>
 #include <lref_nukelog.h>
@@ -163,46 +164,6 @@ data_backup_records(char *file)
       print_str("NOTICE: %s: created data backup: %s\n", file, buffer);
     }
   return 0;
-}
-
-int
-find_absolute_path(char *exec, char *output)
-{
-  char *env = getenv("PATH");
-
-  if (!env)
-    {
-      return 1;
-    }
-
-  mda s_p =
-    { 0 };
-
-  md_init(&s_p, 64);
-
-  int p_c = split_string(env, 0x3A, &s_p);
-
-  if (p_c < 1)
-    {
-      return 2;
-    }
-
-  p_md_obj ptr = md_first(&s_p);
-
-  while (ptr)
-    {
-      snprintf(output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
-      if (!access(output, R_OK | X_OK))
-        {
-          md_g_free(&s_p);
-          return 0;
-        }
-      ptr = ptr->next;
-    }
-
-  md_g_free(&s_p);
-
-  return 3;
 }
 
 int

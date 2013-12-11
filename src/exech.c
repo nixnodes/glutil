@@ -19,7 +19,7 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 
   if (!in_ptr[0])
     {
-      return 1;
+      return 2600;
     }
 
   md_init(mech, 16);
@@ -27,7 +27,7 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 
   if (!ptr)
     {
-      return 4;
+      return 2601;
     }
 
   ptr->st_ptr = in_ptr;
@@ -45,7 +45,7 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
           ptr = md_alloc(mech, sizeof(_d_exec_ch));
           if (!ptr)
             {
-              return 9;
+              return 2602;
             }
 
           do_gcb: ;
@@ -60,7 +60,7 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 
           if (!ptr->callback)
             {
-              return 10;
+              return 2603;
             }
 
           while (((in_ptr[0] != 0x7D) || in_ptr[-1] == 0x5C) && in_ptr[0])
@@ -71,19 +71,19 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
             }
           if (!in_ptr[0])
             {
-              return 11;
+              return 2604;
             }
 
           if (in_ptr[0] != 0x7D)
             {
-              return 12;
+              return 2605;
             }
 
           ptr->len = vl1;
           ptr = md_alloc(mech, sizeof(_d_exec_ch));
           if (!ptr)
             {
-              return 13;
+              return 2606;
             }
 
           if (in_ptr[1] && ((in_ptr[1] == 0x7B) && in_ptr[0] != 0x5C))
@@ -109,6 +109,7 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
   return 0;
 
 }
+
 
 char *
 g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,

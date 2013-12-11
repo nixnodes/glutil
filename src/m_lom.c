@@ -28,7 +28,7 @@ g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
   while (ptr)
     {
       lom = (__g_lom) ptr->ptr;
-      lom->result = 0;
+      //lom->result = 0;
       i++;
       lom->g_lom_vp(d_ptr, (void*)lom);
 
@@ -64,6 +64,13 @@ g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
     }
 
   return 1;
+}
+
+int
+g_lom_match_bare(__g_handle hdl, void *d_ptr, __g_lom lom)
+{
+  lom->g_lom_vp(d_ptr, (void*) lom);
+  return lom->result;
 }
 
 int
@@ -241,15 +248,22 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
 void *_lcs_isequal[] =
   { g_is_equal, g_is_equal_s, g_is_equal_f };
+void *_lcs_ishigher[] =
+  { g_is_higher_2, g_is_higher_2_s, g_is_higher_f_2 };
+void *_lcs_islower[] =
+  { g_is_lower_2, g_is_lower_2_s, g_is_lower_f_2 };
+void *_lcs_islowerorequal[] =
+  { g_is_lowerorequal, g_is_lowerorequal_s, g_is_lowerorequal_f };
+void *_lcs_ishigherorequal[] =
+  { g_is_higherorequal, g_is_higherorequal_s, g_is_higherorequal_f };
+void *_lcs_isnotorequal[] =
+  { g_is_not, g_is_not_s, g_is_not_f };
 
 int
-g_build_lom_packet_bare(__g_handle hdl, __g_match match, char *field,
+g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field,
     void *right, void *comp_set[], g_op lop)
 {
-  md_init(&match->lom, 2);
   int rt = 0;
-
-  __g_lom lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
 
   if (!lom)
     {
@@ -261,9 +275,10 @@ g_build_lom_packet_bare(__g_handle hdl, __g_match match, char *field,
 
   size_t off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
 
-  if (!vb) {
+  if (!vb)
+    {
       return 600;
-  }
+    }
 
   if (off > hdl->block_sz)
     {
@@ -298,14 +313,7 @@ g_build_lom_packet_bare(__g_handle hdl, __g_match match, char *field,
   lom->flags |= F_LOM_RVAR_KNOWN;
   lom->g_oper_ptr = lop;
 
-  match->flags |= F_GM_ISLOM;
-
   end:
-
-  if (rt)
-    {
-      md_unlink(&match->lom, match->lom.pos);
-    }
 
   return rt;
 }

@@ -23,8 +23,7 @@ int
 determine_datatype(__g_handle hdl, char *file);
 int
 g_proc_mr(__g_handle hdl);
-int
-find_absolute_path(char *exec, char *output);
+
 
 char *_print_ptr;
 

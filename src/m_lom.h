@@ -14,10 +14,10 @@
 #ifndef M_LOM_H_
 #define M_LOM_H_
 
-#define F_LM_CPRG               (a32 << 1)
-#define F_LM_LOM                (a32 << 2)
+#define F_LM_CPRG                       (a32 << 1)
+#define F_LM_LOM                        (a32 << 2)
 
-#define F_LM_TYPES              (F_LM_CPRG|F_LM_LOM)
+#define F_LM_TYPES                      (F_LM_CPRG|F_LM_LOM)
 
 #define F_LOM_LVAR_KNOWN                (a32 << 1)
 #define F_LOM_RVAR_KNOWN                (a32 << 2)
@@ -30,12 +30,12 @@
 #define F_LOM_TYPES                     (F_LOM_FLOAT|F_LOM_INT|F_LOM_INT_S)
 #define F_LOM_VAR_KNOWN                 (F_LOM_LVAR_KNOWN|F_LOM_RVAR_KNOWN)
 
-#define F_GLT_LEFT              (a32 << 1)
-#define F_GLT_RIGHT             (a32 << 2)
+#define F_GLT_LEFT                      (a32 << 1)
+#define F_GLT_RIGHT                     (a32 << 2)
 
-#define F_GLT_DIRECT    (F_GLT_LEFT|F_GLT_RIGHT)
+#define F_GLT_DIRECT                    (F_GLT_LEFT|F_GLT_RIGHT)
 
-#define MAX_LOM_STRING          4096
+#define MAX_LOM_STRING                  4096
 
 typedef struct ___lom_strings_header
 {
@@ -69,9 +69,16 @@ g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off);
 int
 opt_g_lom(void *arg, int m, uint32_t flags);
 int
-g_build_lom_packet_bare(__g_handle hdl, __g_match match, char *field,
+g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field,
     void *right, void *comp_set[], g_op lop);
+int
+g_lom_match_bare(__g_handle hdl, void *d_ptr, __g_lom lom);
 
 void *_lcs_isequal[3];
+void *_lcs_ishigher[3];
+void *_lcs_islower[3];
+void *_lcs_islowerorequal[3];
+void *_lcs_ishigherorequal[3];
+void *_lcs_isnotorequal[3];
 
 #endif /* M_LOM_H_ */

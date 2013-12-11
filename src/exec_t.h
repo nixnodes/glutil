@@ -12,8 +12,7 @@
 
 #include <memory_t.h>
 #include <fp_types.h>
-
-
+#include <im_hdr.h>
 
 typedef struct ___d_argv_ch
 {
@@ -28,6 +27,8 @@ int
 g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl);
 int
 process_execv_args(void *data, __g_handle hdl);
+int
+process_execv_args_bare(void *data, __g_handle hdl, __execv exec_args);
 int
 prep_for_exec(void);
 
@@ -53,5 +54,10 @@ process_exec_string(char *input, char *output, size_t max_size, void *callback,
     void *data);
 int
 g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl);
+
+int
+g_init_execv_bare(__execv exec_args, __g_handle hdl, char *i_exec_str);
+int
+g_build_argv_c_bare(__execv exec_args, __g_handle hdl);
 
 #endif /* EXEC_H_ */

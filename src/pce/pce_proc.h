@@ -39,9 +39,11 @@ pce_get_year_result(char *subject, char *output, size_t max_size);
 char*
 pce_do_str_preproc(char *subject);
 
-char cl_sub[PATH_MAX];
+char cl_presub[PATH_MAX];
+char cl_sub[PATH_MAX*2];
 char cl_yr[32], *s_year;
 char *cl_dir;
+char *cl_g_sub;
 
 uint32_t pce_f;
 int EXITVAL;
@@ -61,6 +63,9 @@ pce_enable_logging(void);
 void
 pce_pcl_stat(int r, __d_sconf ptr);
 
+typedef int _d_pce_plm(__g_handle hdl, __d_sconf ptr);
+
+_d_pce_plm pce_process_string_match, pce_process_lom_match, pce_process_exec_match;
 
 mda g_opt;
 

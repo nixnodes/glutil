@@ -13,6 +13,7 @@
 #include <exech.h>
 #include <arg_proc.h>
 #include <l_error.h>
+#include <misc.h>
 
 #include <unistd.h>
 #include <errno.h>
@@ -70,6 +71,112 @@ g_build_argv_c(__g_handle hdl)
 }
 
 int
+g_build_argv_c_bare(__execv exec_args, __g_handle hdl)
+{
+  md_init(&exec_args->ac_ref, exec_args->argc);
+
+  exec_args->argv_c = calloc(amax / sizeof(char*), sizeof(char**));
+  int i, r;
+  __d_argv_ch ach;
+  char *ptr;
+  for (i = 0; i < exec_args->argc && exec_args->argv[i]; i++)
+    {
+      ptr = strchr(exec_args->argv[i], 0x7B);
+      if (ptr)
+        {
+          exec_args->argv_c[i] = (char*) calloc(8192, 1);
+          size_t t_l = strlen(exec_args->argv[i]);
+          strncpy(exec_args->argv_c[i], exec_args->argv[i],
+              t_l > 8191 ? 8191 : t_l);
+          ach = md_alloc(&exec_args->ac_ref, sizeof(_d_argv_ch));
+          ach->cindex = i;
+          if ((r = g_compile_exech(&ach->mech, hdl, exec_args->argv[i])))
+            {
+              return r;
+            }
+        }
+      else
+        {
+          exec_args->argv_c[i] = exec_args->argv[i];
+        }
+    }
+
+  if (!i)
+    {
+      return -1;
+    }
+
+  return 0;
+}
+
+int
+g_init_execv_bare(__execv exec_args, __g_handle hdl, char *i_exec_str)
+{
+  int r;
+
+#ifdef _SC_ARG_MAX
+  amax = sysconf(_SC_ARG_MAX);
+#else
+#ifdef ARG_MAX
+  amax = ARG_MAX;
+#endif
+#endif
+
+  if (!amax)
+    {
+      amax = LONG_MAX;
+    }
+
+  long count = amax / sizeof(char*);
+
+  if (!i_exec_str)
+    {
+      return 9008;
+    }
+
+  if (!strlen(i_exec_str))
+    {
+      return 9009;
+    }
+
+  int c = 0;
+
+  char **ptr = build_argv(i_exec_str, count, &c);
+
+  if (!c)
+    {
+      return 9001;
+    }
+
+  if (c > count / 2)
+    {
+      return 9002;
+    }
+
+  exec_args->argv = ptr;
+  exec_args->argc = c;
+  exec_args->exc = g_do_exec_v;
+
+  if (!exec_args->argc)
+    {
+      return 2001;
+    }
+
+  if ((r = g_build_argv_c_bare(exec_args, hdl)))
+    {
+      return r;
+    }
+
+  if ((r = find_absolute_path(exec_args->argv_c[0], exec_args->exec_v_path)))
+    {
+      snprintf(exec_args->exec_v_path, PATH_MAX, "%s", exec_args->argv_c[0]);
+    }
+
+  return 0;
+
+}
+
+int
 opt_execv(void *arg, int m)
 {
   int c = 0;
@@ -78,7 +185,7 @@ opt_execv(void *arg, int m)
   amax = sysconf(_SC_ARG_MAX);
 #else
 #ifdef ARG_MAX
-  val = ARG_MAX;
+  amax = ARG_MAX;
 #endif
 #endif
 
@@ -252,11 +359,10 @@ process_execv_args(void *data, __g_handle hdl)
 
   p_md_obj ptr = md_first(&hdl->exec_args.ac_ref);
 
-  __d_argv_ch ach;
+  __d_argv_ch ach = NULL;
   char *s_ptr;
   while (ptr)
     {
-
       ach = (__d_argv_ch) ptr->ptr;
 
       if (!(s_ptr = g_exech_build_string(data, &ach->mech,
@@ -266,10 +372,37 @@ process_execv_args(void *data, __g_handle hdl)
           hdl->exec_args.argv_c[ach->cindex][0] = 0x0;
         }
 
-      /*if (process_exec_string(hdl->exec_args.argv[ach->cindex],
-       hdl->exec_args.argv_c[ach->cindex], 8191, (void*) hdl->g_proc1, data))
-       {
-       }*/
+
+      ptr = ptr->next;
+    }
+
+  if (!ach) {
+      return 1;
+  }
+
+  return 0;
+}
+
+int
+process_execv_args_bare(void *data, __g_handle hdl, __execv exec_args)
+{
+  g_setjmp(0, "process_execv_args", NULL, NULL);
+
+  p_md_obj ptr = md_first(&exec_args->ac_ref);
+
+  __d_argv_ch ach;
+  char *s_ptr;
+  while (ptr)
+    {
+
+      ach = (__d_argv_ch) ptr->ptr;
+
+      if (!(s_ptr = g_exech_build_string(data, &ach->mech,
+                  hdl, exec_args->argv_c[ach->cindex], 8191)))
+        {
+
+          exec_args->argv_c[ach->cindex][0] = 0x0;
+        }
 
       ptr = ptr->next;
     }

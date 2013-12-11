@@ -30,7 +30,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-
 int
 prio_opt_g_macro(void *arg, int m)
 {
@@ -569,7 +568,8 @@ g_opt_mode_noop(void *arg, int m)
 int
 print_version_long(void *arg, int m)
 {
-  print_str("* %s_%s-%s - glFTPd binary logs tool *\n", PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH);
+  print_str("* %s_%s-%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
+  PACKAGE_VERSION, __STR_ARCH);
   return 0;
 }
 
@@ -781,7 +781,6 @@ opt_membuffer_limit_in(void *arg, int m)
   return 0;
 }
 
-
 int
 opt_g_arg1(void *arg, int m)
 {
@@ -868,6 +867,28 @@ opt_lastonlog(void *arg, int m)
     {
       g_cpg(arg, LASTONLOG, m, PATH_MAX);
       ofl |= F_OVRR_LASTONLOG;
+    }
+  return 0;
+}
+
+int
+opt_sconf(void *arg, int m)
+{
+  if (!(ofl & F_OVRR_SCONF))
+    {
+      g_cpg(arg, SCONFLOG, m, PATH_MAX);
+      ofl |= F_OVRR_SCONF;
+    }
+  return 0;
+}
+
+int
+opt_gconf(void *arg, int m)
+{
+  if (!(ofl & F_OVRR_GCONF))
+    {
+      g_cpg(arg, GCONFLOG, m, PATH_MAX);
+      ofl |= F_OVRR_GCONF;
     }
   return 0;
 }
@@ -1007,7 +1028,6 @@ opt_execv_stdout_redir(void *arg, int m)
   return 0;
 }
 
-
 int
 opt_g_infile(void *arg, int m)
 {
@@ -1047,7 +1067,6 @@ opt_log_file(void *arg, int m)
   return 0;
 }
 
-
 int
 opt_print(void *arg, int m)
 {
@@ -1084,7 +1103,6 @@ opt_exec(void *arg, int m)
   exc = g_do_exec_fb;
   return 0;
 }
-
 
 int
 option_crc32(void *arg, int m)
@@ -1138,6 +1156,7 @@ void *prio_f_ref[] =
       "--tvlog", opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1,
       "--oneliners", opt_oneliner, (void*) 1, "--lastonlog", opt_lastonlog,
       (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--siteroot",
+      "--sconf", opt_sconf, (void*) 1, "--gconf", opt_gconf, (void*) 1,
       opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1, "--noglconf",
       opt_g_noglconf, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
       NULL, NULL, NULL };
@@ -1187,7 +1206,8 @@ void *f_ref[] =
       opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1, "--oneliners",
       opt_oneliner, (void*) 1, "-o", opt_oneliner_dump, (void*) 0,
       "--lastonlog", opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump,
-      (void*) 0, "--dupefile", opt_dupefile, (void*) 1, "--nowbuffer",
+      (void*) 0, "--dupefile", opt_dupefile, (void*) 1, "--sconf", opt_sconf,
+      (void*) 1, "--gconf", opt_gconf, (void*) 1, "--nowbuffer",
       opt_g_buffering, (void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary",
       opt_binary, (void*) 0, "iregexi", opt_g_iregexi, (void*) 1, "--iregexi",
       opt_g_iregexi, (void*) 1, "iregex", opt_g_iregex, (void*) 1, "--iregex",

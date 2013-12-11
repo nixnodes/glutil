@@ -36,6 +36,8 @@ int
 g_print_info(void);
 int
 g_bin_compare(const void *p1, const void *p2, off_t size);
+int
+find_absolute_path(char *exec, char *output);
 
 uint32_t LOGLVL;
 
