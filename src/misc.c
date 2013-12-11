@@ -24,21 +24,21 @@
 #define PSTR_MAX        (V_MB/4)
 
 int
-print_str(const char * volatile buf, ...)
+g_print_str(const char * volatile buf, ...)
 {
-  char d_buffer_2[PSTR_MAX + 1];
+  char d_buffer_2[PSTR_MAX];
   va_list al;
   va_start(al, buf);
 
   if ((gfl & F_OPT_PS_LOGGING) || (gfl & F_OPT_PS_TIME))
     {
       struct tm tm = *get_localtime();
-      snprintf(d_buffer_2, PSTR_MAX, "[%.2u-%.2u-%.2u %.2u:%.2u:%.2u] %s",
-          (tm.tm_year + 1900) % 100, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+      snprintf(d_buffer_2, PSTR_MAX, "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] %s",
+          tm.tm_mday, tm.tm_mon + 1, (tm.tm_year + 1900) % 100, tm.tm_hour,
           tm.tm_min, tm.tm_sec, buf);
       if (fd_log)
         {
-          char wl_buffer[PSTR_MAX + 1];
+          char wl_buffer[PSTR_MAX];
           vsnprintf(wl_buffer, PSTR_MAX, d_buffer_2, al);
           w_log(wl_buffer, (char*) buf);
         }
@@ -159,8 +159,8 @@ enable_logging(void)
         {
           gfl ^= F_OPT_PS_LOGGING;
           print_str(
-              "ERROR: %s: [%d]: could not open file for writing, logging disabled\n",
-              LOGFILE, errno);
+              "ERROR: %s: [%s]: could not open file for writing, logging disabled\n",
+              LOGFILE, strerror(errno));
         }
     }
   return;

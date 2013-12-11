@@ -69,7 +69,6 @@ g_build_argv_c(__g_handle hdl)
   return 0;
 }
 
-
 int
 opt_execv(void *arg, int m)
 {
@@ -130,7 +129,6 @@ g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl)
   return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
 }
 
-
 int
 g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
 {
@@ -171,7 +169,6 @@ g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
       return -1;
     }
 }
-
 
 int
 prep_for_exec(void)
@@ -228,8 +225,8 @@ l_execv(char *exec, char **argv)
       else
         {
           execv(exec, argv);
-          fprintf(stderr, "ERROR: %s: execv failed to execute [%d]\n", exec,
-          errno);
+          fprintf(stderr, "ERROR: %s: execv failed to execute [%s]\n", exec,
+              strerror(errno));
           _exit(1);
         }
     }
@@ -239,15 +236,14 @@ l_execv(char *exec, char **argv)
       if (errno != EINTR)
         {
           fprintf(stderr,
-              "ERROR: %s:failed waiting for child process to finish [%d]\n",
-              exec, errno);
+              "ERROR: %s:failed waiting for child process to finish [%s]\n",
+              exec, strerror(errno));
           return 2;
         }
     }
 
   return status;
 }
-
 
 int
 process_execv_args(void *data, __g_handle hdl)

@@ -20,9 +20,9 @@ sconf_format_block(void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
-  return print_str("SCONF\x9%u\x9%u\x9%d\x9%d\x9%d\x9%lu\x9%s\x9%s\n",
+  return print_str("SCONF\x9%u\x9%u\x9%d\x9%d\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
       data->ui32_1, data->ui32_2, data->i32_1, data->i32_2, data->i32,
-      data->ui64, data->field , data->match);
+      data->ui64, data->field , data->match, data->message);
 
 }
 
@@ -31,9 +31,9 @@ sconf_format_block_batch(void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
-  return printf("SCONF\x9%u\x9%u\x9%d\x9%d\x9%d\x9%lu\x9%s\x9%s\n",
+  return printf("SCONF\x9%u\x9%u\x9%d\x9%d\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
       data->ui32_1, data->ui32_2, data->i32_1, data->i32_2, data->i32,
-      data->ui64, data->field , data->match);
+      data->ui64, data->field , data->match, data->message);
 
 }
 
@@ -50,8 +50,9 @@ sconf_format_block_exp(void *iarg, char *output)
       "uint64 %llu\n"
       "field %s\n"
       "match %s\n\n"
+      "msg %s\n"
       , data->ui32_1, data->ui32_2, data->i32_1, data->i32_2, data->i32,
-      (ulint64_t)data->ui64, data->field , data->match);
+      (ulint64_t)data->ui64, data->field , data->match, data->message);
 
 }
 
@@ -153,6 +154,13 @@ dt_rval_sconf_field(void *arg, char *match, char *output, size_t max_size,
   return ((__d_sconf) arg)->field;
 }
 
+char *
+dt_rval_gconf_msg(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  return ((__d_sconf) arg)->message;
+}
+
 void *
 ref_to_val_lk_sconf(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -191,6 +199,10 @@ ref_to_val_lk_sconf(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_sconf_match, (__d_drt_h ) mppd, "%s");
     }
+  else if (!strncmp(match, _MC_SCONF_MSG, 3))
+    {
+      return as_ref_to_val_lk(match, dt_rval_gconf_msg, (__d_drt_h) mppd, "%s");
+    }
   else if (!strncmp(match, _MC_SCONF_FIELD, 5))
     {
       return as_ref_to_val_lk(match, dt_rval_sconf_field, (__d_drt_h ) mppd, "%s");
@@ -223,6 +235,15 @@ gcb_sconf(void *buffer, char *key, char *val)
         }
       memcpy(ptr->field, val, v_l > 254 ? 254 : v_l);
       return 1;
+    }
+  else if (k_l == 3 && !strncmp(key, _MC_SCONF_MSG, 3))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return 0;
+        }
+      memcpy(ptr->message, val, v_l >= SCONF_MAX_MSG ? SCONF_MAX_MSG - 1 : v_l);
+      return -1;
     }
   else if (k_l == 3 && !strncmp(key, _MC_SCONF_INT32, 3))
     {

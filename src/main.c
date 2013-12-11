@@ -39,10 +39,15 @@
 #include <errno.h>
 
 int
+(*print_str)(const char * volatile buf, ...);
+
+int
 main(int argc, char *argv[])
 {
   char **p_argv = (char**) argv;
   int r;
+
+  print_str = g_print_str;
 
   g_setjmp(0, "main", NULL, NULL);
   if ((r = setup_sighandlers()))
@@ -298,8 +303,8 @@ g_init(int argc, char **argv)
       if (daemon(1, 0) == -1)
         {
           print_str(
-              "ERROR: [%d] could not fork into background, terminating..\n",
-              errno);
+              "ERROR: [%s] could not fork into background, terminating..\n",
+              strerror(errno));
           EXITVAL = errno;
           return errno;
         }

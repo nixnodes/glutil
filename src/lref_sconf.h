@@ -20,6 +20,9 @@
 #define _MC_SCONF_MATCH       "match"
 #define _MC_SCONF_INT32       "int"
 #define _MC_SCONF_UINT64      "uint64"
+#define _MC_SCONF_MSG         "msg"
+
+#define SCONF_MAX_MSG          512
 
 __d_format_block sconf_format_block, sconf_format_block_batch,
     sconf_format_block_exp;
@@ -43,6 +46,7 @@ typedef struct ___d_sconf
   uint64_t ui64;
   char match[4096];
   char field[MAX_VAR_LEN];
+  char message[SCONF_MAX_MSG];
 } _d_sconf, *__d_sconf;
 
 #pragma pack(pop)

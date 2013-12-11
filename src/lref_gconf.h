@@ -1,5 +1,5 @@
-/*
- * lref_gconf.h
+/*5
+ * lref_gconf.h5
  *
  *  Created on: Dec 10, 2013
  *      Author: reboot
@@ -23,6 +23,7 @@
 #define _MC_GCONF_O_SHM           "o_use_shared"
 
 #define GCONF_MAX_REG_EXPR        16384
+
 
 __d_format_block gconf_format_block, gconf_format_block_batch,
     gconf_format_block_exp;

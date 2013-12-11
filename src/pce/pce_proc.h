@@ -17,6 +17,7 @@
 typedef struct __g_dgetr {
   uint64_t pf;
   char *d_field;
+  char *d_yf;
 }_g_dgetr, *__d_dgetr;
 
 int
@@ -53,6 +54,13 @@ int
 pce_do_regex_match(char *pattern, char *match, int cflags, int m_i_m);
 int
 pce_lh_ref_clean(pmda lh_ref);
+int
+pce_do_lookup(__g_handle p_log, __d_dgetr dgetr);
+void
+pce_enable_logging(void);
+void
+pce_pcl_stat(int r, __d_sconf ptr);
+
 
 mda g_opt;
 

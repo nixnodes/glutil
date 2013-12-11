@@ -8,6 +8,7 @@
 #include <glutil.h>
 #include "pce_config.h"
 #include "pce_proc.h"
+#include "pce_misc.h"
 
 #include <str.h>
 #include <x_f.h>
@@ -35,14 +36,13 @@ uint32_t g_hflags = F_DL_FOPEN_BUFFER;
 int
 pce_proc(char *subject)
 {
-  gfl |= G_HFLAGS | F_OPT_VERBOSE | F_OPT_VERBOSE2 | F_OPT_VERBOSE3
-      | F_OPT_VERBOSE4 | F_OPT_VERBOSE5;
+  gfl |= G_HFLAGS | F_OPT_PS_SILENT;
 
   int r;
 
   if ((r = g_fopen(GCONFLOG, "r", F_DL_FOPEN_BUFFER, &h_gconf)))
     {
-      printf("200 glutil: failed opening '%s', code %d\n", GCONFLOG, r);
+      pce_log("ERROR: failed opening '%s', code %d\n", GCONFLOG, r);
       goto end;
     }
 
@@ -73,8 +73,8 @@ pce_proc(char *subject)
 
   if (file_exists(s_lp))
     {
-      printf("200 glutil: %s - no section configuration exists at '%s'\n",
-          s_b_p, s_lp);
+      pce_log("ERROR: %s - no section configuration exists at '%s'\n", s_b_p,
+          s_lp);
       goto end;
     }
 
@@ -85,13 +85,13 @@ pce_proc(char *subject)
 
   if (determine_datatype(&h_sconf, SCONFLOG))
     {
-      printf("200 glutil: SCONF: determine_datatype failed\n");
+      pce_log("ERROR: SCONF: determine_datatype failed\n");
       goto end;
     }
 
   if ((r = g_fopen(s_lp, "r", F_DL_FOPEN_BUFFER, &h_sconf)))
     {
-      printf("200 glutil: failed opening '%s', code %d\n", s_lp, r);
+      pce_log("ERROR: failed opening '%s', code %d\n", s_lp, r);
       goto end;
     }
 
@@ -101,8 +101,7 @@ pce_proc(char *subject)
 
   if ((r = g_enum_log(pce_match_build, &h_sconf, &nres, &lh_ref)))
     {
-      printf("200 glutil: failed processing records in '%s', code %d\n", s_lp,
-          r);
+      pce_log("ERROR: failed processing records in '%s', code %d\n", s_lp, r);
       goto end;
     }
 
@@ -111,6 +110,11 @@ pce_proc(char *subject)
   g_cleanup(&h_gconf);
   g_cleanup(&h_sconf);
   pce_lh_ref_clean(&lh_ref);
+
+  if (fd_log)
+    {
+      fclose(fd_log);
+    }
 
   return EXITVAL;
 }
@@ -169,7 +173,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
 
           if ((r=g_fopen(log_s, "r", F_DL_FOPEN_BUFFER, p_log)))
             {
-              printf("200 glutil: failed opening '%s', code %d\n", log_s, r);
+              pce_log("ERROR: failed opening '%s', code %d\n", log_s, r);
               p_log->flags |= F_GH_LOCKED;
               return 0;
             }
@@ -183,7 +187,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
         {
           if ((p_log->flags & F_GH_LOCKED))
             {
-              printf("200 glutil: '%s': this log has been locked\n", p_log->file );
+              pce_log("NOTICE: '%s': this log has been locked\n", p_log->file );
               return 0;
             }
         }
@@ -201,20 +205,17 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
 
       if (!(r=pce_match_log(p_log, ptr, i_m)))
         {
-          printf("200 glutil: '%s': rule chain hit positive match (%s) (%s), blocking..\n", cl_sub, p_log->file, ptr->match);
+          pce_log("WARNING: '%s': rule chain hit positive match (%s) (%s), blocking..\n", cl_sub, p_log->file, ptr->match);
           EXITVAL = 1;
-          //return -1;
+          if (ptr->message[0])
+            {
+              printf("200 %s\n", ptr->message);
+            }
+          return -1;
         }
       else
         {
-          if (r < 0)
-            {
-              printf("200 glutil: error %d processing chain link (%s) (%s)\n",r, ptr->field, ptr->match);
-            }
-          else
-            {
-              printf("200 glutil: chain link passed (%s) (%s)\n", ptr->field, ptr->match);
-            }
+          pce_pcl_stat(r, ptr);
         }
     }
   else
@@ -232,24 +233,35 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
       int r;
       if (!(r=pce_do_regex_match(ptr->match, cl_dir, REG_EXTENDED, i_m)))
         {
-          printf("200 glutil: '%s': rule chain hit positive match (%s), blocking..\n", cl_sub, ptr->match);
+          pce_log("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_sub, ptr->match);
           EXITVAL = 1;
-          //return -1;
+          if (ptr->message[0])
+            {
+              printf("200 %s\n", ptr->message);
+            }
+          return -1;
         }
       else
         {
-          if (r < 0)
-            {
-              printf("200 glutil: error %d processing chain link (%s) (%s)\n",r, ptr->field, ptr->match);
-            }
-          else
-            {
-              printf("200 glutil: chain link passed (%s) (%s)\n", ptr->field, ptr->match);
-            }
+          pce_pcl_stat(r, ptr);
         }
     }
 
   return 0;
+}
+
+void
+pce_pcl_stat(int r, __d_sconf ptr)
+{
+  if (r < 0)
+    {
+      pce_log("ERROR: %d processing chain link (%s) (%s)\n", r, ptr->field,
+          ptr->match);
+    }
+  else
+    {
+      pce_log("NOTICE: chain link passed (%s) (%s)\n", ptr->field, ptr->match);
+    }
 }
 
 int
@@ -261,11 +273,11 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
     {
       if (!pce_do_str_preproc(g_basename(cl_dir)))
         {
-          printf(
-              "200 glutil: unable to preprocess the directory string, aborting\n");
+          pce_log(
+              "ERROR: unable to preprocess the directory string, aborting\n");
           return -1;
         }
-      //printf("%s | %s\n", cl_sub, s_year);
+      //pce_log("%s | %s\n", cl_sub, s_year);
       pce_f |= F_PCE_DONE_STR_PREPROC;
     }
 
@@ -281,7 +293,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
       if ((r = g_build_lom_packet_bare(p_log, tt_m, dgetr->d_yf, &year,
           _lcs_isequal, g_oper_and)))
         {
-          printf("200 glutil: unable to commit lom match : %d\n", r);
+          pce_log(" ERROR: unable to commit lom match : %d\n", r);
           p_log->flags |= F_GH_LOCKED;
           return 0;
         }
@@ -290,7 +302,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
   if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_sub, 0,
   REG_EXTENDED | REG_ICASE, F_GM_ISREGEX)))
     {
-      printf("200 glutil: unable to commit regex match : %d\n", r);
+      pce_log("ERROR: unable to commit regex match : %d\n", r);
       p_log->flags |= F_GH_LOCKED;
       return 0;
     }
@@ -299,8 +311,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
 
   if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
     {
-      printf("200 glutil: could not find match in '%s', code %d, %llu\n",
-          p_log->file, r, (ulint64_t) nres);
+      pce_log("ERROR: could not find match '%s (%s)' in '%s', code %d, %llu\n",
+          cl_sub, s_year, p_log->file, r, (ulint64_t) nres);
       p_log->flags |= F_GH_LOCKED;
       return 0;
     }
@@ -329,7 +341,7 @@ pce_match_log(__g_handle hdl, __d_sconf sconf, int m_i_m)
     {
       return -14;
     }
-  // printf("%s : %s\n", r_v, sconf->match);
+  // pce_log("%s : %s\n", r_v, sconf->match);
   return pce_do_regex_match(sconf->match, r_v, REG_EXTENDED | REG_ICASE, m_i_m);
 }
 
@@ -341,7 +353,7 @@ pce_do_regex_match(char *pattern, char *match, int cflags, int m_i_m)
 
   if ((r = regcomp(&preg, pattern, cflags | REG_NOSUB)))
     {
-      printf("200 glutil: could not compile pattern '%s'\n", pattern);
+      pce_log("ERROR: could not compile pattern '%s'\n", pattern);
       return 0;
     }
 
@@ -460,3 +472,4 @@ pce_do_str_preproc(char *subject)
 
   return s_rs;
 }
+

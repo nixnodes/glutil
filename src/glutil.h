@@ -106,6 +106,9 @@ void *f_ref[8192];
 char *GLOBAL_PREEXEC;
 char *GLOBAL_POSTEXEC;
 
+int
+g_print_str(const char * volatile buf, ...);
+
 #include <signal.h>
 
 int

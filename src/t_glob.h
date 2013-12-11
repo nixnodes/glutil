@@ -198,7 +198,7 @@ uint64_t gfl0, gfl;
 uint32_t ofl;
 
 int
-print_str(const char * volatile buf, ...);
+(*print_str)(const char * volatile buf, ...);
 
 typedef struct ___si_argv0
 {

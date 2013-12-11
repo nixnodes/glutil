@@ -525,9 +525,9 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           if (!(gfl & F_OPT_SHAREDMEM))
             {
               print_str(
-                  "ERROR: %s: [%d] unable to get information from data file\n",
+                  "ERROR: %s: [%s] unable to get information from data file\n",
                   file,
-                  errno);
+                  strerror(errno));
               return 20201;
             }
           else
@@ -554,6 +554,10 @@ g_buffer_into_memory(char *file, __g_handle hdl)
             }
 
           hdl->total_sz = st.st_size;
+        }
+    } else {
+        if ((gfl & F_OPT_SHAREDMEM)) {
+            flags |= F_GBM_SHM_NO_DATAFILE;
         }
     }
 
@@ -644,8 +648,8 @@ g_buffer_into_memory(char *file, __g_handle hdl)
                   if (shmctl(hdl->shmid, IPC_RMID, NULL) == -1)
                     {
                       print_str(
-                          "WARNING: %s: [IPC: 0x%.8X] [%d] unable to destroy shared memory segment\n",
-                          hdl->file, hdl->ipc_key, errno);
+                          "WARNING: %s: [IPC: 0x%.8X] [%s] unable to destroy shared memory segment\n",
+                          hdl->file, hdl->ipc_key, strerror(errno));
                     }
                   else
                     {
@@ -662,8 +666,8 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           else
             {
               print_str(
-                  "ERROR: %s: [IPC: 0x%.8X]: [%d]: could not get shared memory segment information from kernel\n",
-                  hdl->file, hdl->ipc_key, errno);
+                  "ERROR: %s: [IPC: 0x%.8X]: [%s]: could not get shared memory segment information from kernel\n",
+                  hdl->file, hdl->ipc_key, strerror(errno));
               return 20205;
             }
           if ((gfl & F_OPT_VERBOSE2) && hdl->shmid != -1
@@ -678,8 +682,8 @@ g_buffer_into_memory(char *file, __g_handle hdl)
       else if ((flags & F_GBM_SHM_NO_DATAFILE))
         {
           print_str(
-              "ERROR: %s: [IPC: 0x%.8X]: failed loading data into shared memory segment: [%d]: no shared memory segment or data file available to load\n",
-              hdl->file, hdl->ipc_key, errno);
+              "ERROR: %s: [IPC: 0x%.8X]: failed loading data into shared memory segment: [%s]: no shared memory segment or data file available to load\n",
+              hdl->file, hdl->ipc_key, strerror(errno));
           return 20206;
         }
     }
@@ -715,12 +719,12 @@ g_buffer_into_memory(char *file, __g_handle hdl)
   if ((r = load_data_md(&hdl->buffer, hdl->file, hdl)))
     {
       print_str(
-          "ERROR: %s: [%llu/%llu] [%llu] [%u] could not load data!%s [%d] [%d]\n",
+          "ERROR: %s: [%llu/%llu] [%llu] [%u] could not load data!%s [%d] [%s]\n",
           hdl->file, (ulint64_t) hdl->buffer.count,
           (ulint64_t) (hdl->total_sz / hdl->block_sz), hdl->total_sz,
           hdl->block_sz,
           (hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
-          errno);
+          strerror(errno));
 
       return 20209;
     }
@@ -998,9 +1002,9 @@ rebuild_data_file(char *file, __g_handle hdl)
         {
           if ((r = rename(hdl->s_buffer, file)))
             {
-              print_str("ERROR: %s: [%d] renaming temporary file failed!\n",
+              print_str("ERROR: %s: [%s] renaming temporary file failed!\n",
                   hdl->s_buffer,
-                  errno);
+                  strerror(errno));
               ret = 4;
             }
           goto end;
@@ -1011,9 +1015,9 @@ rebuild_data_file(char *file, __g_handle hdl)
       if ((r = remove(hdl->s_buffer)))
         {
           print_str(
-              "WARNING: %s: [%d] deleting temporary file failed (remove manually)\n",
+              "WARNING: %s: [%s] deleting temporary file failed (remove manually)\n",
               hdl->s_buffer,
-              errno);
+              strerror(errno));
           ret = 5;
         }
 

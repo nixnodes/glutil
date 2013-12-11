@@ -124,8 +124,9 @@ get_file_type(char *file)
 {
   struct stat sb;
 
-  if (stat(file, &sb) == -1)
-    return errno;
+  if (stat(file, &sb) == -1) {
+    return DT_UNKNOWN;
+  }
 
   return IFTODT(sb.st_mode);
 }

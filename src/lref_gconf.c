@@ -45,7 +45,7 @@ gconf_format_block_exp(void *iarg, char *output)
       "r_yearm %s\n"
       "r_sects %s\n"
       "o_use_shared_mem %hhu\n"
-      , data->r_clean, data->r_postproc, data->r_yearm, data->r_sects,data->o_use_shared_mem);
+      , data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem);
 
 }
 
@@ -124,6 +124,7 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_r_sects, (__d_drt_h) mppd, "%s");
     }
+
   else if (!strncmp(match, _MC_GCONF_O_SHM, 12))
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_shm , (__d_drt_h) mppd, "%hhu");
