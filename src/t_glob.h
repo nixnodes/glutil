@@ -164,6 +164,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_PRINT                     (a64 << 1)
 #define F_OPT_STDIN                     (a64 << 2)
 #define F_OPT_PRINTF                    (a64 << 3)
+#define F_OPT_PCE_NO_POST_EXEC          (a64 << 4)
 
 #define F_DL_FOPEN_BUFFER               (a32 << 1)
 #define F_DL_FOPEN_FILE                 (a32 << 2)
@@ -171,7 +172,7 @@ typedef unsigned long long int ulint64_t;
 #define F_DL_FOPEN_SHM                  (a32 << 4)
 
 #define F_OPT_HASMATCH                  (F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
-
+#define F_OPT_VERBMAX                   (F_OPT_VERBOSE|F_OPT_VERBOSE2|F_OPT_VERBOSE3|F_OPT_VERBOSE4|F_OPT_VERBOSE5)
 
 #define F_OVRR_IPC                      (a32 << 1)
 #define F_OVRR_GLROOT                   (a32 << 2)

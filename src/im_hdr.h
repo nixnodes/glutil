@@ -102,6 +102,8 @@ typedef struct g_handle
   size_t j_offset, jm_offset;
   int d_memb;
   void *_x_ref;
+  int shmcflags;
+  int shmatflags;
 } _g_handle, *__g_handle;
 
 #endif /* IM_HDR_H_ */

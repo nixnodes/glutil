@@ -66,6 +66,7 @@ int EXITVAL;
 int loop_interval;
 uint64_t loop_max;
 
+int shmatf;
 
 char MACRO_ARG1[4096];
 char MACRO_ARG2[4096];

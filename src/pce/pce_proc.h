@@ -12,7 +12,8 @@
 #include <lref_sconf.h>
 
 #define F_PCE_DONE_STR_PREPROC          (a32 << 1)
-#define F_PCE_LOCK_IMDB                 (a32 << 2)
+#define F_PCE_FORKED                    (a32 << 2)
+
 
 typedef struct __g_dgetr {
   uint64_t pf;
@@ -44,8 +45,10 @@ char cl_sub[PATH_MAX*2];
 char cl_yr[32], *s_year;
 char *cl_dir;
 char *cl_g_sub;
+char *post_m_exec_str;
 
 uint32_t pce_f;
+int32_t pce_lm;
 int EXITVAL;
 
 int
@@ -57,7 +60,7 @@ pce_do_regex_match(char *pattern, char *match, int cflags, int m_i_m);
 int
 pce_lh_ref_clean(pmda lh_ref);
 int
-pce_do_lookup(__g_handle p_log, __d_dgetr dgetr);
+pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp);
 void
 pce_enable_logging(void);
 void
@@ -65,7 +68,9 @@ pce_pcl_stat(int r, __d_sconf ptr);
 
 typedef int _d_pce_plm(__g_handle hdl, __d_sconf ptr);
 
-_d_pce_plm pce_process_string_match, pce_process_lom_match, pce_process_execv;
+int pce_process_execv(__g_handle hdl, char *ptr);
+
+_d_pce_plm pce_process_string_match, pce_process_lom_match;
 
 mda g_opt;
 

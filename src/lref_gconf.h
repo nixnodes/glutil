@@ -21,8 +21,12 @@
 #define _MC_GCONF_R_YEARM         "r_yearm"
 #define _MC_GCONF_R_SECTS         "r_sects"
 #define _MC_GCONF_O_SHM           "o_use_shared"
+#define _MC_GCONF_E_LF            "e_lookup_fail"
+#define _MC_GCONF_E_OLF           "o_exec_on_lookup_fail"
+#define _MC_GCONF_E_M             "e_match"
 
 #define GCONF_MAX_REG_EXPR        16384
+#define GCONF_MAX_EXEC            32768
 
 
 __d_format_block gconf_format_block, gconf_format_block_batch,
@@ -40,10 +44,13 @@ gcb_gconf(void *buffer, char *key, char *val);
 typedef struct ___d_gconf
 {
   int8_t o_use_shared_mem;
+  int8_t o_exec_on_lookup_fail;
   char r_clean[GCONF_MAX_REG_EXPR];
   char r_postproc[GCONF_MAX_REG_EXPR];
   char r_yearm[GCONF_MAX_REG_EXPR];
   char r_sects[GCONF_MAX_REG_EXPR];
+  char e_lookup_fail[GCONF_MAX_EXEC];
+  char e_match[GCONF_MAX_EXEC];
 } _d_gconf, *__d_gconf;
 
 #pragma pack(pop)

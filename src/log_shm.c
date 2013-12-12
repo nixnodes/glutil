@@ -56,14 +56,13 @@ g_shmap_data(__g_handle hdl, key_t ipc)
 
 void *
 shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
-    int *shmid)
+    int *shmid, int cflags, int shmflg)
 {
   g_setjmp(0, "shmap", NULL, NULL);
 
   void *ptr;
   int ir = 0;
 
-  int shmflg = 0;
 
   int i_shmid = -1;
 
@@ -75,9 +74,10 @@ shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
   if (*ret & R_SHMAP_ALREADY_EXISTS)
     {
       ir = 1;
+      //shmflg |= SHM_RDONLY;
     }
   else if ((*shmid = shmget(ipc, size,
-  IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR)) == -1)
+  IPC_CREAT | IPC_EXCL | cflags)) == -1)
     {
       if ( errno == EEXIST)
         {
@@ -177,7 +177,6 @@ g_map_shm(__g_handle hdl, key_t ipc)
 
   return 0;
 }
-
 
 int
 g_shm_cleanup(__g_handle hdl)

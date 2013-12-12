@@ -18,6 +18,8 @@
 uint32_t pce_f = 0;
 char *s_year = NULL;
 int EXITVAL = 0;
+uint32_t pce_gfl = 0;
+int32_t pce_lm = 0;
 
 int
 main(int argc, char *argv[])

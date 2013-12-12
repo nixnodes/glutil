@@ -37,12 +37,16 @@ uint32_t g_hflags = F_DL_FOPEN_BUFFER;
 
 char *cl_g_sub = cl_sub;
 
+char *post_m_exec_str = NULL;
+
 int
 pce_proc(char *subject)
 {
-  gfl |= G_HFLAGS | F_OPT_PS_SILENT;
+  gfl |= G_HFLAGS | F_OPT_PS_SILENT | F_OPT_VERBMAX;
 
   int r;
+
+  h_gconf.shmatflags |= SHM_RDONLY;
 
   if ((r = g_fopen(GCONFLOG, "r", F_DL_FOPEN_BUFFER, &h_gconf)))
     {
@@ -87,6 +91,8 @@ pce_proc(char *subject)
   mda lh_ref =
     { 0 };
 
+  h_sconf.shmatflags |= SHM_RDONLY;
+
   if (determine_datatype(&h_sconf, SCONFLOG))
     {
       print_str("ERROR: SCONF: determine_datatype failed\n");
@@ -107,6 +113,12 @@ pce_proc(char *subject)
     {
       print_str("ERROR: failed processing records in '%s', code %d\n", s_lp, r);
       goto end;
+    }
+
+  if (!(gfl0 & F_OPT_PCE_NO_POST_EXEC) && EXITVAL && gconf->e_match[0])
+    {
+      print_str("NOTICE: executing: '%s'\n", gconf->e_match);
+      system(gconf->e_match);
     }
 
   end:
@@ -153,6 +165,11 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
   __d_sconf ptr = (__d_sconf) _ptr;
   pmda lh_ref = (pmda) arg;
 
+  if (pce_lm && pce_lm != ptr->i32)
+    {
+      return 0;
+    }
+
   char *log_s;
 
   if (ptr->i32)
@@ -174,6 +191,8 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
         {
           p_log = md_alloc(lh_ref, sizeof(_g_handle));
           p_log->flags |= F_GH_HASMATCHES;
+          p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
+                            | S_IWGRP;
 
           if ((r=g_fopen(log_s, "r", F_DL_FOPEN_BUFFER, p_log)))
             {
@@ -182,8 +201,12 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               return 0;
             }
 
-          if ((r=pce_do_lookup(p_log, &dgetr) ) != 1)
+          if ((r=pce_do_lookup(p_log, &dgetr, ptr, log_s) ) != 1)
             {
+              if (gfl & F_OPT_KILL_GLOBAL)
+                {
+                  return -1;
+                }
               return r;
             }
         }
@@ -205,7 +228,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           pce_process_lom_match(p_log, ptr);
           break;
           case 3:
-          if ((r = pce_process_execv(p_log, ptr)))
+          if ((r = pce_process_execv(p_log, ptr->match)))
             {
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
@@ -310,22 +333,21 @@ pce_rescomp(int m_i)
 }
 
 int
-pce_process_execv(__g_handle hdl, __d_sconf ptr)
+pce_process_execv(__g_handle hdl, char *exec_str)
 {
   _execv exec_args =
     { 0 };
   int r;
 
-  if ((r = g_init_execv_bare(&exec_args, hdl, ptr->match)))
+  if ((r = g_init_execv_bare(&exec_args, hdl, exec_str)))
     {
-      print_str("ERROR: [%d]: g_init_execv_bare failed: '%s'\n", r, ptr->match);
+      print_str("ERROR: [%d]: g_init_execv_bare failed: '%s'\n", r, exec_str);
       return 1;
     }
 
   if ((r = process_execv_args_bare(hdl->buffer.pos->ptr, hdl, &exec_args)))
     {
-      print_str("ERROR: [%d]: process_execv_args failed: '%s'\n", r,
-          ptr->match);
+      print_str("ERROR: [%d]: process_execv_args failed: '%s'\n", r, exec_str);
       return 1;
     }
 
@@ -439,7 +461,7 @@ pce_pcl_stat(int r, __d_sconf ptr)
 }
 
 int
-pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
+pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 {
   int r;
 
@@ -474,6 +496,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
           p_log->flags |= F_GH_LOCKED;
           return 0;
         }
+
     }
 
   if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_g_sub, 0,
@@ -485,6 +508,11 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
     }
 
   off_t nres;
+  char did_retry = 0;
+
+  retry:
+
+  did_retry++;
 
   if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
     {
@@ -492,8 +520,51 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr)
           "ERROR: could not find anything matching pattern '%s (%s)' in '%s', code %d, %llu\n",
           cl_g_sub, s_year ? s_year : "no year", p_log->file, r,
           (ulint64_t) nres);
+
+      if (gconf->o_exec_on_lookup_fail && did_retry == 1)
+        {
+          if (gconf->o_exec_on_lookup_fail == 2)
+            {
+              if (fork())
+                {
+                  print_str(
+                      "NOTICE: o_exec_on_lookup_fail == 2, forked child\n");
+                  //gfl |= F_OPT_KILL_GLOBAL;
+                  gfl0 |= F_OPT_PCE_NO_POST_EXEC;
+                  p_log->flags |= F_GH_LOCKED;
+                  return 0;
+                }
+              pce_f |= F_PCE_FORKED;
+              pce_lm = sconf->i32;
+            }
+
+          if (WEXITSTATUS(system(gconf->e_lookup_fail)))
+            {
+              print_str("ERROR: retry lookup failed, bad exit code\n");
+            }
+          else
+            {
+              g_cleanup(p_log);
+              p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
+                  | S_IWGRP;
+              p_log->shmatflags = SHM_RDONLY;
+              p_log->flags |= F_GH_HASMATCHES;
+              if ((r = g_fopen(lp, "r", F_DL_FOPEN_BUFFER, p_log)))
+                {
+                  print_str("ERROR: failed re-opening '%s', code %d\n", lp, r);
+                  p_log->flags |= F_GH_LOCKED;
+                  return 0;
+                }
+              nres = 0;
+              print_str("NOTICE: external call suceeded, retry lookup.. (%s)\n",
+                  gconf->e_lookup_fail);
+              goto retry;
+            }
+        }
+
       p_log->flags |= F_GH_LOCKED;
       return 0;
+
     }
   return 1;
 }
@@ -647,18 +718,35 @@ char*
 pce_do_str_preproc(char *subject)
 {
 
-  if (!(cl_g_sub = reg_sub_d(subject, gconf->r_clean,
-  REG_EXTENDED | REG_ICASE, cl_presub)))
+  if (gconf->r_clean[0])
     {
-      print_str("ERROR: could not preprocess string (r_clean)\n");
-      return NULL;
+      if (!(cl_g_sub = reg_sub_d(subject, gconf->r_clean,
+      REG_EXTENDED | REG_ICASE, cl_presub)))
+        {
+          print_str("ERROR: could not preprocess string (r_clean)\n");
+          return NULL;
+        }
+    }
+  else
+    {
+      cl_g_sub = subject;
     }
 
-  if (!(cl_g_sub = reg_sub_g(cl_g_sub, gconf->r_postproc,
-  REG_EXTENDED | REG_ICASE, cl_sub, sizeof(cl_sub), ".*")))
+  if (gconf->r_postproc[0])
     {
-      print_str("ERROR: could not preprocess string (r_postproc)\n");
-      return NULL;
+      if (!(cl_g_sub = reg_sub_g(cl_g_sub, gconf->r_postproc,
+      REG_EXTENDED | REG_ICASE, cl_sub, sizeof(cl_sub), ".*")))
+        {
+          print_str("ERROR: could not preprocess string (r_postproc)\n");
+          return NULL;
+        }
+    }
+
+  if (cl_g_sub == subject)
+    {
+      size_t s_l = strlen(subject);
+      strncpy(cl_sub, subject,
+          s_l > sizeof(cl_sub) - 1 ? sizeof(cl_sub) - 1 : s_l);
     }
 
   size_t cl_l = strlen(cl_sub);
@@ -670,6 +758,8 @@ pce_do_str_preproc(char *subject)
 
   memmove(&cl_sub[1], cl_sub, cl_l);
   cl_sub[0] = 0x5E;
+
+  cl_g_sub = cl_sub;
 
   s_year = pce_get_year_result(subject, cl_yr, sizeof(cl_yr));
 

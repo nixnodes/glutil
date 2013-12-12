@@ -28,7 +28,7 @@ int
 g_map_shm(__g_handle, key_t);
 void *
 shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
-    int *shmid);
+    int *shmid, int cflags, int shmflg);
 int
 g_shm_cleanup(__g_handle hdl);
 

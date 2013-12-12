@@ -26,9 +26,9 @@ pce_log(const char * volatile buf, ...)
   if (fd_log)
     {
       struct tm tm = *get_localtime();
-      snprintf(d_buffer_2, PCE_PSTR_MAX, "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] %s",
+      snprintf(d_buffer_2, PCE_PSTR_MAX, "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] [%d] %s",
           tm.tm_mday, tm.tm_mon + 1, (tm.tm_year + 1900) % 100, tm.tm_hour,
-          tm.tm_min, tm.tm_sec, buf);
+          tm.tm_min, tm.tm_sec, getpid(), buf);
 
       char wl_buffer[PCE_PSTR_MAX];
       vsnprintf(wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);

@@ -406,8 +406,14 @@ load_data_md(pmda md, char *file, __g_handle hdl)
         {
           sh_ret |= R_SHMAP_ALREADY_EXISTS;
         }
+
+      if (!hdl->shmcflags)
+        {
+          hdl->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IRGRP;
+        }
+
       hdl->data = shmap(hdl->ipc_key, &hdl->ipcbuf, (size_t) hdl->total_sz,
-          &sh_ret, &hdl->shmid);
+          &sh_ret, &hdl->shmid, hdl->shmcflags, hdl->shmatflags);
 
       if (sh_ret & R_SHMAP_FAILED_ATTACH)
         {
@@ -526,8 +532,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
             {
               print_str(
                   "ERROR: %s: [%s] unable to get information from data file\n",
-                  file,
-                  strerror(errno));
+                  file, strerror(errno));
               return 20201;
             }
           else
@@ -555,9 +560,12 @@ g_buffer_into_memory(char *file, __g_handle hdl)
 
           hdl->total_sz = st.st_size;
         }
-    } else {
-        if ((gfl & F_OPT_SHAREDMEM)) {
-            flags |= F_GBM_SHM_NO_DATAFILE;
+    }
+  else
+    {
+      if ((gfl & F_OPT_SHAREDMEM))
+        {
+          flags |= F_GBM_SHM_NO_DATAFILE;
         }
     }
 
@@ -1003,8 +1011,7 @@ rebuild_data_file(char *file, __g_handle hdl)
           if ((r = rename(hdl->s_buffer, file)))
             {
               print_str("ERROR: %s: [%s] renaming temporary file failed!\n",
-                  hdl->s_buffer,
-                  strerror(errno));
+                  hdl->s_buffer, strerror(errno));
               ret = 4;
             }
           goto end;
@@ -1016,8 +1023,7 @@ rebuild_data_file(char *file, __g_handle hdl)
         {
           print_str(
               "WARNING: %s: [%s] deleting temporary file failed (remove manually)\n",
-              hdl->s_buffer,
-              strerror(errno));
+              hdl->s_buffer, strerror(errno));
           ret = 5;
         }
 
@@ -1380,7 +1386,7 @@ m_load_input_n(__g_handle hdl, FILE *input)
           i++;
         }
 
-      memset(&l_ptr[i], 0x0, 1);
+      l_ptr[i] = 0x0;
 
       while (l_ptr[i] == 0x20)
         {
@@ -1410,10 +1416,11 @@ m_load_input_n(__g_handle hdl, FILE *input)
       else if (bd == -1)
         {
           rf = 4;
+          rw++;
         }
       else
         {
-          rw += bd;
+          rw++;
         }
     }
 

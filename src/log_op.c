@@ -573,7 +573,7 @@ determine_datatype(__g_handle hdl, char *file)
     {
       hdl->flags |= F_GH_ISGCONF;
       hdl->block_sz = GC_SZ;
-      hdl->d_memb = 4;
+      hdl->d_memb = 1;
       hdl->g_proc0 = gcb_gconf;
       hdl->g_proc1_lookup = ref_to_val_lk_gconf;
       hdl->g_proc2 = ref_to_val_ptr_gconf;
