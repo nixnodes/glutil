@@ -226,7 +226,7 @@ parse_args(int argc, char **argv, void*fref_t[])
 
   p_ora ora = (p_ora) fref_t;
 
-  for (i = 1, ret = 0, vi = 0; i < argc; i++, vi = -1)
+  for (i = 1, ret = 0, vi = -1; i < argc; i++, vi = -1)
     {
       c_arg = argv[i];
 
