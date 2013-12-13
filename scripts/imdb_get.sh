@@ -144,7 +144,7 @@ cad() {
         else
                 if [ -n "$RTIME" ]; then
                         [ $VERBOSE -gt 0 ] && echo "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
-                        exit 1
+                        exit 0
                 fi
         fi
 }
