@@ -19,7 +19,6 @@
 
 int execv_stdout_redir = -1;
 
-
 int
 g_cpg(void *arg, void *out, int m, size_t sz)
 {
@@ -83,7 +82,6 @@ g_pd(void *arg, int m, size_t l)
     }
   return ptr;
 }
-
 
 char **
 build_argv(char *args, size_t max, int *c)
@@ -185,8 +183,6 @@ build_argv(char *args, size_t max, int *c)
   return ptr;
 }
 
-
-
 int
 process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
 {
@@ -230,7 +226,7 @@ parse_args(int argc, char **argv, void*fref_t[])
 
   p_ora ora = (p_ora) fref_t;
 
-  for (i = 1, ret = 0; i < argc; i++, vi = -1)
+  for (i = 1, ret = 0, vi = 0; i < argc; i++, vi = -1)
     {
       c_arg = argv[i];
 
