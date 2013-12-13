@@ -16,17 +16,22 @@
 #include <inttypes.h>
 #include <regex.h>
 
-#define _MC_GCONF_R_CLEAN         "r_clean"
-#define _MC_GCONF_R_POSTPROC      "r_postproc"
-#define _MC_GCONF_R_YEARM         "r_yearm"
-#define _MC_GCONF_R_SECTS         "r_sects"
-#define _MC_GCONF_O_SHM           "o_use_shared"
-#define _MC_GCONF_E_LF            "e_lookup_fail"
-#define _MC_GCONF_E_OLF           "o_exec_on_lookup_fail"
-#define _MC_GCONF_E_M             "e_match"
+#define _MC_GCONF_R_CLEAN               "r_path_clean"
+#define _MC_GCONF_R_POSTPROC            "r_path_postproc"
+#define _MC_GCONF_R_YEARM               "r_year_extract"
+#define _MC_GCONF_R_SKIPBDIR            "r_skip_basedir"
+#define _MC_GCONF_R_SECTS               "paths"
+#define _MC_GCONF_O_SHM                 "use_shared_mem"
+#define _MC_GCONF_E_LF                  "path_exec_on_lookup_fail"
+#define _MC_GCONF_E_OLF                 "execute_on_lookup_fail"
+#define _MC_GCONF_E_M                   "path_exec_on_match"
+#define _MC_GCONF_EX_U                  "r_exclude_user"
+#define _MC_GCONF_EX_UF                 "r_exclude_user_flags"
 
 #define GCONF_MAX_REG_EXPR        16384
-#define GCONF_MAX_EXEC            32768
+#define GCONF_MAX_EXEC            4096
+#define GCONF_MAX_REG_USR         2048
+#define GCONF_MAX_UFLAGS          256
 
 
 __d_format_block gconf_format_block, gconf_format_block_batch,
@@ -49,6 +54,9 @@ typedef struct ___d_gconf
   char r_postproc[GCONF_MAX_REG_EXPR];
   char r_yearm[GCONF_MAX_REG_EXPR];
   char r_sects[GCONF_MAX_REG_EXPR];
+  char r_skip_basedir[GCONF_MAX_REG_EXPR];
+  char r_exclude_user[GCONF_MAX_REG_USR];
+  char r_exclude_user_flags[GCONF_MAX_UFLAGS];
   char e_lookup_fail[GCONF_MAX_EXEC];
   char e_match[GCONF_MAX_EXEC];
 } _d_gconf, *__d_gconf;

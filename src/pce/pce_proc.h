@@ -44,6 +44,7 @@ char cl_presub[PATH_MAX];
 char cl_sub[PATH_MAX*2];
 char cl_yr[32], *s_year;
 char *cl_dir;
+char *cl_dir_b;
 char *cl_g_sub;
 char *post_m_exec_str;
 
@@ -73,5 +74,10 @@ int pce_process_execv(__g_handle hdl, char *ptr);
 _d_pce_plm pce_process_string_match, pce_process_lom_match;
 
 mda g_opt;
+
+int
+pce_print_msg(char *input, __g_handle hdl);
+int
+pce_g_skip_proc(void);
 
 #endif /* PCE_PROC_H_ */

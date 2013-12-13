@@ -19,6 +19,7 @@
 #include <timeh.h>
 #include <errno.h>
 #include <dirent.h>
+#include <stdlib.h>
 
 
 #define PSTR_MAX        (V_MB/4)

@@ -10,7 +10,6 @@
 
 #include <t_glob.h>
 
-
 int
 g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 {
@@ -32,84 +31,89 @@ g_compile_exech(pmda mech, __g_handle hdl, char *instr)
 
   ptr->st_ptr = in_ptr;
 
-  for (p1 = 0, pl = 0; in_ptr[0]; p1++, in_ptr++, pl++)
+  if (hdl->g_proc1_lookup)
     {
-      if (pl > 0 && in_ptr[-1] == 0x5C)
+      for (p1 = 0, pl = 0; in_ptr[0]; p1++, in_ptr++, pl++)
         {
-          continue;
-        }
-      if (in_ptr[0] == 0x7B)
-        {
-          ptr->len = pl;
-          pl = 0;
-          ptr = md_alloc(mech, sizeof(_d_exec_ch));
-          if (!ptr)
+          if (pl > 0 && in_ptr[-1] == 0x5C)
             {
-              return 2602;
+              continue;
             }
-
-          do_gcb: ;
-
-          in_ptr++;
-          ptr->st_ptr = in_ptr;
-          ptr->dtr.hdl = hdl;
-          vl1 = 0;
-
-          ptr->callback = hdl->g_proc1_lookup(hdl->_x_ref, ptr->st_ptr, NULL, 0,
-              &ptr->dtr);
-
-          if (!ptr->callback)
+          if (in_ptr[0] == 0x7B)
             {
-              return 2603;
-            }
+              ptr->len = pl;
+              pl = 0;
+              ptr = md_alloc(mech, sizeof(_d_exec_ch));
+              if (!ptr)
+                {
+                  return 2602;
+                }
 
-          while (((in_ptr[0] != 0x7D) || in_ptr[-1] == 0x5C) && in_ptr[0])
-            {
+              do_gcb: ;
 
-              in_ptr++;
-              vl1++;
-            }
-          if (!in_ptr[0])
-            {
-              return 2604;
-            }
-
-          if (in_ptr[0] != 0x7D)
-            {
-              return 2605;
-            }
-
-          ptr->len = vl1;
-          ptr = md_alloc(mech, sizeof(_d_exec_ch));
-          if (!ptr)
-            {
-              return 2606;
-            }
-
-          if (in_ptr[1] && ((in_ptr[1] == 0x7B) && in_ptr[0] != 0x5C))
-            {
-              in_ptr++;
-              goto do_gcb;
-            }
-          else
-            {
               in_ptr++;
               ptr->st_ptr = in_ptr;
-            }
+              ptr->dtr.hdl = hdl;
+              vl1 = 0;
 
-          if (!in_ptr[0])
-            {
-              break;
+              ptr->callback = hdl->g_proc1_lookup(hdl->_x_ref, ptr->st_ptr,
+              NULL, 0, &ptr->dtr);
+              if (!ptr->callback)
+                {
+                  return 2603;
+                }
+
+              while (((in_ptr[0] != 0x7D) || in_ptr[-1] == 0x5C) && in_ptr[0])
+                {
+
+                  in_ptr++;
+                  vl1++;
+                }
+              if (!in_ptr[0])
+                {
+                  return 2604;
+                }
+
+              if (in_ptr[0] != 0x7D)
+                {
+                  return 2605;
+                }
+
+              ptr->len = vl1;
+              ptr = md_alloc(mech, sizeof(_d_exec_ch));
+              if (!ptr)
+                {
+                  return 2606;
+                }
+
+              if (in_ptr[1] && ((in_ptr[1] == 0x7B) && in_ptr[0] != 0x5C))
+                {
+                  in_ptr++;
+                  goto do_gcb;
+                }
+              else
+                {
+                  in_ptr++;
+                  ptr->st_ptr = in_ptr;
+                }
+
+              if (!in_ptr[0])
+                {
+                  break;
+                }
             }
         }
-    }
 
-  ptr->len = pl;
+      ptr->len = pl;
+    }
+  else
+    {
+      ptr->len = strlen(ptr->st_ptr);
+    }
 
   return 0;
 
 }
-
 
 char *
 g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
@@ -166,5 +170,4 @@ g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *output,
   output[0] = 0x0;
   return output;
 }
-
 

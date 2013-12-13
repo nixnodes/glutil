@@ -22,6 +22,7 @@
 #include <m_lom.h>
 #include <lc_oper.h>
 #include <exec_t.h>
+#include <exech.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -42,8 +43,8 @@ char *post_m_exec_str = NULL;
 int
 pce_proc(char *subject)
 {
-  gfl |= G_HFLAGS | F_OPT_PS_SILENT | F_OPT_VERBMAX;
-
+  gfl |= G_HFLAGS | F_OPT_PS_SILENT;
+  char *subject_b = strdup(subject);
   int r;
 
   h_gconf.shmatflags |= SHM_RDONLY;
@@ -56,27 +57,43 @@ pce_proc(char *subject)
 
   gconf = (__d_gconf) h_gconf.buffer.pos->ptr;
 
+  if (!gconf)
+    {
+      print_str("ERROR: %s: no info available\n", GCONFLOG);
+      goto end;
+    }
+
   gfl ^= G_HFLAGS;
 
   char s_b[255], *s_b_p = s_b;
 
-  if (!(s_b_p = reg_getsubm(subject, gconf->r_sects, REG_EXTENDED, s_b, 255)))
+  g_zerom_r(subject_b, 0x2F);
+
+  if (!(s_b_p = reg_getsubm(subject_b, gconf->r_sects, REG_EXTENDED, s_b, 255)))
     {
       goto end;
     }
 
-  if (gconf->o_use_shared_mem)
-    {
-      gfl |= F_OPT_SHAREDMEM;
-    }
-
   s_b_p = g_zerom(s_b_p, 0x2F);
   g_zerom_r(s_b_p, 0x2F);
-  cl_dir = subject;
+
+  if (!s_b_p[0])
+    {
+      print_str("ERROR: %s: unconfigured section\n", subject_b);
+      goto end;
+    }
+
+  cl_dir = subject_b;
+  cl_dir_b = g_basename(subject_b);
+
+  if (pce_g_skip_proc())
+    {
+      goto end;
+    }
 
   char s_lp[PATH_MAX];
 
-  snprintf(s_lp, PATH_MAX, "%s/%s/%s/%s", GLROOT, FTPDATA, DEFPATH_LOGS, s_b_p);
+  snprintf(s_lp, PATH_MAX, "%s/%s", pce_data_path, s_b_p);
   remove_repeating_chars(s_lp, 0x2F);
 
   if (file_exists(s_lp))
@@ -105,6 +122,13 @@ pce_proc(char *subject)
       goto end;
     }
 
+  if (gconf->o_use_shared_mem)
+    {
+      gfl |= F_OPT_SHAREDMEM;
+    }
+
+  gfl |= F_OPT_PROCREV;
+
   md_init(&lh_ref, 4);
 
   off_t nres;
@@ -115,7 +139,8 @@ pce_proc(char *subject)
       goto end;
     }
 
-  if (!(gfl0 & F_OPT_PCE_NO_POST_EXEC) && EXITVAL && gconf->e_match[0])
+  if ((pce_f & F_PCE_FORKED) && gconf->o_exec_on_lookup_fail == 2 && EXITVAL
+      && gconf->e_match[0])
     {
       print_str("NOTICE: executing: '%s'\n", gconf->e_match);
       system(gconf->e_match);
@@ -126,13 +151,48 @@ pce_proc(char *subject)
   g_cleanup(&h_gconf);
   g_cleanup(&h_sconf);
   pce_lh_ref_clean(&lh_ref);
-
+  free(subject_b);
   if (fd_log)
     {
       fclose(fd_log);
     }
 
   return EXITVAL;
+}
+
+int
+pce_g_skip_proc(void)
+{
+  char *e_tmp;
+
+  if (gconf->r_exclude_user[0] && (e_tmp = getenv("USER")))
+    {
+      if (!pce_do_regex_match(gconf->r_exclude_user, e_tmp,
+      REG_EXTENDED, 0))
+        {
+          print_str("NOTICE: ignoring user '%s'\n", e_tmp);
+          return 1;
+        }
+    }
+
+  if (gconf->r_exclude_user_flags[0] && (e_tmp = getenv("FLAGS")))
+    {
+      if (!pce_do_regex_match(gconf->r_exclude_user_flags, e_tmp,
+      REG_EXTENDED, 0))
+        {
+          print_str("NOTICE: ignoring user '%s'\n", e_tmp);
+          return 1;
+        }
+    }
+
+  if (gconf->r_skip_basedir[0]
+      && !pce_do_regex_match(gconf->r_skip_basedir, cl_dir_b,
+      REG_EXTENDED | REG_ICASE, 0))
+    {
+      print_str("NOTICE: skipping directory '%s'\n", cl_dir);
+      return 1;
+    }
+  return 0;
 }
 
 int
@@ -192,7 +252,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           p_log = md_alloc(lh_ref, sizeof(_g_handle));
           p_log->flags |= F_GH_HASMATCHES;
           p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
-                            | S_IWGRP;
+          | S_IWGRP;
 
           if ((r=g_fopen(log_s, "r", F_DL_FOPEN_BUFFER, p_log)))
             {
@@ -228,6 +288,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           pce_process_lom_match(p_log, ptr);
           break;
           case 3:
+
           if ((r = pce_process_execv(p_log, ptr->match)))
             {
               print_str(
@@ -236,9 +297,12 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               EXITVAL = 1;
               if (ptr->message[0])
                 {
-                  printf("200 %s\n", ptr->message);
+                  pce_print_msg(ptr->message, p_log);
                 }
-              return -1;
+            }
+          else
+            {
+              pce_pcl_stat(r, ptr);
             }
           break;
           default:
@@ -255,35 +319,95 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
     }
   else
     {
-      int i_m = 0;
-      if (ptr->invert == 1)
+      switch(ptr->type)
         {
-          i_m = REG_NOMATCH;
-        }
+          case 1:;
 
-      int cflags = REG_EXTENDED;
-
-      if (ptr->icase)
-        {
-          cflags |= REG_ICASE;
-        }
-
-      int r;
-      if (!(r=pce_do_regex_match(ptr->match, cl_dir, cflags, i_m)))
-        {
-          print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
-          EXITVAL = 1;
-          if (ptr->message[0])
+          int i_m = 0;
+          if (ptr->invert == 1)
             {
-              printf("200 %s\n", ptr->message);
+              i_m = REG_NOMATCH;
             }
+
+          int cflags = REG_EXTENDED;
+
+          if (ptr->icase)
+            {
+              cflags |= REG_ICASE;
+            }
+
+          int r;
+          if (!(r=pce_do_regex_match(ptr->match, cl_dir, cflags, i_m)))
+            {
+              print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
+              EXITVAL = 1;
+              if (ptr->message[0])
+                {
+                  _g_handle t_h =
+                    { 0};
+                  pce_print_msg(ptr->message, &t_h);
+                  g_cleanup(&t_h);
+                }
+            }
+          else
+            {
+              pce_pcl_stat(r, ptr);
+            }
+          break;
+          case 3:;
+          _g_handle t_h =
+            { 0};
+
+          if ((r = pce_process_execv(&t_h, ptr->match)))
+            {
+              print_str(
+                  "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
+                  r, ptr->match);
+              EXITVAL = 1;
+              if (ptr->message[0])
+                {
+                  pce_print_msg(ptr->message, &t_h);
+                }
+            }
+          else
+            {
+              pce_pcl_stat(r, ptr);
+            }
+          g_cleanup(&t_h);
+          break;
+        }
+
+      if (EXITVAL)
+        {
           return -1;
         }
-      else
-        {
-          pce_pcl_stat(r, ptr);
-        }
     }
+
+  return 0;
+}
+
+int
+pce_print_msg(char *input, __g_handle hdl)
+{
+  int r;
+  md_g_free(&hdl->print_mech);
+  if ((r = g_compile_exech(&hdl->print_mech, hdl, input)))
+    {
+      print_str("ERROR: %s: [%d]: could not compile print string\n", hdl->file,
+          r);
+      return 1;
+    }
+
+  char *s_ptr;
+  if (!(s_ptr = g_exech_build_string(
+      hdl->buffer.pos ? hdl->buffer.pos->ptr : NULL,
+      &((__g_handle ) hdl)->print_mech, (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+    {
+      print_str("ERROR: could not assemble print string\n");
+      return 1;
+    }
+
+  printf("200 %s\n", b_glob);
 
   return 0;
 }
@@ -342,13 +466,14 @@ pce_process_execv(__g_handle hdl, char *exec_str)
   if ((r = g_init_execv_bare(&exec_args, hdl, exec_str)))
     {
       print_str("ERROR: [%d]: g_init_execv_bare failed: '%s'\n", r, exec_str);
-      return 1;
+      return 0;
     }
 
-  if ((r = process_execv_args_bare(hdl->buffer.pos->ptr, hdl, &exec_args)))
+  if ((r = process_execv_args_bare(
+      hdl->buffer.pos ? hdl->buffer.pos->ptr : NULL, hdl, &exec_args)))
     {
       print_str("ERROR: [%d]: process_execv_args failed: '%s'\n", r, exec_str);
-      return 1;
+      return 0;
     }
 
   return WEXITSTATUS(l_execv(exec_args.exec_v_path, exec_args.argv_c));
@@ -399,12 +524,12 @@ pce_process_lom_match(__g_handle hdl, __d_sconf ptr)
   if (lom.result == i_m)
     {
       print_str(
-          "WARNING: rule chain hit positive LOM match (%s == %s), blocking..\n",
-          ptr->field, ptr->match);
+          "WARNING: rule chain hit positive LOM match (%s [%d] %s), blocking..\n",
+          ptr->field, ptr->lcomp, ptr->match);
       EXITVAL = 1;
       if (ptr->message[0])
         {
-          printf("200 %s\n", ptr->message);
+          pce_print_msg(ptr->message, hdl);
         }
       return -1;
     }
@@ -434,7 +559,7 @@ pce_process_string_match(__g_handle hdl, __d_sconf ptr)
       EXITVAL = 1;
       if (ptr->message[0])
         {
-          printf("200 %s\n", ptr->message);
+          pce_print_msg(ptr->message, hdl);
         }
       return -1;
     }
@@ -450,13 +575,13 @@ pce_pcl_stat(int r, __d_sconf ptr)
 {
   if (r < 0)
     {
-      print_str("ERROR: %d processing chain link (%s) (%s)\n", r, ptr->field,
-          ptr->match);
+      print_str("ERROR: %d processing chain link [%d][%d] (%s)\n", r, ptr->type,
+          ptr->i32, ptr->match);
     }
   else
     {
-      print_str("NOTICE: chain link passed (%s) (%s)\n", ptr->field,
-          ptr->match);
+      print_str("NOTICE: chain link passed [%d][%d] (%s)\n", ptr->type,
+          ptr->i32, ptr->match);
     }
 }
 
@@ -467,13 +592,13 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 
   if (!(pce_f & F_PCE_DONE_STR_PREPROC))
     {
-      if (!pce_do_str_preproc(g_basename(cl_dir)))
+      if (!pce_do_str_preproc(cl_dir_b))
         {
           print_str(
               "ERROR: unable to preprocess the directory string, aborting\n");
           return -1;
         }
-      printf("%s | %s\n", cl_g_sub, s_year);
+      //printf("%s | %s\n", cl_g_sub, s_year);
       pce_f |= F_PCE_DONE_STR_PREPROC;
     }
 
@@ -530,7 +655,6 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
                   print_str(
                       "NOTICE: o_exec_on_lookup_fail == 2, forked child\n");
                   //gfl |= F_OPT_KILL_GLOBAL;
-                  gfl0 |= F_OPT_PCE_NO_POST_EXEC;
                   p_log->flags |= F_GH_LOCKED;
                   return 0;
                 }
@@ -544,20 +668,27 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
             }
           else
             {
+              print_str("NOTICE: external call suceeded, retry lookup.. (%s)\n",
+                  gconf->e_lookup_fail);
               g_cleanup(p_log);
               p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
                   | S_IWGRP;
               p_log->shmatflags = SHM_RDONLY;
               p_log->flags |= F_GH_HASMATCHES;
+              uint64_t s_gfl = gfl;
+              if (gfl & F_OPT_SHAREDMEM)
+                {
+                  gfl ^= F_OPT_SHAREDMEM;
+                }
               if ((r = g_fopen(lp, "r", F_DL_FOPEN_BUFFER, p_log)))
                 {
                   print_str("ERROR: failed re-opening '%s', code %d\n", lp, r);
                   p_log->flags |= F_GH_LOCKED;
                   return 0;
                 }
-              nres = 0;
-              print_str("NOTICE: external call suceeded, retry lookup.. (%s)\n",
-                  gconf->e_lookup_fail);
+              gfl = s_gfl;
+              //nres = 0;
+
               goto retry;
             }
         }
@@ -746,6 +877,12 @@ pce_do_str_preproc(char *subject)
     {
       size_t s_l = strlen(subject);
       strncpy(cl_sub, subject,
+          s_l > sizeof(cl_sub) - 1 ? sizeof(cl_sub) - 1 : s_l);
+    }
+  else if (cl_g_sub == cl_presub)
+    {
+      size_t s_l = strlen(cl_presub);
+      strncpy(cl_sub, cl_presub,
           s_l > sizeof(cl_sub) - 1 ? sizeof(cl_sub) - 1 : s_l);
     }
 

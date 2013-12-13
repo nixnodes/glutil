@@ -27,9 +27,12 @@
 #define tv_log "/glftpd/ftp-data/logs/tv.log"
 #endif
 
-/* generic 1 log file path */
-#ifndef ge1_log
-#define ge1_log "/glftpd/ftp-data/logs/gen1.log"
+#ifndef pce_data_path
+#define pce_data_path "/glftpd/ftp-data/glutil/precheck-data"
+#endif
+
+#ifndef gconf_log
+#define gconf_log "/glftpd/ftp-data/glutil/precheck-data/gconf"
 #endif
 
 #ifndef LOG_LEVEL

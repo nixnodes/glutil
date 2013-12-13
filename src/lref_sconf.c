@@ -20,10 +20,9 @@ sconf_format_block(void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
-  return print_str("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
+  return print_str("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%llu\x9%s\x9%s\x9%s\n",
       data->ui32_1, data->ui32_2, data->invert, data->type, data->icase, data->lcomp, data->i32,
-      data->ui64, data->field , data->match, data->message);
-
+      (ulint64_t)data->ui64, data->field , data->match, data->message);
 }
 
 int
@@ -31,10 +30,9 @@ sconf_format_block_batch(void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
-  return printf("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%lu\x9%s\x9%s\x9%s\n",
+  return printf("SCONF\x9%u\x9%u\x9%hhu\x9%hhu\x9%hhu\x9%hhu\x9%d\x9%llu\x9%s\x9%s\x9%s\n",
       data->ui32_1, data->ui32_2, data->invert, data->type, data->icase, data->lcomp, data->i32,
-      data->ui64, data->field , data->match, data->message);
-
+      (ulint64_t)data->ui64, data->field , data->match, data->message);
 }
 
 int
@@ -55,7 +53,6 @@ sconf_format_block_exp(void *iarg, char *output)
       "msg %s\n\n"
       , data->ui32_1, data->ui32_2, data->invert, data->type, data->icase, data->lcomp, data->i32,
       (ulint64_t)data->ui64, data->field , data->match, data->message);
-
 }
 
 void *

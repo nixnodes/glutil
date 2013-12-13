@@ -1334,7 +1334,7 @@ m_load_input_n(__g_handle hdl, FILE *input)
   char *buffer = malloc(MAX_SDENTRY_LEN + 1);
   buffer[0] = 0x0;
 
-  int i, rf = -9;
+  int rf = -9;
 
   char *l_ptr;
   void *st_buffer = NULL;
@@ -1380,37 +1380,37 @@ m_load_input_n(__g_handle hdl, FILE *input)
           st_buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
         }
 
-      i = 0;
-      while (l_ptr[i] && l_ptr[i] != 0x20)
+      char *s_p1 = l_ptr;
+
+      while (l_ptr[0] && l_ptr[0] != 0x20 && l_ptr[0] != 0x9)
         {
-          i++;
+          l_ptr++;
         }
 
-      l_ptr[i] = 0x0;
+      l_ptr[0] = 0x0;
+      l_ptr++;
 
-      while (l_ptr[i] == 0x20)
+      while (l_ptr[0] == 0x20 || l_ptr[0] == 0x9)
         {
-          i++;
+          l_ptr++;
         }
 
-      char *s_p1 = &l_ptr[i + 1];
-
-      size_t s_p1_l = strlen(s_p1);
-      if (s_p1[s_p1_l - 1] == 0xA)
+      size_t s_p1_l = strlen(l_ptr);
+      if (l_ptr[s_p1_l - 1] == 0xA)
         {
-          s_p1[s_p1_l - 1] = 0x0;
+          l_ptr[s_p1_l - 1] = 0x0;
           s_p1_l--;
         }
 
       if (!s_p1_l)
         {
-          print_str("WARNING: DATA IMPORT: null value '%s'\n", l_ptr);
+          print_str("WARNING: DATA IMPORT: null value '%s'\n", s_p1);
         }
 
-      int bd = hdl->g_proc0(st_buffer, l_ptr, s_p1);
+      int bd = hdl->g_proc0(st_buffer, s_p1, l_ptr);
       if (!bd)
         {
-          print_str("ERROR: DATA IMPORT: failed extracting '%s'\n", l_ptr);
+          print_str("ERROR: DATA IMPORT: failed extracting '%s'\n", s_p1);
           rf = 3;
         }
       else if (bd == -1)

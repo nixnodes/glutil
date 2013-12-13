@@ -115,7 +115,7 @@
 /* precheck global config */
 
 #ifndef gconf_log
-#define gconf_log "/glftpd/ftp-data/logs/gconf.log"
+#define gconf_log "/glftpd/ftp-data/glutil/precheck-data/gconf"
 #endif
 
 /* see MANUAL */

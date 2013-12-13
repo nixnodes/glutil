@@ -2983,13 +2983,13 @@ _ACEOF
 
 # Some tools Automake needs.
 
-ACLOCAL=${ACLOCAL-"${am_missing_run}aclocal"}
+ACLOCAL=${ACLOCAL-"${am_missing_run}aclocal-${am__api_version}"}
 
 
 AUTOCONF=${AUTOCONF-"${am_missing_run}autoconf"}
 
 
-AUTOMAKE=${AUTOMAKE-"${am_missing_run}automake"}
+AUTOMAKE=${AUTOMAKE-"${am_missing_run}automake-${am__api_version}"}
 
 
 AUTOHEADER=${AUTOHEADER-"${am_missing_run}autoheader"}
@@ -4392,6 +4392,7 @@ $as_echo "none needed" >&6; } ;; #(
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cc_stdc" >&5
 $as_echo "$ac_cv_prog_cc_stdc" >&6; } ;;
 esac
+
 
 
 CFLAGS="-g -Wall"
