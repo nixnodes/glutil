@@ -71,9 +71,6 @@
 #endif
 
 
-#include <misc.h>
-#include <t_glob.h>
-
-#define G_HFLAGS F_OPT_SHAREDMEM
+#define G_HFLAGS (a64 << 44)
 
 #endif /* PCE_CONFIG_H_ */

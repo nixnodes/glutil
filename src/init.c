@@ -5,6 +5,7 @@
  *      Author: reboot
  */
 
+#include "config.h"
 #include <glutil.h>
 #include <l_error.h>
 #include <im_hdr.h>

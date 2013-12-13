@@ -5,8 +5,8 @@
  *      Author: reboot
  */
 
-
-
+#include <glc.h>
+#include "config.h"
 #include <glutil.h>
 
 #include <l_sb.h>

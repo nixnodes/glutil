@@ -10,7 +10,6 @@
 
 #include <glutil.h>
 #include <t_glob.h>
-#include <config.h>
 
 
 #define sconf_log "SCONF"

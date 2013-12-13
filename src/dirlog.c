@@ -5,6 +5,7 @@
  *      Author: reboot
  */
 
+#include "config.h"
 #include <glutil.h>
 #include "dirlog.h"
 

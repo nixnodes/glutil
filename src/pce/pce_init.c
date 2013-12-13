@@ -1,11 +1,13 @@
 /*
  * pce_init.c
+
  *
  *  Created on: Dec 8, 2013
  *      Author: reboot
  */
-
+#include <glc.h>
 #include "pce_config.h"
+#include <config.h>
 #include <glutil.h>
 #include "pce_proc.h"
 #include "pce_misc.h"

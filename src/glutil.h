@@ -12,7 +12,7 @@
 #define _LARGEFILE_SOURCE 1
 #define _FILE_OFFSET_BITS 64
 
-#include <glconf.h>
+#include <glc.h>
 
 #define DL_SZ                           sizeof(struct dirlog)
 #define NL_SZ                           sizeof(struct nukelog)

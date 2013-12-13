@@ -4,7 +4,7 @@
  *  Created on: Dec 6, 2013
  *      Author: reboot
  */
-
+#include "config.h"
 #include <glutil.h>
 #include "signal_t.h"
 
