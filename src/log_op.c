@@ -5,9 +5,9 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include <glc.h>
 #include "config.h"
-#include <glutil.h>
 #include <t_glob.h>
 
 #include "log_op.h"

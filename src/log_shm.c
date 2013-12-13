@@ -5,8 +5,8 @@
  *      Author: reboot
  */
 
-#include "log_shm.h"
 #include <glutil.h>
+#include "log_shm.h"
 #include <im_hdr.h>
 #include <l_sb.h>
 #include <l_error.h>
