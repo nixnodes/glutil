@@ -6,7 +6,6 @@
  */
 
 #include <glutil.h>
-#include <glc.h>
 #include "pce_config.h"
 #include "pce_signal.h"
 

@@ -5,10 +5,10 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include "m_string.h"
 #include <memory_t.h>
 
-#include <glutil.h>
 #include <m_general.h>
 #include <m_lom.h>
 #include <lc_oper.h>

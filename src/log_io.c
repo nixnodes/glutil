@@ -5,9 +5,9 @@
  *      Author: reboot
  */
 
-#include <t_glob.h>
-#include <im_hdr.h>
 #include <glutil.h>
+//#include <t_glob.h>
+//#include <im_hdr.h>
 #include <l_sb.h>
 #include <log_shm.h>
 #include <log_io.h>

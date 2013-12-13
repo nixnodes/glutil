@@ -6,7 +6,6 @@
  */
 
 #include <glutil.h>
-#include <glc.h>
 #include "config.h"
 #include <l_error.h>
 #include <im_hdr.h>

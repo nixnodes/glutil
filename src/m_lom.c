@@ -5,8 +5,9 @@
  *      Author: reboot
  */
 
-#include <m_lom.h>
 #include <glutil.h>
+#include "m_lom.h"
+
 #include <l_error.h>
 #include <str.h>
 #include <lc_oper.h>

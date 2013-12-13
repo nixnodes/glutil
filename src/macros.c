@@ -5,9 +5,9 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
 #include "macros_t.h"
 
-#include <glutil.h>
 #include <t_glob.h>
 #include <xref.h>
 #include <l_error.h>
