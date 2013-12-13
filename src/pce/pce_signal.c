@@ -4,10 +4,10 @@
  *  Created on: Dec 11, 2013
  *      Author: reboot
  */
-#include <glc.h>
-#include "pce_config.h"
 
 #include <glutil.h>
+#include <glc.h>
+#include "pce_config.h"
 #include "pce_signal.h"
 
 #include <l_error.h>
