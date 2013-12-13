@@ -1,2 +1,2 @@
 SUBDIRS=src
-CFLAGS = -O3 -Wall
+ACLOCAL_AMFLAGS="-Im4"

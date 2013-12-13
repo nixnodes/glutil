@@ -5,6 +5,7 @@
  *      Author: reboot
  */
 
+#include "pce_config.h"
 #include <glutil.h>
 #include "pce_signal.h"
 

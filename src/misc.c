@@ -350,3 +350,12 @@ g_bin_compare(const void *p1, const void *p2, off_t size)
     }
   return 1;
 }
+
+
+int
+print_version_long(void *arg, int m)
+{
+  print_str("* %s_%s-%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
+  PACKAGE_VERSION, __STR_ARCH);
+  return 0;
+}

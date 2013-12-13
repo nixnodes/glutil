@@ -144,7 +144,7 @@ for ir_f in ${CONFIG_PATH}/*; do
 	rm -f /tmp/glutil.$$.pce
 done
 
-g_path="/(${t_path})/"
+g_path="/(${t_path})$"
 
 cat "${CONFIG_PATH}/gconf" | sed -r '/^$/d' > /tmp/glutil.$$.pce
 echo "paths ${g_path}" >> /tmp/glutil.$$.pce

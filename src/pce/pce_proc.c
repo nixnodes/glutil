@@ -17,6 +17,7 @@
 #include <lref_sconf.h>
 #include <lref_gconf.h>
 #include <lref_imdb.h>
+#include <lref_gen.h>
 #include <omfp.h>
 #include <m_string.h>
 #include <m_lom.h>
@@ -29,6 +30,7 @@
 #include <limits.h>
 #include <regex.h>
 #include <errno.h>
+#include <sys/wait.h>
 
 _g_handle h_gconf =
   { 0 };
@@ -41,10 +43,15 @@ char *cl_g_sub = cl_sub;
 char *post_m_exec_str = NULL;
 
 int
-pce_proc(char *subject)
+pce_proc(char *path, char *dir)
 {
-  gfl |= G_HFLAGS | F_OPT_PS_SILENT;
-  char *subject_b = strdup(subject);
+  if (!path || !dir)
+    {
+      print_str("ERROR: insufficient arguments from ftpd\n");
+      return 0;
+    }
+  gfl |= G_HFLAGS | F_OPT_PS_SILENT | F_OPT_VERBMAX;
+  //char *subject_b = strdup(subject);
   int r;
 
   h_gconf.shmatflags |= SHM_RDONLY;
@@ -67,24 +74,37 @@ pce_proc(char *subject)
 
   char s_b[255], *s_b_p = s_b;
 
-  g_zerom_r(subject_b, 0x2F);
+  //g_zerom_r(subject_b, 0x2F);
 
-  if (!(s_b_p = reg_getsubm(subject_b, gconf->r_sects, REG_EXTENDED, s_b, 255)))
+  if (!(s_b_p = reg_getsubm(path, gconf->r_sects, REG_EXTENDED, s_b, 255)))
     {
       goto end;
     }
-
-  s_b_p = g_zerom(s_b_p, 0x2F);
-  g_zerom_r(s_b_p, 0x2F);
 
   if (!s_b_p[0])
     {
-      print_str("ERROR: %s: unconfigured section\n", subject_b);
+      print_str("ERROR: %s/%s: unconfigured section\n", path, dir);
       goto end;
     }
 
-  cl_dir = subject_b;
-  cl_dir_b = g_basename(subject_b);
+  char r_sb[GCONF_MAX_REG_EXPR];
+
+  snprintf(r_sb, GCONF_MAX_REG_EXPR, "%s%s", SITEROOT_N, gconf->r_sects);
+
+  if (pce_do_regex_match(r_sb, path,
+  REG_EXTENDED, 0))
+    {
+      print_str("ERROR: no path '%s' was defined (%s doesn't match input)\n",
+          s_b_p, r_sb);
+      return 1;
+    }
+
+  s_b_p = g_zerom(s_b_p, 0x2F);
+  //g_zerom_r(s_b_p, 0x2F);
+
+  cl_dir = dir;
+  cl_dir_b = dir;
+  spec_p1 = dir;
 
   if (pce_g_skip_proc())
     {
@@ -151,11 +171,7 @@ pce_proc(char *subject)
   g_cleanup(&h_gconf);
   g_cleanup(&h_sconf);
   pce_lh_ref_clean(&lh_ref);
-  free(subject_b);
-  if (fd_log)
-    {
-      fclose(fd_log);
-    }
+  //free(subject_b);
 
   return EXITVAL;
 }
@@ -294,7 +310,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
-              EXITVAL = 1;
+              EXITVAL = 2;
               if (ptr->message[0])
                 {
                   pce_print_msg(ptr->message, p_log);
@@ -340,7 +356,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           if (!(r=pce_do_regex_match(ptr->match, cl_dir, cflags, i_m)))
             {
               print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
-              EXITVAL = 1;
+              EXITVAL = 2;
               if (ptr->message[0])
                 {
                   _g_handle t_h =
@@ -363,7 +379,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
-              EXITVAL = 1;
+              EXITVAL = 2;
               if (ptr->message[0])
                 {
                   pce_print_msg(ptr->message, &t_h);
@@ -476,7 +492,7 @@ pce_process_execv(__g_handle hdl, char *exec_str)
       return 0;
     }
 
-  return WEXITSTATUS(l_execv(exec_args.exec_v_path, exec_args.argv_c));
+  return WEXITSTATUS(pce_l_execv(exec_args.exec_v_path, exec_args.argv_c));
 }
 
 int
@@ -526,7 +542,7 @@ pce_process_lom_match(__g_handle hdl, __d_sconf ptr)
       print_str(
           "WARNING: rule chain hit positive LOM match (%s [%d] %s), blocking..\n",
           ptr->field, ptr->lcomp, ptr->match);
-      EXITVAL = 1;
+      EXITVAL = 2;
       if (ptr->message[0])
         {
           pce_print_msg(ptr->message, hdl);
@@ -556,7 +572,7 @@ pce_process_string_match(__g_handle hdl, __d_sconf ptr)
       print_str(
           "WARNING: '%s': rule chain hit positive REGEX match (pattern '%s' matches '%s'), blocking..\n",
           hdl->file, ptr->match, cl_g_sub);
-      EXITVAL = 1;
+      EXITVAL = 2;
       if (ptr->message[0])
         {
           pce_print_msg(ptr->message, hdl);
@@ -602,6 +618,12 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
       pce_f |= F_PCE_DONE_STR_PREPROC;
     }
 
+  off_t nres;
+  char did_retry = 0;
+
+  retry:
+  did_retry++;
+
   if (s_year && dgetr->d_yf)
     {
       uint64_t year = (uint64_t) strtoul(s_year, NULL, 10);
@@ -632,12 +654,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
       return 0;
     }
 
-  off_t nres;
-  char did_retry = 0;
 
-  retry:
-
-  did_retry++;
 
   if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
     {
@@ -662,12 +679,19 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
               pce_lm = sconf->i32;
             }
 
-          if (WEXITSTATUS(system(gconf->e_lookup_fail)))
+          _g_handle t_h =
+            { 0 };
+
+          t_h.g_proc1_lookup = ref_to_val_lk_generic;
+          t_h.buffer.pos = p_log->buffer.objects;
+
+          if ((r = pce_process_execv(&t_h, gconf->e_lookup_fail)))
             {
-              print_str("ERROR: retry lookup failed, bad exit code\n");
+              print_str("ERROR: retry lookup failed, bad exit code [%d]\n", r);
             }
           else
             {
+              g_close(&t_h);
               print_str("NOTICE: external call suceeded, retry lookup.. (%s)\n",
                   gconf->e_lookup_fail);
               g_cleanup(p_log);
@@ -691,6 +715,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 
               goto retry;
             }
+
+          g_close(&t_h);
         }
 
       p_log->flags |= F_GH_LOCKED;
@@ -903,3 +929,47 @@ pce_do_str_preproc(char *subject)
   return cl_g_sub;
 }
 
+int
+pce_l_execv(char *exec, char **argv)
+{
+  pid_t c_pid;
+
+  fflush(stdout);
+  fflush(stderr);
+
+  c_pid = fork();
+
+  if (c_pid == (pid_t) -1)
+    {
+      fprintf(stderr, "ERROR: %s: fork failed\n", exec);
+      return 1;
+    }
+
+  if (!c_pid)
+    {
+      if (prep_for_exec())
+        {
+          _exit(0);
+        }
+      else
+        {
+          execv(exec, argv);
+          fprintf(stderr, "ERROR: %s: execv failed to execute [%s]\n", exec,
+              strerror(errno));
+          _exit(0);
+        }
+    }
+  int status;
+  while (waitpid(c_pid, &status, 0) == (pid_t) -1)
+    {
+      if (errno != EINTR)
+        {
+          fprintf(stderr,
+              "ERROR: %s:failed waiting for child process to finish [%s]\n",
+              exec, strerror(errno));
+          return 0;
+        }
+    }
+
+  return status;
+}

@@ -1,24 +1,28 @@
 dnl Process this file with autoconf to produce a configure script.
 
-#AC_PREREQ(2.13)
+AC_PREREQ(2.63)
 
-AC_INIT(glutil, [2.3.1d], [devel@nixnodes.net])
+
+AC_INIT(glutil, [2.3.2d], [devel@nixnodes.net])
+#LT_INIT
 
 AC_CANONICAL_SYSTEM
-
-AM_INIT_AUTOMAKE([subdir-objects])
-
 AC_PROG_CC
 AC_PROG_CC_STDC
+
+AM_INIT_AUTOMAKE([subdir-objects])
 AM_PROG_CC_C_O
 
-CFLAGS="-g -Wall"
-
 AC_CONFIG_FILES(Makefile src/Makefile)
-AC_CONFIG_SRCDIR([src/])
+AC_CONFIG_SRCDIR([src])
+
+#AC_CONFIG_MACRO_DIR([m4])
+
+CFLAGS="-g -Wall"
+AC_SUBST(CFLAGS)
+
 
 AC_OUTPUT
-
 
 
 dnl Process this file with autoconf to produce a configure script.
@@ -31,9 +35,7 @@ AC_CHECK_HEADERS([stdio.h stdarg.h unistd.h errno.h dirent.h time.h \
 				  	signal.h string.h regex.h libgen.h utime.h  limits.h setjmp.h \
 				  	fcntl.h sys/stat.h sys/wait.h sys/types.h sys/shm.h inttypes.h \
 				  	stdint.h "$PWD/src/glconf.h"],,AC_MSG_ERROR([missing required header file!]))
-				  	
-
-AC_SUBST(CFLAGS)  	
+		 	
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T

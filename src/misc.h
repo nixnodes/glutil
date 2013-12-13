@@ -40,5 +40,6 @@ int
 find_absolute_path(char *exec, char *output);
 
 uint32_t LOGLVL;
-
+int
+print_version_long(void *arg, int m);
 #endif /* MISC_H_ */

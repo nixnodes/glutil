@@ -565,13 +565,6 @@ g_opt_mode_noop(void *arg, int m)
   return 0;
 }
 
-int
-print_version_long(void *arg, int m)
-{
-  print_str("* %s_%s-%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
-  PACKAGE_VERSION, __STR_ARCH);
-  return 0;
-}
 
 int
 opt_dirlog_check(void *arg, int m)

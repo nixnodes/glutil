@@ -1,0 +1,9 @@
+path=archive/tv-xvid
+msg=Only scripted allowed
+tvrage_allow_class=Scripted
+msg=Only comedy allowed
+tvrage_allow_genre=Comedy|Drama
+msg=Network '{network}' not allowed
+tvrage_deny_network=CBS
+tvrage_allow_startyear_ishigherorequal=2001
+deny=BluRay|lala

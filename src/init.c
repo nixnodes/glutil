@@ -29,11 +29,6 @@ _g_handle g_act_1 =
 _g_handle g_act_2 =
   { 0 };
 
-mda dirlog_buffer =
-  { 0 };
-mda nukelog_buffer =
-  { 0 };
-
 mda glconf =
   { 0 };
 
@@ -145,4 +140,4 @@ char *GLOBAL_POSTEXEC = NULL;
 uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;
 
-
+char *spec_p1 = NULL;

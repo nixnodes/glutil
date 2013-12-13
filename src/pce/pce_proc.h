@@ -14,15 +14,15 @@
 #define F_PCE_DONE_STR_PREPROC          (a32 << 1)
 #define F_PCE_FORKED                    (a32 << 2)
 
-
-typedef struct __g_dgetr {
+typedef struct __g_dgetr
+{
   uint64_t pf;
   char *d_field;
   char *d_yf;
-}_g_dgetr, *__d_dgetr;
+} _g_dgetr, *__d_dgetr;
 
 int
-pce_proc(char *subject);
+pce_proc(char *path, char *dir);
 
 char *
 pce_decomp(char *subject, char *sct_b, size_t max_sct);
@@ -41,7 +41,7 @@ char*
 pce_do_str_preproc(char *subject);
 
 char cl_presub[PATH_MAX];
-char cl_sub[PATH_MAX*2];
+char cl_sub[PATH_MAX * 2];
 char cl_yr[32], *s_year;
 char *cl_dir;
 char *cl_dir_b;
@@ -51,7 +51,8 @@ char *post_m_exec_str;
 uint32_t pce_f;
 int32_t pce_lm;
 int EXITVAL;
-
+int
+pce_l_execv(char *exec, char **argv);
 int
 pce_run_log_match(void *_hdl, void *_ptr, void *arg);
 int
@@ -67,9 +68,11 @@ pce_enable_logging(void);
 void
 pce_pcl_stat(int r, __d_sconf ptr);
 
-typedef int _d_pce_plm(__g_handle hdl, __d_sconf ptr);
+typedef int
+_d_pce_plm(__g_handle hdl, __d_sconf ptr);
 
-int pce_process_execv(__g_handle hdl, char *ptr);
+int
+pce_process_execv(__g_handle hdl, char *ptr);
 
 _d_pce_plm pce_process_string_match, pce_process_lom_match;
 
