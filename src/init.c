@@ -5,8 +5,9 @@
  *      Author: reboot
  */
 
-#include <glutil.h>
 #include "config.h"
+#include <glutil.h>
+
 #include <l_error.h>
 #include <im_hdr.h>
 #include <t_glob.h>

@@ -15,7 +15,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <glutil.h>
 #include <l_error.h>
 
 int execv_stdout_redir = -1;
