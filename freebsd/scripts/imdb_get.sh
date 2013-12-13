@@ -302,6 +302,6 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "IMDB: `echo "Q:'$QUERY ($YEAR_q)' | A:'$TITLE ($YEAR)'" | tr '+' ' '` : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
+[ ${VERBOSE} -eq 1 ] && "IMDB: `echo "Q:'$QUERY ($YEAR_q)' | A:'$TITLE ($YEAR)'" | tr '+' ' '` : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
 
 exit 0

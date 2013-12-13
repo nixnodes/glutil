@@ -304,6 +304,6 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	rm /tmp/glutil.img.$$.tmp
 fi
 
-echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
+[ ${VERBOSE} -eq 1 ] && echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
 
 exit 0
