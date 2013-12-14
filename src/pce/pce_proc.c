@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 _g_handle h_gconf =
   { 0 };

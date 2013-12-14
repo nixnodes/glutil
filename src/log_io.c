@@ -806,6 +806,30 @@ gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count)
 }
 
 int
+determine_temp_path(char *file, char *output, size_t max_out)
+{
+  char *f_n = g_basename(file);
+  if (!strlen(f_n))
+    {
+      return 1;
+    }
+
+  snprintf(output, max_out, "/tmp/glutil_%s.%d.dtm", f_n, getpid());
+
+  FILE *fh;
+
+  if (!(fh = fopen(output, "w")))
+    {
+      snprintf(output, max_out, "%s.%d.dtm", file, getpid());
+    }
+  else
+    {
+      fclose(fh);
+    }
+  return 0;
+}
+
+int
 rebuild_data_file(char *file, __g_handle hdl)
 {
   g_setjmp(0, "rebuild_data_file", NULL, NULL);
@@ -820,7 +844,11 @@ rebuild_data_file(char *file, __g_handle hdl)
       return 1;
     }
 
-  snprintf(hdl->s_buffer, PATH_MAX - 1, "%s.%d.dtm", file, getpid());
+  if (determine_temp_path(file, hdl->s_buffer, PATH_MAX))
+    {
+      print_str("ERROR: %s: unable to get a writable temp. path\n", file);
+    }
+
   snprintf(buffer, PATH_MAX - 1, "%s.bk", file);
 
   pmda p_ptr;
@@ -1008,13 +1036,28 @@ rebuild_data_file(char *file, __g_handle hdl)
         }
       else
         {
-          if ((r = rename(hdl->s_buffer, file)))
+          if (strncmp(hdl->s_buffer, "/tmp/", 5))
             {
-              print_str("ERROR: %s: [%s] renaming temporary file failed!\n",
-                  hdl->s_buffer, strerror(errno));
-              ret = 4;
+              if ((r = rename(hdl->s_buffer, file)))
+                {
+                  print_str("ERROR: %s: [%s] renaming temporary file failed!\n",
+                      hdl->s_buffer, strerror(errno));
+                  ret = 4;
+                }
+              goto end;
             }
-          goto end;
+          else
+            {
+              errno = 0;
+              if ((r = (int) file_copy(hdl->s_buffer, file, "wb",
+              F_FC_MSET_SRC)) < 1)
+                {
+                  print_str("ERROR: %s: [%d] [%s] copying temp file failed!\n",
+                      hdl->s_buffer, r, strerror(errno));
+                  ret = 21;
+                }
+            }
+
         }
 
       cleanup:
@@ -1028,6 +1071,7 @@ rebuild_data_file(char *file, __g_handle hdl)
         }
 
     }
+
   end:
 
   return ret;

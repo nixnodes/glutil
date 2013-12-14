@@ -55,5 +55,7 @@ int
 m_load_input_n(__g_handle hdl, FILE *input);
 int
 g_enum_log(_d_enuml callback, __g_handle hdl, off_t *nres, void *arg);
+int
+determine_temp_path(char *file, char *output, size_t max_out);
 
 #endif /* LOG_IO_H_ */
