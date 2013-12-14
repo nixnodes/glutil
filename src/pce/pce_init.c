@@ -144,7 +144,7 @@ __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
         dt_set_game, pdt_set_tvrage = dt_set_tvrage,
     pdt_set_gen1 = dt_set_dummy, pdt_set_gen2 = dt_set_dummy, pdt_set_gen3 =
         dt_set_dummy, pdt_set_gen4 = dt_set_dummy, pdt_set_gconf = dt_set_gconf,
-    pdt_set_sconf = dt_set_gconf;
+    pdt_set_sconf = dt_set_sconf;
 
 int
 main(int argc, char *argv[])
