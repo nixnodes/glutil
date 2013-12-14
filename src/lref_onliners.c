@@ -5,16 +5,37 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include "config.h"
 #include "lref_onliners.h"
 
-#include <glutil.h>
 #include <mc_glob.h>
 #include <lref.h>
 #include <lref_gen.h>
+#include <omfp.h>
 
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+
+
+void
+dt_set_oneliners(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISONELINERS;
+  hdl->block_sz = OL_SZ;
+  hdl->d_memb = 5;
+  hdl->g_proc0 = gcb_oneliner;
+  hdl->g_proc1_lookup = ref_to_val_lk_oneliners;
+  hdl->g_proc2 = ref_to_val_ptr_oneliners;
+  hdl->g_proc3 = oneliner_format_block;
+  hdl->g_proc3_batch = oneliner_format_block_batch;
+  hdl->g_proc3_export = oneliner_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_ONELINERS;
+  hdl->jm_offset = (size_t) &((struct oneliner*) NULL)->uname;
+}
+
 
 void *
 ref_to_val_lk_oneliners(void *arg, char *match, char *output, size_t max_size,

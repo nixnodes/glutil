@@ -6,6 +6,7 @@
  */
 
 #include <glutil.h>
+#include "config.h"
 #include "lref_nukelog.h"
 
 #include <mc_glob.h>
@@ -14,9 +15,28 @@
 
 #include <str.h>
 #include <xref.h>
+#include <omfp.h>
 
 #include <errno.h>
 #include <time.h>
+
+void
+dt_set_nukelog(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISNUKELOG;
+  hdl->block_sz = NL_SZ;
+  hdl->d_memb = 9;
+  hdl->g_proc0 = gcb_nukelog;
+  hdl->g_proc1_lookup = ref_to_val_lk_nukelog;
+  hdl->g_proc2 = ref_to_val_ptr_nukelog;
+  hdl->g_proc3 = nukelog_format_block;
+  hdl->g_proc3_batch = nukelog_format_block_batch;
+  hdl->g_proc3_export = nukelog_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_NUKELOG;
+  hdl->jm_offset = (size_t) &((struct nukelog*) NULL)->dirname;
+}
+
 
 void *
 ref_to_val_lk_nukelog(void *arg, char *match, char *output, size_t max_size,

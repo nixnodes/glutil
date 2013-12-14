@@ -25,21 +25,7 @@
 #include <log_io.h>
 #include <misc.h>
 
-#include <lref_dirlog.h>
-#include <lref_nukelog.h>
-#include <lref_lastonlog.h>
-#include <lref_dupefile.h>
-#include <lref_onliners.h>
 #include <lref_online.h>
-#include <lref_tvrage.h>
-#include <lref_imdb.h>
-#include <lref_game.h>
-#include <lref_gen1.h>
-#include <lref_gen2.h>
-#include <lref_gen3.h>
-#include <lref_gen4.h>
-#include <lref_sconf.h>
-#include <lref_gconf.h>
 
 #include <unistd.h>
 
@@ -377,213 +363,59 @@ determine_datatype(__g_handle hdl, char *file)
 {
   if (!strncmp(file, DIRLOG, strlen(DIRLOG)))
     {
-      hdl->flags |= F_GH_ISDIRLOG;
-      hdl->block_sz = DL_SZ;
-      hdl->d_memb = 7;
-      hdl->g_proc0 = gcb_dirlog;
-      hdl->g_proc1_lookup = ref_to_val_lk_dirlog;
-      hdl->g_proc2 = ref_to_val_ptr_dirlog;
-      hdl->g_proc3 = dirlog_format_block;
-      hdl->g_proc3_batch = dirlog_format_block_batch;
-      hdl->g_proc3_export = dirlog_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_DIRLOG;
-      hdl->jm_offset = (size_t) &((struct dirlog*) NULL)->dirname;
+      pdt_set_dirlog(hdl);
     }
   else if (!strncmp(file, NUKELOG, strlen(NUKELOG)))
     {
-      hdl->flags |= F_GH_ISNUKELOG;
-      hdl->block_sz = NL_SZ;
-      hdl->d_memb = 9;
-      hdl->g_proc0 = gcb_nukelog;
-      hdl->g_proc1_lookup = ref_to_val_lk_nukelog;
-      hdl->g_proc2 = ref_to_val_ptr_nukelog;
-      hdl->g_proc3 = nukelog_format_block;
-      hdl->g_proc3_batch = nukelog_format_block_batch;
-      hdl->g_proc3_export = nukelog_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_NUKELOG;
-      hdl->jm_offset = (size_t) &((struct nukelog*) NULL)->dirname;
+      pdt_set_nukelog(hdl);
     }
   else if (!strncmp(file, DUPEFILE, strlen(DUPEFILE)))
     {
-      hdl->flags |= F_GH_ISDUPEFILE;
-      hdl->block_sz = DF_SZ;
-      hdl->d_memb = 3;
-      hdl->g_proc0 = gcb_dupefile;
-      hdl->g_proc1_lookup = ref_to_val_lk_dupefile;
-      hdl->g_proc2 = ref_to_val_ptr_dupefile;
-      hdl->g_proc3 = dupefile_format_block;
-      hdl->g_proc3_batch = dupefile_format_block_batch;
-      hdl->g_proc3_export = dupefile_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_DUPEFILE;
-      hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
+      pdt_set_dupefile(hdl);
     }
   else if (!strncmp(file, LASTONLOG, strlen(LASTONLOG)))
     {
-      hdl->flags |= F_GH_ISLASTONLOG;
-      hdl->block_sz = LO_SZ;
-      hdl->d_memb = 8;
-      hdl->g_proc0 = gcb_lastonlog;
-      hdl->g_proc1_lookup = ref_to_val_lk_lastonlog;
-      hdl->g_proc2 = ref_to_val_ptr_lastonlog;
-      hdl->g_proc3 = lastonlog_format_block;
-      hdl->g_proc3_batch = lastonlog_format_block_batch;
-      hdl->g_proc3_export = lastonlog_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_LASTONLOG;
-      hdl->jm_offset = (size_t) &((struct lastonlog*) NULL)->uname;
+      pdt_set_lastonlog(hdl);
     }
   else if (!strncmp(file, ONELINERS, strlen(ONELINERS)))
     {
-      hdl->flags |= F_GH_ISONELINERS;
-      hdl->block_sz = OL_SZ;
-      hdl->d_memb = 5;
-      hdl->g_proc0 = gcb_oneliner;
-      hdl->g_proc1_lookup = ref_to_val_lk_oneliners;
-      hdl->g_proc2 = ref_to_val_ptr_oneliners;
-      hdl->g_proc3 = oneliner_format_block;
-      hdl->g_proc3_batch = oneliner_format_block_batch;
-      hdl->g_proc3_export = oneliner_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_ONELINERS;
-      hdl->jm_offset = (size_t) &((struct oneliner*) NULL)->uname;
+      pdt_set_oneliners(hdl);
     }
   else if (!strncmp(file, IMDBLOG, strlen(IMDBLOG)))
     {
-      hdl->flags |= F_GH_ISIMDB;
-      hdl->block_sz = ID_SZ;
-      hdl->d_memb = 14;
-      hdl->g_proc0 = gcb_imdbh;
-      hdl->g_proc1_lookup = ref_to_val_lk_imdb;
-      hdl->g_proc2 = ref_to_val_ptr_imdb;
-      hdl->g_proc3 = imdb_format_block;
-      hdl->g_proc3_batch = imdb_format_block_batch;
-      hdl->g_proc3_export = imdb_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_IMDBLOG;
-      hdl->jm_offset = (size_t) &((__d_imdb) NULL)->dirname;
+      pdt_set_imdb(hdl);
     }
   else if (!strncmp(file, GAMELOG, strlen(GAMELOG)))
     {
-      hdl->flags |= F_GH_ISGAME;
-      hdl->block_sz = GM_SZ;
-      hdl->d_memb = 3;
-      hdl->g_proc0 = gcb_game;
-      hdl->g_proc1_lookup = ref_to_val_lk_game;
-      hdl->g_proc2 = ref_to_val_ptr_game;
-      hdl->g_proc3 = game_format_block;
-      hdl->g_proc3_batch = game_format_block_batch;
-      hdl->g_proc3_export = game_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_GAMELOG;
-      hdl->jm_offset = (size_t) &((__d_game) NULL)->dirname;
+      pdt_set_game(hdl);
     }
   else if (!strncmp(file, TVLOG, strlen(TVLOG)))
     {
-      hdl->flags |= F_GH_ISTVRAGE;
-      hdl->block_sz = TV_SZ;
-      hdl->d_memb = 18;
-      hdl->g_proc0 = gcb_tv;
-      hdl->g_proc1_lookup = ref_to_val_lk_tvrage;
-      hdl->g_proc2 = ref_to_val_ptr_tv;
-      hdl->g_proc3 = tv_format_block;
-      hdl->g_proc3_batch = tv_format_block_batch;
-      hdl->g_proc3_export = tv_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_TVRAGELOG;
-      hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
+      pdt_set_tvrage(hdl);
     }
   else if (!strncmp(file, GE1LOG, strlen(GE1LOG)))
     {
-      hdl->flags |= F_GH_ISGENERIC1;
-      hdl->block_sz = G1_SZ;
-      hdl->d_memb = 9;
-      hdl->g_proc0 = gcb_gen1;
-      hdl->g_proc1_lookup = ref_to_val_lk_gen1;
-      hdl->g_proc2 = ref_to_val_ptr_gen1;
-      hdl->g_proc3 = gen1_format_block;
-      hdl->g_proc3_batch = gen1_format_block_batch;
-      hdl->g_proc3_export = gen1_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_GEN1LOG;
-      hdl->jm_offset = (size_t) &((__d_generic_s2044) NULL)->s_1;
+      pdt_set_gen1(hdl);
     }
   else if (!strncmp(file, GE2LOG, strlen(GE2LOG)))
     {
-      hdl->flags |= F_GH_ISGENERIC2;
-      hdl->block_sz = G2_SZ;
-      hdl->d_memb = 24;
-      hdl->g_proc0 = gcb_gen2;
-      hdl->g_proc1_lookup = ref_to_val_lk_gen2;
-      hdl->g_proc2 = ref_to_val_ptr_gen2;
-      hdl->g_proc3 = gen2_format_block;
-      hdl->g_proc3_batch = gen2_format_block_batch;
-      hdl->g_proc3_export = gen2_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_GEN2LOG;
-      hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
+      pdt_set_gen2(hdl);
     }
   else if (!strncmp(file, GE3LOG, strlen(GE3LOG)))
     {
-      hdl->flags |= F_GH_ISGENERIC3;
-      hdl->block_sz = G3_SZ;
-      hdl->d_memb = 10;
-      hdl->g_proc0 = gcb_gen3;
-      hdl->g_proc1_lookup = ref_to_val_lk_gen3;
-      hdl->g_proc2 = ref_to_val_ptr_gen3;
-      hdl->g_proc3 = gen3_format_block;
-      hdl->g_proc3_batch = gen3_format_block_batch;
-      hdl->g_proc3_export = gen3_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_GEN3LOG;
-      hdl->jm_offset = (size_t) &((__d_generic_s800) NULL)->s_1;
+      pdt_set_gen3(hdl);
     }
   else if (!strncmp(file, GE4LOG, strlen(GE4LOG)))
     {
-      hdl->flags |= F_GH_ISGENERIC4;
-      hdl->block_sz = G4_SZ;
-      hdl->d_memb = 10;
-      hdl->g_proc0 = gcb_gen4;
-      hdl->g_proc1_lookup = ref_to_val_lk_gen4;
-      hdl->g_proc2 = ref_to_val_ptr_gen4;
-      hdl->g_proc3 = gen4_format_block;
-      hdl->g_proc3_batch = gen4_format_block_batch;
-      hdl->g_proc3_export = gen4_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_GEN4LOG;
-      hdl->jm_offset = (size_t) &((__d_generic_s1644) NULL)->s_1;
+      pdt_set_gen4(hdl);
     }
   else if (!strncmp(file, SCONFLOG, strlen(SCONFLOG)))
     {
-      hdl->flags |= F_GH_ISSCONF;
-      hdl->block_sz = SC_SZ;
-      hdl->d_memb = 3;
-      hdl->g_proc0 = gcb_sconf;
-      hdl->g_proc1_lookup = ref_to_val_lk_sconf;
-      hdl->g_proc2 = ref_to_val_ptr_sconf;
-      hdl->g_proc3 = sconf_format_block;
-      hdl->g_proc3_batch = sconf_format_block_batch;
-      hdl->g_proc3_export = sconf_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_SCONFLOG;
-      hdl->jm_offset = (size_t) &((__d_sconf) NULL)->field;
+      pdt_set_sconf(hdl);
     }
   else if (!strncmp(file, GCONFLOG, strlen(GCONFLOG)))
     {
-      hdl->flags |= F_GH_ISGCONF;
-      hdl->block_sz = GC_SZ;
-      hdl->d_memb = 1;
-      hdl->g_proc0 = gcb_gconf;
-      hdl->g_proc1_lookup = ref_to_val_lk_gconf;
-      hdl->g_proc2 = ref_to_val_ptr_gconf;
-      hdl->g_proc3 = gconf_format_block;
-      hdl->g_proc3_batch = gconf_format_block_batch;
-      hdl->g_proc3_export = gconf_format_block_exp;
-      hdl->g_proc4 = g_omfp_norm;
-      hdl->ipc_key = IPC_KEY_GCONFLOG;
-      hdl->jm_offset = (size_t) &((__d_gconf) NULL)->r_clean;
+      pdt_set_gconf(hdl);
     }
   else
     {

@@ -5,18 +5,39 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include "config.h"
 #include "lref_imdb.h"
 
-#include <glutil.h>
 #include <str.h>
 #include <lref.h>
 #include <lref_gen.h>
 #include <xref.h>
 #include <l_sb.h>
+#include <omfp.h>
 
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+
+
+
+void
+dt_set_imdb(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISIMDB;
+  hdl->block_sz = ID_SZ;
+  hdl->d_memb = 14;
+  hdl->g_proc0 = gcb_imdbh;
+  hdl->g_proc1_lookup = ref_to_val_lk_imdb;
+  hdl->g_proc2 = ref_to_val_ptr_imdb;
+  hdl->g_proc3 = imdb_format_block;
+  hdl->g_proc3_batch = imdb_format_block_batch;
+  hdl->g_proc3_export = imdb_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_IMDBLOG;
+  hdl->jm_offset = (size_t) &((__d_imdb) NULL)->dirname;
+}
 
 void *
 ref_to_val_ptr_imdb(void *arg, char *match, int *output)

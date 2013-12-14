@@ -5,18 +5,39 @@
  *      Author: reboot
  */
 
-#include <mc_glob.h>
 
 #include <glutil.h>
+#include "config.h"
+
+#include <mc_glob.h>
+
 #include <lref.h>
 #include <lref_gen.h>
 #include "lref_dupefile.h"
-
+#include <omfp.h>
 
 #include <stdio.h>
 #include <time.h>
 
 #include <errno.h>
+
+void
+dt_set_dupefile(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISDUPEFILE;
+  hdl->block_sz = DF_SZ;
+  hdl->d_memb = 3;
+  hdl->g_proc0 = gcb_dupefile;
+  hdl->g_proc1_lookup = ref_to_val_lk_dupefile;
+  hdl->g_proc2 = ref_to_val_ptr_dupefile;
+  hdl->g_proc3 = dupefile_format_block;
+  hdl->g_proc3_batch = dupefile_format_block_batch;
+  hdl->g_proc3_export = dupefile_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_DUPEFILE;
+  hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
+}
+
 
 int
 dupefile_format_block(void *iarg, char *output)

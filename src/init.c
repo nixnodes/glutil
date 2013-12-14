@@ -16,7 +16,6 @@
 #include <m_general.h>
 #include <exec_t.h>
 
-
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -118,8 +117,9 @@ FILE *fd_log = NULL;
 
 char *LOOPEXEC = NULL;
 
-char *NUKESTR_d[255] = { NUKESTR_DEF };
-char *NUKESTR = (char*)NUKESTR_d;
+char *NUKESTR_d[255] =
+  { NUKESTR_DEF };
+char *NUKESTR = (char*) NUKESTR_d;
 
 int updmode = 0;
 char *argv_off = NULL;
@@ -143,3 +143,11 @@ uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;
 
 char *spec_p1 = NULL;
+
+__dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,
+    pdt_set_lastonlog = dt_set_lastonlog, pdt_set_dupefile = dt_set_dupefile,
+    pdt_set_oneliners = dt_set_oneliners, pdt_set_imdb = dt_set_imdb,
+    pdt_set_game = dt_set_game, pdt_set_tvrage = dt_set_tvrage, pdt_set_gen1 =
+        dt_set_gen1, pdt_set_gen2 = dt_set_gen2, pdt_set_gen3 = dt_set_gen3,
+    pdt_set_gen4 = dt_set_gen4, pdt_set_gconf = dt_set_gconf, pdt_set_sconf =
+        dt_set_sconf;

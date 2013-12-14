@@ -6,14 +6,33 @@
  */
 
 #include <glutil.h>
+#include "config.h"
 #include "lref_sconf.h"
 
 #include <str.h>
 #include <lref.h>
 #include <lref_gen.h>
 #include <l_sb.h>
+#include <omfp.h>
 
 #include <errno.h>
+
+void
+dt_set_sconf(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISSCONF;
+  hdl->block_sz = SC_SZ;
+  hdl->d_memb = 3;
+  hdl->g_proc0 = gcb_sconf;
+  hdl->g_proc1_lookup = ref_to_val_lk_sconf;
+  hdl->g_proc2 = ref_to_val_ptr_sconf;
+  hdl->g_proc3 = sconf_format_block;
+  hdl->g_proc3_batch = sconf_format_block_batch;
+  hdl->g_proc3_export = sconf_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_SCONFLOG;
+  hdl->jm_offset = (size_t) &((__d_sconf) NULL)->field;
+}
 
 int
 sconf_format_block(void *iarg, char *output)

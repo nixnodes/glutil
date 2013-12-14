@@ -165,7 +165,11 @@ pce_proc(char *path, char *dir)
       && gconf->e_match[0])
     {
       print_str("NOTICE: executing: '%s'\n", gconf->e_match);
-      system(gconf->e_match);
+      _g_handle t_h =
+        { 0 };
+      t_h.g_proc1_lookup = ref_to_val_lk_generic;
+      pce_process_execv(&t_h, gconf->e_match);
+      g_cleanup(&t_h);
     }
 
   end:
@@ -425,7 +429,7 @@ pce_print_msg(char *input, __g_handle hdl)
       return 1;
     }
 
-  printf("%s\n", b_glob);
+  fwrite(b_glob, strlen(b_glob), 1, stdout);
 
   return 0;
 }

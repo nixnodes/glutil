@@ -24,11 +24,8 @@ determine_datatype(__g_handle hdl, char *file);
 int
 g_proc_mr(__g_handle hdl);
 
-
 char *_print_ptr;
 
-int
-online_format_block_comp(void *iarg, char *output);
 int
 data_backup_records(char *file);
 int

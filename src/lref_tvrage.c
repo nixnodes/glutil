@@ -5,18 +5,38 @@
  *      Author: reboot
  */
 
+#include <glutil.h>
+#include "config.h"
 #include "lref_tvrage.h"
 
-#include <glutil.h>
 #include <str.h>
 #include <lref.h>
 #include <lref_gen.h>
 #include <xref.h>
 #include <mc_glob.h>
 #include <l_sb.h>
+#include <omfp.h>
 
 #include <errno.h>
 #include <time.h>
+
+void
+dt_set_tvrage(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISTVRAGE;
+  hdl->block_sz = TV_SZ;
+  hdl->d_memb = 18;
+  hdl->g_proc0 = gcb_tv;
+  hdl->g_proc1_lookup = ref_to_val_lk_tvrage;
+  hdl->g_proc2 = ref_to_val_ptr_tv;
+  hdl->g_proc3 = tv_format_block;
+  hdl->g_proc3_batch = tv_format_block_batch;
+  hdl->g_proc3_export = tv_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_TVRAGELOG;
+  hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
+}
+
 
 void *
 ref_to_val_ptr_tv(void *arg, char *match, int *output)

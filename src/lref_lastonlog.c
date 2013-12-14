@@ -6,6 +6,7 @@
  */
 
 #include <glutil.h>
+#include "config.h"
 #include "lref_lastonlog.h"
 
 #include <mc_glob.h>
@@ -13,9 +14,28 @@
 #include <str.h>
 #include <lref.h>
 #include <lref_gen.h>
+#include <omfp.h>
 
 #include <time.h>
 #include <errno.h>
+
+void
+dt_set_lastonlog(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISLASTONLOG;
+  hdl->block_sz = LO_SZ;
+  hdl->d_memb = 8;
+  hdl->g_proc0 = gcb_lastonlog;
+  hdl->g_proc1_lookup = ref_to_val_lk_lastonlog;
+  hdl->g_proc2 = ref_to_val_ptr_lastonlog;
+  hdl->g_proc3 = lastonlog_format_block;
+  hdl->g_proc3_batch = lastonlog_format_block_batch;
+  hdl->g_proc3_export = lastonlog_format_block_exp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_LASTONLOG;
+  hdl->jm_offset = (size_t) &((struct lastonlog*) NULL)->uname;
+}
+
 
 char *
 dt_rval_lastonlog_logon(void *arg, char *match, char *output, size_t max_size,

@@ -6,9 +6,7 @@
  */
 
 #include <glutil.h>
-//#include <t_glob.h>
-//#include <im_hdr.h>
-#include <l_sb.h>
+
 #include <log_shm.h>
 #include <log_io.h>
 #include <memory_t.h>
@@ -826,6 +824,7 @@ determine_temp_path(char *file, char *output, size_t max_out)
     {
       fclose(fh);
     }
+
   return 0;
 }
 
@@ -1515,4 +1514,10 @@ g_enum_log(_d_enuml callback, __g_handle hdl, off_t *nres, void *arg)
   free(buffer);
 
   return r;
+}
+
+void
+dt_set_dummy(__g_handle hdl)
+{
+  return;
 }

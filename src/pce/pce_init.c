@@ -14,6 +14,7 @@
 
 #include <l_error.h>
 #include <misc.h>
+#include <x_f.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -137,7 +138,13 @@ uint32_t ofl = 0;
 
 char *spec_p1 = NULL;
 
-#include <x_f.h>
+__dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
+    pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,
+    pdt_set_oneliners = dt_set_dummy, pdt_set_imdb = dt_set_imdb, pdt_set_game =
+        dt_set_game, pdt_set_tvrage = dt_set_tvrage,
+    pdt_set_gen1 = dt_set_dummy, pdt_set_gen2 = dt_set_dummy, pdt_set_gen3 =
+        dt_set_dummy, pdt_set_gen4 = dt_set_dummy, pdt_set_gconf = dt_set_gconf,
+    pdt_set_sconf = dt_set_gconf;
 
 int
 main(int argc, char *argv[])
