@@ -993,7 +993,7 @@ pce_l_execv(char *exec, char **argv)
 
   if (c_pid == (pid_t) -1)
     {
-      fprintf(stderr, "ERROR: %s: fork failed\n", exec);
+      print_str("ERROR: %s: fork failed\n", exec);
       return 0;
     }
 
@@ -1016,8 +1016,8 @@ pce_l_execv(char *exec, char **argv)
     {
       if (errno != EINTR)
         {
-          fprintf(stderr,
-              "ERROR: %s:failed waiting for child process to finish [%s]\n",
+          print_str(
+              "ERROR: %s: failed waiting for child process to finish [%s]\n",
               exec, strerror(errno));
           return 0;
         }
