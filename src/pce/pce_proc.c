@@ -31,6 +31,7 @@
 #include <regex.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 _g_handle h_gconf =
   { 0 };
@@ -374,7 +375,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           _g_handle t_h =
             { 0};
           t_h.g_proc1_lookup = ref_to_val_lk_generic;
-          if ((r = pce_process_exec(&t_h, ptr->match)))
+          if ((r = pce_process_execv(&t_h, ptr->match)))
             {
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
@@ -945,6 +946,42 @@ pce_do_str_preproc(char *subject)
 }
 
 int
+pce_prep_for_exec(void)
+{
+  const char inputfile[] = "/dev/null";
+
+  if (close(0) < 0)
+    {
+      fprintf(stdout, "ERROR: could not close stdin\n");
+      return 1;
+    }
+  else
+    {
+      if (open(inputfile, O_RDONLY
+#if defined O_LARGEFILE
+          | O_LARGEFILE
+#endif
+          ) < 0)
+        {
+          fprintf(stdout, "ERROR: could not open %s\n", inputfile);
+        }
+    }
+
+  if (fd_log)
+    {
+      dup2(fileno(fd_log), STDOUT_FILENO);
+      dup2(fileno(fd_log), STDERR_FILENO);
+    }
+  else
+    {
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
+    }
+
+  return 0;
+}
+
+int
 pce_l_execv(char *exec, char **argv)
 {
   pid_t c_pid;
@@ -962,7 +999,7 @@ pce_l_execv(char *exec, char **argv)
 
   if (!c_pid)
     {
-      if (prep_for_exec())
+      if (pce_prep_for_exec())
         {
           _exit(0);
         }

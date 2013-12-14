@@ -283,7 +283,7 @@ prep_for_exec(void)
 {
   const char inputfile[] = "/dev/null";
 
-  if (close(0) < 0)
+  if (close(STDIN_FILENO) < 0)
     {
       fprintf(stdout, "ERROR: could not close stdin\n");
       return 1;

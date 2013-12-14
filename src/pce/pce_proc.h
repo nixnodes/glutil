@@ -86,5 +86,6 @@ int
 pce_g_skip_proc(void);
 int
 pce_process_exec(__g_handle hdl, char *exec_str);
+int pce_prep_for_exec(void);
 
 #endif /* PCE_PROC_H_ */
