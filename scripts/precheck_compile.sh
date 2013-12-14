@@ -156,4 +156,6 @@ ${GLUTIL} -z gconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/gconf" &&
 ${GLUTIL} -q gconf --shmem --shmdestroy --silent
 ${GLUTIL} -q gconf --shmem --shmreload --silent
 
+rm -f /tmp/glutil.$$.pce
+
 exit 0
