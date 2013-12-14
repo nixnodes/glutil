@@ -1,4 +1,4 @@
-path=archive/tv-xvid
+path=tv-xvid
 msg=Only scripted allowed
 tvrage_allow_class=Scripted
 msg=Only comedy allowed

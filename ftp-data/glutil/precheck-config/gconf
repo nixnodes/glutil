@@ -1,9 +1,9 @@
-r_path_clean 			([_\-\(\)\.\ \+](([1][98][0-9]{2,2}|[2][0][0-9]{2,2})|(S[0-9]{1,3}E[0-9]{1,3}|E(P|())[0-9]{1,3}|S[0-9]{1,3}).*)([_\-\(\)\.\ \+]|$).*)|([_\-\(\)\.\ \+](MACOSX|BLURAY|EUR|Creators[_\-\(\)\.\ \+]Edition|PATCH|DATAPACK|INTERNAL|FINNISH|GAMEFIX|READ[_\-\(\)\.\ \+]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DUTCH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[_\-\(\)\.\ \+]CUT|READNFO|DLC|INCL[_\-\(\)\.\ \+]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|GOTY|MULTI|Crack|DOX|FRENCH|VOBSUBS|SUBPACK|BOXSET|WS|FESTIVAL|(720|1080)(i|p)|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|REPACK|DC|XVID|UNCUT)([_\-\(\)\.\ \+\-]|$).*)|-([A-Z0-9a-z_\-]*$)
-r_path_postproc 		[_\-\(\)\.\+\ ]+
-r_year_extract 			[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())
-r_skip_basedir			^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
-use_shared_mem 			1
-execute_on_lookup_fail 		1
-path_exec_on_lookup_fail 	echo "lala"
-path_exec_on_match              echo "match, executing.."
+r_path_clean 					([_\-\(\)\.\ \+](([1][98][0-9]{2,2}|[2][0][0-9]{2,2})|(S[0-9]{1,3}E[0-9]{1,3}|E(P|())[0-9]{1,3}|S[0-9]{1,3}).*)([_\-\(\)\.\ \+]|$).*)|([_\-\(\)\.\ \+](MACOSX|BLURAY|EUR|Creators[_\-\(\)\.\ \+]Edition|PATCH|DATAPACK|INTERNAL|FINNISH|GAMEFIX|READ[_\-\(\)\.\ \+]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DUTCH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[_\-\(\)\.\ \+]CUT|READNFO|DLC|INCL[_\-\(\)\.\ \+]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|GOTY|MULTI|Crack|DOX|FRENCH|VOBSUBS|SUBPACK|BOXSET|WS|FESTIVAL|(720|1080)(i|p)|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|REPACK|DC|XVID|UNCUT)([_\-\(\)\.\ \+\-]|$).*)|-([A-Z0-9a-z_\-]*$)
+r_path_postproc 				[_\-\(\)\.\+\ ]+
+r_year_extract 					[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())
+r_skip_basedir					^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
+use_shared_mem                  1
+execute_on_lookup_fail          1
+path_exec_on_lookup_fail        /bin/sh -c "{?rd:exe:-precheck$} -m tvrage-e -vvvv -arg1 '{pspec1}' --glroot / --tvlog {tvragefile}"
+path_exec_on_match              /bin/echo "200 match, executing.."
 
