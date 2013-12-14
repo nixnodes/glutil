@@ -5,7 +5,6 @@
  *      Author: reboot
  */
 
-
 #include <glutil.h>
 #include <t_glob.h>
 #include <xref.h>
@@ -124,9 +123,10 @@ get_file_type(char *file)
 {
   struct stat sb;
 
-  if (stat(file, &sb) == -1) {
-    return DT_UNKNOWN;
-  }
+  if (stat(file, &sb) == -1)
+    {
+      return DT_UNKNOWN;
+    }
 
   return IFTODT(sb.st_mode);
 }
@@ -176,7 +176,6 @@ file_crc32(char *file, uint32_t *crc_out)
   return 1;
 }
 
-
 int
 self_get_path(char *out)
 {
@@ -203,9 +202,10 @@ self_get_path(char *out)
       return 2;
     }
 
-  if (r == 0) {
-	return 3;
-  }
+  if (r == 0)
+    {
+      return 3;
+    }
   out[r] = 0x0;
   return 0;
 }
@@ -228,7 +228,6 @@ delete_file(char *name, unsigned char type, void *arg, __g_eds eds)
 
   return 2;
 }
-
 
 ssize_t
 file_copy(char *source, char *dest, char *mode, uint32_t flags)
@@ -316,7 +315,6 @@ file_copy(char *source, char *dest, char *mode, uint32_t flags)
   return t;
 }
 
-
 off_t
 read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
 {
@@ -379,4 +377,34 @@ write_file_text(char *data, char *file)
   fclose(fp);
 
   return r;
+}
+
+size_t
+exec_and_redirect_output(char *command, FILE *output)
+{
+  size_t r = 0, w = 0;
+  FILE *pipe = NULL;
+
+  if (!(pipe = popen(command, "r")))
+    {
+      return 0;
+    }
+
+  size_t read = 0;
+
+  char r_b[0x2000];
+
+  while (!feof(pipe))
+    {
+      if ((r = fread(r_b, 1, 0x2000, pipe)) <= 0)
+        {
+          break;
+        }
+      w += fwrite(r_b, r, 1, output);
+      read += r;
+    }
+
+  pclose(pipe);
+
+  return w;
 }

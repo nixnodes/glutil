@@ -16,17 +16,14 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
 #ifdef HAVE_ST_BIRTHTIME
 #define birthtime(x) x->st_birthtime
 #else
 #define birthtime(x) x->st_ctime
 #endif
 
-
 #define F_FC_MSET_SRC                   (a32 << 1)
 #define F_FC_MSET_DEST                  (a32 << 2)
-
 
 static uint32_t crc_32_tab[];
 
@@ -51,5 +48,7 @@ off_t
 read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp);
 int
 write_file_text(char *data, char *file);
+size_t
+exec_and_redirect_output(char *command, FILE *output);
 
 #endif /* X_F_H_ */

@@ -14,6 +14,7 @@
 #include <arg_proc.h>
 #include <l_error.h>
 #include <misc.h>
+#include <str.h>
 
 #include <unistd.h>
 #include <errno.h>
@@ -372,13 +373,13 @@ process_execv_args(void *data, __g_handle hdl)
           hdl->exec_args.argv_c[ach->cindex][0] = 0x0;
         }
 
-
       ptr = ptr->next;
     }
 
-  if (!ach) {
+  if (!ach)
+    {
       return 1;
-  }
+    }
 
   return 0;
 }
@@ -422,6 +423,67 @@ g_do_exec_fb(void *buffer, void *callback, char *ex_str, void *hdl)
     }
 
   return system(b_glob);
+}
+
+int
+process_exec_string_n(char *input, char *output, size_t max_size,
+    _d_rtv_lk callback, void *data, void *mppd)
+{
+  __g_proc_v dt_rval;
+  size_t ow = 0;
+  char *op = output;
+  char vb[MAX_VAR_LEN];
+
+  while (input[0] && ow < max_size)
+    {
+      while (input[0] != 0x7B && input[0])
+        {
+          op[0] = input[0];
+          input++;
+          op++;
+          ow++;
+        }
+
+      if (input[0] != 0x7B)
+        {
+          break;
+        }
+
+      input++;
+
+      dt_rval = callback(data, input, vb, MAX_VAR_LEN, mppd);
+
+      if (dt_rval)
+        {
+          char *dp = dt_rval(data, input, vb, MAX_VAR_LEN, mppd);
+          if (dp)
+            {
+              size_t dp_l = strlen(dp);
+              if (dp_l)
+                {
+                  strcp_s(op, max_size - ow, dp);
+                  op = &op[dp_l];
+                }
+            }
+        }
+
+      while (input[0] != 0x7D && input[0])
+        {
+          input++;
+        }
+
+      if (!input[0])
+        {
+          break;
+        }
+
+      input++;
+
+    }
+
+  op[0] = 0x0;
+
+  return 0;
 }
 
 int

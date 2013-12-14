@@ -373,8 +373,8 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           case 3:;
           _g_handle t_h =
             { 0};
-
-          if ((r = pce_process_execv(&t_h, ptr->match)))
+          t_h.g_proc1_lookup = ref_to_val_lk_generic;
+          if ((r = pce_process_exec(&t_h, ptr->match)))
             {
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
@@ -493,6 +493,24 @@ pce_process_execv(__g_handle hdl, char *exec_str)
     }
 
   return WEXITSTATUS(pce_l_execv(exec_args.exec_v_path, exec_args.argv_c));
+}
+
+int
+pce_process_exec(__g_handle hdl, char *exec_str)
+{
+  _d_exec_ch exech =
+    { 0 };
+
+  process_exec_string_n(exec_str, b_glob, MAX_EXEC_STR, hdl->g_proc1_lookup,
+      hdl->buffer.pos ? hdl->buffer.pos->ptr : NULL, &exech.dtr);
+
+  if (!exec_and_redirect_output(b_glob, stdout))
+    {
+      print_str("ERROR: pce_process_exec failed: '%s'\n", exec_str);
+      return 0;
+    }
+
+  return 0;
 }
 
 int
@@ -621,8 +639,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
   off_t nres;
   char did_retry = 0;
 
-  retry:
-  did_retry++;
+  retry: did_retry++;
 
   if (s_year && dgetr->d_yf)
     {
@@ -653,8 +670,6 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
       p_log->flags |= F_GH_LOCKED;
       return 0;
     }
-
-
 
   if ((r = g_enum_log(pce_run_log_match, p_log, &nres, NULL)))
     {
@@ -942,7 +957,7 @@ pce_l_execv(char *exec, char **argv)
   if (c_pid == (pid_t) -1)
     {
       fprintf(stderr, "ERROR: %s: fork failed\n", exec);
-      return 1;
+      return 0;
     }
 
   if (!c_pid)

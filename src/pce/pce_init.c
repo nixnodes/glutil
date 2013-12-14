@@ -137,6 +137,8 @@ uint32_t ofl = 0;
 
 char *spec_p1 = NULL;
 
+#include <x_f.h>
+
 int
 main(int argc, char *argv[])
 {
@@ -148,9 +150,10 @@ main(int argc, char *argv[])
   //gfl |= F_OPT_PS_SILENT;
   pce_proc(argv[2], argv[1]);
 
-  if (fd_log) {
+  if (fd_log)
+    {
       fclose(fd_log);
-  }
+    }
 
   if ((pce_f & F_PCE_FORKED))
     {

@@ -59,5 +59,8 @@ int
 g_init_execv_bare(__execv exec_args, __g_handle hdl, char *i_exec_str);
 int
 g_build_argv_c_bare(__execv exec_args, __g_handle hdl);
+int
+process_exec_string_n(char *input, char *output, size_t max_size,
+    _d_rtv_lk callback, void *data, void *mppd);
 
 #endif /* EXEC_H_ */

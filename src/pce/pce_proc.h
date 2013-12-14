@@ -73,6 +73,8 @@ _d_pce_plm(__g_handle hdl, __d_sconf ptr);
 
 int
 pce_process_execv(__g_handle hdl, char *ptr);
+int
+pce_process_exec(__g_handle hdl, char *exec_str);
 
 _d_pce_plm pce_process_string_match, pce_process_lom_match;
 
@@ -82,5 +84,7 @@ int
 pce_print_msg(char *input, __g_handle hdl);
 int
 pce_g_skip_proc(void);
+int
+pce_process_exec(__g_handle hdl, char *exec_str);
 
 #endif /* PCE_PROC_H_ */
