@@ -425,7 +425,7 @@ pce_print_msg(char *input, __g_handle hdl)
       return 1;
     }
 
-  printf("200 %s\n", b_glob);
+  printf("%s\n", b_glob);
 
   return 0;
 }
