@@ -4279,6 +4279,7 @@ ac_config_files="$ac_config_files Makefile src/Makefile"
 
 CFLAGS="-g -Wall"
 
+
 if test "$prefix" = "NONE"; then :
   cat >>confdefs.h <<_ACEOF
 #define CONF_PREFIX "$ac_default_prefix"
@@ -4290,7 +4291,32 @@ else
 _ACEOF
 
 fi
+if test "$prefix" = "NONE"; then :
+  prefix=$ac_default_prefix
+fi
 
+as_ac_File=`$as_echo "ac_cv_file_"$prefix/bin/sources/glconf.h"" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"$prefix/bin/sources/glconf.h\"" >&5
+$as_echo_n "checking for \"$prefix/bin/sources/glconf.h\"... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""$prefix/bin/sources/glconf.h""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  glutil_glconf_file=$prefix/bin/sources/glconf.h
+else
+  glutil_glconf_file=$PWD/src/glconf.h
+fi
 
 
 cat >confcache <<\_ACEOF
@@ -6005,7 +6031,7 @@ done
 for ac_header in stdio.h stdarg.h unistd.h errno.h dirent.h time.h \
 				  	signal.h string.h regex.h libgen.h utime.h  limits.h setjmp.h \
 				  	fcntl.h sys/stat.h sys/wait.h sys/types.h sys/shm.h inttypes.h \
-				  	stdint.h "$PWD/src/glconf.h"
+				  	stdint.h "$glutil_glconf_file"
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
