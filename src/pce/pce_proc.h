@@ -52,7 +52,7 @@ uint32_t pce_f;
 int32_t pce_lm;
 int EXITVAL;
 int
-pce_l_execv(char *exec, char **argv);
+pce_l_execv(char *exec, char **argv, __d_avoid_i ppfe);
 int
 pce_run_log_match(void *_hdl, void *_ptr, void *arg);
 int
@@ -71,8 +71,7 @@ pce_pcl_stat(int r, __d_sconf ptr);
 typedef int
 _d_pce_plm(__g_handle hdl, __d_sconf ptr);
 
-int
-pce_process_execv(__g_handle hdl, char *ptr);
+
 int
 pce_process_exec(__g_handle hdl, char *exec_str);
 
@@ -86,6 +85,13 @@ int
 pce_g_skip_proc(void);
 int
 pce_process_exec(__g_handle hdl, char *exec_str);
-int pce_prep_for_exec(void);
+int
+pce_pfe(void);
+void
+pce_pfe_r(void);
+_d_avoid_i pce_prep_for_exec, pce_prep_for_exec_r;
+
+int
+pce_process_execv(__g_handle hdl, char *ptr, __d_avoid_i ppfe);
 
 #endif /* PCE_PROC_H_ */

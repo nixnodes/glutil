@@ -25,6 +25,8 @@ _d_achar_p(char *);
 typedef int
 _d_avoid_i(void);
 typedef int
+(*__d_avoid_i)(void);
+typedef int
 _d_is_am(uint8_t in_c);
 typedef int
 (*__d_is_am)(uint8_t in_c);

@@ -168,7 +168,7 @@ pce_proc(char *path, char *dir)
       _g_handle t_h =
         { 0 };
       t_h.g_proc1_lookup = ref_to_val_lk_generic;
-      pce_process_execv(&t_h, gconf->e_match);
+      pce_process_execv(&t_h, gconf->e_match, pce_prep_for_exec_r);
       g_cleanup(&t_h);
     }
 
@@ -311,7 +311,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           break;
           case 3:
 
-          if ((r = pce_process_execv(p_log, ptr->match)))
+          if ((r = pce_process_execv(p_log, ptr->match, pce_prep_for_exec)))
             {
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
@@ -359,7 +359,6 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               cflags |= REG_ICASE;
             }
 
-
           if (!(r=pce_do_regex_match(ptr->match, cl_dir, cflags, i_m)))
             {
               print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
@@ -381,7 +380,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
           _g_handle t_h =
             { 0};
           t_h.g_proc1_lookup = ref_to_val_lk_generic;
-          if ((r = pce_process_execv(&t_h, ptr->match)))
+          if ((r = pce_process_execv(&t_h, ptr->match, pce_prep_for_exec)))
             {
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
@@ -480,7 +479,7 @@ pce_rescomp(int m_i)
 }
 
 int
-pce_process_execv(__g_handle hdl, char *exec_str)
+pce_process_execv(__g_handle hdl, char *exec_str, __d_avoid_i ppfe)
 {
   _execv exec_args =
     { 0 };
@@ -499,7 +498,7 @@ pce_process_execv(__g_handle hdl, char *exec_str)
       return 0;
     }
 
-  return WEXITSTATUS(pce_l_execv(exec_args.exec_v_path, exec_args.argv_c));
+  return WEXITSTATUS(pce_l_execv(exec_args.exec_v_path, exec_args.argv_c, pce_prep_for_exec));
 }
 
 int
@@ -707,7 +706,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           t_h.g_proc1_lookup = ref_to_val_lk_generic;
           t_h.buffer.pos = p_log->buffer.objects;
 
-          if ((r = pce_process_execv(&t_h, gconf->e_lookup_fail)))
+          if ((r = pce_process_execv(&t_h, gconf->e_lookup_fail, pce_prep_for_exec_r)))
             {
               print_str("ERROR: retry lookup failed, bad exit code [%d]\n", r);
             }
@@ -952,7 +951,7 @@ pce_do_str_preproc(char *subject)
 }
 
 int
-pce_prep_for_exec(void)
+pce_pfe(void)
 {
   const char inputfile[] = "/dev/null";
 
@@ -972,7 +971,12 @@ pce_prep_for_exec(void)
           fprintf(stdout, "ERROR: could not open %s\n", inputfile);
         }
     }
+  return 0;
+}
 
+void
+pce_pfe_r(void)
+{
   if (fd_log)
     {
       dup2(fileno(fd_log), STDOUT_FILENO);
@@ -983,12 +987,31 @@ pce_prep_for_exec(void)
       close(STDOUT_FILENO);
       close(STDERR_FILENO);
     }
+}
 
+int
+pce_prep_for_exec(void)
+{
+  if (pce_pfe())
+    {
+      return 1;
+    }
   return 0;
 }
 
 int
-pce_l_execv(char *exec, char **argv)
+pce_prep_for_exec_r(void)
+{
+  if (pce_pfe())
+    {
+      return 1;
+    }
+  pce_pfe_r();
+  return 0;
+}
+
+int
+pce_l_execv(char *exec, char **argv, __d_avoid_i ppfe)
 {
   pid_t c_pid;
 
@@ -1005,7 +1028,7 @@ pce_l_execv(char *exec, char **argv)
 
   if (!c_pid)
     {
-      if (pce_prep_for_exec())
+      if (ppfe())
         {
           _exit(0);
         }
