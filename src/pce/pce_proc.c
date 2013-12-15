@@ -947,6 +947,13 @@ pce_do_str_preproc(char *subject)
   memmove(&cl_sub[1], cl_sub, cl_l);
   cl_sub[0] = 0x5E;
 
+
+  cl_l++;
+  if (cl_l < sizeof(cl_sub) - 1) {
+      cl_sub[cl_l] = 0x24;
+  }
+
+
   cl_g_sub = cl_sub;
 
   s_year = pce_get_year_result(subject, cl_yr, sizeof(cl_yr));
