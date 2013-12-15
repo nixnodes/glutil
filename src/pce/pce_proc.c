@@ -632,7 +632,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 
   if (!(pce_f & F_PCE_DONE_STR_PREPROC))
     {
-      if (!pce_do_str_preproc(cl_dir_b))
+      if (!pce_do_str_preproc(cl_dir_b, dgetr))
         {
           print_str(
               "ERROR: unable to preprocess the directory string, aborting\n");
@@ -849,6 +849,7 @@ pce_dgetlf(__d_dgetr dgetr, int logc)
     dgetr->d_field = "title";
     dgetr->d_yf = "year";
     dgetr->e_lookup_fail = gconf->e_lookup_fail_imdb;
+    dgetr->o_lookup_strictness = gconf->o_lookup_strictness_imdb;
     return IMDBLOG;
     break;
   case 2:
@@ -856,6 +857,7 @@ pce_dgetlf(__d_dgetr dgetr, int logc)
     dgetr->d_field = "name";
     dgetr->d_yf = "startyear";
     dgetr->e_lookup_fail = gconf->e_lookup_fail_tvrage;
+    dgetr->o_lookup_strictness = gconf->o_lookup_strictness_tvrage;
     return TVLOG;
     break;
     }
@@ -897,7 +899,7 @@ pce_get_year_result(char *subject, char *output, size_t max_size)
 }
 
 char*
-pce_do_str_preproc(char *subject)
+pce_do_str_preproc(char *subject, __d_dgetr dgetr)
 {
 
   if (gconf->r_clean[0])
@@ -938,21 +940,29 @@ pce_do_str_preproc(char *subject)
     }
 
   size_t cl_l = strlen(cl_sub);
-  if (cl_l >= sizeof(cl_sub) - 1)
+
+  if (dgetr->o_lookup_strictness < 2)
     {
-      print_str("ERROR: could not preprocess string (prepend ^)\n");
-      return NULL;
+
+      if (cl_l >= sizeof(cl_sub) - 1)
+        {
+          print_str("ERROR: could not preprocess string (prepend ^)\n");
+          return NULL;
+        }
+
+      memmove(&cl_sub[1], cl_sub, cl_l);
+      cl_sub[0] = 0x5E;
+      cl_l++;
     }
 
-  memmove(&cl_sub[1], cl_sub, cl_l);
-  cl_sub[0] = 0x5E;
+  if (dgetr->o_lookup_strictness < 1)
+    {
 
-
-  cl_l++;
-  if (cl_l < sizeof(cl_sub) - 1) {
-      cl_sub[cl_l] = 0x24;
-  }
-
+      if (cl_l < sizeof(cl_sub) - 1)
+        {
+          cl_sub[cl_l] = 0x24;
+        }
+    }
 
   cl_g_sub = cl_sub;
 

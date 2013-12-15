@@ -90,6 +90,21 @@ path_exec_on_lookup_fail_imdb			/bin/sh -c "{?rd:exe:-precheck$} -m imdb-e -vvvv
 #
 path_exec_on_match              /bin/nuker ..."
 #
+###############################################################
+#
+## Defines how strictly precheck does title lookups in logs;
+##
+##	0 - Strict
+##	1 - Normal
+##  2 - Loose
+##
+## Recommended setting is 0. Each is log configured separately.
+#
+lookup_match_strictness_imdb      	0
+lookup_match_strictness_tvrage     	0
+#
+###############################################################
+#
 ## This file must end with two trailing new lines!
 #
 

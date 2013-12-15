@@ -20,6 +20,7 @@ typedef struct __g_dgetr
   char *d_field;
   char *d_yf;
   char *e_lookup_fail;
+  uint8_t o_lookup_strictness;
 } _g_dgetr, *__d_dgetr;
 
 int
@@ -39,7 +40,7 @@ pce_lhref_fst(pmda lh_ref, uint64_t *pf);
 char *
 pce_get_year_result(char *subject, char *output, size_t max_size);
 char*
-pce_do_str_preproc(char *subject);
+pce_do_str_preproc(char *subject, __d_dgetr dgetr);
 
 char cl_presub[PATH_MAX];
 char cl_sub[PATH_MAX * 2];
