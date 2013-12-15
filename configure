@@ -586,6 +586,7 @@ PACKAGE_BUGREPORT='devel@nixnodes.net'
 PACKAGE_URL=''
 
 ac_unique_file="src"
+ac_default_prefix="/glftpd"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -4274,6 +4275,7 @@ ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 #AC_CONFIG_MACRO_DIR([m4])
+
 
 CFLAGS="-g -Wall"
 cat >>confdefs.h <<_ACEOF

@@ -17,6 +17,7 @@ AC_CONFIG_FILES(Makefile src/Makefile)
 AC_CONFIG_SRCDIR([src])
 
 #AC_CONFIG_MACRO_DIR([m4])
+AC_PREFIX_DEFAULT(["/glftpd"])
 
 CFLAGS="-g -Wall"
 AC_DEFINE_UNQUOTED([CONF_PREFIX], "$prefix" )
