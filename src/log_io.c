@@ -1387,6 +1387,11 @@ m_load_input_n(__g_handle hdl, FILE *input)
     {
       rf = 1;
 
+      if (buffer[0] == 0x23)
+        {
+          continue;
+        }
+
       if (buffer[0] == 0xA)
         {
           if (!rw)
