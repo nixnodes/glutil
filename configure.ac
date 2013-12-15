@@ -4,17 +4,17 @@ AC_PREREQ(2.63)
 AC_INIT([glutil], [2.3.6d], [devel@nixnodes.net],,["http://glutil.nixnodes.net/"]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
+AM_MAINTAINER_MODE([disable])
 
 AM_PROG_CC_C_O
 AC_PROG_CC_STDC
 
-AC_CONFIG_FILES([Makefile src/Makefile])
- 
+AC_CONFIG_FILES([Makefile src/Makefile]) 
 AC_CONFIG_SRCDIR([src])
 
 AC_PREFIX_DEFAULT(["/glftpd"])
 
-AM_MAINTAINER_MODE([disable])
+
 
 AC_DEFINE(_LARGE_FILES, [1], [Large files])
 AC_DEFINE(_LARGEFILE_SOURCE, [1], [Large files])
@@ -31,13 +31,13 @@ glutil_chroot_ownbin="$enableval", glutil_chroot_ownbin="no")
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
 	AS_IF([test "$prefix" = "NONE"], 
-		[AC_DEFINE_UNQUOTED([CONF_PREFIX], "$ac_default_prefix") ], 
-		[AC_DEFINE_UNQUOTED([CONF_PREFIX], "$prefix" )] \
+		[AC_DEFINE_UNQUOTED([CONF_PREFIX], ["$ac_default_prefix"]) ], 
+		[AC_DEFINE_UNQUOTED([CONF_PREFIX], ["$prefix"] )] \
 	)	
 	AS_IF([test "$prefix" = "NONE"], AS_VAR_SET(prefix, [$ac_default_prefix]))
 else 
-	AC_DEFINE_UNQUOTED([CONF_PREFIX], "")
-	AC_DEFINE([_GLCONF_NOROOTPATH])
+	AC_DEFINE_UNQUOTED([CONF_PREFIX], [""], [//])
+	AC_DEFINE([_GLCONF_NOROOTPATH], [], [//])
 	AS_IF([test "$glutil_chroot_ownbin" = "yes"],
 		[AC_MSG_NOTICE(compiling for chrooted environment (glutil-chroot)..)],
 		[AC_MSG_NOTICE(compiling for chrooted environment..)]) 
@@ -71,20 +71,11 @@ AC_SUBST(CFLAGS)
 AC_OUTPUT
 
 GLUTIL_MSG_REQH="missing required header file"
-AC_CHECK_HEADER([stdarg.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (stdarg.h)])])
 AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (fnctl.h)])])
 AC_CHECK_HEADER([limits.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (limits.h)])])
 AC_CHECK_HEADER([utime.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (utime.h)])])
 AC_CHECK_HEADER([errno.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (errno.h)])])
-AC_CHECK_HEADER([signal.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (signal.h)])])
-AC_CHECK_HEADER([dirent.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (dirent.h)])])
-AC_CHECK_HEADER([time.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (time.h)])])
-AC_CHECK_HEADER([utime.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (utime.h)])])
-AC_CHECK_HEADER([inttypes.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (inttypes.h)])])
-AC_CHECK_HEADER([sys/shm.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/shm.h)])])
-AC_CHECK_HEADER([sys/types.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/types.h)])])
-AC_CHECK_HEADER([sys/wait.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/wait.h)])])
-AC_CHECK_HEADER([sys/stat.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/stat.h)])])
+
 
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
@@ -111,14 +102,21 @@ AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_TYPE_SSIZE_T
 
-AC_CHECK_FUNCS([bzero memcpy memmove memset _exit exit strcmp strncmp \
-				regcomp strerror usleep sleep syscall \
-				printf vsprintf vprintf fflush daemon waitpid \
-				regcomp regexec snprintf strtoull strtoul strtoll utime \
-				strtol strtof  strlen calloc sysconf dup2 execv strstr \
-				signal sigaction sigemptyset sigfillset readdir opendir fopen system fprintf \
-				fclose shmget shmat shmctl dirname basename strchr strdup strrchr],,
-				AC_MSG_ERROR([missing procedure!]))
+GLUTIL_MSG_FH="missing procedure"
 
+AC_CHECK_FUNCS([bzero],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (bzero)])])
+AC_CHECK_FUNCS([dup2],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (dup2)])])
+AC_CHECK_FUNCS([memmove],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (memmove)])])
+AC_CHECK_FUNCS([memset],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (memset)])])
+AC_CHECK_FUNCS([regcomp],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (regcomp)])])
+AC_CHECK_FUNCS([strchr],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strchr)])])
+AC_CHECK_FUNCS([strdup],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strdup)])])
+AC_CHECK_FUNCS([strerror],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strerror)])])
+AC_CHECK_FUNCS([strrchr],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strrchr)])])
+AC_CHECK_FUNCS([strstr],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strstr)])])
+AC_CHECK_FUNCS([strtol],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtol)])])
+AC_CHECK_FUNCS([strtoul],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtoul)])])
+AC_CHECK_FUNCS([strtoull],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtoull)])])
+AC_CHECK_FUNCS([utime],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (utime)])])
 
 AC_CHECK_MEMBERS([struct stat.st_blksize])

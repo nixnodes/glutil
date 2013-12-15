@@ -636,9 +636,6 @@ ENABLE_PRECHECK_FALSE
 ENABLE_PRECHECK_TRUE
 ENABLE_CHROOT_OWNBIN_FALSE
 ENABLE_CHROOT_OWNBIN_TRUE
-MAINT
-MAINTAINER_MODE_FALSE
-MAINTAINER_MODE_TRUE
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -656,6 +653,9 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+MAINT
+MAINTAINER_MODE_FALSE
+MAINTAINER_MODE_TRUE
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
 AM_DEFAULT_V
@@ -725,8 +725,8 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
-enable_dependency_tracking
 enable_maintainer_mode
+enable_dependency_tracking
 enable_chroot
 enable_chroot_ownbin
 enable_precheck
@@ -1356,13 +1356,13 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
+  --enable-maintainer-mode
+                          enable make rules and dependencies not useful (and
+                          sometimes confusing) to the casual installer
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
-  --enable-maintainer-mode
-                          enable make rules and dependencies not useful (and
-                          sometimes confusing) to the casual installer
   --enable-chroot	  build glutil for chrooted environment default=no
   --enable-chroot-ownbin	  build glutil for chrooted environment as a separate binary default=no
   --enable-precheck	  build glutil-precheck default=no
@@ -3011,6 +3011,29 @@ END
   fi
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
+$as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
+    # Check whether --enable-maintainer-mode was given.
+if test "${enable_maintainer_mode+set}" = set; then :
+  enableval=$enable_maintainer_mode; USE_MAINTAINER_MODE=$enableval
+else
+  USE_MAINTAINER_MODE=no
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_MAINTAINER_MODE" >&5
+$as_echo "$USE_MAINTAINER_MODE" >&6; }
+   if test $USE_MAINTAINER_MODE = yes; then
+  MAINTAINER_MODE_TRUE=
+  MAINTAINER_MODE_FALSE='#'
+else
+  MAINTAINER_MODE_TRUE='#'
+  MAINTAINER_MODE_FALSE=
+fi
+
+  MAINT=$MAINTAINER_MODE_TRUE
+
+
+
 DEPDIR="${am__leading_dot}deps"
 
 ac_config_commands="$ac_config_commands depfiles"
@@ -4352,29 +4375,6 @@ ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
-$as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
-    # Check whether --enable-maintainer-mode was given.
-if test "${enable_maintainer_mode+set}" = set; then :
-  enableval=$enable_maintainer_mode; USE_MAINTAINER_MODE=$enableval
-else
-  USE_MAINTAINER_MODE=no
-fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_MAINTAINER_MODE" >&5
-$as_echo "$USE_MAINTAINER_MODE" >&6; }
-   if test $USE_MAINTAINER_MODE = yes; then
-  MAINTAINER_MODE_TRUE=
-  MAINTAINER_MODE_FALSE='#'
-else
-  MAINTAINER_MODE_TRUE='#'
-  MAINTAINER_MODE_FALSE=
-fi
-
-  MAINT=$MAINTAINER_MODE_TRUE
-
-
-
 
 $as_echo "#define _LARGE_FILES 1" >>confdefs.h
 
@@ -4421,11 +4421,13 @@ fi
   prefix=$ac_default_prefix
 fi
 else
-	cat >>confdefs.h <<_ACEOF
+
+cat >>confdefs.h <<_ACEOF
 #define CONF_PREFIX ""
 _ACEOF
 
-	$as_echo "#define _GLCONF_NOROOTPATH 1" >>confdefs.h
+
+$as_echo "#define _GLCONF_NOROOTPATH /**/" >>confdefs.h
 
 	if test "$glutil_chroot_ownbin" = "yes"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: compiling for chrooted environment (glutil-chroot).." >&5
@@ -4691,16 +4693,16 @@ else
   am__EXEEXT_FALSE=
 fi
 
+if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
+  as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then
   as_fn_error $? "conditional \"AMDEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
-  as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CHROOT_OWNBIN_TRUE}" && test -z "${ENABLE_CHROOT_OWNBIN_FALSE}"; then
@@ -6247,14 +6249,6 @@ fi
 done
 
 
-ac_fn_c_check_header_mongrel "$LINENO" "stdarg.h" "ac_cv_header_stdarg_h" "$ac_includes_default"
-if test "x$ac_cv_header_stdarg_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (stdarg.h)" "$LINENO" 5
-fi
-
-
 ac_fn_c_check_header_mongrel "$LINENO" "fcntl.h" "ac_cv_header_fcntl_h" "$ac_includes_default"
 if test "x$ac_cv_header_fcntl_h" = xyes; then :
 
@@ -6286,77 +6280,6 @@ else
   as_fn_error $? "$GLUTIL_MSG_REQH (errno.h)" "$LINENO" 5
 fi
 
-
-ac_fn_c_check_header_mongrel "$LINENO" "signal.h" "ac_cv_header_signal_h" "$ac_includes_default"
-if test "x$ac_cv_header_signal_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (signal.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "dirent.h" "ac_cv_header_dirent_h" "$ac_includes_default"
-if test "x$ac_cv_header_dirent_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (dirent.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "time.h" "ac_cv_header_time_h" "$ac_includes_default"
-if test "x$ac_cv_header_time_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (time.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "utime.h" "ac_cv_header_utime_h" "$ac_includes_default"
-if test "x$ac_cv_header_utime_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (utime.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "inttypes.h" "ac_cv_header_inttypes_h" "$ac_includes_default"
-if test "x$ac_cv_header_inttypes_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (inttypes.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "sys/shm.h" "ac_cv_header_sys_shm_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_shm_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (sys/shm.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "sys/types.h" "ac_cv_header_sys_types_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_types_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (sys/types.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "sys/wait.h" "ac_cv_header_sys_wait_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_wait_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (sys/wait.h)" "$LINENO" 5
-fi
-
-
-ac_fn_c_check_header_mongrel "$LINENO" "sys/stat.h" "ac_cv_header_sys_stat_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_stat_h" = xyes; then :
-
-else
-  as_fn_error $? "$GLUTIL_MSG_REQH (sys/stat.h)" "$LINENO" 5
-fi
 
 
 
@@ -7250,26 +7173,189 @@ _ACEOF
 fi
 
 
-for ac_func in bzero memcpy memmove memset _exit exit strcmp strncmp \
-				regcomp strerror usleep sleep syscall \
-				printf vsprintf vprintf fflush daemon waitpid \
-				regcomp regexec snprintf strtoull strtoul strtoll utime \
-				strtol strtof  strlen calloc sysconf dup2 execv strstr \
-				signal sigaction sigemptyset sigfillset readdir opendir fopen system fprintf \
-				fclose shmget shmat shmctl dirname basename strchr strdup strrchr
+GLUTIL_MSG_FH="missing procedure"
+
+for ac_func in bzero
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "bzero" "ac_cv_func_bzero"
+if test "x$ac_cv_func_bzero" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_BZERO 1
 _ACEOF
 
 else
-  as_fn_error $? "missing procedure!" "$LINENO" 5
+  as_fn_error $? "$GLUTIL_MSG_FH (bzero)" "$LINENO" 5
 fi
 done
 
+for ac_func in dup2
+do :
+  ac_fn_c_check_func "$LINENO" "dup2" "ac_cv_func_dup2"
+if test "x$ac_cv_func_dup2" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DUP2 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (dup2)" "$LINENO" 5
+fi
+done
+
+for ac_func in memmove
+do :
+  ac_fn_c_check_func "$LINENO" "memmove" "ac_cv_func_memmove"
+if test "x$ac_cv_func_memmove" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMMOVE 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (memmove)" "$LINENO" 5
+fi
+done
+
+for ac_func in memset
+do :
+  ac_fn_c_check_func "$LINENO" "memset" "ac_cv_func_memset"
+if test "x$ac_cv_func_memset" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMSET 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (memset)" "$LINENO" 5
+fi
+done
+
+for ac_func in regcomp
+do :
+  ac_fn_c_check_func "$LINENO" "regcomp" "ac_cv_func_regcomp"
+if test "x$ac_cv_func_regcomp" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_REGCOMP 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (regcomp)" "$LINENO" 5
+fi
+done
+
+for ac_func in strchr
+do :
+  ac_fn_c_check_func "$LINENO" "strchr" "ac_cv_func_strchr"
+if test "x$ac_cv_func_strchr" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRCHR 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strchr)" "$LINENO" 5
+fi
+done
+
+for ac_func in strdup
+do :
+  ac_fn_c_check_func "$LINENO" "strdup" "ac_cv_func_strdup"
+if test "x$ac_cv_func_strdup" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRDUP 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strdup)" "$LINENO" 5
+fi
+done
+
+for ac_func in strerror
+do :
+  ac_fn_c_check_func "$LINENO" "strerror" "ac_cv_func_strerror"
+if test "x$ac_cv_func_strerror" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRERROR 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strerror)" "$LINENO" 5
+fi
+done
+
+for ac_func in strrchr
+do :
+  ac_fn_c_check_func "$LINENO" "strrchr" "ac_cv_func_strrchr"
+if test "x$ac_cv_func_strrchr" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRRCHR 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strrchr)" "$LINENO" 5
+fi
+done
+
+for ac_func in strstr
+do :
+  ac_fn_c_check_func "$LINENO" "strstr" "ac_cv_func_strstr"
+if test "x$ac_cv_func_strstr" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRSTR 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strstr)" "$LINENO" 5
+fi
+done
+
+for ac_func in strtol
+do :
+  ac_fn_c_check_func "$LINENO" "strtol" "ac_cv_func_strtol"
+if test "x$ac_cv_func_strtol" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOL 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strtol)" "$LINENO" 5
+fi
+done
+
+for ac_func in strtoul
+do :
+  ac_fn_c_check_func "$LINENO" "strtoul" "ac_cv_func_strtoul"
+if test "x$ac_cv_func_strtoul" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOUL 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strtoul)" "$LINENO" 5
+fi
+done
+
+for ac_func in strtoull
+do :
+  ac_fn_c_check_func "$LINENO" "strtoull" "ac_cv_func_strtoull"
+if test "x$ac_cv_func_strtoull" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOULL 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (strtoull)" "$LINENO" 5
+fi
+done
+
+for ac_func in utime
+do :
+  ac_fn_c_check_func "$LINENO" "utime" "ac_cv_func_utime"
+if test "x$ac_cv_func_utime" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_UTIME 1
+_ACEOF
+
+else
+  as_fn_error $? "$GLUTIL_MSG_FH (utime)" "$LINENO" 5
+fi
+done
 
 
 ac_fn_c_check_member "$LINENO" "struct stat" "st_blksize" "ac_cv_member_struct_stat_st_blksize" "$ac_includes_default"
