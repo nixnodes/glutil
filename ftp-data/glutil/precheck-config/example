@@ -1,0 +1,123 @@
+#################################################################
+#
+# Sample rule-chain configuration. Chains are applied to 
+# individual folders defined by 'path' (see below).
+# Each path or 'section' must be defined in its own config
+# file. 'precheck_compile.sh' in 'scripts/' compiles these
+# logs into binary form in order to avoid parsing text from
+# configuration files on each fork.
+#
+#################################################################
+#
+# Defines the relative-to-siteroot path to
+# which this rule chain applies. The name of
+# this file doesn't matter, only this value
+# is taken into account when doing lookups.
+# Anything uploaded into 'path' is processed,
+# make sure 'r_skip_basedir' in 'gconf' is set
+# to filter unwanted directories.
+# Do not add trailing or leading  /
+#
+# For example, a to define rules for subfolders:
+# 	path='archive/xvid'
+#
+path=xvid
+#
+####################################################
+#
+# Rule chain starts here;
+#
+# There are three rule-match types available:
+#
+#	- REGEX matching
+#   - Integer field relational matching
+#   - External match (execute some process and use 
+#			its return code)
+#
+# Any rule-match type can match against/extract 
+# any field from imdb/tvrage logs.
+# There is no limit on how many rules can exist
+# in a chain.
+# Take a look inside MANUAL for what fields are
+# available for use with these logs.
+#
+# Format for logs:
+# 	REGEX:
+#
+# 	<logtype>_<allow/deny>_<field>=<expression>
+#
+# 	Logical:
+#
+# 	<logtype>_<allow/deny>_<field>_<relation>=<value>
+# 	See below what <relation> operators are available.
+#
+# 	Exec:
+#
+#   <logtype>_do_exec=<command>
+# 
+# 
+####################################################
+#
+# For example, REGEX match against the 'genre' 
+# field in imdb log (allow only) and define a 
+# message (msg=) to print in case this rule check
+# fails.
+# Messages can be formatted with data from the
+# respective log and with generic data (MANUAL).
+#
+msg=Only comedy/action allowed but '{title}' has genres '{genre}'
+imdb_allow_genre=Comedy|Action
+#
+####################################################
+#
+# Deny if actors field matched against db lookup
+# contains the string 'Steven Seagal'
+#
+msg=Shame on you for trying to upload {title}
+imdb_deny_actors='Steven Seagal'
+#
+# Logical matching example;
+# Deny releases under score 5.0:
+#
+####################################################
+#
+imdb_deny_score_islower=5.0
+#
+# .. this could also be written as:
+# 
+# imdb_allow_score_ishigherorequal=5.0
+#
+# Relational operators available are:
+#	isequal
+#	isnotequal
+#	islower	
+#	ishigher
+#	islowerorqeual
+#	ishigherorequal
+#
+# Check MANUAL, any field with I or F flag is
+# compatible with logical matching.
+#
+####################################################
+#
+# Deny anything older than year 2000
+#
+imdb_deny_year_islower=2000
+#
+# REGEX filter applied to the dir string passed
+# from glftpd
+#
+deny=BluRay|lala
+#
+# allow=..  (allow-only)
+#
+####################################################
+# 
+# Command is executed, if the return status is non-zero,
+# the chain terminates and returns the respective code.
+# msg= applies, but stdout of the called process is not
+# muted.
+#
+do_exec=/bin/scripts/some-other-precheck.sh
+#
+####################################################

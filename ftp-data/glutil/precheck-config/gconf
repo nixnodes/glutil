@@ -1,9 +1,75 @@
+#################################################################
+#
+# Global configuration settings for glutil-precheck.
+#
+# NOTE: After compilation, this file is loaded into shared 
+#       memory by default. Remove PCE_F_OPT_SHAREDMEM from
+#       G_HFLAGS macro in src/pce/pce_config.h to force
+#       glutil-precheck reading it from the segment.
+#
+#################################################################
+#
+## Delete the parts matching this regex from
+## the input directory.
+#
 r_path_clean 					([_\-\(\)\.\ \+](([1][98][0-9]{2,2}|[2][0][0-9]{2,2})|(S[0-9]{1,3}E[0-9]{1,3}|E(P|())[0-9]{1,3}|S[0-9]{1,3}).*)([_\-\(\)\.\ \+]|$).*)|([_\-\(\)\.\ \+](MACOSX|BLURAY|EUR|Creators[_\-\(\)\.\ \+]Edition|PATCH|DATAPACK|INTERNAL|FINNISH|GAMEFIX|READ[_\-\(\)\.\ \+]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DUTCH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[_\-\(\)\.\ \+]CUT|READNFO|DLC|INCL[_\-\(\)\.\ \+]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|GOTY|MULTI|Crack|DOX|FRENCH|VOBSUBS|SUBPACK|BOXSET|WS|FESTIVAL|(720|1080)(i|p)|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|REPACK|DC|XVID|UNCUT)([_\-\(\)\.\ \+\-]|$).*)|-([A-Z0-9a-z_\-]*$)
+#
+## Replace what matches this regex in the input
+## string with ".*".
+#
 r_path_postproc 				[_\-\(\)\.\+\ ]+
+#
+## Extract the year from directory string based on
+## this regex. If it's matched, database lookups
+## take the value into account.
+#
 r_year_extract 					[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())
+#
+## Do not process directories matching this regex.
+#
 r_skip_basedir					^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
+#
+## Read databases (imdb/tvrage logs) from the shared
+## memory segment (faster access, no file loading).
+## Note that you are responsible for reloading the
+## logs into shared memory whenever updated. While
+## glutil-precheck will try to do it on itsown if
+## it detects a file size change, it will lack
+## permissions to destroy and re-create the segment
+## when running in context of a glftpd user.
+## Note that if 'execute_on_lookup_fail' is on and
+## lookup fails, the log is always re-loaded from
+## file to avoid repeating a lookup failure due 
+## to insufficient priviledges when reloading the 
+## segment.
+#
+## Ensure that that kernel.shmmax and kernel.shmall
+## are set to a sufficient value to hold your logs +
+## some reserve for future growth (man sysctl).
+#
 use_shared_mem                  1
+#
+## If a release lookup fails, execute command set in
+## 'path_exec_on_lookup_fail' and re-try lookup.
+#
+## Set to 2 it forks into background. Forked process
+## checks only chain rules related to the respective
+## log while the parent process continues to check
+## all other rules except those that are being 
+## processed in the background. It is usefull for 
+## avoiding slowdowns on MKD when we wish to execute
+## a web lookup if log doesn't contain the info.
+## See also 'path_exec_on_match'.
+#
 execute_on_lookup_fail          1
 path_exec_on_lookup_fail        /bin/sh -c "{?rd:exe:-precheck$} -m tvrage-e -vvvv -arg1 '{pspec1}' --glroot / --tvlog {tvragefile}"
+#
+## This is used to do a perform a delayed action (nuke/etc..), 
+## after the first lookup found nothing but the second (after 
+## performing 'path_exec_on_lookup_fail' call) suceeded.
+## If 'execute_on_lookup_fail' is set to 2, only the forked
+## instance executes this command if rule processor hits
+## a match.
+#
 path_exec_on_match              /bin/echo "200 match, executing.."
 
