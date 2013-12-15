@@ -31,15 +31,15 @@ r_skip_basedir					^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
 #
 ## Read databases (imdb/tvrage logs) from the shared
 ## memory segment (faster access, no file loading).
-## Note that you are responsible for reloading the
-## logs into shared memory whenever updated. While
-## glutil-precheck will try to do it on itsown if
-## it detects a file size change, it will lack
+## Note that you are  responsible for reloading the
+## logs into shared  memory whenever updated. While
+## glutil-precheck  will try to do it on  itsown if
+## it  detects a  file size change, it will lack
 ## permissions to destroy and re-create the segment
 ## when running in context of a glftpd user.
 ## Note that if 'execute_on_lookup_fail' is on and
 ## lookup fails, the log is always re-loaded from
-## file to avoid repeating a lookup failure due 
+## file to avoid repeating a  lookup failure due 
 ## to insufficient priviledges when reloading the 
 ## segment.
 #
@@ -52,14 +52,14 @@ use_shared_mem                  1
 ## If a release lookup fails, execute command set in
 ## 'path_exec_on_lookup_fail' and re-try lookup.
 #
-## Set to 2 it forks into background. Forked process
-## checks only chain rules related to the respective
-## log while the parent process continues to check
-## all other rules except those that are being 
-## processed in the background. It is usefull for 
-## avoiding slowdowns on MKD when we wish to execute
-## a web lookup if log doesn't contain the info.
-## See also 'path_exec_on_match'.
+## Set to 2, it forks into background. Forked process
+## checks only chain  rules related to the respective
+## log while the parent continues to  check all other
+## rules except those that are being processed in the
+## background. 
+## This is usefull for avoiding slowdowns on MKD when  
+## we  wish to  execute a web lookup  if log doesn't  
+## contain the info. See also 'path_exec_on_match'.
 #
 execute_on_lookup_fail          1
 path_exec_on_lookup_fail        /bin/sh -c "{?rd:exe:-precheck$} -m tvrage-e -vvvv -arg1 '{pspec1}' --glroot / --tvlog {tvragefile}"

@@ -34,8 +34,8 @@ path=xvid
 #   - External match (execute some process and use 
 #			its return code)
 #
-# Any rule-match type can match against/extract 
-# any field from imdb/tvrage logs.
+# A rule of any match-type can lookup against/extract 
+# any data field from imdb/tvrage logs.
 # There is no limit on how many rules can exist
 # in a chain.
 # Take a look inside MANUAL for what fields are
