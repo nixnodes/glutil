@@ -583,7 +583,7 @@ PACKAGE_TARNAME='glutil'
 PACKAGE_VERSION='2.3.6d'
 PACKAGE_STRING='glutil 2.3.6d'
 PACKAGE_BUGREPORT='devel@nixnodes.net'
-PACKAGE_URL='"http://glutil.nixnodes.net/"'
+PACKAGE_URL='http://glutil.nixnodes.net/'
 
 ac_unique_file="src/main.c"
 ac_unique_file="src"
@@ -1381,7 +1381,7 @@ Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Report bugs to <devel@nixnodes.net>.
-glutil home page: <"http://glutil.nixnodes.net/">.
+glutil home page: <http://glutil.nixnodes.net/>.
 _ACEOF
 ac_status=$?
 fi
@@ -4374,8 +4374,6 @@ ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 
-
-
 $as_echo "#define _LARGE_FILES 1" >>confdefs.h
 
 
@@ -5162,7 +5160,7 @@ Configuration commands:
 $config_commands
 
 Report bugs to <devel@nixnodes.net>.
-glutil home page: <"http://glutil.nixnodes.net/">."
+glutil home page: <http://glutil.nixnodes.net/>."
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1

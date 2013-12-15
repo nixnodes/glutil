@@ -10,6 +10,7 @@
 
 char *hpd_up =
     "glFTPd binary logs utility, version %s-%s\n"
+        "%s\n"
         "\n"
         "Main options:\n"
         "\n Output:\n"

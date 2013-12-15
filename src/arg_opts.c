@@ -696,7 +696,7 @@ opt_oneliner_dump(void *arg, int m)
 int
 print_help(void *arg, int m)
 {
-  print_str(hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_BUGREPORT);
+  print_str(hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL, PACKAGE_BUGREPORT);
   if (m != -1)
     {
       updmode = UPD_MODE_NOOP;

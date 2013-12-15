@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.3.6d], [devel@nixnodes.net],,["http://glutil.nixnodes.net/"]) 
+AC_INIT([glutil], [2.3.6d], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
 AM_MAINTAINER_MODE([disable])
@@ -13,8 +13,6 @@ AC_CONFIG_FILES([Makefile src/Makefile])
 AC_CONFIG_SRCDIR([src])
 
 AC_PREFIX_DEFAULT(["/glftpd"])
-
-
 
 AC_DEFINE(_LARGE_FILES, [1], [Large files])
 AC_DEFINE(_LARGEFILE_SOURCE, [1], [Large files])
