@@ -316,7 +316,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
-              EXITVAL = 2;
+              EXITVAL = r;
               if (ptr->message[0])
                 {
                   pce_print_msg(ptr->message, p_log);
@@ -341,6 +341,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
     }
   else
     {
+      int r;
       switch(ptr->type)
         {
           case 1:;
@@ -358,7 +359,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               cflags |= REG_ICASE;
             }
 
-          int r;
+
           if (!(r=pce_do_regex_match(ptr->match, cl_dir, cflags, i_m)))
             {
               print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
@@ -385,7 +386,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
               print_str(
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
-              EXITVAL = 2;
+              EXITVAL = r;
               if (ptr->message[0])
                 {
                   pce_print_msg(ptr->message, &t_h);
