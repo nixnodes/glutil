@@ -85,26 +85,40 @@ libs automatically:
 		(not always required, do this if the scripts can't resolve DNS records)
 		
   There's a full list of dependencies inside each script.
-		
+
+If you plan on using the shared memory cache option, there are limits on how
+big a segment can be and how shared memory can be allocated in the kernel.
+Set the limits high enough to acommoda the log + some reserve:
+
+	sysctl -w kernel.shmall=<bytes>		- global shared mem max size
+	sysctl -w kernel.shmmax=<bytes>		- single segment max size
+	
+  Save the options in /etc/sysctl.conf so they persist on reboot.
+
 Time to test it out:
 
 At this point, you can pre-build a glutil binary that is aligned to the
 chrooted environment (see above), or use command line path options to
 test if lookups/log writes work.
+
 	chroot /glroot
 	
 Avoid testing as root, any user needs to have write access to logs.
+
 	/bin/glutil -m imdb-e -arg1 "Some Movie"
 	
   Dynamic paths:
+  
   	/bin/glutil -m imdb-e -arg1 "Some Movie" --imdblog /ftp-data/glutil/db/imdb --glroot /
   	
 Look for the new record:
+
 	/bin/glutil -q imdb --rev --maxres=5 
 	
 If it's there (and you were doing this as a regular user), all should be well.
 
 In glftpd.conf:
+
 	pre_dir_check  /bin/glutil-precheck
 	
 Other precheck scripts/tools can be included as parts of an existing chain.
