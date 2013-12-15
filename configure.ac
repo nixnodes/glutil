@@ -5,13 +5,11 @@ AC_INIT([glutil], [2.3.5d], [devel@nixnodes.net],,["http://glutil.nixnodes.net/"
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
 
-#LT_INIT
-
-
 AM_PROG_CC_C_O
 AC_PROG_CC_STDC
 
-AC_CONFIG_FILES(Makefile src/Makefile)
+AC_CONFIG_FILES([Makefile src/Makefile])
+ 
 AC_CONFIG_SRCDIR([src])
 
 AC_PREFIX_DEFAULT(["/glftpd"])
@@ -56,6 +54,7 @@ AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
 ]) \
 )
 
+
 AS_VAR_SET(datadir, ["$prefix/scripts"])
 
 AC_ARG_ENABLE(precheck,
@@ -86,16 +85,6 @@ AC_CHECK_HEADER([sys/shm.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/shm.h)])])
 AC_CHECK_HEADER([sys/types.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/types.h)])])
 AC_CHECK_HEADER([sys/wait.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/wait.h)])])
 AC_CHECK_HEADER([sys/stat.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (sys/stat.h)])])
-
-#AC_CHECK_HEADER([stdio.h],,[AC_MSG_ERROR([missing required header file!])])
-
-
-#AC_CHECK_HEADERS([stdio.h stdarg.h unistd.h errno.h dirent.h time.h \
-#				  	signal.h string.h regex.h libgen.h utime.h  limits.h setjmp.h \
-#				  	fcntl.h sys/stat.h sys/wait.h sys/types.h sys/shm.h inttypes.h \
-#				  	stdint.h "$PWD/src/glconf.h"],,[AC_MSG_ERROR([missing required header file!])])
-		 	
-
 
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
