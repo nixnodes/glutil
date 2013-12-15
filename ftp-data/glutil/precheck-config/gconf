@@ -37,6 +37,20 @@ r_skip_basedir					^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
 #
 #####################################################
 #
+## Exclude user(s) matching flags. Value is extracted
+## from $FLAGS env variable. This is a REGEX.
+#
+r_exclude_user_flags			[1A]
+#
+#####################################################
+#
+## Exclude user(s) matching this REGEX. Value is 
+## extracted from $USER environment variable.
+#
+r_exclude_user					 ^(user1|user2)$
+#
+#####################################################
+#
 ## Read databases (imdb/tvrage logs) from the shared
 ## memory segment (faster access, no file loading).
 ## Note that you are  responsible for reloading the
@@ -98,10 +112,10 @@ path_exec_on_match              /bin/nuker ..."
 ##	1 - Normal
 ##  2 - Loose
 ##
-## Recommended setting is 0. Each is log configured separately.
+## Each is log configured separately.
 #
-lookup_match_strictness_imdb      	0
-lookup_match_strictness_tvrage     	0
+lookup_match_strictness_imdb      	1
+lookup_match_strictness_tvrage     	1
 #
 ###############################################################
 #
