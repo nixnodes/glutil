@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:17
+#@REVISION:19
 #@MACRO:tvrage:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -81,7 +81,7 @@ DENY_TVID_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1)
-RECORD_MAX_AGE=14
+RECORD_MAX_AGE=114
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -130,7 +130,7 @@ fi
 [ -z "$QUERY" ] && exit 1
 
 cad() {
-	RTIME=`$1 --tvlog "$4$LAPPEND" -h $2 "$3" --imatchq -execv "echo {time}" --silent`
+	RTIME=`$1 --tvlog "$4$LAPPEND" -h $2 "$3" --imatchq -printf "{time}" --silent --nobuffer --rev`
 	CTIME=`date +"%s"`
 	[ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
 	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then

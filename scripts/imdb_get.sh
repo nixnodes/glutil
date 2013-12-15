@@ -136,7 +136,7 @@ get_omdbapi_data() {
 }
 
 cad() {
-        RTIME=`$1 --imdblog "$4$LAPPEND" -a $2 "$3" --imatchq -execv "echo {time}" --silent`
+        RTIME=`$1 --imdblog "$4$LAPPEND" -a $2 "$3" --imatchq -printf "{time}" --silent --nobuffer --rev`
         CTIME=`date +"%s"`
         [ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
         if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
