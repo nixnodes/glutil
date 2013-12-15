@@ -8,9 +8,10 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+
 /* gl root  */
 #ifndef glroot
-#define glroot "/glftpd"
+#define glroot CONF_PREFIX
 #endif
 
 /* site root, relative to gl root */
@@ -54,73 +55,73 @@
 
 /* dirlog file path */
 #ifndef dir_log
-#define dir_log "/glftpd/ftp-data/logs/dirlog"
+#define dir_log CONF_PREFIX "/ftp-data/logs/dirlog"
 #endif
 
 /* nukelog file path */
 #ifndef nuke_log
-#define nuke_log "/glftpd/ftp-data/logs/nukelog"
+#define nuke_log CONF_PREFIX "/ftp-data/logs/nukelog"
 #endif
 
 /* dupe file path */
 #ifndef dupe_file
-#define dupe_file "/glftpd/ftp-data/logs/dupefile"
+#define dupe_file CONF_PREFIX "/ftp-data/logs/dupefile"
 #endif
 
 /* last-on log file path */
 #ifndef last_on_log
-#define last_on_log "/glftpd/ftp-data/logs/laston.log"
+#define last_on_log CONF_PREFIX "/ftp-data/logs/laston.log"
 #endif
 
 /* oneliner file path */
 #ifndef oneliner_file
-#define oneliner_file "/glftpd/ftp-data/logs/oneliners.log"
+#define oneliner_file CONF_PREFIX "/ftp-data/logs/oneliners.log"
 #endif
 
 /* imdb log file path */
 #ifndef imdb_file
-#define imdb_file "/glftpd/ftp-data/logs/imdb.log"
+#define imdb_file CONF_PREFIX "/ftp-data/logs/imdb.log"
 #endif
 
 /* game log file path */
 #ifndef game_log
-#define game_log "/glftpd/ftp-data/logs/game.log"
+#define game_log CONF_PREFIX "/ftp-data/logs/game.log"
 #endif
 
 /* tv log file path */
 #ifndef tv_log
-#define tv_log "/glftpd/ftp-data/logs/tv.log"
+#define tv_log CONF_PREFIX "/ftp-data/logs/tv.log"
 #endif
 
 /* generic 1 log file path */
 #ifndef ge1_log
-#define ge1_log "/glftpd/ftp-data/logs/gen1.log"
+#define ge1_log CONF_PREFIX "/ftp-data/logs/gen1.log"
 #endif
 
 /* generic 2 log file path */
 #ifndef ge2_log
-#define ge2_log "/glftpd/ftp-data/logs/gen2.log"
+#define ge2_log CONF_PREFIX "/ftp-data/logs/gen2.log"
 #endif
 
 /* generic 3 log file path */
 #ifndef ge3_log
-#define ge3_log "/glftpd/ftp-data/logs/gen3.log"
+#define ge3_log CONF_PREFIX "/ftp-data/logs/gen3.log"
 #endif
 
 /* generic 4 log file path */
 #ifndef ge4_log
-#define ge4_log "/glftpd/ftp-data/logs/gen4.log"
+#define ge4_log CONF_PREFIX "/ftp-data/logs/gen4.log"
 #endif
 
 /* precheck global config */
 
 #ifndef gconf_log
-#define gconf_log "/glftpd/ftp-data/glutil/precheck-data/gconf"
+#define gconf_log CONF_PREFIX "/ftp-data/glutil/precheck-data/gconf"
 #endif
 
 /* see MANUAL */
 #ifndef du_fld
-#define du_fld "/glftpd/bin/glutil.folders"
+#define du_fld CONF_PREFIX "/bin/glutil.folders"
 #endif
 
 /* file extensions to skip generating crc32 (SFV mode)*/

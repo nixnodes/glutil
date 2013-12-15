@@ -27,7 +27,7 @@
 #define _MC_SCONF_ICASE       "icase"
 
 #define SCONF_MAX_MSG          512
-#define SCONF_MAX_REG_MATCH    32768
+#define SCONF_MAX_REG_MATCH    4096
 
 __d_format_block sconf_format_block, sconf_format_block_batch,
     sconf_format_block_exp;

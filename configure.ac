@@ -6,12 +6,12 @@ AC_PREREQ(2.63)
 AC_INIT(glutil, [2.3.4d], [devel@nixnodes.net])
 #LT_INIT
 
-AC_CANONICAL_SYSTEM
-AC_PROG_CC
-AC_PROG_CC_STDC
+#AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE([subdir-objects])
+
 AM_PROG_CC_C_O
+AC_PROG_CC_STDC
 
 AC_CONFIG_FILES(Makefile src/Makefile)
 AC_CONFIG_SRCDIR([src])
@@ -19,8 +19,9 @@ AC_CONFIG_SRCDIR([src])
 #AC_CONFIG_MACRO_DIR([m4])
 
 CFLAGS="-g -Wall"
-AC_SUBST(CFLAGS)
+AC_DEFINE_UNQUOTED([CONF_PREFIX], "$prefix" )
 
+AC_SUBST(CFLAGS)
 
 AC_OUTPUT
 
@@ -36,7 +37,7 @@ AC_CHECK_HEADERS([stdio.h stdarg.h unistd.h errno.h dirent.h time.h \
 				  	fcntl.h sys/stat.h sys/wait.h sys/types.h sys/shm.h inttypes.h \
 				  	stdint.h "$PWD/src/glconf.h"],,AC_MSG_ERROR([missing required header file!]))
 		 	
-
+#
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
