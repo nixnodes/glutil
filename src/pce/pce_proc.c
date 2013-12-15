@@ -161,7 +161,7 @@ pce_proc(char *path, char *dir)
       goto end;
     }
 
-  if ((pce_f & F_PCE_FORKED) && gconf->o_exec_on_lookup_fail == 2 && EXITVAL
+  if ((pce_f & F_PCE_FORKED) && gconf->o_exec_on_lookup_fail == 2 && EXITVAL == 2
       && gconf->e_match[0])
     {
       print_str("NOTICE: executing: '%s'\n", gconf->e_match);

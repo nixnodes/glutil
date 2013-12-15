@@ -32,7 +32,6 @@
 #include <x_f.h>
 #include <omfp.h>
 
-
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
@@ -101,7 +100,6 @@ main(int argc, char *argv[])
   return EXITVAL;
 }
 
-
 int
 g_init(int argc, char **argv)
 {
@@ -169,6 +167,7 @@ g_init(int argc, char **argv)
               SHM_IPC = (key_t) strtol(ptr->ptr, NULL, 16);
             }
 
+#ifndef _GLCONF_NOROOTPATH
           ptr = get_cfg_opt("rootpath", &glconf, NULL);
 
           if (ptr && !(ofl & F_OVRR_GLROOT))
@@ -179,7 +178,7 @@ g_init(int argc, char **argv)
                   print_str("NOTICE: GLCONF: using 'rootpath': %s\n", GLROOT);
                 }
             }
-
+#endif
           ptr = get_cfg_opt("min_homedir", &glconf, NULL);
 
           if (ptr && !(ofl & F_OVRR_SITEROOT))
@@ -222,11 +221,13 @@ g_init(int argc, char **argv)
         }
     }
 
+#ifndef _GLCONF_NOROOTPATH
   if (!strlen(GLROOT))
     {
       print_str("ERROR: glftpd root directory not specified!\n");
       return 2;
     }
+#endif
 
   if (!strlen(SITEROOT_N))
     {
@@ -244,7 +245,7 @@ g_init(int argc, char **argv)
 
   if ((gfl & F_OPT_VERBOSE) && dir_exists(SITEROOT))
     {
-      print_str("WARNING: no valid siteroot!\n");
+      print_str("WARNING: siteroot '%s' not found\n", SITEROOT);
     }
 
   if (!updmode && (gfl & F_OPT_SFV))
@@ -473,7 +474,6 @@ g_init(int argc, char **argv)
 
   return EXITVAL;
 }
-
 
 int
 g_shutdown(void *arg)

@@ -876,7 +876,7 @@ dirlog_write_record(struct dirlog *buffer, off_t offset, int whence)
       return 1;
     }
 
-  if (whence == SEEK_SET && fseeko(g_act_1.fh, offset * DL_SZ, SEEK_SET) < 0)
+  if (whence == SEEK_SET && fseek(g_act_1.fh, offset * DL_SZ, SEEK_SET) < 0)
     {
       print_str("ERROR: seeking dirlog failed!\n");
       return 1;
@@ -1371,7 +1371,7 @@ dirlog_check_dupe(void)
 
       if (!g_act_1.buffer.count)
         {
-          st2 = (off_t) ftello(g_act_1.fh);
+          st2 = (off_t) ftell(g_act_1.fh);
         }
       else
         {
@@ -1408,7 +1408,7 @@ dirlog_check_dupe(void)
       g_act_1.offset = st1;
       if (!g_act_1.buffer.count)
         {
-          fseeko(g_act_1.fh, (off_t) st2, SEEK_SET);
+          fseek(g_act_1.fh, (off_t) st2, SEEK_SET);
         }
       else
         {

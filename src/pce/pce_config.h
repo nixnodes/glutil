@@ -8,6 +8,8 @@
 #ifndef PCE_CONFIG_H_
 #define PCE_CONFIG_H_
 
+#define PCE_F_OPT_SHAREDMEM     (a64 << 44)
+
 #ifndef pce_logfile
 #define pce_logfile "/ftp-data/logs/glutil-precheck.log"
 #endif
@@ -70,7 +72,6 @@
 #define gconf_log "/ftp-data/glutil/precheck-data/gconf"
 #endif
 
-
-#define G_HFLAGS (a64 << 44)
+#define G_HFLAGS PCE_F_OPT_SHAREDMEM
 
 #endif /* PCE_CONFIG_H_ */

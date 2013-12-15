@@ -344,7 +344,7 @@ read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
     }
 
   if (offset)
-    fseeko(fp, (off_t) offset, SEEK_SET);
+    fseek(fp, (off_t) offset, SEEK_SET);
 
   for (read = 0; !feof(fp) && read < read_max;)
     {
