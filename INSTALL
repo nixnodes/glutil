@@ -1,25 +1,21 @@
 Basic installation:
 -----------------------------------------------
 Run configure, define glftpd root path:
-
 	make clean
 	./configure --prefix /glroot
 	Configure will try to copy glconf.h from '$prefix/bin/sources' automatically,
 	if it fails, find and copy the file to 'src/' folder manually.
 
 Adjust paths and IPC keys if required:
-
 	vi src/config.h
 
 At the time of compilation, default log and glroot paths are set based on --prefix
 path.
-
 	make
 	make install
 
 Ensure procfs is mounted in /proc, if not, add the entry to /etc/fstab and/or mount
 it manually:
-
 	mount -t procfs proc /proc
 
 	On some platforms -t procfs won't work, try: 
@@ -30,6 +26,7 @@ it manually:
 Setup glutil for use in a chrooted environment:
 ------------------------------------------------
 
+Clean previous build and compile:
 	make clean	
 	./configure --prefix /glroot --enable-chroot-ownbin		
 	make
@@ -40,16 +37,13 @@ aligned to '/'.
 
 Set up prerequisites:
   Create and chmod /tmp in /glroot, if not already:
-
 	mkdir /glroot/tmp
 	chmod 777 /glroot/tmp
 	
   Mount procfs:
-
 	mount -t procfs proc /glroot/proc
 	
   Set permissions to log files:
-
 	touch /glroot/ftp-data/logs/glutil.log			(if logging enabled)
 	chmod 666 /glroot/ftp-data/logs/glutil.log  	(if logging enabled)
 	chmod 666 /glroot/ftp-data/logs/glftpd.log		(if using any scripts that need to write here)
@@ -60,6 +54,7 @@ Set up prerequisites:
 Precheck installation:
 ------------------------------------------------
 
+Clean previous build and compile:
 	make clean
 	./configure --prefix /glroot --enable-precheck
 	make
@@ -73,7 +68,6 @@ for calling lookup scripts and delayed nukes when data is not available
 locally. (read gconf file)
 
 Ensure the log storage path and data is read/write for everyone:
-
 	chmod 777 /glroot/ftp-data/glutil/db
 	chmod 666 /glroot/ftp-data/glutil/db/tvrage
 	chmod 666 /glroot/ftp-data/glutil/db/imdb
@@ -86,7 +80,6 @@ environment.
 
 Run 'tvrage-installch' macro to try installing required
 libs automatically:
-
 	glutil -m tvrage-installch
 	Find and copy libnss_files.so.2 libnss_dns.so.2 to /usr or /usr64 dir
 		(not always required, do this if the scripts can't resolve DNS records)
@@ -98,25 +91,20 @@ Time to test it out:
 At this point, you can pre-build a glutil binary that is aligned to the
 chrooted environment (see above), or use command line path options to
 test if lookups/log writes work.
-
 	chroot /glroot
 	
 Avoid testing as root, any user needs to have write access to logs.
-
 	/bin/glutil -m imdb-e -arg1 "Some Movie"
 	
   Dynamic paths:
-  
   	/bin/glutil -m imdb-e -arg1 "Some Movie" --imdblog /ftp-data/glutil/db/imdb --glroot /
   	
 Look for the new record:
-
 	/bin/glutil -q imdb --rev --maxres=5 
 	
 If it's there (and you were doing this as a regular user), all should be well.
 
 In glftpd.conf:
-
 	pre_dir_check  /bin/glutil-precheck
 	
 Other precheck scripts/tools can be included as parts of an existing chain.
