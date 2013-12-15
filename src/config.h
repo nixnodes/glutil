@@ -83,17 +83,17 @@
 
 /* imdb log file path */
 #ifndef imdb_file
-#define imdb_file CONF_PREFIX "/ftp-data/logs/imdb.log"
+#define imdb_file CONF_PREFIX "/ftp-data/glutil/db/imdb"
 #endif
 
 /* game log file path */
 #ifndef game_log
-#define game_log CONF_PREFIX "/ftp-data/logs/game.log"
+#define game_log CONF_PREFIX "/ftp-data/glutil/db/game"
 #endif
 
 /* tv log file path */
 #ifndef tv_log
-#define tv_log CONF_PREFIX "/ftp-data/logs/tv.log"
+#define tv_log CONF_PREFIX "/ftp-data/glutil/db/tvrage"
 #endif
 
 /* generic 1 log file path */

@@ -22,7 +22,8 @@
 #define _MC_GCONF_R_SKIPBDIR            "r_skip_basedir"
 #define _MC_GCONF_R_SECTS               "paths"
 #define _MC_GCONF_O_SHM                 "use_shared_mem"
-#define _MC_GCONF_E_LF                  "path_exec_on_lookup_fail"
+#define _MC_GCONF_E_LF_IMDB             "path_exec_on_lookup_fail_imdb"
+#define _MC_GCONF_E_LF_TVRAGE           "path_exec_on_lookup_fail_tvrage"
 #define _MC_GCONF_E_OLF                 "execute_on_lookup_fail"
 #define _MC_GCONF_E_M                   "path_exec_on_match"
 #define _MC_GCONF_EX_U                  "r_exclude_user"
@@ -57,7 +58,8 @@ typedef struct ___d_gconf
   char r_skip_basedir[GCONF_MAX_REG_EXPR];
   char r_exclude_user[GCONF_MAX_REG_USR];
   char r_exclude_user_flags[GCONF_MAX_UFLAGS];
-  char e_lookup_fail[GCONF_MAX_EXEC];
+  char e_lookup_fail_imdb[GCONF_MAX_EXEC];
+  char e_lookup_fail_tvrage[GCONF_MAX_EXEC];
   char e_match[GCONF_MAX_EXEC];
 } _d_gconf, *__d_gconf;
 

@@ -14,15 +14,21 @@
 #define pce_logfile "/ftp-data/logs/glutil-precheck.log"
 #endif
 
+/* imdb log file path */
+#ifndef imdb_file
+#define imdb_file "/ftp-data/glutil/db/imdb"
+#endif
+
 /* game log file path */
 #ifndef game_log
-#define game_log "/ftp-data/logs/game.log"
+#define game_log "/ftp-data/glutil/db/game"
 #endif
 
 /* tv log file path */
 #ifndef tv_log
-#define tv_log "/ftp-data/logs/tv.log"
+#define tv_log "/ftp-data/glutil/db/tvrage"
 #endif
+
 
 #ifndef pce_data_path
 #define pce_data_path "/ftp-data/glutil/precheck-data"
@@ -50,22 +56,6 @@
 #ifndef ftp_data
 #define ftp_data "/ftp-data"
 #endif
-
-/* imdb log file path */
-#ifndef imdb_file
-#define imdb_file "/ftp-data/logs/imdb.log"
-#endif
-
-/* game log file path */
-#ifndef game_log
-#define game_log "/ftp-data/logs/game.log"
-#endif
-
-/* tv log file path */
-#ifndef tv_log
-#define tv_log "/ftp-data/logs/tv.log"
-#endif
-
 
 /* precheck global config */
 #ifndef gconf_log

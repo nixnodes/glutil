@@ -19,6 +19,7 @@ typedef struct __g_dgetr
   uint64_t pf;
   char *d_field;
   char *d_yf;
+  char *e_lookup_fail;
 } _g_dgetr, *__d_dgetr;
 
 int

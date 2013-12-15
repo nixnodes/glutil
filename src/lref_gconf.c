@@ -34,15 +34,14 @@ dt_set_gconf(__g_handle hdl)
   hdl->jm_offset = (size_t) &((__d_gconf) NULL)->r_clean;
 }
 
-
 int
 gconf_format_block(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
       data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem,
-      data->o_exec_on_lookup_fail, data->e_lookup_fail, data->e_match, data->r_skip_basedir,
+      data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user, data->r_exclude_user_flags);
 
 }
@@ -52,9 +51,9 @@ gconf_format_block_batch(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\n",
+  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
       data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem,
-      data->o_exec_on_lookup_fail, data->e_lookup_fail, data->e_match, data->r_skip_basedir,
+      data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user, data->r_exclude_user_flags);
 
 }
@@ -71,12 +70,13 @@ gconf_format_block_exp(void *iarg, char *output)
       "paths %s\n"
       "use_shared_mem %hhu\n"
       "execute_on_lookup_fail %hhu\n"
-      "path_exec_on_lookup_fail %s\n"
+      "path_exec_on_lookup_fail_imdb %s\n"
+      "path_exec_on_lookup_fail_tvrage %s\n"
       "path_exec_on_match %s\n"
       "r_exclude_user %s\n"
       "r_exclude_user_flags %s\n\n"
       , data->r_clean, data->r_postproc, data->r_yearm, data->r_skip_basedir, data->r_sects, data->o_use_shared_mem,
-      data->o_exec_on_lookup_fail, data->e_lookup_fail, data->e_match, data->r_exclude_user, data->r_exclude_user_flags);
+      data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_exclude_user, data->r_exclude_user_flags);
 
 }
 
@@ -143,10 +143,17 @@ dt_rval_gconf_r_sects(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
-dt_rval_gconf_e_lf(void *arg, char *match, char *output, size_t max_size,
+dt_rval_gconf_e_lf_imdb(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  return ((__d_gconf) arg)->e_lookup_fail;
+  return ((__d_gconf) arg)->e_lookup_fail_imdb;
+}
+
+char *
+dt_rval_gconf_e_lf_tvrage(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  return ((__d_gconf) arg)->e_lookup_fail_tvrage;
 }
 
 char *
@@ -207,9 +214,13 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_shm , (__d_drt_h) mppd, "%hhu");
     }
-  else if (!strncmp(match, _MC_GCONF_E_LF, 24))
+  else if (!strncmp(match, _MC_GCONF_E_LF_IMDB, 29))
     {
-      return as_ref_to_val_lk(match, dt_rval_gconf_e_lf , (__d_drt_h) mppd, "%s");
+      return as_ref_to_val_lk(match, dt_rval_gconf_e_lf_imdb , (__d_drt_h) mppd, "%s");
+    }
+  else if (!strncmp(match, _MC_GCONF_E_LF_TVRAGE, 31))
+    {
+      return as_ref_to_val_lk(match, dt_rval_gconf_e_lf_tvrage , (__d_drt_h) mppd, "%s");
     }
   else if (!strncmp(match, _MC_GCONF_E_OLF, 22))
     {
@@ -302,13 +313,23 @@ gcb_gconf(void *buffer, char *key, char *val)
       ptr->o_exec_on_lookup_fail = v_ui;
       return -1;
     }
-  else if (k_l == 24 && !strncmp(key, _MC_GCONF_E_LF, 24))
+  else if (k_l == 29 && !strncmp(key, _MC_GCONF_E_LF_IMDB, 29))
     {
       if (!(v_l = strlen(val)))
         {
           return -1;
         }
-      memcpy(ptr->e_lookup_fail, val,
+      memcpy(ptr->e_lookup_fail_imdb, val,
+          v_l >= GCONF_MAX_EXEC ? GCONF_MAX_EXEC - 1 : v_l);
+      return -1;
+    }
+  else if (k_l == 31 && !strncmp(key, _MC_GCONF_E_LF_TVRAGE, 31))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return -1;
+        }
+      memcpy(ptr->e_lookup_fail_tvrage, val,
           v_l >= GCONF_MAX_EXEC ? GCONF_MAX_EXEC - 1 : v_l);
       return -1;
     }
@@ -333,25 +354,25 @@ gcb_gconf(void *buffer, char *key, char *val)
       return -1;
     }
   else if (k_l == 14 && !strncmp(key, _MC_GCONF_EX_U, 14))
-     {
-       if (!(v_l = strlen(val)))
-         {
-           return -1;
-         }
-       memcpy(ptr->r_exclude_user, val,
-           v_l >= GCONF_MAX_REG_USR ? GCONF_MAX_REG_USR - 1 : v_l);
-       return -1;
-     }
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return -1;
+        }
+      memcpy(ptr->r_exclude_user, val,
+          v_l >= GCONF_MAX_REG_USR ? GCONF_MAX_REG_USR - 1 : v_l);
+      return -1;
+    }
   else if (k_l == 20 && !strncmp(key, _MC_GCONF_EX_UF, 20))
-     {
-       if (!(v_l = strlen(val)))
-         {
-           return -1;
-         }
-       memcpy(ptr->r_exclude_user_flags, val,
-           v_l >= GCONF_MAX_UFLAGS ? GCONF_MAX_UFLAGS - 1 : v_l);
-       return -1;
-     }
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return -1;
+        }
+      memcpy(ptr->r_exclude_user_flags, val,
+          v_l >= GCONF_MAX_UFLAGS ? GCONF_MAX_UFLAGS - 1 : v_l);
+      return -1;
+    }
 
   return 0;
 }

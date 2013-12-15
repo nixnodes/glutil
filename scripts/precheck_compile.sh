@@ -1,8 +1,8 @@
 #!/bin/bash
 
 CONFIG_PATH="/glftpd/ftp-data/glutil/precheck-config"
-DATA_PATH="/ftp-data/glutil/precheck-data"
-GLUTIL="/bin/glutil"
+DATA_PATH="/glftpd/ftp-data/glutil/precheck-data"
+GLUTIL="/glftpd/bin/glutil"
 
 #########################################################
 
@@ -164,8 +164,8 @@ echo >> /tmp/glutil.$$.pce
 ${GLUTIL} -z gconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/gconf" && 
 		echo "BUILD: 'GCONF': OK"
 
-${GLUTIL} -q gconf --shmem --shmdestroy --silent
-${GLUTIL} -q gconf --shmem --shmreload --silent
+${GLUTIL} -q gconf --shmem --shmdestroy --silent --gconf "${DATA_PATH}/gconf"
+${GLUTIL} -q gconf --shmem --shmreload --silent --gconf "${DATA_PATH}/gconf"
 
 rm -f /tmp/glutil.$$.pce
 

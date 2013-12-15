@@ -161,8 +161,8 @@ pce_proc(char *path, char *dir)
       goto end;
     }
 
-  if ((pce_f & F_PCE_FORKED) && gconf->o_exec_on_lookup_fail == 2 && EXITVAL == 2
-      && gconf->e_match[0])
+  if ((pce_f & F_PCE_FORKED) && gconf->o_exec_on_lookup_fail == 2
+      && EXITVAL == 2 && gconf->e_match[0])
     {
       print_str("NOTICE: executing: '%s'\n", gconf->e_match);
       _g_handle t_h =
@@ -684,7 +684,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           cl_g_sub, s_year ? s_year : "no year", p_log->file, r,
           (ulint64_t) nres);
 
-      if (gconf->o_exec_on_lookup_fail && did_retry == 1)
+      if (gconf->o_exec_on_lookup_fail && dgetr->e_lookup_fail[0]
+          && did_retry == 1)
         {
           if (gconf->o_exec_on_lookup_fail == 2)
             {
@@ -706,7 +707,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           t_h.g_proc1_lookup = ref_to_val_lk_generic;
           t_h.buffer.pos = p_log->buffer.objects;
 
-          if ((r = pce_process_execv(&t_h, gconf->e_lookup_fail, pce_prep_for_exec_r)))
+          if ((r = pce_process_execv(&t_h, dgetr->e_lookup_fail,
+              pce_prep_for_exec_r)))
             {
               print_str("ERROR: retry lookup failed, bad exit code [%d]\n", r);
             }
@@ -714,7 +716,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
             {
               g_close(&t_h);
               print_str("NOTICE: external call suceeded, retry lookup.. (%s)\n",
-                  gconf->e_lookup_fail);
+                  dgetr->e_lookup_fail);
               g_cleanup(p_log);
               p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
                   | S_IWGRP;
@@ -846,12 +848,14 @@ pce_dgetlf(__d_dgetr dgetr, int logc)
     dgetr->pf |= F_GH_ISIMDB;
     dgetr->d_field = "title";
     dgetr->d_yf = "year";
+    dgetr->e_lookup_fail = gconf->e_lookup_fail_imdb;
     return IMDBLOG;
     break;
   case 2:
     dgetr->pf |= F_GH_ISTVRAGE;
     dgetr->d_field = "name";
     dgetr->d_yf = "startyear";
+    dgetr->e_lookup_fail = gconf->e_lookup_fail_tvrage;
     return TVLOG;
     break;
     }
