@@ -498,7 +498,7 @@ pce_process_execv(__g_handle hdl, char *exec_str, __d_avoid_i ppfe)
       return 0;
     }
 
-  return WEXITSTATUS(pce_l_execv(exec_args.exec_v_path, exec_args.argv_c, pce_prep_for_exec));
+  return WEXITSTATUS(pce_l_execv(exec_args.exec_v_path, exec_args.argv_c, ppfe));
 }
 
 int

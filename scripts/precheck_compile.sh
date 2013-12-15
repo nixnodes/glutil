@@ -77,6 +77,11 @@ get_opts ${2}
 return 1
 }
 
+lala()
+{
+ 	echo "${@}"
+}
+
 tokenize_s_left() {
 	tsl_t="${@}"
 	echo "${tsl_t}" | grep -q '=' || return 1
@@ -84,6 +89,7 @@ tokenize_s_left() {
 	IFS="_"
 	set -- `echo "${tsl_t}" | cut -f 1 -d"="`
 	g_match=`echo "${tsl_t}" | cut -f 2- -d"="`	
+
 	g_icase=0;g_mode=0; g_type=0; g_inv=0; g_lom=0; unset g_field	
 	if echo ${1} | egrep -q '^(allow|deny|do)$'; then		
 		get_inv ${1}; g_inv=$?
