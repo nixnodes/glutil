@@ -8,6 +8,9 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#ifndef CONF_PREFIX
+#define CONF_PREFIX "/glftpd"
+#endif
 
 /* gl root  */
 #ifndef glroot
