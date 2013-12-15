@@ -1,21 +1,25 @@
 Basic installation:
 -----------------------------------------------
 Run configure, define glftpd root path:
+
 	make clean
 	./configure --prefix /glroot
 	Configure will try to copy glconf.h from '$prefix/bin/sources' automatically,
 	if it fails, find and copy the file to 'src/' folder manually.
 
 Adjust paths and IPC keys if required:
+
 	vi src/config.h
 
 At the time of compilation, default log and glroot paths are set based on --prefix
 path.
+
 	make
 	make install
 
 Ensure procfs is mounted in /proc, if not, add the entry to /etc/fstab and/or mount
 it manually:
+
 	mount -t procfs proc /proc
 
 	On some platforms -t procfs won't work, try: 
@@ -27,6 +31,7 @@ Setup glutil for use in a chrooted environment:
 ------------------------------------------------
 
 Clean previous build and compile:
+
 	make clean	
 	./configure --prefix /glroot --enable-chroot-ownbin		
 	make
@@ -36,6 +41,7 @@ Clean previous build and compile:
 aligned to '/'.
 
 Set up prerequisites:
+
   Create and chmod /tmp in /glroot, if not already:
 	mkdir /glroot/tmp
 	chmod 777 /glroot/tmp
