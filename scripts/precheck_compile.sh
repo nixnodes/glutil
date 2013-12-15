@@ -4,7 +4,7 @@ CONFIG_PATH="/glftpd/ftp-data/glutil/precheck-config"
 DATA_PATH="/ftp-data/glutil/precheck-data"
 GLUTIL="/bin/glutil"
 
-####
+#########################################################
 
 
 get_opts() {
@@ -79,10 +79,11 @@ return 1
 
 tokenize_s_left() {
 	tsl_t="${@}"
+	echo "${tsl_t}" | grep -q '=' || return 1
 	#g_field=`echo ${1} | egrep -o '\(.+\)'`
 	IFS="_"
 	set -- `echo "${tsl_t}" | cut -f 1 -d"="`
-	g_match=`echo "${tsl_t}" | cut -f 2- -d"="`
+	g_match=`echo "${tsl_t}" | cut -f 2- -d"="`	
 	g_icase=0;g_mode=0; g_type=0; g_inv=0; g_lom=0; unset g_field	
 	if echo ${1} | egrep -q '^(allow|deny|do)$'; then		
 		get_inv ${1}; g_inv=$?
@@ -97,11 +98,14 @@ tokenize_s_left() {
 		get_inv "${2}"; g_inv=$?
 		! [ ${g_type} -eq 3 ] && g_field="${3}"
 	fi
+	[ ${g_type} -eq 0 ] && [ ${g_mode} -eq 0 ] && return 1
+	return 0
 }
 
 proc_s_entry() {
 	while read ir_l; do
 		[ -z "${ir_l}" ] && continue		
+		echo "${ir_l}" | egrep -q '^#' && continue
 		
 		if echo "${ir_l}" | egrep -q 'msg([ ]+=|=)'; then
 			g_msg=`echo "${ir_l}" | cut -f 2- -d"="`
@@ -114,8 +118,8 @@ proc_s_entry() {
 				t_path="${t_path}|${c_path}"
 			fi
 		else
-			tokenize_s_left "${ir_l}"
-			echo -e "match ${g_match}\nfield ${g_field}\ntype ${g_type}\nint ${g_mode}\ninvert ${g_inv}\nlcomp ${g_lom}\nicase ${g_icase}\nmsg ${g_msg}\n"
+			tokenize_s_left "${ir_l}" &&
+				echo -e "match ${g_match}\nfield ${g_field}\ntype ${g_type}\nint ${g_mode}\ninvert ${g_inv}\nlcomp ${g_lom}\nicase ${g_icase}\nmsg ${g_msg}\n"
 			
 			unset g_msg
 		fi
@@ -141,6 +145,7 @@ for ir_f in ${CONFIG_PATH}/*; do
 	#cat /tmp/glutil.$$.pce
 	${GLUTIL} -z sconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/${c_path}" && 
 		echo "BUILD: '${c_path}': OK"
+		
 	rm -f /tmp/glutil.$$.pce
 done
 
