@@ -76,7 +76,7 @@ imdb_allow_genre=Comedy|Action
 msg=Shame on you for trying to upload {title}
 imdb_deny_actors='Steven Seagal'
 #
-# Logical matching example;
+# Relational comparison matching example;
 # Deny releases under score 5.0:
 #
 ####################################################
