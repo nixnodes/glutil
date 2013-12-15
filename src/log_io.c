@@ -812,13 +812,13 @@ determine_temp_path(char *file, char *output, size_t max_out)
       return 1;
     }
 
-  snprintf(output, max_out, "/tmp/glutil_%s.%d.dtm", f_n, getpid());
+  snprintf(output, max_out, "%s.%d.dtm", file, getpid());
 
   FILE *fh;
 
   if (!(fh = fopen(output, "w")))
     {
-      snprintf(output, max_out, "%s.%d.dtm", file, getpid());
+      snprintf(output, max_out, "/tmp/glutil_%s.%d.dtm", f_n, getpid());
     }
   else
     {
