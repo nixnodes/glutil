@@ -4278,10 +4278,18 @@ ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
 CFLAGS="-g -Wall"
-cat >>confdefs.h <<_ACEOF
+
+if test "$prefix" = "NONE"; then :
+  cat >>confdefs.h <<_ACEOF
+#define CONF_PREFIX "$ac_default_prefix"
+_ACEOF
+
+else
+  cat >>confdefs.h <<_ACEOF
 #define CONF_PREFIX "$prefix"
 _ACEOF
 
+fi
 
 
 

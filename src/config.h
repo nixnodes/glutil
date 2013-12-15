@@ -8,6 +8,15 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <string.h>
+/*
+#define CP_M strcmp(CONF_PREFIX, "NONE")
+
+#if $CP_M == 1
+#undef CONF_PREFIX
+#define CONF_PREFIX "/glftpd"
+#endif
+*/
 
 /* gl root  */
 #ifndef glroot

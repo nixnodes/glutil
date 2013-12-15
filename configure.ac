@@ -20,7 +20,8 @@ AC_CONFIG_SRCDIR([src])
 AC_PREFIX_DEFAULT(["/glftpd"])
 
 CFLAGS="-g -Wall"
-AC_DEFINE_UNQUOTED([CONF_PREFIX], "$prefix" )
+
+AS_IF([test "$prefix" = "NONE"], [AC_DEFINE_UNQUOTED([CONF_PREFIX], "$ac_default_prefix")], [AC_DEFINE_UNQUOTED([CONF_PREFIX], "$prefix" )])
 
 AC_SUBST(CFLAGS)
 
