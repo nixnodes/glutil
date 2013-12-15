@@ -18,7 +18,7 @@
 # to filter unwanted directories.
 # Do not add trailing or leading  /
 #
-# For example, a to define rules for subfolders:
+# For example, to define rules for subfolders:
 # 	path='archive/xvid'
 #
 path=xvid
