@@ -5,7 +5,6 @@
  *      Author: reboot
  */
 
-
 #include <glutil.h>
 #include <t_glob.h>
 #include <l_sb.h>
@@ -54,7 +53,6 @@ g_l_fmode(char *path, size_t max_size, char *output)
   snprintf(output, max_size, "%d", IFTODT(st.st_mode));
   return 0;
 }
-
 
 int
 ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
@@ -303,8 +301,6 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
 
   return 0;
 }
-
-
 
 void *
 ref_to_val_ptr_x(void *arg, char *match, int *output)
@@ -709,7 +705,6 @@ dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size,
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->crc32);
   return output;
 }
-
 
 void*
 ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
@@ -1201,19 +1196,6 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
 
   switch (type)
     {
-      case DT_REG:;
-      if (aa_rh->flags & F_PD_MATCHREG)
-        {
-          if (g_xproc_m(type, name, aa_rh, eds))
-            {
-              break;
-            }
-          if (aa_rh->xproc_out)
-            {
-              aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
-            }
-        }
-      break;
       case DT_DIR:;
 
       if (aa_rh->xproc_rcl0)
@@ -1284,6 +1266,19 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
 
         }
       break;
+      default:;
+      if (aa_rh->flags & F_PD_MATCHREG)
+        {
+          if (g_xproc_m(type, name, aa_rh, eds))
+            {
+              break;
+            }
+          if (aa_rh->xproc_out)
+            {
+              aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
+            }
+        }
+      break;
     }
 
   return 0;
@@ -1304,14 +1299,12 @@ d_xref_ct_fe(__d_xref_ct input, size_t sz)
   return -1;
 }
 
-
 int
 enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
 {
   struct dirent *dirp, _dirp =
     { 0 };
   int r = 0, ir;
-
 
   DIR *dp = opendir(dir);
 
@@ -1321,7 +1314,6 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
     }
 
   char buf[PATH_MAX];
-
 
   if (eds)
     {
@@ -1333,7 +1325,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
       if (!(eds->flags & F_EDS_ROOTMINSET))
         {
           eds->r_minor = minor(eds->st.st_dev);
-         eds->flags |= F_EDS_ROOTMINSET;
+          eds->flags |= F_EDS_ROOTMINSET;
         }
 
       if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
@@ -1366,10 +1358,10 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
         {
           continue;
         }
-	
+
       snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
-      
-	remove_repeating_chars(buf, 0x2F);
+
+      remove_repeating_chars(buf, 0x2F);
 
       if (dirp->d_type == DT_UNKNOWN)
         {
