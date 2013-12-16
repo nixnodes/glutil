@@ -126,6 +126,10 @@ opt_g_loop(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
   loop_interval = (int) strtol(buffer, NULL, 10);
+  if (loop_interval)
+    {
+      g_sleep = (uint32_t) loop_interval;
+    }
   gfl |= F_OPT_LOOP;
   return 0;
 }
@@ -565,7 +569,6 @@ g_opt_mode_noop(void *arg, int m)
   return 0;
 }
 
-
 int
 opt_dirlog_check(void *arg, int m)
 {
@@ -696,7 +699,8 @@ opt_oneliner_dump(void *arg, int m)
 int
 print_help(void *arg, int m)
 {
-  print_str(hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL, PACKAGE_BUGREPORT);
+  print_str(hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL,
+      PACKAGE_BUGREPORT);
   if (m != -1)
     {
       updmode = UPD_MODE_NOOP;

@@ -331,15 +331,6 @@ g_init(int argc, char **argv)
         }
     }
 
-  if (g_usleep)
-    {
-      usleep(g_usleep);
-    }
-  else if (g_sleep)
-    {
-      sleep(g_sleep);
-    }
-
   uint64_t mloop_c = 0;
   char m_b1[128];
   int m_f = 0x1;
@@ -347,6 +338,16 @@ g_init(int argc, char **argv)
   g_setjmp(0, "main(start)", NULL, NULL);
 
   enter:
+
+  if (g_sleep)
+    {
+      sleep(g_sleep);
+    }
+
+  if (g_usleep)
+    {
+      usleep(g_usleep);
+    }
 
   if ((m_f & 0x1))
     {
@@ -448,7 +449,7 @@ g_init(int argc, char **argv)
       g_cleanup(&g_act_1);
       g_cleanup(&g_act_2);
       free_cfg_rf(&cfg_rf);
-      sleep(loop_interval);
+      //sleep(loop_interval);
       if (gfl & F_OPT_LOOPEXEC)
         {
           g_do_exec(NULL, ref_to_val_generic, LOOPEXEC, NULL);
