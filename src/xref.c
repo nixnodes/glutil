@@ -19,6 +19,7 @@
 #include <lref.h>
 #include <log_op.h>
 #include <m_general.h>
+#include <log_io.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -1077,6 +1078,8 @@ g_dump_gen(char *root)
   enum_dir(ret.root, g_process_directory, &ret, 0, &eds);
 
   end:
+
+  g_cleanup(&ret.hdl);
 
   if (!(gfl & F_OPT_FORMAT_BATCH))
     {
