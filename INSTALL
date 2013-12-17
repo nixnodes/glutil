@@ -100,16 +100,21 @@ Set the limits high enough to accommodate the log + some reserve:
 	sysctl -w kernel.shmmax=<bytes>		- single segment max size
 	
   Save options in /etc/sysctl.conf so they persist on reboot.
+  
+glftpd.conf:
+
+	pre_dir_check  /bin/glutil-precheck
+	
 
 Time to test it out:
 
-At this point, you can pre-build a glutil binary that is aligned to the
-chrooted environment (see above), or use command line path options to
-test if lookups/log writes work.
+  At this point, you can pre-build a glutil binary that is aligned to the
+  chrooted environment (see above), or use command line path options to
+  test if lookups/log writes work.
 
 	chroot /glroot
 	
-Avoid testing as root, any user needs to have write access to logs.
+  Avoid testing as root, any user needs to have write access to logs.
 
 	/bin/glutil -m imdb-e -arg1 "Some Movie"
 	
@@ -117,15 +122,12 @@ Avoid testing as root, any user needs to have write access to logs.
   
   	/bin/glutil -m imdb-e -arg1 "Some Movie" --imdblog /ftp-data/glutil/db/imdb --glroot /
   	
-Look for the new record:
+  Look for the new record:
 
 	/bin/glutil -q imdb --rev --maxres=5 
 	
-If it's there (and you were doing this as a regular user), all should be well.
+  If it's there (and you were doing this as a regular user), all should be well.
 
-In glftpd.conf:
-
-	pre_dir_check  /bin/glutil-precheck
 	
 Other precheck scripts/tools can be included as parts of an existing chain.
 Look in examples (/ftp-data/glutil/precheck-confg/) to see how.

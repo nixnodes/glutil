@@ -81,7 +81,7 @@ DENY_TVID_DUPE=1
 #
 ## Overwrite existing matched record, when it's atleast 
 ##  this old (days) (when DENY_TVID_DUPE=1)
-RECORD_MAX_AGE=114
+RECORD_MAX_AGE=14
 #
 ## Work with unique database for each type
 TYPE_SPECIFIC_DB=0
@@ -101,6 +101,7 @@ VERBOSE=1
 TITLE_WIPE_CHARS="\'\´\:\""
 #
 ############################[ END OPTIONS ]##############################
+############################[ BEGIN PATHS ]##############################
 
 CURL="/usr/bin/curl"
 CURL_FLAGS="--silent --max-time 30"
@@ -110,6 +111,8 @@ XMLLINT="/usr/bin/xmllint"
 
 # recode binary (optional), gets rid of HTML entities
 RECODE="recode"
+
+############################[ BEGIN PATHS ]##############################
 
 BASEDIR=`dirname $0`
 

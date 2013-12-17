@@ -832,6 +832,7 @@ determine_temp_path(char *file, char *output, size_t max_out)
   else
     {
       fclose(fh);
+      remove(output);
     }
 
   return 0;
