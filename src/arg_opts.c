@@ -125,10 +125,10 @@ int
 opt_g_loop(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  loop_interval = (int) strtol(buffer, NULL, 10);
-  if (loop_interval)
+  uint32_t li = (uint32_t) strtol(buffer, NULL, 10);
+  if (li)
     {
-      g_sleep = (uint32_t) loop_interval;
+      g_sleep = (uint32_t) li;
     }
   gfl |= F_OPT_LOOP;
   return 0;
@@ -183,17 +183,6 @@ int
 opt_g_udc_f(void *arg, int m)
 {
   flags_udcfg |= F_PD_MATCHREG;
-  return 0;
-}
-
-int
-opt_g_loopexec(void *arg, int m)
-{
-  LOOPEXEC = g_pd(arg, m, MAX_EXEC_STR);
-  if (LOOPEXEC)
-    {
-      gfl |= F_OPT_LOOPEXEC;
-    }
   return 0;
 }
 
@@ -700,7 +689,7 @@ int
 print_help(void *arg, int m)
 {
   print_str(hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL,
-      PACKAGE_BUGREPORT);
+  PACKAGE_BUGREPORT);
   if (m != -1)
     {
       updmode = UPD_MODE_NOOP;
@@ -1194,19 +1183,19 @@ void *f_ref[] =
       opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
       opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
       opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "silent",
-      opt_silent, (void*) 0, "--silent", opt_silent, (void*) 0, "--loopexec",
-      opt_g_loopexec, (void*) 1, "--loop", opt_g_loop, (void*) 1, "--daemon",
-      opt_g_daemonize, (void*) 0, "-w", opt_online_dump, (void*) 0, "--ipc",
-      opt_shmipc, (void*) 1, "-l", opt_lastonlog_dump, (void*) 0, "--ge1log",
-      opt_GE1LOG, (void*) 1, "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log",
-      opt_GE3LOG, (void*) 1, "--gamelog", opt_gamelog, (void*) 1, "--tvlog",
-      opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1, "--oneliners",
-      opt_oneliner, (void*) 1, "-o", opt_oneliner_dump, (void*) 0,
-      "--lastonlog", opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump,
-      (void*) 0, "--dupefile", opt_dupefile, (void*) 1, "--sconf", opt_sconf,
-      (void*) 1, "--gconf", opt_gconf, (void*) 1, "--nowbuffer",
-      opt_g_buffering, (void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary",
-      opt_binary, (void*) 0, "iregexi", opt_g_iregexi, (void*) 1, "--iregexi",
+      opt_silent, (void*) 0, "--silent", opt_silent, (void*) 0, "--loop",
+      opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
+      opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
+      opt_lastonlog_dump, (void*) 0, "--ge1log", opt_GE1LOG, (void*) 1,
+      "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log", opt_GE3LOG, (void*) 1,
+      "--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
+      "--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
+      (void*) 1, "-o", opt_oneliner_dump, (void*) 0, "--lastonlog",
+      opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
+      "--dupefile", opt_dupefile, (void*) 1, "--sconf", opt_sconf, (void*) 1,
+      "--gconf", opt_gconf, (void*) 1, "--nowbuffer", opt_g_buffering,
+      (void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary", opt_binary,
+      (void*) 0, "iregexi", opt_g_iregexi, (void*) 1, "--iregexi",
       opt_g_iregexi, (void*) 1, "iregex", opt_g_iregex, (void*) 1, "--iregex",
       opt_g_iregex, (void*) 1, "regexi", opt_g_regexi, (void*) 1, "--regexi",
       opt_g_regexi, (void*) 1, "regex", opt_g_regex, (void*) 1, "--regex",

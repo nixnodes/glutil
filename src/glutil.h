@@ -59,7 +59,6 @@ mda glconf;
 
 int EXITVAL;
 
-int loop_interval;
 uint64_t loop_max;
 
 int shmatf;

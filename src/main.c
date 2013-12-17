@@ -443,21 +443,6 @@ g_init(int argc, char **argv)
     break;
     }
 
-  if ((gfl & F_OPT_LOOP) && !(gfl & F_OPT_KILL_GLOBAL)
-      && (!loop_max || mloop_c < loop_max - 1))
-    {
-      g_cleanup(&g_act_1);
-      g_cleanup(&g_act_2);
-      free_cfg_rf(&cfg_rf);
-      //sleep(loop_interval);
-      if (gfl & F_OPT_LOOPEXEC)
-        {
-          g_do_exec(NULL, ref_to_val_generic, LOOPEXEC, NULL);
-        }
-      mloop_c++;
-      goto enter;
-    }
-
   if (updmode && (gfl & F_OPT_POSTEXEC))
     {
       if (gfl & F_OPT_VERBOSE)
@@ -471,6 +456,21 @@ g_init(int argc, char **argv)
               print_str("WARNING: POSTEXEC failed: '%s'\n", GLOBAL_POSTEXEC);
             }
         }
+    }
+
+  if ((gfl & F_OPT_LOOP) && !(gfl & F_OPT_KILL_GLOBAL)
+      && (!loop_max || mloop_c < loop_max - 1))
+    {
+      g_cleanup(&g_act_1);
+      g_cleanup(&g_act_2);
+      free_cfg_rf(&cfg_rf);
+
+      /*if (gfl & F_OPT_LOOPEXEC)
+        {
+          g_do_exec(NULL, ref_to_val_generic, LOOPEXEC, NULL);
+        }*/
+      mloop_c++;
+      goto enter;
     }
 
   return EXITVAL;
