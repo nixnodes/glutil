@@ -21,6 +21,7 @@
 #include <misc.h>
 #include <fp_types.h>
 #include <str.h>
+#include <exech.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -265,7 +266,7 @@ g_cleanup(__g_handle hdl)
         {
           ach = (__d_argv_ch) ptr->ptr;
           free(hdl->exec_args.argv_c[ach->cindex]);
-          md_g_free(&ach->mech);
+          md_g_free_cb(&ach->mech, g_claf_mech);
           ptr = ptr->next;
         }
 
@@ -277,7 +278,7 @@ g_cleanup(__g_handle hdl)
       r += md_g_free(&hdl->exec_args.ac_ref);
     }
 
-  md_g_free(&hdl->exec_args.mech);
+  md_g_free_cb(&hdl->exec_args.mech, g_claf_mech);
 
   if (!(hdl->flags & F_GH_ISSHM) && hdl->data)
     {
@@ -289,6 +290,14 @@ g_cleanup(__g_handle hdl)
     }
   bzero(hdl, sizeof(_g_handle));
   return r;
+}
+
+int
+g_claf_mech(void *ptr)
+{
+  __d_exec_ch ach = (__d_exec_ch) ptr;
+  regfree(&ach->dtr.preg);
+  return 0;
 }
 
 int

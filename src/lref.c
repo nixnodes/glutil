@@ -428,8 +428,6 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
   return c;
 }
 
-
-
 void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
@@ -783,6 +781,8 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
 
         int rr = regcomp(&mppd->preg, r_b, REG_EXTENDED | mppd->regex_flags);
 
+        mppd->flags |= _D_DRT_HASREGEX;
+
         free(r_b);
 
         if (rr)
@@ -795,7 +795,6 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     }
   return NULL;
 }
-
 
 int
 rtv_q(void *query, char *output, size_t max_size)

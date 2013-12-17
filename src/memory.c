@@ -51,6 +51,35 @@ md_g_free(pmda md)
   return 0;
 }
 
+int
+md_g_free_cb(pmda md, int
+(*cb)(void *))
+{
+  if (!md || !md->objects)
+    return 1;
+
+  if (!(md->flags & F_MDA_REFPTR))
+    {
+      p_md_obj ptr = md_first(md), ptr_s;
+      while (ptr)
+        {
+          cb(ptr->ptr);
+          ptr_s = ptr->next;
+          if (ptr->ptr)
+            {
+              free(ptr->ptr);
+              ptr->ptr = NULL;
+            }
+          ptr = ptr_s;
+        }
+    }
+
+  free(md->objects);
+  bzero(md, sizeof(mda));
+
+  return 0;
+}
+
 uintaa_t
 md_relink(pmda md)
 {
@@ -102,7 +131,6 @@ md_first(pmda md)
 
   return NULL;
 }
-
 
 p_md_obj
 md_last(pmda md)
@@ -277,7 +305,6 @@ md_swap_s(pmda md, p_md_obj md_o1, p_md_obj md_o2)
 
   return md_o1->next;
 }
-
 
 int
 md_copy(pmda source, pmda dest, size_t block_sz)

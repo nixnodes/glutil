@@ -44,6 +44,8 @@ gen_md_data_ref(__g_handle hdl, pmda md, off_t count);
 int
 gh_rewind(__g_handle hdl);
 int
+g_claf_mech(void *ptr);
+int
 g_buffer_into_memory(char *file, __g_handle hdl);
 int
 g_cleanup(__g_handle hdl);

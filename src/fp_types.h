@@ -20,6 +20,10 @@
 
 typedef int
 _d_achar_i(char *);
+typedef int
+(*__d_avoidp_i)(void *);
+typedef int
+*_d_avoidp_i(void *);
 typedef char *
 _d_achar_p(char *);
 typedef int

@@ -8,7 +8,7 @@
 #ifndef MEMORY_H_
 #define MEMORY_H_
 
-
+#include <fp_types.h>
 #include <t_glob.h>
 
 #include <stdio.h>
@@ -47,6 +47,8 @@ p_md_obj
 md_first(pmda md);
 int
 md_g_free(pmda md);
+int
+md_g_free_cb(pmda md, int (*cb)(void *));
 uintaa_t
 md_relink(pmda md);
 p_md_obj

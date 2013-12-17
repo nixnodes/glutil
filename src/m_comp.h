@@ -13,6 +13,8 @@
 #include <im_hdr.h>
 #include <regex.h>
 
+#define _D_DRT_HASREGEX         (a32 << 10)
+
 typedef struct ___d_drt_h
 {
   uint32_t flags;

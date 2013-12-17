@@ -299,6 +299,7 @@ file_copy(char *source, char *dest, char *mode, uint32_t flags)
         }
       else
         {
+          free(buffer);
           return -4;
         }
     }
