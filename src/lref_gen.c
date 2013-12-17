@@ -104,6 +104,10 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     {
       strcp_s(output, max_size, b_spec1);
     }
+  else if (!strncmp(match, "pspec1", 6))
+      {
+        strcp_s(output, max_size, spec_p1);
+      }
   else if (!strncmp(match, "glconf", 6))
     {
       strcp_s(output, max_size, GLCONF_I);
