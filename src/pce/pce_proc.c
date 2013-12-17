@@ -710,9 +710,13 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           print_str("NOTICE: executing command on failed lookup: '%s'\n",
               dgetr->e_lookup_fail);
 
-          if ((r = pce_process_execv(&t_h, dgetr->e_lookup_fail, pce_prep_for_exec_r))) {
-              print_str("WARNING: %s: lookup retry call returned bad exit code: %d\n", p_log->file, r);
-          }
+          if ((r = pce_process_execv(&t_h, dgetr->e_lookup_fail,
+              pce_prep_for_exec_r)))
+            {
+              print_str(
+                  "WARNING: %s: lookup retry call returned bad exit code: %d\n",
+                  p_log->file, r);
+            }
 
           print_str("NOTICE: %s: retrying lookup\n", p_log->file);
 
@@ -955,10 +959,9 @@ pce_do_str_preproc(char *subject, __d_dgetr dgetr)
 
   if (dgetr->o_lookup_strictness < 1)
     {
-
       if (cl_l < sizeof(cl_sub) - 1)
         {
-          cl_sub[cl_l] = 0x24;
+          strncpy(&cl_sub[cl_l], "(()|.)$", 7);
         }
     }
 
