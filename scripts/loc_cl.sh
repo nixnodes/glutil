@@ -25,10 +25,10 @@
 ###########################[ BEGIN OPTIONS ]#############################
 #
 ## glutil executable
-GLUTIL="/glftpd/bin/glutil"
+GLUTIL="/bin/glutil"
 #
 ## glFTPd root path
-GLROOT="/glftpd"
+GLROOT=""
 #
 #TIMEOUT=60
 #
