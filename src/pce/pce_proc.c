@@ -707,37 +707,33 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           t_h.g_proc1_lookup = ref_to_val_lk_generic;
           t_h.buffer.pos = p_log->buffer.objects;
 
-          if ((r = pce_process_execv(&t_h, dgetr->e_lookup_fail,
-              pce_prep_for_exec_r)))
-            {
-              print_str("ERROR: retry lookup failed, bad exit code [%d]\n", r);
-            }
-          else
-            {
-              g_close(&t_h);
-              print_str("NOTICE: external call suceeded, retry lookup.. (%s)\n",
-                  dgetr->e_lookup_fail);
-              g_cleanup(p_log);
-              p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
-                  | S_IWGRP;
-              p_log->shmatflags = SHM_RDONLY;
-              p_log->flags |= F_GH_HASMATCHES;
-              uint64_t s_gfl = gfl;
-              if (gfl & F_OPT_SHAREDMEM)
-                {
-                  gfl ^= F_OPT_SHAREDMEM;
-                }
-              if ((r = g_fopen(lp, "r", F_DL_FOPEN_BUFFER, p_log)))
-                {
-                  print_str("ERROR: failed re-opening '%s', code %d\n", lp, r);
-                  p_log->flags |= F_GH_LOCKED;
-                  return 0;
-                }
-              gfl = s_gfl;
-              //nres = 0;
+          print_str("NOTICE: executing command on failed lookup: '%s'\n",
+              dgetr->e_lookup_fail);
 
-              goto retry;
+          pce_process_execv(&t_h, dgetr->e_lookup_fail, pce_prep_for_exec_r);
+
+          print_str("NOTICE: %s: retrying lookup\n", p_log->file);
+
+          g_cleanup(p_log);
+          p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
+              | S_IWGRP;
+          p_log->shmatflags = SHM_RDONLY;
+          p_log->flags |= F_GH_HASMATCHES;
+          uint64_t s_gfl = gfl;
+          if (gfl & F_OPT_SHAREDMEM)
+            {
+              gfl ^= F_OPT_SHAREDMEM;
             }
+          if ((r = g_fopen(lp, "r", F_DL_FOPEN_BUFFER, p_log)))
+            {
+              print_str("ERROR: failed re-opening '%s', code %d\n", lp, r);
+              p_log->flags |= F_GH_LOCKED;
+              return 0;
+            }
+          gfl = s_gfl;
+          //nres = 0;
+
+          goto retry;
 
           g_close(&t_h);
         }
