@@ -4,7 +4,7 @@
 # individual folders defined by 'path' (see below).
 # Each path or 'section' must be defined in its own config
 # file. 'precheck_compile.sh' in 'scripts/' compiles these
-# logs into binary form in order to avoid parsing text from
+# chains into binary form in order to avoid parsing text from
 # configuration files on each fork.
 #
 #################################################################
