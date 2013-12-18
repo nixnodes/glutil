@@ -76,10 +76,10 @@ imdb_allow_genre=Comedy|Action
 msg=Shame on you for trying to upload {title}
 imdb_deny_actors='Steven Seagal'
 #
+####################################################
+#
 # Relational comparison matching example;
 # Deny releases under score 5.0:
-#
-####################################################
 #
 imdb_deny_score_islower=5.0
 #
@@ -100,9 +100,11 @@ imdb_deny_score_islower=5.0
 #
 ####################################################
 #
-# Deny anything older than year 2000
+# Deny anything older than year 2000:
 #
 imdb_deny_year_islower=2000
+#
+####################################################
 #
 # REGEX filter applied to the dir string passed
 # from glftpd
@@ -116,7 +118,7 @@ deny=BluRay|lala
 # Command is executed, if the return status is non-zero,
 # the chain terminates and returns the respective code.
 # msg= applies, but stdout of the called process is not
-# muted.
+# muted;
 #
 do_exec=/bin/scripts/some-other-precheck.sh
 #
