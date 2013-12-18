@@ -55,7 +55,6 @@ path=xvid
 #
 #   <logtype>_do_exec=<command>
 # 
-# 
 ####################################################
 #
 # For example, REGEX match against the 'genre' 
