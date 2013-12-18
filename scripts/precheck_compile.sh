@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONFIG_PATH="/glftpd/ftp-data/glutil/precheck-config"
-DATA_PATH="/ftp-data/glutil/precheck-data"
+DATA_PATH="/glftpd//ftp-data/glutil/precheck-data"
 GLUTIL="/glftpd/bin/glutil"
 
 #########################################################
@@ -75,11 +75,6 @@ case ${3} in
 esac
 get_opts ${2}
 return 1
-}
-
-lala()
-{
- 	echo "${@}"
 }
 
 tokenize_s_left() {
