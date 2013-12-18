@@ -73,17 +73,17 @@ use_shared_mem                  1
 #
 #####################################################
 #
-## If a release lookup fails, execute command set in
-## 'path_exec_on_lookup_fail' and re-try lookup.
-## Applies when execute_on_lookup_fail=1.
-#
-## Set to 2, it forks into background. Forked process
-## checks only chain  rules related to the respective
-## log while the parent continues to  check all other
-## rules except those that are being processed in the
-## background. 
+## If a release  lookup fails, execute command set in
+## 'path_exec_on_lookup_fail' and re-try lookup after
+## it exits.
+## When  execute_on_lookup_fail=1,  this operation is
+## synchronous, set to 2, the process forks off;
+## Forked instance executes the command and processes
+## only  chain  rules  related to the  respective log
+## while the parent continues to check all other rules
+## except those that are being processed in the child.
 ## This is usefull for avoiding slowdowns on MKD when  
-## we  wish to  execute a web lookup  if log doesn't  
+## we  wish to  execute a web  lookup  if log doesn't  
 ## contain the info. See also 'path_exec_on_match'.
 #
 execute_on_lookup_fail          1
