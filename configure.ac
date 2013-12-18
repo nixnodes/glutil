@@ -73,6 +73,7 @@ AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (fnctl.h)])])
 AC_CHECK_HEADER([limits.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (limits.h)])])
 AC_CHECK_HEADER([utime.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (utime.h)])])
 AC_CHECK_HEADER([errno.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (errno.h)])])
+AC_CHECK_HEADER([$PWD/src/glconf.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (src/glconf.h)])])
 
 
 AC_TYPE_SIZE_T

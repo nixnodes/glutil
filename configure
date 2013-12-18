@@ -6279,6 +6279,15 @@ else
 fi
 
 
+as_ac_Header=`$as_echo "ac_cv_header_$PWD/src/glconf.h" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$PWD/src/glconf.h" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+
+else
+  as_fn_error $? "$GLUTIL_MSG_REQH (errno.h)" "$LINENO" 5
+fi
+
+
 
 
 ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
