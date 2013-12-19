@@ -10,32 +10,34 @@
 
 #define PCE_F_OPT_SHAREDMEM     (a64 << 44)
 
+#define PATH_PREFIX     ""
+
 #ifndef pce_logfile
-#define pce_logfile "/ftp-data/logs/glutil-precheck.log"
+#define pce_logfile PATH_PREFIX "/ftp-data/logs/glutil-precheck.log"
 #endif
 
 /* imdb log file path */
 #ifndef imdb_file
-#define imdb_file "/ftp-data/glutil/db/imdb"
+#define imdb_file PATH_PREFIX "/ftp-data/glutil/db/imdb"
 #endif
 
 /* game log file path */
 #ifndef game_log
-#define game_log "/ftp-data/glutil/db/game"
+#define game_log PATH_PREFIX "/ftp-data/glutil/db/game"
 #endif
 
 /* tv log file path */
 #ifndef tv_log
-#define tv_log "/ftp-data/glutil/db/tvrage"
+#define tv_log PATH_PREFIX "/ftp-data/glutil/db/tvrage"
 #endif
 
 
 #ifndef pce_data_path
-#define pce_data_path "/ftp-data/glutil/precheck-data"
+#define pce_data_path PATH_PREFIX "/ftp-data/glutil/precheck-data"
 #endif
 
 #ifndef gconf_log
-#define gconf_log "/ftp-data/glutil/precheck-data/gconf"
+#define gconf_log PATH_PREFIX "/ftp-data/glutil/precheck-data/gconf"
 #endif
 
 #ifndef LOG_LEVEL
@@ -59,7 +61,7 @@
 
 /* precheck global config */
 #ifndef gconf_log
-#define gconf_log "/ftp-data/glutil/precheck-data/gconf"
+#define gconf_log PATH_PREFIX  "/ftp-data/glutil/precheck-data/gconf"
 #endif
 
 #define G_HFLAGS PCE_F_OPT_SHAREDMEM
