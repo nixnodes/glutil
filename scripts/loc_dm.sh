@@ -15,13 +15,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+#########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
 #@REVISION:0
-#@MACRO:loc-dm:{m:exe} --daemon --glroot "{m:glroot}" -x "{m:glroot}/io/glud" iregex "basepath,gld\.in\." --ilom "mode=1" --preexec `mkdir -p {m:glroot}/io/glud; chmod 777 {m:glroot}/io/glud` --loop 0 --usleep 300000 --silent -execv "{m:spec1} {path} {?rd:basepath:^gld\.in\.} {m:exe} {glroot}"
+#@MACRO:loc-dm:{m:exe} --daemon --glroot "{m:glroot}" --xretry -x "{m:glroot}/io/glud" iregex "basepath,gld\.in\." --ilom "mode=1" --preexec `mkdir -p {m:glroot}/io/glud; chmod 777 {m:glroot}/io/glud` --loop 0 --usleep 300000 --silent -execv "{m:spec1} {path} {?rd:basepath:^gld\.in\.} {m:exe} {glroot}"
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
-#
-#@MACRO:loc-dm-installch:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/mkfifo"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Offers functionality to processes that would otherwise require higher priviledges.
 ## The tasks it does are constricted and injection checks performed against user-
@@ -31,8 +30,7 @@
 ## glutil -x searches for FIFO's in /io/glud in the background, this script
 ## is executed only when something is found.
 #
-## Avoid running this as root, use a normal user and give it access to what
-## resources are needed.
+## This is meant to run outside the chrooted environment.
 #
 #########################################################################
 
