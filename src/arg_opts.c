@@ -987,6 +987,13 @@ opt_dirlog_file(void *arg, int m)
 }
 
 int
+opt_g_xretry(void *arg, int m)
+{
+  gfl0 |= F_OPT_XRETRY;
+  return 0;
+}
+
+int
 opt_g_sleep(void *arg, int m)
 {
   g_sleep = atoi(g_pg(arg, m));
@@ -1237,4 +1244,5 @@ void *f_ref[] =
       (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
       "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
       "--glconf", opt_pex, (void*) 0, "--ge4log", opt_GE4LOG, (void*) 1,
+      "--xretry", opt_g_xretry, (void*) 0,
       NULL, NULL, NULL };

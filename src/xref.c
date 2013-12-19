@@ -1075,18 +1075,33 @@ g_dump_gen(char *root)
   snprintf(ret.root, PATH_MAX, "%s", root);
   remove_repeating_chars(ret.root, 0x2F);
 
+  enter:
+
   enum_dir(ret.root, g_process_directory, &ret, 0, &eds);
+
+  if ((gfl0 & F_OPT_XRETRY) && !ret.st_1 && !(gfl & F_OPT_KILL_GLOBAL))
+    {
+      if (g_sleep)
+        {
+          sleep(g_sleep);
+        }
+      if (g_usleep)
+        {
+          usleep(g_usleep);
+        }
+      goto enter;
+    }
+
+  if (!(gfl & F_OPT_FORMAT_BATCH))
+    {
+      print_str("STATS: %s: OK: %llu/%llu [%llu]\n", ret.root,
+          (unsigned long long int) ret.st_1,
+          (unsigned long long int) ret.st_1 + ret.st_2);
+    }
 
   end:
 
   g_cleanup(&ret.hdl);
-
-  if (!(gfl & F_OPT_FORMAT_BATCH))
-    {
-      print_str("STATS: %s: OK: %llu/%llu\n", ret.root,
-          (unsigned long long int) ret.st_1,
-          (unsigned long long int) ret.st_1 + ret.st_2);
-    }
 
   return ret.rt_m;
 }
