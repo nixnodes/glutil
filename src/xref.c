@@ -1094,7 +1094,7 @@ g_dump_gen(char *root)
 
   if (!(gfl & F_OPT_FORMAT_BATCH))
     {
-      print_str("STATS: %s: OK: %llu/%llu [%llu]\n", ret.root,
+      print_str("STATS: %s: OK: %llu/%llu\n", ret.root,
           (unsigned long long int) ret.st_1,
           (unsigned long long int) ret.st_1 + ret.st_2);
     }
