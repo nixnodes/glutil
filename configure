@@ -632,10 +632,10 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 GLUTIL_PREFIX
-ENABLE_PRECHECK_FALSE
-ENABLE_PRECHECK_TRUE
 ENABLE_CHROOT_OWNBIN_FALSE
 ENABLE_CHROOT_OWNBIN_TRUE
+ENABLE_PRECHECK_FALSE
+ENABLE_PRECHECK_TRUE
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -730,6 +730,7 @@ enable_dependency_tracking
 enable_chroot
 enable_chroot_ownbin
 enable_precheck
+enable_precheck_pfroot
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1366,6 +1367,7 @@ Optional Features:
   --enable-chroot	  build glutil for chrooted environment default=no
   --enable-chroot-ownbin	  build glutil for chrooted environment as a separate binary default=no
   --enable-precheck	  build glutil-precheck default=no
+  --enable-precheck-pfroot	  build glutil-precheck taking --prefix into account default=no
 
 Some influential environment variables:
   CC          C compiler command
@@ -4402,8 +4404,30 @@ else
 fi
 
 
+# Check whether --enable-precheck was given.
+if test "${enable_precheck+set}" = set; then :
+  enableval=$enable_precheck; glutil_precheck="$enableval"
+else
+  glutil_precheck="no"
+fi
+
+
+# Check whether --enable-precheck-pfroot was given.
+if test "${enable_precheck_pfroot+set}" = set; then :
+  enableval=$enable_precheck_pfroot; glutil_precheck_pfroot="$enableval"
+else
+  glutil_precheck_pfroot="no"
+fi
+
+
 if  test "$glutil_chroot" = "no"  &&  test "$glutil_chroot_ownbin" = "no" ; then
-	if test "$prefix" = "NONE"; then :
+	if  test "$glutil_precheck" = "yes"  &&  test "$glutil_precheck_pfroot" = "no" ; then
+		cat >>confdefs.h <<_ACEOF
+#define CONF_PREFIX ""
+_ACEOF
+
+	else
+		if test "$prefix" = "NONE"; then :
   cat >>confdefs.h <<_ACEOF
 #define CONF_PREFIX "$ac_default_prefix"
 _ACEOF
@@ -4415,9 +4439,10 @@ _ACEOF
  \
 
 fi
-	if test "$prefix" = "NONE"; then :
+		if test "$prefix" = "NONE"; then :
   prefix=$ac_default_prefix
 fi
+	fi
 else
 
 cat >>confdefs.h <<_ACEOF
@@ -4434,6 +4459,14 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: compiling for chrooted environment.." >&5
 $as_echo "$as_me: compiling for chrooted environment.." >&6;}
 fi
+fi
+
+ if test "$glutil_precheck" = "yes"; then
+  ENABLE_PRECHECK_TRUE=
+  ENABLE_PRECHECK_FALSE='#'
+else
+  ENABLE_PRECHECK_TRUE='#'
+  ENABLE_PRECHECK_FALSE=
 fi
 
  if test "$glutil_chroot_ownbin" = "yes"; then
@@ -4507,21 +4540,6 @@ fi
 
 datadir="$prefix/scripts"
 
-# Check whether --enable-precheck was given.
-if test "${enable_precheck+set}" = set; then :
-  enableval=$enable_precheck; glutil_precheck="$enableval"
-else
-  glutil_precheck="no"
-fi
-
-
- if test "$glutil_precheck" = "yes"; then
-  ENABLE_PRECHECK_TRUE=
-  ENABLE_PRECHECK_FALSE='#'
-else
-  ENABLE_PRECHECK_TRUE='#'
-  ENABLE_PRECHECK_FALSE=
-fi
 
 
 GLUTIL_PREFIX=$prefix
@@ -4703,12 +4721,12 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_CHROOT_OWNBIN_TRUE}" && test -z "${ENABLE_CHROOT_OWNBIN_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_CHROOT_OWNBIN\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${ENABLE_PRECHECK_TRUE}" && test -z "${ENABLE_PRECHECK_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_PRECHECK\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_CHROOT_OWNBIN_TRUE}" && test -z "${ENABLE_CHROOT_OWNBIN_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_CHROOT_OWNBIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -6284,7 +6302,7 @@ ac_fn_c_check_header_mongrel "$LINENO" "$PWD/src/glconf.h" "$as_ac_Header" "$ac_
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 
 else
-  as_fn_error $? "$GLUTIL_MSG_REQH (errno.h)" "$LINENO" 5
+  as_fn_error $? "$GLUTIL_MSG_REQH (src/glconf.h)" "$LINENO" 5
 fi
 
 

@@ -27,12 +27,24 @@ AC_ARG_ENABLE(chroot-ownbin,
 [  --enable-chroot-ownbin	  build glutil for chrooted environment as a separate binary [default=no]],
 glutil_chroot_ownbin="$enableval", glutil_chroot_ownbin="no")
 
+AC_ARG_ENABLE(precheck,
+[  --enable-precheck	  build glutil-precheck [default=no]],
+glutil_precheck="$enableval", glutil_precheck="no")
+
+AC_ARG_ENABLE(precheck-pfroot,
+[  --enable-precheck-pfroot	  build glutil-precheck taking --prefix into account [default=no]],
+glutil_precheck_pfroot="$enableval", glutil_precheck_pfroot="no")
+
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
-	AS_IF([test "$prefix" = "NONE"], 
-		[AC_DEFINE_UNQUOTED([CONF_PREFIX], ["$ac_default_prefix"]) ], 
-		[AC_DEFINE_UNQUOTED([CONF_PREFIX], ["$prefix"] )] \
-	)	
-	AS_IF([test "$prefix" = "NONE"], AS_VAR_SET(prefix, [$ac_default_prefix]))
+	if [ test "$glutil_precheck" = "yes" ] && [ test "$glutil_precheck_pfroot" = "no" ]; then
+		AC_DEFINE_UNQUOTED([CONF_PREFIX], [""]) 
+	else
+		AS_IF([test "$prefix" = "NONE"], 
+			[AC_DEFINE_UNQUOTED([CONF_PREFIX], ["$ac_default_prefix"]) ], 
+			[AC_DEFINE_UNQUOTED([CONF_PREFIX], ["$prefix"] )] \
+		)	
+		AS_IF([test "$prefix" = "NONE"], AS_VAR_SET(prefix, [$ac_default_prefix]))
+	fi
 else 
 	AC_DEFINE_UNQUOTED([CONF_PREFIX], [""], [//])
 	AC_DEFINE([_GLCONF_NOROOTPATH], [], [//])
@@ -41,6 +53,7 @@ else
 		[AC_MSG_NOTICE(compiling for chrooted environment..)]) 
 fi
 
+AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 AM_CONDITIONAL(ENABLE_CHROOT_OWNBIN, test "$glutil_chroot_ownbin" = "yes")
 
 AC_CHECK_FILE( \
@@ -55,11 +68,7 @@ AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
 
 AS_VAR_SET(datadir, ["$prefix/scripts"])
 
-AC_ARG_ENABLE(precheck,
-[  --enable-precheck	  build glutil-precheck [default=no]],
-glutil_precheck="$enableval", glutil_precheck="no")
 
-AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
