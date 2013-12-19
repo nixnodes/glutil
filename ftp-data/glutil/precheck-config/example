@@ -94,8 +94,8 @@ imdb_deny_score_islower=5.0
 #	islowerorqeual
 #	ishigherorequal
 #
-# Check MANUAL, any field with I or F flag is
-# compatible with logical matching.
+# Check DATA_STRUCTURES, any field with I or F flag
+# is compatible with logical matching.
 #
 ####################################################
 #
