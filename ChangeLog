@@ -5,13 +5,16 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
- * v2.3.7d:
- *
- *   - Add loc_dm.sh and loc_cl.sh
- *
- * v2.3.1d:
+ * v2.3:
  *
  *   - + Started glutil-precheck, on MKDIR filtering processor, uses imdb/tvrage data logs.
+ *   - + Add loc_dm.sh and loc_cl.sh
+ *   - ~ Fix memory leak in file proc (-x)
+ *   - ~ Clean up resources after done (-x)
+ *   - ~ Filesystem parser ignored elements not of type DT_REG (regular file)
+ *   - % Higher resolution (nanosecond) loop interval can be given to --loop
+ *   - % Log import (-z) ignores # commented lines
+ *   - + Add --xretry
  *
  * v2.2:
  *
