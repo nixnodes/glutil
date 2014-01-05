@@ -124,7 +124,7 @@ rebuild_dirlog(void)
       return 12;
     }
 
-  if (gfl & F_OPT_FORCE)
+  if (gfl & F_OPT_DIR_FULL_REBUILD)
     {
       print_str("NOTICE: performing a full siteroot rescan\n");
       print_str("SCANNING: '%s'\n", SITEROOT);
@@ -140,7 +140,7 @@ rebuild_dirlog(void)
   if (read_file(DU_FLD, buffer, V_MB, 0, NULL) < 1)
     {
       print_str(
-          "ERROR: unable to read folders file '%s', read MANUAL on how to set it up, or use -f (force) to do a full rescan (not compatible with -u (update))..\n",
+          "ERROR: unable to read folders file '%s', read MANUAL on how to set it up, or use '--full' option to do a full rescan..\n",
           DU_FLD, SITEROOT);
       goto r_end;
     }
@@ -254,9 +254,6 @@ update_records(char *dirname, int depth)
   ear arg =
     { 0 };
 
-  if (dir_exists(dirname))
-    return 2;
-
   arg.depth = depth;
   arg.dirlog = &buffer;
 
@@ -276,11 +273,10 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
     { 0 };
   char *fn, *fn2, *base;
 
-  if (!reg_match("\\/[.]{1,2}$", name, 0))
-    return 1;
-
   if (!reg_match("\\/[.].*$", name, REG_NEWLINE))
-    return 1;
+    {
+      return 1;
+    }
 
   switch (type)
     {
@@ -315,7 +311,7 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
     off_t fs = get_file_size(name);
     iarg->dirlog->bytes += fs;
     iarg->dirlog->files++;
-    if (gfl & F_OPT_VERBOSE4)
+    if ((gfl & F_OPT_VERBOSE4))
       {
         print_str("     %s  %.2fMB%s\n", base, (double) fs / 1024.0 / 1024.0,
             buffer);
@@ -345,7 +341,6 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 {
   ear *iarg = (ear*) arg;
   int r;
-  uint64_t rl;
 
   if (!reg_match("\\/[.]{1,2}", name, 0))
     {
@@ -360,23 +355,40 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
   switch (type)
     {
   case DT_DIR:
+
+    if (access(name, R_OK))
+      {
+        if (gfl & F_OPT_VERBOSE)
+          {
+            print_str("WARNING: %s: no read access\n", name);
+          }
+        break;
+      }
+
     iarg->depth--;
-    if (!iarg->depth || (gfl & F_OPT_FORCE))
+    if (!iarg->depth || (gfl & F_OPT_DIR_FULL_REBUILD))
       {
         if (gfl & F_OPT_UPDATE)
           {
-            if (((rl = dirlog_find(name, 1, F_DL_FOPEN_REWIND, NULL))
-                < MAX_uint64_t))
+            p_md_obj ptr;
+            if ((ptr = dirlog_find_a(name, F_DL_FOPEN_REWIND, NULL)) != NULL)
               {
                 if (gfl & F_OPT_VERBOSE2)
                   {
                     print_str(
-                        "WARNING: %s: [%llu] record already exists, not importing\n",
-                        name, rl);
+                        "WARNING: %s: record already exists, not importing\n",
+                        name);
                   }
+
+                if (ptr != (p_md_obj) -1)
+                  {
+                    md_unlink(&g_act_1.buffer, ptr);
+                  }
+
                 goto end;
               }
           }
+
         bzero(iarg->buffer, PATH_MAX);
         iarg->flags = 0;
         if ((r = release_generate_block(name, iarg)))
@@ -426,7 +438,7 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             else
               {
                 print_str("ERROR: '%s': failed renaming '%s' to '%s'\n",
-                basename(iarg->buffer2), basename(iarg->buffer));
+                g_basename(iarg->buffer2), g_basename(iarg->buffer));
               }
           }
 
@@ -453,7 +465,9 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             dirlog_format_block(iarg->dirlog, NULL);
           }
 
-        if (gfl & F_OPT_FORCE)
+        end:
+
+        if (gfl & F_OPT_DIR_FULL_REBUILD)
           {
             enum_dir(name, proc_section, iarg, 0, eds);
           }
@@ -462,7 +476,8 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
       {
         enum_dir(name, proc_section, iarg, 0, eds);
       }
-    end: iarg->depth++;
+
+    iarg->depth++;
     break;
     }
   return 0;
@@ -510,7 +525,9 @@ release_generate_block(char *name, ear *iarg)
     }
 
   if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-    print_str("ENTERING: %s\n", name);
+    {
+      print_str("ENTERING: %s\n", name);
+    }
 
   _g_eds eds =
     { 0 };
@@ -527,10 +544,13 @@ release_generate_block(char *name, ear *iarg)
           ret = 5;
         }
     }
+
   g_setjmp(0, "release_generate_block(2)", NULL, NULL);
 
   if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-    print_str("EXITING: %s\n", name);
+    {
+      print_str("EXITING: %s\n", name);
+    }
 
   if ((gfl & F_OPT_SFV) && !(gfl & F_OPT_NOWRITE))
     {
@@ -593,7 +613,9 @@ release_generate_block(char *name, ear *iarg)
 
   struct nukelog n_buffer =
     { 0 };
-  if (nukelog_find(buffer, 2, &n_buffer) < MAX_uint64_t)
+
+  if (!(gfl0 & F_OPT_NO_CHECK_NUKED)
+      && nukelog_find(buffer, 2, &n_buffer) < MAX_uint64_t)
     {
       iarg->dirlog->status = n_buffer.status + 1;
       strncpy(iarg->dirlog->dirname, n_buffer.dirname,
@@ -752,6 +774,39 @@ dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback)
     }
 
   return ur;
+}
+
+p_md_obj
+dirlog_find_a(char *dirn, uint32_t flags, void *callback)
+{
+  if (g_fopen(DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
+    {
+      return NULL;
+    }
+
+  struct dirlog buffer;
+
+  struct dirlog *d_ptr = NULL;
+  size_t r_l = strlen(dirn);
+
+  while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ)))
+    {
+      size_t l_l = strlen(d_ptr->dirname);
+
+      if (l_l == r_l && !strncmp(dirn, d_ptr->dirname, r_l))
+        {
+          if (g_act_1.buffer.count)
+            {
+              return g_act_1.buffer.pos;
+            }
+          else
+            {
+              return (p_md_obj) -1;
+            }
+        }
+    }
+
+  return NULL;
 }
 
 uint64_t
@@ -975,7 +1030,7 @@ dirlog_update_record(char *argv)
 
       char *mode = "a";
 
-      if (!(gfl & F_OPT_FORCE) && rl < MAX_uint64_t)
+      if (!(gfl & F_OPT_DIR_FULL_REBUILD) && rl < MAX_uint64_t)
         {
           print_str(
               "WARNING: %s: [%llu] already exists in dirlog (use -f to overwrite)\n",
@@ -1152,6 +1207,7 @@ dirlog_check_records(void)
                 }
               continue;
             }
+
           buffer3.flags |= F_EAR_NOVERB;
 
           if ((r2 = release_generate_block(s_buffer, &buffer3)))
@@ -1186,6 +1242,7 @@ dirlog_check_records(void)
               r++;
               continue;
             }
+
           if (d_ptr->files != buffer4.files)
             {
               print_str(

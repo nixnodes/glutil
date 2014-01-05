@@ -20,6 +20,7 @@
 #define F_MDA_WAS_REUSED                (a32 << 4)
 #define F_MDA_EOF                       (a32 << 5)
 #define F_MDA_FIRST_REUSED              (a32 << 6)
+#define F_MDA_ARR_DIST                  (a32 << 7)
 
 #define MDA_MDALLOC_RE                  (a32 << 1)
 
@@ -51,6 +52,8 @@ int
 md_g_free_cb(pmda md, int (*cb)(void *));
 uintaa_t
 md_relink(pmda md);
+uintaa_t
+md_relink_n(pmda md, off_t base);
 p_md_obj
 md_first(pmda md);
 p_md_obj

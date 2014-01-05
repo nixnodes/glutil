@@ -579,9 +579,37 @@ opt_g_xblk(void *arg, int m)
 }
 
 int
-opt_pex(void *arg, int m)
+opt_dirlog_rebuild_full(void *arg, int m)
 {
-  gfl |= F_OPT_PEX;
+  gfl |= F_OPT_DIR_FULL_REBUILD;
+  return 0;
+}
+
+int
+opt_no_nuke_chk(void *arg, int m)
+{
+  gfl0 |= F_OPT_NO_CHECK_NUKED;
+  return 0;
+}
+
+int
+opt_arrange(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+  if (!buffer)
+    {
+      return 5610;
+    }
+
+  if (!strncmp(buffer, "dist", 4))
+    {
+      gfl0 |= F_OPT_ARR_DIST;
+    }
+  else
+    {
+      return 5611;
+    }
+
   return 0;
 }
 
@@ -1276,7 +1304,8 @@ void *f_ref[] =
       "-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
       (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
       "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
-      "--glconf", opt_pex, (void*) 0, "--ge4log", opt_GE4LOG, (void*) 1,
-      "--xretry", opt_g_xretry, (void*) 0, "--indepth", opt_g_indepth,
-      (void*) 0,
+      "--ge4log", opt_GE4LOG, (void*) 1, "--xretry", opt_g_xretry, (void*) 0,
+      "--indepth", opt_g_indepth, (void*) 0, "--full", opt_dirlog_rebuild_full,
+      (void*) 0, "--arr", opt_arrange, (void*) 1, "--nonukechk",
+      opt_no_nuke_chk, (void*) 0,
       NULL, NULL, NULL };

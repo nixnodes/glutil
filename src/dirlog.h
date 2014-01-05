@@ -61,4 +61,7 @@ dirlog_update_record(char *argv);
 int
 dirlog_check_dupe(void);
 
+p_md_obj
+dirlog_find_a(char *dirn, uint32_t flags, void *callback);
+
 #endif /* DIRLOG_H_ */

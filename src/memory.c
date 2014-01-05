@@ -108,6 +108,56 @@ md_relink(pmda md)
   return l;
 }
 
+#include <unistd.h>
+
+uintaa_t
+md_relink_n(pmda md, off_t base)
+{
+  size_t off, l = 1;
+
+  p_md_obj last = NULL, cur = md->objects;
+
+  off_t tot = (off_t) md->objects + (md->count * sizeof(md_obj));
+
+  off_t totl = (size_t) md->count / base;
+
+  off_t cp = 0, cnt = 0;
+
+  for (cp = 0; cp < base; cp++)
+    {
+      for (off = 0; off <= totl; off++)
+        {
+          cur = md->objects + ((base * off) + cp);
+          //cnt++;
+          if ((off_t) cur < tot)
+            {
+              cnt++;
+              if (cur->ptr)
+                {
+                  if (last)
+                    {
+                      last->next = cur;
+                      cur->prev = last;
+                      cur->next = NULL;
+                      l++;
+                    }
+                  else
+                    {
+                      md->first = cur;
+                    }
+                  last = cur;
+                }
+            }
+          else
+            {
+              break;
+            }
+        }
+    }
+
+  return l;
+}
+
 p_md_obj
 md_first(pmda md)
 {
@@ -169,7 +219,16 @@ md_alloc(pmda md, int b)
       bzero(md->pos, md->count * sizeof(md_obj));
 
       md->count *= 2;
-      uintaa_t rlc = md_relink(md);
+      uintaa_t rlc;
+
+      if (md->flags & F_MDA_ARR_DIST)
+        {
+          rlc = md_relink_n(md, 100);
+        }
+      else
+        {
+          rlc = md_relink(md);
+        }
       flags |= MDA_MDALLOC_RE;
       if (gfl & F_OPT_VERBOSE5)
         {
@@ -220,7 +279,14 @@ md_alloc(pmda md, int b)
 
   if (flags & MDA_MDALLOC_RE)
     {
-      md_relink(md);
+      if (md->flags & F_MDA_ARR_DIST)
+        {
+          md_relink_n(md, 100);
+        }
+      else
+        {
+          md_relink(md);
+        }
     }
 
   return md->pos->ptr;
@@ -258,6 +324,8 @@ md_unlink(pmda md, p_md_obj md_o)
       free(md_o->ptr);
     }
   md_o->ptr = NULL;
+  md_o->next = NULL;
+  md_o->prev = NULL;
 
   return (void*) c_ptr;
 }

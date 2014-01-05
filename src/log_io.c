@@ -501,6 +501,12 @@ load_data_md(pmda md, char *file, __g_handle hdl)
   md->flags |= F_MDA_REFPTR;
   cb(hdl, md, count);
 
+  if (gfl0 & F_OPT_ARR_DIST)
+    {
+      md->flags |= F_MDA_ARR_DIST ;
+      md_relink_n(md, 100);
+    }
+
   g_setjmp(0, "load_data_md", NULL, NULL);
 
   if (!md->count)

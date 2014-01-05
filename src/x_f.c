@@ -96,26 +96,13 @@ file_exists(char *file)
 int
 dir_exists(char *dir)
 {
-  int r;
+  int r = get_file_type(dir);
 
-  errno = 0;
-  DIR *dd = opendir(dir);
-
-  r = errno;
-
-  if (dd)
+  if (r == DT_DIR)
     {
-      closedir(dd);
+      return 0;
     }
-  else
-    {
-      if (!r)
-        {
-          r++;
-        }
-    }
-
-  return r;
+  return 1;
 }
 
 int

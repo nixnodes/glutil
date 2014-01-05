@@ -154,7 +154,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_MINDEPTH                  (a64 << 59)
 #define F_OPT_XFD                       (a64 << 60)
 #define F_OPT_ZPRUNEDUP                 (a64 << 61)
-#define F_OPT_PEX                       (a64 << 62)
+#define F_OPT_DIR_FULL_REBUILD          (a64 << 62)
 #define F_OPT_FORMAT_EXPORT             (a64 << 63)
 
 #define F_OPT_PRINT                     (a64 << 1)
@@ -163,6 +163,8 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_PCE_NO_POST_EXEC          (a64 << 4)
 #define F_OPT_XRETRY                    (a64 << 5)
 #define F_OPT_DRINDEPTH                 (a64 << 6)
+#define F_OPT_ARR_DIST                  (a64 << 7)
+#define F_OPT_NO_CHECK_NUKED            (a64 << 8)
 
 #define F_DL_FOPEN_BUFFER               (a32 << 1)
 #define F_DL_FOPEN_FILE                 (a32 << 2)

@@ -21,6 +21,9 @@
  *   - ~ Full filesystem rescan (dirlog rebuild) not recursing (2.3.8)
  *   - % Passing '-' as argument to path overrides reads from stdin (2.3.8)
  *   - ~ Full filesystem rescan (dirlog rebuild) not scanning files (2.3.9)
+ *   - % Changed option name for full dirlog rebuild from '-f' to '--full' (2.3.10)
+ *   - ~ Update in full dirlog rebuild mode fixed (2.3.10)
+ *   - ! Large performance boost in dirlog update mode (2.3.10)
  *
  * v2.2:
  *
