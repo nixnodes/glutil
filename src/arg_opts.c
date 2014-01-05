@@ -522,14 +522,6 @@ opt_g_iregex(void *arg, int m)
 }
 
 int
-opt_nukelog_file(void *arg, int m)
-{
-  g_cpg(arg, NUKELOG, m, PATH_MAX - 1);
-  ofl |= F_OVRR_NUKELOG;
-  return 0;
-}
-
-int
 opt_glconf_file(void *arg, int m)
 {
   g_cpg(arg, GLCONF_I, m, PATH_MAX - 1);
@@ -820,6 +812,39 @@ opt_g_postexec(void *arg, int m)
   return 0;
 }
 
+void
+l_opt_cstdin(char *arg)
+{
+  if (arg[0] == 0x2D && arg[1] == 0x0)
+    {
+      gfl0 |= F_OPT_STDIN;
+    }
+}
+
+int
+opt_dirlog_file(void *arg, int m)
+{
+  if (!(ofl & F_OVRR_DIRLOG))
+    {
+      g_cpg(arg, DIRLOG, m, PATH_MAX);
+      ofl |= F_OVRR_DIRLOG;
+      l_opt_cstdin(DIRLOG);
+    }
+  return 0;
+}
+
+int
+opt_nukelog_file(void *arg, int m)
+{
+  if (!(ofl & F_OVRR_NUKELOG))
+    {
+      g_cpg(arg, NUKELOG, m, PATH_MAX - 1);
+      ofl |= F_OVRR_NUKELOG;
+      l_opt_cstdin(NUKELOG);
+    }
+  return 0;
+}
+
 int
 opt_glroot(void *arg, int m)
 {
@@ -849,6 +874,7 @@ opt_dupefile(void *arg, int m)
     {
       g_cpg(arg, DUPEFILE, m, PATH_MAX);
       ofl |= F_OVRR_DUPEFILE;
+      l_opt_cstdin(DUPEFILE);
     }
   return 0;
 }
@@ -860,6 +886,7 @@ opt_lastonlog(void *arg, int m)
     {
       g_cpg(arg, LASTONLOG, m, PATH_MAX);
       ofl |= F_OVRR_LASTONLOG;
+      l_opt_cstdin(LASTONLOG);
     }
   return 0;
 }
@@ -871,6 +898,7 @@ opt_sconf(void *arg, int m)
     {
       g_cpg(arg, SCONFLOG, m, PATH_MAX);
       ofl |= F_OVRR_SCONF;
+      l_opt_cstdin(SCONFLOG);
     }
   return 0;
 }
@@ -882,6 +910,7 @@ opt_gconf(void *arg, int m)
     {
       g_cpg(arg, GCONFLOG, m, PATH_MAX);
       ofl |= F_OVRR_GCONF;
+      l_opt_cstdin(GCONFLOG);
     }
   return 0;
 }
@@ -893,6 +922,7 @@ opt_oneliner(void *arg, int m)
     {
       g_cpg(arg, ONELINERS, m, PATH_MAX);
       ofl |= F_OVRR_ONELINERS;
+      l_opt_cstdin(ONELINERS);
     }
   return 0;
 }
@@ -904,6 +934,7 @@ opt_imdblog(void *arg, int m)
     {
       g_cpg(arg, IMDBLOG, m, PATH_MAX);
       ofl |= F_OVRR_IMDBLOG;
+      l_opt_cstdin(IMDBLOG);
     }
   return 0;
 }
@@ -915,6 +946,7 @@ opt_tvlog(void *arg, int m)
     {
       g_cpg(arg, TVLOG, m, PATH_MAX);
       ofl |= F_OVRR_TVLOG;
+      l_opt_cstdin(TVLOG);
     }
   return 0;
 }
@@ -926,6 +958,7 @@ opt_gamelog(void *arg, int m)
     {
       g_cpg(arg, GAMELOG, m, PATH_MAX);
       ofl |= F_OVRR_GAMELOG;
+      l_opt_cstdin(GAMELOG);
     }
   return 0;
 }
@@ -937,6 +970,7 @@ opt_GE1LOG(void *arg, int m)
     {
       g_cpg(arg, GE1LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE1LOG;
+      l_opt_cstdin(GE1LOG);
     }
   return 0;
 }
@@ -948,6 +982,7 @@ opt_GE2LOG(void *arg, int m)
     {
       g_cpg(arg, GE2LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE2LOG;
+      l_opt_cstdin(GE2LOG);
     }
   return 0;
 }
@@ -959,6 +994,7 @@ opt_GE3LOG(void *arg, int m)
     {
       g_cpg(arg, GE3LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE3LOG;
+      l_opt_cstdin(GE3LOG);
     }
   return 0;
 }
@@ -970,6 +1006,7 @@ opt_GE4LOG(void *arg, int m)
     {
       g_cpg(arg, GE4LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE4LOG;
+      l_opt_cstdin(GE4LOG);
     }
   return 0;
 }
@@ -979,17 +1016,6 @@ opt_rebuild(void *arg, int m)
 {
   p_argv_off = g_pg(arg, m);
   updmode = UPD_MODE_REBUILD;
-  return 0;
-}
-
-int
-opt_dirlog_file(void *arg, int m)
-{
-  if (!(ofl & F_OVRR_DIRLOG))
-    {
-      g_cpg(arg, DIRLOG, m, PATH_MAX);
-      ofl |= F_OVRR_DIRLOG;
-    }
   return 0;
 }
 

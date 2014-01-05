@@ -16,9 +16,10 @@
  *   - % Log import (-z) ignores # commented lines
  *   - + Add --xretry
  *   - % Changed default behaviour: dirlog rebuild imports files on requested depth level
- *   - + Add --indepth - scans each import subject recursivelly (old behaviour)
+ *   - + Add --indepth - scans each import subject recursively (old behaviour)
  *   - % Passing '-' as argument to --folders reads from stdin
  *   - ~ Full filesystem rescan (dirlog rebuild) not recursing
+ *   - % Passing '-' as argument to path overrides reads from stdin
  *
  * v2.2:
  *
@@ -54,7 +55,6 @@
  *   - + Extended format/regex/match directives;
  *   -    Apply to -printf, --[i]regex[i] and --[i]match
  *   -    See MANUAL for more information
- *   -
  *   - + ref_to_val_lk_generic processes all directives (rev. 1)
  *   - ~ g_load_strm wrote to restricted memory (rev. 2)
  *   - ~ dt_rval_x_c was broken, replaced with dt_rval_c (rev. 2)
