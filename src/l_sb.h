@@ -8,7 +8,6 @@
 #ifndef L_SB_H_
 #define L_SB_H_
 
-#include <glutil.h>
 #include <t_glob.h>
 
 

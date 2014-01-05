@@ -117,11 +117,11 @@ md_relink_n(pmda md, off_t base)
 
   p_md_obj last = NULL, cur = md->objects;
 
-  off_t tot = (off_t) md->objects + (md->count * sizeof(md_obj));
+  size_t tot = (size_t) md->objects + ((size_t) md->count * sizeof(md_obj));
 
-  off_t totl = (size_t) md->count / base;
+  size_t totl = (size_t) md->count / base;
 
-  off_t cp = 0, cnt = 0;
+  size_t cp = 0, cnt = 0;
 
   for (cp = 0; cp < base; cp++)
     {
@@ -129,7 +129,7 @@ md_relink_n(pmda md, off_t base)
         {
           cur = md->objects + ((base * off) + cp);
           //cnt++;
-          if ((off_t) cur < tot)
+          if ((size_t) cur < tot)
             {
               cnt++;
               if (cur->ptr)

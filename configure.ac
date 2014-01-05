@@ -63,7 +63,7 @@ AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
-CFLAGS="-Wall -O3"
+CFLAGS="-Wall -O2"
 AC_SUBST(CFLAGS)
 
 AC_OUTPUT

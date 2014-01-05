@@ -9,9 +9,6 @@
 #include "config.h"
 
 #include <l_error.h>
-#include <im_hdr.h>
-#include <t_glob.h>
-#include <l_sb.h>
 #include <fp_types.h>
 #include <m_general.h>
 #include <exec_t.h>

@@ -6,10 +6,8 @@
  */
 
 #include <glutil.h>
-#include <glc.h>
 #include "config.h"
 
-#include <l_sb.h>
 #include <t_glob.h>
 #include <l_error.h>
 #include <cfgv.h>
