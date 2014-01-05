@@ -9,10 +9,7 @@
 #include "config.h"
 #include "dirlog.h"
 
-#include <t_glob.h>
-#include <im_hdr.h>
 #include <l_error.h>
-#include <l_sb.h>
 #include <g_modes.h>
 
 #include <log_io.h>
@@ -85,6 +82,7 @@ rebuild_dirlog(void)
       strncpy(g_act_1.mode, mode, strlen(mode));
       data_backup_records(DIRLOG);
     }
+
   g_act_1.block_sz = DL_SZ;
   g_act_1.flags |= F_GH_ISDIRLOG;
 
@@ -99,6 +97,8 @@ rebuild_dirlog(void)
       flags ^= F_DL_FOPEN_BUFFER;
     }
 
+  int r = 1;
+
   if (!strncmp(g_act_1.mode, "r", 1) && dfex)
     {
       if (gfl & F_OPT_VERBOSE)
@@ -108,11 +108,25 @@ rebuild_dirlog(void)
               DIRLOG);
         }
     }
-  else if (g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1))
+  else if ((r = g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1)))
     {
       print_str("ERROR: could not open dirlog, mode '%s', flags %u\n",
           g_act_1.mode, flags);
       return errno;
+    }
+
+  if (r)
+    {
+      if (determine_datatype(&g_act_1, DIRLOG))
+        {
+          print_str("ERROR: %s: determine_datatype failed\n", DIRLOG);
+          return 31;
+        }
+      if (g_proc_mr(&g_act_1))
+        {
+          print_str("ERROR: %s: g_proc_mr failed\n", DIRLOG);
+          return 32;
+        }
     }
 
   mda dirchain =
@@ -145,7 +159,7 @@ rebuild_dirlog(void)
       goto r_end;
     }
 
-  int r, r2;
+  int r2;
 
   if ((r = split_string(buffer, 0x13, &dirchain)) < 1)
     {
@@ -535,12 +549,12 @@ release_generate_block(char *name, ear *iarg)
   if (((r = enum_dir(name, proc_directory, iarg, 0, &eds)) < 1
       || !(iarg->dirlog->files)))
     {
-      if (gfl & F_OPT_VERBOSE)
-        {
-          print_str("WARNING: %s: [%d] - empty directory\n", name, r);
-        }
       if (!(gfl & F_OPT_FORCE))
         {
+          if (gfl & F_OPT_VERBOSE)
+            {
+              print_str("WARNING: %s: [%d] - empty directory\n", name, r);
+            }
           ret = 5;
         }
     }
