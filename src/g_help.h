@@ -65,6 +65,7 @@ char *hpd_up =
         "                           --full - ignore .folders file and do a full recursive scan\n"
         "                           --indepth - scans each imported directory recursivelly\n"
         "                           --nonukechk - disable checking dir nuke status in nukelog\n"
+        "                           --indepth - scan all subdirectories for each record found\n"
         "  -c, --check [--fix] [--ghost]\n"
         "                        Compare dirlog and filesystem records and warn on differences\n"
         "                          --fix attempts to correct dirlog/filesystem\n"
