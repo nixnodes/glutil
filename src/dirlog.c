@@ -515,8 +515,9 @@ release_generate_block(char *name, ear *iarg)
   _g_eds eds =
     { 0 };
 
-  if ((r = enum_dir(name, proc_directory, iarg, 0, &eds)) < 1
-      || !iarg->dirlog->files)
+  if (!(gfl & F_OPT_FORCE)
+      && ((r = enum_dir(name, proc_directory, iarg, 0, &eds)) < 1
+          || !(iarg->dirlog->files)))
     {
       if (gfl & F_OPT_VERBOSE)
         {

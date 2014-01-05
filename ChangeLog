@@ -18,6 +18,7 @@
  *   - % Changed default behaviour: dirlog rebuild imports files on requested depth level
  *   - + Add --indepth - scans each import subject recursivelly (old behaviour)
  *   - % Passing '-' as argument to --folders reads from stdin
+ *   - ~ Full filesystem rescan (dirlog rebuild) not recursing
  *
  * v2.2:
  *
