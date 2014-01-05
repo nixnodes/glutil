@@ -15,11 +15,12 @@
  *   - % Higher resolution (nanosecond) loop interval can be given to --loop
  *   - % Log import (-z) ignores # commented lines
  *   - + Add --xretry
- *   - % Changed default behaviour: dirlog rebuild imports files on requested depth level
- *   - + Add --indepth - scans each import subject recursively (old behaviour)
- *   - % Passing '-' as argument to --folders reads from stdin
- *   - ~ Full filesystem rescan (dirlog rebuild) not recursing
- *   - % Passing '-' as argument to path overrides reads from stdin
+ *   - % Changed default behaviour: dirlog rebuild imports files on requested depth level (2.3.8)
+ *   - + Add --indepth - scans each import subject recursively (old behaviour) (2.3.8)
+ *   - % Passing '-' as argument to --folders reads from stdin (2.3.8)
+ *   - ~ Full filesystem rescan (dirlog rebuild) not recursing (2.3.8)
+ *   - % Passing '-' as argument to path overrides reads from stdin (2.3.8)
+ *   - ~ Full filesystem rescan (dirlog rebuild) not scanning files (2.3.9)
  *
  * v2.2:
  *
