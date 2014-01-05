@@ -322,40 +322,58 @@ read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
   g_setjmp(0, "read_file", NULL, NULL);
   size_t read;
   int r;
-  FILE *fp = _fp;
+  FILE *fp;
 
-  if (!_fp)
+  if (file[0] == 0x2D)
     {
-      if (!file)
+      fp = stdin;
+    }
+  else
+    {
+      if (!_fp)
         {
-          return 0;
+          if (!file)
+            {
+              return 0;
+            }
+
+          off_t a_fsz = get_file_size(file);
+
+          if (!a_fsz)
+            return 0;
+
+          if (read_max > a_fsz)
+            {
+              read_max = a_fsz;
+            }
+
+          if ((fp = fopen(file, "rb")) == NULL)
+            {
+              return 0;
+            }
+        }
+      else
+        {
+          fp = _fp;
         }
 
-      off_t a_fsz = get_file_size(file);
-
-      if (!a_fsz)
-        return 0;
-
-      if (read_max > a_fsz)
+      if (offset)
         {
-          read_max = a_fsz;
+          fseek(fp, (off_t) offset, SEEK_SET);
         }
-      if ((fp = fopen(file, "rb")) == NULL)
-        return 0;
     }
 
-  if (offset)
-    fseek(fp, (off_t) offset, SEEK_SET);
-
-  for (read = 0; !feof(fp) && read < read_max;)
+  for (read = 0; !feof(fp) && !ferror(fp) && read < read_max;)
     {
       if ((r = fread(&((unsigned char*) buffer)[read], 1, read_max - read, fp))
           < 1)
-        break;
+        {
+          break;
+        }
       read += r;
     }
 
-  if (!_fp)
+  if (!_fp && fp != stdin)
     {
       fclose(fp);
     }

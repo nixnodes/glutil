@@ -16,7 +16,8 @@
  *   - % Log import (-z) ignores # commented lines
  *   - + Add --xretry
  *   - % Changed default behaviour: dirlog rebuild imports files on requested depth level
- *   - + Add --indepth - scans each import subject recursivelly (old behaviour) 
+ *   - + Add --indepth - scans each import subject recursivelly (old behaviour)
+ *   - % Passing '-' as argument to --folders reads from stdin
  *
  * v2.2:
  *
