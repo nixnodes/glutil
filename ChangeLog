@@ -25,6 +25,7 @@
  *   - ~ Update in full dirlog rebuild mode fixed (2.3.10)
  *   - ! Large performance boost in dirlog update mode (2.3.10)
  *   - ~ Dirlog rebuild update mode broken (-r -u) (2.3.10) 
+ *   - ~ Do not retry opening nukelog if it fails the first time (-r) (2.3.10)
  *
  * v2.2:
  *

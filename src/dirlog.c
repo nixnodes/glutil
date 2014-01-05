@@ -824,6 +824,7 @@ nukelog_find(char *dirn, int mode, struct nukelog *output)
 
   if (g_fopen(NUKELOG, "r", F_DL_FOPEN_BUFFER, &g_act_2))
     {
+      gfl0 |= F_OPT_NO_CHECK_NUKED;
       goto r_end;
     }
 
