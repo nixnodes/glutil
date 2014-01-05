@@ -52,6 +52,8 @@ int
 dirlog_write_record(struct dirlog *buffer, off_t offset, int whence);
 int
 get_relative_path(char *subject, char *root, char *output);
+char*
+get_relative_path_n(char *subject, char *root);
 uint64_t
 nukelog_find(char *dirn, int mode, struct nukelog *output);
 int

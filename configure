@@ -4527,7 +4527,7 @@ fi
 GLUTIL_PREFIX=$prefix
 
 
-CFLAGS="-Wall -O3"
+CFLAGS="-Wall -O2"
 
 
 cat >confcache <<\_ACEOF

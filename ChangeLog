@@ -24,6 +24,7 @@
  *   - % Changed option name for full dirlog rebuild from '-f' to '--full' (2.3.10)
  *   - ~ Update in full dirlog rebuild mode fixed (2.3.10)
  *   - ! Large performance boost in dirlog update mode (2.3.10)
+ *   - ~ Dirlog rebuild update mode broken (-r -u) (2.3.10) 
  *
  * v2.2:
  *

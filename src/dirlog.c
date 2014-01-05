@@ -438,7 +438,7 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             else
               {
                 print_str("ERROR: '%s': failed renaming '%s' to '%s'\n",
-                g_basename(iarg->buffer2), g_basename(iarg->buffer));
+                    g_basename(iarg->buffer2), g_basename(iarg->buffer));
               }
           }
 
@@ -786,14 +786,18 @@ dirlog_find_a(char *dirn, uint32_t flags, void *callback)
 
   struct dirlog buffer;
 
+  char *s_ptr;
+
+  s_ptr = get_relative_path_n(dirn, GLROOT);
+
   struct dirlog *d_ptr = NULL;
-  size_t r_l = strlen(dirn);
+  size_t r_l = strlen(s_ptr);
 
   while ((d_ptr = (struct dirlog *) g_read(&buffer, &g_act_1, DL_SZ)))
     {
       size_t l_l = strlen(d_ptr->dirname);
 
-      if (l_l == r_l && !strncmp(dirn, d_ptr->dirname, r_l))
+      if (l_l == r_l && !strncmp(s_ptr, d_ptr->dirname, r_l))
         {
           if (g_act_1.buffer.count)
             {
@@ -978,6 +982,29 @@ get_relative_path(char *subject, char *root, char *output)
 
   snprintf(output, PATH_MAX, "%s", &subject[i]);
   return 0;
+}
+
+char*
+get_relative_path_n(char *subject, char *root)
+{
+  char *o_s = subject;
+  while (subject[0] && root[0] && subject[0] == root[0])
+    {
+      subject++;
+      root++;
+    }
+
+  if (subject[0] != root[0] && root[0])
+    {
+      return o_s;
+    }
+
+  while (subject[-1] == 0x2F && subject[0])
+    {
+      subject--;
+    }
+
+  return subject;
 }
 
 int
