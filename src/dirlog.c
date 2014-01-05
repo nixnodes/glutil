@@ -32,7 +32,6 @@
 
 #define         ACT_WRITE_BUFFER_MEMBERS        10000
 
-
 int
 rebuild_dirlog(void)
 {
@@ -325,19 +324,21 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
     free(fn2);
     break;
   case DT_DIR:
-    if ((gfl & F_OPT_SFV)
-        && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
+    if (gfl0 & F_OPT_DRINDEPTH)
       {
-        enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
-      }
+        if ((gfl & F_OPT_SFV)
+            && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
+          {
+            enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
+          }
 
-    enum_dir(name, proc_directory, iarg, 0, eds);
+        enum_dir(name, proc_directory, iarg, 0, eds);
+      }
     break;
     }
 
   return 0;
 }
-
 
 int
 proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
@@ -605,7 +606,6 @@ release_generate_block(char *name, ear *iarg)
   return ret;
 }
 
-
 uint64_t
 dirlog_find(char *dirn, int mode, uint32_t flags, void *callback)
 {
@@ -751,7 +751,6 @@ dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback)
   return ur;
 }
 
-
 uint64_t
 nukelog_find(char *dirn, int mode, struct nukelog *output)
 {
@@ -814,9 +813,6 @@ nukelog_find(char *dirn, int mode, struct nukelog *output)
   return r;
 }
 
-
-
-
 int
 g_load_record(__g_handle hdl, const void *data)
 {
@@ -854,7 +850,6 @@ g_load_record(__g_handle hdl, const void *data)
 
   return 0;
 }
-
 
 int
 dirlog_write_record(struct dirlog *buffer, off_t offset, int whence)
@@ -926,7 +921,6 @@ get_relative_path(char *subject, char *root, char *output)
   snprintf(output, PATH_MAX, "%s", &subject[i]);
   return 0;
 }
-
 
 int
 dirlog_update_record(char *argv)
@@ -1041,8 +1035,6 @@ dirlog_update_record(char *argv)
 
   return ret;
 }
-
-
 
 int
 dirlog_check_records(void)
@@ -1303,7 +1295,6 @@ g_progress_stats(time_t s_t, time_t e_t, off_t total, off_t done)
       (float) (total - done) / rate);
 
 }
-
 
 int
 dirlog_check_dupe(void)

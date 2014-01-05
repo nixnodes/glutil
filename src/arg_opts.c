@@ -594,6 +594,13 @@ opt_pex(void *arg, int m)
 }
 
 int
+opt_g_indepth(void *arg, int m)
+{
+  gfl0 |= F_OPT_DRINDEPTH;
+  return 0;
+}
+
+int
 opt_g_cdironly(void *arg, int m)
 {
   gfl |= F_OPT_CDIRONLY;
@@ -1244,5 +1251,6 @@ void *f_ref[] =
       (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
       "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
       "--glconf", opt_pex, (void*) 0, "--ge4log", opt_GE4LOG, (void*) 1,
-      "--xretry", opt_g_xretry, (void*) 0,
+      "--xretry", opt_g_xretry, (void*) 0, "--indepth", opt_g_indepth,
+      (void*) 0,
       NULL, NULL, NULL };
