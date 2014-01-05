@@ -15,6 +15,8 @@
  *   - % Higher resolution (nanosecond) loop interval can be given to --loop
  *   - % Log import (-z) ignores # commented lines
  *   - + Add --xretry
+ *   - % Changed default behaviour: dirlog rebuild imports files on requested depth level
+ *   - + Add --indepth - scans each import subject recursivelly (old behaviour) 
  *
  * v2.2:
  *
