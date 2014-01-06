@@ -110,7 +110,7 @@ path_exec_on_match              /bin/nuker ..."
 ##
 ##	0 - Strict
 ##	1 - Normal
-##  2 - Loose
+##	2 - Loose
 ##
 ## Each is log configured separately.
 #
