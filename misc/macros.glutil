@@ -37,7 +37,14 @@
 ## Update directory log with new records and remove 
 ## records that are missing from filesystem 
 #
-#@MACRO:dirlog-update:{m:exe} -r -u -v --postexec "{exe} --check --fix --ghost -v"
+#@MACRO:dirlog-update:{m:exe} -r -u --postexec "{exe} --check --fix --ghost -v"
+#
+## <dirlog-full-update>
+#
+## Update directory log with new records and remove 
+## records that are missing from filesystem 
+#
+#@MACRO:dirlog-full-update:{m:exe} -r -u --full --postexec "{exe} --check --fix --ghost -v"
 #
 ## <dupe>
 #
