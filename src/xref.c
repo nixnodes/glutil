@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <math.h>
 
 int
 g_l_fmode_n(char *path, size_t max_size, char *output)
@@ -141,6 +142,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       snprintf(output, max_size, "%u", (uint32_t) st.st_gid);
     }
+#if defined HAVE_STRUCT_STAT_ST_BLKSIZE
   else if (!strncmp(match, _MC_X_BLKSIZE, 7))
     {
       struct stat st;
@@ -150,8 +152,11 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       snprintf(output, max_size, "%u", (uint32_t) st.st_blksize);
     }
+#endif
+#if defined HAVE_STRUCT_STAT_ST_BLOCKS
   else if (!strncmp(match, _MC_X_BLOCKS, 6))
     {
+
       struct stat st;
       if (lstat(data->name, &st))
         {
@@ -159,6 +164,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       snprintf(output, max_size, "%u", (uint32_t) st.st_blocks);
     }
+#endif
   else if (!strncmp(match, _MC_X_ATIME, 5))
     {
       struct stat st;
@@ -261,8 +267,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       else
         {
-          snprintf(output, max_size, "%f",
-              ((float) st.st_blksize * (float) st.st_blocks / (float) st.st_size));
+          snprintf(output, max_size, "%f", file_sparseness(&st));
         }
     }
   else if (!strncmp(match, _MC_X_CRC32, 5))
@@ -404,18 +409,22 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
       data->flags |= F_XRF_DO_STAT;
       return &((__d_xref) NULL)->st.st_gid;
     }
+#if defined HAVE_STRUCT_STAT_ST_BLKSIZE
   else if (!strncmp(match, _MC_X_BLKSIZE, 7))
     {
       *output = sizeof(data->st.st_blksize);
       data->flags |= F_XRF_DO_STAT;
       return &((__d_xref) NULL)->st.st_blksize;
     }
+#endif
+#if defined HAVE_STRUCT_STAT_ST_BLOCKS
   else if (!strncmp(match, _MC_X_BLOCKS, 6))
     {
       *output = sizeof(data->st.st_blocks);
       data->flags |= F_XRF_DO_STAT;
       return &((__d_xref) NULL)->st.st_blocks;
     }
+#endif
   else if (!strncmp(match, _MC_X_ATIME, 5))
     {
       *output = ~((int) sizeof(data->st.st_atime));
@@ -587,21 +596,25 @@ dt_rval_x_gid(void *arg, char *match, char *output, size_t max_size, void *mppd)
   return output;
 }
 
+#if defined HAVE_STRUCT_STAT_ST_BLKSIZE
 char *
 dt_rval_x_blksize(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_blksize);
   return output;
 }
+#endif
 
+#if defined HAVE_STRUCT_STAT_ST_BLOCKS
 char *
 dt_rval_x_blocks(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_blocks);
   return output;
 }
+#endif
 
 char *
 dt_rval_x_atime(void *arg, char *match, char *output, size_t max_size,
@@ -789,6 +802,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         }
       return as_ref_to_val_lk(match, dt_rval_x_gid ,(__d_drt_h)mppd, "%u");
     }
+#if defined HAVE_STRUCT_STAT_ST_BLKSIZE
   else if (!strncmp(match, _MC_X_BLKSIZE, 7))
     {
       if ( arg)
@@ -797,6 +811,8 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         }
       return as_ref_to_val_lk(match, dt_rval_x_blksize ,(__d_drt_h)mppd, "%u");
     }
+#endif
+#if defined HAVE_STRUCT_STAT_ST_BLOCKS
   else if (!strncmp(match, _MC_X_BLOCKS, 6))
     {
       if ( arg)
@@ -805,6 +821,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         }
       return as_ref_to_val_lk(match, dt_rval_x_blocks ,(__d_drt_h)mppd, "%u");
     }
+#endif
   else if (!strncmp(match, _MC_X_ATIME, 5))
     {
       if ( arg)
@@ -1148,9 +1165,7 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
             }
           if (aa_rh->p_xref.flags & F_XRF_GET_SPARSE)
             {
-              aa_rh->p_xref.sparseness = ((float) aa_rh->p_xref.st.st_blksize
-                  * (float) aa_rh->p_xref.st.st_blocks
-                  / (float) aa_rh->p_xref.st.st_size);
+              aa_rh->p_xref.sparseness = file_sparseness(&aa_rh->p_xref.st);
             }
         }
     }
@@ -1416,4 +1431,25 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
 
   closedir(dp);
   return r;
+}
+
+float
+file_sparseness(const struct stat *p)
+{
+#if defined HAVE_STRUCT_STAT_ST_BLOCKS
+  if (0 == p->st_size)
+    {
+      if (0 == p->st_blocks)
+      return 1.0;
+      else
+      return p->st_blocks < 0 ? -HUGE_VAL : HUGE_VAL;
+    }
+  else
+    {
+      double blklen = ST_NBLOCKSIZE * (double)p->st_blocks;
+      return (float)(blklen / p->st_size);
+    }
+#else
+  return 1.0;
+#endif
 }

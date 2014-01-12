@@ -65,7 +65,7 @@ FLAGS:
    links      I     Number of hard links
    uid        I     User ID of owner
    gid        I     Uroup ID of owner
-   blksize    I     Blocksize for filesystem I/O
+   blksize    I     Optimal block size for filesystem I/O
    blocks     I     Number of 512B blocks allocated
    sparse     F     File's sparseness.
    atime      I     Time of last access

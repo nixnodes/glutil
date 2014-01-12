@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.3.11], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.3.12], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
 AM_MAINTAINER_MODE([disable])
@@ -65,6 +65,9 @@ AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
 CFLAGS="-Wall -O2"
 AC_SUBST(CFLAGS)
+
+AC_CHECK_MEMBERS([struct stat.st_blksize])
+AC_STRUCT_ST_BLOCKS
 
 AC_OUTPUT
 

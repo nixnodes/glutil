@@ -74,6 +74,76 @@
 #define F_EDS_ROOTMINSET                (a32 << 1)
 #define F_EDS_KILL                      (a32 << 2)
 
+/* Get or fake the disk device blocksize.
+ Usually defined by sys/param.h (if at all).  */
+#ifndef DEV_BSIZE
+# ifdef BSIZE
+#  define DEV_BSIZE BSIZE
+# else /* !BSIZE */
+#  define DEV_BSIZE 4096
+# endif /* !BSIZE */
+#endif /* !DEV_BSIZE */
+
+/* Extract or fake data from a `struct stat'.
+ ST_BLKSIZE: Preferred I/O blocksize for the file, in bytes.
+ ST_NBLOCKS: Number of blocks in the file, including indirect blocks.
+ ST_NBLOCKSIZE: Size of blocks used when calculating ST_NBLOCKS.  */
+#ifndef HAVE_STRUCT_STAT_ST_BLOCKS
+# define ST_BLKSIZE(statbuf) DEV_BSIZE
+# if defined _POSIX_SOURCE || !defined BSIZE /* fileblocks.c uses BSIZE.  */
+#  define ST_NBLOCKS(statbuf) \
+  (S_ISREG ((statbuf).st_mode) \
+   || S_ISDIR ((statbuf).st_mode) \
+   ? (statbuf).st_size / ST_NBLOCKSIZE + ((statbuf).st_size % ST_NBLOCKSIZE != 0) : 0)
+# else /* !_POSIX_SOURCE && BSIZE */
+#  define ST_NBLOCKS(statbuf) \
+  (S_ISREG ((statbuf).st_mode) \
+   || S_ISDIR ((statbuf).st_mode) \
+   ? st_blocks ((statbuf).st_size) : 0)
+# endif /* !_POSIX_SOURCE && BSIZE */
+#else /* HAVE_STRUCT_STAT_ST_BLOCKS */
+/* Some systems, like Sequents, return st_blksize of 0 on pipes. */
+# define ST_BLKSIZE(statbuf) ((statbuf).st_blksize > 0 \
+                               ? (statbuf).st_blksize : DEV_BSIZE)
+# if defined hpux || defined __hpux__ || defined __hpux
+/* HP-UX counts st_blocks in 1024-byte units.
+ This loses when mixing HP-UX and BSD filesystems with NFS.  */
+#  define ST_NBLOCKSIZE 1024
+# else /* !hpux */
+#  if defined _AIX && defined _I386
+/* AIX PS/2 counts st_blocks in 4K units.  */
+#   define ST_NBLOCKSIZE (4 * 1024)
+#  else /* not AIX PS/2 */
+#   if defined _CRAY
+#    define ST_NBLOCKS(statbuf) \
+  (S_ISREG ((statbuf).st_mode) \
+   || S_ISDIR ((statbuf).st_mode) \
+   ? (statbuf).st_blocks * ST_BLKSIZE(statbuf)/ST_NBLOCKSIZE : 0)
+#   endif /* _CRAY */
+#  endif /* not AIX PS/2 */
+# endif /* !hpux */
+#endif /* HAVE_STRUCT_STAT_ST_BLOCKS */
+
+#ifndef ST_NBLOCKS
+# define ST_NBLOCKS(statbuf) \
+  (S_ISREG ((statbuf).st_mode) \
+   || S_ISDIR ((statbuf).st_mode) \
+   ? (statbuf).st_blocks : 0)
+#endif
+
+#ifndef ST_NBLOCKSIZE
+# define ST_NBLOCKSIZE 512
+#endif
+
+#ifdef major                    /* Might be defined in sys/types.h.  */
+#define HAVE_MAJOR
+#endif
+#ifndef HAVE_MAJOR
+#define major(dev)  (((dev) >> 8) & 0xff)
+#define minor(dev)  ((dev) & 0xff)
+#endif
+#undef HAVE_MAJOR
+
 typedef struct ___d_xref_ct
 {
   uint8_t active;
@@ -84,7 +154,6 @@ typedef struct ___d_xref_ct
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
 
 typedef struct ___d_xref
 {
@@ -102,7 +171,6 @@ typedef struct ___d_xref
   _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
 
-
 typedef struct ___g_eds
 {
   uint32_t flags;
@@ -110,8 +178,6 @@ typedef struct ___g_eds
   struct stat st;
   off_t depth;
 } _g_eds, *__g_eds;
-
-
 
 typedef void
 (*__d_xproc_rc)(char *name, void* aa_rh, __g_eds eds);
@@ -174,5 +240,8 @@ int
 g_dump_ug(char *ug);
 int
 g_dump_gen(char *root);
+
+float
+file_sparseness(const struct stat *p);
 
 #endif /* XREF_H_ */

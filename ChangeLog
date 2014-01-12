@@ -27,6 +27,7 @@
  *   - ~ Dirlog rebuild update mode broken (-r -u) (2.3.10) 
  *   - ~ Do not retry opening nukelog if it fails the first time (-r) (2.3.11)
  *   - ~ Filtering options broken when no log existed (-r) (2.3.11)
+ *   - ~ Sparseness ({sparse}) was not calculated properly (2.3.12)
  *
  * v2.2:
  *
