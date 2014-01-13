@@ -415,7 +415,8 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
         if (g_bmatch(iarg->dirlog, &g_act_1, &g_act_1.buffer))
           {
-            if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV))
+            if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)
+                && !(gfl & F_OPT_NOWRITE))
               {
                 if (remove(iarg->buffer))
                   {
@@ -427,7 +428,8 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
         if (gfl & F_OPT_KILL_GLOBAL)
           {
-            if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV))
+            if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)
+                && !(gfl & F_OPT_NOWRITE))
               {
                 if (remove(iarg->buffer))
                   {
@@ -437,7 +439,8 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             goto end;
           }
 
-        if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV))
+        if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)
+            && !(gfl & F_OPT_NOWRITE))
           {
             iarg->dirlog->bytes += (uint64_t) get_file_size(iarg->buffer);
             iarg->dirlog->files++;
@@ -451,8 +454,12 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
               }
             else
               {
-                print_str("ERROR: '%s': failed renaming '%s' to '%s'\n",
+                print_str("ERROR: failed renaming '%s' to '%s'\n",
                     g_basename(iarg->buffer2), g_basename(iarg->buffer));
+                if (remove(iarg->buffer2))
+                  {
+                    print_str( MSG_PS_UWSFV, iarg->buffer);
+                  }
               }
           }
 

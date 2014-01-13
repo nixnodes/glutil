@@ -8,7 +8,7 @@
 #ifndef DIRLOG_H_
 #define DIRLOG_H_
 
-#define MSG_PS_UWSFV    "WARNING: %s: unable wiping temp. SFV file (remove it manually)\n"
+#define MSG_PS_UWSFV    "WARNING: %s: unable to wipe temp. SFV file (remove it manually)\n"
 
 #define MAX_WBUFFER_HOLD        100000
 
