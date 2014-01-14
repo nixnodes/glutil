@@ -63,7 +63,7 @@ AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
-CFLAGS="-Wall -g -O2"
+CFLAGS="-Wall -O2"
 AC_SUBST(CFLAGS)
 
 AC_CHECK_MEMBERS([struct stat.st_blksize])
