@@ -74,6 +74,10 @@
 #define F_EDS_ROOTMINSET                (a32 << 1)
 #define F_EDS_KILL                      (a32 << 2)
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 /* Get or fake the disk device blocksize.
  Usually defined by sys/param.h (if at all).  */
 #ifndef DEV_BSIZE
@@ -150,10 +154,6 @@ typedef struct ___d_xref_ct
   time_t curtime;
   int ct_off;
 } _d_xref_ct, *__d_xref_ct;
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 typedef struct ___d_xref
 {

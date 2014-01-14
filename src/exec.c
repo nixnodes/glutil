@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-
 #include <stdlib.h>
 
 long amax = 0;
