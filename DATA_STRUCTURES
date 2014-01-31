@@ -77,6 +77,7 @@ FLAGS:
    uperm      I     User permission octet
    gperm      I     Group permission octet
    operm      I     Others permission octet
+   sperm      I     SUID/SGID/sticky bit octet
    perm       S     File permissions string
    crc32      I     CRC32 of file (hexadecimal)
    dec-crc32  S     CRC32 of file (decimal)

@@ -32,6 +32,7 @@
 #define _MC_X_OPERM             "operm"
 #define _MC_X_GPERM             "gperm"
 #define _MC_X_UPERM             "uperm"
+#define _MC_X_SPERM             "sperm"
 #define _MC_X_SPARSE            "sparse"
 #define _MC_X_CRC32             "crc32"
 #define _MC_X_DCRC32            "dec-crc32"
@@ -56,6 +57,7 @@
 #define F_XRF_GET_MAJOR         (a32 << 13)
 #define F_XRF_GET_SPARSE        (a32 << 14)
 #define F_XRF_GET_STCTIME       (a32 << 15)
+#define F_XRF_GET_SPERM         (a32 << 16)
 
 #define F_PD_RECURSIVE                  (a32 << 1)
 #define F_PD_MATCHDIR                   (a32 << 2)
@@ -161,7 +163,7 @@ typedef struct ___d_xref
   struct stat st;
   uint8_t type;
   uint8_t r, w, x;
-  uint8_t uperm, gperm, operm;
+  uint8_t uperm, gperm, operm, sperm;
   uint16_t perm;
   uint32_t flags;
   uint32_t crc32;

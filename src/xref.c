@@ -213,8 +213,8 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       else
         {
-          snprintf(output, max_size, "%hu",
-              (uint16_t) ((st.st_mode & S_IRWXU) >> 6));
+          snprintf(output, max_size, "%hhu",
+              (uint8_t) ((st.st_mode & S_IRWXU) >> 6));
         }
     }
   else if (!strncmp(match, _MC_X_GPERM, 5))
@@ -226,8 +226,8 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       else
         {
-          snprintf(output, max_size, "%hu",
-              (uint16_t) ((st.st_mode & S_IRWXG) >> 3));
+          snprintf(output, max_size, "%hhu",
+              (uint8_t) ((st.st_mode & S_IRWXG) >> 3));
         }
     }
   else if (!strncmp(match, _MC_X_OPERM, 5))
@@ -239,8 +239,21 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       else
         {
-          snprintf(output, max_size, "%hu",
-              (uint16_t) ((st.st_mode & S_IRWXO)));
+          snprintf(output, max_size, "%hhu",
+              (uint8_t) ((st.st_mode & S_IRWXO)));
+        }
+    }
+  else if (!strncmp(match, _MC_X_SPERM, 5))
+    {
+      struct stat st;
+      if (lstat(data->name, &st))
+        {
+          strcp_s(output, max_size, "-1");
+        }
+      else
+        {
+          snprintf(output, max_size, "%hhu",
+              (uint8_t) ((st.st_mode & (S_ISUID | S_ISGID | S_ISVTX))));
         }
     }
   else if (!strncmp(match, _MC_X_PERM, 4))
@@ -252,7 +265,8 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       else
         {
-          snprintf(output, max_size, "%hu%hu%hu",
+          snprintf(output, max_size, "%hu%hu%hu%hu",
+              (uint16_t) ((st.st_mode & (S_ISUID | S_ISGID | S_ISVTX))) >> 9,
               (uint16_t) ((st.st_mode & S_IRWXU) >> 6),
               (uint16_t) ((st.st_mode & S_IRWXG) >> 3),
               (uint16_t) ((st.st_mode & S_IRWXO)));
@@ -360,6 +374,12 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
       *output = sizeof(data->operm);
       data->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
       return &((__d_xref) NULL)->operm;
+    }
+  else if (!strncmp(match, _MC_X_SPERM, 5))
+    {
+      *output = sizeof(data->operm);
+      data->flags |= F_XRF_GET_SPERM | F_XRF_DO_STAT;
+      return &((__d_xref) NULL)->sperm;
     }
   else if (!strncmp(match, _MC_X_DEVID, 5))
     {
@@ -668,7 +688,7 @@ char *
 dt_rval_x_uperm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->uperm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint8_t) ((__d_xref) arg)->uperm);
   return output;
 }
 
@@ -676,7 +696,7 @@ char *
 dt_rval_x_gperm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->gperm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint8_t) ((__d_xref) arg)->gperm);
   return output;
 }
 
@@ -684,7 +704,15 @@ char *
 dt_rval_x_operm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint16_t) ((__d_xref) arg)->operm);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint8_t) ((__d_xref) arg)->operm);
+  return output;
+}
+
+char *
+dt_rval_x_sperm(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint8_t) ((__d_xref) arg)->sperm);
   return output;
 }
 
@@ -692,7 +720,7 @@ char *
 dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hhu%hhu%hhu", (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
+  snprintf(output, max_size, "%hhu%hhu%hhu%hhu", ((__d_xref) arg)->sperm, (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
   return output;
 }
 
@@ -876,7 +904,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
         }
-      return as_ref_to_val_lk(match, dt_rval_x_uperm ,(__d_drt_h)mppd, "%hu");
+      return as_ref_to_val_lk(match, dt_rval_x_uperm ,(__d_drt_h)mppd, "%hhu");
     }
   else if (!strncmp(match, _MC_X_GPERM, 5))
     {
@@ -884,7 +912,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
         }
-      return as_ref_to_val_lk(match, dt_rval_x_gperm ,(__d_drt_h)mppd, "%hu");
+      return as_ref_to_val_lk(match, dt_rval_x_gperm ,(__d_drt_h)mppd, "%hhu");
     }
   else if (!strncmp(match, _MC_X_OPERM, 5))
     {
@@ -892,15 +920,23 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         {
           ((__d_xref) arg)->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
         }
-      return as_ref_to_val_lk(match, dt_rval_x_operm ,(__d_drt_h)mppd, "%hu");
+      return as_ref_to_val_lk(match, dt_rval_x_operm ,(__d_drt_h)mppd, "%hhu");
+    }
+  else if (!strncmp(match, _MC_X_SPERM, 5))
+    {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_GET_SPERM | F_XRF_DO_STAT;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_sperm ,(__d_drt_h)mppd, "%hhu");
     }
   else if (!strncmp(match, _MC_X_PERM, 4))
     {
       if (arg)
         {
-          ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_GPERM | F_XRF_GET_UPERM | F_XRF_GET_OPERM;
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_GPERM | F_XRF_GET_UPERM | F_XRF_GET_OPERM | F_XRF_GET_SPERM;
         }
-      return as_ref_to_val_lk(match, dt_rval_x_perm ,(__d_drt_h)mppd, "%hhu%hhu%hhu");
+      return as_ref_to_val_lk(match, dt_rval_x_perm ,(__d_drt_h)mppd, "%hhu%hhu%hhu%hhu");
     }
   else if (!strncmp(match, _MC_X_SPARSE, 6))
     {
@@ -1154,6 +1190,11 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
           if (aa_rh->p_xref.flags & F_XRF_GET_OPERM)
             {
               aa_rh->p_xref.operm = (aa_rh->p_xref.st.st_mode & S_IRWXO);
+            }
+          if (aa_rh->p_xref.flags & F_XRF_GET_SPERM)
+            {
+              aa_rh->p_xref.sperm = (aa_rh->p_xref.st.st_mode
+                  & (S_ISUID | S_ISGID | S_ISVTX)) >> 9;
             }
           if (aa_rh->p_xref.flags & F_XRF_GET_MINOR)
             {
