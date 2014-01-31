@@ -125,12 +125,35 @@ int
 opt_g_loop(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  uint32_t li = (uint32_t) strtol(buffer, NULL, 10);
-  if (li)
-    {
-      g_sleep = (uint32_t) li;
-    }
+  g_sleep = (uint32_t) strtol(buffer, NULL, 10);
   gfl |= F_OPT_LOOP;
+
+  return 0;
+}
+
+int
+opt_g_loop_sleep(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+  g_omfp_sto = (uint32_t) strtol(buffer, NULL, 10);
+  if (g_omfp_sto)
+    {
+      gfl0 |= F_OPT_LOOP_SLEEP;
+    }
+
+  return 0;
+}
+
+int
+opt_g_loop_usleep(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+  g_omfp_suto = (uint32_t) strtol(buffer, NULL, 10);
+  if (g_omfp_suto)
+    {
+      gfl0 |= F_OPT_LOOP_USLEEP;
+    }
+
   return 0;
 }
 
@@ -143,7 +166,7 @@ opt_loop_max(void *arg, int m)
   if ((errno == ERANGE && (loop_max == LONG_MAX || loop_max == LONG_MIN))
       || (errno != 0 && loop_max == 0))
     {
-      return (a32 << 17);
+      return 4080;
     }
 
   return 0;
@@ -1057,14 +1080,18 @@ opt_g_xretry(void *arg, int m)
 int
 opt_g_sleep(void *arg, int m)
 {
-  g_sleep = atoi(g_pg(arg, m));
+  char *buffer = g_pg(arg, m);
+  g_sleep = (uint32_t) strtoul(buffer, NULL, 10);
+
   return 0;
 }
 
 int
 opt_g_usleep(void *arg, int m)
 {
-  g_usleep = atoi(g_pg(arg, m));
+  char *buffer = g_pg(arg, m);
+  g_usleep = (uint32_t) strtoul(buffer, NULL, 10);
+
   return 0;
 }
 
@@ -1307,5 +1334,6 @@ void *f_ref[] =
       "--ge4log", opt_GE4LOG, (void*) 1, "--xretry", opt_g_xretry, (void*) 0,
       "--indepth", opt_g_indepth, (void*) 0, "--full", opt_dirlog_rebuild_full,
       (void*) 0, "--arr", opt_arrange, (void*) 1, "--nonukechk",
-      opt_no_nuke_chk, (void*) 0,
+      opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1,
+      "--rusleep", opt_g_loop_usleep, (void*) 1,
       NULL, NULL, NULL };

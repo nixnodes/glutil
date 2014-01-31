@@ -32,6 +32,7 @@
  *   - + SUID/SGID/sticky bit octet support (2.3.13)
  *   - + Add 'pbits' (first 12 bits of st_mode) (2.3.13)
  *   - + Add 'st_mode' (2.3.13)
+ *   - + --r[u]sleep log parsing/filesystem walking timeout (2.3.13)
  *
  * v2.2:
  *

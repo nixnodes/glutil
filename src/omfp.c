@@ -145,6 +145,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
               continue;
             }
 
+          g_omfp_timeout();
+
           c++;
           g_act_1.g_proc4((void*) &g_act_1, ptr, NULL);
 
@@ -228,4 +230,20 @@ g_omfp_eassemblef(void *hdl, void *ptr, char *sbuffer)
     }
 
   printf("%s", b_glob);
+}
+
+void
+g_omfp_timeout(void)
+{
+  if (g_omfp_sto)
+    {
+      sleep(g_omfp_sto);
+    }
+  else
+    {
+      if (g_omfp_suto)
+        {
+          usleep(g_omfp_suto);
+        }
+    }
 }

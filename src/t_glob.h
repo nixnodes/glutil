@@ -166,6 +166,8 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_DRINDEPTH                 (a64 << 6)
 #define F_OPT_ARR_DIST                  (a64 << 7)
 #define F_OPT_NO_CHECK_NUKED            (a64 << 8)
+#define F_OPT_LOOP_SLEEP                (a64 << 9)
+#define F_OPT_LOOP_USLEEP               (a64 << 10)
 
 #define F_DL_FOPEN_BUFFER               (a32 << 1)
 #define F_DL_FOPEN_FILE                 (a32 << 2)

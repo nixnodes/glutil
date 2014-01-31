@@ -1320,8 +1320,10 @@ g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds)
   if ((g_bmatch((void*) &aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer)))
     {
       aa_rh->st_2++;
-      return 1;
+      return 2;
     }
+
+  g_omfp_timeout();
 
   aa_rh->rt_m = 0;
   aa_rh->st_1++;

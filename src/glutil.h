@@ -104,6 +104,8 @@ char *GLOBAL_POSTEXEC;
 
 char *spec_p1;
 
+uint32_t g_omfp_sto, g_omfp_suto;
+
 int
 g_print_str(const char * volatile buf, ...);
 
