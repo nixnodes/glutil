@@ -720,7 +720,7 @@ char *
 dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, "%hhu%hhu%hhu%hhu", ((__d_xref) arg)->sperm, (uint16_t) ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
+  snprintf(output, max_size, "%hhu%hhu%hhu%hhu", ((__d_xref) arg)->sperm, ((__d_xref) arg)->uperm, ((__d_xref) arg)->gperm, ((__d_xref) arg)->operm);
   return output;
 }
 
