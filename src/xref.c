@@ -80,6 +80,15 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       snprintf(output, max_size, "%hu", (unsigned short) IFTODT(st.st_mode));
     }
+  else if (!strncmp(match, _MC_X_ST_MODE, 6))
+    {
+      struct stat st;
+      if (lstat(data->name, &st))
+        {
+          return 1;
+        }
+      snprintf(output, max_size, "%u", st.st_mode);
+    }
   else if (!strncmp(match, _MC_X_DEVID, 5))
     {
       struct stat st;
@@ -357,6 +366,12 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
       data->flags |= F_XRF_GET_DT_MODE;
       return &((__d_xref) NULL)->type;
     }
+  else if (!strncmp(match,_MC_X_ST_MODE, 6))
+    {
+      *output = sizeof(data->st.st_mode);
+      data->flags |= F_XRF_DO_STAT;
+      return &((__d_xref) NULL)->st.st_mode;
+    }
   else if (!strncmp(match, _MC_X_ISREAD, 6))
     {
       *output = ~((int) sizeof(data->r));
@@ -585,6 +600,14 @@ dt_rval_x_mode(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_x_st_mode(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_xref) arg)->st.st_mode);
+  return output;
+}
+
+char *
 dt_rval_x_devid(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -805,6 +828,14 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
           ((__d_xref) arg)->flags |= F_XRF_GET_DT_MODE;
         }
       return as_ref_to_val_lk(match, dt_rval_x_mode ,(__d_drt_h)mppd, "%u");
+    }
+  else if (!strncmp(match, _MC_X_ST_MODE, 6))
+    {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_st_mode ,(__d_drt_h)mppd, "%u");
     }
   else if (!strncmp(match, _MC_X_DEVID, 5))
     {

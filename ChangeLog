@@ -31,6 +31,7 @@
  *   - ~ Certain stages of SFV rebuild ignoring --nowrite (2.3.12)
  *   - + SUID/SGID/sticky bit octet support (2.3.13)
  *   - + Add 'pbits' (first 12 bits of st_mode) (2.3.13)
+ *   - + Add 'st_mode' (2.3.13)
  *
  * v2.2:
  *

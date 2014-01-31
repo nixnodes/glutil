@@ -42,6 +42,7 @@
 #define _MC_X_PATH              "path"
 #define _MC_X_UID               "uid"
 #define _MC_X_GID               "gid"
+#define _MC_X_ST_MODE           "stmode"
 
 #define F_XRF_DO_STAT           (a32 << 1)
 #define F_XRF_GET_DT_MODE       (a32 << 2)
@@ -171,7 +172,7 @@ typedef struct ___d_xref
   uint32_t crc32;
   uint32_t major;
   uint32_t minor;
-  uint64_t pbits;
+  uint16_t pbits;
   float sparseness;
   _d_xref_ct ct[GM_MAX / 16];
   char sb_0[128];
