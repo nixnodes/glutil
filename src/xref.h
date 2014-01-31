@@ -29,6 +29,7 @@
 #define _MC_X_ISWRITE           "iswrite"
 #define _MC_X_ISEXEC            "isexec"
 #define _MC_X_PERM              "perm"
+#define _MC_X_PBITS             "pbits"
 #define _MC_X_OPERM             "operm"
 #define _MC_X_GPERM             "gperm"
 #define _MC_X_UPERM             "uperm"
@@ -58,6 +59,7 @@
 #define F_XRF_GET_SPARSE        (a32 << 14)
 #define F_XRF_GET_STCTIME       (a32 << 15)
 #define F_XRF_GET_SPERM         (a32 << 16)
+#define F_XRF_GET_PBITS         (a32 << 17)
 
 #define F_PD_RECURSIVE                  (a32 << 1)
 #define F_PD_MATCHDIR                   (a32 << 2)
@@ -169,8 +171,10 @@ typedef struct ___d_xref
   uint32_t crc32;
   uint32_t major;
   uint32_t minor;
+  uint64_t pbits;
   float sparseness;
   _d_xref_ct ct[GM_MAX / 16];
+  char sb_0[128];
 } _d_xref, *__d_xref;
 
 typedef struct ___g_eds

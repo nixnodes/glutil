@@ -1321,7 +1321,7 @@ d_write(char *arg)
           m = 1;
           while (ptr_r)
             {
-              if (!(m = g_bin_compare(ptr_r->ptr, ptr_w->ptr,
+              if (!(m = g_memcomp(ptr_r->ptr, ptr_w->ptr,
                   (off_t) g_act_1.block_sz)))
                 {
                   if (!md_unlink(&g_act_1.w_buffer, ptr_w))

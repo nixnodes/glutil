@@ -79,6 +79,7 @@ FLAGS:
    operm      I     Others permission octet
    sperm      I     SUID/SGID/sticky bit octet
    perm       S     File permissions string
+   pbits      I     Permission bits
    crc32      I     CRC32 of file (hexadecimal)
    dec-crc32  S     CRC32 of file (decimal)
    curtime    I     Seconds passed since Epoch (when LOM matching, trailing +/- increase/decrease this value, e.g curtime-3600, curtime+7200, ..)

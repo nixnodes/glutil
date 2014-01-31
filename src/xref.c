@@ -20,6 +20,7 @@
 #include <log_op.h>
 #include <m_general.h>
 #include <log_io.h>
+#include <misc.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -272,6 +273,23 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
               (uint16_t) ((st.st_mode & S_IRWXO)));
         }
     }
+  else if (!strncmp(match, _MC_X_PBITS, 5))
+    {
+      struct stat st;
+      if (lstat(data->name, &st))
+        {
+          strcp_s(output, max_size, "-1");
+        }
+      else
+        {
+          char buffer[13];
+          snprintf(output, max_size, "%s",
+              g_bitstr(
+                  (uint64_t) st.st_mode
+                      & (S_ISUID | S_ISGID | S_ISVTX | S_IRWXO | S_IRWXG
+                          | S_IRWXU), 12, buffer));
+        }
+    }
   else if (!strncmp(match, _MC_X_SPARSE, 6))
     {
       struct stat st;
@@ -380,6 +398,12 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
       *output = sizeof(data->operm);
       data->flags |= F_XRF_GET_SPERM | F_XRF_DO_STAT;
       return &((__d_xref) NULL)->sperm;
+    }
+  else if (!strncmp(match, _MC_X_PBITS, 5))
+    {
+      *output = sizeof(data->pbits);
+      data->flags |= F_XRF_GET_PBITS | F_XRF_DO_STAT;
+      return &((__d_xref) NULL)->pbits;
     }
   else if (!strncmp(match, _MC_X_DEVID, 5))
     {
@@ -725,6 +749,14 @@ dt_rval_x_perm(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_x_pbits(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  g_bitstr((uint64_t) (((__d_xref) arg)->pbits), 12, output);
+  return output;
+}
+
+char *
 dt_rval_x_sparse(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -937,6 +969,14 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_GPERM | F_XRF_GET_UPERM | F_XRF_GET_OPERM | F_XRF_GET_SPERM;
         }
       return as_ref_to_val_lk(match, dt_rval_x_perm ,(__d_drt_h)mppd, "%hhu%hhu%hhu%hhu");
+    }
+  else if (!strncmp(match, _MC_X_PBITS, 5))
+    {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT | F_XRF_GET_PBITS;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_pbits ,(__d_drt_h)mppd, "%s");
     }
   else if (!strncmp(match, _MC_X_SPARSE, 6))
     {
@@ -1195,6 +1235,11 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
             {
               aa_rh->p_xref.sperm = (aa_rh->p_xref.st.st_mode
                   & (S_ISUID | S_ISGID | S_ISVTX)) >> 9;
+            }
+          if (aa_rh->p_xref.flags & F_XRF_GET_PBITS)
+            {
+              aa_rh->p_xref.pbits = aa_rh->p_xref.st.st_mode
+                  & (S_ISUID | S_ISGID | S_ISVTX | S_IRWXO | S_IRWXG | S_IRWXU);
             }
           if (aa_rh->p_xref.flags & F_XRF_GET_MINOR)
             {

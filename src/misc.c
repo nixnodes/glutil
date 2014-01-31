@@ -21,7 +21,6 @@
 #include <dirent.h>
 #include <stdlib.h>
 
-
 #define PSTR_MAX        (V_MB/4)
 
 int
@@ -334,7 +333,7 @@ g_print_info(void)
 }
 
 int
-g_bin_compare(const void *p1, const void *p2, off_t size)
+g_memcomp(const void *p1, const void *p2, off_t size)
 {
   unsigned char *ptr1 = (unsigned char *) p1 + (size - 1), *ptr2 =
       (unsigned char *) p2 + (size - 1);
@@ -351,6 +350,20 @@ g_bin_compare(const void *p1, const void *p2, off_t size)
   return 1;
 }
 
+char *
+g_bitstr(uint64_t value, uint8_t bits, char *buffer)
+{
+  int16_t i = (int64_t) bits - 1, p;
+
+  buffer[i] = 0x0;
+
+  for (p = 0; p < bits; i--, p++)
+    {
+      buffer[i] = 0x30 + (value >> p & 1);
+    }
+
+  return buffer;
+}
 
 int
 print_version_long(void *arg, int m)

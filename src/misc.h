@@ -35,7 +35,9 @@ w_log(char *w, char *ow);
 int
 g_print_info(void);
 int
-g_bin_compare(const void *p1, const void *p2, off_t size);
+g_memcomp(const void *p1, const void *p2, off_t size);
+char *
+g_bitstr(uint64_t value, uint8_t bits, char *buffer);
 int
 find_absolute_path(char *exec, char *output);
 
