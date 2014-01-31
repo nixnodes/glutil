@@ -175,7 +175,6 @@ typedef struct ___d_xref
   uint16_t pbits;
   float sparseness;
   _d_xref_ct ct[GM_MAX / 16];
-  char sb_0[128];
 } _d_xref, *__d_xref;
 
 typedef struct ___g_eds
