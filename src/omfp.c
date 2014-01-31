@@ -230,6 +230,7 @@ g_omfp_eassemblef(void *hdl, void *ptr, char *sbuffer)
     }
 
   printf("%s", b_glob);
+  fflush(stdout);
 }
 
 void
