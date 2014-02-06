@@ -409,10 +409,8 @@ Updated: 4/12/2013
     This does two passes, one on each directory tree level, 1 does the,
     releases 2 the folders inside them.
 
-  Using -f (force) when recursing ignores the folders file and imports
+  Passing '--full' when recursing ignores the folders file and imports
   every single folder inside gl's site root into your dirlog (scanning
   it for sizes/file counts).
 
-  If folders file is missing, it automatically does full siteroot
-  recursion (same as '-f').
   
