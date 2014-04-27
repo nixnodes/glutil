@@ -449,7 +449,7 @@ int
 opt_raw_dump(void *arg, int m)
 {
   gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT | F_OPT_NOWRITE;
-  ;
+  gfl0 |= F_OPT_PS_ABSSILENT;
   return 0;
 }
 

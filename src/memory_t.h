@@ -24,7 +24,6 @@
 
 #define MDA_MDALLOC_RE                  (a32 << 1)
 
-
 typedef struct mda_object
 {
   void *ptr;
@@ -41,7 +40,6 @@ typedef struct mda_header
   void *lref_ptr;
 } mda, *pmda;
 
-
 int
 md_init(pmda md, int nm);
 p_md_obj
@@ -49,7 +47,8 @@ md_first(pmda md);
 int
 md_g_free(pmda md);
 int
-md_g_free_cb(pmda md, int (*cb)(void *));
+md_g_free_cb(pmda md, int
+(*cb)(void *));
 uintaa_t
 md_relink(pmda md);
 uintaa_t
@@ -70,6 +69,5 @@ int
 md_copy(pmda source, pmda dest, size_t block_sz);
 int
 is_memregion_null(void *addr, size_t size);
-
 
 #endif /* MEMORY_H_ */

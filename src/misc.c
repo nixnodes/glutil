@@ -86,7 +86,7 @@ g_print_str(const char * volatile buf, ...)
 
   char iserr = !(buf[0] == 0x45 && (buf[1] == 0x52 || buf[1] == 0x58));
 
-  if (iserr && (gfl & F_OPT_PS_SILENT))
+  if ((iserr && (gfl & F_OPT_PS_SILENT)) || (gfl0 & F_OPT_PS_ABSSILENT))
     {
       return 0;
     }

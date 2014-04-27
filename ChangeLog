@@ -33,6 +33,7 @@
  *   - + Add 'pbits' (first 12 bits of st_mode) (2.3.13)
  *   - + Add 'st_mode' (2.3.13)
  *   - + --r[u]sleep log parsing/filesystem walking timeout (2.3.13)
+ *   - ~ --raw dump was displaying stats info (2.3.14)
  *
  * v2.2:
  *

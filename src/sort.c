@@ -20,7 +20,6 @@ char *g_sort_field = NULL;
 
 uint32_t g_sort_flags = 0;
 
-
 int
 do_sort(__g_handle hdl, char *field, uint32_t flags)
 {
@@ -36,10 +35,21 @@ do_sort(__g_handle hdl, char *field, uint32_t flags)
       return 1;
     }
 
+  pmda m_ptr;
+
+  if (!(hdl->flags & F_GH_FFBUFFER))
+    {
+      m_ptr = &hdl->buffer;
+    }
+  else
+    {
+      m_ptr = &hdl->w_buffer;
+    }
+
   if ((gfl & F_OPT_VERBOSE))
     {
       print_str("NOTICE: %s: sorting %llu records..\n", hdl->file,
-          (uint64_t) hdl->buffer.offset);
+          (uint64_t) m_ptr->offset);
     }
 
   int r = g_sort(hdl, field, flags);
@@ -58,7 +68,6 @@ do_sort(__g_handle hdl, char *field, uint32_t flags)
 
   return r;
 }
-
 
 int
 g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
@@ -422,7 +431,6 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);
 
 }
-
 
 int
 opt_g_sort(void *arg, int m)
