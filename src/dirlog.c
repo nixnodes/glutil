@@ -251,7 +251,7 @@ rebuild_dirlog(void)
 
   g_close(&g_act_1);
 
-  if (dl_stats.bw || (gfl & F_OPT_VERBOSE4))
+  if ((dl_stats.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
     {
       print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
     }
@@ -1135,7 +1135,7 @@ dirlog_update_record(char *argv)
 
   md_g_free(&dirchain);
 
-  if (dl_stats.bw || (gfl & F_OPT_VERBOSE4))
+  if ((dl_stats.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
     {
       print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
     }
@@ -1379,7 +1379,7 @@ dirlog_check_records(void)
         }
       else
         {
-          if (g_act_1.bw || (gfl & F_OPT_VERBOSE4))
+          if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
             {
               print_str(MSG_GEN_WROTE, DIRLOG, (ulint64_t) g_act_1.bw,
                   (ulint64_t) g_act_1.rw);
@@ -1517,7 +1517,8 @@ dirlog_check_dupe(void)
         }
 
     }
-  if (gfl & F_OPT_VERBOSE)
+
+  if ((gfl & F_OPT_VERBOSE) && !(gfl0 & F_OPT_NOSTATS))
     {
       d_t = time(NULL);
       g_progress_stats(s_t, e_t, nrec, st3);

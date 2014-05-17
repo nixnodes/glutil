@@ -1,5 +1,10 @@
+ * 17/5/2014
+ 	Dump operations (-d, -n, ..) no longer output statistics by default
+ 	 (use '--stats' to revert to old behaviour)
+  
  * 5/1/2014
  	Changed option name for full dirlog rebuild from '-f' to '--full' (2.3.10)
  
  * 6/12/2013
  	Converted project to automake and fixed a bug (see ChangeLog)
+ 	

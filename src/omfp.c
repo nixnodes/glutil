@@ -160,7 +160,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   // g_setjmp(0, "dirlog_print_stats(2)", NULL, NULL);
 
-  if (!(g_act_1.flags & F_GH_ISONLINE))
+  if (!(g_act_1.flags & F_GH_ISONLINE) && (gfl0 & F_OPT_STATS))
     {
       print_str("STATS: %s: processed %llu/%llu records\n", file,
           (unsigned long long int) c,

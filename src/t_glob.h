@@ -94,6 +94,8 @@ typedef unsigned long long int ulint64_t;
 #define MSG_BAD_DATATYPE                "ERROR: %s: could not determine data type\n"
 #define MSG_GEN_WROTE                   "STATS: %s: wrote %llu bytes in %llu records\n"
 
+// gfl
+
 #define F_OPT_FORCE                     (a64 << 1)
 #define F_OPT_VERBOSE                   (a64 << 2)
 #define F_OPT_VERBOSE2                  (a64 << 3)
@@ -158,6 +160,8 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_DIR_FULL_REBUILD          (a64 << 62)
 #define F_OPT_FORMAT_EXPORT             (a64 << 63)
 
+// gfl0
+
 #define F_OPT_PRINT                     (a64 << 1)
 #define F_OPT_STDIN                     (a64 << 2)
 #define F_OPT_PRINTF                    (a64 << 3)
@@ -169,6 +173,8 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_LOOP_SLEEP                (a64 << 9)
 #define F_OPT_LOOP_USLEEP               (a64 << 10)
 #define F_OPT_PS_ABSSILENT              (a64 << 11)
+#define F_OPT_NOSTATS                   (a64 << 12)
+#define F_OPT_STATS                     (a64 << 13)
 
 #define F_DL_FOPEN_BUFFER               (a32 << 1)
 #define F_DL_FOPEN_FILE                 (a32 << 2)

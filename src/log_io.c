@@ -503,7 +503,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
   if (gfl0 & F_OPT_ARR_DIST)
     {
-      md->flags |= F_MDA_ARR_DIST ;
+      md->flags |= F_MDA_ARR_DIST;
       md_relink_n(md, 100);
     }
 
@@ -1354,7 +1354,7 @@ d_write(char *arg)
     }
   else
     {
-      if (g_act_1.bw || (gfl & F_OPT_VERBOSE4))
+      if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
         {
           print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
         }

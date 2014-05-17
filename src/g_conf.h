@@ -9,7 +9,7 @@
 #define G_CONF_H_
 
 #ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION "2.3.14"
+#define PACKAGE_VERSION "2.3.15"
 #endif
 
 #ifndef PACKAGE_NAME

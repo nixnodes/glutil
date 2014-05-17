@@ -158,6 +158,20 @@ opt_g_loop_usleep(void *arg, int m)
 }
 
 int
+opt_g_nostats(void *arg, int m)
+{
+  gfl0 |= F_OPT_NOSTATS;
+  return 0;
+}
+
+int
+opt_g_stats(void *arg, int m)
+{
+  gfl0 |= F_OPT_STATS;
+  return 0;
+}
+
+int
 opt_loop_max(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
@@ -1335,5 +1349,6 @@ void *f_ref[] =
       "--indepth", opt_g_indepth, (void*) 0, "--full", opt_dirlog_rebuild_full,
       (void*) 0, "--arr", opt_arrange, (void*) 1, "--nonukechk",
       opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1,
-      "--rusleep", opt_g_loop_usleep, (void*) 1,
+      "--rusleep", opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats,
+      (void*) 0, "--stats", opt_g_stats, (void*) 0,
       NULL, NULL, NULL };

@@ -478,7 +478,7 @@ rebuild(void *arg)
       return 5;
     }
 
-  if (g_act_1.bw || (gfl & F_OPT_VERBOSE4))
+  if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
     {
       print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
           (ulint64_t) g_act_1.rw);
