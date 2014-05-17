@@ -144,7 +144,7 @@ char *hpd_up =
         "Options:\n"
         "  -f                    Force operation where it applies (use -ff for greater effect)\n"
         "  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
-        "  --stats               Output statistics after operation finishes (applies to dump ops)\n"
+        "  --stats               Output statistics after operation finishes (applies to dump/parse ops)\n"
         "  --nostats             Disable operation statistics output\n"
         "  --nowrite             Perform a dry run, executing normally except no writing is done\n"
         "  --nobuffer            Disable data file memory buffering\n"
