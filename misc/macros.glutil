@@ -1,11 +1,16 @@
-#@REVISION:30
+#@REVISION:31
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
 #
 ## This file needs to be marked executable
 #
-## COMPATIBLE WITH LINUX ENVIRONMENTS ONLY!!
+## Remember, these 'macros' are nothing other than small
+## bash snippets, not created to work out of the box.
+## Create own macros with functionality specific to what
+## you need.
+#
+## COMPATIBLE WITH NEWER LINUX ENVIRONMENTS ONLY!!
 #
 ### Run with: ./glutil -m <macro name>
 ##
@@ -147,14 +152,14 @@
 #
 ## Remove unecessary entries from dirlog
 #
-#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|extras|vobsubs(s|)|subpack|proof|booklet|subs|cover(s|)|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|)$" --nofq -vvv
+#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|extras|vobsubs(s|())|subpack|proof|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" --nofq -vvv
 #
 ## <dirlog-full-clean>
 #
 ## Does the job of both <dirlog-clean-empty> 
 ##  and <dirlog-clean-junk>
 #
-#@MACRO:dirlog-full-clean:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|extras|vobsubs(s|)|subpack|booklet|subs|cover(s|)|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|)$" or lom size=0&&files=0
+#@MACRO:dirlog-full-clean:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" or lom size=0&&files=0
 #
 ## <dirlog-trim>
 #
