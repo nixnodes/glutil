@@ -35,7 +35,7 @@
  *   - + --r[u]sleep log parsing/filesystem walking timeout (2.3.13)
  *   - ~ --raw dump was displaying stats info (2.3.14)
  *   - + --stats and --nostats (read --help) (2.3.15)
- *   - ~ Disabled statistics after dump by default (2.3.15)
+ *   - % Disabled statistics after dump and filesystem traversal by default (2.3.15)
  *
  * v2.2:
  *

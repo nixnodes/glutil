@@ -135,7 +135,7 @@ int
 opt_g_loop_sleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  g_omfp_sto = (uint32_t) strtol(buffer, NULL, 10);
+  g_omfp_sto = (uint32_t) strtoul(buffer, NULL, 10);
   if (g_omfp_sto)
     {
       gfl0 |= F_OPT_LOOP_SLEEP;
@@ -148,7 +148,7 @@ int
 opt_g_loop_usleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  g_omfp_suto = (uint32_t) strtol(buffer, NULL, 10);
+  g_omfp_suto = (uint32_t) strtoul(buffer, NULL, 10);
   if (g_omfp_suto)
     {
       gfl0 |= F_OPT_LOOP_USLEEP;

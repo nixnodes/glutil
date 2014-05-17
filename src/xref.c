@@ -1216,7 +1216,7 @@ g_dump_gen(char *root)
       goto enter;
     }
 
-  if (!(gfl & F_OPT_FORMAT_BATCH))
+  if (!(gfl & F_OPT_FORMAT_BATCH) && (gfl0 & F_OPT_STATS))
     {
       print_str("STATS: %s: OK: %llu/%llu\n", ret.root,
           (unsigned long long int) ret.st_1,
@@ -1323,7 +1323,7 @@ g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds)
       return 2;
     }
 
-  g_omfp_timeout();
+  omfp_timeout;
 
   aa_rh->rt_m = 0;
   aa_rh->st_1++;
