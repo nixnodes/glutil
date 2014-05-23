@@ -36,8 +36,10 @@ long long int db_max_size = DB_MAX_SIZE;
 int
 g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 {
+
+
   g_setjmp(0, "g_fopen", NULL, NULL);
-  int r;
+  int r = 0;
   if (flags & F_DL_FOPEN_SHM)
     {
       if ((r = g_map_shm(hdl, SHM_IPC)))
@@ -70,6 +72,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
             {
               return 0;
             }
+          r = 1;
         }
       else
         {
@@ -93,45 +96,66 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   strncpy(hdl->file, file, strlen(file) + 1);
 
-  if (determine_datatype(hdl, hdl->file))
-    {
-      print_str(MSG_GEN_NODFILE, file, "could not determine data-type");
-      return 3;
-    }
-
   FILE *fd;
 
-  if (!(gfl0 & F_OPT_STDIN))
+  if (r != 1)
     {
-      hdl->total_sz = get_file_size(file);
 
-      if (!hdl->total_sz)
+      if (determine_datatype(hdl, hdl->file))
         {
-          print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
+          print_str(MSG_GEN_NODFILE, file, "could not determine data-type");
+          return 3;
         }
 
-      if (hdl->total_sz % hdl->block_sz)
+      if (!(gfl0 & F_OPT_STDIN))
         {
-          print_str(MSG_GEN_DFCORRU, file, (ulint64_t) hdl->total_sz,
-              hdl->block_sz);
-          return 4;
+          hdl->total_sz = get_file_size(file);
+
+          if (!hdl->total_sz)
+            {
+              print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
+            }
+
+          if (hdl->total_sz % hdl->block_sz)
+            {
+              print_str(MSG_GEN_DFCORRU, file, (ulint64_t) hdl->total_sz,
+                  hdl->block_sz);
+              return 4;
+            }
+
+          if (!(fd = fopen(file, mode)))
+            {
+              print_str(MSG_GEN_NODFILE, file, "not available");
+              return 1;
+            }
+        }
+      else
+        {
+          fd = stdin;
+          strncpy(hdl->file, "stdin", 7);
         }
 
-      if (!(fd = fopen(file, mode)))
+      if (g_proc_mr(hdl))
         {
-          print_str(MSG_GEN_NODFILE, file, "not available");
-          return 1;
+          return 32;
         }
+
     }
   else
     {
-      fd = stdin;
-      strncpy(hdl->file, "stdin", 7);
-    }
-
-  if (g_proc_mr(hdl))
-    {
-      return 32;
+      if (!(gfl0 & F_OPT_STDIN))
+        {
+          if (!(fd = fopen(file, mode)))
+            {
+              print_str(MSG_GEN_NODFILE, file, "not available");
+              return 1;
+            }
+        }
+      else
+        {
+          fd = stdin;
+          strncpy(hdl->file, "stdin", 7);
+        }
     }
 
   hdl->fh = fd;
@@ -544,7 +568,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           if (!(gfl & F_OPT_SHAREDMEM))
             {
               print_str(
-                  "ERROR: %s: [%s] unable to get information from data file\n",
+                  "ERROR: %s: [%s]\n",
                   file, strerror(errno));
               return 20201;
             }

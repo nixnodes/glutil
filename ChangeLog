@@ -38,6 +38,7 @@
  *   - % Disabled statistics after dump and filesystem traversal by default (rev. 15)
  *   - ~ dirlog rebuild (-r) forced ignore empty dir (rev. 16)
  *   - % --maxdepth and --mindepth work with dirlog rebuild mode (-r) (rev. 16)
+ *   - ~ Segfault when filters were applied during dirlog update (-r -u) (rev. 16) 
          
  *
  * v2.2:

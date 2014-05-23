@@ -83,8 +83,8 @@ rebuild_dirlog(void)
       data_backup_records(DIRLOG);
     }
 
-  g_act_1.block_sz = DL_SZ;
-  g_act_1.flags |= F_GH_ISDIRLOG;
+  //g_act_1.block_sz = DL_SZ;
+  //g_act_1.flags |= F_GH_ISDIRLOG;
 
   int dfex = file_exists(DIRLOG);
 
@@ -94,7 +94,10 @@ rebuild_dirlog(void)
           "WARNING: %s: requested update, but no dirlog exists - removing update flag..\n",
           DIRLOG);
       gfl ^= F_OPT_UPDATE;
-      flags ^= F_DL_FOPEN_BUFFER;
+      if (flags & F_DL_FOPEN_BUFFER)
+        {
+          flags ^= F_DL_FOPEN_BUFFER;
+        }
     }
 
   int r = 1;
