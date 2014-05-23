@@ -236,7 +236,7 @@ int
 opt_g_maxdepth(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  max_depth = (off_t) strtoll(buffer, NULL, 10);
+  max_depth = ((off_t) strtoll(buffer, NULL, 10)) + 1;
   gfl |= F_OPT_MAXDEPTH;
   return 0;
 }
@@ -245,7 +245,7 @@ int
 opt_g_mindepth(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  min_depth = (off_t) strtoll(buffer, NULL, 10);
+  min_depth = ((off_t) strtoll(buffer, NULL, 10)) + 1;
   gfl |= F_OPT_MINDEPTH;
   return 0;
 }

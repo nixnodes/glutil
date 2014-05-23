@@ -1316,6 +1316,7 @@ g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds)
     {
       return 1;
     }
+
   g_preproc_dm(name, aa_rh, type);
   if ((g_bmatch((void*) &aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer)))
     {
@@ -1335,9 +1336,7 @@ g_xproc_rc(char *name, void *aa_rh, __g_eds eds)
 {
   if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth))
     {
-      eds->depth++;
       enum_dir(name, g_process_directory, aa_rh, 0, eds);
-      eds->depth--;
     }
 }
 
@@ -1495,6 +1494,8 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
 
     }
 
+  eds->depth++;
+
   while ((dirp = readdir(dp)))
     {
       if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM))
@@ -1545,6 +1546,9 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
             }
         }
     }
+
+
+  eds->depth--;
 
   end:
 

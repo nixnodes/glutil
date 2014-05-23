@@ -1,3 +1,8 @@
+ * 23/5/2014
+    Changed behaviour: dirlog rebuild does not skip empty directories unconditionally.
+    Instead, specifiy appropriate filtering parameters (e.g. --lom "size = 0 && files = 0")
+    at the command line when running a dirlog rebuld (-r).
+ 
  * 17/5/2014
  	Dump operations (-d, -n, ..) and filesystem traversal (-x) no longer output 
  	statistics by default (use '--stats' to revert to old behaviour)

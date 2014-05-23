@@ -287,7 +287,7 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
     { 0 };
   char *fn, *fn2, *base;
 
-  if (!reg_match("\\/[.].*$", name, REG_NEWLINE))
+  if (!reg_match("(\\/|^)[.]{1,2}", name, 0))
     {
       return 1;
     }
@@ -350,21 +350,31 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
   return 0;
 }
 
+static void
+proc_sect_edec(char *name, void *callback, ear *iarg, __g_eds eds)
+{
+  if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth))
+    {
+      enum_dir(name, callback, iarg, 0, eds);
+    }
+}
+
 int
 proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 {
   ear *iarg = (ear*) arg;
   int r;
 
-  if (!reg_match("\\/[.]{1,2}", name, 0))
+  if (!reg_match("(\\/|^)[.]{1,2}", name, 0))
     {
       return 1;
     }
-
-  if (!reg_match("\\/[.].*$", name, REG_NEWLINE))
-    {
-      return 1;
-    }
+  /*
+   if (!reg_match("\\/[.].*$", name, REG_NEWLINE))
+   {
+   return 1;
+   }
+   */
 
   switch (type)
     {
@@ -380,6 +390,14 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
       }
 
     iarg->depth--;
+
+    if ((gfl & F_OPT_MINDEPTH) && eds->depth < min_depth)
+      {
+        proc_sect_edec(name, proc_section, iarg, eds);
+        iarg->depth++;
+        return 1;
+      }
+
     if (!iarg->depth || (gfl & F_OPT_DIR_FULL_REBUILD))
       {
         if (gfl & F_OPT_UPDATE)
@@ -413,7 +431,7 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             goto end;
           }
 
-        if (g_bmatch(iarg->dirlog, &g_act_1, &g_act_1.buffer))
+        if (gfl & F_OPT_KILL_GLOBAL)
           {
             if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)
                 && !(gfl & F_OPT_NOWRITE))
@@ -426,7 +444,7 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             goto end;
           }
 
-        if (gfl & F_OPT_KILL_GLOBAL)
+        if (g_bmatch(iarg->dirlog, &g_act_1, &g_act_1.buffer))
           {
             if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)
                 && !(gfl & F_OPT_NOWRITE))
@@ -490,18 +508,18 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
         if (gfl & F_OPT_DIR_FULL_REBUILD)
           {
-            enum_dir(name, proc_section, iarg, 0, eds);
+            proc_sect_edec(name, proc_section, iarg, eds);
           }
       }
     else
       {
-        enum_dir(name, proc_section, iarg, 0, eds);
+        proc_sect_edec(name, proc_section, iarg, eds);
       }
 
     iarg->depth++;
-    break;
+    return 0;
     }
-  return 0;
+  return 1;
 }
 
 int
@@ -556,13 +574,9 @@ release_generate_block(char *name, ear *iarg)
   if (((r = enum_dir(name, proc_directory, iarg, 0, &eds)) < 1
       || !(iarg->dirlog->files)))
     {
-      if (!(gfl & F_OPT_FORCE))
+      if (gfl & F_OPT_VERBOSE)
         {
-          if (gfl & F_OPT_VERBOSE)
-            {
-              print_str("WARNING: %s: [%d] - empty directory\n", name, r);
-            }
-          ret = 5;
+          print_str("WARNING: %s: [%d] - empty directory\n", name, r);
         }
     }
 
