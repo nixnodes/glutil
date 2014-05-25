@@ -175,7 +175,7 @@
 #
 #    glutil -m dirlog-trim -arg1=<maxsize>
 #
-#@MACRO:dirlog-trim:{m:exe} -e dirlog --maxres={m:arg1}  --nofq --rev -vvv
+#@MACRO:dirlog-trim|Rebuild dirlog with a limit of <maxsize> records; requires glutil-1.9-10 or above:{m:exe} -e dirlog --maxres={m:arg1}  --nofq --rev -vvv
 #
 ## <print-<log>-info>
 #
@@ -193,7 +193,7 @@
 ## Counts up files/size information from all dirlog
 ## records and displays
 #
-#@MACRO:dirlog-record-stats:{m:exe} -d --ilom "u64glob0 += size && u64glob1 += files" --postexec `echo "{q:dirlog@file}: Total site size: $(expr {u64glob0} / 1048576)MB in {u64glob1} files ; $(expr {u64glob0} / {q:dirlog@count} / 1048576)MB in $(expr {u64glob1} / {q:dirlog@count}) files per directory on average"` --silent
+#@MACRO:dirlog-record-stats| Counts up files/size information from all dirlog records and displays:{m:exe} -d --ilom "u64glob0 += size && u64glob1 += files" --postexec `echo "{q:dirlog@file}: Total site size: $(expr {u64glob0} / 1048576)MB in {u64glob1} files ; $(expr {u64glob0} / {q:dirlog@count} / 1048576)MB in $(expr {u64glob1} / {q:dirlog@count}) files per directory on average"` --silent
 #
 ## <imdb-record-stats>
 #
@@ -201,7 +201,7 @@
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-record-stats:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  ilom "u64glob3 += runtime && u64glob2 += votes && u64glob1 += year && f32glob0 += score && u64glob0 += 1" --postexec `echo -e "IMDB: {q:imdb@file}: Average iMDB score/year/votes/runtime: $(echo 'scale=2; {f32glob0} / {u64glob0}' | bc -l) / $(echo 'scale=3; {u64glob1} / {u64glob0}' | bc -l) / $(echo 'scale=1; {u64glob2} / {u64glob0}' | bc -l) / $(expr {u64glob3} \/ {u64glob0})min ; Total votes/runtime: {u64glob2} / $(echo 'scale=2; {u64glob3} / 60' | bc -l)hrs"` --silent
+#@MACRO:imdb-record-stats|iMDB log - various stats, dependencies\: bc:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  ilom "u64glob3 += runtime && u64glob2 += votes && u64glob1 += year && f32glob0 += score && u64glob0 += 1" --postexec `echo -e "IMDB: {q:imdb@file}: Average iMDB score/year/votes/runtime: $(echo 'scale=2; {f32glob0} / {u64glob0}' | bc -l) / $(echo 'scale=3; {u64glob1} / {u64glob0}' | bc -l) / $(echo 'scale=1; {u64glob2} / {u64glob0}' | bc -l) / $(expr {u64glob3} \/ {u64glob0})min ; Total votes/runtime: {u64glob2} / $(echo 'scale=2; {u64glob3} / 60' | bc -l)hrs"` --silent
 #
 ## <imdb-stats>
 #
@@ -209,7 +209,7 @@
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-stats:{m:exe} noop --preexec `{m:exe} -m print-imdb-info; {m:exe} -m imdb-record-stats`
+#@MACRO:imdb-stats|iMDB log - full stats:{m:exe} noop --preexec `{m:exe} -m print-imdb-info; {m:exe} -m imdb-record-stats`
 
 #
 ## <edit-<logname>>
