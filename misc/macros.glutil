@@ -1,4 +1,6 @@
-#@REVISION:33
+#@REVISION:34
+#
+## NOTE: This revision requires glutil 2.3.17 or higher
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -197,11 +199,17 @@
 #
 ## <imdb-record-stats>
 #
-## iMDB log - various stats
+## iMDB log - statistics - averages
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-record-stats|iMDB log - various stats, dependencies\: bc:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  ilom "u64glob3 += runtime && u64glob2 += votes && u64glob1 += year && f32glob0 += score && u64glob0 += 1" --postexec `echo -e "IMDB: {q:imdb@file}: Average iMDB score/year/votes/runtime: $(echo 'scale=2; {f32glob0} / {u64glob0}' | bc -l) / $(echo 'scale=3; {u64glob1} / {u64glob0}' | bc -l) / $(echo 'scale=1; {u64glob2} / {u64glob0}' | bc -l) / $(expr {u64glob3} \/ {u64glob0})min ; Total votes/runtime: {u64glob2} / $(echo 'scale=2; {u64glob3} / 60' | bc -l)hrs"` --silent
+#@MACRO:imdb-record-avgstats|iMDB log - statistics - averages, dependencies\: bc:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  ilom "u64glob3 += runtime && u64glob2 += votes && u64glob1 += year && f32glob0 += score && u64glob0 += 1" --postexec `echo -e "IMDB: {q:imdb@file}: Average iMDB score/year/votes/runtime: $(echo 'scale=2; {f32glob0} / {u64glob0}' | bc -l) / $(echo 'scale=3; {u64glob1} / {u64glob0}' | bc -l) / $(echo 'scale=1; {u64glob2} / {u64glob0}' | bc -l) / $(expr {u64glob3} \/ {u64glob0})min"` --silent
+#
+## iMDB log - total count statistics
+#
+## Dependencies: bc
+#
+#@MACRO:imdb-record-totalstats|iMDB log - total count statistics, dependencies\: bc:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  ilom "u64glob3 += runtime && u64glob2 += votes" --postexec `echo -e "IMDB: {q:imdb@file}: Total votes/runtime: {u64glob2} / $(echo 'scale=2; {u64glob3} / 60' | bc -l)hrs"` --silent
 #
 ## <imdb-stats>
 #
@@ -209,7 +217,7 @@
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-stats|iMDB log - full stats:{m:exe} noop --preexec `{m:exe} -m print-imdb-info; {m:exe} -m imdb-record-stats`
+#@MACRO:imdb-stats|iMDB log - full stats, dependencies\: bc:{m:exe} noop --preexec `{m:exe} -m print-imdb-info; {m:exe} -m imdb-record-avgstats; {m:exe} -m imdb-record-totalstats`
 
 #
 ## <edit-<logname>>
