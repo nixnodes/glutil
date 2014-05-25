@@ -169,7 +169,7 @@ process_macro(void * arg, char **out)
 
   if (gfl & F_OPT_VERBOSE)
     {
-      print_str("MACRO: '%s': EXECUTING: '%s'\n", av.p_buf_1, s_buffer);
+      print_str("MACRO: '%s': EXECUTING: %s\n", av.p_buf_1, s_buffer);
     }
 
   end:
