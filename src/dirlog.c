@@ -332,7 +332,7 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
     iarg->dirlog->files++;
     if ((gfl & F_OPT_VERBOSE4))
       {
-        print_str("     %s  %.2fMB%s\n", base, (double) fs / 1024.0 / 1024.0,
+        print_str("     %s  %.2fMB%s\n", name, (double) fs / 1024.0 / 1024.0,
             buffer);
       }
 
@@ -576,7 +576,7 @@ release_generate_block(char *name, ear *iarg)
   if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds)) < 1
       || !(iarg->dirlog->files)))
     {
-      if (gfl & F_OPT_VERBOSE)
+      if (gfl & F_OPT_VERBOSE2)
         {
           print_str("WARNING: %s: [%d] - empty directory\n", name, r);
         }
