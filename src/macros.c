@@ -293,12 +293,20 @@ ssd_mmode_list(char *name, __si_argv0 ptr, char *buffer)
 
   if (m_desc)
     {
-      printf("%s - %s[ %s ]\n", m_n,
+      printf("%s - %s[ %s ] ", m_n,
           !access(name, X_OK) ? "" : "[NOT EXECUTABLE] ", m_desc);
     }
   else
     {
-      printf("%s%s\n", m_n, !access(name, X_OK) ? "" : " [!NOT EXECUTABLE!]");
+      printf("%s%s ", m_n, !access(name, X_OK) ? "" : " [!NOT EXECUTABLE!]");
+    }
+
+  if (gfl & F_OPT_VERBOSE)
+    {
+      printf("[ %s ]\n",
+           name);
+    } else {
+        fputs("\n", stdout);
     }
 
   return 0;
