@@ -325,7 +325,7 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
         snprintf(buffer, PATH_MAX, "  %.8X", (uint32_t) crc32);
         free(fn);
       }
-    off_t fs = get_file_size(name);
+    uint64_t fs = (uint64_t) get_file_size(name);
     iarg->dirlog->bytes += fs;
     iarg->dirlog->files++;
     if ((gfl & F_OPT_VERBOSE4))
