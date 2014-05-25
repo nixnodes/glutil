@@ -24,6 +24,7 @@
 #define F_GM_IMATCH                     (a32 << 4)
 #define F_GM_NAND                       (a32 << 5)
 #define F_GM_NOR                        (a32 << 6)
+#define F_GM_ISACCU                     (a32 << 7)
 
 #define F_GM_TYPES                      (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
 
@@ -38,7 +39,7 @@ typedef int64_t
 typedef int
 (*g_op)(int s, int d);
 void
-g_ipcbm(void *ptr, pmda md, int *r_p);
+g_ipcbm(void *hdl, pmda md, int *r_p, void *ptr);
 int
 g_filter(__g_handle hdl, pmda md);
 int
@@ -73,6 +74,7 @@ typedef struct ___g_lom
   float tf_left, tf_right;
   /* --- */
   size_t t_l_off, t_r_off;
+  void *p_glob_stor;
 } _g_lom, *__g_lom;
 
 typedef struct ___g_match_h

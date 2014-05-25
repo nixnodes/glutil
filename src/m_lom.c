@@ -17,6 +17,7 @@
 #include <errno.h>
 
 #include <arg_proc.h>
+#include <mc_glob.h>
 
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
@@ -65,6 +66,24 @@ g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
     }
 
   return 1;
+}
+
+int
+g_lom_accu(__g_handle hdl, void *d_ptr, pmda _accumulator)
+{
+  p_md_obj ptr = _accumulator->objects;
+  __g_lom lom;
+
+  while (ptr)
+    {
+      lom = (__g_lom) ptr->ptr;
+
+      lom->g_lom_vp(d_ptr, (void*)lom);
+
+      ptr = ptr->next;
+    }
+
+  return 0;
 }
 
 int
@@ -173,19 +192,12 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
           goto build;
         }
 
-      while (ptr[0] == 0x20)
+      if (!strncmp(ptr, "+=", 2))
         {
-          ptr++;
+          flags |= F_GM_ISACCU;
         }
 
-      if (!is_comp(ptr[0]))
-        {
-          comp = ptr;
-        }
-      else
-        {
-          comp = NULL;
-        }
+      comp = ptr;
 
       while (!is_comp(ptr[0]))
         {
@@ -242,6 +254,11 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
           return 6;
         }
 
+      if (flags & F_GM_ISACCU)
+        {
+          flags ^= F_GM_ISACCU;
+        }
+
     }
 
   return 0;
@@ -261,8 +278,8 @@ void *_lcs_isnotorequal[] =
   { g_is_not, g_is_not_s, g_is_not_f };
 
 int
-g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field,
-    void *right, void *comp_set[], g_op lop)
+g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field, void *right,
+    void *comp_set[], g_op lop)
 {
   int rt = 0;
 
@@ -319,6 +336,43 @@ g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field,
   return rt;
 }
 
+static int
+g_get_lom_glob_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
+{
+  g_setjmp(0, "g_get_lom_glob_ptr", NULL, NULL);
+
+  int l_off = 7;
+
+  int idx = (int) strtol(&field[l_off], NULL, 10);
+
+  if (!(idx >= 0 && idx <= MAX_GLOB_STOR_AR_COUNT))
+    {
+      return 2054;
+    }
+
+  if (!strncmp(field, _MC_GLOB_U64G, 7))
+    {
+      lom->p_glob_stor = (void*) &glob_ui64_stor[idx];
+      memset(lom->p_glob_stor, 0x0, sizeof(uint64_t));
+    }
+  else if (!strncmp(field, _MC_GLOB_S64G, 7))
+    {
+      lom->p_glob_stor = (void*) &glob_si64_stor[idx];
+      memset(lom->p_glob_stor, 0x0, sizeof(int64_t));
+    }
+  else if (!strncmp(field, _MC_GLOB_F32G, 7))
+    {
+      lom->p_glob_stor = (void*) &glob_float_stor[idx];
+      memset(lom->p_glob_stor, 0x0, sizeof(float));
+    }
+  else
+    {
+      return 2055;
+    }
+
+  return 0;
+}
+
 int
 g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
     size_t comp_l, char *oper, size_t oper_l, __g_match match, __g_lom *ret,
@@ -326,9 +380,18 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 {
   g_setjmp(0, "g_build_lom_packet", NULL, NULL);
   int rt = 0;
-  md_init(&match->lom, 16);
+  __g_lom lom;
 
-  __g_lom lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
+  if (!(flags & F_GM_ISACCU))
+    {
+      md_init(&match->lom, 16);
+      lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
+    }
+  else
+    {
+      md_init(&hdl->_accumulator, 8);
+      lom = (__g_lom ) md_alloc(&hdl->_accumulator, sizeof(_g_lom));
+    }
 
   if (!lom)
     {
@@ -338,16 +401,33 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
   int r = 0;
 
-  if ((r = g_get_lom_g_t_ptr(hdl, left, lom, F_GLT_LEFT)))
+  if (!(flags & F_GM_ISACCU))
     {
-      rt = r;
-      goto end;
+      if ((r = g_get_lom_g_t_ptr(hdl, left, lom, F_GLT_LEFT)))
+        {
+          rt = r;
+          goto end;
+        }
+    }
+  else
+    {
+      if ((r = g_get_lom_glob_ptr(hdl, left, lom, F_GLT_LEFT)))
+        {
+          rt = r;
+          goto end;
+        }
     }
 
   char *r_ptr = right;
 
   if (!r_ptr)
     {
+      if (flags & F_GM_ISACCU)
+        {
+          rt = 21;
+          goto end;
+        }
+
       switch (lom->flags & F_LOM_TYPES)
         {
       case F_LOM_FLOAT:
@@ -491,6 +571,21 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
         }
 
     }
+  else if (comp_l == 2 && !strncmp(comp, "+=", 2))
+    {
+      switch (lom->flags & F_LOM_TYPES)
+        {
+      case F_LOM_FLOAT:
+        lom->g_lom_vp = g_lom_var_accu_float;
+        break;
+      case F_LOM_INT:
+        lom->g_lom_vp = g_lom_var_accu_uint;
+        break;
+      case F_LOM_INT_S:
+        lom->g_lom_vp = g_lom_var_accu_int;
+        break;
+        }
+    }
   else
     {
       rt = 11;
@@ -528,7 +623,7 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
     {
       md_unlink(&match->lom, match->lom.pos);
     }
-  else
+  else if (!(flags & F_GM_ISACCU))
     {
       match->flags |= F_GM_ISLOM;
       match->flags |= flags;
@@ -789,31 +884,9 @@ int
 g_lom_var_float(void *d_ptr, void *_lom)
 {
   __g_lom lom = _lom;
-  if (lom->g_tf_ptr_left)
-    {
-      lom->tf_left = lom->g_tf_ptr_left(d_ptr, lom->t_l_off);
-    }
-  else if (lom->g_t_ptr_left)
-    {
-      lom->tf_left = (float) lom->g_t_ptr_left(d_ptr, lom->t_l_off);
-    }
-  else if (lom->g_ts_ptr_left)
-    {
-      lom->tf_left = (float) lom->g_ts_ptr_left(d_ptr, lom->t_l_off);
-    }
 
-  if (lom->g_tf_ptr_right)
-    {
-      lom->tf_right = lom->g_tf_ptr_right(d_ptr, lom->t_r_off);
-    }
-  else if (lom->g_t_ptr_right)
-    {
-      lom->tf_right = (float) lom->g_t_ptr_right(d_ptr, lom->t_r_off);
-    }
-  else if (lom->g_ts_ptr_right)
-    {
-      lom->tf_right = (float) lom->g_ts_ptr_right(d_ptr, lom->t_r_off);
-    }
+  G_LOM_VAR_L(float, tf_left)
+  G_LOM_VAR_R(float, tf_right)
 
   lom->result = lom->g_fcomp_ptr(lom->tf_left, lom->tf_right);
 
@@ -825,31 +898,8 @@ g_lom_var_int(void *d_ptr, void *_lom)
 {
   __g_lom lom = _lom;
 
-  if (lom->g_ts_ptr_left)
-    {
-      lom->ts_left = lom->g_ts_ptr_left(d_ptr, lom->t_l_off);
-    }
-  else if (lom->g_t_ptr_left)
-    {
-      lom->ts_left = (int64_t) lom->g_t_ptr_left(d_ptr, lom->t_l_off);
-    }
-  else if (lom->g_tf_ptr_left)
-    {
-      lom->ts_left = (int64_t) lom->g_tf_ptr_left(d_ptr, lom->t_l_off);
-    }
-
-  if (lom->g_ts_ptr_right)
-    {
-      lom->ts_right = lom->g_ts_ptr_right(d_ptr, lom->t_r_off);
-    }
-  else if (lom->g_tf_ptr_right)
-    {
-      lom->ts_right = (int64_t) lom->g_tf_ptr_right(d_ptr, lom->t_r_off);
-    }
-  else if (lom->g_t_ptr_right)
-    {
-      lom->ts_right = (int64_t) lom->g_t_ptr_right(d_ptr, lom->t_r_off);
-    }
+  G_LOM_VAR_L(int64_t, ts_left)
+  G_LOM_VAR_R(int64_t, ts_right)
 
   lom->result = lom->g_iscomp_ptr(lom->ts_left, lom->ts_right);
 
@@ -860,33 +910,53 @@ int
 g_lom_var_uint(void *d_ptr, void *_lom)
 {
   __g_lom lom = _lom;
-  if (lom->g_t_ptr_left)
-    {
-      lom->t_left = lom->g_t_ptr_left(d_ptr, lom->t_l_off);
-    }
-  else if (lom->g_tf_ptr_left)
-    {
-      lom->t_left = (uint64_t) lom->g_tf_ptr_left(d_ptr, lom->t_l_off);
-    }
-  else if (lom->g_ts_ptr_left)
-    {
-      lom->t_left = (uint64_t) lom->g_ts_ptr_left(d_ptr, lom->t_l_off);
-    }
 
-  if (lom->g_t_ptr_right)
-    {
-      lom->t_right = lom->g_t_ptr_right(d_ptr, lom->t_r_off);
-    }
-  else if (lom->g_tf_ptr_right)
-    {
-      lom->t_right = (uint64_t) lom->g_tf_ptr_right(d_ptr, lom->t_r_off);
-    }
-  else if (lom->g_ts_ptr_right)
-    {
-      lom->t_right = (uint64_t) lom->g_ts_ptr_right(d_ptr, lom->t_r_off);
-    }
+  G_LOM_VAR_L(uint64_t, t_left)
+  G_LOM_VAR_R(uint64_t, t_right)
 
   lom->result = lom->g_icomp_ptr(lom->t_left, lom->t_right);
+
+  return 0;
+}
+
+int
+g_lom_var_accu_uint(void *d_ptr, void *_lom)
+{
+  __g_lom lom = _lom;
+
+  uint64_t *res = (uint64_t*) lom->p_glob_stor;
+  G_LOM_VAR_R(uint64_t, t_right)
+
+  lom->result = 1;
+  *res = *res + lom->t_right;
+
+  return 0;
+}
+
+int
+g_lom_var_accu_int(void *d_ptr, void *_lom)
+{
+  __g_lom lom = _lom;
+
+  int64_t *res = (int64_t*) lom->p_glob_stor;
+  G_LOM_VAR_R(int64_t, ts_right)
+
+  lom->result = 1;
+  *res = *res + (int64_t) lom->ts_right;
+
+  return 0;
+}
+
+int
+g_lom_var_accu_float(void *d_ptr, void *_lom)
+{
+  __g_lom lom = _lom;
+
+  float *res = (float*) lom->p_glob_stor;
+  G_LOM_VAR_R(float, tf_right)
+
+  lom->result = 1;
+  *res = *res + lom->tf_right;
 
   return 0;
 }

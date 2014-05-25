@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 
-
 struct d_stats dl_stats =
   { 0 };
 struct d_stats nl_stats =
@@ -137,6 +136,13 @@ _l_match _match_rr_l =
 
 char *GLOBAL_PREEXEC = NULL;
 char *GLOBAL_POSTEXEC = NULL;
+
+uint64_t glob_ui64_stor[255] =
+  { 0 };
+int64_t glob_si64_stor[255] =
+  { 0 };
+float glob_float_stor[255] =
+  { 0 };
 
 uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;

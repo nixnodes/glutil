@@ -257,6 +257,7 @@ g_cleanup(__g_handle hdl)
   r += md_g_free(&hdl->buffer);
   r += md_g_free(&hdl->w_buffer);
   r += md_g_free(&hdl->print_mech);
+  r += md_g_free(&hdl->_accumulator);
 
   p_md_obj ptr;
 

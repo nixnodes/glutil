@@ -79,6 +79,7 @@ typedef struct g_handle
   uint64_t flags;
   mda buffer, w_buffer;
   mda _match_rr;
+  mda _accumulator;
   off_t max_results, max_hits;
   __g_ipcbm ifrh_l0, ifrh_l1;
   _execv exec_args;

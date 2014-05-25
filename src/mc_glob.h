@@ -28,5 +28,9 @@
 #define _MC_GLOB_GENRE                   "genre"
 #define _MC_GLOB_XREF                   "x:"
 #define _MC_GLOB_XGREF                  "xg:"
+#define _MC_GLOB_FILE                   "file"
+#define _MC_GLOB_U64G                   "u64glob"
+#define _MC_GLOB_S64G                   "s64glob"
+#define _MC_GLOB_F32G                   "f32glob"
 
 #endif /* MC_GLOB_H_ */

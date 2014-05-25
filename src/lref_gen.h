@@ -36,12 +36,19 @@
 #define _MC_GE_GE7      "ge7"
 #define _MC_GE_GE8      "ge8"
 
+#define DT_GG_GIDX(m) { \
+  idx = (int) strtol(&m[7], NULL, 10);  \
+  if (!(idx >= 0 && idx <= MAX_GLOB_STOR_AR_COUNT))  \
+    {  \
+      return NULL;  \
+    } \
+}
+
 _d_rtv_lk ref_to_val_lk_generic;
 
 int
 ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     void *mppd);
-
 
 __g_proc_rv dt_rval_generic_nukestr, dt_rval_generic_procid,
     dt_rval_generic_ipc, dt_rval_generic_usroot, dt_rval_generic_logroot,
@@ -49,6 +56,7 @@ __g_proc_rv dt_rval_generic_nukestr, dt_rval_generic_procid,
     dt_rval_generic_exe, dt_rval_generic_glroot, dt_rval_generic_siteroot,
     dt_rval_generic_siterootn, dt_rval_generic_ftpdata,
     dt_rval_generic_imdbfile, dt_rval_generic_tvfile, dt_rval_generic_gamefile,
-    dt_rval_generic_spec1, dt_rval_generic_glconf, dt_rval_generic_logfile;
+    dt_rval_generic_spec1, dt_rval_generic_glconf, dt_rval_generic_logfile,
+    dt_rval_gg_int, dt_rval_gg_float;
 
 #endif /* LREF_GEN_H_ */

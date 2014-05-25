@@ -20,8 +20,6 @@
 #include <errno.h>
 #include <time.h>
 
-
-
 void
 dt_set_imdb(__g_handle hdl)
 {
@@ -77,7 +75,6 @@ ref_to_val_ptr_imdb(void *arg, char *match, int *output)
 
   return NULL;
 }
-
 
 void *
 ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size,
@@ -176,7 +173,6 @@ ref_to_val_lk_imdb(void *arg, char *match, char *output, size_t max_size,
     }
   return NULL;
 }
-
 
 char *
 dt_rval_imdb_time(void *arg, char *match, char *output, size_t max_size,
@@ -464,7 +460,6 @@ gcb_imdbh(void *buffer, char *key, char *val)
   return 0;
 }
 
-
 int
 imdb_format_block(void *iarg, char *output)
 {
@@ -480,10 +475,10 @@ imdb_format_block(void *iarg, char *output)
   strftime(buffer3, 255, STD_FMT_DATE_STR, localtime(&t_t2));
 
   return print_str(
-      "IMDB: %s: %s (%hu): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - actors: %s - director: %s\n",
-      data->dirname, data->title, data->year, buffer2, data->imdb_id,
+      "IMDB: %s (%hu): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - director: %s\n",
+      data->title, data->year, buffer2, data->imdb_id,
       data->rating, data->votes, data->genres, buffer3, data->runtime,
-      data->rated, data->actors, data->director);
+      data->rated, data->director);
 
 }
 

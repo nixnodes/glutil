@@ -52,6 +52,14 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_spec_accumulate(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+
+  return output;
+}
+
+char *
 dt_rval_spec_gc(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -429,6 +437,65 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
 }
 
 void *
+ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  int m_ret = 0, m_ret2;
+
+  if ((m_ret2 = g_process_math_string(mppd->hdl, match, &mppd->math, &m_ret, 0)))
+    {
+      printf("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
+          m_ret);
+      return NULL;
+    }
+
+  if (mppd->math.offset)
+    {
+      switch (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_TYPES)
+        {
+      case F_MATH_INT:
+        switch (((__g_math ) mppd->math.objects->ptr)->vb)
+          {
+        case 1:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_u8, mppd, "%hhu");
+        case 2:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_u16, mppd, "%hu");
+        case 4:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_u32, mppd, "%u");
+        case 8:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_u64, mppd, "%llu");
+        default:
+          return NULL;
+          }
+        break;
+      case F_MATH_INT_S:
+        switch (((__g_math ) mppd->math.objects->ptr)->vb)
+          {
+        case 1:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_s8, mppd, "%hhd");
+        case 2:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_s16, mppd, "%hd");
+        case 4:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_s32, mppd, "%d");
+        case 8:
+          return as_ref_to_val_lk(match, dt_rval_spec_math_s64, mppd, "%lld");
+        default:
+          return NULL;
+          }
+        break;
+      case F_MATH_FLOAT:
+        return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, "%f");
+      default:
+        return NULL;
+        }
+    }
+  else
+    {
+      return NULL;
+    }
+}
+
+void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
 {
@@ -558,66 +625,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         return dt_rval_spec_gc;
       case 0x6D:
         ;
-        int m_ret = 0, m_ret2;
-
-        if ((m_ret2 = g_process_math_string(mppd->hdl, match, &mppd->math,
-            &m_ret, 0)))
-          {
-            printf("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
-                m_ret);
-            return NULL;
-          }
-
-        if (mppd->math.offset)
-          {
-            switch (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_TYPES)
-              {
-            case F_MATH_INT:
-              switch (((__g_math ) mppd->math.objects->ptr)->vb)
-                {
-              case 1:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_u8, mppd,
-                    "%hhu");
-              case 2:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_u16, mppd,
-                    "%hu");
-              case 4:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_u32, mppd,
-                    "%u");
-              case 8:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_u64, mppd,
-                    "%llu");
-              default:
-                return NULL;
-                }
-            case F_MATH_INT_S:
-              switch (((__g_math ) mppd->math.objects->ptr)->vb)
-                {
-              case 1:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_s8, mppd,
-                    "%hhd");
-              case 2:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_s16, mppd,
-                    "%hd");
-              case 4:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_s32, mppd,
-                    "%d");
-              case 8:
-                return as_ref_to_val_lk(match, dt_rval_spec_math_s64, mppd,
-                    "%lld");
-              default:
-                return NULL;
-                }
-            case F_MATH_FLOAT:
-              return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, "%f");
-            default:
-              return NULL;
-              }
-          }
-        else
-          {
-            return NULL;
-          }
+        return ref_to_val_af_math(arg, match, output, max_size, mppd);
         break;
       case 0x72:
         ;

@@ -37,7 +37,6 @@ dt_set_tvrage(__g_handle hdl)
   hdl->jm_offset = (size_t) &((__d_tvrage) NULL)->dirname;
 }
 
-
 void *
 ref_to_val_ptr_tv(void *arg, char *match, int *output)
 {
@@ -87,7 +86,6 @@ ref_to_val_ptr_tv(void *arg, char *match, int *output)
 
   return NULL;
 }
-
 
 char *
 dt_rval_tvrage_dir(void *arg, char *match, char *output, size_t max_size,
@@ -383,7 +381,6 @@ ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size,
   return NULL;
 }
 
-
 int
 gcb_tv(void *buffer, char *key, char *val)
 {
@@ -564,7 +561,6 @@ gcb_tv(void *buffer, char *key, char *val)
   return 0;
 }
 
-
 int
 tv_format_block(void *iarg, char *output)
 {
@@ -578,10 +574,9 @@ tv_format_block(void *iarg, char *output)
   strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
   return print_str(
-      "TVRAGE: %s: created: %s - %s/%s [%u] - runtime: %u min - status: %s - country: %s - genres: %s\n",
-      data->dirname, buffer2, data->name, data->class, data->showid,
-      data->runtime, data->status, data->country, data->genres);
-
+      "TVRAGE: %s / %s [%u]: created: %s - runtime: %u min - status: %s - country: %s - genres: %s\n",
+      data->name, data->class, data->showid, buffer2, data->runtime,
+      data->status, data->country, data->genres);
 }
 
 int

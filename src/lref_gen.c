@@ -18,6 +18,34 @@
 #include <time.h>
 #include <unistd.h>
 
+static char *
+dt_legacy_gg_int(char *match, char *output, size_t max_size)
+{
+  int idx;
+  DT_GG_GIDX(match)
+  snprintf(output, max_size, "%llu",
+      (unsigned long long int) glob_ui64_stor[idx]);
+  return output;
+}
+
+static char *
+dt_legacy_gg_sint(char *match, char *output, size_t max_size)
+{
+  int idx;
+  DT_GG_GIDX(match)
+  snprintf(output, max_size, "%lld", (long long int) glob_si64_stor[idx]);
+  return output;
+}
+
+static char *
+dt_legacy_gg_float(char *match, char *output, size_t max_size)
+{
+  int idx;
+  DT_GG_GIDX(match)
+  snprintf(output, max_size, "%f", glob_float_stor[idx]);
+  return output;
+}
+
 int
 ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -105,12 +133,24 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
       strcp_s(output, max_size, b_spec1);
     }
   else if (!strncmp(match, "pspec1", 6))
-      {
-        strcp_s(output, max_size, spec_p1);
-      }
+    {
+      strcp_s(output, max_size, spec_p1);
+    }
   else if (!strncmp(match, "glconf", 6))
     {
       strcp_s(output, max_size, GLCONF_I);
+    }
+  else if (!strncmp(match, _MC_GLOB_U64G, 7))
+    {
+      dt_legacy_gg_int(match, output, max_size);
+    }
+  else if (!strncmp(match, _MC_GLOB_S64G, 7))
+    {
+      dt_legacy_gg_sint(match, output, max_size);
+    }
+  else if (!strncmp(match, _MC_GLOB_F32G, 7))
+    {
+      dt_legacy_gg_float(match, output, max_size);
     }
   else
     {
@@ -189,6 +229,36 @@ dt_rval_q(void *arg, char *match, char *output, size_t max_size, void *mppd)
     {
       output[0] = 0x0;
     }
+  return output;
+}
+
+char *
+dt_rval_gg_int(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (unsigned long long int) glob_ui64_stor[((__d_drt_h) mppd)->uc_1]);
+
+  return output;
+}
+
+char *
+dt_rval_gg_sint(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (long long int) glob_si64_stor[((__d_drt_h) mppd)->uc_1]);
+
+  return output;
+}
+
+char *
+dt_rval_gg_float(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      glob_float_stor[((__d_drt_h) mppd)->uc_1]);
+
   return output;
 }
 
@@ -343,7 +413,30 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_q, (__d_drt_h ) mppd, "%s");
     }
+  else if (!strncmp(match, _MC_GLOB_U64G, 7))
+    {
+      int idx;
+      DT_GG_GIDX(match)
+      ((__d_drt_h ) mppd)->uc_1 = (uint8_t) idx;
 
+      return as_ref_to_val_lk(match, dt_rval_gg_int, (__d_drt_h ) mppd, "%llu");
+    }
+  else if (!strncmp(match, _MC_GLOB_S64G, 7))
+    {
+      int idx;
+      DT_GG_GIDX(match)
+      ((__d_drt_h ) mppd)->uc_1 = (uint8_t) idx;
+
+      return as_ref_to_val_lk(match, dt_rval_gg_sint, (__d_drt_h ) mppd, "%lld");
+    }
+  else if (!strncmp(match, _MC_GLOB_F32G, 7))
+    {
+      int idx;
+      DT_GG_GIDX(match)
+      ((__d_drt_h ) mppd)->uc_1 = (uint8_t) idx;
+
+      return as_ref_to_val_lk(match, dt_rval_gg_float, (__d_drt_h ) mppd, "%f");
+    }
   else if (!strncmp(match, MSG_GENERIC_BS, 1))
     {
       switch (match[1])

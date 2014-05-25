@@ -50,7 +50,23 @@ FLAGS:
    glconf     S     Path to glftpd.conf per glconf.h
    curtime    S     Seconds passed since Epoch
    ?<..>      S     Extended directives (see MANUAL)
-
+   
+ Used to store intermediate and final results from arithmetic ops: 
+   
+   s64glob[n] IE    64-bit signed
+   u64glob[n] IE    64-bit unsigned
+   f32glob[n] IE    32-bit floating-point
+   
+ There are 256 variables [n] available for each type;
+  
+   s64glob[0-255]
+   u64glob[0-255]
+   f32glob[0-255]
+   
+ Do not reference them with brackets, correct example:
+ 
+   .. {s64glob3} .. {f32glob19} ..
+   
   
 ; FILESYSTEM (applies to -x, -d, -n, -a, -h and -k)
 

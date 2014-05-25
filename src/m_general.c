@@ -14,9 +14,9 @@
 #include <lc_oper.h>
 
 void
-g_ipcbm(void *ptr, pmda md, int *r_p)
+g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
 {
-  __g_handle hdl = (__g_handle) ptr;
+  __g_handle hdl = (__g_handle) phdl;
 
   if (!*r_p)
     {
@@ -26,6 +26,7 @@ g_ipcbm(void *ptr, pmda md, int *r_p)
           *r_p = 1;
         }
       md->rescnt++;
+      g_lom_accu(hdl, ptr, &hdl->_accumulator);
     }
   else
     {
@@ -36,7 +37,6 @@ g_ipcbm(void *ptr, pmda md, int *r_p)
         }
       md->hitcnt++;
     }
-
 }
 
 __g_match
@@ -52,7 +52,6 @@ g_global_register_match(void)
   return (__g_match ) md_alloc(&_match_rr, sizeof(_g_match));
 
 }
-
 
 int
 g_filter(__g_handle hdl, pmda md)
@@ -133,7 +132,6 @@ g_filter(__g_handle hdl, pmda md)
   return r;
 }
 
-
 int
 g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 {
@@ -186,7 +184,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   if (hdl->ifrh_l0)
     {
-      hdl->ifrh_l0((void*) hdl, md, &r_p);
+      hdl->ifrh_l0((void*) hdl, md, &r_p, d_ptr);
     }
 
   if (!r_p)
@@ -203,7 +201,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   if (hdl->ifrh_l1)
     {
-      hdl->ifrh_l1((void*) hdl, md, &r_p);
+      hdl->ifrh_l1((void*) hdl, md, &r_p, d_ptr);
     }
 
   if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p))
@@ -214,7 +212,6 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   return r_p;
 }
-
 
 int
 do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
@@ -265,7 +262,6 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 
   return r;
 }
-
 
 int
 opt_g_operator_or(void *arg, int m)

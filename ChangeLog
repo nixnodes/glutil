@@ -38,8 +38,9 @@
  *   - % Disabled statistics after dump and filesystem traversal by default (rev. 15)
  *   - ~ dirlog rebuild (-r) forced ignore empty dir (rev. 16)
  *   - % --maxdepth and --mindepth work with dirlog rebuild mode (-r) (rev. 16)
- *   - ~ Segfault when filters were applied during dirlog update (-r -u) (rev. 16) 
-         
+ *   - ~ Segfault when filters were applied during dirlog update (-r -u) (rev. 16)
+ *   - + Globally available accumulators; source data values can be added up and stored in these 
+         variables, see under GLOBAL in DATA_STRUCTURES for descriptions (rev. 17)
  *
  * v2.2:
  *

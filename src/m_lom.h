@@ -45,12 +45,45 @@ typedef struct ___lom_strings_header
   char string[8192];
 } _lom_s_h, *__lom_s_h;
 
+#define G_LOM_VAR_L(x, y) { \
+    if (lom->g_tf_ptr_left) \
+      { \
+        lom->y = lom->g_tf_ptr_left(d_ptr, lom->t_l_off); \
+      } \
+    else if (lom->g_t_ptr_left) \
+      { \
+        lom->y = (x) lom->g_t_ptr_left(d_ptr, lom->t_l_off); \
+      } \
+    else if (lom->g_ts_ptr_left) \
+      { \
+        lom->y = (x) lom->g_ts_ptr_left(d_ptr, lom->t_l_off); \
+      } \
+}
+
+#define G_LOM_VAR_R(x,y) { \
+    if (lom->g_tf_ptr_right) \
+      { \
+        lom->y = lom->g_tf_ptr_right(d_ptr, lom->t_r_off); \
+      } \
+    else if (lom->g_t_ptr_right) \
+      { \
+        lom->y = (x) lom->g_t_ptr_right(d_ptr, lom->t_r_off); \
+      } \
+    else if (lom->g_ts_ptr_right) \
+      { \
+        lom->y = (x) lom->g_ts_ptr_right(d_ptr, lom->t_r_off); \
+      } \
+}
+
 typedef int
 __d_lom_vp(void *d_ptr, void *_lom);
 
-__d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var_float;
+__d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var_float, g_lom_var_accu_uint,
+    g_lom_var_accu_int, g_lom_var_accu_float;
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
+int
+g_lom_accu(__g_handle hdl, void *d_ptr, pmda _accumulator);
 int
 g_load_lom(__g_handle hdl);
 int
@@ -69,8 +102,8 @@ g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off);
 int
 opt_g_lom(void *arg, int m, uint32_t flags);
 int
-g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field,
-    void *right, void *comp_set[], g_op lop);
+g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field, void *right,
+    void *comp_set[], g_op lop);
 int
 g_lom_match_bare(__g_handle hdl, void *d_ptr, __g_lom lom);
 

@@ -20,9 +20,10 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc);
 char *
 g_get_stf(char *match);
 
-void *
-ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
-    __d_drt_h mppd);
+typedef void*
+rtv_af(void *arg, char *match, char *output, size_t max_size, __d_drt_h mppd);
+
+rtv_af ref_to_val_af, ref_to_val_af_math;
 
 int
 rtv_q(void *query, char *output, size_t max_size);

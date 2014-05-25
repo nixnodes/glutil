@@ -60,7 +60,7 @@ g_sint_p(void *base, size_t offset);
 typedef void *
 (*__g_proc_v)(void *, char *, char *, size_t, void *);
 typedef void
-(*__g_ipcbm)(void *hdl, pmda md, int *r_p);
+(*__g_ipcbm)(void *hdl, pmda md, int *r_p, void *ptr);
 typedef int
 (*__g_proc_t)(void *, char *, char *, size_t);
 typedef void *

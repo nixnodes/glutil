@@ -1,3 +1,24 @@
+ * 25/5/2014
+    Added a way to accumulate (add-up) any integer/floating point field across the whole
+    data source or just a part of it. For example, directory sizes from the dirlog can be
+    added up and stored into one of the available accumulators (see DATA_STRUCTURES).
+    
+    Filters are respected, anything not passing through will be ignored.
+    
+    How and where a value accumulates, is defined via a LOM filter hook;
+    Directives within a LOM command scope, which define the accumulation 
+    process, are not treated as filters and are ignored.
+    
+    Usage examples:
+    
+	  Count up folder files and sizes from all dirlog records:
+    
+		-d --ilom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
+    	
+	  Increment by one for each record matched (regex and LOM filters applied):
+   	  
+		-d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
+ 
  * 23/5/2014
     Changed behaviour: dirlog rebuild does not skip empty directories unconditionally.
     Instead, specifiy appropriate filtering parameters (e.g. --lom "size = 0 && files = 0")
