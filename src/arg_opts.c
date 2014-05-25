@@ -230,12 +230,23 @@ opt_g_udc_f(void *arg, int m)
   return 0;
 }
 
-int
+static int
 opt_g_maxresults(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
   max_results = (off_t) strtoll(buffer, NULL, 10);
   gfl |= F_OPT_HASMAXRES;
+  l_sfo = L_STFO_FILTER;
+  return 0;
+}
+
+static int
+opt_g_maxhits(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+  max_hits = (off_t) strtoll(buffer, NULL, 10);
+  gfl |= F_OPT_HASMAXHIT;
+  l_sfo = L_STFO_FILTER;
   return 0;
 }
 
@@ -257,14 +268,6 @@ opt_g_mindepth(void *arg, int m)
   return 0;
 }
 
-int
-opt_g_maxhits(void *arg, int m)
-{
-  char *buffer = g_pg(arg, m);
-  max_hits = (off_t) strtoll(buffer, NULL, 10);
-  gfl |= F_OPT_HASMAXHIT;
-  return 0;
-}
 
 int
 opt_g_daemonize(void *arg, int m)

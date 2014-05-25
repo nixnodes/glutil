@@ -87,6 +87,8 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
     break;
     }
 
+  l_sfo = L_STFO_FILTER;
+
   return 0;
 }
 
@@ -138,6 +140,10 @@ g_commit_strm_regex(__g_handle hdl, char *field, char *m, int reg_i_m,
   if (r)
     {
       md_unlink(&hdl->_match_rr, hdl->_match_rr.pos);
+    }
+  else
+    {
+      l_sfo = L_STFO_FILTER;
     }
 
   return r;

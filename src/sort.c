@@ -502,5 +502,7 @@ opt_g_sort(void *arg, int m)
 
   gfl |= F_OPT_SORT;
 
+  l_sfo = L_STFO_SORT;
+
   return 0;
 }

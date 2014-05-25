@@ -207,8 +207,13 @@ typedef unsigned long long int ulint64_t;
 #define F_OVRR_SCONF                    (a32 << 21)
 #define F_OVRR_GCONF                    (a32 << 22)
 
+#define L_STFO_SORT                     0x1
+#define L_STFO_FILTER                   0x2
+
 uint64_t gfl0, gfl;
 uint32_t ofl;
+
+uint8_t l_sfo;
 
 int
 (*print_str)(const char * volatile buf, ...);

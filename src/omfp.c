@@ -21,6 +21,28 @@
 
 uint32_t g_omfp_sto = 0, g_omfp_suto = 0;
 
+static int
+g_print_do_filter(__g_handle hdl, void *s_exec)
+{
+  int r;
+  hdl->exec_args.exc = NULL;
+
+  r = g_filter(hdl, &hdl->buffer);
+
+  hdl->exec_args.exc = (__d_exec) s_exec;
+
+  if (r == 1)
+    {
+      print_str("WARNING: %s: all records were filtered\n", hdl->file);
+    }
+  else if (r)
+    {
+      print_str("ERROR: %s: [%d]: filtering failed\n", hdl->file, r);
+    }
+
+  return r;
+}
+
 int
 g_print_stats(char *file, uint32_t flags, size_t block_sz)
 {
@@ -43,7 +65,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   void *buffer = calloc(1, g_act_1.block_sz);
 
-  int r;
+  int r = 0;
 
   if (gfl & F_OPT_SORT)
     {
@@ -56,31 +78,30 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
       void *s_exec = (void*) g_act_1.exec_args.exc;
 
-      g_act_1.exec_args.exc = NULL;
-
-      r = g_filter(&g_act_1, &g_act_1.buffer);
-
-      g_act_1.exec_args.exc = (__d_exec) s_exec;
+      if (l_sfo == L_STFO_SORT)
+        {
+          if (g_print_do_filter(&g_act_1, s_exec))
+            {
+              goto r_end;
+            }
+        }
 
       if (gfl & F_OPT_KILL_GLOBAL)
         {
           goto r_end;
         }
 
-      if (r == 1)
-        {
-          print_str("WARNING: %s: all records were filtered\n", g_act_1.file);
-          goto r_end;
-        }
-      else if (r)
-        {
-          print_str("ERROR: %s: [%d]: filtering failed\n", g_act_1.file, r);
-          goto r_end;
-        }
-
       if (do_sort(&g_act_1, g_sort_field, g_sort_flags))
         {
           goto r_end;
+        }
+
+      if (l_sfo == L_STFO_FILTER)
+        {
+          if (g_print_do_filter(&g_act_1, s_exec))
+            {
+              goto r_end;
+            }
         }
 
       if (gfl & F_OPT_KILL_GLOBAL)
@@ -116,7 +137,6 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
               lm_ptr = lm_ptr->next;
             }
         }
-
     }
 
   void *ptr;

@@ -147,6 +147,8 @@ float glob_float_stor[255] =
 uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;
 
+uint8_t l_sfo = 0;
+
 char *spec_p1 = NULL;
 
 __dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,
