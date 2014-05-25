@@ -303,10 +303,15 @@ ssd_mmode_list(char *name, __si_argv0 ptr, char *buffer)
 
   if (gfl & F_OPT_VERBOSE)
     {
-      printf("[ %s ]\n",
-           name);
-    } else {
-        fputs("\n", stdout);
+      printf("[%s]\n", g_basename(name));
+    }
+  else if (gfl & F_OPT_VERBOSE2)
+    {
+      printf("[%s]\n", name);
+    }
+  else
+    {
+      fputs("\n", stdout);
     }
 
   return 0;

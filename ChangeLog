@@ -42,7 +42,8 @@
  *   - + Globally available accumulators; source data values can be added up and stored in these 
          variables, see under GLOBAL in DATA_STRUCTURES for descriptions (rev. 17)
  *   - + -mlist - list all available macros, support for descriptions embedded in macros (rev. 17)
- *   - % -mlist - optionally increase verbosity (rev. 17)
+ *   - % -mlist - optionally increase verbosity (rev. 17_b6)
+ *   - % -mlist - additional optional verbosity increase (rev. 17_b7)
  *
  * v2.2:
  *
