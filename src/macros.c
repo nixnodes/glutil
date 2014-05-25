@@ -301,13 +301,13 @@ ssd_mmode_list(char *name, __si_argv0 ptr, char *buffer)
       printf("%s%s ", m_n, !access(name, X_OK) ? "" : " [!NOT EXECUTABLE!]");
     }
 
-  if (gfl & F_OPT_VERBOSE)
-    {
-      printf("[%s]\n", g_basename(name));
-    }
-  else if (gfl & F_OPT_VERBOSE2)
+  if (gfl & F_OPT_VERBOSE2)
     {
       printf("[%s]\n", name);
+    }
+  else if (gfl & F_OPT_VERBOSE)
+    {
+      printf("[%s]\n", g_basename(name));
     }
   else
     {
