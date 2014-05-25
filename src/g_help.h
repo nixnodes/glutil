@@ -81,6 +81,7 @@ char *hpd_up =
         "  -m <macro> [--arg[1-3] <string>]\n"
         "                         Searches subdirs for script that has the given macro defined, and executes\n"
         "                         --arg[1-3] sets values that fill {m:arg[1-3]} variables inside a macro\n"
+        "  -mlist                 Display any available macro, with description (if present)\n"
         "\n Hooks:\n"
         "  --exec <command [{field}..{field}..]>\n"
         "                        While parsing data structure/filesystem, execute shell command for each record\n"

@@ -431,7 +431,10 @@ g_init(int argc, char **argv)
     EXITVAL = d_write((char*) p_argv_off);
     break;
   case PRIO_UPD_MODE_INFO:
-    g_print_info();
+    EXITVAL = g_print_info();
+    break;
+  case UPD_MODE_LIST_MACROS:
+    EXITVAL = list_macros();
     break;
   case UPD_MODE_NOOP:
     break;

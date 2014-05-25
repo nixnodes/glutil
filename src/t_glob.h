@@ -220,6 +220,7 @@ typedef struct ___si_argv0
   char p_buf_1[4096];
   char p_buf_2[PATH_MAX];
   char s_ret[262144];
+  char *buffer;
 } _si_argv0, *__si_argv0;
 
 #endif /* GLOB_H_ */

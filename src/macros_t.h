@@ -8,6 +8,9 @@
 #ifndef MACROS_T_H_
 #define MACROS_T_H_
 
+#define F_MMODE_EXEC            (a32 << 1)
+#define F_MMODE_LIST            (a32 << 2)
+
 #define SSD_MAX_LINE_SIZE       32768
 #define SSD_MAX_LINE_PROC       15000
 //#define SSD_MAX_FILE_SIZE     (V_MB*32)
@@ -25,5 +28,8 @@ process_macro(void * arg, char **out);
 
 int
 ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds);
+
+int
+list_macros(void);
 
 #endif /* MACROS_T_H_ */

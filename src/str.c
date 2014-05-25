@@ -356,8 +356,8 @@ generate_chars(size_t num, char chr, char*buffer)
 char *
 replace_char(char w, char r, char *string)
 {
-  int s_len = strlen(string), i;
-  for (i = 0; i < s_len + 100 && string[i] != 0; i++)
+  int i;
+  for (i = 0; 0 != string[i]; i++)
     {
       if (string[i] == w)
         {
@@ -463,17 +463,17 @@ reg_getsubm(char *rs_p, char *pattern, int cflags, char *output, size_t max_out)
 }
 
 char *
-reg_sub_g(char *subject, char *pattern, int cflags, char *output, size_t max_size,
-    char *rep)
+reg_sub_g(char *subject, char *pattern, int cflags, char *output,
+    size_t max_size, char *rep)
 {
   regex_t preg;
 
   output[0] = 0x0;
 
-   if ((errno = regcomp(&preg, pattern, cflags)))
-     {
-       return NULL;
-     }
+  if ((errno = regcomp(&preg, pattern, cflags)))
+    {
+      return NULL;
+    }
 
   char *rs_p = subject;
   size_t o_l = strlen(rs_p);
@@ -490,7 +490,7 @@ reg_sub_g(char *subject, char *pattern, int cflags, char *output, size_t max_siz
       if (rm[0].rm_so == 0 && rm[0].rm_eo == o_l)
         {
           strncpy(&output[rs_w], rep, rep_l);
-          output[rep_l+rs_w] = 0x0;
+          output[rep_l + rs_w] = 0x0;
           return output;
         }
       if (rm[0].rm_so == rm[0].rm_eo)
@@ -499,13 +499,13 @@ reg_sub_g(char *subject, char *pattern, int cflags, char *output, size_t max_siz
             {
               strncpy(output, rep, rep_l);
               strncpy(&output[rep_l], rs_p, o_l);
-              output[rep_l+o_l] = 0x0;
+              output[rep_l + o_l] = 0x0;
             }
           else if (rm[0].rm_so == o_l)
             {
               strncpy(output, rs_p, o_l);
               strncpy(&output[o_l], rep, rep_l);
-              output[rep_l+o_l] = 0x0;
+              output[rep_l + o_l] = 0x0;
             }
           else
             {
@@ -514,13 +514,13 @@ reg_sub_g(char *subject, char *pattern, int cflags, char *output, size_t max_siz
           break;
         }
 
-      if (rm[0].rm_so == (regoff_t)-1)
+      if (rm[0].rm_so == (regoff_t) -1)
         {
           return output;
         }
 
       strncpy(&output[rs_w], m_p, rm[0].rm_so);
-      rs_w += (size_t)rm[0].rm_so;
+      rs_w += (size_t) rm[0].rm_so;
       strncpy(&output[rs_w], rep, rep_l);
       rs_w += rep_l;
       m_p = &m_p[rm[0].rm_eo];
@@ -575,7 +575,6 @@ reg_sub_d(char *rs_p, char *pattern, int cflags, char *output)
   regfree(&preg);
   return output;
 }
-
 
 char *
 g_zerom_r(char *input, char m)

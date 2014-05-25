@@ -25,6 +25,42 @@
 #include <libgen.h>
 #include <dirent.h>
 
+int
+list_macros(void)
+{
+  g_setjmp(0, "list_macros", NULL, NULL);
+  char buffer[PATH_MAX] =
+    { 0 };
+
+  if (self_get_path(buffer))
+    {
+      print_str("ERROR: could not get own path\n");
+      return 1;
+    }
+
+  char *dirn = g_dirname(buffer);
+  _si_argv0 av =
+    { 0 };
+  _g_eds eds =
+    { 0 };
+
+  av.buffer = malloc(SSD_MAX_LINE_SIZE + 16);
+  av.ret = -1;
+  av.flags |= F_MMODE_LIST;
+
+  int ret = 0;
+
+  if (enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds) < 0)
+    {
+      print_str("ERROR: %s: recursion failed (macro not found)\n", av.p_buf_1);
+      ret = 2;
+    }
+
+  free(av.buffer);
+
+  return ret;
+
+}
 
 char **
 process_macro(void * arg, char **out)
@@ -47,12 +83,15 @@ process_macro(void * arg, char **out)
       return NULL;
     }
   char *dirn = g_dirname(buffer);
+  char *s_buffer = NULL;
 
   _si_argv0 av =
     { 0 };
 
-  av.ret = -1;
+  av.buffer = malloc(SSD_MAX_LINE_SIZE + 16);
 
+  av.ret = -1;
+  av.flags |= F_MMODE_EXEC;
 
   if (strlen(a_ptr) > sizeof(av.p_buf_1))
     {
@@ -83,6 +122,13 @@ process_macro(void * arg, char **out)
       return NULL;
     }
 
+  if (av.ret > 0)
+    {
+      print_str("ERROR: %s: could not run macro, error '%d'\n", av.p_buf_1,
+          av.ret);
+      return NULL;
+    }
+
   strncpy(b_spec1, av.p_buf_2, strlen(av.p_buf_2));
 
   if (gfl & F_OPT_VERBOSE2)
@@ -90,7 +136,8 @@ process_macro(void * arg, char **out)
       print_str("MACRO: '%s': found macro in '%s'\n", av.p_buf_1, av.p_buf_2);
     }
 
-  char *s_buffer = (char*) malloc(MAX_EXEC_STR + 1), **s_ptr = NULL;
+  s_buffer = (char*) malloc(MAX_EXEC_STR + 1);
+  char **s_ptr = NULL;
   int r;
 
   if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
@@ -127,11 +174,124 @@ process_macro(void * arg, char **out)
 
   end:
 
-  free(s_buffer);
+  if (av.buffer)
+    {
+      free(av.buffer);
+    }
+
+  if (s_buffer)
+    {
+      free(s_buffer);
+    }
 
   return s_ptr;
 }
 
+static int
+ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
+{
+  buffer = replace_char(0xA, 0x0, buffer);
+  buffer = replace_char(0xD, 0x0, buffer);
+
+  while (buffer[0] == 0x3A)
+    {
+      buffer++;
+    }
+
+  char *start = buffer;
+
+  while (buffer[0] != 0x3A && buffer[0] != 0)
+    {
+      if ((buffer[0] == 0x5C))
+        {
+          buffer++;
+        }
+      buffer++;
+    }
+
+  if (buffer[0] != 0x3A)
+    {
+      return 1;
+    }
+
+  while (buffer[0] == 0x3A)
+    {
+      buffer++;
+    }
+
+  size_t pb_l = strlen(ptr->p_buf_1);
+
+  if (!(!strncmp(ptr->p_buf_1, start, pb_l)
+      && (start[pb_l] == 0x3A || start[pb_l] == 0x7C)))
+    {
+      ptr->ret = -1;
+      return 2;
+    }
+
+  bzero(ptr->s_ret, sizeof(ptr->s_ret));
+
+  snprintf(ptr->s_ret, sizeof(ptr->s_ret), buffer);
+  snprintf(ptr->p_buf_2, PATH_MAX, "%s", name);
+
+  ptr->ret = strlen(ptr->s_ret);
+
+  gfl |= F_OPT_TERM_ENUM;
+
+  return 0;
+}
+
+static int
+ssd_mmode_list(char *name, __si_argv0 ptr, char *buffer)
+{
+  char *m_n = buffer, *m_desc = NULL;
+
+  while (buffer[0] != 0x3A && buffer[0] != 0x7C && buffer[0] != 0)
+    {
+      buffer++;
+    }
+
+  if (buffer[0] == 0)
+    {
+      return 1;
+    }
+
+  char *mid_m_n = buffer;
+
+  if (buffer[0] == 0x7C)
+    {
+
+      while (buffer[0] == 0x7C)
+        {
+          buffer++;
+        }
+      m_desc = buffer;
+
+      while ((buffer[0] != 0x3A && buffer[0] != 0))
+        {
+          if ((buffer[0] == 0x5C))
+            {
+              memmove(buffer, buffer + 1, strlen(buffer + 1));
+              buffer++;
+            }
+          buffer++;
+        }
+
+      buffer[0] = 0x0;
+    }
+
+  mid_m_n[0] = 0x0;
+
+  if (m_desc)
+    {
+      printf("%s - [ %s ]\n", m_n, m_desc);
+    }
+  else
+    {
+      printf("%s\n", m_n);
+    }
+
+  return 0;
+}
 
 int
 ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
@@ -140,11 +300,12 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
   switch (type)
     {
   case DT_REG:
+    ;
     if (access(name, X_OK))
       {
         if (gfl & F_OPT_VERBOSE5)
           {
-            print_str("MACRO: %s: could not exec (permission denied)\n", name);
+            print_str("MACRO: %s: no executable permission\n", name);
           }
         break;
       }
@@ -162,10 +323,12 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
         break;
       }
 
-    char *buffer = malloc(SSD_MAX_LINE_SIZE + 16);
-
     size_t b_len, lc = 0;
     int hit = 0, i;
+
+    __si_argv0 ptr = (__si_argv0) arg;
+
+    char *buffer = ptr->buffer;
 
     while (fgets(buffer, SSD_MAX_LINE_SIZE, fh) && lc < SSD_MAX_LINE_PROC
         && !ferror(fh) && !feof(fh))
@@ -190,46 +353,31 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
             continue;
           }
 
-        __si_argv0 ptr = (__si_argv0) arg;
-
-        char buffer2[4096] =
-          { 0 };
-        snprintf(buffer2, 4096, "%s:", ptr->p_buf_1);
-
-        size_t pb_l = strlen(buffer2);
-
-        if (!strncmp(buffer2, &buffer[8], pb_l))
+        if ( ptr->flags & F_MMODE_EXEC)
           {
-            buffer = replace_char(0xA, 0x0, buffer);
-            buffer = replace_char(0xD, 0x0, buffer);
-            b_len = strlen(buffer);
-            size_t d_len = b_len - 8 - pb_l;
-            if (d_len > sizeof(ptr->s_ret))
+            if (!(ptr->ret = ssd_mmode_exec(name, ptr, &buffer[8])))
               {
-                d_len = sizeof(ptr->s_ret);
+                break;
               }
-            bzero(ptr->s_ret, sizeof(ptr->s_ret));
-            strncpy(ptr->s_ret, &buffer[8 + pb_l], d_len);
-
-            snprintf(ptr->p_buf_2, PATH_MAX, "%s", name);
-            ptr->ret = d_len;
-            gfl |= F_OPT_TERM_ENUM;
-            break;
           }
+        else if (ptr->flags & F_MMODE_LIST)
+          {
+            ssd_mmode_list(name, ptr, &buffer[8]);
+          }
+
         hit++;
       }
 
     fclose(fh);
-    free(buffer);
+
     break;
-  case DT_DIR:
+    case DT_DIR:;
     enum_dir(name, ssd_4macro, arg, 0, eds);
     break;
-    }
+  }
 
   return 0;
 }
-
 
 int
 ref_to_val_macro(void *arg, char *match, char *output, size_t max_size,

@@ -171,6 +171,13 @@ opt_g_stats(void *arg, int m)
   return 0;
 }
 
+static int
+opt_g_mlist(void *arg, int m)
+{
+  updmode = UPD_MODE_LIST_MACROS;
+  return 0;
+}
+
 int
 opt_loop_max(void *arg, int m)
 {
@@ -1350,5 +1357,6 @@ void *f_ref[] =
       (void*) 0, "--arr", opt_arrange, (void*) 1, "--nonukechk",
       opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1,
       "--rusleep", opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats,
-      (void*) 0, "--stats", opt_g_stats, (void*) 0,
+      (void*) 0, "--stats", opt_g_stats, (void*) 0, "-mlist", opt_g_mlist,
+      (void*) 0,
       NULL, NULL, NULL };
