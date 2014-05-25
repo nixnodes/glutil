@@ -45,6 +45,7 @@
  *   - % -mlist - optionally increase verbosity (rev. 17_b6)
  *   - % -mlist - additional optional verbosity increase (rev. 17_b7)
  *   - % sort/filter argument order affects a dump operation (sort or filter first) (rev. 17_b8)
+ *   - ~ -xdev broken while rebuilding dirlog (rev. 17_b9)
  *
  * v2.2:
  *

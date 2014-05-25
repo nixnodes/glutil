@@ -25,6 +25,7 @@ typedef struct e_arg
   char buffer2[PATH_MAX + 10];
   struct dirlog *dirlog;
   time_t t_stor;
+  __g_eds eds;
 } ear;
 
 #define F_EARG_SFV                      (a32 << 1)

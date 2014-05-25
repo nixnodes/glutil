@@ -277,6 +277,8 @@ update_records(char *dirname, int depth)
   _g_eds eds =
     { 0 };
 
+  arg.eds = &eds;
+
   return enum_dir(dirname, proc_section, &arg, 0, &eds);
 
 }
@@ -571,10 +573,7 @@ release_generate_block(char *name, ear *iarg)
       print_str("ENTERING: %s\n", name);
     }
 
-  _g_eds eds =
-    { 0 };
-
-  if (((r = enum_dir(name, proc_directory, iarg, 0, &eds)) < 1
+  if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds)) < 1
       || !(iarg->dirlog->files)))
     {
       if (gfl & F_OPT_VERBOSE)
