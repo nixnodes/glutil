@@ -1,4 +1,4 @@
-#@REVISION:31
+#@REVISION:32
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -187,6 +187,21 @@
 #@MACRO:print-lastonlog-info:{m:exe} noop --silent --preexec `if [ {q:lastonlog@read} -eq 0 ]; then echo "WARNING: unable to read lastonlog, no read permission"; exit 1;elif [ {q:lastonlog@read} -eq -1 ]; then echo "WARNING: unable to access lastonlog"; exit 1; fi; echo "LASTONLOG: {q:lastonlog@file}: {q:lastonlog@size} bytes in {q:lastonlog@count} records, block size: {q:lastonlog@bsize}"; [ {q:lastonlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt lastonlog detected, size is not a multiple of {q:lastonlog@bsize}"; [ {q:lastonlog@write} -eq 0 ] && echo "WARNING: no write access to lastonlog"; exit 0`
 #@MACRO:print-imdb-info:{m:exe} noop --silent --preexec `if [ {q:imdb@read} -eq 0 ]; then echo "WARNING: unable to read imdb, no read permission"; exit 1;elif [ {q:imdb@read} -eq -1 ]; then echo "WARNING: unable to access imdb"; exit 1; fi; echo "IMDB: {q:imdb@file}: {q:imdb@size} bytes in {q:imdb@count} records, block size: {q:imdb@bsize}"; [ {q:imdb@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt imdb detected, size is not a multiple of {q:imdb@bsize}"; [ {q:imdb@write} -eq 0 ] && echo "WARNING: no write access to imdb"; exit 0`
 #@MACRO:print-tvrage-info:{m:exe} noop --silent --preexec `if [ {q:tvrage@read} -eq 0 ]; then echo "WARNING: unable to read tvrage, no read permission"; exit 1;elif [ {q:tvrage@read} -eq -1 ]; then echo "WARNING: unable to access tvrage"; exit 1; fi; echo "TVRAGE: {q:tvrage@file}: {q:tvrage@size} bytes in {q:tvrage@count} records, block size: {q:tvrage@bsize}"; [ {q:tvrage@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt tvrage detected, size is not a multiple of {q:tvrage@bsize}"; [ {q:tvrage@write} -eq 0 ] && echo "WARNING: no write access to tvrage"; exit 0`
+#
+## <dirlog-record-stats>
+#
+## Counts up files/size information from all dirlog
+## records and displays
+#
+#@MACRO:dirlog-record-stats:{m:exe} -d --ilom "u64glob0 += size && u64glob1 += files" --postexec `echo "{q:dirlog@file}: Total site size: $(expr {u64glob0} / 1048576) MB in {u64glob1} files"` --silent
+#
+## <imdb-record-stats>
+#
+## iMDB log - various stats
+#
+## Dependencies: bc
+#
+#@MACRO:imdb-record-stats:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a ilom "score > 0.0" ilom "u64glob3 += runtime && u64glob2 += votes && u64glob1 += year && f32glob0 += score && u64glob0 += 1" --postexec `echo -e "{q:imdb@file}: Average iMDB score/year/votes/runtime: $(echo 'scale=2; {f32glob0} / {u64glob0}' | bc -l) / $(echo 'scale=3; {u64glob1} / {u64glob0}' | bc -l) / $(echo 'scale=1; {u64glob2} / {u64glob0}' | bc -l) / $(expr {u64glob3} \/ {u64glob0})min ; Total votes/runtime: {u64glob2} / $(echo 'scale=2; {u64glob3} / 60' | bc -l)hrs"` --silent
 #
 ## <edit-<logname>>
 #
