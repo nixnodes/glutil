@@ -1,4 +1,4 @@
- * 25/5/2014
+ * 25/5/2014 (2.3.17)
     Added a way to accumulate (add-up) any integer/floating point field across the whole
     data source or just a part of it. For example, directory sizes from the dirlog can be
     added up and stored into one of the available accumulators (see DATA_STRUCTURES).
@@ -13,15 +13,24 @@
     
 	  Count up folder files and sizes from all dirlog records:
     
-		-d --ilom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
+		glutil -d --ilom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
     	
 	  Increment by one for each record matched (regex and LOM filters applied):
    	  
-		-d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
+		glutil -d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
 		
     ----------------------------------------------------------------------------------------------------------------------
 		
-    Added -mlist, displays all available macros, with descriptions (if present) 
+    Added -mlist, displays all available macros, with descriptions (if present)
+    
+    ----------------------------------------------------------------------------------------------------------------------
+    
+    Added dirlog-record-stats, imdb-record-avgstats, imdb-record-totalstats and imdb-record-stats
+    macros to macros.glutil.
+    
+    See descriptions by running:
+    
+    	glutil -mlist | egrep "^(imdb|dirlog)-record"
  
  * 23/5/2014
     Changed behaviour: dirlog rebuild does not skip empty directories unconditionally.
