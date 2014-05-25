@@ -18,6 +18,10 @@
 	  Increment by one for each record matched (regex and LOM filters applied):
    	  
 		-d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
+		
+	----------------------------------------------------------------------------------------------------------------------
+		
+	Added -mlist, displays all available macros, with descriptions (if present) 
  
  * 23/5/2014
     Changed behaviour: dirlog rebuild does not skip empty directories unconditionally.
