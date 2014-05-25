@@ -1,4 +1,4 @@
-#@REVISION:36
+#@REVISION:37
 #
 ## NOTE: Requires glutil 2.3.17 or higher
 #
@@ -215,7 +215,7 @@
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-stats|iMDB log - full stats, dependencies\: bc:{m:exe} noop --preexec `{m:exe} -m imdb-print-info; {m:exe} -m imdb-record-avgstats; {m:exe} -m imdb-record-totalstats`
+#@MACRO:imdb-record-stats|iMDB log - full stats, dependencies\: bc:{m:exe} noop --preexec `{m:exe} -m imdb-print-info; {m:exe} -m imdb-record-avgstats; {m:exe} -m imdb-record-totalstats`
 
 #
 ## <<logname>-edit>
