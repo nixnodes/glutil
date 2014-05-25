@@ -224,7 +224,6 @@ ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
   if (!(!strncmp(ptr->p_buf_1, start, pb_l)
       && (start[pb_l] == 0x3A || start[pb_l] == 0x7C)))
     {
-      ptr->ret = -1;
       return 2;
     }
 
@@ -232,6 +231,17 @@ ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
 
   snprintf(ptr->s_ret, sizeof(ptr->s_ret), buffer);
   snprintf(ptr->p_buf_2, PATH_MAX, "%s", name);
+
+  if (access(name, X_OK))
+    {
+      if (gfl & F_OPT_VERBOSE5)
+        {
+          print_str("MACRO: %s: [%s] no execute permission\n", name,
+              ptr->p_buf_1);
+        }
+      ptr->ret = 2;
+      return 0;
+    }
 
   ptr->ret = strlen(ptr->s_ret);
 
@@ -283,11 +293,12 @@ ssd_mmode_list(char *name, __si_argv0 ptr, char *buffer)
 
   if (m_desc)
     {
-      printf("%s - [ %s ]\n", m_n, m_desc);
+      printf("%s - %s[ %s ]\n", m_n,
+          !access(name, X_OK) ? "" : "[NOT EXECUTABLE] ", m_desc);
     }
   else
     {
-      printf("%s\n", m_n);
+      printf("%s%s\n", m_n, !access(name, X_OK) ? "" : " [!NOT EXECUTABLE!]");
     }
 
   return 0;
@@ -301,11 +312,12 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
     {
   case DT_REG:
     ;
-    if (access(name, X_OK))
+
+    if (access(name, R_OK))
       {
         if (gfl & F_OPT_VERBOSE5)
           {
-            print_str("MACRO: %s: no executable permission\n", name);
+            print_str("MACRO: %s: no read permission\n", name);
           }
         break;
       }
