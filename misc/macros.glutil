@@ -1,6 +1,6 @@
-#@REVISION:34
+#@REVISION:36
 #
-## NOTE: This revision requires glutil 2.3.17 or higher
+## NOTE: Requires glutil 2.3.17 or higher
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -23,7 +23,7 @@
 ## Scripts are put into /glroot/bin/scripts,
 ##  folder is created if it doesn't exist
 #
-#@MACRO:update-scripts:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/scripts/";D="{glroot}/bin/scripts/";[ -d "{glroot}/bin/scripts" ] || mkdir "{glroot}/bin/scripts"; if curl --silent "$B"imdb_get.sh > "$D"imdb_get.sh; then echo -e "$D"imdb_get.sh" \t\tv$(cat "$D"imdb_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"imdb_get.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"imdb_get.sh; else echo "$D"imdb_get.sh" FAILED"; fi; if curl --silent "$B"tvrage_get.sh > "$D"tvrage_get.sh; then echo -e "$D"tvrage_get.sh" \t\tv$(cat "$D"tvrage_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"tvrage_get.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK";  chmod 755 "$D"tvrage_get.sh; else echo "$D"tvrage_get.sh" FAILED"; fi;if curl --silent "$B"killslow.sh > "$D"killslow.sh; then echo -e "$D"killslow.sh" \t\tv$(cat "$D"killslow.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"killslow.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"killslow.sh; else echo "$D"killslow.sh" FAILED"; fi;if curl --silent "$B"gb_get.sh > "$D"gb_get.sh; then echo -e "$D"gb_get.sh" \t\t\tv$(cat "$D"gb_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"gb_get.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"gb_get.sh; else echo "$D"gb_get.sh" FAILED"; fi; if curl --silent "$B"check_incomplete.sh > "$D"check_incomplete.sh; then echo -e "$D"check_incomplete.sh" \tv$(cat "$D"check_incomplete.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"check_incomplete.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"check_incomplete.sh; else echo "$D"check_incomplete.sh" FAILED"; fi;  `
+#@MACRO:update-scripts|Get glutil scripts from github repo. Scripts are put into /glroot/bin/scripts, folder is created if it doesn't exist:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/scripts/";D="{glroot}/bin/scripts/";[ -d "{glroot}/bin/scripts" ] || mkdir "{glroot}/bin/scripts"; if curl --silent "$B"imdb_get.sh > "$D"imdb_get.sh; then echo -e "$D"imdb_get.sh" \t\tv$(cat "$D"imdb_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"imdb_get.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"imdb_get.sh; else echo "$D"imdb_get.sh" FAILED"; fi; if curl --silent "$B"tvrage_get.sh > "$D"tvrage_get.sh; then echo -e "$D"tvrage_get.sh" \t\tv$(cat "$D"tvrage_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"tvrage_get.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK";  chmod 755 "$D"tvrage_get.sh; else echo "$D"tvrage_get.sh" FAILED"; fi;if curl --silent "$B"killslow.sh > "$D"killslow.sh; then echo -e "$D"killslow.sh" \t\tv$(cat "$D"killslow.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"killslow.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"killslow.sh; else echo "$D"killslow.sh" FAILED"; fi;if curl --silent "$B"gb_get.sh > "$D"gb_get.sh; then echo -e "$D"gb_get.sh" \t\t\tv$(cat "$D"gb_get.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"gb_get.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"gb_get.sh; else echo "$D"gb_get.sh" FAILED"; fi; if curl --silent "$B"check_incomplete.sh > "$D"check_incomplete.sh; then echo -e "$D"check_incomplete.sh" \tv$(cat "$D"check_incomplete.sh | grep @VERSION: | cut -d ":" -f 2).$(cat "$D"check_incomplete.sh | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$D"check_incomplete.sh; else echo "$D"check_incomplete.sh" FAILED"; fi;  `
 #
 ## <update-macro>
 #
@@ -31,43 +31,43 @@
 ##  and dumps it into /glroot/bin/misc/,
 ##  creating the folder if needed
 #
-#@MACRO:update-macro:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/misc/";D="{glroot}/bin/misc/"; [ -d "{glroot}/bin/misc" ] || mkdir "{glroot}/bin/misc"; if curl --silent "$B"macros.glutil > "$D"macros.glutil; then echo -e "$D"macros.glutil" \t\t\trev:$(cat "$D"macros.glutil | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; else echo "$D"macros.glutil" FAILED"; fi;` 
+#@MACRO:update-macro|Get this macro file from github repo and dumps it into /glroot/bin/misc/, creating the folder if needed:{m:exe} noop --preexec `B="https://raw.github.com/nixnodes/glutil/master/misc/";D="{glroot}/bin/misc/"; [ -d "{glroot}/bin/misc" ] || mkdir "{glroot}/bin/misc"; if curl --silent "$B"macros.glutil > "$D"macros.glutil; then echo -e "$D"macros.glutil" \t\t\trev:$(cat "$D"macros.glutil | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; else echo "$D"macros.glutil" FAILED"; fi;` 
 #
 ## <update>
 #
 ## Performs all updates
 #
-#@MACRO:update:{m:exe} noop --preexec `{m:exe} -m glutil-update;{m:exe} -m update-scripts;{m:exe} -m update-self`
+#@MACRO:update|Perform all updates:{m:exe} noop --preexec `{m:exe} -m glutil-update;{m:exe} -m update-scripts;{m:exe} -m update-self`
 #
 ## <dirlog-update>
 #
 ## Update directory log with new records and remove 
 ## records that are missing from filesystem 
 #
-#@MACRO:dirlog-update:{m:exe} -r -u --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-update|Update directory log with new records and remove records that are missing from filesystem:{m:exe} -r -u --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
-#@MACRO:dirlog-update-skipempty:{m:exe} -r -u --lom "size = 0 && files = 0" --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (skip empty directories):{m:exe} -r -u --lom "size = 0 && files = 0" --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
 ## <dirlog-full-update>
 #
 ## Update directory log with new records and remove 
-## records that are missing from filesystem 
+## records that are missing from filesystem (full)
 #
-#@MACRO:dirlog-full-update:{m:exe} -r -u --full --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-full-update|Update directory log with new records and remove records that are missing from filesystem (full):{m:exe} -r -u --full --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
-#@MACRO:dirlog-full-update-skipempty:{m:exe} -r -u --full --lom "size = 0 && files = 0" --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-full-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (full) (skip empty directories):{m:exe} -r -u --full --lom "size = 0 && files = 0" --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
-## <dupe>
+## <dirlog-dupe>
 #
 ## Search for duplicates in dirlog, avoiding non-releases
 #
-#@MACRO:dupe:{m:exe} -p --regexi "basedir,(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1}
+#@MACRO:dirlog-dupe|Search for duplicates in dirlog, avoiding non-releases:{m:exe} -p --regexi "basedir,(sample|proof|covers|booklet|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1}
 #
-## <dupe-v>
+## <dirlog-dupe-v>
 #
 ## Same, with progress stats
 #
-#@MACRO:dupe-v:{m:exe} -p --regexi "basedir,(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
+#@MACRO:dirlog-dupe-v|Search for duplicates in dirlog, avoiding non-releases (with progress stats):{m:exe} -p --regexi "basedir,(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" {m:arg1} -v
 #
 ## <make-tvrage-dirlinks>
 #
@@ -81,15 +81,15 @@
 #
 ## Requires logs built with DATABASE_TYPE=0 (see tvrage/imdb_get.sh)
 #
-#@MACRO:make-tvrage-infolinks:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
+#@MACRO:tvrage-make-infolinks|Creates symlinks inside respective folders for every tvlog record erasing any existing ones first:{m:exe} -h --silent --exec `rm "{glroot}{dir}/[ TVRAGE "*;ln -s "{dir}" "{glroot}{dir}/[ TVRAGE - {class} - {genres} ]"` {m:arg1}
 #
 ## <make-imdb-dirlinks>
 #
-#@MACRO:make-imdb-infolinks:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} votes - {genres} ]"` {m:arg1}
+#@MACRO:imdb-make-infolinks|Creates symlinks inside respective folders for every imdblog record erasing any existing ones first:{m:exe} -a --silent --exec `rm "{glroot}{dir}/[ IMDB "*;ln -s "{dir}" "{glroot}{dir}/[ IMDB - {score} | {votes} votes - {genres} ]"` {m:arg1}
 #
 # <dirlog-to-ascii> *DEPRECATED - added export option (-E) to glutil, see --help*
 #
-## Converts dirlog into ASCII format, suitable
+## Convert dirlog into ASCII format, suitable
 ## for re-injection using -z
 #
 ## Requires glutil-1.9-18 or above
@@ -108,18 +108,16 @@
 ##  If --dirlog=<path> is not specified, glutil reverts to 
 ##   default dirlog path
 #
-#@MACRO:dirlog-to-ascii:{m:exe} -d --dirlog={m:q:dirlog@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}` 
-#@MACRO:imdb-to-ascii:{m:exe} -a --imdblog={m:q:imdb@file} --imdblog={imdbfile} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nimdbid {imdbid}\nplot {plot}\nscore {score}\ngenre {genre}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n"` {m:arg2} --silent --postexec `echo  "" >> {m:arg1}` 
-#@MACRO:tvrage-to-ascii:{m:exe} -h --tvlog={m:q:tvrage@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenre {genre}\nstatus {status}\nstartyear {startyear}\nendyear {endyear}\nnetwork {network}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}`
+#@MACRO:dirlog-to-ascii|Convert dirlog into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{m:exe} -d --dirlog={m:q:dirlog@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\nstatus {status}\ntime {time}\nuser {user}\ngroup {group}\nfiles {files}\nsize {size}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}` 
+#@MACRO:imdb-to-ascii|Convert imdb into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{m:exe} -a --imdblog={m:q:imdb@file} --imdblog={imdbfile} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nimdbid {imdbid}\nplot {plot}\nscore {score}\ngenre {genre}\nvotes {votes}\ntitle {title}\nactors {actors}\nrated {rated}\nyear {year}\nreleased {released}\nruntime {runtime}\ndirector {director}\n"` {m:arg2} --silent --postexec `echo  "" >> {m:arg1}` 
+#@MACRO:tvrage-to-ascii|Convert tvrage into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{m:exe} -h --tvlog={m:q:tvrage@file} --esredir={m:arg1} --execv `echo -e "dir {dir}\ntime {time}\nshowid {showid}\nname {name}\nlink {link}\ncountry {country}\nairtime {airtime}\nairday {airday}\nruntime {runtime}\nstarted {started}\nended {ended}\nseasons {seasons}\nclass {class}\ngenre {genre}\nstatus {status}\nstartyear {startyear}\nendyear {endyear}\nnetwork {network}\n"` {m:arg2} --silent --postexec `echo "" >> {m:arg1}`
 #
 ##
 #@MACRO:tvrage-to-sql:{m:exe} -h --tvlog={m:q:tvrage@file} silent --execv `echo "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('{name}', '{link}', '{country}', '{started}', '{ended}', '{seasons}', '{status}', '{runtime}', '{airtime}', '{airday}', '{class}', '{genres}', '{showid}', '{time}', '{network}', '{dir}', '{startyear}', '{endyear}');"` --esredir "{m:arg1}"
 #
 ## <dirlog-clean-dupes>
 #
-## ## Requires glutil-1.9-9
-#
-## Erases duplicate records in dirlog
+## Erase duplicate records in dirlog
 #
 ## The first record found is ignored, any other with
 ## the same base directory name are removed.
@@ -129,11 +127,11 @@
 #
 ## This can take a long time, depending on the log size
 #
-#@MACRO:dirlog-clean-dupes:{m:exe} -d --dirlog={m:q:dirlog@file} --preexec `{m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -vv` -execv `{m:exe} -e dirlog --dirlog={m:q:dirlog@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
-#@MACRO:imdb-clean-dupes:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:imdb-clean-dupes-id:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:tvrage-clean-dupes:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:tvrage-clean-dupes-id:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --lom "showid={showid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:dirlog-clean-dupes|Erase duplicate records in dirlog; Requires glutil-1.9-9 or above:{m:exe} -d --dirlog={m:q:dirlog@file} --preexec `{m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -vv` -execv `{m:exe} -e dirlog --dirlog={m:q:dirlog@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#@MACRO:imdb-clean-dupes|Erase duplicate records in imdblog; Requires glutil-1.9-9 or above:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:imdb-clean-dupes-id|Erase duplicate imdbID records in imdblog; Requires glutil-1.9-9 or above:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:tvrage-clean-dupes|Erase duplicate records in tvlog; Requires glutil-1.9-9 or above:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:tvrage-clean-dupes-id|Erase duplicate showid records in tvlog; Requires glutil-1.9-9 or above:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --lom "showid={showid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #
 ## <dirlog-clean-empty>
 #
@@ -152,20 +150,20 @@
 ## If no path is given, glutil reverts to default 
 ##  (attempts extracting from glftpd.conf)
 #
-#@MACRO:dirlog-clean-empty:{m:exe} -e dirlog --lom "size == 0 && files == 0" --nofq -vvv {m:arg1}
+#@MACRO:dirlog-clean-empty|Clean dirlog records that are size 0 and have no files:{m:exe} -e dirlog --lom "size == 0 && files == 0" --nofq -vvv {m:arg1}
 #
 ## <dirlog-clean-junk>
 #
 ## Remove unecessary entries from dirlog
 #
-#@MACRO:dirlog-clean-junk:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|extras|vobsubs(s|())|subpack|proof|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" --nofq -vvv
+#@MACRO:dirlog-clean-junk|Remove unecessary entries from dirlog:{m:exe} -e dirlog regexi "basedir,^(vobsample|sample|extras|vobsubs(s|())|subpack|proof|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" --nofq -vvv
 #
 ## <dirlog-full-clean>
 #
 ## Does the job of both <dirlog-clean-empty> 
 ##  and <dirlog-clean-junk>
 #
-#@MACRO:dirlog-full-clean:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" or lom size=0&&files=0
+#@MACRO:dirlog-full-clean|Does the job of both <dirlog-clean-empty> and <dirlog-clean-junk>:{m:exe} -e dirlog -vvvv --nofq regexi "basedir,^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" or lom size=0&&files=0
 #
 ## <dirlog-trim>
 #
@@ -177,18 +175,18 @@
 #
 #    glutil -m dirlog-trim -arg1=<maxsize>
 #
-#@MACRO:dirlog-trim|Rebuild dirlog with a limit of <maxsize> records; requires glutil-1.9-10 or above:{m:exe} -e dirlog --maxres={m:arg1}  --nofq --rev -vvv
+#@MACRO:dirlog-trim|Rebuild dirlog with a limit of -arg1=<maxsize> records; requires glutil-1.9-10 or above:{m:exe} -e dirlog --maxres={m:arg1}  --nofq --rev -vvv
 #
 ## <print-<log>-info>
 #
-## Prints information about logs and does 
+## Print information about logs and does 
 ##  access/error checks
 #
-#@MACRO:print-dirlog-info:{m:exe} noop --silent --preexec `if [ {q:dirlog@read} -eq 0 ]; then echo "WARNING: unable to read dirlog, no read permission"; exit 1;elif [ {q:dirlog@read} -eq -1 ]; then echo "WARNING: unable to access dirlog"; exit 1; fi; echo "DIRLOG: {q:dirlog@file}: {q:dirlog@size} bytes in {q:dirlog@count} records, block size: {q:dirlog@bsize}"; [ {q:dirlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt dirlog detected, size is not a multiple of {q:dirlog@bsize}"; [ {q:dirlog@write} -eq 0 ] && echo "WARNING: no write access to dirlog"; exit 0`
-#@MACRO:print-nukelog-info:{m:exe} noop --silent --preexec `if [ {q:nukelog@read} -eq 0 ]; then echo "WARNING: unable to read nukelog, no read permission"; exit 1;elif [ {q:nukelog@read} -eq -1 ]; then echo "WARNING: unable to access nukelog"; exit 1; fi; echo "NUKELOG: {q:nukelog@file}: {q:nukelog@size} bytes in {q:nukelog@count} records, block size: {q:nukelog@bsize}"; [ {q:nukelog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt nukelog detected, size is not a multiple of {q:nukelog@bsize}"; [ {q:nukelog@write} -eq 0 ] && echo "WARNING: no write access to nukelog"; exit 0`
-#@MACRO:print-lastonlog-info:{m:exe} noop --silent --preexec `if [ {q:lastonlog@read} -eq 0 ]; then echo "WARNING: unable to read lastonlog, no read permission"; exit 1;elif [ {q:lastonlog@read} -eq -1 ]; then echo "WARNING: unable to access lastonlog"; exit 1; fi; echo "LASTONLOG: {q:lastonlog@file}: {q:lastonlog@size} bytes in {q:lastonlog@count} records, block size: {q:lastonlog@bsize}"; [ {q:lastonlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt lastonlog detected, size is not a multiple of {q:lastonlog@bsize}"; [ {q:lastonlog@write} -eq 0 ] && echo "WARNING: no write access to lastonlog"; exit 0`
-#@MACRO:print-imdb-info:{m:exe} noop --silent --preexec `if [ {q:imdb@read} -eq 0 ]; then echo "WARNING: unable to read imdb, no read permission"; exit 1;elif [ {q:imdb@read} -eq -1 ]; then echo "WARNING: unable to access imdb"; exit 1; fi; echo "IMDB: {q:imdb@file}: {q:imdb@size} bytes in {q:imdb@count} records, block size: {q:imdb@bsize}"; [ {q:imdb@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt imdb detected, size is not a multiple of {q:imdb@bsize}"; [ {q:imdb@write} -eq 0 ] && echo "WARNING: no write access to imdb"; exit 0`
-#@MACRO:print-tvrage-info:{m:exe} noop --silent --preexec `if [ {q:tvrage@read} -eq 0 ]; then echo "WARNING: unable to read tvrage, no read permission"; exit 1;elif [ {q:tvrage@read} -eq -1 ]; then echo "WARNING: unable to access tvrage"; exit 1; fi; echo "TVRAGE: {q:tvrage@file}: {q:tvrage@size} bytes in {q:tvrage@count} records, block size: {q:tvrage@bsize}"; [ {q:tvrage@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt tvrage detected, size is not a multiple of {q:tvrage@bsize}"; [ {q:tvrage@write} -eq 0 ] && echo "WARNING: no write access to tvrage"; exit 0`
+#@MACRO:dirlog-print-info|Print information about dirlog and does access/error checks:{m:exe} noop --silent --preexec `if [ {q:dirlog@read} -eq 0 ]; then echo "WARNING: unable to read dirlog, no read permission"; exit 1;elif [ {q:dirlog@read} -eq -1 ]; then echo "WARNING: unable to access dirlog"; exit 1; fi; echo "DIRLOG: {q:dirlog@file}: {q:dirlog@size} bytes in {q:dirlog@count} records, block size: {q:dirlog@bsize}"; [ {q:dirlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt dirlog detected, size is not a multiple of {q:dirlog@bsize}"; [ {q:dirlog@write} -eq 0 ] && echo "WARNING: no write access to dirlog"; exit 0`
+#@MACRO:nukelog-print-info|Print information about nukelog and does access/error checks:{m:exe} noop --silent --preexec `if [ {q:nukelog@read} -eq 0 ]; then echo "WARNING: unable to read nukelog, no read permission"; exit 1;elif [ {q:nukelog@read} -eq -1 ]; then echo "WARNING: unable to access nukelog"; exit 1; fi; echo "NUKELOG: {q:nukelog@file}: {q:nukelog@size} bytes in {q:nukelog@count} records, block size: {q:nukelog@bsize}"; [ {q:nukelog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt nukelog detected, size is not a multiple of {q:nukelog@bsize}"; [ {q:nukelog@write} -eq 0 ] && echo "WARNING: no write access to nukelog"; exit 0`
+#@MACRO:lastonlog-print-info|Print information about lastonlog and does access/error checks:{m:exe} noop --silent --preexec `if [ {q:lastonlog@read} -eq 0 ]; then echo "WARNING: unable to read lastonlog, no read permission"; exit 1;elif [ {q:lastonlog@read} -eq -1 ]; then echo "WARNING: unable to access lastonlog"; exit 1; fi; echo "LASTONLOG: {q:lastonlog@file}: {q:lastonlog@size} bytes in {q:lastonlog@count} records, block size: {q:lastonlog@bsize}"; [ {q:lastonlog@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt lastonlog detected, size is not a multiple of {q:lastonlog@bsize}"; [ {q:lastonlog@write} -eq 0 ] && echo "WARNING: no write access to lastonlog"; exit 0`
+#@MACRO:imdb-print-info|Print information about imdb and does access/error checks:{m:exe} noop --silent --preexec `if [ {q:imdb@read} -eq 0 ]; then echo "WARNING: unable to read imdb, no read permission"; exit 1;elif [ {q:imdb@read} -eq -1 ]; then echo "WARNING: unable to access imdb"; exit 1; fi; echo "IMDB: {q:imdb@file}: {q:imdb@size} bytes in {q:imdb@count} records, block size: {q:imdb@bsize}"; [ {q:imdb@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt imdb detected, size is not a multiple of {q:imdb@bsize}"; [ {q:imdb@write} -eq 0 ] && echo "WARNING: no write access to imdb"; exit 0`
+#@MACRO:tvrage-print-info|Print information about tvrage and does access/error checks:{m:exe} noop --silent --preexec `if [ {q:tvrage@read} -eq 0 ]; then echo "WARNING: unable to read tvrage, no read permission"; exit 1;elif [ {q:tvrage@read} -eq -1 ]; then echo "WARNING: unable to access tvrage"; exit 1; fi; echo "TVRAGE: {q:tvrage@file}: {q:tvrage@size} bytes in {q:tvrage@count} records, block size: {q:tvrage@bsize}"; [ {q:tvrage@corrupt} -gt 0 ] && echo "WARNING: possibly corrupt tvrage detected, size is not a multiple of {q:tvrage@bsize}"; [ {q:tvrage@write} -eq 0 ] && echo "WARNING: no write access to tvrage"; exit 0`
 #
 ## <dirlog-record-stats>
 #
@@ -217,24 +215,22 @@
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-stats|iMDB log - full stats, dependencies\: bc:{m:exe} noop --preexec `{m:exe} -m print-imdb-info; {m:exe} -m imdb-record-avgstats; {m:exe} -m imdb-record-totalstats`
+#@MACRO:imdb-stats|iMDB log - full stats, dependencies\: bc:{m:exe} noop --preexec `{m:exe} -m imdb-print-info; {m:exe} -m imdb-record-avgstats; {m:exe} -m imdb-record-totalstats`
 
 #
-## <edit-<logname>>
+## <<logname>-edit>
 #
 ## These are basically for editing the 
 ##   binary logs by hand
 #
-## Requires: glutil 1.11-7
 #
 ## Usage:
 #
-#    glutil -m edit-dirlog [-arg1=<regex>]
+#    glutil -m edit-dirlog [-arg1=<regex>] [-arg2=<extra arguments>]
 #
-## -arg1 is optional, used to select 
-##   specific entries to edit
+## -arg1 is used to select specific entries to edit
 #
-#@MACRO:edit-dirlog:{m:exe} noop silent --preexec `if ! {m:exe} -q dirlog --dirlog={m:q:dirlog@file} iregex dir,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q dirlog -E --dirlog={m:q:dirlog@file}  iregex "dir,{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -v && {m:exe} -e dirlog --nobackup --dirlog={m:q:dirlog@file} -ff --nofq regex dir,"{m:arg1}" silent && {m:exe} -z dirlog --nobackup --dirlog={m:q:dirlog@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
-#@MACRO:edit-tvrage:{m:exe} noop silent --preexec `if ! {m:exe} -q tvrage --tvlog={m:q:tvrage@file}  iregex name,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q tvrage -E --tvlog={m:q:tvrage@file} iregex "name,{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -v && {m:exe} -e tvrage --nobackup --tvlog={m:q:tvrage@file} -ff --nofq regex name,"{m:arg1}" silent && {m:exe} --nobackup --tvlog={m:q:tvrage@file} -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
-#@MACRO:edit-imdb:{m:exe} noop silent --preexec `if ! {m:exe}  -q imdb --imdblog={m:q:imdb@file} iregex title,"{m:arg1}" --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q imdb -E --imdblog={m:q:imdb@file} iregex "title,{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --imdblog={m:q:imdb@file} --backup imdb -v && {m:exe} -e imdb --nobackup --imdblog={m:q:imdb@file} -ff --nofq regex title,"{m:arg1}" silent && {m:exe} -z imdb --nobackup --imdblog={m:q:imdb@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:dirlog-edit|Edit dirlog with your default text editor [-arg1=<edit-only regex>] [-arg2=<extra arguments>]:{m:exe} noop silent --preexec `if ! {m:exe} -q dirlog --dirlog={m:q:dirlog@file} iregexi "{m:arg1}" {m:arg2} --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q dirlog -E {m:arg2} --dirlog={m:q:dirlog@file} iregexi "{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -v && {m:exe} -e dirlog --nobackup --dirlog={m:q:dirlog@file} -ff --nofq {m:arg2} regexi "{m:arg1}" silent && {m:exe} -z dirlog --nobackup --dirlog={m:q:dirlog@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:tvrage-edit|Edit tvlog with your default text editor [-arg1=<edit-only regex>] [-arg2=<extra arguments>]:{m:exe} noop silent --preexec `if ! {m:exe} -q tvrage --tvlog={m:q:tvrage@file}  iregexi "{m:arg1}" {m:arg2} --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q tvrage -E {m:arg2} --tvlog={m:q:tvrage@file} iregexi "{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -v && {m:exe} -e tvrage --nobackup --tvlog={m:q:tvrage@file} -ff --nofq {m:arg2} regexi "{m:arg1}" silent && {m:exe} --nobackup --tvlog={m:q:tvrage@file} -z tvrage -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
+#@MACRO:imdb-edit|Edit imdblog with your default text editor [-arg1=<edit-only regex>] [-arg2=<extra arguments>]:{m:exe} noop silent --preexec `if ! {m:exe}  -q imdb --imdblog={m:q:imdb@file} iregexi "{m:arg1}" {m:arg2} --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q imdb -E {m:arg2} --imdblog={m:q:imdb@file} iregexi "{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --imdblog={m:q:imdb@file} --backup imdb -v && {m:exe} -e imdb --nobackup --imdblog={m:q:imdb@file} -ff --nofq {m:arg2} regexi "{m:arg1}" silent && {m:exe} -z imdb --nobackup --imdblog={m:q:imdb@file} -vvvv < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
 #
