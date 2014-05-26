@@ -1274,7 +1274,7 @@ flush_data_md(__g_handle hdl, char *outfile)
     {
       if ((gz_fh = gzdopen(fileno(fh), hdl->w_mode)) == NULL)
         {
-          return 0;
+          return 7;
         }
     }
 #endif
@@ -1301,11 +1301,12 @@ flush_data_md(__g_handle hdl, char *outfile)
 #ifdef HAVE_ZLIB_H
       if (hdl->flags & F_GH_IO_GZIP)
         {
-          if ((bw = gzwrite(gz_fh,ptr->ptr,hdl->block_sz)) != DL_SZ)
+          if ((bw = gzwrite(gz_fh,ptr->ptr,hdl->block_sz)) != hdl->block_sz)
             {
               ret = 3;
               break;
             }
+
         }
       else
         {
@@ -1322,6 +1323,7 @@ flush_data_md(__g_handle hdl, char *outfile)
           break;
         }
 #endif
+
       hdl->bw += hdl->block_sz;
       hdl->rw++;
       ptr = ptr->next;
