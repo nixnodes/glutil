@@ -43,7 +43,7 @@ long long int db_max_size = DB_MAX_SIZE;
 static void
 g_set_compression_opts(uint8_t level, __g_handle hdl)
   {
-    snprintf(hdl->w_mode, sizeof(hdl->w_mode), "wb%hhd", level);
+    snprintf(hdl->w_mode, sizeof(hdl->w_mode), "wb%hhu", level);
   }
 #endif
 
@@ -185,8 +185,9 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 #ifdef HAVE_ZLIB_H
   if ((hdl->gz_fh = gzdopen(fileno(hdl->fh), mode)) == NULL)
     {
-      return 431;
+      return 36;
     }
+
 #endif
 
   return 0;
@@ -392,7 +393,11 @@ gh_rewind(__g_handle hdl)
     {
       if (hdl->fh)
         {
+#ifdef HAVE_ZLIB_H
+          gzrewind(hdl->gz_fh);
+#endif
           rewind(hdl->fh);
+
           hdl->offset = 0;
         }
     }
@@ -426,6 +431,13 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
   if ((gz_fh = gzdopen(fileno(fh), "rb")) == NULL)
     {
       return 0;
+    }
+  if (gzdirect(hdl->gz_fh) == 1)
+    {
+      if (hdl->flags & F_GH_IO_GZIP)
+        {
+          hdl->flags ^= F_GH_IO_GZIP;
+        }
     }
 #endif
 
@@ -567,10 +579,16 @@ load_data_md(pmda md, char *file, __g_handle hdl)
           return 20106;
         }
       uint32_t bdiff;
-      if ((bdiff = (hdl->total_sz % hdl->block_sz)))
+
+      if (hdl->total_sz < hdl->block_sz)
+        {
+          hdl->total_sz = hdl->block_sz;
+        }
+      else if ((bdiff = (hdl->total_sz % hdl->block_sz)))
         {
           hdl->total_sz -= bdiff;
         }
+
       count = hdl->total_sz / hdl->block_sz;
       hdl->data = malloc(count * hdl->block_sz);
     }
@@ -964,6 +982,11 @@ determine_temp_path(char *file, char *output, size_t max_out)
   return 0;
 }
 
+#define RDF_SFAC(hdl, cl) { \
+  hdl->flags |= F_GH_IO_GZIP; \
+  g_set_compression_opts(cl, hdl); \
+}
+
 int
 rebuild_data_file(char *file, __g_handle hdl)
 {
@@ -997,6 +1020,64 @@ rebuild_data_file(char *file, __g_handle hdl)
     {
       p_ptr = &hdl->buffer;
     }
+
+#ifdef HAVE_ZLIB_H
+  /*  if (hdl->flags & F_GH_D_WRITE)
+   {
+   gzFile gz_fh;
+   if ((gz_fh = gzopen(file, "r")) == NULL)
+   {
+   goto skip;
+   }
+
+   int gzd = gzdirect(gz_fh);
+
+   gzclose(gz_fh);
+
+   if ((gfl0 & F_OPT_GZIP))
+   {
+   if (gzd == 1)
+   {
+   if (hdl->flags & F_GH_IO_GZIP)
+   {
+   hdl->flags ^= F_GH_IO_GZIP;
+   gfl0 ^= F_OPT_GZIP;
+   }
+   if (gfl & F_OPT_VERBOSE2)
+   {
+   print_str("WARNING: %s: target is not compressed, forcing gzip off\n",
+   file);
+   }
+   }
+   else if (gzd == 0)
+   {
+   RDF_SFAC(hdl, comp_level)
+   }
+   }
+   else
+   {
+   if (gzd == 0)
+   {
+   if (gfl & F_OPT_VERBOSE2)
+   {
+   print_str("WARNING: %s: target is compressed, forcing gzip on\n",
+   file);
+   }
+   comp_level = 2;
+   RDF_SFAC(hdl, comp_level)
+   } else {
+   RDF_SFAC(hdl, comp_level)
+   }
+   }
+
+   }
+   else
+   {
+   skip:*/
+  RDF_SFAC(hdl, comp_level)
+  //}
+
+#endif
 
   if (updmode != UPD_MODE_RECURSIVE)
     {
@@ -1059,6 +1140,13 @@ rebuild_data_file(char *file, __g_handle hdl)
   if (gfl & F_OPT_VERBOSE2)
     {
       print_str("NOTICE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
+#ifdef HAVE_ZLIB_H
+      if ((hdl->flags & F_GH_IO_GZIP) && comp_level != 0)
+        {
+          print_str("NOTICE: %s: gzip write compression enabled, level '%hhu'\n",
+              hdl->s_buffer, comp_level);
+        }
+#endif
     }
 
   off_t rw_o = hdl->rw, bw_o = hdl->bw;
@@ -1103,18 +1191,12 @@ rebuild_data_file(char *file, __g_handle hdl)
 
   g_setjmp(0, "rebuild_data_file(5)", NULL, NULL);
 
-  if (!(gfl & F_OPT_FORCE2) && !(gfl & F_OPT_NOWRITE)
+  if ((gfl & F_OPT_VERBOSE5) && !(gfl & F_OPT_NOWRITE)
       && (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz)
     {
       print_str(
-          "ERROR: %s: [%u/%u] generated data file is smaller than a single record!\n",
+          "WARNING: %s: [%u/%u] generated data file is smaller than a single record\n",
           hdl->s_buffer, (uint32_t) sz_r, (uint32_t) hdl->block_sz);
-      ret = 7;
-      if (!(gfl & F_OPT_NOWRITE))
-        {
-          remove(hdl->s_buffer);
-        }
-      goto cleanup;
     }
 
   g_setjmp(0, "rebuild_data_file(6)", NULL, NULL);
@@ -1270,12 +1352,14 @@ flush_data_md(__g_handle hdl, char *outfile)
     }
 
 #ifdef HAVE_ZLIB_H
+
   if (hdl->flags & F_GH_IO_GZIP)
     {
-      if ((gz_fh = gzdopen(fileno(fh), hdl->w_mode)) == NULL)
+      if ((gz_fh = gzdopen(dup(fileno(fh)), hdl->w_mode)) == NULL)
         {
-          return 7;
+          return 8;
         }
+
     }
 #endif
 
@@ -1303,23 +1387,23 @@ flush_data_md(__g_handle hdl, char *outfile)
         {
           if ((bw = gzwrite(gz_fh,ptr->ptr,hdl->block_sz)) != hdl->block_sz)
             {
-              ret = 3;
+              ret = 13;
               break;
             }
-
         }
       else
         {
           if ((bw = fwrite(ptr->ptr, hdl->block_sz, 1, fh)) != 1)
             {
-              ret = 3;
+
+              ret = 14;
               break;
             }
         }
 #else
       if ((bw = fwrite(ptr->ptr, hdl->block_sz, 1, fh)) != 1)
         {
-          ret = 3;
+          ret = 15;
           break;
         }
 #endif
@@ -1337,9 +1421,9 @@ flush_data_md(__g_handle hdl, char *outfile)
   g_setjmp(0, "flush_data_md(2)", NULL, NULL);
 
   free(buffer);
-#ifndef HAVE_ZLIB_H
   fflush(fh);
-#else
+#ifdef HAVE_ZLIB_H
+
   if (hdl->flags & F_GH_IO_GZIP)
     {
       gzclose(gz_fh);
@@ -1384,7 +1468,15 @@ d_write(char *arg)
 
   off_t f_sz = get_file_size(datafile);
 
-  g_act_1.flags |= F_GH_FFBUFFER;
+  g_act_1.flags |= F_GH_FFBUFFER | F_GH_D_WRITE;
+
+#ifdef HAVE_ZLIB_H
+  if (gfl0 & F_OPT_GZIP)
+    {
+      g_act_1.flags |= F_GH_IO_GZIP;
+      g_set_compression_opts(comp_level, &g_act_1);
+    }
+#endif
 
   if (f_sz > 0)
     {
