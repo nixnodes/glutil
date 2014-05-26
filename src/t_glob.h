@@ -93,7 +93,8 @@ typedef unsigned long long int ulint64_t;
 #define MSG_GEN_DFCORRUW                "WARNING: %s: data file size [%llu] is not a multiple of block size [%d]\n"
 #define MSG_GEN_DFRFAIL                 "ERROR: %s: building data file failed!\n"
 #define MSG_BAD_DATATYPE                "ERROR: %s: could not determine data type\n"
-#define MSG_GEN_WROTE                   "STATS: %s: wrote %llu bytes in %llu records\n"
+#define MSG_GEN_WROTE                   "STATS: %s: wrote %.2f kB in %llu records\n"
+#define MSG_GEN_WROTE2                  "STATS: %s: wrote %.2f kB [%.2f kB] in %llu records\n"
 #define MSG_GEN_FLUSHED                 "NOTICE: %s: flushed %llu records, %llu bytes\n"
 #define MSG_LL_RC                       "NOTICE: %s: loaded %llu records\n"
 

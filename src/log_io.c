@@ -147,13 +147,17 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
               print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
             }
 
-          if (!(hdl->flags & F_GH_IO_GZIP) && !(gfl & F_OPT_FORCE2))
+          if (!(hdl->flags & F_GH_IO_GZIP))
             {
-              if (hdl->total_sz % hdl->block_sz && (gfl & F_OPT_VERBOSE2))
+              if (hdl->total_sz % hdl->block_sz)
                 {
                   print_str(
                   MSG_GEN_DFCORRUW, file, (ulint64_t) hdl->total_sz,
                       hdl->block_sz);
+                }
+              if (!(gfl & F_OPT_FORCE))
+                {
+                  gfl |= F_OPT_LOADQ;
                 }
             }
 
@@ -481,8 +485,10 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
           hdl->flags |= F_GH_IS_GZIP;
           gzrewind(gz_fh);
         }
-    } else {
-        hdl->flags |= F_GH_IS_GZIP;
+    }
+  else
+    {
+      hdl->flags |= F_GH_IS_GZIP;
     }
 
   rewind(fh);
@@ -957,7 +963,12 @@ g_buffer_into_memory(char *file, __g_handle hdl)
               print_str(
                   "WARNING: %s: [%llu/%llu] actual data loaded was not the same size as source data file\n",
                   hdl->file, (uint64_t) hdl->total_sz, (uint64_t) tot_sz);
+              if (!(gfl & F_OPT_FORCE))
+                {
+                  gfl |= F_OPT_LOADQ;
+                }
             }
+
         }
       if (gfl & F_OPT_VERBOSE2)
         {
@@ -1705,7 +1716,25 @@ d_write(char *arg)
     {
       if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
         {
-          print_str(MSG_GEN_WROTE, datafile, g_act_1.bw, g_act_1.rw);
+
+#ifdef HAVE_ZLIB_H
+          if ( g_act_1.flags & F_GH_IO_GZIP )
+            {
+              fprintf(stderr, MSG_GEN_WROTE2, datafile,
+                  (double) get_file_size(datafile) / 1024.0,
+                  (double) g_act_1.bw / 1024.0,
+                  (long long unsigned int) g_act_1.rw);
+            }
+          else
+            {
+              fprintf(stderr, MSG_GEN_WROTE, datafile,
+                  (double) g_act_1.bw / 1024.0,
+                  (long long unsigned int) g_act_1.rw);
+            }
+#else
+          fprintf(stderr, MSG_GEN_WROTE, datafile, (double) g_act_1.bw / 1024.0,
+              (long long unsigned int) g_act_1.rw);
+#endif
         }
     }
 

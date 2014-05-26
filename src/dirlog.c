@@ -254,9 +254,26 @@ rebuild_dirlog(void)
 
   g_close(&g_act_1);
 
-  if ((dl_stats.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
+  if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+      && !(gfl0 & F_OPT_NOSTATS))
     {
-      print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
+#ifdef HAVE_ZLIB_H
+      if ( g_act_1.flags & F_GH_IO_GZIP )
+        {
+          fprintf(stderr, MSG_GEN_WROTE2, DIRLOG,
+              (double) dl_stats.bw / 1024.0,
+              (double) g_act_1.bw / 1024.0, (long long unsigned)dl_stats.rw);
+        }
+      else
+        {
+          fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
+              (long long unsigned)dl_stats.rw);
+        }
+#else
+      fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
+          (long long unsigned) dl_stats.rw);
+#endif
+
     }
 
   return rt;
@@ -1171,9 +1188,25 @@ dirlog_update_record(char *argv)
 
   md_g_free(&dirchain);
 
-  if ((dl_stats.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
+  if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+      && !(gfl0 & F_OPT_NOSTATS))
     {
-      print_str(MSG_GEN_WROTE, DIRLOG, dl_stats.bw, dl_stats.rw);
+#ifdef HAVE_ZLIB_H
+      if ( g_act_1.flags & F_GH_IO_GZIP )
+        {
+          fprintf(stderr, MSG_GEN_WROTE2, DIRLOG,
+              (double) dl_stats.bw / 1024.0,
+              (double) g_act_1.bw / 1024.0, (long long unsigned)dl_stats.rw);
+        }
+      else
+        {
+          fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
+              (long long unsigned)dl_stats.rw);
+        }
+#else
+      fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
+          (long long unsigned) dl_stats.rw);
+#endif
     }
 
   return ret;
@@ -1418,10 +1451,26 @@ dirlog_check_records(void)
         }
       else
         {
-          if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
+          if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+              && !(gfl0 & F_OPT_NOSTATS))
             {
-              print_str(MSG_GEN_WROTE, DIRLOG, (ulint64_t) g_act_1.bw,
-                  (ulint64_t) g_act_1.rw);
+#ifdef HAVE_ZLIB_H
+              if ( g_act_1.flags & F_GH_IO_GZIP )
+                {
+                  fprintf(stderr, MSG_GEN_WROTE2, DIRLOG,
+                      (double) dl_stats.bw / 1024.0,
+                      (double) g_act_1.bw / 1024.0, (long long unsigned int)dl_stats.rw);
+                }
+              else
+                {
+                  fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
+                      (long long unsigned int)dl_stats.rw);
+                }
+#else
+              fprintf(stderr, MSG_GEN_WROTE, DIRLOG,
+                  (double) dl_stats.bw / 1024.0,
+                  (long long unsigned int) dl_stats.rw);
+#endif
             }
         }
     }

@@ -488,8 +488,23 @@ rebuild(void *arg)
 
   if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
     {
-      print_str(MSG_GEN_WROTE, datafile, (ulint64_t) g_act_1.bw,
-          (ulint64_t) g_act_1.rw);
+#ifdef HAVE_ZLIB_H
+      if ( g_act_1.flags & F_GH_IO_GZIP )
+        {
+          fprintf(stderr, MSG_GEN_WROTE2, datafile,
+              (double) get_file_size(datafile) / 1024.0,
+              (double) g_act_1.bw / 1024.0,
+              (long long unsigned int) g_act_1.rw);
+        }
+      else
+        {
+          fprintf(stderr, MSG_GEN_WROTE, datafile, (double) g_act_1.bw / 1024.0,
+              (long long unsigned int) g_act_1.rw);
+        }
+#else
+      fprintf(stderr, MSG_GEN_WROTE, datafile, (double) g_act_1.bw / 1024.0,
+          (long long unsigned int) g_act_1.rw);
+#endif
     }
 
   /*if ((gfl & F_OPT_NOFQ) && !(g_act_1.flags & F_GH_APFILT))
