@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:21
+#@REVISION:22
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -301,21 +301,21 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
 		
-	 	$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" --nofq --silent ${EXTRA_ARGS} || { 
+	 	$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage --regex "$DIR_E" --nofq --nostats --silent ${EXTRA_ARGS} || { 
 			echo "ERROR: $DIR_E: Failed removing old record"; exit 1 
 		}
 		
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
 		[ -e "$3$LAPPEND" ] && {
-			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage lom "showid=$SHOWID" --nofq --silent ${EXTRA_ARGS} || {
+			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage lom "showid=$SHOWID" --nofq --nostats --silent ${EXTRA_ARGS} || {
 				echo "ERROR: $SHOWID: Failed removing old record"; exit 1 
 			}
 		}
 	fi	
 	
 	echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\nstartyear $STARTYEAR\nendyear $ENDYEAR\nnetwork $NETWORK\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
+	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
 	rm /tmp/glutil.img.$$.tmp
 fi
 

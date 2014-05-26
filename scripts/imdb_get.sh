@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:31
+#@REVISION:32
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -352,7 +352,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
                  [ -e "$3$LAPPEND" ] && {
-               	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb --regex "$DIR_E" --silent ${EXTRA_ARGS} || {
+               	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb --regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
                 	}
                 }
@@ -360,14 +360,14 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
                 [ -e "$3$LAPPEND" ] && {
-               		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb match "imdbid,${iid}" --silent ${EXTRA_ARGS} || {
+               		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
                    	     echo "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
                		}
                	}
         fi
 
 	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --imdblog="$3$LAPPEND" -z imdb --nobackup --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to imdblog!!"
+	$2 --imdblog="$3$LAPPEND" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 fi
 
