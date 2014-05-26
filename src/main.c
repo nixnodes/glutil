@@ -45,6 +45,7 @@ main(int argc, char *argv[])
   int r;
 
   print_str = g_print_str;
+  __pf_eof = g_feof;
 
   g_setjmp(0, "main", NULL, NULL);
   if ((r = setup_sighandlers()))

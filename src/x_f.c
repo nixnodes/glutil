@@ -19,6 +19,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <zlib.h>
+
 static uint32_t crc_32_tab[] =
   { 0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F,
       0xE963A535, 0x9E6495A3, 0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,
@@ -413,4 +415,18 @@ exec_and_redirect_output(char *command, FILE *output)
   pclose(pipe);
 
   return w;
+}
+
+#ifdef HAVE_ZLIB_H
+int
+gz_feof(void *p)
+{
+  return gzeof((gzFile) p);
+}
+#endif
+
+int
+g_feof(void *p)
+{
+  return feof((FILE*) p);
 }

@@ -90,6 +90,7 @@ typedef unsigned long long int ulint64_t;
 #define MSG_GEN_NODFILE                 "ERROR: %s: could not open data file: %s\n"
 #define MSG_GEN_DFWRITE                 "ERROR: %s: [%d] [%llu] writing record to dirlog failed! (mode: %s)\n"
 #define MSG_GEN_DFCORRU                 "ERROR: %s: corrupt data file detected! (data file size [%llu] is not a multiple of block size [%d])\n"
+#define MSG_GEN_DFCORRUW                "WARNING: %s: data file size [%llu] is not a multiple of block size [%d]\n"
 #define MSG_GEN_DFRFAIL                 "ERROR: %s: building data file failed!\n"
 #define MSG_BAD_DATATYPE                "ERROR: %s: could not determine data type\n"
 #define MSG_GEN_WROTE                   "STATS: %s: wrote %llu bytes in %llu records\n"
@@ -175,6 +176,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_PS_ABSSILENT              (a64 << 11)
 #define F_OPT_NOSTATS                   (a64 << 12)
 #define F_OPT_STATS                     (a64 << 13)
+#define F_OPT_GZIP                      (a64 << 14)
 
 #define F_DL_FOPEN_BUFFER               (a32 << 1)
 #define F_DL_FOPEN_FILE                 (a32 << 2)
@@ -214,6 +216,10 @@ uint64_t gfl0, gfl;
 uint32_t ofl;
 
 uint8_t l_sfo;
+
+#ifdef HAVE_ZLIB_H
+uint8_t comp_level;
+#endif
 
 int
 (*print_str)(const char * volatile buf, ...);

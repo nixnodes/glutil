@@ -110,6 +110,8 @@ am_glutil_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) init.$(OBJEXT) \
 	omfp.$(OBJEXT) dirlog.$(OBJEXT)
 glutil_OBJECTS = $(am_glutil_OBJECTS)
 glutil_LDADD = $(LDADD)
+glutil_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(glutil_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_glutil_chroot_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) \
 	init.$(OBJEXT) main.$(OBJEXT) macros.$(OBJEXT) \
 	l_error.$(OBJEXT) str.$(OBJEXT) memory.$(OBJEXT) \
@@ -296,6 +298,7 @@ top_srcdir = @top_srcdir@
 glutil_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c log_op.c omfp.c  dirlog.c
 glutil_chroot_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c log_op.c omfp.c  dirlog.c
 glutil_precheck_SOURCES = pce/pce_signal.c pce/pce_init.c macros.c l_error.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+glutil_LDFLAGS = -lz
 all: all-am
 
 .SUFFIXES:
@@ -375,7 +378,7 @@ clean-binPROGRAMS:
 
 glutil$(EXEEXT): $(glutil_OBJECTS) $(glutil_DEPENDENCIES) $(EXTRA_glutil_DEPENDENCIES) 
 	@rm -f glutil$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(glutil_OBJECTS) $(glutil_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(glutil_LINK) $(glutil_OBJECTS) $(glutil_LDADD) $(LIBS)
 
 glutil-chroot$(EXEEXT): $(glutil_chroot_OBJECTS) $(glutil_chroot_DEPENDENCIES) $(EXTRA_glutil_chroot_DEPENDENCIES) 
 	@rm -f glutil-chroot$(EXEEXT)

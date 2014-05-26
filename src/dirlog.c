@@ -951,6 +951,15 @@ g_load_record(__g_handle hdl, const void *data)
   return 0;
 }
 
+#define DWR_DO_NORM_WRITE(buffer, fh) { \
+    if ((fw = fwrite(buffer, 1, DL_SZ, fh)) < DL_SZ) \
+        { \
+          print_str("ERROR: could not write dirlog record! %d/%d\n", fw, \
+              (int) DL_SZ); \
+          return 1; \
+        } \
+}
+
 int
 dirlog_write_record(struct dirlog *buffer, off_t offset, int whence)
 {
@@ -979,12 +988,23 @@ dirlog_write_record(struct dirlog *buffer, off_t offset, int whence)
 
   int fw;
 
-  if ((fw = fwrite(buffer, 1, DL_SZ, g_act_1.fh)) < DL_SZ)
+#ifdef HAVE_ZLIB_H
+  if (g_act_1.flags & F_GH_IO_GZIP)
     {
-      print_str("ERROR: could not write dirlog record! %d/%d\n", fw,
-          (int) DL_SZ);
-      return 1;
+      if ((fw = gzwrite(g_act_1.gz_fh,buffer,DL_SZ)) < DL_SZ)
+        {
+          print_str("ERROR: could not write dirlog record! %d/%d\n", fw,
+              (int) DL_SZ);
+          return 1;
+        }
     }
+  else
+    {
+      DWR_DO_NORM_WRITE(buffer, g_act_1.fh)
+    }
+#else
+  DWR_DO_NORM_WRITE(buffer, g_act_1.fh)
+#endif
 
   g_act_1.bw += (off_t) fw;
   g_act_1.rw++;
@@ -1174,11 +1194,14 @@ dirlog_check_records(void)
   uint32_t flags = 0;
   off_t dsz;
 
-  if ((dsz = get_file_size(DIRLOG)) % DL_SZ)
+  if (!(gfl0 & F_OPT_GZIP))
     {
-      print_str(MSG_GEN_DFCORRU, DIRLOG, (ulint64_t) dsz, (int) DL_SZ);
-      print_str("NOTICE: use -r to rebuild (see --help)\n");
-      return -1;
+      if ((dsz = get_file_size(DIRLOG)) % DL_SZ)
+        {
+          print_str(MSG_GEN_DFCORRU, DIRLOG, (ulint64_t) dsz, (int) DL_SZ);
+          print_str("NOTICE: use -r to rebuild (see --help)\n");
+          return -1;
+        }
     }
 
   if (g_fopen(DIRLOG, mode, F_DL_FOPEN_BUFFER | flags, &g_act_1))

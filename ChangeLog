@@ -46,6 +46,7 @@
  *   - % -mlist - additional optional verbosity increase (rev. 17_b7)
  *   - % sort/filter argument order affects a dump operation (sort or filter first) (rev. 17_b8)
  *   - ~ -xdev broken while rebuilding dirlog (rev. 17_b9)
+ *   - + gzip compression support (beta) (rev. 17_b10)
  *
  * v2.2:
  *

@@ -158,3 +158,7 @@ __dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,
         dt_set_gen1, pdt_set_gen2 = dt_set_gen2, pdt_set_gen3 = dt_set_gen3,
     pdt_set_gen4 = dt_set_gen4, pdt_set_gconf = dt_set_gconf, pdt_set_sconf =
         dt_set_sconf;
+
+int
+(*__pf_eof)(void *p);
+

@@ -51,4 +51,9 @@ write_file_text(char *data, char *file);
 size_t
 exec_and_redirect_output(char *command, FILE *output);
 
+typedef int
+_pf_eof(void *p);
+
+_pf_eof gz_feof, g_feof;
+
 #endif /* X_F_H_ */

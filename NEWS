@@ -1,4 +1,9 @@
- * 25/5/2014 (2.3.17)
+ * 26/5/2014 (2.3.17_beta)
+ 
+ 	Now supports gzip compressed data sources, usefull for large
+ 	imdb/tvrage logs
+ 
+ * 25/5/2014 (2.3.17_beta)
     Added a way to accumulate (add-up) any integer/floating point field across the whole
     data source or just a part of it. For example, directory sizes from the dirlog can be
     added up and stored into one of the available accumulators (see DATA_STRUCTURES).

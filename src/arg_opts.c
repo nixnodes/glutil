@@ -30,6 +30,12 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#ifdef HAVE_ZLIB_H
+
+uint8_t comp_level = 0;
+
+#endif
+
 int
 prio_opt_g_macro(void *arg, int m)
 {
@@ -125,6 +131,12 @@ int
 opt_g_loop(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 7180;
+    }
+
   g_sleep = (uint32_t) strtol(buffer, NULL, 10);
   gfl |= F_OPT_LOOP;
 
@@ -178,10 +190,42 @@ opt_g_mlist(void *arg, int m)
   return 0;
 }
 
+static int
+opt_g_comp(void *arg, int m)
+{
+#ifdef HAVE_ZLIB_H
+  gfl0 |= F_OPT_GZIP;
+  char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 9180;
+    }
+
+  int32_t t = (int32_t) strtol(buffer, NULL, 10);
+
+  if (t < 0 || t > 9)
+    {
+      return 9181;
+    }
+
+  comp_level = (uint8_t) t;
+
+  __pf_eof = gz_feof;
+  return 0;
+#else
+  return 14591;
+#endif
+}
+
 int
 opt_loop_max(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+  if (buffer == NULL)
+    {
+      return 9080;
+    }
   errno = 0;
   loop_max = (uint64_t) strtol(buffer, NULL, 10);
   if ((errno == ERANGE && (loop_max == LONG_MAX || loop_max == LONG_MIN))
@@ -267,7 +311,6 @@ opt_g_mindepth(void *arg, int m)
   gfl |= F_OPT_MINDEPTH;
   return 0;
 }
-
 
 int
 opt_g_daemonize(void *arg, int m)
@@ -1361,5 +1404,5 @@ void *f_ref[] =
       opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1,
       "--rusleep", opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats,
       (void*) 0, "--stats", opt_g_stats, (void*) 0, "-mlist", opt_g_mlist,
-      (void*) 0,
+      (void*) 0, "--gz", opt_g_comp, (void*) 1,
       NULL, NULL, NULL };

@@ -115,6 +115,9 @@ uint32_t g_omfp_sto, g_omfp_suto;
 int
 g_print_str(const char * volatile buf, ...);
 
+int
+(*__pf_eof)(void *p);
+
 #include <signal.h>
 
 int
