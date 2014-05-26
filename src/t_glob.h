@@ -94,6 +94,8 @@ typedef unsigned long long int ulint64_t;
 #define MSG_GEN_DFRFAIL                 "ERROR: %s: building data file failed!\n"
 #define MSG_BAD_DATATYPE                "ERROR: %s: could not determine data type\n"
 #define MSG_GEN_WROTE                   "STATS: %s: wrote %llu bytes in %llu records\n"
+#define MSG_GEN_FLUSHED                 "NOTICE: %s: flushed %llu records, %llu bytes\n"
+#define MSG_LL_RC                       "NOTICE: %s: loaded %llu records\n"
 
 // gfl
 

@@ -194,7 +194,7 @@ static int
 opt_g_comp(void *arg, int m)
 {
 #ifdef HAVE_ZLIB_H
-  gfl0 |= F_OPT_GZIP;
+
   char *buffer = g_pg(arg, m);
 
   if (buffer == NULL)
@@ -210,6 +210,10 @@ opt_g_comp(void *arg, int m)
     }
 
   comp_level = (uint8_t) t;
+
+  if (comp_level != 0) {
+      gfl0 |= F_OPT_GZIP;
+  }
 
   __pf_eof = gz_feof;
   return 0;

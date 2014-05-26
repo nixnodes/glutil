@@ -115,6 +115,17 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
       hdl->flags |= F_GH_IO_GZIP;
       g_set_compression_opts(comp_level, hdl);
     }
+
+  gzFile gz_fh;
+  if ((gz_fh = gzopen(file, "rb")) != NULL)
+    {
+      if (gzdirect(gz_fh) == 0)
+        {
+          hdl->flags |= F_GH_IS_GZIP;
+        }
+    }
+
+  gzclose(gz_fh);
 #endif
 
   FILE *fd;
@@ -183,7 +194,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   hdl->fh = fd;
 #ifdef HAVE_ZLIB_H
-  if ((hdl->gz_fh = gzdopen(fileno(hdl->fh), mode)) == NULL)
+  if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
     {
       return 36;
     }
@@ -404,6 +415,35 @@ gh_rewind(__g_handle hdl)
   return 0;
 }
 
+static int
+g_load_data_check_of(void *f, void *nf, __g_handle hdl)
+{
+
+  uint8_t _xof = 0;
+
+#ifdef HAVE_ZLIB_H
+  if (hdl->flags & F_GH_IS_GZIP)
+    {
+      if (f == NULL)
+        {
+          return 1;
+        }
+      _xof = gzeof((gzFile)f);
+    }
+  else
+    {
+      _xof = (feof((FILE*) nf) || ferror((FILE*) nf));
+    }
+#else
+  if (f == NULL)
+    {
+      return 1;
+    }
+  _xof = (feof((FILE*) f) || ferror((FILE*) f));
+#endif
+  return _xof;
+}
+
 size_t
 g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 {
@@ -417,7 +457,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 
   if (!(hdl->flags & F_GH_FROMSTDIN))
     {
-      if (!(fh = fopen(file, "rb")))
+      if (NULL == (fh = fopen(file, "rb")))
         {
           return 0;
         }
@@ -428,31 +468,35 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
     }
 
 #ifdef HAVE_ZLIB_H
-  if ((gz_fh = gzdopen(fileno(fh), "rb")) == NULL)
+
+  if ((gz_fh = gzdopen(dup(fileno(fh)), "rb")) == NULL)
     {
       return 0;
     }
-  if (gzdirect(hdl->gz_fh) == 1)
+
+  if (!(hdl->flags & F_GH_FROMSTDIN))
     {
-      if (hdl->flags & F_GH_IO_GZIP)
+      if (gzdirect(gz_fh) == 0)
         {
-          hdl->flags ^= F_GH_IO_GZIP;
+          hdl->flags |= F_GH_IS_GZIP;
+          gzrewind(gz_fh);
         }
+    } else {
+        hdl->flags |= F_GH_IS_GZIP;
     }
+
+  rewind(fh);
 #endif
 
   uint8_t *b_output = (uint8_t*) hdl->data;
 #ifdef HAVE_ZLIB_H
-  while (!gzeof(gz_fh))
+  while (!g_load_data_check_of((void*) gz_fh, fh, hdl))
 #else
-  while (!feof(fh) && !ferror(fh))
+  while (!g_load_data_check_of((void*) fh, NULL, hdl))
 #endif
     {
-      if ((hdl->flags & F_GH_FROMSTDIN)
-#ifdef HAVE_ZLIB_H
-      || 1
-#endif
-      )
+
+      if ((hdl->flags & F_GH_FROMSTDIN) || (hdl->flags & F_GH_IS_GZIP))
         {
           if (!fr && !(hdl->total_sz - c_fr))
             {
@@ -468,9 +512,17 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
               break;
             }
         }
-
 #ifdef HAVE_ZLIB_H
-      fr = gzread(gz_fh, &b_output[c_fr], hdl->total_sz - c_fr);
+      if (hdl->flags & F_GH_IS_GZIP)
+        {
+
+          fr = gzread(gz_fh, &b_output[c_fr], hdl->total_sz - c_fr);
+        }
+      else
+        {
+          fr = fread(&b_output[c_fr], 1, hdl->total_sz - c_fr, fh);
+        }
+
 #else
       fr = fread(&b_output[c_fr], 1, hdl->total_sz - c_fr, fh);
 #endif
@@ -487,15 +539,14 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
       //c_fr = 0;
     }
 
-#ifdef HAVE_ZLIB_H
-  if (gz_fh)
-    {
-      gzclose(gz_fh);
-    }
-#endif
-
   if (!(hdl->flags & F_GH_FROMSTDIN))
     {
+#ifdef HAVE_ZLIB_H
+      if (gz_fh)
+        {
+          gzclose(gz_fh);
+        }
+#endif
       fclose(fh);
     }
 
@@ -610,7 +661,6 @@ load_data_md(pmda md, char *file, __g_handle hdl)
           if ((b_read = g_load_data_md(hdl->data, hdl->total_sz, file, hdl))
               % hdl->block_sz || !b_read)
             {
-
               md_g_free(md);
               return 20109;
             }
@@ -670,6 +720,18 @@ g_buffer_into_memory(char *file, __g_handle hdl)
       hdl->flags |= F_GH_IO_GZIP;
       g_set_compression_opts(comp_level, hdl);
     }
+
+  gzFile gz_fh;
+  if ((gz_fh = gzopen(file, "rb")) != NULL)
+    {
+      if (gzdirect(gz_fh) == 0)
+        {
+          hdl->flags |= F_GH_IS_GZIP;
+        }
+    }
+
+  gzclose(gz_fh);
+
 #endif
 
   struct stat st =
@@ -714,7 +776,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
     {
       if ((gfl & F_OPT_SHAREDMEM))
         {
-          flags |= F_GBM_SHM_NO_DATAFILE;
+          //flags |= F_GBM_SHM_NO_DATAFILE;
         }
     }
 
@@ -751,9 +813,9 @@ g_buffer_into_memory(char *file, __g_handle hdl)
 
   if (!(flags & F_GBM_SHM_NO_DATAFILE))
     {
-      if (!(hdl->flags & F_GH_IO_GZIP) && !(gfl & F_OPT_FORCE2))
+      if (!(hdl->flags & F_GH_IS_GZIP))
         {
-          if (st.st_size % hdl->block_sz && (gfl & F_OPT_VERBOSE2))
+          if (st.st_size % hdl->block_sz)
             {
               print_str(MSG_GEN_DFCORRUW, file, (ulint64_t) st.st_size,
                   hdl->block_sz);
@@ -775,7 +837,6 @@ g_buffer_into_memory(char *file, __g_handle hdl)
 
   if (gfl & F_OPT_SHAREDMEM)
     {
-      hdl->shmid = -1;
       hdl->flags |= F_GH_SHM;
       if ((hdl->shmid = shmget(hdl->ipc_key, 0, 0)) != -1)
         {
@@ -855,7 +916,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
         }
       else
         {
-          print_str("NOTICE: %s: %s [%llu records] [%llu bytes]\n", hdl->file,
+          print_str("NOTICE: %s: %s [%llu kB]\n", hdl->file,
               (hdl->flags & F_GH_SHM) ?
                   hdl->shmid == -1 && !(hdl->flags & F_GH_SHMRB) ?
                       "loading data into shared memory segment" :
@@ -864,12 +925,11 @@ g_buffer_into_memory(char *file, __g_handle hdl)
                       "mapping shared memory segment"
                   :
                   "loading data file into memory",
+
               (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
-                  (uint64_t) (hdl->ipcbuf.shm_segsz / hdl->block_sz) :
-                  (uint64_t) (hdl->total_sz / hdl->block_sz),
-              (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
-                  (ulint64_t) hdl->ipcbuf.shm_segsz :
-                  (ulint64_t) hdl->total_sz);
+                  (ulint64_t) hdl->ipcbuf.shm_segsz / 1024 :
+                  (ulint64_t) hdl->total_sz / 1024);
+
         }
     }
 
@@ -889,7 +949,8 @@ g_buffer_into_memory(char *file, __g_handle hdl)
     }
   else
     {
-      if (!(flags & F_GBM_SHM_NO_DATAFILE) && !(hdl->flags & F_GH_FROMSTDIN))
+      if (!(hdl->flags & F_GH_IS_GZIP) && !(flags & F_GBM_SHM_NO_DATAFILE)
+          && !(hdl->flags & F_GH_FROMSTDIN))
         {
           if (hdl->total_sz < tot_sz)
             {
@@ -900,8 +961,21 @@ g_buffer_into_memory(char *file, __g_handle hdl)
         }
       if (gfl & F_OPT_VERBOSE2)
         {
-          print_str("NOTICE: %s: loaded %llu records\n", hdl->file,
-              (uint64_t) hdl->buffer.offset);
+#ifdef HAVE_ZLIB_H
+          if (hdl->flags & F_GH_IS_GZIP)
+            {
+              print_str("NOTICE: %s: loaded %llu records [compression ratio: %f, %llu/%llu kB]\n", hdl->file,
+                  (uint64_t) hdl->buffer.offset, (double)hdl->total_sz / (double)tot_sz,
+                  (unsigned long long int)hdl->total_sz/1024 ,(unsigned long long int)tot_sz/1024);
+            }
+          else
+            {
+              print_str(MSG_LL_RC, hdl->file,
+                  (uint64_t) hdl->buffer.offset);
+            }
+#else
+          print_str(MSG_LL_RC, hdl->file, (uint64_t) hdl->buffer.offset);
+#endif
         }
     }
   return 0;
@@ -980,11 +1054,6 @@ determine_temp_path(char *file, char *output, size_t max_out)
     }
 
   return 0;
-}
-
-#define RDF_SFAC(hdl, cl) { \
-  hdl->flags |= F_GH_IO_GZIP; \
-  g_set_compression_opts(cl, hdl); \
 }
 
 int
@@ -1074,8 +1143,11 @@ rebuild_data_file(char *file, __g_handle hdl)
    else
    {
    skip:*/
-  RDF_SFAC(hdl, comp_level)
-  //}
+  if (gfl0 & F_OPT_GZIP )
+    {
+      hdl->flags |= F_GH_IO_GZIP;
+      g_set_compression_opts(comp_level, hdl);
+    }
 
 #endif
 
@@ -1141,7 +1213,7 @@ rebuild_data_file(char *file, __g_handle hdl)
     {
       print_str("NOTICE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
 #ifdef HAVE_ZLIB_H
-      if ((hdl->flags & F_GH_IO_GZIP) && comp_level != 0)
+      if ((hdl->flags & F_GH_IO_GZIP))
         {
           print_str("NOTICE: %s: gzip write compression enabled, level '%hhu'\n",
               hdl->s_buffer, comp_level);
@@ -1183,16 +1255,33 @@ rebuild_data_file(char *file, __g_handle hdl)
       return 0;
     }
 
+  sz_r = get_file_size(hdl->s_buffer);
+
   if (gfl & F_OPT_VERBOSE2)
     {
-      print_str("NOTICE: %s: flushed %llu records, %llu bytes\n", hdl->s_buffer,
-          (ulint64_t) (hdl->rw - rw_o), (ulint64_t) (hdl->bw - bw_o));
+#ifdef HAVE_ZLIB_H
+      uint64_t n0_sz = (ulint64_t) (hdl->bw - bw_o);
+      if ((hdl->flags & F_GH_IO_GZIP))
+        {
+          print_str("NOTICE: %s: flushed %llu records, %llu kB [compression ratio: %f, %llu/%llu kB]\n", hdl->file,
+              (ulint64_t) (hdl->rw - rw_o), sz_r /1024, (double) n0_sz / (double) sz_r,
+              (unsigned long long int)n0_sz/1024 ,(unsigned long long int) sz_r/1024);
+        }
+      else
+        {
+          print_str(MSG_GEN_FLUSHED, hdl->s_buffer,
+              (ulint64_t) (hdl->rw - rw_o), (ulint64_t) (hdl->bw - bw_o));
+        }
+#else
+      print_str(MSG_GEN_FLUSHED, hdl->s_buffer, (ulint64_t) (hdl->rw - rw_o),
+          (ulint64_t) (hdl->bw - bw_o));
+#endif
     }
 
   g_setjmp(0, "rebuild_data_file(5)", NULL, NULL);
 
-  if ((gfl & F_OPT_VERBOSE5) && !(gfl & F_OPT_NOWRITE)
-      && (sz_r = get_file_size(hdl->s_buffer)) < hdl->block_sz)
+  if (!(hdl->flags & F_GH_IO_GZIP) && !(gfl & F_OPT_NOWRITE)
+      && sz_r < hdl->block_sz)
     {
       print_str(
           "WARNING: %s: [%u/%u] generated data file is smaller than a single record\n",
@@ -1352,15 +1441,14 @@ flush_data_md(__g_handle hdl, char *outfile)
     }
 
 #ifdef HAVE_ZLIB_H
-
   if (hdl->flags & F_GH_IO_GZIP)
     {
       if ((gz_fh = gzdopen(dup(fileno(fh)), hdl->w_mode)) == NULL)
         {
           return 8;
         }
-
     }
+
 #endif
 
   size_t v = (V_MB * 8) / hdl->block_sz;
@@ -1393,6 +1481,7 @@ flush_data_md(__g_handle hdl, char *outfile)
         }
       else
         {
+
           if ((bw = fwrite(ptr->ptr, hdl->block_sz, 1, fh)) != 1)
             {
 
