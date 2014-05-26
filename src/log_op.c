@@ -486,7 +486,8 @@ rebuild(void *arg)
       return 5;
     }
 
-  if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
+  if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+      && !(gfl0 & F_OPT_NOSTATS))
     {
 #ifdef HAVE_ZLIB_H
       if ( g_act_1.flags & F_GH_IO_GZIP )

@@ -1714,7 +1714,8 @@ d_write(char *arg)
     }
   else
     {
-      if ((g_act_1.bw || (gfl & F_OPT_VERBOSE4)) && !(gfl0 & F_OPT_NOSTATS))
+      if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+          && !(gfl0 & F_OPT_NOSTATS))
         {
 
 #ifdef HAVE_ZLIB_H
