@@ -20,12 +20,16 @@ AC_DEFINE(_LARGEFILE_SOURCE64, [1],[Large files])
 AC_DEFINE(_FILE_OFFSET_BITS, [64],[Large files])
 
 AC_ARG_ENABLE(chroot,
-[  --enable-chroot	  build glutil for chrooted environment [default=no]],
+[  --enable-chroot	  Build glutil for chrooted environment [default=no]],
 glutil_chroot="$enableval", glutil_chroot="no")
 
 AC_ARG_ENABLE(chroot-ownbin,
-[  --enable-chroot-ownbin	  build glutil for chrooted environment as a separate binary [default=no]],
+[  --enable-chroot-ownbin	 Build glutil for chrooted environment as a separate binary [default=no]],
 glutil_chroot_ownbin="$enableval", glutil_chroot_ownbin="no")
+
+AC_ARG_ENABLE(gzip,
+[  --disable-gzip	  Disable gzip compression support],
+glutil_disable_gzip="yes", )
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
 	AS_IF([test "$prefix" = "NONE"], 
@@ -72,7 +76,10 @@ AC_HEADER_MAJOR
 
 GLUTIL_MSG_REQH="missing required header file"
 
-AC_CHECK_HEADERS([zlib.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (zlib.h)])])
+AS_IF([test "$glutil_disable_gzip" != "yes"], \
+AC_CHECK_HEADERS([zlib.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (zlib.h); use --disable-gzip to turn compression off])]) \
+)
+
 AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (fnctl.h)])])
 AC_CHECK_HEADER([limits.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (limits.h)])])
 AC_CHECK_HEADER([utime.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (utime.h)])])

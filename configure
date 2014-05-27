@@ -729,6 +729,7 @@ enable_maintainer_mode
 enable_dependency_tracking
 enable_chroot
 enable_chroot_ownbin
+enable_gzip
 enable_precheck
 '
       ac_precious_vars='build_alias
@@ -1363,8 +1364,9 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
-  --enable-chroot	  build glutil for chrooted environment default=no
-  --enable-chroot-ownbin	  build glutil for chrooted environment as a separate binary default=no
+  --enable-chroot	  Build glutil for chrooted environment default=no
+  --enable-chroot-ownbin	 Build glutil for chrooted environment as a separate binary default=no
+  --disable-gzip	  Disable gzip compression support
   --enable-precheck	  build glutil-precheck default=no
 
 Some influential environment variables:
@@ -4402,6 +4404,12 @@ else
 fi
 
 
+# Check whether --enable-gzip was given.
+if test "${enable_gzip+set}" = set; then :
+  enableval=$enable_gzip; glutil_disable_gzip="yes"
+fi
+
+
 if  test "$glutil_chroot" = "no"  &&  test "$glutil_chroot_ownbin" = "no" ; then
 	if test "$prefix" = "NONE"; then :
   cat >>confdefs.h <<_ACEOF
@@ -5011,6 +5019,8 @@ fi
 
 GLUTIL_MSG_REQH="missing required header file"
 
+if test "$glutil_disable_gzip" != "yes"; then :
+  \
 for ac_header in zlib.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
@@ -5020,10 +5030,13 @@ if test "x$ac_cv_header_zlib_h" = xyes; then :
 _ACEOF
 
 else
-  as_fn_error $? "$GLUTIL_MSG_REQH (zlib.h)" "$LINENO" 5
+  as_fn_error $? "$GLUTIL_MSG_REQH (zlib.h); use --disable-gzip to turn compression off" "$LINENO" 5
 fi
 
 done
+ \
+
+fi
 
 ac_fn_c_check_header_mongrel "$LINENO" "fcntl.h" "ac_cv_header_fcntl_h" "$ac_includes_default"
 if test "x$ac_cv_header_fcntl_h" = xyes; then :
