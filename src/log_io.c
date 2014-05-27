@@ -147,7 +147,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
               print_str(MSG_GEN_NODFILE, file, "zero-byte data file");
             }
 
-          if (!(hdl->flags & F_GH_IO_GZIP))
+          if (!(hdl->flags & F_GH_IO_GZIP) && !(hdl->flags & F_GH_IS_GZIP))
             {
               if (hdl->total_sz % hdl->block_sz)
                 {
