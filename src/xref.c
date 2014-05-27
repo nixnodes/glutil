@@ -1492,9 +1492,8 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
           goto end;
         }
 
+      eds->depth++;
     }
-
-  eds->depth++;
 
   while ((dirp = readdir(dp)))
     {
@@ -1547,8 +1546,10 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
         }
     }
 
-
-  eds->depth--;
+  if (eds)
+    {
+      eds->depth--;
+    }
 
   end:
 

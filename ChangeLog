@@ -47,7 +47,8 @@
  *   - % sort/filter argument order affects a dump operation (sort or filter first) (rev. 17_b8)
  *   - ~ -xdev broken while rebuilding dirlog (rev. 17_b9)
  *   - + gzip compression support (beta) (rev. 17_b10)
- *   - ~ Tons of fixes around compression (rev. 17_b12) 
+ *   - ~ Tons of fixes around compression (rev. 17_b12)
+ *   - ~ Fixed latent bug (segfault) when walking directory tree (rev. 17_b13)
  *
  * v2.2:
  *

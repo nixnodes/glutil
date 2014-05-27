@@ -1,7 +1,7 @@
  * 26/5/2014 (2.3.17_beta)
  
- 	Now supports gzip compressed data sources, usefull for large
- 	imdb/tvrage logs
+    Now supports gzip compressed data sources, usefull for large
+    imdb/tvrage logs
  
  * 25/5/2014 (2.3.17_beta)
     Added a way to accumulate (add-up) any integer/floating point field across the whole
