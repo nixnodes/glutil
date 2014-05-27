@@ -168,6 +168,8 @@ char *hpd_up =
         "                          --shmreload forces existing records (if any) be reloaded, but segment is not destroyed\n"
         "                           and it's size remains the same (when data log size doesn't match segment size,\n"
         "                           there will be junk/missing records, depending on input size being higher/lower)\n"
+        "  --gz <0-9>            Enable gzip compression when writing data. Applies to any data write operation\n"
+        "                           (including writing raw data to stdout), except when rebuilding dirlog (-r)\n"
         "  --loadq               Quit just after loading data into memory\n"
         "                           Applies to dump operations only\n"
         "  --nofq                Abort data (re)build operation unconditionally, if nothing was filtered\n"
