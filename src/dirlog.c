@@ -404,10 +404,7 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
     if (access(name, R_OK))
       {
-        if (gfl & F_OPT_VERBOSE)
-          {
-            print_str("WARNING: %s: no read access\n", name);
-          }
+        print_str("WARNING: %s: no read access\n", name);
         break;
       }
 
