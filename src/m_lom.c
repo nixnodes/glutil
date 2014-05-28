@@ -78,7 +78,10 @@ g_lom_accu(__g_handle hdl, void *d_ptr, pmda _accumulator)
     {
       lom = (__g_lom) ptr->ptr;
 
-      lom->g_lom_vp(d_ptr, (void*)lom);
+      if ( lom)
+        {
+          lom->g_lom_vp(d_ptr, (void*)lom);
+        }
 
       ptr = ptr->next;
     }

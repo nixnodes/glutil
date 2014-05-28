@@ -41,7 +41,8 @@ rebuild_dirlog(void)
   if (!(ofl & F_OVRR_NUKESTR))
     {
       print_str(
-          "WARNING: failed extracting nuke string from glftpd.conf, nuked dirs might not get detected properly\n");
+          "WARNING: failed extracting nuke string from '%s', nuked dirs might not get detected properly\n",
+          GLCONF);
     }
 
   if (gfl & F_OPT_NOWRITE)
