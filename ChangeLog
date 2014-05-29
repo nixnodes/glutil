@@ -50,6 +50,7 @@
  *   - ~ Tons of fixes around compression (rev. 17_b12)
  *   - ~ Fixed latent bug (segfault) when walking directory tree (rev. 17_b13)
  *   - ~ rewinding a stream caused gzip breakage (rev. 17_b14)
+ *   - ~ Fix segfault (glutil-precheck) (rev. 17_b15)
  *
  * v2.2:
  *

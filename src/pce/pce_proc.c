@@ -61,7 +61,7 @@ pce_proc(char *path, char *dir)
   if ((r = g_fopen(GCONFLOG, "r", F_DL_FOPEN_BUFFER, &h_gconf)))
     {
       print_str("ERROR: failed opening '%s', code %d\n", GCONFLOG, r);
-      goto end;
+      goto aft_end;
     }
 
   gconf = (__d_gconf) h_gconf.buffer.pos->ptr;
@@ -69,7 +69,7 @@ pce_proc(char *path, char *dir)
   if (!gconf)
     {
       print_str("ERROR: %s: no info available\n", GCONFLOG);
-      goto end;
+      goto aft_end;
     }
 
   gfl ^= G_HFLAGS;
@@ -80,13 +80,13 @@ pce_proc(char *path, char *dir)
 
   if (!(s_b_p = reg_getsubm(path, gconf->r_sects, REG_EXTENDED, s_b, 255)))
     {
-      goto end;
+      goto aft_end;
     }
 
   if (!s_b_p[0])
     {
       print_str("ERROR: %s/%s: unconfigured section\n", path, dir);
-      goto end;
+      goto aft_end;
     }
 
   char r_sb[GCONF_MAX_REG_EXPR];
@@ -98,7 +98,7 @@ pce_proc(char *path, char *dir)
     {
       print_str("ERROR: no path '%s' was defined (%s doesn't match input)\n",
           s_b_p, r_sb);
-      return 1;
+      goto aft_end;
     }
 
   s_b_p = g_zerom(s_b_p, 0x2F);
@@ -110,7 +110,7 @@ pce_proc(char *path, char *dir)
 
   if (pce_g_skip_proc())
     {
-      goto end;
+      goto aft_end;
     }
 
   char s_lp[PATH_MAX];
@@ -122,7 +122,7 @@ pce_proc(char *path, char *dir)
     {
       print_str("ERROR: %s - no section configuration exists at '%s'\n", s_b_p,
           s_lp);
-      goto end;
+      goto aft_end;
     }
 
   _g_handle h_sconf =
@@ -174,9 +174,13 @@ pce_proc(char *path, char *dir)
 
   end:
 
+  pce_lh_ref_clean(&lh_ref);
+
+  aft_end:
+
   g_cleanup(&h_gconf);
   g_cleanup(&h_sconf);
-  pce_lh_ref_clean(&lh_ref);
+
   //free(subject_b);
 
   return EXITVAL;
