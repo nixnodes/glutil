@@ -49,6 +49,7 @@
  *   - + gzip compression support (beta) (rev. 17_b10)
  *   - ~ Tons of fixes around compression (rev. 17_b12)
  *   - ~ Fixed latent bug (segfault) when walking directory tree (rev. 17_b13)
+ *   - ~ rewinding a stream caused gzip breakage (rev. 17_b14)
  *
  * v2.2:
  *

@@ -483,15 +483,13 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
       if (gzdirect(gz_fh) == 0)
         {
           hdl->flags |= F_GH_IS_GZIP;
-          gzrewind(gz_fh);
         }
+      gzrewind(gz_fh);
     }
   else
     {
       hdl->flags |= F_GH_IS_GZIP;
     }
-
-  rewind(fh);
 #endif
 
   uint8_t *b_output = (uint8_t*) hdl->data;
@@ -523,6 +521,12 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
         {
 
           fr = gzread(gz_fh, &b_output[c_fr], hdl->total_sz - c_fr);
+          if (fr == -1)
+            {
+              c_fr=0;
+              break;
+            }
+
         }
       else
         {
