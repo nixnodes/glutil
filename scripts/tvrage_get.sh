@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:22
+#@REVISION:23
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -107,6 +107,12 @@ VERBOSE=1
 ## To disable this, comment out the below line
 TITLE_WIPE_CHARS="\'\´\:\""
 #
+## Array of sed substitute options, each applied
+## in the respective order to show name before it
+## gets written
+#
+TITLE_REPLACE=("s/\&/and/")
+#
 ############################[ END OPTIONS ]##############################
 ############################[ BEGIN PATHS ]##############################
 
@@ -120,6 +126,16 @@ XMLLINT="/usr/bin/xmllint"
 RECODE="recode"
 
 ############################[ BEGIN PATHS ]##############################
+
+title_regsub_string() {
+	r0_out=${@}
+	
+	for r0_i in ${TITLE_REPLACE[@]}; do
+		r0_out=`echo ${r0_out} | sed -r ${r0_i}`
+	done
+	
+	echo ${r0_out}
+}
 
 BASEDIR=`dirname $0`
 
@@ -264,6 +280,10 @@ $RECODE --version 2&> /dev/null && {
 	NAME=`echo $NAME | $RECODE -f HTML_4.0`
 	GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
 	NETWORK=`echo $NETWORK | $RECODE -f HTML_4.0`
+}
+
+[ -n "${TITLE_REPLACE}" ] && {
+	NAME=`title_regsub_string ${NAME}`
 }
 
 [ -z "$GENRES" ] && GENRES="N/A"
