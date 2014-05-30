@@ -111,7 +111,7 @@ TITLE_WIPE_CHARS="\'\´\:\""
 ## in the respective order to show name before it
 ## gets written
 #
-TITLE_REPLACE=("s/\&/and/")
+TITLE_REPLACE=("s/ \& / and /")
 #
 ############################[ END OPTIONS ]##############################
 ############################[ BEGIN PATHS ]##############################
