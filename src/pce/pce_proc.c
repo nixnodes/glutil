@@ -85,7 +85,7 @@ pce_proc(char *path, char *dir)
 
   if (!s_b_p[0])
     {
-      print_str("ERROR: %s/%s: unconfigured section\n", path, dir);
+      print_str("ERROR: %s: unconfigured section ( %s )\n", path, dir);
       goto aft_end;
     }
 

@@ -471,14 +471,14 @@ imdb_format_block(void *iarg, char *output)
 
   time_t t_t = (time_t) data->timestamp, t_t2 = (time_t) data->released;
 
-  strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
-  strftime(buffer3, 255, STD_FMT_DATE_STR, localtime(&t_t2));
+  strftime(buffer2, sizeof(buffer2), STD_FMT_TIME_STR, localtime(&t_t));
+  strftime(buffer3, sizeof(buffer3), STD_FMT_DATE_STR, localtime(&t_t2));
 
   return print_str(
       "IMDB: %s (%hu): created: %s - iMDB ID: %s - rating: %.1f - votes: %u - genres: %s - released: %s - runtime: %u min - rated: %s - director: %s\n",
-      data->title, data->year, buffer2, data->imdb_id,
-      data->rating, data->votes, data->genres, buffer3, data->runtime,
-      data->rated, data->director);
+      data->title, data->year, buffer2, data->imdb_id, data->rating,
+      data->votes, data->genres, buffer3, data->runtime, data->rated,
+      data->director);
 
 }
 
