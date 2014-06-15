@@ -51,6 +51,8 @@
  *   - ~ Fixed latent bug (segfault) when walking directory tree (rev. 17_b13)
  *   - ~ rewinding a stream caused gzip breakage (rev. 17_b14)
  *   - ~ Fix segfault (glutil-precheck) (rev. 17_b15)
+ *   - ~ Initialize glob_*_stor arrays with MAX_GLOB_STOR_AR_COUNT instead of fixed value (rev. 17_b16)
+ *   - %~ Fixed stats output and made it a bit more informative (rev. 18)
  *
  * v2.2:
  *

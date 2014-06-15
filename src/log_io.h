@@ -60,4 +60,16 @@ g_enum_log(_d_enuml callback, __g_handle hdl, off_t *nres, void *arg);
 int
 determine_temp_path(char *file, char *output, size_t max_out);
 
+#define OPLOG_OUTPUT_NSTATS(dfile, sdst) { \
+  if (sdst.bw > 0) \
+    { \
+      fprintf(stderr, MSG_GEN_WROTE, dfile, (double) sdst.bw / 1024.0, \
+          (unsigned long long int)sdst.rw); \
+    } \
+  else \
+    { \
+      fprintf(stderr, MSG_GEN_NO_WRITE, dfile); \
+    } \
+}
+
 #endif /* LOG_IO_H_ */

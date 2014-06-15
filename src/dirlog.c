@@ -84,9 +84,6 @@ rebuild_dirlog(void)
       data_backup_records(DIRLOG);
     }
 
-  //g_act_1.block_sz = DL_SZ;
-  //g_act_1.flags |= F_GH_ISDIRLOG;
-
   int dfex = file_exists(DIRLOG);
 
   if ((gfl & F_OPT_UPDATE) && dfex)
@@ -267,14 +264,11 @@ rebuild_dirlog(void)
         }
       else
         {
-          fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
-              (long long unsigned)dl_stats.rw);
+          OPLOG_OUTPUT_NSTATS(g_act_1.file, dl_stats)
         }
 #else
-      fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
-          (long long unsigned) dl_stats.rw);
+      OPLOG_OUTPUT_NSTATS(g_act_1.file, dl_stats)
 #endif
-
     }
 
   return rt;
@@ -666,12 +660,22 @@ release_generate_block(char *name, ear *iarg)
   struct nukelog n_buffer =
     { 0 };
 
-  if (!(gfl0 & F_OPT_NO_CHECK_NUKED)
-      && nukelog_find(buffer, 2, &n_buffer) < MAX_uint64_t)
+  if (!(gfl0 & F_OPT_NO_CHECK_NUKED))
     {
-      iarg->dirlog->status = n_buffer.status + 1;
-      strncpy(iarg->dirlog->dirname, n_buffer.dirname,
-          strlen(n_buffer.dirname));
+      if (nukelog_find(buffer, 2, &n_buffer) < MAX_uint64_t)
+        {
+          iarg->dirlog->status = n_buffer.status + 1;
+          strncpy(iarg->dirlog->dirname, n_buffer.dirname,
+              strlen(n_buffer.dirname));
+        }
+      else
+        {
+          if (gfl0 & F_OPT_NO_CHECK_NUKED)
+            {
+              print_str(
+                  "WARNING: will not be able to determine directory nuke status during operation\n");
+            }
+        }
     }
   else
     {
@@ -1198,12 +1202,10 @@ dirlog_update_record(char *argv)
         }
       else
         {
-          fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
-              (long long unsigned)dl_stats.rw);
+          OPLOG_OUTPUT_NSTATS(g_act_1.file, dl_stats)
         }
 #else
-      fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
-          (long long unsigned) dl_stats.rw);
+      OPLOG_OUTPUT_NSTATS(g_act_1.file, dl_stats)
 #endif
     }
 
@@ -1461,13 +1463,10 @@ dirlog_check_records(void)
                 }
               else
                 {
-                  fprintf(stderr, MSG_GEN_WROTE, DIRLOG, (double) dl_stats.bw / 1024.0,
-                      (long long unsigned int)dl_stats.rw);
+                  OPLOG_OUTPUT_NSTATS(g_act_1.file, g_act_1)
                 }
 #else
-              fprintf(stderr, MSG_GEN_WROTE, DIRLOG,
-                  (double) dl_stats.bw / 1024.0,
-                  (long long unsigned int) dl_stats.rw);
+              OPLOG_OUTPUT_NSTATS(g_act_1.file, g_act_1)
 #endif
             }
         }

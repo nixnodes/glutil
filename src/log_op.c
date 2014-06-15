@@ -499,12 +499,10 @@ rebuild(void *arg)
         }
       else
         {
-          fprintf(stderr, MSG_GEN_WROTE, datafile, (double) g_act_1.bw / 1024.0,
-              (long long unsigned int) g_act_1.rw);
+          OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
         }
 #else
-      fprintf(stderr, MSG_GEN_WROTE, datafile, (double) g_act_1.bw / 1024.0,
-          (long long unsigned int) g_act_1.rw);
+      OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
 #endif
     }
 
