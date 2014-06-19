@@ -180,11 +180,17 @@ self_get_path(char *out)
     {
       snprintf(path, PATH_MAX, "/compat/linux/proc/%d/exe", getpid());
     }
+  else
+    {
+      goto read;
+    }
 
   if (access(path, R_OK))
     {
       snprintf(path, PATH_MAX, "/proc/%d/file", getpid());
     }
+
+  read:
 
   if ((r = readlink(path, out, PATH_MAX)) == -1)
     {
@@ -420,9 +426,9 @@ exec_and_redirect_output(char *command, FILE *output)
 #ifdef HAVE_ZLIB_H
 int
 gz_feof(void *p)
-{
-  return gzeof((gzFile) p);
-}
+  {
+    return gzeof((gzFile) p);
+  }
 #endif
 
 int

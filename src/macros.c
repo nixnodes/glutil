@@ -34,7 +34,7 @@ list_macros(void)
 
   if (self_get_path(buffer))
     {
-      print_str("ERROR: could not get own path\n");
+      print_str(MSG_F_OWN_PATH);
       return 1;
     }
 
@@ -79,9 +79,10 @@ process_macro(void * arg, char **out)
 
   if (self_get_path(buffer))
     {
-      print_str("ERROR: could not get own path\n");
+      print_str(MSG_F_OWN_PATH);
       return NULL;
     }
+
   char *dirn = g_dirname(buffer);
   char *s_buffer = NULL;
 

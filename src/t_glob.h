@@ -98,6 +98,7 @@ typedef unsigned long long int ulint64_t;
 #define MSG_GEN_WROTE2                  "STATS: %s: wrote %.2f kB [%.2f kB] in %llu records\n"
 #define MSG_GEN_FLUSHED                 "NOTICE: %s: flushed %llu records, %llu bytes\n"
 #define MSG_LL_RC                       "NOTICE: %s: loaded %llu records\n"
+#define MSG_F_OWN_PATH                  "ERROR: could not get own path\n"
 
 // gfl
 
