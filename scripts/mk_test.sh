@@ -264,7 +264,7 @@ mkdir "${fs_td}" && {
 	echo "t1" > "${fs_td}/t1"
 	echo "t2" > "${fs_td}/t2"
 	echo "t3" > "${fs_td}/t3"
-	[ $(${GLUTIL} -x ${fs_td}/ --batch ilom "ctime > curtime-2000 && uid == `id -u $USER`" | wc -l) -eq 3 ] && {
+	[ $(${GLUTIL} -x ${fs_td}/ --batch ilom "ctime > curtime-2000 && uid == `id -u`" | wc -l) -eq 3 ] && {
 		echo -e " \tOK "
 	} || {
 		echo -e " \tBAD"
