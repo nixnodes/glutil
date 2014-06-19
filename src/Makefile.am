@@ -1,7 +1,5 @@
 if ENABLE_PRECHECK
 PRECHECK_APP = glutil-precheck
-else
-PRECHECK_APP =
 endif
 
 if ENABLE_CHROOT_OWNBIN

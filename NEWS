@@ -1,3 +1,7 @@
+ * 26/5/2014 (2.3.18_b1)
+ 
+    Automake: --enable-precheck does not disable regular (or chrooted) binary build
+ 
  * 26/5/2014 (2.3.17_beta)
  
     Now supports gzip compressed data sources, usefull for large
