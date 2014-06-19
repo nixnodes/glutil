@@ -1,6 +1,24 @@
 #!/bin/bash
-#@VERSION:0
-#@REVISION:7
+#
+#  Copyright (C) 2013 NixNodes
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#########################################################################
+#@VERSION:1
+#@REVISION:0
+#@MACRO:mk-test:{m:exe} noop --preexec {spec1}
 #
 ## Simple debugger script
 #
@@ -18,7 +36,7 @@ dirlog_values=(test 34151334 3341 14351514 700 500 1)
 lastonlog_fields=("user group tag logon logoff upload download stats")
 lastonlog_lom_fields=("logon logoff upload download")
 lastonlog_lom_values=(1384893704 1384893724 23658496 0)
-lastonlog_values=(siska test No 1384893704 1384893724 23658496 0 gfg)
+lastonlog_values=(llon test No 1384893704 1384893724 23658496 0 gfg)
 
 dupefile_fields=("file user time")
 dupefile_values=(kl.s12e08.720p.hdtv.x264-la.mkv user 1372468945)
@@ -51,9 +69,9 @@ ge3_lom_fields=("u1 u2 i1 i2 ul1 ul2")
 ge3_lom_values=(11232	325211	3432545	-2323	3435153343 2434325345)
 
 ge4_fields=("u1 u2 ge1 ge2 i1 i2 ul1 ul2 ge3 ge4")
-ge4_values=(11232	325211	fd	ffffff3	3432545	-2323	3435153343	2434325345	ggf	yyy)
+ge4_values=(11232 325211 fd	ffffff3 3432545	-2323 3435153343 2434325345	ggf	yyy)
 ge4_lom_fields=("u1 u2 i1 i2 ul1 ul2")
-ge4_lom_values=(11232	325211	3432545	-2323	3435153343 2434325345)
+ge4_lom_values=(11232 325211 3432545 -2323 3435153343 2434325345)
 
 nukelog_fields=("dir reason mult size nuker unnuker nukee time status")
 nukelog_lom_fields=("mult size time status")
@@ -146,8 +164,8 @@ launch_test() {
 		lt_ft=${lt_log}
 	fi
 	echo -n "$1: creating test log.. "
-	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} silent --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv &&
-	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} silent --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv && {
+	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv &&
+	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv && {
 		echo -e "       \tOK"
 	} || {
 		echo -e "       \tFAILED"
@@ -254,9 +272,9 @@ launch_test ge2 || t_quit ${?}
 launch_test ge3 || t_quit ${?}
 launch_test ge4 || t_quit ${?}
 
-# End 
+# End log tests
 
-# Filesystem
+# Filesystem tests
 
 echo -n "FS: directory tree matching tests.. "
 [ -d "${fs_td}" ] && rm -Rf "${fs_td}"
@@ -273,7 +291,9 @@ mkdir "${fs_td}" && {
 } || { 
 	echo "COULD NOT CREATE TEMP DIR"
 }
+
 rm -fR ${fs_td}
-# End
+
+# End filesystem tests
 
 t_quit 0
