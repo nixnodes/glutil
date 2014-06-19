@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:0
+#@REVISION:1
 #@MACRO:incomplete:{m:exe} -d -execv "{m:spec1} {dir} {exe} {glroot} {m:arg1}" --silent
 #@MACRO:incomplete-c:{m:exe} -d -execv "{m:spec1} {dir} {exe} {glroot} {m:arg2}" --iregex "{m:arg1}" --silent
 #
@@ -45,35 +45,47 @@ CHECK_CORRUPT=0
 [ -z "$1" ] && exit 1
 [ -z "$2" ] && exit 1
 
-GLROOT=$3
+GLROOT=${3}
 
 c_dir() {
 	while read l; do
-		FFL=$(echo "$l" | sed -r 's/ [A-Fa-f0-9]*([ ]*|$)$//')
+		echo "${l}" | egrep -q '^;' && continue
+		FFL=$(echo "$l" | awk '{print $1}')
 		FFT=$(dirname "$1")/$FFL
-		! [ -f "$FFT" ] && echo "WARNING: $DIR: incomplete, missing file: $FFL" && continue
-		[ $CHECK_CORRUPT -gt 0 ] && { 
-			FCRC=$(echo "$l" | rev | cut -d " " -f -1 | rev) && CRC32=$($EXE --crc32 $FFT) && 
-				[ $CRC32 != $FCRC ] && echo "WARNING: $DIR: corrupted: $FFL, CRC32: $CRC32, should be: $FCRC" && continue
+		! [ -f "${FFT}" ] && {
+ 			echo "WARNING: `dirname ${DIR}`: incomplete, missing file: ${FFL}" && continue
 		}
-		[ $VERBOSE -gt 0 ] && echo "OK: $FFT: $FCRC"
+		
+		if [ ${CHECK_CORRUPT} -gt 0 ]; then
+			FCRC=`echo "$l" | tr -d '\n' | tr -d '\r' | rev | awk '{print $1}' | rev | tr '[:lower:]' '[:upper:]'`
+			CRC32=`$EXE --crc32 "${FFT}" | tr -d '\n'`
+			
+			! test ${CRC32} = ${FCRC} && {
+				echo "WARNING: `dirname "${DIR}"`/${FFL} CRC32: ${CRC32}, should be: ${FCRC}" 					
+				continue
+			}
+			
+			[ ${VERBOSE} -gt 0 ] && echo "OK: ${FFT}: ${FCRC}"
+		else
+			[ ${VERBOSE} -gt 0 ] && echo "OK: ${FFT}"
+		fi
 	done < "$1"
 }
 
 [ "$4" = "cdir" ] && {
-	DIR="$1"; EXE=$2
+	DIR="${1}"; EXE=${2}
 	[ -n "$5" ] && VERBOSE=1
-	c_dir "$DIR"
+	echo "NOTICE: processing ${DIR}"
+	c_dir "${DIR}"
 	exit 1
 }
 
-DIR=$GLROOT$1
-[ -n "$4" ] && VERBOSE=1
 
-! [ -d "$DIR" ] && exit 1
+DIR="${GLROOT}${1}"
+[ -n "${4}" ] && VERBOSE=1
 
-$2 -x "$DIR" --iregexi "\.sfv$" -execv "$0 {path} $2 $3 cdir $4" --silent -recursive
+! [ -d "${DIR}" ] && exit 1
+
+$2 -x "${DIR}" --iregexi "\.sfv$" -execv "$0 {path} $2 $3 cdir $4" --silent -recursive
 
 exit 1
-
-
