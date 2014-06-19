@@ -54,7 +54,8 @@
  *   - ~ Initialize glob_*_stor arrays with MAX_GLOB_STOR_AR_COUNT instead of fixed value (rev. 17_b16)
  *   - %~ Fixed stats output and made it a bit more informative (rev. 18)
  *   - % Automake: --enable-precheck does not disable regular (or chrooted) binary build (rev. 18_b1)
- *   - ! self_get_path checking read access twice (rev. 18_b2) 
+ *   - ! self_get_path checking read access twice (rev. 18_b2)
+ *   - ~ Blank directory names written during dirlog rebuild (only in certain cases) (rev. 19)
  *
  * v2.2:
  *

@@ -1,4 +1,9 @@
- * 26/5/2014 (2.3.18_b1)
+ * 19/6/2014 (2.3.19)
+
+    Major issue in 2.3.18 was fixed, in certain cases blank directory names were written
+    in during dirlog rebuild mode.
+
+ * 19/6/2014 (2.3.18_b1)
  
     Automake: --enable-precheck does not disable regular (or chrooted) binary build
  

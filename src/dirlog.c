@@ -677,10 +677,8 @@ release_generate_block(char *name, ear *iarg)
             }
         }
     }
-  else
-    {
-      strncpy(iarg->dirlog->dirname, buffer, strlen(buffer));
-    }
+
+  strncpy(iarg->dirlog->dirname, buffer, strlen(buffer));
 
   end:
 
