@@ -424,6 +424,10 @@ ref_to_val_macro(void *arg, char *match, char *output, size_t max_size,
     {
       strcp_s(output, max_size, SITEROOT);
     }
+  else if (!strncmp(match, "m:siterootn", 11))
+    {
+      strcp_s(output, max_size, SITEROOT_N);
+    }
   else if (!strncmp(match, "m:ftpdata", 9))
     {
       strcp_s(output, max_size, FTPDATA);

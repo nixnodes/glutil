@@ -57,6 +57,7 @@
  *   - ! self_get_path checking read access twice (rev. 18_b2)
  *   - ~ Blank directory names written during dirlog rebuild (only in certain cases) (rev. 19)
  *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES (rev. 19_b1)
+ *   - + 'm:siterootn' field (rev. 19_b2)
  *
  * v2.2:
  *
