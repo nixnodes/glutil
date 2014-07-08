@@ -1,4 +1,4 @@
-#@REVISION:40
+#@REVISION:41
 #
 ## NOTE: Requires glutil 2.3.17 or higher
 #
@@ -238,4 +238,4 @@
 #
 ## Rebuild the dupefile based on filesystem info
 #
-#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{m:exe} noop --preexec `{exe} -R -x "{siteroot}" -print "file {basepath}{:nl}user {user}{:nl}time {mtime}{:nl}" ilom mode=8 --glroot / | glutil -z dupefile -vvvv --stdin`
+#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{m:exe} noop --preexec `{exe} --dupefile={m:q:dupefile@file} --backup dupefile -vv; rm -f {m:q:dupefile@file}; {exe} -R -x "{siteroot}" -print "file {basepath}{:nl}user {user}{:nl}time {mtime}{:nl}" ilom mode=8 --glroot / | glutil -z dupefile -vvvv --stdin --dupefile={m:q:dupefile@file}`
