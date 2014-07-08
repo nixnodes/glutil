@@ -1,3 +1,10 @@
+ * 8/7/2014 (2.3.19_b2)
+ 
+    Added features which allow automated rebuilds of the dupefile, see
+    <dupefile-rebuild> and <dupefile-rebuild> macros (macros.glutil).
+    
+    Mind that glutil binary must also be updated.
+
  * 19/6/2014 (2.3.19)
 
     Major issue in 2.3.18 was fixed, in certain cases blank directory names were written
