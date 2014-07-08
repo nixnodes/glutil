@@ -46,8 +46,8 @@
 #define _MC_X_USER              _MC_GLOB_USER
 #define _MC_X_GROUP             _MC_GLOB_GROUP
 
-#define MSG_X_UMISSING          "(MISSING)"
-#define MSG_X_GMISSING          "(MISSING)"
+#define MSG_X_UMISSING          ""
+#define MSG_X_GMISSING          ""
 
 #define F_XRF_DO_STAT           (a32 << 1)
 #define F_XRF_GET_DT_MODE       (a32 << 2)

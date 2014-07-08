@@ -49,7 +49,7 @@
  *   - + gzip compression support (beta) (rev. 17_b10)
  *   - ~ Tons of fixes around compression (rev. 17_b12)
  *   - ~ Fixed latent bug (segfault) when walking directory tree (rev. 17_b13)
- *   - ~ rewinding a stream caused gzip breakage (rev. 17_b14)
+ *   - ~ Rewinding a stream caused gzip breakage (rev. 17_b14)
  *   - ~ Fix segfault (glutil-precheck) (rev. 17_b15)
  *   - ~ Initialize glob_*_stor arrays with MAX_GLOB_STOR_AR_COUNT instead of fixed value (rev. 17_b16)
  *   - %~ Fixed stats output and made it a bit more informative (rev. 18)
@@ -58,6 +58,7 @@
  *   - ~ Blank directory names written during dirlog rebuild (only in certain cases) (rev. 19)
  *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES (rev. 19_b1)
  *   - + 'm:siterootn' field (rev. 19_b2)
+ *   - % Got rid of "(MISSING)" messages ('user' and 'group') fields, instead it returns blank when info can't be obtained (rev. 19_b3)
  *
  * v2.2:
  *
