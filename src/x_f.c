@@ -460,8 +460,9 @@ load_guid_info(pmda md, char *path)
           break;
         }
 
-      mda spl;
-      md_init(&spl, 8);
+      mda spl =
+        { 0 };
+      md_init(&spl, 5);
 
       if (split_string(buffer, 0x3A, &spl) < 3)
         {

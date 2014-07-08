@@ -59,6 +59,7 @@
  *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES (rev. 19_b1)
  *   - + 'm:siterootn' field (rev. 19_b2)
  *   - % Got rid of "(MISSING)" messages ('user' and 'group') fields, instead it returns blank when info can't be obtained (rev. 19_b3)
+ *   - ~ Segfaulted when looking up 'user' or 'group' fields, in certain cases (rev. 19_b4)
  *
  * v2.2:
  *
