@@ -1,4 +1,4 @@
-#@REVISION:41
+#@REVISION:42
 #
 ## NOTE: Requires glutil 2.3.17 or higher
 #
@@ -37,7 +37,23 @@
 #
 ## Performs all updates
 #
-#@MACRO:update|Perform all updates:{m:exe} noop --preexec `{m:exe} -m glutil-update;{m:exe} -m update-scripts;{m:exe} -m update-self`
+#@MACRO:update|Perform all updates:{m:exe} noop --preexec `{m:exe} -m update-scripts;{m:exe} -m update-macro`
+#
+## <dirlog-rebuild>
+#
+## Rebuilds the dirlog based on glutil.folders file
+#
+#@MACRO:dirlog-rebuild|Rebuild directory log based on 'glutil.folders':{m:exe} -r -v {m:arg1}
+#
+#@MACRO:dirlog-rebuild-skipempty|Rebuild directory log based on 'glutil.folders' (skip empty directories):{m:exe} -r -v --lom "size = 0 && files = 0" {m:arg1}
+#
+## <dirlog-full-rebuild>
+#
+## Rebuilds the dirlog based on glutil.folders file
+#
+#@MACRO:dirlog-full-rebuild|Rebuild directory log based on 'glutil.folders':{m:exe} -r -v {m:arg1}
+#
+#@MACRO:dirlog-full-rebuild-skipempty|Rebuild directory log (skip empty directories):{m:exe} -r --full -v --lom "size = 0 && files = 0" {m:arg1}
 #
 ## <dirlog-update>
 #
