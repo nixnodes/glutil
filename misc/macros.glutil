@@ -1,4 +1,4 @@
-#@REVISION:39
+#@REVISION:40
 #
 ## NOTE: Requires glutil 2.3.17 or higher
 #
@@ -128,6 +128,7 @@
 ## This can take a long time, depending on the log size
 #
 #@MACRO:dirlog-clean-dupes|Erase duplicate records in dirlog; Requires glutil-1.9-9 or above:{m:exe} -d --dirlog={m:q:dirlog@file} --preexec `{m:exe} --dirlog={m:q:dirlog@file} --backup dirlog -vv` -execv `{m:exe} -e dirlog --dirlog={m:q:dirlog@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --regexi "dir,\/(sample|proof|booklet|covers|subs|cover|CD[0-9]{1,3}|dvd[0-9]{1,3})$|.*( COMPLETE ).*" --silent
+#@MACRO:dupefile-clean-dupes|Erase duplicate records in dupelog; Requires glutil-1.9-9 or above:{m:exe} -i --dupefile={m:q:dupefile@file} --preexec `{m:exe} --dupefile={m:q:dupefile@file} --backup dupefile -vv` -execv `{m:exe} -e dupefile --dupefile={m:q:dupefile@file} --match "file,{file}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #@MACRO:imdb-clean-dupes|Erase duplicate records in imdblog; Requires glutil-1.9-9 or above:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #@MACRO:imdb-clean-dupes-id|Erase duplicate imdbID records in imdblog; Requires glutil-1.9-9 or above:{m:exe} -a --imdblog={m:q:imdb@file} --preexec `{m:exe} --imdblog={m:q:imdb@file} --backup imdb -vv` -execv `{m:exe} -e imdb --imdblog={m:q:imdb@file} --match "imdbid,{imdbid}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #@MACRO:tvrage-clean-dupes|Erase duplicate records in tvlog; Requires glutil-1.9-9 or above:{m:exe} -h --tvlog={m:q:tvrage@file} --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -vv` -execv `{m:exe} -e tvrage --tvlog={m:q:tvrage@file} --match "basedir,{basedir}" --nofq --loglevel=6 --ifhit --nobackup` --silent
@@ -216,7 +217,6 @@
 ## Dependencies: bc
 #
 #@MACRO:imdb-record-stats|iMDB log - full stats, dependencies\: bc:{m:exe} noop --preexec `{m:exe} -m imdb-print-info; {m:exe} -m imdb-record-avgstats; {m:exe} -m imdb-record-totalstats`
-
 #
 ## <<logname>-edit>
 #
@@ -234,3 +234,8 @@
 #@MACRO:tvrage-edit|Edit tvlog with your default text editor [-arg1=<edit-only regex>] [-arg2=<extra arguments>]:{m:exe} noop silent --preexec `if ! {m:exe} -q tvrage --tvlog={m:q:tvrage@file}  iregexi "{m:arg1}" {m:arg2} --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q tvrage -E {m:arg2} --tvlog={m:q:tvrage@file} iregexi "{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --tvlog={m:q:tvrage@file} --backup tvrage -v && {m:exe} -e tvrage --nobackup --tvlog={m:q:tvrage@file} -ff --nofq {m:arg2} regexi "{m:arg1}" silent && {m:exe} --nobackup --tvlog={m:q:tvrage@file} -z tvrage -vvvv {m:arg2} < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
 #@MACRO:imdb-edit|Edit imdblog with your default text editor [-arg1=<edit-only regex>] [-arg2=<extra arguments>]:{m:exe} noop silent --preexec `if ! {m:exe}  -q imdb --imdblog={m:q:imdb@file} iregexi "{m:arg1}" {m:arg2} --nofq silent; then echo "ERROR: nothing found"; exit 1; fi; {m:exe} -q imdb -E {m:arg2} --imdblog={m:q:imdb@file} iregexi "{m:arg1}" > /tmp/glutil.ef.$$ ; csum() { cat "$1" | md5sum | cut -f 1 -d " "; } ; osum=$(csum /tmp/glutil.ef.$$); [ -z "$EDITOR" ] && EDITOR="vi"; $EDITOR /tmp/glutil.ef.$$; if ! echo "$osum" | egrep -q "^$(csum /tmp/glutil.ef.$$)$"; then {m:exe} --imdblog={m:q:imdb@file} --backup imdb -v && {m:exe} -e imdb --nobackup --imdblog={m:q:imdb@file} -ff --nofq {m:arg2} regexi "{m:arg1}" silent && {m:exe} -z imdb --nobackup --imdblog={m:q:imdb@file} -vvvv {m:arg2} < /tmp/glutil.ef.$$ || echo "ERROR: could not write record"; fi; rm /tmp/glutil.ef.$$`
 #
+## <dupefile-rebuild>
+#
+## Rebuild the dupefile based on filesystem info
+#
+#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{m:exe} noop --preexec `{exe} -R -x "{siteroot}" -print "file {basepath}{:nl}user {user}{:nl}time {mtime}{:nl}" ilom mode=8 --glroot / | glutil -z dupefile -vvvv --stdin`
