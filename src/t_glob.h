@@ -81,6 +81,9 @@ typedef unsigned long long int ulint64_t;
 #define DEFPATH_USERS                   "/users"
 #define DEFPATH_GROUPS                  "/groups"
 
+#define DEFPATH_PASSWD                  "/etc/passwd"
+#define DEFPATH_GROUP                   "/etc/group"
+
 #define NUKESTR_DEF                     "NUKED-%s"
 
 #define DB_MAX_SIZE                     ((long long int)1073741824)   /* max file size allowed to load into memory */

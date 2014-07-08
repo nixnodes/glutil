@@ -43,6 +43,11 @@
 #define _MC_X_UID               "uid"
 #define _MC_X_GID               "gid"
 #define _MC_X_ST_MODE           "stmode"
+#define _MC_X_USER              _MC_GLOB_USER
+#define _MC_X_GROUP             _MC_GLOB_GROUP
+
+#define MSG_X_UMISSING          "(MISSING)"
+#define MSG_X_GMISSING          "(MISSING)"
 
 #define F_XRF_DO_STAT           (a32 << 1)
 #define F_XRF_GET_DT_MODE       (a32 << 2)
@@ -62,22 +67,22 @@
 #define F_XRF_GET_SPERM         (a32 << 16)
 #define F_XRF_GET_PBITS         (a32 << 17)
 
-#define F_PD_RECURSIVE                  (a32 << 1)
-#define F_PD_MATCHDIR                   (a32 << 2)
-#define F_PD_MATCHREG                   (a32 << 3)
+#define F_PD_RECURSIVE          (a32 << 1)
+#define F_PD_MATCHDIR           (a32 << 2)
+#define F_PD_MATCHREG           (a32 << 3)
 
-#define F_PD_MATCHTYPES                 (F_PD_MATCHDIR|F_PD_MATCHREG)
+#define F_PD_MATCHTYPES         (F_PD_MATCHDIR|F_PD_MATCHREG)
 
-#define F_XRF_ACCESS_TYPES  (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
+#define F_XRF_ACCESS_TYPES      (F_XRF_GET_READ|F_XRF_GET_WRITE|F_XRF_GET_EXEC)
 #define F_XRF_PERM_TYPES        (F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_PERM)
 
-#define F_ENUMD_ENDFIRSTOK              (a32 << 1)
-#define F_ENUMD_BREAKONBAD              (a32 << 2)
-#define F_ENUMD_NOXDEV                  (a32 << 3)
-#define F_ENUMD_NOXBLK                  (a32 << 4)
+#define F_ENUMD_ENDFIRSTOK      (a32 << 1)
+#define F_ENUMD_BREAKONBAD      (a32 << 2)
+#define F_ENUMD_NOXDEV          (a32 << 3)
+#define F_ENUMD_NOXBLK          (a32 << 4)
 
-#define F_EDS_ROOTMINSET                (a32 << 1)
-#define F_EDS_KILL                      (a32 << 2)
+#define F_EDS_ROOTMINSET        (a32 << 1)
+#define F_EDS_KILL              (a32 << 2)
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -174,6 +179,8 @@ typedef struct ___d_xref
   uint32_t minor;
   uint16_t pbits;
   float sparseness;
+  mda guid_stor;
+  mda uuid_stor;
   _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
 
@@ -204,10 +211,11 @@ typedef struct ___std_rh_0
 
 typedef int
 __d_enum_cb(char *, unsigned char, void *, __g_eds);
-int
-g_l_fmode_n(char *path, size_t max_size, char *output);
+
 int
 g_l_fmode(char *path, size_t max_size, char *output);
+int
+g_l_fmode_n(char *path, size_t max_size, char *output);
 
 __g_proc_rv dt_rval_x_path, dt_rval_x_basepath, dt_rval_x_dirpath, dt_rval_c,
     dt_rval_x_size, dt_rval_x_mode, dt_rval_x_devid, dt_rval_x_minor, major,
@@ -215,7 +223,8 @@ __g_proc_rv dt_rval_x_path, dt_rval_x_basepath, dt_rval_x_dirpath, dt_rval_c,
     dt_rval_x_blksize, dt_rval_x_blocks, dt_rval_x_atime, dt_rval_x_ctime,
     dt_rval_x_mtime, dt_rval_x_isread, dt_rval_x_iswrite, dt_rval_x_isexec,
     dt_rval_x_uperm, dt_rval_x_gperm, dt_rval_x_operm, dt_rval_x_perm,
-    dt_rval_x_sparse, dt_rval_x_crc32, dt_rval_x_deccrc32;
+    dt_rval_x_sparse, dt_rval_x_crc32, dt_rval_x_deccrc32, dt_rval_x_user,
+    dt_rval_x_group;
 
 void
 g_xproc_rc(char *name, void *aa_rh, __g_eds eds);

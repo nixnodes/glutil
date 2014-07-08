@@ -29,6 +29,15 @@ static uint32_t crc_32_tab[];
 
 #define UPDC32(octet,crc) (crc_32_tab[((crc) ^ ((uint8_t)octet)) & 0xff] ^ ((crc) >> 8))
 
+typedef struct gu_nfo
+{
+  uint32_t id;
+  char name[64];
+} gu_n, *p_gu_n;
+
+#define PGF_MAX_LINE_SIZE       8192
+#define PGF_MAX_LINE_PROC       134217728
+
 off_t
 get_file_size(char *file);
 time_t
@@ -55,5 +64,10 @@ typedef int
 _pf_eof(void *p);
 
 _pf_eof gz_feof, g_feof;
+
+int
+load_guid_info(pmda md, char *path);
+p_gu_n
+search_xuid_id(pmda md, uint32_t id);
 
 #endif /* X_F_H_ */

@@ -426,13 +426,87 @@ exec_and_redirect_output(char *command, FILE *output)
 #ifdef HAVE_ZLIB_H
 int
 gz_feof(void *p)
-  {
-    return gzeof((gzFile) p);
-  }
+{
+  return gzeof((gzFile) p);
+}
 #endif
 
 int
 g_feof(void *p)
 {
   return feof((FILE*) p);
+}
+
+int
+load_guid_info(pmda md, char *path)
+{
+  FILE *fh = fopen(path, "r");
+
+  if (NULL == fh)
+    {
+      return 1;
+    }
+
+  errno = 0;
+
+  char buffer[PGF_MAX_LINE_SIZE + 1];
+  uint32_t lc = 0;
+
+  while (fgets(buffer, PGF_MAX_LINE_SIZE, fh) && lc < PGF_MAX_LINE_PROC
+      && !ferror(fh) && !feof(fh))
+    {
+      if (!strlen(buffer) || buffer[0] == 0xA)
+        {
+          break;
+        }
+
+      mda spl;
+      md_init(&spl, 8);
+
+      if (split_string(buffer, 0x3A, &spl) < 3)
+        {
+          md_g_free(&spl);
+          return 2;
+        }
+
+      p_md_obj ptr = md_first(&spl);
+
+      p_gu_n gu = md_alloc(md, sizeof(gu_n));
+
+      strcp_s(gu->name, sizeof(gu->name), (char *) ptr->ptr);
+      gu->id = (uint32_t) strtoul(ptr[2].ptr, NULL, 10);
+
+      if ( errno == ERANGE)
+        {
+          return 3;
+        }
+
+      md_g_free(&spl);
+
+      lc++;
+    }
+
+  fclose(fh);
+
+  return 0;
+}
+
+p_gu_n
+search_xuid_id(pmda md, uint32_t id)
+{
+  p_md_obj ptr = md_first(md);
+
+  while (ptr)
+    {
+      p_gu_n gu = (p_gu_n) ptr->ptr;
+
+      if (gu->id == id)
+        {
+          return gu;
+        }
+
+      ptr = ptr->next;
+    }
+
+  return NULL;
 }

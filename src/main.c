@@ -468,9 +468,9 @@ g_init(int argc, char **argv)
       free_cfg_rf(&cfg_rf);
 
       /*if (gfl & F_OPT_LOOPEXEC)
-        {
-          g_do_exec(NULL, ref_to_val_generic, LOOPEXEC, NULL);
-        }*/
+       {
+       g_do_exec(NULL, ref_to_val_generic, LOOPEXEC, NULL);
+       }*/
       mloop_c++;
       goto enter;
     }

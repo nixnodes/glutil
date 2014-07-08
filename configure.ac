@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.3.19], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.3.19_b1], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
 AM_MAINTAINER_MODE([disable])
@@ -104,6 +104,10 @@ AC_CHECK_FUNCS([strtol],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtol)])])
 AC_CHECK_FUNCS([strtoul],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtoul)])])
 AC_CHECK_FUNCS([strtoull],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtoull)])])
 AC_CHECK_FUNCS([utime],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (utime)])])
+
+#AS_IF([test "$glutil_disable_gzip" != "yes"], \
+#AC_CHECK_FUNCS([gzread],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (gzread)])])
+#)
 
 AC_FUNC_FORK
 AC_FUNC_CHOWN

@@ -29,6 +29,19 @@
 #include <dirent.h>
 #include <math.h>
 
+static int
+r_preload_guid_data(pmda md, char *path)
+{
+  if (md->offset)
+    {
+      return 0;
+    }
+  char buffer[PATH_MAX];
+  snprintf(buffer, PATH_MAX, "%s%s", GLROOT, path);
+  md_init(md, 16);
+  return load_guid_info(md, buffer);
+}
+
 int
 g_l_fmode_n(char *path, size_t max_size, char *output)
 {
@@ -54,6 +67,62 @@ g_l_fmode(char *path, size_t max_size, char *output)
       return 0;
     }
   snprintf(output, max_size, "%d", IFTODT(st.st_mode));
+  return 0;
+}
+
+static int
+g_legacy_guser(__d_xref data, size_t max_size, char *output)
+{
+  md_init(&data->uuid_stor, 16);
+
+  if (r_preload_guid_data(&data->uuid_stor, "/etc/passwd"))
+    {
+      return 1;
+    }
+
+  struct stat st;
+
+  if (lstat(data->name, &st))
+    {
+      return 2;
+    }
+
+  p_gu_n pgn = search_xuid_id(&data->uuid_stor, (uint32_t) st.st_uid);
+  if (pgn != NULL)
+    {
+      snprintf(output, max_size, "%s", pgn->name);
+      return 0;
+    }
+
+  strncpy(output, MSG_X_UMISSING, sizeof(MSG_X_UMISSING));
+  return 0;
+}
+
+static int
+g_legacy_ggroup(__d_xref data, size_t max_size, char *output)
+{
+  md_init(&data->guid_stor, 16);
+
+  if (r_preload_guid_data(&data->guid_stor, "/etc/group"))
+    {
+      return 1;
+    }
+
+  struct stat st;
+
+  if (lstat(data->name, &st))
+    {
+      return 2;
+    }
+
+  p_gu_n pgn = search_xuid_id(&data->guid_stor, (uint32_t) st.st_gid);
+  if (pgn != NULL)
+    {
+      snprintf(output, max_size, "%s", pgn->name);
+      return 0;
+    }
+
+  strncpy(output, MSG_X_GMISSING, sizeof(MSG_X_GMISSING));
   return 0;
 }
 
@@ -341,8 +410,17 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
     {
       strcp_s(output, max_size, data->name);
     }
+  else if (!strncmp(match, _MC_X_USER, 4))
+    {
+      return g_legacy_guser(data, max_size, output);
+    }
+  else if (!strncmp(match, _MC_X_GROUP, 5))
+    {
+      return g_legacy_ggroup(data, max_size, output);
+    }
   else
     {
+      output[0] = 0x0;
       return 1;
     }
 
@@ -540,6 +618,34 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
 }
 
 char *
+dt_rval_x_user(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  p_gu_n pgn = search_xuid_id(&((__d_xref) arg)->uuid_stor, (uint32_t)((__d_xref) arg)->st.st_uid);
+  if (pgn != NULL)
+    {
+      return pgn->name;
+    }
+
+  strncpy(output, MSG_X_UMISSING, sizeof(MSG_X_UMISSING));
+  return output;
+}
+
+char *
+dt_rval_x_group(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  p_gu_n pgn = search_xuid_id(&((__d_xref) arg)->guid_stor, (uint32_t)((__d_xref) arg)->st.st_gid);
+  if (pgn != NULL)
+    {
+      return pgn->name;
+    }
+
+  strncpy(output, MSG_X_GMISSING, sizeof(MSG_X_GMISSING));
+  return output;
+}
+
+char *
 dt_rval_x_path(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -666,7 +772,7 @@ dt_rval_x_gid(void *arg, char *match, char *output, size_t max_size, void *mppd)
 #if defined HAVE_STRUCT_STAT_ST_BLKSIZE
 char *
 dt_rval_x_blksize(void *arg, char *match, char *output, size_t max_size,
-void *mppd)
+    void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_blksize);
   return output;
@@ -676,7 +782,7 @@ void *mppd)
 #if defined HAVE_STRUCT_STAT_ST_BLOCKS
 char *
 dt_rval_x_blocks(void *arg, char *match, char *output, size_t max_size,
-void *mppd)
+    void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (uint32_t) ((__d_xref) arg)->st.st_blocks);
   return output;
@@ -1045,6 +1151,41 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_x_path ,(__d_drt_h)mppd, "%s");
     }
+  else if (!strncmp(match, _MC_X_USER, 4))
+    {
+      if (arg)
+        {
+          int r;
+          if ((r=r_preload_guid_data(&((__d_xref) arg)->uuid_stor, DEFPATH_PASSWD)))
+            {
+              if ( r== 1)
+                {
+                  print_str ("WARNING: unable to access '%s'\n", DEFPATH_PASSWD);
+                }
+              return NULL;
+            }
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_user ,(__d_drt_h)mppd, "%s");
+    }
+  else if (!strncmp(match, _MC_X_GROUP, 5))
+    {
+      if (arg)
+        {
+          int r;
+          if ((r=r_preload_guid_data(&((__d_xref) arg)->guid_stor, DEFPATH_GROUP)))
+            {
+              if ( r == 1)
+                {
+                  print_str ("WARNING: unable to access '%s'\n", DEFPATH_PASSWD);
+                }
+              return NULL;
+            }
+
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_group ,(__d_drt_h)mppd, "%s");
+    }
   else if (!strncmp(match, "c:", 2))
     {
       ((__d_drt_h ) mppd)->vp_off2 = (size_t)((__d_xref) NULL)->name;
@@ -1226,6 +1367,8 @@ g_dump_gen(char *root)
   end:
 
   g_cleanup(&ret.hdl);
+  md_g_free(&ret.p_xref.uuid_stor);
+  md_g_free(&ret.p_xref.guid_stor);
 
   return ret.rt_m;
 }
@@ -1564,14 +1707,14 @@ file_sparseness(const struct stat *p)
   if (0 == p->st_size)
     {
       if (0 == p->st_blocks)
-      return 1.0;
+        return 1.0;
       else
-      return p->st_blocks < 0 ? -HUGE_VAL : HUGE_VAL;
+        return p->st_blocks < 0 ? -HUGE_VAL : HUGE_VAL;
     }
   else
     {
-      double blklen = ST_NBLOCKSIZE * (double)p->st_blocks;
-      return (float)(blklen / p->st_size);
+      double blklen = ST_NBLOCKSIZE * (double) p->st_blocks;
+      return (float) (blklen / p->st_size);
     }
 #else
   return 1.0;

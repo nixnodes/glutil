@@ -198,11 +198,13 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   hdl->fh = fd;
 #ifdef HAVE_ZLIB_H
-  if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
+  if (strncmp(mode, "a+", 2))
     {
-      return 36;
+      if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
+        {
+          return 36;
+        }
     }
-
 #endif
 
   return 0;

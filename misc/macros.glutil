@@ -46,16 +46,16 @@
 #
 #@MACRO:dirlog-update|Update directory log with new records and remove records that are missing from filesystem:{m:exe} -r -u --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
-#@MACRO:dirlog-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (skip empty directories):{m:exe} -r -u --lom "size = 0 && files = 0" --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (skip empty directories):{m:exe} -r -u --stats --lom "size = 0 && files = 0" --postexec "{exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
 ## <dirlog-full-update>
 #
 ## Update directory log with new records and remove 
 ## records that are missing from filesystem (full)
 #
-#@MACRO:dirlog-full-update|Update directory log with new records and remove records that are missing from filesystem (full):{m:exe} -r -u --full --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-full-update|Update directory log with new records and remove records that are missing from filesystem (full):{m:exe} -r -u --stats --full --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
-#@MACRO:dirlog-full-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (full) (skip empty directories):{m:exe} -r -u --full --lom "size = 0 && files = 0" --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
+#@MACRO:dirlog-full-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (full) (skip empty directories):{m:exe} -r -u --stats --full --stats --lom "size = 0 && files = 0" --postexec "{m:exe} --check --fix --ghost -v {m:arg2}" {m:arg1}
 #
 ## <dirlog-dupe>
 #

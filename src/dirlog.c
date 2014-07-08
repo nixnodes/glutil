@@ -38,6 +38,8 @@ rebuild_dirlog(void)
   uint32_t flags = 0;
   int rt = 0;
 
+  gfl0 |= F_OPT_STATS;
+
   if (!(ofl & F_OVRR_NUKESTR))
     {
       print_str(
@@ -111,8 +113,8 @@ rebuild_dirlog(void)
     }
   else if ((r = g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1)))
     {
-      print_str("ERROR: could not open dirlog, mode '%s', flags %u\n",
-          g_act_1.mode, flags);
+      print_str("ERROR: [%d] could not open dirlog, mode '%s', flags %u\n",
+          r, g_act_1.mode, flags);
       return errno;
     }
 
@@ -137,6 +139,11 @@ rebuild_dirlog(void)
   if (g_proc_mr(&g_act_1))
     {
       return 12;
+    }
+
+  if (gfl & F_OPT_UPDATE)
+    {
+      print_str("NOTICE: requested dirlog update only\n");
     }
 
   if (gfl & F_OPT_DIR_FULL_REBUILD)
