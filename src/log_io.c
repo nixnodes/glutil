@@ -42,9 +42,9 @@ long long int db_max_size = DB_MAX_SIZE;
 #ifdef HAVE_ZLIB_H
 static void
 g_set_compression_opts(uint8_t level, __g_handle hdl)
-  {
-    snprintf(hdl->w_mode, sizeof(hdl->w_mode), "wb%hhu", level);
-  }
+{
+  snprintf(hdl->w_mode, sizeof(hdl->w_mode), "wb%hhu", level);
+}
 #endif
 
 int
@@ -256,7 +256,7 @@ g_read(void *buffer, __g_handle hdl, size_t size)
 #ifdef HAVE_ZLIB_H
           gzeof(hdl->gz_fh)
 #else
-          feof(hdl->fh) || ferror(hdl->fh)
+              feof(hdl->fh) || ferror(hdl->fh)
 #endif
               )
         {
@@ -434,7 +434,7 @@ g_load_data_check_of(void *f, void *nf, __g_handle hdl)
         {
           return 1;
         }
-      _xof = gzeof((gzFile)f);
+      _xof = gzeof((gzFile) f);
     }
   else
     {
@@ -525,7 +525,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
           fr = gzread(gz_fh, &b_output[c_fr], hdl->total_sz - c_fr);
           if (fr == -1)
             {
-              c_fr=0;
+              c_fr = 0;
               break;
             }
 
@@ -981,14 +981,16 @@ g_buffer_into_memory(char *file, __g_handle hdl)
 #ifdef HAVE_ZLIB_H
           if (hdl->flags & F_GH_IS_GZIP)
             {
-              print_str("NOTICE: %s: loaded %llu records [compression ratio: %f, %llu/%llu kB]\n", hdl->file,
-                  (uint64_t) hdl->buffer.offset, (double)hdl->total_sz / (double)tot_sz,
-                  (unsigned long long int)hdl->total_sz/1024 ,(unsigned long long int)tot_sz/1024);
+              print_str(
+                  "NOTICE: %s: loaded %llu records [compression ratio: %f, %llu/%llu kB]\n",
+                  hdl->file, (uint64_t) hdl->buffer.offset,
+                  (double) hdl->total_sz / (double) tot_sz,
+                  (unsigned long long int) hdl->total_sz / 1024,
+                  (unsigned long long int) tot_sz / 1024);
             }
           else
             {
-              print_str(MSG_LL_RC, hdl->file,
-                  (uint64_t) hdl->buffer.offset);
+              print_str(MSG_LL_RC, hdl->file, (uint64_t) hdl->buffer.offset);
             }
 #else
           print_str(MSG_LL_RC, hdl->file, (uint64_t) hdl->buffer.offset);
@@ -1160,7 +1162,7 @@ rebuild_data_file(char *file, __g_handle hdl)
    else
    {
    skip:*/
-  if (gfl0 & F_OPT_GZIP )
+  if (gfl0 & F_OPT_GZIP)
     {
       hdl->flags |= F_GH_IO_GZIP;
       g_set_compression_opts(comp_level, hdl);
@@ -1232,7 +1234,8 @@ rebuild_data_file(char *file, __g_handle hdl)
 #ifdef HAVE_ZLIB_H
       if ((hdl->flags & F_GH_IO_GZIP))
         {
-          print_str("NOTICE: %s: gzip write compression enabled, level '%hhu'\n",
+          print_str(
+              "NOTICE: %s: gzip write compression enabled, level '%hhu'\n",
               hdl->s_buffer, comp_level);
         }
 #endif
@@ -1280,9 +1283,12 @@ rebuild_data_file(char *file, __g_handle hdl)
       uint64_t n0_sz = (ulint64_t) (hdl->bw - bw_o);
       if ((hdl->flags & F_GH_IO_GZIP))
         {
-          print_str("NOTICE: %s: flushed %llu records, %llu kB [compression ratio: %f, %llu/%llu kB]\n", hdl->file,
-              (ulint64_t) (hdl->rw - rw_o), sz_r /1024, (double) n0_sz / (double) sz_r,
-              (unsigned long long int)n0_sz/1024 ,(unsigned long long int) sz_r/1024);
+          print_str(
+              "NOTICE: %s: flushed %llu records, %llu kB [compression ratio: %f, %llu/%llu kB]\n",
+              hdl->file, (ulint64_t) (hdl->rw - rw_o), sz_r / 1024,
+              (double) n0_sz / (double) sz_r,
+              (unsigned long long int) n0_sz / 1024,
+              (unsigned long long int) sz_r / 1024);
         }
       else
         {
@@ -1490,7 +1496,7 @@ flush_data_md(__g_handle hdl, char *outfile)
 #ifdef HAVE_ZLIB_H
       if (hdl->flags & F_GH_IO_GZIP)
         {
-          if ((bw = gzwrite(gz_fh,ptr->ptr,hdl->block_sz)) != hdl->block_sz)
+          if ((bw = gzwrite(gz_fh, ptr->ptr, hdl->block_sz)) != hdl->block_sz)
             {
               ret = 13;
               break;
@@ -1627,8 +1633,17 @@ d_write(char *arg)
     {
       if ((r = m_load_input_n(&g_act_1, in)))
         {
-          print_str("ERROR: %s: [%d]: could not parse input data\n", datafile,
-              r);
+          if (r == -9)
+            {
+              print_str(
+                  "ERROR: %s: [%d]: no data could be read, import failed\n",
+                  datafile, r);
+            }
+          else
+            {
+              print_str("ERROR: %s: [%d]: could not parse input data\n",
+                  datafile, r);
+            }
           ret = 5;
           goto end;
         }
@@ -1725,7 +1740,7 @@ d_write(char *arg)
         {
 
 #ifdef HAVE_ZLIB_H
-          if ( g_act_1.flags & F_GH_IO_GZIP )
+          if (g_act_1.flags & F_GH_IO_GZIP)
             {
               fprintf(stderr, MSG_GEN_WROTE2, datafile,
                   (double) get_file_size(datafile) / 1024.0,
