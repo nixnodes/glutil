@@ -39,7 +39,15 @@ r_preload_guid_data(pmda md, char *path)
   char buffer[PATH_MAX];
   snprintf(buffer, PATH_MAX, "%s%s", GLROOT, path);
   md_init(md, 16);
-  return load_guid_info(md, buffer);
+
+  int r = load_guid_info(md, buffer);
+
+  if (r == 1)
+    {
+      print_str("WARNING: unable to access '%s'\n", buffer);
+    }
+
+  return r;
 }
 
 int
@@ -73,8 +81,6 @@ g_l_fmode(char *path, size_t max_size, char *output)
 static int
 g_legacy_guser(__d_xref data, size_t max_size, char *output)
 {
-  md_init(&data->uuid_stor, 16);
-
   if (r_preload_guid_data(&data->uuid_stor, "/etc/passwd"))
     {
       return 1;
@@ -101,8 +107,6 @@ g_legacy_guser(__d_xref data, size_t max_size, char *output)
 static int
 g_legacy_ggroup(__d_xref data, size_t max_size, char *output)
 {
-  md_init(&data->guid_stor, 16);
-
   if (r_preload_guid_data(&data->guid_stor, "/etc/group"))
     {
       return 1;
@@ -1158,10 +1162,6 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
           int r;
           if ((r=r_preload_guid_data(&((__d_xref) arg)->uuid_stor, DEFPATH_PASSWD)))
             {
-              if ( r== 1)
-                {
-                  print_str ("WARNING: unable to access '%s'\n", DEFPATH_PASSWD);
-                }
               return NULL;
             }
           ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
@@ -1175,10 +1175,6 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
           int r;
           if ((r=r_preload_guid_data(&((__d_xref) arg)->guid_stor, DEFPATH_GROUP)))
             {
-              if ( r == 1)
-                {
-                  print_str ("WARNING: unable to access '%s'\n", DEFPATH_PASSWD);
-                }
               return NULL;
             }
 

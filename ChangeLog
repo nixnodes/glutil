@@ -60,6 +60,8 @@
  *   - + 'm:siterootn' field (rev. 19_b2)
  *   - % Got rid of "(MISSING)" messages ('user' and 'group') fields, instead it returns blank when info can't be obtained (rev. 19_b3)
  *   - ~ Segfaulted when looking up 'user' or 'group' fields, in certain cases (rev. 19_b4)
+ *   - ~ Called 'md_init' twice when referencing 'user' or 'group' fields (FILESYSTEM) (rev. 19_b5)
+ *   - ~ Not showing proper paths on error messages, when unable to open passwd or group files (rev. 19_b5)
  *
  * v2.2:
  *
