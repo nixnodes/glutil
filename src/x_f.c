@@ -511,3 +511,21 @@ search_xuid_id(pmda md, uint32_t id)
 
   return NULL;
 }
+
+#ifdef HAVE_ZLIB_H
+int
+g_is_file_compressed(char *file)
+{
+  gzFile gz_fh;
+
+  if ((gz_fh = gzopen(file, "r")) == NULL)
+    {
+      return 2;
+    }
+
+  int r = gzdirect(gz_fh);
+  gzclose(gz_fh);
+
+  return r;
+}
+#endif

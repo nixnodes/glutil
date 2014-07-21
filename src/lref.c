@@ -521,6 +521,10 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
         {
+      case 0x71:
+        return as_ref_to_val_lk(match, ((__d_drt_h ) mppd)->st_ptr0,
+            (__d_drt_h ) mppd, "%s");
+        break;
       case 0x6C:
         mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
             mppd);
@@ -528,7 +532,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           {
             return NULL;
           }
-        return as_ref_to_val_lk(match, dt_rval_spec_slen, mppd, NULL);
+        return as_ref_to_val_lk(match, dt_rval_spec_slen, (__d_drt_h )mppd, NULL);
         break;
       case 0x74:
         ;
@@ -900,6 +904,12 @@ rtv_q(void *query, char *output, size_t max_size)
       snprintf(output, max_size, "%d",
           !access(rtv_l, W_OK) ? 1 : errno == EACCES ? 0 : -1);
     }
+#ifdef HAVE_ZLIB_H
+  else if (!strncmp(rtv_q, "comp", 4))
+    {
+      snprintf(output, max_size, "%d", !g_is_file_compressed(rtv_l) ? 1 : 0);
+    }
+#endif
   else
     {
       bzero(output, max_size);

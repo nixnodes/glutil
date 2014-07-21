@@ -89,6 +89,10 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     {
       return rtv_q(&match[2], output, max_size);
     }
+  else if (!strncmp(match, "?q:", 3))
+    {
+      return rtv_q(&match[3], output, max_size);
+    }
   else if (!strncmp(match, "exe", 3))
     {
       if (self_get_path(output))
@@ -225,7 +229,19 @@ dt_rval_generic_curtime(void *arg, char *match, char *output, size_t max_size,
 char *
 dt_rval_q(void *arg, char *match, char *output, size_t max_size, void *mppd)
 {
-  if (rtv_q(&match[2], output, max_size))
+  while (match[0] != 0x3A && match[0])
+    {
+      match++;
+    }
+
+  match++;
+
+  if (!match[0])
+    {
+      return output;
+    }
+
+  if (rtv_q(match, output, max_size))
     {
       output[0] = 0x0;
     }
@@ -411,7 +427,7 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, "q:", 2))
     {
-      return as_ref_to_val_lk(match, dt_rval_q, (__d_drt_h ) mppd, "%s");
+      return as_ref_to_val_lk(&match[4], dt_rval_q, (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, _MC_GLOB_U64G, 7))
     {
@@ -516,8 +532,9 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
       return as_ref_to_val_lk(match, dt_rval_generic_pspec1, (__d_drt_h ) mppd,
           "%s");
     }
-  else if (!strncmp(match, "?", 1))
+  else if (match[0] == 0x3F)
     {
+      ((__d_drt_h ) mppd)->st_ptr0 = dt_rval_q;
       return ref_to_val_af(arg, match, output, max_size, (__d_drt_h ) mppd);
     }
 

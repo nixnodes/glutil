@@ -68,6 +68,8 @@
  *   - + Libs to translate internal error codes to message strings (rev. 19_b6)
  *   - + Implemented heapsort algorithm (rev. 20_b1)
  *   - + '--loadqa' and '--sortmethod' (rev. 20_b1)
+ *   - ~ Legacy sort function inverting order (rev. 20_b2)
+ *   - + 'comp' field added to '?q' extended directive (check if log is compressed (rev. 20_b2)
  *
  * v2.2:
  *

@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <zlib.h>
 
 #ifdef HAVE_ST_BIRTHTIME
 #define birthtime(x) x->st_birthtime
@@ -69,5 +70,10 @@ int
 load_guid_info(pmda md, char *path);
 p_gu_n
 search_xuid_id(pmda md, uint32_t id);
+
+#ifdef HAVE_ZLIB_H
+int
+g_is_file_compressed(char *file);
+#endif
 
 #endif /* X_F_H_ */
