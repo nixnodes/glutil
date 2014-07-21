@@ -139,6 +139,11 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
         }
     }
 
+  if (gfl0 & F_OPT_LOADQA)
+    {
+      goto r_end;
+    }
+
   void *ptr;
 
   size_t c = 0;
@@ -178,7 +183,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
 #ifdef HAVE_ZLIB_H
-      if (( g_act_1.flags & F_GH_IO_GZIP) && g_act_1.gz_fh1)
+      if ((g_act_1.flags & F_GH_IO_GZIP) && g_act_1.gz_fh1)
         {
           gzflush(g_act_1.gz_fh1, Z_FINISH);
         }
@@ -190,7 +195,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   if (!(g_act_1.flags & F_GH_ISONLINE) && (gfl0 & F_OPT_STATS))
     {
-      fprintf(stderr,"STATS: %s: processed %llu/%llu records\n", file,
+      fprintf(stderr, "STATS: %s: processed %llu/%llu records\n", file,
           (unsigned long long int) c,
           !g_act_1.buffer.count ?
               (unsigned long long int) c : g_act_1.buffer.count);
@@ -224,7 +229,7 @@ g_omfp_raw(void * hdl, void *ptr, char *sbuffer)
 #ifdef HAVE_ZLIB_H
   if (((__g_handle ) hdl)->flags & F_GH_IO_GZIP)
     {
-      gzwrite( ((__g_handle ) hdl)->gz_fh1, ptr, ((__g_handle ) hdl)->block_sz);
+      gzwrite(((__g_handle ) hdl)->gz_fh1, ptr, ((__g_handle ) hdl)->block_sz);
     }
   else
     {

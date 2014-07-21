@@ -126,7 +126,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
       return 2;
     }
 
-  strncpy(hdl->file, file, strlen(file) + 1);
+  strncpy(hdl->file, file, strlen(file));
 
 #ifdef HAVE_ZLIB_H
   if (gfl0 & F_OPT_GZIP)
@@ -159,7 +159,7 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
       if (!(gfl0 & F_OPT_STDIN))
         {
-          hdl->total_sz = get_file_size(file);
+          hdl->total_sz = get_file_size(hdl->file);
 
           if (!hdl->total_sz)
             {
@@ -173,10 +173,6 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
                   print_str(
                   MSG_GEN_DFCORRUW, file, (ulint64_t) hdl->total_sz,
                       hdl->block_sz);
-                }
-              if (!(gfl & F_OPT_FORCE))
-                {
-                  gfl |= F_OPT_LOADQ;
                 }
             }
 
@@ -690,10 +686,14 @@ load_data_md(pmda md, char *file, __g_handle hdl)
       if (!((sh_ret & R_SHMAP_ALREADY_EXISTS)) || ((hdl->flags & F_GH_SHMRB)))
         {
           if ((b_read = g_load_data_md(hdl->data, hdl->total_sz, file, hdl))
-              % hdl->block_sz || !b_read)
+              % hdl->block_sz)
             {
               md_g_free(md);
-              return 20109;
+              if (!b_read)
+                {
+                  return 20109;
+                }
+              return 20110;
             }
           if (b_read != hdl->total_sz)
             {
@@ -791,14 +791,14 @@ g_buffer_into_memory(char *file, __g_handle hdl)
               return 3;
             }
 
-          if (st.st_size > db_max_size)
-            {
-              print_str(
-                  "WARNING: %s: disabling memory buffering, file too big (%lld MB max)\n",
-                  file, db_max_size / 1048576);
-              hdl->flags |= F_GH_NOMEM;
-              return 20202;
-            }
+          /*if (st.st_size > db_max_size)
+           {
+           print_str(
+           "WARNING: %s: disabling memory buffering, file too big (%lld MB max)\n",
+           file, db_max_size / 1048576);
+           hdl->flags |= F_GH_NOMEM;
+           return 20202;
+           }*/
 
           hdl->total_sz = st.st_size;
         }

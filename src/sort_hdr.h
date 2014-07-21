@@ -38,7 +38,10 @@ int
 opt_g_sort(void *arg, int m);
 int
 g_sort(__g_handle hdl, char *field, uint32_t flags);
-int
-g_swapsort_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2);
+
+#include <lc_oper.h>
+
+typedef int
+(*g_xsort_exec_p)(pmda m_ptr, size_t off, uint32_t flags, gs_cmp_p m_op, void *cb2);
 
 #endif /* SORT_HDR_H_ */

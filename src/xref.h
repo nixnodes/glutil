@@ -86,8 +86,6 @@
 
 #include <errno_int.h>
 
-_emr EMR_enum_dir[2];
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

@@ -185,6 +185,11 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_NOSTATS                   (a64 << 12)
 #define F_OPT_STATS                     (a64 << 13)
 #define F_OPT_GZIP                      (a64 << 14)
+#define F_OPT_SMETHOD_SWAP              (a64 << 15)
+#define F_OPT_SMETHOD_HEAP              (a64 << 16)
+#define F_OPT_LOADQA                    (a64 << 17)
+
+#define F_OPT_SMETHOD                   (F_OPT_SMETHOD_SWAP|F_OPT_SMETHOD_HEAP)
 
 #define F_DL_FOPEN_BUFFER               (a32 << 1)
 #define F_DL_FOPEN_FILE                 (a32 << 2)

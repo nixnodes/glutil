@@ -426,28 +426,35 @@ opt_g_shmem(void *arg, int m)
   return 0;
 }
 
-int
+static int
 opt_g_loadq(void *arg, int m)
 {
   gfl |= F_OPT_LOADQ;
   return 0;
 }
 
-int
+static int
+opt_g_loadqa(void *arg, int m)
+{
+  gfl0 |= F_OPT_LOADQA;
+  return 0;
+}
+
+static int
 opt_g_shmdestroy(void *arg, int m)
 {
   gfl |= F_OPT_SHMDESTROY;
   return 0;
 }
 
-int
+static int
 opt_g_shmdestroyonexit(void *arg, int m)
 {
   gfl |= F_OPT_SHMDESTONEXIT;
   return 0;
 }
 
-int
+static int
 opt_g_shmreload(void *arg, int m)
 {
   gfl |= F_OPT_SHMRELOAD;
@@ -1295,6 +1302,39 @@ option_crc32(void *arg, int m)
   return 0;
 }
 
+static int
+opt_g_swapmode(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 140051;
+    }
+
+  size_t i_len = strlen(buffer);
+
+  if (i_len > 4)
+    {
+      return 140052;
+    }
+
+  if (!strncmp(buffer, "swap", i_len))
+    {
+      gfl0 |= F_OPT_SMETHOD_SWAP;
+    }
+  else if (!strncmp(buffer, "heap", i_len))
+    {
+      gfl0 |= F_OPT_SMETHOD_HEAP;
+    }
+  else
+    {
+      return 140059;
+    }
+
+  return 0;
+}
+
 void *prio_f_ref[] =
   { "noop", g_opt_mode_noop, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
       "silent", opt_silent, (void*) 0, "--silent", opt_silent, (void*) 0,
@@ -1394,23 +1434,24 @@ void *f_ref[] =
       "-f", opt_g_force, (void*) 0, "-ff", opt_g_force2, (void*) 0, "-s",
       opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
       (void*) 0, "--shmem", opt_g_shmem, (void*) 0, "--shmreload",
-      opt_g_shmreload, (void*) 0, "--loadq", opt_g_loadq, (void*) 0,
-      "--shmdestroy", opt_g_shmdestroy, (void*) 0, "--shmdestonexit",
-      opt_g_shmdestroyonexit, (void*) 0, "--maxres", opt_g_maxresults,
-      (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1, "--ifres", opt_g_ifres,
-      (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0, "--ifrhe", opt_g_ifrh_e,
-      (void*) 0, "--nofq", opt_g_nofq, (void*) 0, "--esredir",
-      opt_execv_stdout_redir, (void*) 1, "--noglconf", opt_g_noglconf,
-      (void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1, "-maxdepth",
-      opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth, (void*) 1,
-      "-mindepth", opt_g_mindepth, (void*) 1, "--noereg", opt_g_noereg,
-      (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd, (void*) 0,
-      "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
-      "--ge4log", opt_GE4LOG, (void*) 1, "--xretry", opt_g_xretry, (void*) 0,
-      "--indepth", opt_g_indepth, (void*) 0, "--full", opt_dirlog_rebuild_full,
-      (void*) 0, "--arr", opt_arrange, (void*) 1, "--nonukechk",
-      opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1,
-      "--rusleep", opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats,
-      (void*) 0, "--stats", opt_g_stats, (void*) 0, "-mlist", opt_g_mlist,
-      (void*) 0, "--gz", opt_g_comp, (void*) 1,
+      opt_g_shmreload, (void*) 0, "--loadq", opt_g_loadq, (void*) 0, "--loadqa",
+      opt_g_loadqa, (void*) 0, "--shmdestroy", opt_g_shmdestroy, (void*) 0,
+      "--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
+      opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
+      "--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
+      "--ifrhe", opt_g_ifrh_e, (void*) 0, "--nofq", opt_g_nofq, (void*) 0,
+      "--esredir", opt_execv_stdout_redir, (void*) 1, "--noglconf",
+      opt_g_noglconf, (void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1,
+      "-maxdepth", opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth,
+      (void*) 1, "-mindepth", opt_g_mindepth, (void*) 1, "--noereg",
+      opt_g_noereg, (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd,
+      (void*) 0, "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file,
+      (void*) 1, "--ge4log", opt_GE4LOG, (void*) 1, "--xretry", opt_g_xretry,
+      (void*) 0, "--indepth", opt_g_indepth, (void*) 0, "--full",
+      opt_dirlog_rebuild_full, (void*) 0, "--arr", opt_arrange, (void*) 1,
+      "--nonukechk", opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep,
+      (void*) 1, "--rusleep", opt_g_loop_usleep, (void*) 1, "--nostats",
+      opt_g_nostats, (void*) 0, "--stats", opt_g_stats, (void*) 0, "-mlist",
+      opt_g_mlist, (void*) 0, "--gz", opt_g_comp, (void*) 1, "--sortmethod",
+      opt_g_swapmode, (void*) 1,
       NULL, NULL, NULL };

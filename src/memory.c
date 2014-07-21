@@ -418,6 +418,57 @@ md_copy(pmda source, pmda dest, size_t block_sz)
 }
 
 int
+md_md_to_array(pmda source, void **dest)
+{
+  if (!source || !dest)
+    {
+      return 1;
+    }
+
+  p_md_obj ptr = md_first(source);
+  size_t index = 0;
+
+  while (ptr)
+    {
+      dest[index] = ptr->ptr;
+      index++;
+      if (index == UINTPTR_MAX)
+        {
+          return 2;
+        }
+      ptr = ptr->next;
+    }
+
+  return 0;
+}
+
+int
+md_array_to_md(void **source, pmda dest)
+{
+  if (!source || !dest)
+    {
+      return 1;
+    }
+
+  p_md_obj ptr = md_first(dest);
+
+  size_t index = 0;
+
+  while (ptr)
+    {
+      ptr->ptr = source[index];
+      index++;
+      if (index == UINTPTR_MAX)
+        {
+          return 2;
+        }
+      ptr = ptr->next;
+    }
+
+  return 0;
+}
+
+int
 is_memregion_null(void *addr, size_t size)
 {
   size_t i = size - 1;

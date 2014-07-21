@@ -69,5 +69,9 @@ int
 md_copy(pmda source, pmda dest, size_t block_sz);
 int
 is_memregion_null(void *addr, size_t size);
+int
+md_md_to_array(pmda source, void **dest);
+int
+md_array_to_md(void ** source, pmda dest);
 
 #endif /* MEMORY_H_ */

@@ -24,42 +24,42 @@ static int
 gs_t_is_lower(void *s, void *d, size_t offset, void * t_ptr)
 {
   g_t64_ptr_p t64_ptr = (g_t64_ptr_p) t_ptr;
-  return !(t64_ptr(s, offset) < t64_ptr(d, offset));
+  return (t64_ptr(s, offset) < t64_ptr(d, offset));
 }
 
 static int
 gs_t_is_higher(void *s, void *d, size_t offset, void * t_ptr)
 {
   g_t64_ptr_p t64_ptr = (g_t64_ptr_p) t_ptr;
-  return !(t64_ptr(s, offset) > t64_ptr(d, offset));
+  return (t64_ptr(s, offset) > t64_ptr(d, offset));
 }
 
 static int
 gs_ts_is_lower(void *s, void *d, size_t offset, void * t_ptr)
 {
   g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) t_ptr;
-  return !(ts64_ptr(s, offset) < ts64_ptr(d, offset));
+  return (ts64_ptr(s, offset) < ts64_ptr(d, offset));
 }
 
 static int
 gs_ts_is_higher(void *s, void *d, size_t offset, void * t_ptr)
 {
   g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) t_ptr;
-  return !(ts64_ptr(s, offset) > ts64_ptr(d, offset));
+  return (ts64_ptr(s, offset) > ts64_ptr(d, offset));
 }
 
 static int
 gs_tf_is_lower(void *s, void *d, size_t offset, void * t_ptr)
 {
   g_tf_ptr_p tf_ptr = (g_tf_ptr_p) t_ptr;
-  return !(tf_ptr(s, offset) < tf_ptr(d, offset));
+  return (tf_ptr(s, offset) < tf_ptr(d, offset));
 }
 
 static int
 gs_tf_is_higher(void *s, void *d, size_t offset, void * t_ptr)
 {
   g_tf_ptr_p tf_ptr = (g_tf_ptr_p) t_ptr;
-  return !(tf_ptr(s, offset) > tf_ptr(d, offset));
+  return (tf_ptr(s, offset) > tf_ptr(d, offset));
 }
 
 int
@@ -110,28 +110,82 @@ do_sort(__g_handle hdl, char *field, uint32_t flags)
 
   return r;
 }
-/*
- int g_heap_sorti_exec(void *a_ptr, size_t off) {
 
- }*/
-
-int
-g_swapsort_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
+static void
+g_swapi(void **x, void **y)
 {
-  gs_cmp_p m_op = cb1;
+  void *z = *x;
+  *x = *y;
+  *y = z;
+}
 
+static void
+g_siftdown(void **arr, int start, int end, size_t off, gs_cmp_p m_op, void *cb2)
+{
+  int root, child;
+
+  root = start;
+  while (2 * root + 1 < end)
+    {
+      child = 2 * root + 1;
+      if ((child + 1 < end) && (!m_op(arr[child], arr[child + 1], off, cb2)))
+        ++child;
+      if (!m_op(arr[root], arr[child], off, cb2))
+        {
+          g_swapi(&arr[child], &arr[root]);
+          root = child;
+        }
+      else
+        return;
+    }
+}
+
+static int
+g_heapsort_exec(pmda m_ptr, size_t off, uint32_t flags, gs_cmp_p m_op,
+    void *cb2)
+{
+  void **ref_arr = malloc(m_ptr->offset * sizeof(void*));
+
+  if (md_md_to_array(m_ptr, ref_arr))
+    {
+      return 1;
+    }
+
+  int start, end;
+
+  // heapify the array
+  for (start = (m_ptr->offset - 2) / 2; start >= 0; --start) // for every root
+    g_siftdown(ref_arr, start, m_ptr->offset, off, m_op, cb2); // sift through it
+
+  for (end = m_ptr->offset - 1; end; --end)
+    {
+      g_swapi(&ref_arr[end], &ref_arr[0]);
+      g_siftdown(ref_arr, 0, end, off, m_op, cb2);
+    }
+
+  if (md_array_to_md(ref_arr, m_ptr))
+    {
+      return 1;
+    }
+
+  return 0;
+}
+
+static int
+g_swapsort_exec(pmda m_ptr, size_t off, uint32_t flags, gs_cmp_p m_op,
+    void *cb2)
+{
   p_md_obj ptr, ptr_n;
 
   uint32_t ml_f = 0;
 
-  for (; ; )
+  for (;;)
     {
       ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
       ptr = md_first(m_ptr);
       while (ptr && ptr->next)
         {
           ptr_n = (p_md_obj) ptr->next;
-
 
           if (!m_op(ptr->ptr, ptr_n->ptr, off, cb2))
             {
@@ -152,16 +206,16 @@ g_swapsort_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
           break;
         }
 
-      if (!(ml_f & F_INT_GSORT_DID_SORT))
-        {
-          ml_f |= F_INT_GSORT_DID_SORT;
-        }
+      /*if (!(ml_f & F_INT_GSORT_DID_SORT))
+       {
+       ml_f |= F_INT_GSORT_DID_SORT;
+       }*/
     }
 
-  if (!(ml_f & F_INT_GSORT_DID_SORT))
-    {
-      return -1;
-    }
+  /*if (!(ml_f & F_INT_GSORT_DID_SORT))
+   {
+   return -1;
+   }*/
 
   if ((flags & F_GSORT_RESETPOS))
     {
@@ -177,8 +231,8 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   g_setjmp(0, "g_sort", NULL, NULL);
   void *m_op = NULL, *g_t_ptr_c = NULL;
 
-  int
-  (*g_s_ex)(pmda, size_t, uint32_t, void *, void *) = NULL;
+  g_xsort_exec_p g_s_ex;
+
   pmda m_ptr;
 
   if (!hdl)
@@ -198,6 +252,18 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   if (!hdl->g_proc2)
     {
       return 2;
+    }
+
+  switch (gfl0 & F_OPT_SMETHOD)
+    {
+  case F_OPT_SMETHOD_SWAP:
+    g_s_ex = g_swapsort_exec;
+    break;
+  case F_OPT_SMETHOD_HEAP:
+    g_s_ex = g_heapsort_exec;
+    break;
+  default:
+    g_s_ex = g_heapsort_exec;
     }
 
   void *g_fh_f = NULL, *g_fh_s = NULL;
@@ -235,49 +301,40 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   case -32:
     m_op = g_fh_f;
     g_t_ptr_c = g_tf_ptr;
-    g_s_ex = g_swapsort_exec;
     break;
   case 1:
     g_t_ptr_c = g_t8_ptr;
-    g_s_ex = g_swapsort_exec;
     break;
   case 2:
     g_t_ptr_c = g_t16_ptr;
-    g_s_ex = g_swapsort_exec;
     break;
   case 4:
     g_t_ptr_c = g_t32_ptr;
-    g_s_ex = g_swapsort_exec;
     break;
   case 8:
     g_t_ptr_c = g_t64_ptr;
-    g_s_ex = g_swapsort_exec;
     break;
   case -2:
     g_t_ptr_c = g_ts8_ptr;
-    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   case -3:
     g_t_ptr_c = g_ts16_ptr;
-    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   case -5:
     g_t_ptr_c = g_ts32_ptr;
-    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   case -9:
     g_t_ptr_c = g_ts64_ptr;
-    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   default:
     return 14;
     }
 
-  return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);
+  return g_s_ex(m_ptr, off, flags, (gs_cmp_p) m_op, g_t_ptr_c);
 
 }
 

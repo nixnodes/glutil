@@ -63,6 +63,8 @@
  *   - ~ Called 'md_init' twice when referencing 'user' or 'group' fields (FILESYSTEM) (rev. 19_b5)
  *   - ~ Not showing proper paths on error messages, when unable to open passwd or group files (rev. 19_b5)
  *   - + Libs to translate internal error codes to message strings (rev. 19_b6)
+ *   - + Implemented heapsort algorithm (rev. 20_b1)
+ *   - + '--loadqa' and '--swapsort' (rev. 20_b1)
  *
  * v2.2:
  *

@@ -33,4 +33,7 @@ char erm_buf[2048];
 char *
 ie_tl(int code, __emr pemr);
 
+
+_emr EMR_enum_dir[4];
+
 #endif /* ERRNO_INT_H_ */
