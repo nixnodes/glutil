@@ -20,6 +20,48 @@ char *g_sort_field = NULL;
 
 uint32_t g_sort_flags = 0;
 
+static int
+gs_t_is_lower(void *s, void *d, size_t offset, void * t_ptr)
+{
+  g_t64_ptr_p t64_ptr = (g_t64_ptr_p) t_ptr;
+  return !(t64_ptr(s, offset) < t64_ptr(d, offset));
+}
+
+static int
+gs_t_is_higher(void *s, void *d, size_t offset, void * t_ptr)
+{
+  g_t64_ptr_p t64_ptr = (g_t64_ptr_p) t_ptr;
+  return !(t64_ptr(s, offset) > t64_ptr(d, offset));
+}
+
+static int
+gs_ts_is_lower(void *s, void *d, size_t offset, void * t_ptr)
+{
+  g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) t_ptr;
+  return !(ts64_ptr(s, offset) < ts64_ptr(d, offset));
+}
+
+static int
+gs_ts_is_higher(void *s, void *d, size_t offset, void * t_ptr)
+{
+  g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) t_ptr;
+  return !(ts64_ptr(s, offset) > ts64_ptr(d, offset));
+}
+
+static int
+gs_tf_is_lower(void *s, void *d, size_t offset, void * t_ptr)
+{
+  g_tf_ptr_p tf_ptr = (g_tf_ptr_p) t_ptr;
+  return !(tf_ptr(s, offset) < tf_ptr(d, offset));
+}
+
+static int
+gs_tf_is_higher(void *s, void *d, size_t offset, void * t_ptr)
+{
+  g_tf_ptr_p tf_ptr = (g_tf_ptr_p) t_ptr;
+  return !(tf_ptr(s, offset) > tf_ptr(d, offset));
+}
+
 int
 do_sort(__g_handle hdl, char *field, uint32_t flags)
 {
@@ -68,22 +110,21 @@ do_sort(__g_handle hdl, char *field, uint32_t flags)
 
   return r;
 }
+/*
+ int g_heap_sorti_exec(void *a_ptr, size_t off) {
+
+ }*/
 
 int
-g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
+g_swapsort_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
 {
-  int
-  (*m_op)(uint64_t s, uint64_t d) = cb1;
-  uint64_t
-  (*g_t_ptr_c)(void *base, size_t offset) = cb2;
+  gs_cmp_p m_op = cb1;
 
   p_md_obj ptr, ptr_n;
 
-  uint64_t t_b, t_b_n;
   uint32_t ml_f = 0;
-  uint64_t ml_i;
 
-  for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++)
+  for (; ; )
     {
       ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
       ptr = md_first(m_ptr);
@@ -91,10 +132,8 @@ g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
         {
           ptr_n = (p_md_obj) ptr->next;
 
-          t_b = g_t_ptr_c(ptr->ptr, off);
-          t_b_n = g_t_ptr_c(ptr_n->ptr, off);
 
-          if (!m_op(t_b, t_b_n))
+          if (!m_op(ptr->ptr, ptr_n->ptr, off, cb2))
             {
               ptr = md_swap_s(m_ptr, ptr, ptr_n);
               if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
@@ -130,195 +169,6 @@ g_sorti_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
     }
 
   return 0;
-}
-
-int
-g_sortis_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
-{
-  int
-  (*m_op)(int64_t s, int64_t d) = cb1;
-  int64_t
-  (*g_t_ptr_c)(void *base, size_t offset) = cb2;
-
-  p_md_obj ptr, ptr_n;
-
-  int64_t t_b, t_b_n;
-  uint32_t ml_f = 0;
-  uint64_t ml_i;
-
-  for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++)
-    {
-      ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
-      ptr = md_first(m_ptr);
-      while (ptr && ptr->next)
-        {
-          ptr_n = (p_md_obj) ptr->next;
-
-          t_b = g_t_ptr_c(ptr->ptr, off);
-          t_b_n = g_t_ptr_c(ptr_n->ptr, off);
-
-          if (!m_op(t_b, t_b_n))
-            {
-              ptr = md_swap_s(m_ptr, ptr, ptr_n);
-              if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
-                {
-                  ml_f |= F_INT_GSORT_LOOP_DID_SORT;
-                }
-            }
-          else
-            {
-              ptr = ptr->next;
-            }
-        }
-
-      if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
-        {
-          break;
-        }
-
-      if (!(ml_f & F_INT_GSORT_DID_SORT))
-        {
-          ml_f |= F_INT_GSORT_DID_SORT;
-        }
-    }
-
-  if (!(ml_f & F_INT_GSORT_DID_SORT))
-    {
-      return -1;
-    }
-
-  if ((flags & F_GSORT_RESETPOS))
-    {
-      m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
-    }
-
-  return 0;
-}
-
-int
-g_sortd_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
-{
-  int
-  (*m_op)(double s, double d) = cb1;
-  double
-  (*g_t_ptr_c)(void *base, size_t offset) = cb2;
-
-  p_md_obj ptr, ptr_n;
-  int r = 0;
-  uint64_t ml_i;
-  uint32_t ml_f = 0;
-  double t_b, t_b_n;
-
-  for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++)
-    {
-      ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
-      ptr = md_first(m_ptr);
-      while (ptr && ptr->next)
-        {
-          ptr_n = (p_md_obj) ptr->next;
-
-          t_b = g_t_ptr_c(ptr->ptr, off);
-          t_b_n = g_t_ptr_c(ptr_n->ptr, off);
-
-          if (!m_op(t_b, t_b_n))
-            {
-              ptr = md_swap_s(m_ptr, ptr, ptr_n);
-              if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
-                {
-                  ml_f |= F_INT_GSORT_LOOP_DID_SORT;
-                }
-            }
-          else
-            {
-              ptr = ptr->next;
-            }
-        }
-
-      if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
-        {
-          break;
-        }
-
-      if (!(ml_f & F_INT_GSORT_DID_SORT))
-        {
-          ml_f |= F_INT_GSORT_DID_SORT;
-        }
-    }
-
-  if (!(ml_f & F_INT_GSORT_DID_SORT))
-    {
-      return -1;
-    }
-
-  if (!r && (flags & F_GSORT_RESETPOS))
-    {
-      m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
-    }
-
-  return r;
-}
-
-int
-g_sortf_exec(pmda m_ptr, size_t off, uint32_t flags, void *cb1, void *cb2)
-{
-  int
-  (*m_op)(float s, float d) = cb1;
-  float
-  (*g_t_ptr_c)(void *base, size_t offset) = cb2;
-
-  p_md_obj ptr, ptr_n;
-  int r = 0;
-  uint64_t ml_i;
-  uint32_t ml_f = 0;
-  float t_b, t_b_n;
-
-  for (ml_i = 0; ml_i < MAX_SORT_LOOPS; ml_i++)
-    {
-      ml_f ^= F_INT_GSORT_LOOP_DID_SORT;
-      ptr = md_first(m_ptr);
-      while (ptr && ptr->next)
-        {
-          ptr_n = (p_md_obj) ptr->next;
-
-          t_b = g_t_ptr_c(ptr->ptr, off);
-          t_b_n = g_t_ptr_c(ptr_n->ptr, off);
-
-          if (!m_op(t_b, t_b_n))
-            {
-              ptr = md_swap_s(m_ptr, ptr, ptr_n);
-              if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
-                {
-                  ml_f |= F_INT_GSORT_LOOP_DID_SORT;
-                }
-            }
-          else
-            {
-              ptr = ptr->next;
-            }
-        }
-
-      if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
-        {
-          break;
-        }
-
-      if (!(ml_f & F_INT_GSORT_DID_SORT))
-        {
-          ml_f |= F_INT_GSORT_DID_SORT;
-        }
-    }
-
-  if (!(ml_f & F_INT_GSORT_DID_SORT))
-    {
-      return -1;
-    }
-
-  if (!r && (flags & F_GSORT_RESETPOS))
-    {
-      m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
-    }
-
-  return r;
 }
 
 int
@@ -355,14 +205,14 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   switch (flags & F_GSORT_ORDER)
     {
   case F_GSORT_DESC:
-    m_op = g_is_lower;
-    g_fh_f = g_is_lower_f;
-    g_fh_s = g_is_lower_s;
+    m_op = gs_t_is_lower;
+    g_fh_f = gs_tf_is_lower;
+    g_fh_s = gs_ts_is_lower;
     break;
   case F_GSORT_ASC:
-    m_op = g_is_higher;
-    g_fh_f = g_is_higher_f;
-    g_fh_s = g_is_higher_s;
+    m_op = gs_t_is_higher;
+    g_fh_f = gs_tf_is_higher;
+    g_fh_s = gs_ts_is_higher;
     break;
     }
 
@@ -385,47 +235,46 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   case -32:
     m_op = g_fh_f;
     g_t_ptr_c = g_tf_ptr;
-    g_s_ex = g_sortf_exec;
+    g_s_ex = g_swapsort_exec;
     break;
   case 1:
     g_t_ptr_c = g_t8_ptr;
-    g_s_ex = g_sorti_exec;
+    g_s_ex = g_swapsort_exec;
     break;
   case 2:
     g_t_ptr_c = g_t16_ptr;
-    g_s_ex = g_sorti_exec;
+    g_s_ex = g_swapsort_exec;
     break;
   case 4:
     g_t_ptr_c = g_t32_ptr;
-    g_s_ex = g_sorti_exec;
+    g_s_ex = g_swapsort_exec;
     break;
   case 8:
     g_t_ptr_c = g_t64_ptr;
-    g_s_ex = g_sorti_exec;
+    g_s_ex = g_swapsort_exec;
     break;
   case -2:
     g_t_ptr_c = g_ts8_ptr;
-    g_s_ex = g_sortis_exec;
+    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   case -3:
     g_t_ptr_c = g_ts16_ptr;
-    g_s_ex = g_sortis_exec;
+    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   case -5:
     g_t_ptr_c = g_ts32_ptr;
-    g_s_ex = g_sortis_exec;
+    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   case -9:
     g_t_ptr_c = g_ts64_ptr;
-    g_s_ex = g_sortis_exec;
+    g_s_ex = g_swapsort_exec;
     m_op = g_fh_s;
     break;
   default:
     return 14;
-    break;
     }
 
   return g_s_ex(m_ptr, off, flags, m_op, g_t_ptr_c);

@@ -51,9 +51,9 @@ g_is_higher(uint64_t s, uint64_t d)
 }
 
 int
-g_is_higher_s(int64_t s, int64_t d)
+g_is_lower(uint64_t s, uint64_t d)
 {
-  if (s > d)
+  if (s < d)
     {
       return 0;
     }
@@ -61,9 +61,9 @@ g_is_higher_s(int64_t s, int64_t d)
 }
 
 int
-g_is_lower(uint64_t s, uint64_t d)
+g_is_higher_s(int64_t s, int64_t d)
 {
-  if (s < d)
+  if (s > d)
     {
       return 0;
     }
@@ -79,8 +79,6 @@ g_is_lower_s(int64_t s, int64_t d)
     }
   return 1;
 }
-
-
 
 int
 g_is_higher_2(uint64_t s, uint64_t d)
