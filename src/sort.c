@@ -187,7 +187,7 @@ g_swapsort_exec(pmda m_ptr, size_t off, uint32_t flags, gs_cmp_p m_op,
         {
           ptr_n = (p_md_obj) ptr->next;
 
-          if (!m_op(ptr->ptr, ptr_n->ptr, off, cb2))
+          if (m_op(ptr->ptr, ptr_n->ptr, off, cb2))
             {
               ptr = md_swap_s(m_ptr, ptr, ptr_n);
               if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
