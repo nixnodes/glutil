@@ -153,9 +153,8 @@ g_heapsort_exec(pmda m_ptr, size_t off, uint32_t flags, gs_cmp_p m_op,
 
   int start, end;
 
-  // heapify the array
-  for (start = (m_ptr->offset - 2) / 2; start >= 0; --start) // for every root
-    g_siftdown(ref_arr, start, m_ptr->offset, off, m_op, cb2); // sift through it
+  for (start = (m_ptr->offset - 2) / 2; start >= 0; --start)
+    g_siftdown(ref_arr, start, m_ptr->offset, off, m_op, cb2);
 
   for (end = m_ptr->offset - 1; end; --end)
     {
