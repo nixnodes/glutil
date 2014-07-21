@@ -10,8 +10,8 @@
 
 #define F_GBM_SHM_NO_DATAFILE           (a32 << 1)
 
-#define MAX_SDENTRY_LEN         20000
-#define MAX_SENTRY_LEN          1024
+#define MAX_SDENTRY_LEN                 20000
+#define MAX_SENTRY_LEN                  1024
 
 #include <glutil.h>
 
@@ -19,8 +19,24 @@
 
 #include <im_hdr.h>
 
-#define MSG_REDF_ABORT "WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n"
+#define MSG_REDF_ABORT                  "WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n"
 #define MSG_UNRECOGNIZED_DATA_TYPE      "ERROR: [%s] unrecognized data type\n"
+
+#include <errno_int.h>
+
+#define _E_MSG_MLI_DEF                  "import failed"
+#define _E_MSG_MLI_NOREF                "g_proc0 is null"
+#define _E_MSG_MLI_NOMEMB               "d_memb is zero"
+#define _E_MSG_MLI_NORES                "no input data to import"
+#define _E_MSG_MLI_UTERM                "could not process all mandatory items or an unterminated record was encountered"
+#define _E_MSG_MLI_MALF                 "malformed input data"
+
+#define _E_MSG_FDM_DEF                  "flushing data failed"
+#define _E_MSG_FDM_NOW                  _E_MSG_DEF_BNW
+#define _E_MSG_FDM_NOWC                 _E_MSG_DEF_BNW _E_MSG_DEF_CC
+#define _E_MSG_FDM_WF                   _E_MSG_DEF_WF
+#define _E_MSG_FDM_WFC                  _E_MSG_DEF_WF _E_MSG_DEF_CC
+#define _E_MSG_FDM_NORECW               "no data was written"
 
 typedef int
 (*__g_mdref)(__g_handle hdl, pmda md, off_t count);

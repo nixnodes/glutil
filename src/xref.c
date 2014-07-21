@@ -21,6 +21,7 @@
 #include <m_general.h>
 #include <log_io.h>
 #include <misc.h>
+#include <errno_int.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -1275,7 +1276,14 @@ g_dump_ug(char *ug)
 
   remove_repeating_chars(buffer, 0x2F);
 
-  return enum_dir(buffer, g_process_directory, &ret, 0, &eds);
+  int r = enum_dir(buffer, g_process_directory, &ret, 0, &eds);
+
+  if (r < 0)
+    {
+      print_str("ERROR: %s: [%d] %s\n", buffer, r, ie_tl(r, EMR_enum_dir));
+    }
+
+  return r;
 }
 
 int
@@ -1336,9 +1344,14 @@ g_dump_gen(char *root)
   snprintf(ret.root, PATH_MAX, "%s", root);
   remove_repeating_chars(ret.root, 0x2F);
 
-  enter:
+  enter: ;
 
-  enum_dir(ret.root, g_process_directory, &ret, 0, &eds);
+  int r = enum_dir(ret.root, g_process_directory, &ret, 0, &eds);
+
+  if (r < 0)
+    {
+      print_str("ERROR: %s: [%d] %s\n", ret.root, r, ie_tl(r, EMR_enum_dir));
+    }
 
   if ((gfl0 & F_OPT_XRETRY) && !ret.st_1 && !(gfl & F_OPT_KILL_GLOBAL))
     {
@@ -1475,7 +1488,11 @@ g_xproc_rc(char *name, void *aa_rh, __g_eds eds)
 {
   if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth))
     {
-      enum_dir(name, g_process_directory, aa_rh, 0, eds);
+      int r = enum_dir(name, g_process_directory, aa_rh, 0, eds);
+      if (r < 0)
+        {
+          print_str("ERROR: %s: [%d] %s\n", name, r, ie_tl(r, EMR_enum_dir));
+        }
     }
 }
 
@@ -1598,7 +1615,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
 
   DIR *dp = opendir(dir);
 
-  if (!dp)
+  if (NULL == dp)
     {
       return -2;
     }
@@ -1607,9 +1624,18 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
 
   if (eds)
     {
-      if (lstat(dir, &eds->st))
+      int fddp = dirfd(dp);
+
+      if (-1 == fddp)
         {
-          return -3;
+          r = -4;
+          goto end;
+        }
+
+      if (fstat(fddp, &eds->st))
+        {
+          r = -3;
+          goto end;
         }
 
       if (!(eds->flags & F_EDS_ROOTMINSET))
@@ -1621,13 +1647,13 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
       if (!(f & F_ENUMD_NOXBLK) && (gfl & F_OPT_XBLK)
           && major(eds->st.st_dev) != 8)
         {
-          r = -6;
+          r = 0;
           goto end;
         }
 
       if ((gfl & F_OPT_XDEV) && minor(eds->st.st_dev) != eds->r_minor)
         {
-          r = -5;
+          r = 0;
           goto end;
         }
 

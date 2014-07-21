@@ -211,9 +211,10 @@ opt_g_comp(void *arg, int m)
 
   comp_level = (uint8_t) t;
 
-  if (comp_level != 0) {
+  if (comp_level != 0)
+    {
       gfl0 |= F_OPT_GZIP;
-  }
+    }
 
   __pf_eof = gz_feof;
   return 0;
@@ -1196,14 +1197,14 @@ opt_shmipc(void *arg, int m)
 
   if (!strlen(buffer))
     {
-      return (a32 << 16);
+      return 53412;
     }
 
   SHM_IPC = (key_t) strtoul(buffer, NULL, 16);
 
   if (!SHM_IPC)
     {
-      return 2;
+      return 53413;
     }
 
   ofl |= F_OVRR_IPC;
@@ -1239,7 +1240,7 @@ opt_printf(void *arg, int m)
       gfl0 |= F_OPT_PRINTF;
       return 0;
     }
-  return 4250;
+  return 4251;
 }
 
 int
@@ -1273,8 +1274,10 @@ option_crc32(void *arg, int m)
 
   updmode = UPD_MODE_NOOP;
 
-  if (!buffer)
-    return 1;
+  if (NULL == buffer)
+    {
+      return 55272;
+    }
 
   uint32_t crc32;
 

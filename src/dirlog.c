@@ -19,6 +19,7 @@
 #include <xref.h>
 #include <m_general.h>
 #include <lref_dirlog.h>
+#include <errno_int.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -113,8 +114,8 @@ rebuild_dirlog(void)
     }
   else if ((r = g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1)))
     {
-      print_str("ERROR: [%d] could not open dirlog, mode '%s', flags %u\n",
-          r, g_act_1.mode, flags);
+      print_str("ERROR: [%d] could not open dirlog, mode '%s', flags %u\n", r,
+          g_act_1.mode, flags);
       return errno;
     }
 
@@ -263,11 +264,10 @@ rebuild_dirlog(void)
       && !(gfl0 & F_OPT_NOSTATS))
     {
 #ifdef HAVE_ZLIB_H
-      if ( g_act_1.flags & F_GH_IO_GZIP )
+      if (g_act_1.flags & F_GH_IO_GZIP)
         {
-          fprintf(stderr, MSG_GEN_WROTE2, DIRLOG,
-              (double) dl_stats.bw / 1024.0,
-              (double) g_act_1.bw / 1024.0, (long long unsigned)dl_stats.rw);
+          fprintf(stderr, MSG_GEN_WROTE2, DIRLOG, (double) dl_stats.bw / 1024.0,
+              (double) g_act_1.bw / 1024.0, (long long unsigned) dl_stats.rw);
         }
       else
         {
@@ -298,7 +298,15 @@ update_records(char *dirname, int depth)
 
   arg.eds = &eds;
 
-  return enum_dir(dirname, proc_section, &arg, 0, &eds);
+  int r = enum_dir(dirname, proc_section, &arg, 0, &eds);
+
+  if (r < 0)
+    {
+      print_str("ERROR: enum_dir: %s: [%d] %s\n", dirname, r,
+          ie_tl(r, EMR_enum_dir));
+    }
+
+  return r;
 
 }
 
@@ -360,13 +368,27 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
   case DT_DIR:
     if (gfl0 & F_OPT_DRINDEPTH)
       {
+        int r;
         if ((gfl & F_OPT_SFV)
             && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
           {
-            enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
+            r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0,
+            NULL);
+            if (r < 0)
+              {
+                print_str(
+                    "ERROR: proc_directory->enum_dir->delete_file (clean SFV): %s: [%d] %s\n",
+                    name, r, ie_tl(r, EMR_enum_dir));
+              }
           }
 
-        enum_dir(name, proc_directory, iarg, 0, eds);
+        r = enum_dir(name, proc_directory, iarg, 0, eds);
+        if (r < 0)
+          {
+            print_str(
+                "ERROR: proc_directory->enum_dir->proc_directory: %s: [%d] %s\n",
+                name, r, ie_tl(r, EMR_enum_dir));
+          }
       }
     break;
     }
@@ -379,7 +401,12 @@ proc_sect_edec(char *name, void *callback, ear *iarg, __g_eds eds)
 {
   if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth))
     {
-      enum_dir(name, callback, iarg, 0, eds);
+      int r = enum_dir(name, callback, iarg, 0, eds);
+      if (r < 0)
+        {
+          print_str("ERROR: proc_sect_edec->enum_dir->(%.16X): %s: [%d] %s\n",
+              callback, name, r, ie_tl(r, EMR_enum_dir));
+        }
     }
 }
 
@@ -388,6 +415,7 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 {
   ear *iarg = (ear*) arg;
   int r;
+  uint8_t ps_f = 0;
 
   if (!reg_match("(\\/|^)[.]{1,2}", name, 0))
     {
@@ -404,11 +432,11 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
     {
   case DT_DIR:
 
-    if (access(name, R_OK))
-      {
-        print_str("WARNING: %s: no read access\n", name);
-        break;
-      }
+    /*if (access(name, R_OK))
+     {
+     print_str("WARNING: %s: no read access\n", name);
+     break;
+     }*/
 
     iarg->depth--;
 
@@ -446,10 +474,20 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
         iarg->flags = 0;
         if ((r = release_generate_block(name, iarg)))
           {
-            if (r < 5)
-              print_str("ERROR: %s: [%d] generating dirlog data chunk failed\n",
-                  name, r);
-            goto end;
+            if (r == 12)
+              {
+                ps_f |= F_PS_STOP_TRAVERSE;
+              }
+            else
+              {
+                if (r < 5)
+                  {
+                    print_str(
+                        "ERROR: %s: [%d] generating dirlog data chunk failed\n",
+                        name, r);
+                  }
+                goto end;
+              }
           }
 
         if (gfl & F_OPT_KILL_GLOBAL)
@@ -525,9 +563,9 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
             dirlog_format_block(iarg->dirlog, NULL);
           }
 
-        end:
+        end: ;
 
-        if (gfl & F_OPT_DIR_FULL_REBUILD)
+        if ((gfl & F_OPT_DIR_FULL_REBUILD) && !(ps_f & F_PS_STOP_TRAVERSE))
           {
             proc_sect_edec(name, proc_section, iarg, eds);
           }
@@ -581,7 +619,13 @@ release_generate_block(char *name, ear *iarg)
 
   if ((gfl & F_OPT_SFV) && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
     {
-      enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL);
+      if ((r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL))
+          < 0)
+        {
+          print_str(
+              "ERROR: release_generate_block->enum_dir->delete_file (clean SFV): %s: [%d] %s\n",
+              name, r, ie_tl(r, EMR_enum_dir));
+        }
     }
 
   if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
@@ -592,9 +636,19 @@ release_generate_block(char *name, ear *iarg)
   if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds)) < 1
       || !(iarg->dirlog->files)))
     {
-      if (gfl & F_OPT_VERBOSE2)
+      if (r < 0)
         {
-          print_str("WARNING: %s: [%d] - empty directory\n", name, r);
+          print_str(
+              "ERROR: release_generate_block->enum_dir->proc_directory: %s: [%d] %s\n",
+              name, r, ie_tl(r, EMR_enum_dir));
+          ret = 12;
+        }
+      else
+        {
+          if (gfl & F_OPT_VERBOSE2)
+            {
+              print_str("WARNING: %s: [%d] - empty directory\n", name, r);
+            }
         }
     }
 
@@ -611,14 +665,14 @@ release_generate_block(char *name, ear *iarg)
         {
           if (stat(name, &st2))
             {
-              ret = 1;
+              return 1;
             }
         }
       else
         {
           if (lstat(name, &st2))
             {
-              ret = 1;
+              return 1;
             }
         }
       time_t c_ctime = get_file_creation_time(&st2);
@@ -643,11 +697,6 @@ release_generate_block(char *name, ear *iarg)
 
     }
 
-  if (ret)
-    {
-      goto end;
-    }
-
   char *bn = g_basename(name);
 
   iarg->dirlog->uptime = orig_ctime;
@@ -660,8 +709,7 @@ release_generate_block(char *name, ear *iarg)
     {
       print_str("ERROR: [%s] could not get relative to root directory name\n",
           bn);
-      ret = 2;
-      goto end;
+      return 2;
     }
 
   struct nukelog n_buffer =
@@ -686,8 +734,6 @@ release_generate_block(char *name, ear *iarg)
     }
 
   strncpy(iarg->dirlog->dirname, buffer, strlen(buffer));
-
-  end:
 
   return ret;
 }
@@ -1015,7 +1061,7 @@ dirlog_write_record(struct dirlog *buffer, off_t offset, int whence)
 #ifdef HAVE_ZLIB_H
   if (g_act_1.flags & F_GH_IO_GZIP)
     {
-      if ((fw = gzwrite(g_act_1.gz_fh,buffer,DL_SZ)) < DL_SZ)
+      if ((fw = gzwrite(g_act_1.gz_fh, buffer, DL_SZ)) < DL_SZ)
         {
           print_str("ERROR: could not write dirlog record! %d/%d\n", fw,
               (int) DL_SZ);
@@ -1199,11 +1245,10 @@ dirlog_update_record(char *argv)
       && !(gfl0 & F_OPT_NOSTATS))
     {
 #ifdef HAVE_ZLIB_H
-      if ( g_act_1.flags & F_GH_IO_GZIP )
+      if (g_act_1.flags & F_GH_IO_GZIP)
         {
-          fprintf(stderr, MSG_GEN_WROTE2, DIRLOG,
-              (double) dl_stats.bw / 1024.0,
-              (double) g_act_1.bw / 1024.0, (long long unsigned)dl_stats.rw);
+          fprintf(stderr, MSG_GEN_WROTE2, DIRLOG, (double) dl_stats.bw / 1024.0,
+              (double) g_act_1.bw / 1024.0, (long long unsigned) dl_stats.rw);
         }
       else
         {
@@ -1361,9 +1406,12 @@ dirlog_check_records(void)
                 }
               else
                 {
-                  print_str(
-                      "WARNING: [%s] - could not get directory information from the filesystem\n",
-                      s_buffer);
+                  if (r2 < 5)
+                    {
+                      print_str(
+                          "WARNING: %s: [%d] - could not get directory information from the filesystem\n",
+                          s_buffer, r2);
+                    }
                 }
               r++;
               continue;
@@ -1460,11 +1508,12 @@ dirlog_check_records(void)
               && !(gfl0 & F_OPT_NOSTATS))
             {
 #ifdef HAVE_ZLIB_H
-              if ( g_act_1.flags & F_GH_IO_GZIP )
+              if (g_act_1.flags & F_GH_IO_GZIP)
                 {
                   fprintf(stderr, MSG_GEN_WROTE2, DIRLOG,
                       (double) dl_stats.bw / 1024.0,
-                      (double) g_act_1.bw / 1024.0, (long long unsigned int)dl_stats.rw);
+                      (double) g_act_1.bw / 1024.0,
+                      (long long unsigned int) dl_stats.rw);
                 }
               else
                 {

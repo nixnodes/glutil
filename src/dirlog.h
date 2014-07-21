@@ -31,6 +31,9 @@ typedef struct e_arg
 #define F_EARG_SFV                      (a32 << 1)
 #define F_EAR_NOVERB                    (a32 << 2)
 
+
+#define F_PS_STOP_TRAVERSE              ((uint8_t)1 << 1)
+
 int
 update_records(char *dirname, int depth);
 int

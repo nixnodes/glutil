@@ -84,6 +84,10 @@
 #define F_EDS_ROOTMINSET        (a32 << 1)
 #define F_EDS_KILL              (a32 << 2)
 
+#include <errno_int.h>
+
+_emr EMR_enum_dir[2];
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

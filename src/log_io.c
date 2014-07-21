@@ -22,6 +22,7 @@
 #include <fp_types.h>
 #include <str.h>
 #include <exech.h>
+#include <errno_int.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -38,6 +39,24 @@
 #endif
 
 long long int db_max_size = DB_MAX_SIZE;
+
+static _emr EMR_m_load_input_n[] =
+  {
+    { .code = -1, .err_msg = _E_MSG_MLI_NOREF, .has_errno = 0 },
+    { .code = -2, .err_msg = _E_MSG_MLI_NOMEMB, .has_errno = 0 },
+    { .code = -9, .err_msg = _E_MSG_MLI_NORES, .has_errno = 0 },
+    { .code = 1, .err_msg = _E_MSG_MLI_UTERM, .has_errno = 0 },
+    { .code = 3, .err_msg = _E_MSG_MLI_MALF, .has_errno = 0 },
+    { .code = 0, .err_msg = _E_MSG_MLI_DEF, .has_errno = 0 } };
+
+static _emr EMR_flush_data_md[] =
+  {
+    { .code = 2, .err_msg = _E_MSG_FDM_NOW, .has_errno = 0 },
+    { .code = 8, .err_msg = _E_MSG_FDM_NOWC, .has_errno = 0 },
+    { .code = 14, .err_msg = _E_MSG_FDM_WF, .has_errno = 0 },
+    { .code = 13, .err_msg = _E_MSG_FDM_WFC, .has_errno = 0 },
+    { .code = 5, .err_msg = _E_MSG_FDM_NORECW, .has_errno = 0 },
+    { .code = 0, .err_msg = _E_MSG_FDM_DEF, .has_errno = 0 } };
 
 #ifdef HAVE_ZLIB_H
 static void
@@ -1256,8 +1275,8 @@ rebuild_data_file(char *file, __g_handle hdl)
         }
       else
         {
-          print_str("ERROR: %s: [%d] flushing data failed!\n", hdl->s_buffer,
-              r);
+          print_str("ERROR: 'flush_data_md': %s: [%d]: %s\n", hdl->s_buffer, r,
+              ie_tl(r, EMR_flush_data_md));
           ret = 2;
         }
       goto end;
@@ -1515,7 +1534,7 @@ flush_data_md(__g_handle hdl, char *outfile)
 #else
       if ((bw = fwrite(ptr->ptr, hdl->block_sz, 1, fh)) != 1)
         {
-          ret = 15;
+          ret = 14;
           break;
         }
 #endif
@@ -1633,17 +1652,8 @@ d_write(char *arg)
     {
       if ((r = m_load_input_n(&g_act_1, in)))
         {
-          if (r == -9)
-            {
-              print_str(
-                  "ERROR: %s: [%d]: no data could be read, import failed\n",
-                  datafile, r);
-            }
-          else
-            {
-              print_str("ERROR: %s: [%d]: could not parse input data\n",
-                  datafile, r);
-            }
+          print_str("ERROR: DATA IMPORT: %s: [%d]: %s\n", datafile, r,
+              ie_tl(r, EMR_m_load_input_n));
           ret = 5;
           goto end;
         }
@@ -1777,7 +1787,7 @@ m_load_input_n(__g_handle hdl, FILE *input)
       md_init(&hdl->w_buffer, 256);
     }
 
-  if (!hdl->g_proc0)
+  if (NULL == hdl->g_proc0)
     {
       return -1;
     }
