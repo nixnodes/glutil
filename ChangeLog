@@ -42,6 +42,7 @@
  *   - + Globally available accumulators; source data values can be added up and stored in these 
          variables, see under GLOBAL in DATA_STRUCTURES for descriptions (rev. 17)
  *   - + -mlist - list all available macros, support for descriptions embedded in macros (rev. 17)
+ *
  *   - % -mlist - optionally increase verbosity (rev. 17_b6)
  *   - % -mlist - additional optional verbosity increase (rev. 17_b7)
  *   - % sort/filter argument order affects a dump operation (sort or filter first) (rev. 17_b8)
@@ -53,9 +54,11 @@
  *   - ~ Fix segfault (glutil-precheck) (rev. 17_b15)
  *   - ~ Initialize glob_*_stor arrays with MAX_GLOB_STOR_AR_COUNT instead of fixed value (rev. 17_b16)
  *   - %~ Fixed stats output and made it a bit more informative (rev. 18)
+ *
  *   - % Automake: --enable-precheck does not disable regular (or chrooted) binary build (rev. 18_b1)
  *   - ! self_get_path checking read access twice (rev. 18_b2)
  *   - ~ Blank directory names written during dirlog rebuild (only in certain cases) (rev. 19)
+ *
  *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES (rev. 19_b1)
  *   - + 'm:siterootn' field (rev. 19_b2)
  *   - % Got rid of "(MISSING)" messages ('user' and 'group') fields, instead it returns blank when info can't be obtained (rev. 19_b3)
@@ -64,7 +67,7 @@
  *   - ~ Not showing proper paths on error messages, when unable to open passwd or group files (rev. 19_b5)
  *   - + Libs to translate internal error codes to message strings (rev. 19_b6)
  *   - + Implemented heapsort algorithm (rev. 20_b1)
- *   - + '--loadqa' and '--swapsort' (rev. 20_b1)
+ *   - + '--loadqa' and '--sortmethod' (rev. 20_b1)
  *
  * v2.2:
  *
