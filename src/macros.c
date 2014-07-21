@@ -17,6 +17,8 @@
 #include <exec_t.h>
 #include <arg_proc.h>
 #include <lref.h>
+#include <errno_int.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -50,10 +52,15 @@ list_macros(void)
 
   int ret = 0;
 
-  if (enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds) < 0)
+  if ((ret = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds)) == 0)
     {
-      print_str("ERROR: %s: recursion failed (macro not found)\n", av.p_buf_1);
+      print_str("ERROR: %s: no macros could be found\n", av.p_buf_1);
       ret = 2;
+    }
+  else if (ret < 0)
+    {
+      print_str("ERROR: list_macros->enum_dir: %s: [%d] %s\n", dirn, ret,
+          ie_tl(ret, EMR_enum_dir));
     }
 
   free(av.buffer);
@@ -111,9 +118,17 @@ process_macro(void * arg, char **out)
   _g_eds eds =
     { 0 };
 
-  if (enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds) < 0)
+  int r;
+
+  if ((r = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds)) == 0)
     {
-      print_str("ERROR: %s: recursion failed (macro not found)\n", av.p_buf_1);
+      print_str("ERROR: %s: macro not found\n", av.p_buf_1);
+      return NULL;
+    }
+  else if (r < 0)
+    {
+      print_str("ERROR: list_macros->enum_dir: %s: [%d] %s\n", dirn, r,
+          ie_tl(r, EMR_enum_dir));
       return NULL;
     }
 
@@ -139,7 +154,6 @@ process_macro(void * arg, char **out)
 
   s_buffer = (char*) malloc(MAX_EXEC_STR + 1);
   char **s_ptr = NULL;
-  int r;
 
   if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
       ref_to_val_macro,
@@ -225,7 +239,7 @@ ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
   if (!(!strncmp(ptr->p_buf_1, start, pb_l)
       && (start[pb_l] == 0x3A || start[pb_l] == 0x7C)))
     {
-      return 2;
+      return -1;
     }
 
   bzero(ptr->s_ret, sizeof(ptr->s_ret));
@@ -240,8 +254,7 @@ ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
           print_str("MACRO: %s: [%s] no execute permission\n", name,
               ptr->p_buf_1);
         }
-      ptr->ret = 2;
-      return 0;
+      return 2;
     }
 
   ptr->ret = strlen(ptr->s_ret);
@@ -346,6 +359,8 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
 
     if (!fh)
       {
+        print_str("MACRO: %s: could not open stream [%s]\n", name,
+            strerror(errno));
         break;
       }
 
@@ -396,9 +411,19 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
 
     fclose(fh);
 
+    if ( 0 != ptr->ret )
+      {
+        ptr->ret = -1;
+      }
+
     break;
     case DT_DIR:;
-    enum_dir(name, ssd_4macro, arg, 0, eds);
+    int ret = enum_dir(name, ssd_4macro, arg, 0, eds);
+    if (ret < 0)
+      {
+        print_str("ERROR: ssd_4macro->enum_dir: %s: [%d] %s\n", name, ret,
+            ie_tl(ret, EMR_enum_dir));
+      }
     break;
   }
 

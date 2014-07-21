@@ -1693,7 +1693,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
         {
           if (f & F_ENUMD_ENDFIRSTOK)
             {
-              r = ir;
+              r = 0;
               break;
             }
           else
@@ -1705,7 +1705,7 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds)
         {
           if (f & F_ENUMD_BREAKONBAD)
             {
-              r = ir;
+              //r = ir;
               break;
             }
         }

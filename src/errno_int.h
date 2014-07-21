@@ -24,7 +24,7 @@ typedef struct errno_msg_ref
 #define _E_MSG_DEF_CC                   " (compressed)"
 
 #define _E_MSG_ED_DEF                   "directory enumeration failed"
-#define _E_MSG_ED_ODFAIL                "failed to open a directory stream"
+#define _E_MSG_ED_ODFAIL                "could not open a directory stream"
 #define _E_MSG_ED_ESD_LSTAT             "could not get directory status (fstat)"
 #define _E_MSG_ED_ESD_DIRFD             "could not get directory stream file descriptor"
 
