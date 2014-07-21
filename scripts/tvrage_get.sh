@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:24
+#@REVISION:25
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` --iregexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -32,7 +32,7 @@
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-1.11-11 or above
+## Requires: - glutil-2.3.20 or above
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
@@ -98,7 +98,7 @@ TVRAGE_API_KEY=""
 ## Setting this to 0 or removing it disables
 ## compression
 #
-TVLOG_COMPRESSION=2
+TVLOG_COMPRESSION=0
 #
 VERBOSE=1
 #
@@ -142,6 +142,18 @@ BASEDIR=`dirname $0`
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $TVRAGE_DATABASE_TYPE -gt 0 ] && LAPPEND="$TVRAGE_DATABASE_TYPE"
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
+
+IS_COMP=`${2} --preexec "echo -n {?q:tvrage@comp}" noop`
+
+[ -n "${IS_COMP}" ] && [ ${IS_COMP} -eq 1 ] && {	
+	[ -z "${TVLOG_COMPRESSION}" ] && {
+		TVLOG_COMPRESSION=2
+	} || {
+		[ ${TVLOG_COMPRESSION} -gt 0  ] || {
+			TVLOG_COMPRESSION=2
+		}
+	}
+}
 
 [ -n "${TVLOG_COMPRESSION}" ] && [ ${TVLOG_COMPRESSION} -gt 0 ] && 
 	[ ${TVLOG_COMPRESSION} -lt 10 ]  && {

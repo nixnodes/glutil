@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:32
+#@REVISION:33
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -32,7 +32,7 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-1.11-10 or above
+## Requires: - glutil-2.3.20 or above
 ##           - libxml2 v2.7.7 or above 
 ##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
@@ -122,6 +122,18 @@ BASEDIR=`dirname $0`
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $IMDB_DATABASE_TYPE -gt 0 ] && LAPPEND="$IMDB_DATABASE_TYPE"
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
+
+IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" noop`
+
+[ -n "${IS_COMP}" ] && [ ${IS_COMP} -eq 1 ] && {	
+	[ -z "${IMDBLOG_COMPRESSION}" ] && {
+		IMDBLOG_COMPRESSION=2
+	} || {
+		[ ${IMDBLOG_COMPRESSION} -gt 0  ] || {
+			IMDBLOG_COMPRESSION=2
+		}
+	}
+}
 
 [ -n "${IMDBLOG_COMPRESSION}" ] && [ ${IMDBLOG_COMPRESSION} -gt 0 ] && 
 	[ ${IMDBLOG_COMPRESSION} -lt 10 ]  && {
