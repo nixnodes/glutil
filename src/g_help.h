@@ -131,8 +131,6 @@ char *hpd_up =
         "                        Execute shell <command> before starting main procedure\n"
         "  --postexec <command [{field}..{field}..]>\n"
         "                        Execute shell <command> after main procedure finishes\n"
-        "  --loopexec <command [{field}..{field}..]>\n"
-        "                        Execute command each loop (see --loop)\n"
         "\n Misc:\n"
         "  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
         "                        Perform backup on specified log\n"
