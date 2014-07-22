@@ -140,7 +140,7 @@ char *hpd_up =
         "                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
         "                          Sorts by the specified data log <field>\n"
         "                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n, -q\n"
-        "  --sortmethod <heap|swap|q>\n"
+        "  --sortmethod <heap|swap|qsort>\n"
         "                        Select a sorting method (heapsort, swapsort, quicksort)\n"
         "                          Defaults to heap\n"
         "\n"

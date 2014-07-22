@@ -1324,22 +1324,15 @@ opt_g_swapmode(void *arg, int m)
       return 140051;
     }
 
-  size_t i_len = strlen(buffer);
-
-  if (i_len > 4)
-    {
-      return 140052;
-    }
-
-  if (!strncmp(buffer, "swap", i_len))
+  if (!strncmp(buffer, "swap", 4))
     {
       gfl0 |= F_OPT_SMETHOD_SWAP;
     }
-  else if (!strncmp(buffer, "heap", i_len))
+  else if (!strncmp(buffer, "heap", 4))
     {
       gfl0 |= F_OPT_SMETHOD_HEAP;
     }
-  else if (!strncmp(buffer, "q", i_len))
+  else if (!strncmp(buffer, "qsort", 5))
     {
       gfl0 |= F_OPT_SMETHOD_Q;
     }
