@@ -221,6 +221,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OVRR_GE4LOG                   (a32 << 20)
 #define F_OVRR_SCONF                    (a32 << 21)
 #define F_OVRR_GCONF                    (a32 << 22)
+#define F_OVRR_ALTLOG                   (a32 << 23)
 
 #define L_STFO_SORT                     0x1
 #define L_STFO_FILTER                   0x2

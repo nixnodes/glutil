@@ -92,6 +92,10 @@ g_dgetf(char *str)
     {
       return GCONFLOG;
     }
+  else if (!strncmp(str, "altlog", 6))
+    {
+      return ALTLOG;
+    }
   return NULL;
 }
 
@@ -355,7 +359,7 @@ g_proc_mr(__g_handle hdl)
       hdl->g_proc3 = online_format_block_comp;
       print_str(
           "+-------------------------------------------------------------------------------------------------------------------------------------------\n"
-              "|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS       \n"
+              "|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS                      \n"
               "|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
     }
   else if (gfl & F_OPT_FORMAT_EXPORT)
@@ -425,6 +429,10 @@ determine_datatype(__g_handle hdl, char *file)
     {
       pdt_set_gconf(hdl);
     }
+  else if (!strncmp(file, ALTLOG, strlen(ALTLOG)))
+    {
+      pdt_set_altlog(hdl);
+    }
   else
     {
       return 1;
@@ -490,7 +498,7 @@ rebuild(void *arg)
       && !(gfl0 & F_OPT_NOSTATS))
     {
 #ifdef HAVE_ZLIB_H
-      if ( g_act_1.flags & F_GH_IO_GZIP )
+      if (g_act_1.flags & F_GH_IO_GZIP)
         {
           fprintf(stderr, MSG_GEN_WROTE2, datafile,
               (double) get_file_size(datafile) / 1024.0,

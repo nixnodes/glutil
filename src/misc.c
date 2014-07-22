@@ -258,6 +258,7 @@ build_data_path(char *file, char *path, char *sd)
 #include <lref_gen2.h>
 #include <lref_gen3.h>
 #include <lref_gen4.h>
+#include <lref_altlog.h>
 
 int
 g_print_info(void)
@@ -278,6 +279,7 @@ g_print_info(void)
   print_str(" GE2            %d\t\n", G2_SZ);
   print_str(" GE3            %d\t\n", G3_SZ);
   print_str(" GE4            %d\t\n", G4_SZ);
+  print_str(" ALTLOG         %d\t\n", AL_SZ);
   print_str(" ONLINE(SHR)    %d\t\n", OL_SZ);
   print_str(MSG_NL);
   if (gfl & F_OPT_VERBOSE)

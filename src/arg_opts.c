@@ -1143,6 +1143,18 @@ opt_GE4LOG(void *arg, int m)
 }
 
 int
+opt_altlog(void *arg, int m)
+{
+  if (!(ofl & F_OVRR_GE4LOG))
+    {
+      g_cpg(arg, ALTLOG, m, PATH_MAX);
+      ofl |= F_OVRR_GE4LOG;
+      l_opt_cstdin(ALTLOG);
+    }
+  return 0;
+}
+
+int
 opt_rebuild(void *arg, int m)
 {
   p_argv_off = g_pg(arg, m);
@@ -1348,13 +1360,14 @@ void *prio_f_ref[] =
       "--logfile", opt_log_file, (void*) 1, "--log", opt_logging, (void*) 0,
       "--dirlog", opt_dirlog_file, (void*) 1, "--ge1log", opt_GE1LOG, (void*) 1,
       "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log", opt_GE3LOG, (void*) 1,
-      "--ge4log", opt_GE4LOG, (void*) 1, "--gamelog", opt_gamelog, (void*) 1,
-      "--tvlog", opt_tvlog, (void*) 1, "--imdblog", opt_imdblog, (void*) 1,
-      "--oneliners", opt_oneliner, (void*) 1, "--lastonlog", opt_lastonlog,
-      (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1, "--sconf", opt_sconf,
-      (void*) 1, "--gconf", opt_gconf, (void*) 1, "--siteroot", opt_siteroot,
-      (void*) 1, "--glroot", opt_glroot, (void*) 1, "--noglconf",
-      opt_g_noglconf, (void*) 0, "--glconf", opt_glconf_file, (void*) 1,
+      "--ge4log", opt_GE4LOG, (void*) 1, "--altlog", opt_altlog, (void*) 1,
+      "--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
+      "--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
+      (void*) 1, "--lastonlog", opt_lastonlog, (void*) 1, "--nukelog",
+      opt_nukelog_file, (void*) 1, "--sconf", opt_sconf, (void*) 1, "--gconf",
+      opt_gconf, (void*) 1, "--siteroot", opt_siteroot, (void*) 1, "--glroot",
+      opt_glroot, (void*) 1, "--noglconf", opt_g_noglconf, (void*) 0,
+      "--glconf", opt_glconf_file, (void*) 1,
       NULL, NULL, NULL };
 
 void *f_ref[] =
@@ -1446,12 +1459,12 @@ void *f_ref[] =
       (void*) 1, "-mindepth", opt_g_mindepth, (void*) 1, "--noereg",
       opt_g_noereg, (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd,
       (void*) 0, "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file,
-      (void*) 1, "--ge4log", opt_GE4LOG, (void*) 1, "--xretry", opt_g_xretry,
-      (void*) 0, "--indepth", opt_g_indepth, (void*) 0, "--full",
-      opt_dirlog_rebuild_full, (void*) 0, "--arr", opt_arrange, (void*) 1,
-      "--nonukechk", opt_no_nuke_chk, (void*) 0, "--rsleep", opt_g_loop_sleep,
-      (void*) 1, "--rusleep", opt_g_loop_usleep, (void*) 1, "--nostats",
-      opt_g_nostats, (void*) 0, "--stats", opt_g_stats, (void*) 0, "-mlist",
-      opt_g_mlist, (void*) 0, "--gz", opt_g_comp, (void*) 1, "--sortmethod",
-      opt_g_swapmode, (void*) 1,
+      (void*) 1, "--ge4log", opt_GE4LOG, (void*) 1, "--altlog", opt_altlog,
+      (void*) 1, "--xretry", opt_g_xretry, (void*) 0, "--indepth",
+      opt_g_indepth, (void*) 0, "--full", opt_dirlog_rebuild_full, (void*) 0,
+      "--arr", opt_arrange, (void*) 1, "--nonukechk", opt_no_nuke_chk,
+      (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1, "--rusleep",
+      opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats, (void*) 0,
+      "--stats", opt_g_stats, (void*) 0, "-mlist", opt_g_mlist, (void*) 0,
+      "--gz", opt_g_comp, (void*) 1, "--sortmethod", opt_g_swapmode, (void*) 1,
       NULL, NULL, NULL };
