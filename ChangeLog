@@ -20,6 +20,7 @@
  *   - + 'comp' field added to '?q' extended directive (check if log is compressed
  *   - + Implemented quicksort algorithm (rev. 1_b1)
  *   - ~ Plugged memory leak (sorting functions) (rev. 1_b1)
+ *   - ~ qsort was broken (rev. 2)
  *
  * v2.3:
  *

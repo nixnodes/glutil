@@ -120,7 +120,7 @@ g_swapi(void **x, void **y)
 }
 
 static void
-g_siftdown(void **arr, int start, int end, __p_srd psrd)
+g_heap_siftdown(void **arr, int start, int end, __p_srd psrd)
 {
   int root, child;
 
@@ -143,32 +143,66 @@ g_siftdown(void **arr, int start, int end, __p_srd psrd)
 }
 
 static void
-g_qsort(void **arr, int left, int right, __p_srd psrd)
+g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
 {
-  int i = left, j = right;
-  void * tmp;
-  int pivot = (left + right) / 2;
+  int64_t i = left, j = right;
+  void *tmp;
+
+  void *pivot = arr[(left + right) / 2];
 
   while (i <= j)
     {
-      while (!psrd->m_op(arr[i], arr[pivot], psrd->off, psrd->g_t_ptr_c))
+
+      while (psrd->m_op_opp(arr[i], pivot, psrd->off, psrd->g_t_ptr_c))
         i++;
-      while (!psrd->m_op_opp(arr[j], arr[pivot], psrd->off, psrd->g_t_ptr_c))
+      while (psrd->m_op(arr[j], pivot, psrd->off, psrd->g_t_ptr_c))
         j--;
+
       if (i <= j)
         {
           tmp = arr[i];
           arr[i] = arr[j];
           arr[j] = tmp;
+
           i++;
           j--;
         }
+
     };
 
   if (left < j)
     g_qsort(arr, left, j, psrd);
+
   if (i < right)
     g_qsort(arr, i, right, psrd);
+}
+
+static int
+g_qsort_exec(pmda m_ptr, __p_srd psrd)
+{
+  g_setjmp(0, "g_qsort_exec", NULL, NULL);
+
+  int ret = 0;
+  void **ref_arr = calloc(m_ptr->offset + 1, sizeof(void*));
+
+  if (md_md_to_array(m_ptr, ref_arr))
+    {
+      ret = 1;
+      goto cl_end;
+    }
+
+  g_qsort(ref_arr, 0, (int64_t) m_ptr->offset - 1, psrd);
+
+  if (md_array_to_md(ref_arr, m_ptr))
+    {
+      ret = 2;
+    }
+
+  cl_end: ;
+
+  free(ref_arr);
+
+  return ret;
 }
 
 static int
@@ -186,45 +220,17 @@ g_heapsort_exec(pmda m_ptr, __p_srd psrd)
   int start, end;
 
   for (start = (m_ptr->offset - 2) / 2; start >= 0; --start)
-    g_siftdown(ref_arr, start, m_ptr->offset, psrd);
+    g_heap_siftdown(ref_arr, start, m_ptr->offset, psrd);
 
   for (end = m_ptr->offset - 1; end; --end)
     {
       g_swapi(&ref_arr[end], &ref_arr[0]);
-      g_siftdown(ref_arr, 0, end, psrd);
+      g_heap_siftdown(ref_arr, 0, end, psrd);
     }
 
   if (md_array_to_md(ref_arr, m_ptr))
     {
       ret = 2;
-      goto cl_end;
-    }
-
-  cl_end: ;
-
-  free(ref_arr);
-
-  return ret;
-}
-
-static int
-g_qsort_exec(pmda m_ptr, __p_srd psrd)
-{
-  int ret = 0;
-  void **ref_arr = malloc(m_ptr->offset * sizeof(void*));
-
-  if (md_md_to_array(m_ptr, ref_arr))
-    {
-      ret = 1;
-      goto cl_end;
-    }
-
-  g_qsort(ref_arr, 0, m_ptr->offset, psrd);
-
-  if (md_array_to_md(ref_arr, m_ptr))
-    {
-      ret = 2;
-      goto cl_end;
     }
 
   cl_end: ;
@@ -237,6 +243,8 @@ g_qsort_exec(pmda m_ptr, __p_srd psrd)
 static int
 g_swapsort_exec(pmda m_ptr, __p_srd psrd)
 {
+  g_setjmp(0, "g_swapsort_exec", NULL, NULL);
+
   p_md_obj ptr, ptr_n;
 
   uint32_t ml_f = 0;
