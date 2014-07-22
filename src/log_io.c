@@ -1582,9 +1582,9 @@ d_write(char *arg)
 
   int ret = 0;
 
-  if (!arg)
+  if (NULL == arg)
     {
-      print_str("ERROR: missing data type argument\n");
+      print_str("ERROR: "MSG_GEN_MISSING_DTARG" (-z <log>)\n");
       return 1;
     }
 
@@ -1668,6 +1668,7 @@ d_write(char *arg)
         {
           g_act_1.total_sz = db_max_size;
         }
+
       if ((r = load_data_md(&g_act_1.w_buffer, infile_p, &g_act_1)))
         {
           print_str(
@@ -1949,5 +1950,4 @@ dt_set_dummy(__g_handle hdl)
 {
   return;
 }
-
 

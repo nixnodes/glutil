@@ -32,6 +32,19 @@ char *g_sort_field;
 
 uint32_t g_sort_flags;
 
+#include <lc_oper.h>
+
+typedef struct g_sref_data
+{
+  void *g_t_ptr_c;
+  gs_cmp_p m_op, m_op_opp;
+  uint32_t flags;
+  size_t off;
+} _srd, *__p_srd;
+
+typedef int
+(*g_xsort_exec_p)(pmda m_ptr, __p_srd psrd);
+
 int
 do_sort(__g_handle hdl, char *field, uint32_t flags);
 int
@@ -39,9 +52,5 @@ opt_g_sort(void *arg, int m);
 int
 g_sort(__g_handle hdl, char *field, uint32_t flags);
 
-#include <lc_oper.h>
-
-typedef int
-(*g_xsort_exec_p)(pmda m_ptr, size_t off, uint32_t flags, gs_cmp_p m_op, void *cb2);
 
 #endif /* SORT_HDR_H_ */

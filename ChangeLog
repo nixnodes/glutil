@@ -5,6 +5,22 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.4:
+ *
+ *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES
+ *   - + 'm:siterootn' field
+ *   - % Got rid of "(MISSING)" messages ('user' and 'group') fields, instead it returns blank when info can't be obtained
+ *   - ~ Segfaulted when looking up 'user' or 'group' fields, in certain cases
+ *   - ~ Called 'md_init' twice when referencing 'user' or 'group' fields (FILESYSTEM)
+ *   - ~ Not showing proper paths on error messages, when unable to open passwd or group files
+ *   - + Libs to translate internal error codes to message strings
+ *   - + Implemented heapsort algorithm
+ *   - + '--loadqa' and '--sortmethod'
+ *   - ~ Legacy sort function inverting order
+ *   - + 'comp' field added to '?q' extended directive (check if log is compressed
+ *   - + Implemented quicksort algorithm (rev. 1_b1)
+ *   - ~ Plugged memory leak (sorting functions) (rev. 1_b1)
+ *
  * v2.3:
  *
  *   - + Started glutil-precheck, on MKDIR filtering processor, uses imdb/tvrage data logs.
@@ -58,18 +74,6 @@
  *   - % Automake: --enable-precheck does not disable regular (or chrooted) binary build (rev. 18_b1)
  *   - ! self_get_path checking read access twice (rev. 18_b2)
  *   - ~ Blank directory names written during dirlog rebuild (only in certain cases) (rev. 19)
- *
- *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES (rev. 19_b1)
- *   - + 'm:siterootn' field (rev. 19_b2)
- *   - % Got rid of "(MISSING)" messages ('user' and 'group') fields, instead it returns blank when info can't be obtained (rev. 19_b3)
- *   - ~ Segfaulted when looking up 'user' or 'group' fields, in certain cases (rev. 19_b4)
- *   - ~ Called 'md_init' twice when referencing 'user' or 'group' fields (FILESYSTEM) (rev. 19_b5)
- *   - ~ Not showing proper paths on error messages, when unable to open passwd or group files (rev. 19_b5)
- *   - + Libs to translate internal error codes to message strings (rev. 19_b6)
- *   - + Implemented heapsort algorithm (rev. 20_b1)
- *   - + '--loadqa' and '--sortmethod' (rev. 20_b1)
- *   - ~ Legacy sort function inverting order (rev. 20_b2)
- *   - + 'comp' field added to '?q' extended directive (check if log is compressed (rev. 20_b2)
  *
  * v2.2:
  *

@@ -444,6 +444,12 @@ determine_datatype(__g_handle hdl, char *file)
 int
 d_gen_dump(char *arg)
 {
+  if (NULL == arg)
+    {
+      print_str("ERROR: "MSG_GEN_MISSING_DTARG" (-q <log>)\n");
+      return 1;
+    }
+
   char *datafile = g_dgetf(arg);
 
   if (!datafile)
@@ -459,9 +465,9 @@ int
 rebuild(void *arg)
 {
   g_setjmp(0, "rebuild", NULL, NULL);
-  if (!arg)
+  if (NULL == arg)
     {
-      print_str("ERROR: missing data type argument (-e <log>)\n");
+      print_str("ERROR: "MSG_GEN_MISSING_DTARG" (-e <log>)\n");
       return 1;
     }
 

@@ -18,11 +18,9 @@
 #include <inttypes.h>
 #include <limits.h>
 
-
 #ifndef WEXITSTATUS
 #define WEXITSTATUS(status)     (((status) & 0xff00) >> 8)
 #endif
-
 
 #ifndef _STDINT_H
 typedef unsigned char uint8_t;
@@ -70,7 +68,6 @@ typedef unsigned long long int ulint64_t;
 
 #define V_MB                            0x100000
 
-
 #define CRC_FILE_READ_BUFFER_SIZE       64512
 
 #define MAX_EXEC_STR                    262144
@@ -102,6 +99,8 @@ typedef unsigned long long int ulint64_t;
 #define MSG_GEN_FLUSHED                 "NOTICE: %s: flushed %llu records, %llu bytes\n"
 #define MSG_LL_RC                       "NOTICE: %s: loaded %llu records\n"
 #define MSG_F_OWN_PATH                  "ERROR: could not get own path\n"
+
+#define MSG_GEN_MISSING_DTARG           "missing data type argument"
 
 // gfl
 
@@ -188,6 +187,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_SMETHOD_SWAP              (a64 << 15)
 #define F_OPT_SMETHOD_HEAP              (a64 << 16)
 #define F_OPT_LOADQA                    (a64 << 17)
+#define F_OPT_SMETHOD_Q                 (a64 << 18)
 
 #define F_OPT_SMETHOD                   (F_OPT_SMETHOD_SWAP|F_OPT_SMETHOD_HEAP)
 
