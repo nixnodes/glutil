@@ -23,6 +23,7 @@
  *   - ~ qsort was broken (rev. 2)
  *   - ~ Floating point values sorting broken (since 2.4.1) (rev. 3)
  *   - % Changed default altlog output (rev. 4_b2)
+ *   - ~ 'ipc' generic field broken (was showing PID instead of IPC key) (rev. 4_b3) 
  *
  * v2.3:
  *

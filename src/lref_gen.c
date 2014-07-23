@@ -186,7 +186,8 @@ char *
 dt_rval_generic_ipc(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, getpid());
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      ((__d_drt_h ) mppd)->hdl->ipc_key);
   return output;
 }
 
@@ -384,7 +385,7 @@ dt_rval_generic_pspec1(void *arg, char *match, char *output, size_t max_size,
   return "";
 }
 
-#define MSG_GENERIC_BS         ":"
+#define MSG_GENERIC_BS         0x3A
 
 void *
 ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
@@ -403,7 +404,7 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp(match, "ipc", 3))
     {
       return as_ref_to_val_lk(match, dt_rval_generic_ipc, (__d_drt_h ) mppd,
-          "%d");
+          "%X");
     }
   else if (!strncmp(match, "usroot", 6))
     {
@@ -453,7 +454,7 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
 
       return as_ref_to_val_lk(match, dt_rval_gg_float, (__d_drt_h ) mppd, "%f");
     }
-  else if (!strncmp(match, MSG_GENERIC_BS, 1))
+  else if (match[0] == 0x3A)
     {
       switch (match[1])
         {
