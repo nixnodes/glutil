@@ -19,8 +19,10 @@
 #define F_GSORT_ASC                     (a32 << 2)
 #define F_GSORT_RESETPOS                (a32 << 3)
 #define F_GSORT_NUMERIC                 (a32 << 4)
+#define F_GSORT_STRING                  (a32 << 5)
 
 #define F_GSORT_ORDER                   (F_GSORT_DESC|F_GSORT_ASC)
+#define F_GSORT_TYPE                    (F_GSORT_NUMERIC|F_GSORT_STRING)
 
 #define MAX_SORT_LOOPS                          MAX_uint64_t
 
@@ -33,6 +35,7 @@ char *g_sort_field;
 uint32_t g_sort_flags;
 
 #include <lc_oper.h>
+#include <m_comp.h>
 
 typedef struct g_sref_data
 {
@@ -40,6 +43,8 @@ typedef struct g_sref_data
   gs_cmp_p m_op, m_op_opp;
   uint32_t flags;
   size_t off;
+  char m_buf1[4096], m_buf2[4096];
+  _d_drt_h mppd;
 } _srd, *__p_srd;
 
 typedef int
@@ -51,6 +56,5 @@ int
 opt_g_sort(void *arg, int m);
 int
 g_sort(__g_handle hdl, char *field, uint32_t flags);
-
 
 #endif /* SORT_HDR_H_ */

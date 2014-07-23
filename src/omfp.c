@@ -148,7 +148,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   size_t c = 0;
 
-  g_setjmp(0, "g_print_stats(loop)", NULL, NULL);
+  g_setjmp(F_SIGERR_CONTINUE, "g_print_stats(loop)", NULL, NULL);
 
   g_act_1.buffer.offset = 0;
 
@@ -178,6 +178,15 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
           g_act_1.g_proc4((void*) &g_act_1, ptr, NULL);
 
         }
+
+    }
+  else
+    {
+      print_str(
+          "ERROR: %s: an exception has occured, terminating enumeration and attempt cleanup..\n",
+          g_act_1.file);
+      EXITVAL = 2;
+      goto r_end;
     }
 
   if (gfl & F_OPT_MODE_RAWDUMP)

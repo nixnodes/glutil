@@ -136,7 +136,7 @@ char *hpd_up =
         "                        Perform backup on specified log\n"
         "  --sort <mode>,<order>,<field>\n"
         "                        Sort data log entries\n"
-        "                          <mode> can only be 'num' (numeric)\n"
+        "                          <mode> can be either 'num' (numeric) or 'str' (string)\n"
         "                          <order> can be 'asc' (ascending) or 'desc' (descending)\n"
         "                          Sorts by the specified data log <field>\n"
         "                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n, -q\n"

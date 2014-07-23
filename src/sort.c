@@ -8,6 +8,7 @@
 #include <glutil.h>
 #include "sort_hdr.h"
 
+#include <m_comp.h>
 #include <arg_proc.h>
 #include <gv_off.h>
 #include <lc_oper.h>
@@ -21,45 +22,69 @@ char *g_sort_field = NULL;
 uint32_t g_sort_flags = 0;
 
 static int
-gs_t_is_lower(void *s, void *d, size_t offset, void * t_ptr)
+gs_t_is_lower(void *s, void *d, void * t_ptr)
 {
-  g_t64_ptr_p t64_ptr = (g_t64_ptr_p) t_ptr;
-  return (t64_ptr(s, offset) < t64_ptr(d, offset));
+  __p_srd psrd = (__p_srd) t_ptr;
+  g_t64_ptr_p t64_ptr = (g_t64_ptr_p) psrd->g_t_ptr_c;
+  return (t64_ptr(s, psrd->off) < t64_ptr(d, psrd->off));
 }
 
 static int
-gs_t_is_higher(void *s, void *d, size_t offset, void * t_ptr)
+gs_t_is_higher(void *s, void *d, void * t_ptr)
 {
-  g_t64_ptr_p t64_ptr = (g_t64_ptr_p) t_ptr;
-  return (t64_ptr(s, offset) > t64_ptr(d, offset));
+  __p_srd psrd = (__p_srd) t_ptr;
+  g_t64_ptr_p t64_ptr = (g_t64_ptr_p) psrd->g_t_ptr_c;
+  return (t64_ptr(s, psrd->off) > t64_ptr(d, psrd->off));
 }
 
 static int
-gs_ts_is_lower(void *s, void *d, size_t offset, void * t_ptr)
+gs_ts_is_lower(void *s, void *d, void * t_ptr)
 {
-  g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) t_ptr;
-  return (ts64_ptr(s, offset) < ts64_ptr(d, offset));
+  __p_srd psrd = (__p_srd) t_ptr;
+  g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) psrd->g_t_ptr_c;
+  return (ts64_ptr(s, psrd->off) < ts64_ptr(d, psrd->off));
 }
 
 static int
-gs_ts_is_higher(void *s, void *d, size_t offset, void * t_ptr)
+gs_ts_is_higher(void *s, void *d, void * t_ptr)
 {
-  g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) t_ptr;
-  return (ts64_ptr(s, offset) > ts64_ptr(d, offset));
+  __p_srd psrd = (__p_srd) t_ptr;
+  g_ts64_ptr_p ts64_ptr = (g_ts64_ptr_p) psrd->g_t_ptr_c;
+  return (ts64_ptr(s, psrd->off) > ts64_ptr(d, psrd->off));
 }
 
 static int
-gs_tf_is_lower(void *s, void *d, size_t offset, void * t_ptr)
+gs_tf_is_lower(void *s, void *d, void * t_ptr)
 {
-  g_tf_ptr_p tf_ptr = (g_tf_ptr_p) t_ptr;
-  return (tf_ptr(s, offset) < tf_ptr(d, offset));
+  __p_srd psrd = (__p_srd) t_ptr;
+  g_tf_ptr_p tf_ptr = (g_tf_ptr_p) psrd->g_t_ptr_c;
+  return (tf_ptr(s, psrd->off) < tf_ptr(d, psrd->off));
 }
 
 static int
-gs_tf_is_higher(void *s, void *d, size_t offset, void * t_ptr)
+gs_tf_is_higher(void *s, void *d, void * t_ptr)
 {
-  g_tf_ptr_p tf_ptr = (g_tf_ptr_p) t_ptr;
-  return (tf_ptr(s, offset) > tf_ptr(d, offset));
+  __p_srd psrd = (__p_srd) t_ptr;
+  g_tf_ptr_p tf_ptr = (g_tf_ptr_p) psrd->g_t_ptr_c;
+  return (tf_ptr(s, psrd->off) > tf_ptr(d, psrd->off));
+}
+
+static int
+gs_s_is_lower(void *s, void *d, void * t_ptr)
+{
+  __p_srd psrd = (__p_srd) t_ptr;
+  __g_proc_v sb_ref = (__g_proc_v) psrd->g_t_ptr_c;
+  return (strcasecmp(((char*) sb_ref(s, NULL, psrd->m_buf1, sizeof(psrd->m_buf1), (void*)&psrd->mppd)),
+          ((char*) sb_ref(d, NULL, psrd->m_buf2, sizeof(psrd->m_buf2), (void*)&psrd->mppd))) < 0);
+}
+
+static int
+gs_s_is_higher(void *s, void *d, void * t_ptr)
+{
+  __p_srd psrd = (__p_srd) t_ptr;
+  __g_proc_v sb_ref = (__g_proc_v) psrd->g_t_ptr_c;
+  return (strcasecmp(((char*) sb_ref(s, NULL, psrd->m_buf1, sizeof(psrd->m_buf1), (void*)&psrd->mppd)),
+          ((char*) sb_ref(d, NULL, psrd->m_buf2, sizeof(psrd->m_buf2), (void*)&psrd->mppd))) > 0);
 }
 
 int
@@ -98,7 +123,7 @@ do_sort(__g_handle hdl, char *field, uint32_t flags)
 
   if (r)
     {
-      print_str("ERROR: %s: [%d]: could not sort data\n", hdl->file, r);
+      print_str("ERROR: %s: [%d]: sorting data failed\n", hdl->file, r);
     }
   else
     {
@@ -128,11 +153,9 @@ g_heap_siftdown(void **arr, int start, int end, __p_srd psrd)
   while (2 * root + 1 < end)
     {
       child = 2 * root + 1;
-      if ((child + 1 < end)
-          && (!psrd->m_op(arr[child], arr[child + 1], psrd->off,
-              psrd->g_t_ptr_c)))
+      if ((child + 1 < end) && (!psrd->m_op(arr[child], arr[child + 1], psrd)))
         ++child;
-      if (!psrd->m_op(arr[root], arr[child], psrd->off, psrd->g_t_ptr_c))
+      if (!psrd->m_op(arr[root], arr[child], psrd))
         {
           g_swapi(&arr[child], &arr[root]);
           root = child;
@@ -153,9 +176,9 @@ g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
   while (i <= j)
     {
 
-      while (psrd->m_op_opp(arr[i], pivot, psrd->off, psrd->g_t_ptr_c))
+      while (psrd->m_op_opp(arr[i], pivot, psrd))
         i++;
-      while (psrd->m_op(arr[j], pivot, psrd->off, psrd->g_t_ptr_c))
+      while (psrd->m_op(arr[j], pivot, psrd))
         j--;
 
       if (i <= j)
@@ -258,7 +281,7 @@ g_swapsort_exec(pmda m_ptr, __p_srd psrd)
         {
           ptr_n = (p_md_obj) ptr->next;
 
-          if (psrd->m_op(ptr->ptr, ptr_n->ptr, psrd->off, psrd->g_t_ptr_c))
+          if (psrd->m_op(ptr->ptr, ptr_n->ptr, psrd))
             {
               ptr = md_swap_s(m_ptr, ptr, ptr_n);
               if (!(ml_f & F_INT_GSORT_LOOP_DID_SORT))
@@ -291,6 +314,117 @@ g_swapsort_exec(pmda m_ptr, __p_srd psrd)
   if ((psrd->flags & F_GSORT_RESETPOS))
     {
       m_ptr->pos = m_ptr->r_pos = md_first(m_ptr);
+    }
+
+  return 0;
+}
+
+static int
+g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
+{
+  g_setjmp(0, "g_sort_numeric", NULL, NULL);
+  void *g_fh_f = NULL, *g_fh_s = NULL, *g_fh_f_opp = NULL, *g_fh_s_opp = NULL;
+
+  switch (flags & F_GSORT_ORDER)
+    {
+  case F_GSORT_DESC:
+    psrd->m_op = gs_t_is_lower;
+    psrd->m_op_opp = gs_t_is_higher;
+    g_fh_f = gs_tf_is_lower;
+    g_fh_f_opp = gs_tf_is_higher;
+    g_fh_s = gs_ts_is_lower;
+    g_fh_s_opp = gs_ts_is_higher;
+    break;
+  case F_GSORT_ASC:
+    psrd->m_op = gs_t_is_higher;
+    psrd->m_op_opp = gs_t_is_lower;
+    g_fh_f = gs_tf_is_higher;
+    g_fh_f_opp = gs_tf_is_lower;
+    g_fh_s = gs_ts_is_higher;
+    g_fh_s_opp = gs_ts_is_lower;
+    break;
+    }
+
+  if (!psrd->m_op)
+    {
+      return 3;
+    }
+
+  int vb = 0;
+
+  psrd->off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
+
+  if (!vb)
+    {
+      return 13;
+    }
+
+  switch (vb)
+    {
+  case -32:
+    psrd->m_op = g_fh_f;
+    psrd->m_op_opp = g_fh_f_opp;
+    psrd->g_t_ptr_c = g_tf_ptr;
+    break;
+  case 1:
+    psrd->g_t_ptr_c = g_t8_ptr;
+    break;
+  case 2:
+    psrd->g_t_ptr_c = g_t16_ptr;
+    break;
+  case 4:
+    psrd->g_t_ptr_c = g_t32_ptr;
+    break;
+  case 8:
+    psrd->g_t_ptr_c = g_t64_ptr;
+    break;
+  case -2:
+    psrd->g_t_ptr_c = g_ts8_ptr;
+    break;
+  case -3:
+    psrd->g_t_ptr_c = g_ts16_ptr;
+    break;
+  case -5:
+    psrd->g_t_ptr_c = g_ts32_ptr;
+    break;
+  case -9:
+    psrd->g_t_ptr_c = g_ts64_ptr;
+    break;
+  default:
+    return 14;
+    }
+
+  if (vb < 0 && vb > -10)
+    {
+      psrd->m_op = g_fh_s;
+      psrd->m_op_opp = g_fh_s_opp;
+    }
+
+  return 0;
+}
+
+static int
+g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
+{
+  g_setjmp(0, "g_sort_string", NULL, NULL);
+  switch (flags & F_GSORT_ORDER)
+    {
+  case F_GSORT_DESC:
+    psrd->m_op = gs_s_is_lower;
+    psrd->m_op_opp = gs_s_is_higher;
+    break;
+  case F_GSORT_ASC:
+    psrd->m_op = gs_s_is_higher;
+    psrd->m_op_opp = gs_s_is_lower;
+    break;
+    }
+
+  psrd->g_t_ptr_c = hdl->g_proc1_lookup(hdl->_x_ref, field, psrd->m_buf1,
+      sizeof(psrd->m_buf1), (void*) &psrd->mppd);
+
+  if (NULL == psrd->g_t_ptr_c)
+    {
+      return 7;
     }
 
   return 0;
@@ -341,81 +475,24 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     g_s_ex = g_heapsort_exec;
     }
 
-  void *g_fh_f = NULL, *g_fh_s = NULL, *g_fh_f_opp = NULL, *g_fh_s_opp = NULL;
+  int ret;
 
-  switch (flags & F_GSORT_ORDER)
+  switch (flags & F_GSORT_TYPE)
     {
-  case F_GSORT_DESC:
-    srd.m_op = gs_t_is_lower;
-    srd.m_op_opp = gs_t_is_higher;
-    g_fh_f = gs_tf_is_lower;
-    g_fh_f_opp = gs_tf_is_higher;
-    g_fh_s = gs_ts_is_lower;
-    g_fh_s_opp = gs_ts_is_higher;
+  case F_GSORT_NUMERIC:
+    ;
+    if ((ret = g_sort_numeric(hdl, field, flags, &srd)))
+      {
+        return ret;
+      }
     break;
-  case F_GSORT_ASC:
-    srd.m_op = gs_t_is_higher;
-    srd.m_op_opp = gs_t_is_lower;
-    g_fh_f = gs_tf_is_higher;
-    g_fh_f_opp = gs_tf_is_lower;
-    g_fh_s = gs_ts_is_higher;
-    g_fh_s_opp = gs_ts_is_lower;
+  case F_GSORT_STRING:
+    ;
+    if ((ret = g_sort_string(hdl, field, flags, &srd)))
+      {
+        return ret;
+      }
     break;
-    }
-
-  if (!srd.m_op)
-    {
-      return 3;
-    }
-
-  int vb = 0;
-
-  srd.off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
-
-  if (!vb)
-    {
-      return 13;
-    }
-
-  switch (vb)
-    {
-  case -32:
-    srd.m_op = g_fh_f;
-    srd.m_op_opp = g_fh_f_opp;
-    srd.g_t_ptr_c = g_tf_ptr;
-    break;
-  case 1:
-    srd.g_t_ptr_c = g_t8_ptr;
-    break;
-  case 2:
-    srd.g_t_ptr_c = g_t16_ptr;
-    break;
-  case 4:
-    srd.g_t_ptr_c = g_t32_ptr;
-    break;
-  case 8:
-    srd.g_t_ptr_c = g_t64_ptr;
-    break;
-  case -2:
-    srd.g_t_ptr_c = g_ts8_ptr;
-    break;
-  case -3:
-    srd.g_t_ptr_c = g_ts16_ptr;
-    break;
-  case -5:
-    srd.g_t_ptr_c = g_ts32_ptr;
-    break;
-  case -9:
-    srd.g_t_ptr_c = g_ts64_ptr;
-    break;
-  default:
-    return 14;
-    }
-
-  if (vb < 0 && vb > -10)
-    {
-      srd.m_op = g_fh_s;
-      srd.m_op_opp = g_fh_s_opp;
     }
 
   return g_s_ex(m_ptr, &srd);
@@ -458,6 +535,10 @@ opt_g_sort(void *arg, int m)
   if (!strncmp(s_ptr, "num", 3))
     {
       g_sort_flags |= F_GSORT_NUMERIC;
+    }
+  else if (!strncmp(s_ptr, "str", 3))
+    {
+      g_sort_flags |= F_GSORT_STRING;
     }
   else
     {

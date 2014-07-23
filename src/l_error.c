@@ -12,7 +12,6 @@
 
 #include <unistd.h>
 
-
 void
 e_pop(p_sigjmp psm)
 {
@@ -31,7 +30,6 @@ e_push(p_sigjmp psm)
   psm->ci = psm->pci;
 }
 
-
 void
 g_setjmp(uint32_t flags, char *type, void *callback, void *arg)
 {
@@ -41,8 +39,17 @@ g_setjmp(uint32_t flags, char *type, void *callback, void *arg)
     }
   g_sigjmp.id = ID_SIGERR_UNSPEC;
 
-  bzero(g_sigjmp.type, 32);
-  memcpy(g_sigjmp.type, type, strlen(type));
+  //bzero(g_sigjmp.type, 32);
+  size_t t_len = strlen(type) + 1;
+
+  if (t_len >= sizeof(g_sigjmp.type))
+    {
+      t_len = sizeof(g_sigjmp.type) - 1;
+    }
+
+  strncpy(g_sigjmp.type, type, t_len);
+
+  g_sigjmp.type[t_len] = 0x0;
 
   return;
 }
@@ -128,7 +135,6 @@ sighdl_error(int sig, siginfo_t* siginfo, void* context)
 
   exit(siginfo->si_errno);
 }
-
 
 void *
 g_memcpy(void *dest, const void *src, size_t n)

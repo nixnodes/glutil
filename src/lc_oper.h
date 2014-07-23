@@ -26,7 +26,7 @@ typedef int
 __d_fcomp(float s, float d);
 
 typedef int
-(*gs_cmp_p)(void *s, void *d, size_t offset, void * t_ptr);
+(*gs_cmp_p)(void *s, void *d, void * t_ptr);
 
 __d_iscomp g_is_higher_s, g_is_lower_s, g_is_higherorequal_s, g_is_equal_S,
     g_is_not_equal_s, g_is_lowerorequal_s, g_is_not_s, g_is_s, g_is_lower_2_s,
