@@ -343,11 +343,14 @@ g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
     g_fh_s = gs_ts_is_higher;
     g_fh_s_opp = gs_ts_is_lower;
     break;
+  default:
+    ;
+    return 3;
     }
 
   if (!psrd->m_op)
     {
-      return 3;
+      return 4;
     }
 
   int vb = 0;
@@ -417,6 +420,9 @@ g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
     psrd->m_op = gs_s_is_higher;
     psrd->m_op_opp = gs_s_is_lower;
     break;
+  default:
+    ;
+    return 3;
     }
 
   psrd->g_t_ptr_c = hdl->g_proc1_lookup(hdl->_x_ref, field, psrd->m_buf1,
