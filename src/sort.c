@@ -137,7 +137,7 @@ do_sort(__g_handle hdl, char *field, uint32_t flags)
 }
 
 static void
-g_swapi(void **x, void **y)
+g_swap_p(void **x, void **y)
 {
   void *z = *x;
   *x = *y;
@@ -145,37 +145,14 @@ g_swapi(void **x, void **y)
 }
 
 static void
-g_heap_siftdown(void **arr, int start, int end, __p_srd psrd)
-{
-  int root, child;
-
-  root = start;
-  while (2 * root + 1 < end)
-    {
-      child = 2 * root + 1;
-      if ((child + 1 < end) && (!psrd->m_op(arr[child], arr[child + 1], psrd)))
-        ++child;
-      if (!psrd->m_op(arr[root], arr[child], psrd))
-        {
-          g_swapi(&arr[child], &arr[root]);
-          root = child;
-        }
-      else
-        return;
-    }
-}
-
-static void
 g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
 {
   int64_t i = left, j = right;
-  void *tmp;
 
   void *pivot = arr[(left + right) / 2];
 
   while (i <= j)
     {
-
       while (psrd->m_op_opp(arr[i], pivot, psrd))
         i++;
       while (psrd->m_op(arr[j], pivot, psrd))
@@ -183,10 +160,7 @@ g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
 
       if (i <= j)
         {
-          tmp = arr[i];
-          arr[i] = arr[j];
-          arr[j] = tmp;
-
+          g_swap_p(&arr[i], &arr[j]);
           i++;
           j--;
         }
@@ -228,6 +202,27 @@ g_qsort_exec(pmda m_ptr, __p_srd psrd)
   return ret;
 }
 
+static void
+g_heap_siftdown(void **arr, int start, int end, __p_srd psrd)
+{
+  int root, child;
+
+  root = start;
+  while (2 * root + 1 < end)
+    {
+      child = 2 * root + 1;
+      if ((child + 1 < end) && (!psrd->m_op(arr[child], arr[child + 1], psrd)))
+        ++child;
+      if (!psrd->m_op(arr[root], arr[child], psrd))
+        {
+          g_swap_p(&arr[child], &arr[root]);
+          root = child;
+        }
+      else
+        return;
+    }
+}
+
 static int
 g_heapsort_exec(pmda m_ptr, __p_srd psrd)
 {
@@ -248,7 +243,7 @@ g_heapsort_exec(pmda m_ptr, __p_srd psrd)
 
   for (end = m_ptr->offset - 1; end; --end)
     {
-      g_swapi(&ref_arr[end], &ref_arr[0]);
+      g_swap_p(&ref_arr[end], &ref_arr[0]);
       g_heap_siftdown(ref_arr, 0, end, psrd);
     }
 
@@ -357,9 +352,9 @@ g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
 
   psrd->off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
 
-  if (!vb)
+  if (0 == vb)
     {
-      return 13;
+      return 9;
     }
 
   switch (vb)
@@ -487,18 +482,19 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     {
   case F_GSORT_NUMERIC:
     ;
-    if ((ret = g_sort_numeric(hdl, field, flags, &srd)))
-      {
-        return ret;
-      }
+    ret = g_sort_numeric(hdl, field, flags, &srd);
     break;
   case F_GSORT_STRING:
     ;
-    if ((ret = g_sort_string(hdl, field, flags, &srd)))
-      {
-        return ret;
-      }
+    ret = g_sort_string(hdl, field, flags, &srd);
     break;
+  default:
+    return 11;
+    }
+
+  if (0 != ret)
+    {
+      return ret;
     }
 
   return g_s_ex(m_ptr, &srd);
