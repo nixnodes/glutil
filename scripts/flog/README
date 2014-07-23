@@ -1,0 +1,48 @@
+These scripts are used for building/searching a special
+binary log which holds file information
+
+REQUIREMENTS:
+
+	* glutil_2.4.4_b2 or later, compiled for a chrooted environment
+
+
+INSTALLATION:
+
+	* Compile and install the latest chrooted version of glutil:
+	
+		make clean
+		./configure --prefix /<glroot> --enable-chroot-ownbin
+		make install
+		
+	* Ensure that /tmp folders exists in /<glroot and has proper permissions:
+	
+		mkdir -p /<glroot>/tmp
+		chmod 1777 /<glroot>/tmp
+		
+	* Ensure that '/<glroot>/ftp-data/glutil/db/' exists and has proper
+	  permissions:
+	  
+	  	mkdir -p /<glroot>/ftp-data/glutil/db/
+	  	chmod 777 /<glroot>/ftp-data/glutil/db/
+	  	
+	  Choose a different path where log will be stored by editing
+	  FILE_LOG_PATH variable in both .sh files
+	  
+	* Install the scripts:
+	
+		mkdir -p /<glroot>/bin/scripts/flog
+		cp fsearch.sh mk_index.sh /<glroot>/bin/scripts/flog
+		chmod +x /<glroot>/bin/scripts/flog/fsearch.sh
+		chmod +x /<glroot>/bin/scripts/flog/mk_index.sh
+		
+	* Configure site commands and STOR hook (in glftpd.conf):
+	
+		cscript 	STOR			post 	/bin/scripts/flog/mk_index.sh
+		site_cmd	FSEARCH			EXEC 	/bin/scripts/flog/fsearch.sh
+		custom-fsearch   !8      *
+
+
+USAGE:
+
+	SITE FSEARCH <query>
+		
