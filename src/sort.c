@@ -208,8 +208,9 @@ g_qsort_exec(pmda m_ptr, __p_srd psrd)
 static int
 g_heapsort_exec(pmda m_ptr, __p_srd psrd)
 {
+  g_setjmp(0, "g_heapsort_exec", NULL, NULL);
   int ret = 0;
-  void **ref_arr = malloc(m_ptr->offset * sizeof(void*));
+  void **ref_arr = calloc(m_ptr->offset + 1, sizeof(void*));
 
   if (md_md_to_array(m_ptr, ref_arr))
     {
@@ -411,7 +412,7 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     return 14;
     }
 
-  if (vb < 0)
+  if (vb < 0 && vb > -10)
     {
       srd.m_op = g_fh_s;
       srd.m_op_opp = g_fh_s_opp;
