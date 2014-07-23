@@ -17,10 +17,12 @@
 struct altlog {
     uint16_t    status;          /* 0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED */
     time32_t    uptime;          /* Creation time since epoch (man 2 time) */
-    uint16_t    uploader;        /* The userid of the creator */
-    uint16_t    group;           /* The groupid of the primary group of the creator */
+    //uint16_t    uploader;        /* The userid of the creator */
+    //uint16_t    group;           /* The groupid of the primary group of the creator */
     uint16_t    files;           /* The number of files inside the dir */
     uint64_t    bytes;           /* The number of bytes in the dir */
+    char        user[255];
+    char        groupn[255];
     char        dirname[4096];    /* The name of the dir (fullpath) */
 };
 

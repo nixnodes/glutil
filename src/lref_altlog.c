@@ -5,8 +5,6 @@
  *      Author: reboot
  */
 
-
-
 #include <glutil.h>
 #include "config.h"
 #include <xref.h>
@@ -21,7 +19,6 @@
 
 #include <errno.h>
 #include <time.h>
-
 
 void
 dt_set_altlog(__g_handle hdl)
@@ -44,18 +41,15 @@ char *
 dt_rval_altlog_user(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      ((struct altlog *) arg)->uploader);
-  return output;
+  return ((struct altlog *) arg)->user;
 }
 
 char *
 dt_rval_altlog_group(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      ((struct altlog *) arg)->group);
-  return output;
+
+  return ((struct altlog *) arg)->groupn;
 }
 
 char *
@@ -154,7 +148,7 @@ ref_to_val_lk_altlog(void *arg, char *match, char *output, size_t max_size,
   if (!strncmp(match, _MC_GLOB_USER, 4))
     {
       return as_ref_to_val_lk(match, dt_rval_altlog_user, (__d_drt_h ) mppd,
-          "%hu");
+          "%s");
     }
   else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
     {
@@ -169,7 +163,7 @@ ref_to_val_lk_altlog(void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp(match, _MC_GLOB_GROUP, 5))
     {
       return as_ref_to_val_lk(match, dt_rval_altlog_group, (__d_drt_h ) mppd,
-          "%hu");
+          "%s");
     }
   else if (!strncmp(match, _MC_ALTLOG_FILES, 5))
     {
@@ -208,7 +202,6 @@ ref_to_val_lk_altlog(void *arg, char *match, char *output, size_t max_size,
   return NULL;
 }
 
-
 int
 altlog_format_block(void *iarg, char *output)
 {
@@ -232,18 +225,18 @@ altlog_format_block(void *iarg, char *output)
   strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
   return print_str(
-      "ALTLOG: %s - %llu Mbytes in %hu files - created %s by %hu.%hu [%hu]\n",
+      "ALTLOG: %s - %llu Mbytes in %hu files - created %s by %s.%s [%hu]\n",
       base, (ulint64_t) (data->bytes / 1048576), data->files, buffer2,
-      data->uploader, data->group, data->status);
+      data->user, data->groupn, data->status);
 }
 
 int
 altlog_format_block_batch(void *iarg, char *output)
 {
   struct altlog *data = (struct altlog *) iarg;
-  return printf("ALTLOG\x9%s\x9%llu\x9%hu\x9%d\x9%hu\x9%hu\x9%hu\n",
+  return printf("ALTLOG\x9%s\x9%llu\x9%hu\x9%d\x9%s\x9%s\x9%hu\n",
       data->dirname, (ulint64_t) data->bytes, data->files,
-      (int32_t) data->uptime, data->uploader, data->group, data->status);
+      (int32_t) data->uptime, data->user, data->groupn, data->status);
 
 }
 
@@ -255,12 +248,11 @@ altlog_format_block_exp(void *iarg, char *output)
       "size %llu\n"
       "files %hu\n"
       "time %d\n"
-      "user %hu\n"
-      "group %hu\n"
+      "user %s\n"
+      "group %s\n"
       "status %hu\n\n", data->dirname, (ulint64_t) data->bytes, data->files,
-      (int32_t) data->uptime, data->uploader, data->group, data->status);
+      (int32_t) data->uptime, data->user, data->groupn, data->status);
 }
-
 
 int
 gcb_altlog(void *buffer, char *key, char *val)
@@ -280,22 +272,20 @@ gcb_altlog(void *buffer, char *key, char *val)
     }
   else if (k_l == 4 && !strncmp(key, _MC_GLOB_USER, 4))
     {
-      uint16_t v_i = (uint16_t) strtol(val, NULL, 10);
-      if ( errno == ERANGE)
+      if (!(v_l = strlen(val)))
         {
           return 0;
         }
-      ptr->uploader = v_i;
+      memcpy(ptr->user, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
   else if (k_l == 5 && !strncmp(key, _MC_GLOB_GROUP, 5))
     {
-      uint16_t v_i = (uint16_t) strtol(val, NULL, 10);
-      if ( errno == ERANGE)
+      if (!(v_l = strlen(val)))
         {
           return 0;
         }
-      ptr->group = v_i;
+      memcpy(ptr->groupn, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
   else if (k_l == 5 && !strncmp(key, _MC_ALTLOG_FILES, 5))
@@ -341,7 +331,6 @@ gcb_altlog(void *buffer, char *key, char *val)
   return 0;
 }
 
-
 void *
 ref_to_val_ptr_altlog(void *arg, char *match, int *output)
 {
@@ -352,16 +341,16 @@ ref_to_val_ptr_altlog(void *arg, char *match, int *output)
       *output = ~((int) sizeof(data->uptime));
       return &data->uptime;
     }
-  else if (!strncmp(match, _MC_GLOB_USER, 4))
-    {
-      *output = sizeof(data->uploader);
-      return &data->uploader;
-    }
-  else if (!strncmp(match, _MC_GLOB_GROUP, 5))
-    {
-      *output = sizeof(data->group);
-      return &data->group;
-    }
+  /*else if (!strncmp(match, _MC_GLOB_USER, 4))
+   {
+   *output = sizeof(data->uploader);
+   return &data->uploader;
+   }
+   else if (!strncmp(match, _MC_GLOB_GROUP, 5))
+   {
+   *output = sizeof(data->group);
+   return &data->group;
+   }*/
   else if (!strncmp(match, _MC_ALTLOG_FILES, 5))
     {
       *output = sizeof(data->files);
