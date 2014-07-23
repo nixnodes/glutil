@@ -295,16 +295,7 @@ g_swapsort_exec(pmda m_ptr, __p_srd psrd)
           break;
         }
 
-      /*if (!(ml_f & F_INT_GSORT_DID_SORT))
-       {
-       ml_f |= F_INT_GSORT_DID_SORT;
-       }*/
     }
-
-  /*if (!(ml_f & F_INT_GSORT_DID_SORT))
-   {
-   return -1;
-   }*/
 
   if ((psrd->flags & F_GSORT_RESETPOS))
     {
@@ -431,6 +422,16 @@ g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
   return 0;
 }
 
+static int
+g_check_is_data_numeric(__g_handle hdl, char *field)
+{
+  int dummy_vb = 0;
+
+  hdl->g_proc2(hdl->_x_ref, field, &dummy_vb);
+
+  return !(0 != dummy_vb);
+}
+
 int
 g_sort(__g_handle hdl, char *field, uint32_t flags)
 {
@@ -478,6 +479,18 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
 
   int ret;
 
+  if (!(flags & F_GSORT_TYPE))
+    {
+      if (!g_check_is_data_numeric(hdl, field))
+        {
+          flags |= F_GSORT_NUMERIC;
+        }
+      else
+        {
+          flags |= F_GSORT_STRING;
+        }
+    }
+
   switch (flags & F_GSORT_TYPE)
     {
   case F_GSORT_NUMERIC:
@@ -520,35 +533,42 @@ opt_g_sort(void *arg, int m)
 
   int r = split_string(buffer, 0x2C, &_md_gsort);
 
-  if (r != 3)
+  if (r < 2)
     {
       return 4601;
+    }
+
+  if (r > 3)
+    {
+      return 4602;
     }
 
   p_md_obj ptr = md_first(&_md_gsort);
 
   if (!ptr)
     {
-      return 4602;
+      return 4604;
     }
 
   char *s_ptr = (char*) ptr->ptr;
 
-  if (!strncmp(s_ptr, "num", 3))
+  if (r == 3)
     {
-      g_sort_flags |= F_GSORT_NUMERIC;
+      if (!strncmp(s_ptr, "num", 3))
+        {
+          g_sort_flags |= F_GSORT_NUMERIC;
+        }
+      else if (!strncmp(s_ptr, "str", 3))
+        {
+          g_sort_flags |= F_GSORT_STRING;
+        }
+      else
+        {
+          return 4606;
+        }
+      ptr = ptr->next;
+      s_ptr = (char*) ptr->ptr;
     }
-  else if (!strncmp(s_ptr, "str", 3))
-    {
-      g_sort_flags |= F_GSORT_STRING;
-    }
-  else
-    {
-      return 4603;
-    }
-
-  ptr = ptr->next;
-  s_ptr = (char*) ptr->ptr;
 
   if (!strncmp(s_ptr, "desc", 4))
     {
@@ -560,7 +580,7 @@ opt_g_sort(void *arg, int m)
     }
   else
     {
-      return 4604;
+      return 4608;
     }
 
   ptr = ptr->next;
@@ -568,7 +588,7 @@ opt_g_sort(void *arg, int m)
 
   if (!strlen(g_sort_field))
     {
-      return 4605;
+      return 4610;
     }
 
   g_sort_flags |= F_GSORT_RESETPOS;
