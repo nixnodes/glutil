@@ -21,7 +21,8 @@
  *   - + Implemented quicksort algorithm (rev. 1_b1)
  *   - ~ Plugged memory leak (sorting functions) (rev. 1_b1)
  *   - ~ qsort was broken (rev. 2)
- *   - ~ floating point values sorting broken (since 2.4.1) (rev. 3)
+ *   - ~ Floating point values sorting broken (since 2.4.1) (rev. 3)
+ *   - % Changed default altlog output (rev. 4_b2)
  *
  * v2.3:
  *

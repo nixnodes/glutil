@@ -1319,7 +1319,7 @@ g_dump_gen(char *root)
     {
       ret.flags ^= F_PD_MATCHTYPES;
       ret.flags |= F_PD_MATCHREG;
-      if (gfl & F_OPT_VERBOSE)
+      if (gfl & F_OPT_VERBOSE5)
         {
           print_str("NOTICE: %s is a file\n", root);
         }

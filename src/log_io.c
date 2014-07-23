@@ -1697,7 +1697,15 @@ d_write(char *arg)
           (unsigned long long int) g_act_1.w_buffer.offset);
     }
 
-  if ((gfl & F_OPT_ZPRUNEDUP) && !access(datafile, R_OK)
+  if ((gfl & F_OPT_ZPRUNEDUP) && (gfl & F_OPT_NOBUFFER))
+    {
+      print_str(
+          "ERROR: '%s': pruning can't be done with buffering disabled\n",
+          datafile);
+    }
+
+  if ((gfl & F_OPT_ZPRUNEDUP) && !(gfl & F_OPT_NOBUFFER)
+      && !access(datafile, R_OK)
       && !g_fopen(datafile, "rb", F_DL_FOPEN_BUFFER, &g_act_1)
       && g_act_1.buffer.count)
     {

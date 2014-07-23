@@ -224,10 +224,9 @@ altlog_format_block(void *iarg, char *output)
 
   strftime(buffer2, 255, STD_FMT_TIME_STR, localtime(&t_t));
 
-  return print_str(
-      "ALTLOG: %s - %llu Mbytes in %hu files - created %s by %s.%s [%hu]\n",
-      base, (ulint64_t) (data->bytes / 1048576), data->files, buffer2,
-      data->user, data->groupn, data->status);
+  return print_str("ALTLOG: %s - %llu MB - created %s by %s.%s [%hu]\n",
+      base, (ulint64_t) (data->bytes / 1048576), buffer2, data->user,
+      data->groupn, data->status);
 }
 
 int
