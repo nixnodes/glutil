@@ -514,11 +514,16 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
 int
 opt_g_sort(void *arg, int m)
 {
-  char *buffer = g_pg(arg, m);
-
   if (gfl & F_OPT_SORT)
     {
       return 0;
+    }
+
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 4601;
     }
 
   if (0 != _md_gsort.count)
@@ -529,11 +534,6 @@ opt_g_sort(void *arg, int m)
   md_init(&_md_gsort, 3);
 
   int r = split_string(buffer, 0x2C, &_md_gsort);
-
-  if (r < 2)
-    {
-      return 4601;
-    }
 
   if (r > 3)
     {
@@ -567,20 +567,27 @@ opt_g_sort(void *arg, int m)
       s_ptr = (char*) ptr->ptr;
     }
 
-  if (!strncmp(s_ptr, "desc", 4))
+  if (r == 2)
     {
-      g_sort_flags |= F_GSORT_DESC;
-    }
-  else if (!strncmp(s_ptr, "asc", 3))
-    {
-      g_sort_flags |= F_GSORT_ASC;
+      if (!strncmp(s_ptr, "desc", 4))
+        {
+          g_sort_flags |= F_GSORT_DESC;
+        }
+      else if (!strncmp(s_ptr, "asc", 3))
+        {
+          g_sort_flags |= F_GSORT_ASC;
+        }
+      else
+        {
+          return 4608;
+        }
+      ptr = ptr->next;
     }
   else
     {
-      return 4608;
+      g_sort_flags |= F_GSORT_ASC;
     }
 
-  ptr = ptr->next;
   g_sort_field = (char*) ptr->ptr;
 
   if (!strlen(g_sort_field))

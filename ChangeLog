@@ -29,6 +29,7 @@
  *   - + 'nuser' and 'ngroup' dirlog fields (extra info), see DATA_STRUCTURES (rev. 5_b1)
  *   - ~ altlog data structure wasn't aligned to 4b (rev. 5_b2)
  *   - % Changed some altlog properties, update filelog scripts and rebuild filelog if using it (rev. 5)
+ *   - % Made --sort ..,<order> parameter optional (rev. 6_b1)
  *
  * v2.3:
  *
