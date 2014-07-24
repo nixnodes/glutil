@@ -509,7 +509,7 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     g_s_ex = g_insertion_sort_exec;
     break;
   default:
-    g_s_ex = g_heapsort_exec;
+    g_s_ex = g_qsort_exec;
     }
 
   srd.mppd.hdl = hdl;

@@ -147,7 +147,7 @@ char *hpd_up =
         "                          Used with -e, -d, -i, -l, -o, -w, -a, -k, -h, -n, -q, -z\n"
         "  --sortmethod <heap|qsort|insert|swap>\n"
         "                        Select a sorting method (heapsort, quicksort, insertion sort, swapsort)\n"
-        "                          Defaults to 'heap'\n"
+        "                          Defaults to quicksort\n"
         "\n"
         "Options:\n"
         "  -f                    Force operation where it applies (use -ff for greater effect)\n"
