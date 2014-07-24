@@ -3,7 +3,7 @@ binary log which holds file information
 
 REQUIREMENTS:
 
-	* glutil_2.4.4_b2 or later, compiled for a chrooted environment
+	* glutil_2.4.5 or later, compiled for a chrooted environment
 
 
 INSTALLATION:
@@ -31,16 +31,27 @@ INSTALLATION:
 	* Install the scripts:
 	
 		mkdir -p /<glroot>/bin/scripts/flog
-		cp fsearch.sh mk_index.sh /<glroot>/bin/scripts/flog
-		chmod +x /<glroot>/bin/scripts/flog/fsearch.sh
-		chmod +x /<glroot>/bin/scripts/flog/mk_index.sh
+		cp fsearch.sh mk_index.sh un_index.sh stack_exec.sh /<glroot>/bin/scripts/flog
+		chmod +x /<glroot>/bin/scripts/flog/*.sh
 		
-	* Configure site commands and STOR hook (in glftpd.conf):
+	* Configure site commands and STOR hooks (in glftpd.conf):
 	
 		cscript 	STOR			post 	/bin/scripts/flog/mk_index.sh
+		cscript     DELE            post    /bin/scripts/flog/stack_exec.sh
+		
 		site_cmd	FSEARCH			EXEC 	/bin/scripts/flog/fsearch.sh
 		custom-fsearch   !8      *
-
+		
+	* Configure 'stack_exec.sh' script to execute 'un_index.sh' and
+	  whatever other script that is already hooked to DELE command:
+	  
+	  	CHAIN=(				
+			"/bin/scripts/flog/un_index.sh"
+			"/bin/something.."
+			"/bin/someotherthing.."
+		)
+		
+	  Read description inside 'stack_exec.sh'
 
 USAGE:
 
