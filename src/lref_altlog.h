@@ -14,6 +14,8 @@
 
 #define _MC_ALTLOG_FILES        "files"
 
+#pragma pack(push, 4)
+
 struct altlog {
     uint16_t    status;          /* 0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED */
     time32_t    uptime;          /* Creation time since epoch (man 2 time) */
@@ -25,6 +27,8 @@ struct altlog {
     char        groupn[255];
     char        dirname[4096];    /* The name of the dir (fullpath) */
 };
+
+#pragma pack(pop)
 
 #define AL_SZ                           sizeof(struct altlog)
 

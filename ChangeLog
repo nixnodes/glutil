@@ -26,7 +26,8 @@
  *   - ~ 'ipc' generic field broken (was showing PID instead of IPC key) (rev. 4_b3) 
  *   - + Implemented string sorting (rev. 4_b4)
  *   - % Made --sort <mode> parameter optional (rev. 4_b5)
- *   - + 'nuser' and 'ngroup' dirlog fields (extra info), see DATA_STRUCTURES (rev. 5_b1) 
+ *   - + 'nuser' and 'ngroup' dirlog fields (extra info), see DATA_STRUCTURES (rev. 5_b1)
+ *   - ~ altlog data structure wasn't aligned to 4b (rev. 5_b2)
  *
  * v2.3:
  *
