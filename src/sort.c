@@ -334,11 +334,6 @@ g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
     return 3;
     }
 
-  if (!psrd->m_op)
-    {
-      return 4;
-    }
-
   int vb = 0;
 
   psrd->off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
