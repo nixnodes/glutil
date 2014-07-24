@@ -76,4 +76,7 @@ int
 g_is_file_compressed(char *file);
 #endif
 
+int
+r_preload_guid_data(pmda md, char *path);
+
 #endif /* X_F_H_ */

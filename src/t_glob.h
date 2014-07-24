@@ -99,6 +99,7 @@ typedef unsigned long long int ulint64_t;
 #define MSG_GEN_FLUSHED                 "NOTICE: %s: flushed %llu records, %llu bytes\n"
 #define MSG_LL_RC                       "NOTICE: %s: loaded %llu records\n"
 #define MSG_F_OWN_PATH                  "ERROR: could not get own path\n"
+#define MSG_GEN_NOFACC                  "ERROR: could not open '%s%s' for reading\n"
 
 #define MSG_GEN_MISSING_DTARG           "missing data type argument"
 

@@ -5,9 +5,9 @@
  *      Author: reboot
  */
 
-
 #include <glutil.h>
 #include "config.h"
+#include <x_f.h>
 #include <xref.h>
 
 #include <lref.h>
@@ -20,7 +20,6 @@
 
 #include <errno.h>
 #include <time.h>
-
 
 void
 dt_set_dirlog(__g_handle hdl)
@@ -140,6 +139,24 @@ dt_rval_x_dirlog(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
+static char *
+dt_rval_dirlog_username(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->uuid_stor,
+      ((struct dirlog* ) arg)->uploader)
+  return output;
+}
+
+static char *
+dt_rval_dirlog_groupname(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->guid_stor,
+      ((struct dirlog* ) arg)->group)
+  return output;
+}
+
 void *
 ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -150,7 +167,35 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size,
       return ptr;
     }
 
-  if (!strncmp(match, _MC_GLOB_USER, 4))
+  if (!strncmp(match, _MC_GLOB_USERNAME, 5))
+    {
+      int r;
+      if ((r = r_preload_guid_data(&((__d_drt_h) mppd)->hdl->uuid_stor, DEFPATH_PASSWD)))
+        {
+          if ( r == 1 )
+            {
+              print_str (MSG_GEN_NOFACC, GLROOT, DEFPATH_PASSWD);
+            }
+          return NULL;
+        }
+      return as_ref_to_val_lk(match, dt_rval_dirlog_username, (__d_drt_h ) mppd,
+          "%s");
+    }
+  else if (!strncmp(match, _MC_GLOB_GROUPNAME, 6))
+    {
+      int r;
+      if ((r = r_preload_guid_data(&((__d_drt_h) mppd)->hdl->guid_stor, DEFPATH_GROUP)))
+        {
+          if ( r == 1 )
+            {
+              print_str (MSG_GEN_NOFACC, GLROOT, DEFPATH_GROUP);
+            }
+          return NULL;
+        }
+      return as_ref_to_val_lk(match, dt_rval_dirlog_groupname,
+          (__d_drt_h ) mppd, "%s");
+    }
+  else if (!strncmp(match, _MC_GLOB_USER, 4))
     {
       return as_ref_to_val_lk(match, dt_rval_dirlog_user, (__d_drt_h ) mppd,
           "%hu");
@@ -207,7 +252,6 @@ ref_to_val_lk_dirlog(void *arg, char *match, char *output, size_t max_size,
   return NULL;
 }
 
-
 int
 dirlog_format_block(void *iarg, char *output)
 {
@@ -259,7 +303,6 @@ dirlog_format_block_exp(void *iarg, char *output)
       "status %hu\n\n", data->dirname, (ulint64_t) data->bytes, data->files,
       (int32_t) data->uptime, data->uploader, data->group, data->status);
 }
-
 
 int
 gcb_dirlog(void *buffer, char *key, char *val)
@@ -339,7 +382,6 @@ gcb_dirlog(void *buffer, char *key, char *val)
     }
   return 0;
 }
-
 
 void *
 ref_to_val_ptr_dirlog(void *arg, char *match, int *output)

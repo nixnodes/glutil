@@ -529,3 +529,19 @@ g_is_file_compressed(char *file)
   return r;
 }
 #endif
+
+int
+r_preload_guid_data(pmda md, char *path)
+{
+  if (md->offset)
+    {
+      return 0;
+    }
+  char buffer[PATH_MAX];
+  snprintf(buffer, PATH_MAX, "%s%s", GLROOT, path);
+  md_init(md, 16);
+
+  int r = load_guid_info(md, buffer);
+
+  return r;
+}

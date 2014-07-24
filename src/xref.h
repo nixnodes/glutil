@@ -181,8 +181,6 @@ typedef struct ___d_xref
   uint32_t minor;
   uint16_t pbits;
   float sparseness;
-  mda guid_stor;
-  mda uuid_stor;
   _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
 
@@ -208,6 +206,8 @@ typedef struct ___std_rh_0
   _d_xref p_xref;
   __d_xproc_rc xproc_rcl0, xproc_rcl1;
   _d_omfp xproc_out;
+  mda guid_stor;
+  mda uuid_stor;
   char root[PATH_MAX];
 } _std_rh, *__std_rh;
 
@@ -260,5 +260,15 @@ g_dump_gen(char *root);
 
 float
 file_sparseness(const struct stat *p);
+
+#define dt_rval_x_guid(stor, id) \
+{ \
+  p_gu_n pgn = search_xuid_id(stor, (uint32_t)(id)); \
+  if (pgn != NULL) \
+    { \
+      return pgn->name; \
+    } \
+  strncpy(output, MSG_X_UMISSING, sizeof(MSG_X_UMISSING)); \
+};
 
 #endif /* XREF_H_ */

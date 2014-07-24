@@ -115,6 +115,8 @@ typedef struct g_handle
   void *_x_ref;
   int shmcflags;
   int shmatflags;
+  mda guid_stor;
+  mda uuid_stor;
 } _g_handle, *__g_handle;
 
 typedef void

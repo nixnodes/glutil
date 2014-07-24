@@ -112,6 +112,8 @@ FLAGS:
    basedir    ES    The name of the dir (basepath)
    x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
    xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   nuser      ES    User name of the creator
+   ngroup     ES    Group name of the creator
    status     I     0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED
    time       I     Creation time since epoch (man 2 time)
    user       I     The userid of the creator
@@ -176,7 +178,7 @@ FLAGS:
    basedir    ES    The filename component of fullpath current dir (basepath)
    ndir       ES    The directory component of fullpath current dir
    ssl        I     0 = no ssl, 1 = ssl on control, 2 = ssl on control and data
-   group      I     The groupid of the users primary group
+   group      I     The group id of the users primary group
    pid        I     The processor id of the process
    lupdtime   I     Last update time since epoch (man 2 time)
    lxfertime  I     The time of the last succesfull transfer

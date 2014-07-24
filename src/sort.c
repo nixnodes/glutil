@@ -472,6 +472,8 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     g_s_ex = g_heapsort_exec;
     }
 
+  srd.mppd.hdl = hdl;
+
   int ret;
 
   if (!(flags & F_GSORT_TYPE))

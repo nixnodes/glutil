@@ -343,6 +343,8 @@ g_cleanup(__g_handle hdl)
   r += md_g_free(&hdl->w_buffer);
   r += md_g_free(&hdl->print_mech);
   r += md_g_free(&hdl->_accumulator);
+  r += md_g_free(&hdl->uuid_stor);
+  r += md_g_free(&hdl->guid_stor);
 
   p_md_obj ptr;
 
@@ -1699,8 +1701,7 @@ d_write(char *arg)
 
   if ((gfl & F_OPT_ZPRUNEDUP) && (gfl & F_OPT_NOBUFFER))
     {
-      print_str(
-          "ERROR: '%s': pruning can't be done with buffering disabled\n",
+      print_str("ERROR: '%s': pruning can't be done with buffering disabled\n",
           datafile);
     }
 

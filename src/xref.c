@@ -30,27 +30,6 @@
 #include <dirent.h>
 #include <math.h>
 
-static int
-r_preload_guid_data(pmda md, char *path)
-{
-  if (md->offset)
-    {
-      return 0;
-    }
-  char buffer[PATH_MAX];
-  snprintf(buffer, PATH_MAX, "%s%s", GLROOT, path);
-  md_init(md, 16);
-
-  int r = load_guid_info(md, buffer);
-
-  if (r == 1)
-    {
-      print_str("WARNING: unable to access '%s'\n", buffer);
-    }
-
-  return r;
-}
-
 int
 g_l_fmode_n(char *path, size_t max_size, char *output)
 {
@@ -80,10 +59,15 @@ g_l_fmode(char *path, size_t max_size, char *output)
 }
 
 static int
-g_legacy_guser(__d_xref data, size_t max_size, char *output)
+g_legacy_guser(__d_xref data, size_t max_size, char *output, __d_drt_h mppd)
 {
-  if (r_preload_guid_data(&data->uuid_stor, "/etc/passwd"))
+  int r;
+  if ((r = r_preload_guid_data(&mppd->hdl->uuid_stor, DEFPATH_PASSWD)))
     {
+      /*if (r == 1)
+        {
+          print_str(MSG_GEN_NOFACC, GLROOT, DEFPATH_PASSWD);
+        }*/
       return 1;
     }
 
@@ -94,7 +78,7 @@ g_legacy_guser(__d_xref data, size_t max_size, char *output)
       return 2;
     }
 
-  p_gu_n pgn = search_xuid_id(&data->uuid_stor, (uint32_t) st.st_uid);
+  p_gu_n pgn = search_xuid_id(&mppd->hdl->uuid_stor, (uint32_t) st.st_uid);
   if (pgn != NULL)
     {
       snprintf(output, max_size, "%s", pgn->name);
@@ -106,10 +90,15 @@ g_legacy_guser(__d_xref data, size_t max_size, char *output)
 }
 
 static int
-g_legacy_ggroup(__d_xref data, size_t max_size, char *output)
+g_legacy_ggroup(__d_xref data, size_t max_size, char *output, __d_drt_h mppd)
 {
-  if (r_preload_guid_data(&data->guid_stor, "/etc/group"))
+  int r;
+  if ((r = r_preload_guid_data(&mppd->hdl->guid_stor, DEFPATH_GROUP)))
     {
+      /*if (r == 1)
+        {
+          print_str(MSG_GEN_NOFACC, GLROOT, DEFPATH_GROUP);
+        }*/
       return 1;
     }
 
@@ -120,7 +109,7 @@ g_legacy_ggroup(__d_xref data, size_t max_size, char *output)
       return 2;
     }
 
-  p_gu_n pgn = search_xuid_id(&data->guid_stor, (uint32_t) st.st_gid);
+  p_gu_n pgn = search_xuid_id(&mppd->hdl->guid_stor, (uint32_t) st.st_gid);
   if (pgn != NULL)
     {
       snprintf(output, max_size, "%s", pgn->name);
@@ -417,11 +406,11 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
     }
   else if (!strncmp(match, _MC_X_USER, 4))
     {
-      return g_legacy_guser(data, max_size, output);
+      return g_legacy_guser(data, max_size, output, (__d_drt_h ) mppd);
     }
   else if (!strncmp(match, _MC_X_GROUP, 5))
     {
-      return g_legacy_ggroup(data, max_size, output);
+      return g_legacy_ggroup(data, max_size, output, (__d_drt_h ) mppd);
     }
   else
     {
@@ -626,13 +615,7 @@ char *
 dt_rval_x_user(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  p_gu_n pgn = search_xuid_id(&((__d_xref) arg)->uuid_stor, (uint32_t)((__d_xref) arg)->st.st_uid);
-  if (pgn != NULL)
-    {
-      return pgn->name;
-    }
-
-  strncpy(output, MSG_X_UMISSING, sizeof(MSG_X_UMISSING));
+  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, ((__d_xref) arg)->st.st_uid)
   return output;
 }
 
@@ -640,13 +623,7 @@ char *
 dt_rval_x_group(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  p_gu_n pgn = search_xuid_id(&((__d_xref) arg)->guid_stor, (uint32_t)((__d_xref) arg)->st.st_gid);
-  if (pgn != NULL)
-    {
-      return pgn->name;
-    }
-
-  strncpy(output, MSG_X_GMISSING, sizeof(MSG_X_GMISSING));
+  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->guid_stor, ((__d_xref) arg)->st.st_gid)
   return output;
 }
 
@@ -1158,29 +1135,33 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_X_USER, 4))
     {
-      if (arg)
+      int r;
+      if ((r=r_preload_guid_data(&((__d_drt_h) mppd)->hdl->uuid_stor, DEFPATH_PASSWD)))
         {
-          int r;
-          if ((r=r_preload_guid_data(&((__d_xref) arg)->uuid_stor, DEFPATH_PASSWD)))
+          if ( r == 1 )
             {
-              return NULL;
+              print_str (MSG_GEN_NOFACC, GLROOT, DEFPATH_PASSWD);
             }
-          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+          return NULL;
         }
+      ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+
       return as_ref_to_val_lk(match, dt_rval_x_user ,(__d_drt_h)mppd, "%s");
     }
   else if (!strncmp(match, _MC_X_GROUP, 5))
     {
-      if (arg)
+      int r;
+      if ((r=r_preload_guid_data(&((__d_drt_h) mppd)->hdl->guid_stor, DEFPATH_GROUP)))
         {
-          int r;
-          if ((r=r_preload_guid_data(&((__d_xref) arg)->guid_stor, DEFPATH_GROUP)))
+          if ( r == 1 )
             {
-              return NULL;
+              print_str (MSG_GEN_NOFACC, GLROOT, DEFPATH_GROUP);
             }
-
-          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+          return NULL;
         }
+
+      ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+
       return as_ref_to_val_lk(match, dt_rval_x_group ,(__d_drt_h)mppd, "%s");
     }
   else if (!strncmp(match, "c:", 2))
@@ -1376,8 +1357,6 @@ g_dump_gen(char *root)
   end:
 
   g_cleanup(&ret.hdl);
-  md_g_free(&ret.p_xref.uuid_stor);
-  md_g_free(&ret.p_xref.guid_stor);
 
   return ret.rt_m;
 }
