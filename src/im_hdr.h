@@ -56,7 +56,7 @@
 #define F_GH_IS_ALTLOG                  (a64 << 44)
 
 /* these bits determine log type */
-#define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE)
+#define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE|F_GH_IS_ALTLOG)
 
 #define F_GH_ISSHM                      (F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP                       (F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
@@ -131,6 +131,7 @@ _dt_set dt_set_dummy, dt_set_dirlog, dt_set_nukelog, dt_set_dupefile,
 
 __dt_set pdt_set_dirlog, pdt_set_nukelog, pdt_set_dupefile, pdt_set_lastonlog,
     pdt_set_oneliners, pdt_set_imdb, pdt_set_game, pdt_set_tvrage, pdt_set_gen1,
-    pdt_set_gen2, pdt_set_gen3, pdt_set_gen4, pdt_set_gconf, pdt_set_sconf, pdt_set_altlog;
+    pdt_set_gen2, pdt_set_gen3, pdt_set_gen4, pdt_set_gconf, pdt_set_sconf,
+    pdt_set_altlog;
 
 #endif /* IM_HDR_H_ */

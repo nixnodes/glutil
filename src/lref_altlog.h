@@ -16,16 +16,15 @@
 
 #pragma pack(push, 4)
 
-struct altlog {
-    uint16_t    status;          /* 0 = NEWDIR, 1 = NUKE, 2 = UNNUKE, 3 = DELETED */
-    time32_t    uptime;          /* Creation time since epoch (man 2 time) */
-    //uint16_t    uploader;        /* The userid of the creator */
-    //uint16_t    group;           /* The groupid of the primary group of the creator */
-    uint16_t    files;           /* The number of files inside the dir */
-    uint64_t    bytes;           /* The number of bytes in the dir */
-    char        user[255];
-    char        groupn[255];
-    char        dirname[4096];    /* The name of the dir (fullpath) */
+struct altlog
+{
+  uint16_t status;
+  time32_t uptime;
+  uint16_t uid;
+  uint16_t gid;
+  uint16_t files;
+  uint64_t bytes;
+  char dirname[4096];
 };
 
 #pragma pack(pop)
@@ -40,7 +39,8 @@ __g_proc_rv dt_rval_altlog_user, dt_rval_altlog_group, dt_rval_altlog_files,
 __d_ref_to_pval ref_to_val_ptr_altlog;
 _d_rtv_lk ref_to_val_lk_altlog;
 
-__d_format_block altlog_format_block,altlog_format_block_exp,  altlog_format_block_batch;
+__d_format_block altlog_format_block, altlog_format_block_exp,
+    altlog_format_block_batch;
 
 int
 gcb_altlog(void *buffer, char *key, char *val);

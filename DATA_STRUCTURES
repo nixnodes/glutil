@@ -314,3 +314,19 @@ FLAGS:
    ge2        S     255 byte signed character field
    ge3        S     128 byte signed character field
    ge4        S     -||-
+
+; ALTLOG
+
+   file       S     The name of the file (fullpath)
+   mode       ES    File type (glutil --info -vv)
+   basedir    ES    The name of the file (basepath)
+   x:<field>  ES    Returns FILESYSTEM info on <dir> (available fields listed above)
+   xg:<field> ES    Returns FILESYSTEM info on /glroot/<dir> (available fields listed above)
+   nuser      ES    User name of the creator
+   ngroup     ES    Group name of the creator
+   status     I     Reserved
+   time       I     Creation time since epoch (man 2 time)
+   user       I     The user id of the creator
+   group      I     The group id of the primary group of the creator
+   files      I     Reserved
+   size       I     The size of the file
