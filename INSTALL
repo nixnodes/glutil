@@ -105,6 +105,12 @@ glftpd.conf:
 
 	pre_dir_check  /bin/glutil-precheck
 	
+Ensure that the global configuration files are loaded into the shared
+memory segment at boot time:
+
+/etc/rc.local (or any boot exec method of your choosing):
+
+	/glftpd/bin/scripts/precheck_compile.sh
 
 Time to test it out:
 
