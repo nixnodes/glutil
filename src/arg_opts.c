@@ -1336,6 +1336,10 @@ opt_g_swapmode(void *arg, int m)
     {
       gfl0 |= F_OPT_SMETHOD_Q;
     }
+  else if (!strncmp(buffer, "insert", 5))
+    {
+      gfl0 |= F_OPT_SMETHOD_INSSORT;
+    }
   else
     {
       return 140059;

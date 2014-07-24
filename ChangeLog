@@ -30,6 +30,7 @@
  *   - ~ altlog data structure wasn't aligned to 4b (rev. 5_b2)
  *   - % Changed some altlog properties, update filelog scripts and rebuild filelog if using it (rev. 5)
  *   - % Made --sort ..,<order> parameter optional (rev. 6_b1)
+ *   - + Implemented insertion sort (rev. 6_b2)
  *
  * v2.3:
  *
