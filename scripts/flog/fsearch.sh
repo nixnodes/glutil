@@ -6,7 +6,7 @@ FILE_LOG_PATH=/ftp-data/glutil/db/filelog
 ############################################
 #
 
-echo "${@}" | egrep -q '([^a-zA-Z0-9\.\_\-\*\(\)\^\ \/\$\\]|\$\()' && exit 2
+echo "${@}" | egrep -q "([\`\>\<\|]|\$\()" && exit 2
 
 vstr=`echo "${@}" | sed -r 's/ /.*/'`
 
