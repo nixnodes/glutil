@@ -144,6 +144,86 @@ g_swap_p(void **x, void **y)
   *y = z;
 }
 
+static int
+g_insertion_sort_exec(pmda m_ptr, __p_srd psrd)
+{
+  g_setjmp(0, "g_insertion_sort_exec", NULL, NULL);
+  int ret = 0;
+  void **ref_arr = calloc(m_ptr->offset + 1, sizeof(void*));
+
+  if (md_md_to_array(m_ptr, ref_arr))
+    {
+      ret = 1;
+      goto cl_end;
+    }
+
+  int64_t j, i, length = (int64_t) m_ptr->offset;
+
+  for (i = 1; i < length; i++)
+    {
+      j = i;
+
+      while (j > 0 && !psrd->m_op(ref_arr[j], ref_arr[j - 1], psrd))
+        {
+          g_swap_p(&ref_arr[j], &ref_arr[j - 1]);
+          j--;
+        }
+    }
+
+  if (md_array_to_md(ref_arr, m_ptr))
+    {
+      ret = 2;
+    }
+
+  cl_end: ;
+
+  free(ref_arr);
+
+  return ret;
+}
+
+static int
+g_selection_sort_exec(pmda m_ptr, __p_srd psrd)
+{
+  g_setjmp(0, "g_selection_sort_exec", NULL, NULL);
+  int ret = 0;
+  void **ref_arr = calloc(m_ptr->offset + 1, sizeof(void*));
+
+  if (md_md_to_array(m_ptr, ref_arr))
+    {
+      ret = 1;
+      goto cl_end;
+    }
+
+  off_t i = m_ptr->offset;
+  for (i = 0; i < m_ptr->offset - 1; ++i)
+    {
+      off_t j, min = i;
+
+      for (j = i + 1; j < m_ptr->offset; ++j)
+        {
+
+          if (!psrd->m_op(ref_arr[j], ref_arr[min], psrd))
+            {
+              min = j;
+            }
+        }
+
+      g_swap_p(&ref_arr[i], &ref_arr[min]);
+    }
+
+  if (md_array_to_md(ref_arr, m_ptr))
+    {
+      ret = 2;
+    }
+
+  cl_end: ;
+
+  free(ref_arr);
+
+  return ret;
+}
+
 static void
 g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
 {
@@ -164,7 +244,6 @@ g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
           i++;
           j--;
         }
-
     };
 
   if (left < j)
@@ -203,9 +282,9 @@ g_qsort_exec(pmda m_ptr, __p_srd psrd)
 }
 
 static void
-g_heap_siftdown(void **arr, int start, int end, __p_srd psrd)
+g_heap_siftdown(void **arr, int64_t start, int64_t end, __p_srd psrd)
 {
-  int root, child;
+  int64_t root, child;
 
   root = start;
   while (2 * root + 1 < end)
@@ -236,12 +315,12 @@ g_heapsort_exec(pmda m_ptr, __p_srd psrd)
       goto cl_end;
     }
 
-  int start, end;
+  int64_t start, end;
 
   for (start = (m_ptr->offset - 2) / 2; start >= 0; --start)
     g_heap_siftdown(ref_arr, start, m_ptr->offset, psrd);
 
-  for (end = m_ptr->offset - 1; end; --end)
+  for (end = (int64_t) (m_ptr->offset - 1); end; --end)
     {
       g_swap_p(&ref_arr[end], &ref_arr[0]);
       g_heap_siftdown(ref_arr, 0, end, psrd);
@@ -468,8 +547,14 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
   case F_OPT_SMETHOD_Q:
     g_s_ex = g_qsort_exec;
     break;
+  case F_OPT_SMETHOD_INSSORT:
+    g_s_ex = g_insertion_sort_exec;
+    break;
+  case F_OPT_SMETHOD_SELECT:
+    g_s_ex = g_selection_sort_exec;
+    break;
   default:
-    g_s_ex = g_heapsort_exec;
+    g_s_ex = g_qsort_exec;
     }
 
   srd.mppd.hdl = hdl;
@@ -514,11 +599,16 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
 int
 opt_g_sort(void *arg, int m)
 {
-  char *buffer = g_pg(arg, m);
-
   if (gfl & F_OPT_SORT)
     {
       return 0;
+    }
+
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 4601;
     }
 
   if (0 != _md_gsort.count)
@@ -529,11 +619,6 @@ opt_g_sort(void *arg, int m)
   md_init(&_md_gsort, 3);
 
   int r = split_string(buffer, 0x2C, &_md_gsort);
-
-  if (r < 2)
-    {
-      return 4601;
-    }
 
   if (r > 3)
     {
@@ -567,20 +652,27 @@ opt_g_sort(void *arg, int m)
       s_ptr = (char*) ptr->ptr;
     }
 
-  if (!strncmp(s_ptr, "desc", 4))
+  if (r >= 2)
     {
-      g_sort_flags |= F_GSORT_DESC;
-    }
-  else if (!strncmp(s_ptr, "asc", 3))
-    {
-      g_sort_flags |= F_GSORT_ASC;
+      if (!strncmp(s_ptr, "desc", 4))
+        {
+          g_sort_flags |= F_GSORT_DESC;
+        }
+      else if (!strncmp(s_ptr, "asc", 3))
+        {
+          g_sort_flags |= F_GSORT_ASC;
+        }
+      else
+        {
+          return 4608;
+        }
+      ptr = ptr->next;
     }
   else
     {
-      return 4608;
+      g_sort_flags |= F_GSORT_ASC;
     }
 
-  ptr = ptr->next;
   g_sort_field = (char*) ptr->ptr;
 
   if (!strlen(g_sort_field))
