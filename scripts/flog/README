@@ -40,11 +40,11 @@ INSTALLATION:
 		
 	* Configure site commands and STOR hooks (in glftpd.conf):
 	
-		cscript 	STOR			post 	/bin/scripts/flog/mk_index.sh
-		cscript     DELE            post    /bin/scripts/flog/stack_exec.sh
+		cscript			STOR			post 	/bin/scripts/flog/mk_index.sh
+		cscript			DELE            post    /bin/scripts/flog/stack_exec.sh
 		
-		site_cmd	FSEARCH			EXEC 	/bin/scripts/flog/fsearch.sh
-		custom-fsearch   !8      *
+		site_cmd		FSEARCH			EXEC 	/bin/scripts/flog/fsearch.sh
+		custom-fsearch	!8      		*
 		
 	* Configure 'stack_exec.sh' script to execute 'un_index.sh' and
 	  whatever other script that is already hooked to DELE command:
