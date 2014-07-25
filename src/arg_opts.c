@@ -1340,6 +1340,10 @@ opt_g_swapmode(void *arg, int m)
     {
       gfl0 |= F_OPT_SMETHOD_INSSORT;
     }
+  else if (!strncmp(buffer, "select", 6))
+    {
+      gfl0 |= F_OPT_SMETHOD_SELECT;
+    }
   else
     {
       return 140059;

@@ -182,6 +182,48 @@ g_insertion_sort_exec(pmda m_ptr, __p_srd psrd)
   return ret;
 }
 
+static int
+g_selection_sort_exec(pmda m_ptr, __p_srd psrd)
+{
+  g_setjmp(0, "g_selection_sort_exec", NULL, NULL);
+  int ret = 0;
+  void **ref_arr = calloc(m_ptr->offset + 1, sizeof(void*));
+
+  if (md_md_to_array(m_ptr, ref_arr))
+    {
+      ret = 1;
+      goto cl_end;
+    }
+
+  off_t i = m_ptr->offset;
+  for (i = 0; i < m_ptr->offset - 1; ++i)
+    {
+      off_t j, min = i;
+
+      for (j = i + 1; j < m_ptr->offset; ++j)
+        {
+
+          if (!psrd->m_op(ref_arr[j], ref_arr[min], psrd))
+            {
+              min = j;
+            }
+        }
+
+      g_swap_p(&ref_arr[i], &ref_arr[min]);
+    }
+
+  if (md_array_to_md(ref_arr, m_ptr))
+    {
+      ret = 2;
+    }
+
+  cl_end: ;
+
+  free(ref_arr);
+
+  return ret;
+}
+
 static void
 g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
 {
@@ -507,6 +549,9 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     break;
   case F_OPT_SMETHOD_INSSORT:
     g_s_ex = g_insertion_sort_exec;
+    break;
+  case F_OPT_SMETHOD_SELECT:
+    g_s_ex = g_selection_sort_exec;
     break;
   default:
     g_s_ex = g_qsort_exec;
