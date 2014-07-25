@@ -1,5 +1,9 @@
 These scripts are used for building/searching a special
-binary log which holds file information
+binary log which holds file information. The log may be
+built passively (see 'filelog-rebuild' macro) or actively
+by hooking the mk_index.sh script to ftp STOR commands.
+
+See installation instructions below;
 
 REQUIREMENTS:
 
@@ -52,6 +56,11 @@ INSTALLATION:
 		)
 		
 	  Read description inside 'stack_exec.sh'
+	  
+	* Build the initial index using 'filelog-rebuild' macro in 'macros.glutil',
+	  make sure to have the latest version of the file, then run:
+	
+		glutil -m filelog-rebuild
 
 USAGE:
 
