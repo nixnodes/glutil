@@ -60,7 +60,7 @@ INSTALLATION:
 	* Build the initial index using 'filelog-rebuild' macro in 'macros.glutil',
 	  make sure to have the latest version of the file, then run:
 	
-		glutil -m filelog-rebuild --altlog /glftpd/ftp-data/glutil/db/filelog
+		glutil -m filelog-rebuild --altlog /<glroot>/ftp-data/glutil/db/filelog
 
 USAGE:
 
