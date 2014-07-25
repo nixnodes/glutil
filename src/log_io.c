@@ -1256,7 +1256,7 @@ rebuild_data_file(char *file, __g_handle hdl)
       if ((hdl->flags & F_GH_IO_GZIP))
         {
           print_str(
-              "NOTICE: %s: gzip write compression enabled, level '%hhu'\n",
+              "NOTICE: %s: gzip compression enabled, level '%hhu'\n",
               hdl->s_buffer, comp_level);
         }
 #endif
