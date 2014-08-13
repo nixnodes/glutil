@@ -1235,7 +1235,7 @@ rebuild_data_file(char *file, __g_handle hdl)
       return 0;
     }
 
-  if (gfl & F_OPT_VERBOSE)
+  if (gfl & F_OPT_VERBOSE4)
     {
       print_str("NOTICE: %s: flushing data to disk..\n", hdl->s_buffer);
     }
@@ -1249,14 +1249,13 @@ rebuild_data_file(char *file, __g_handle hdl)
       hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     }
 
-  if (gfl & F_OPT_VERBOSE2)
+  if (gfl & F_OPT_VERBOSE3)
     {
       print_str("NOTICE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
 #ifdef HAVE_ZLIB_H
       if ((hdl->flags & F_GH_IO_GZIP))
         {
-          print_str(
-              "NOTICE: %s: gzip compression enabled, level '%hhu'\n",
+          print_str("NOTICE: %s: gzip compression enabled, level '%hhu'\n",
               hdl->s_buffer, comp_level);
         }
 #endif
@@ -1337,7 +1336,7 @@ rebuild_data_file(char *file, __g_handle hdl)
   if (!(gfl & F_OPT_NOWRITE)
       && !((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED)))
     {
-      if (data_backup_records(file))
+      if (!(hdl->flags & F_GH_NO_BACKUP) && data_backup_records(file))
         {
           ret = 3;
           if (!(gfl & F_OPT_NOWRITE))
@@ -1559,22 +1558,52 @@ flush_data_md(__g_handle hdl, char *outfile)
 
   if (hdl->flags & F_GH_IO_GZIP)
     {
-      gzclose(gz_fh);
+      if (gz_fh)
+        {
+          gzclose(gz_fh);
+        }
     }
 #endif
 
   if (!(gfl & F_OPT_MODE_RAWDUMP))
     {
-      fclose(fh);
+      if (fh)
+        {
+          fclose(fh);
+        }
 
       if (hdl->st_mode)
         {
           chmod(outfile, hdl->st_mode);
         }
-
     }
 
   return ret;
+}
+
+static void
+d_write_stats(char *datafile)
+{
+  if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+      && !(gfl0 & F_OPT_NOSTATS))
+    {
+
+#ifdef HAVE_ZLIB_H
+      if (g_act_1.flags & F_GH_IO_GZIP)
+        {
+          fprintf(stderr, MSG_GEN_WROTE2, datafile,
+              (double) get_file_size(datafile) / 1024.0,
+              (double) g_act_1.bw / 1024.0,
+              (long long unsigned int) g_act_1.rw);
+        }
+      else
+        {
+          OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
+        }
+#else
+      OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
+#endif
+    }
 }
 
 int
@@ -1599,9 +1628,9 @@ d_write(char *arg)
       return 2;
     }
 
-  off_t f_sz = get_file_size(datafile);
+  //off_t f_sz = get_file_size(datafile);
 
-  g_act_1.flags |= F_GH_FFBUFFER | F_GH_D_WRITE;
+  g_act_1.flags |= F_GH_FFBUFFER | F_GH_D_WRITE | F_GH_WAPPEND | F_GH_DFNOWIPE;
 
 #ifdef HAVE_ZLIB_H
   if (gfl0 & F_OPT_GZIP)
@@ -1611,10 +1640,10 @@ d_write(char *arg)
     }
 #endif
 
-  if (f_sz > 0)
-    {
-      g_act_1.flags |= F_GH_WAPPEND | F_GH_DFNOWIPE;
-    }
+  /*if (f_sz > 0)
+   {
+   g_act_1.flags |= F_GH_WAPPEND | F_GH_DFNOWIPE;
+   }*/
 
   strncpy(g_act_1.file, datafile, strlen(datafile));
 
@@ -1640,6 +1669,7 @@ d_write(char *arg)
   else
     {
       in = stdin;
+      sprintf(infile_p, "stdin");
       g_act_1.flags |= F_GH_FROMSTDIN;
     }
 
@@ -1647,11 +1677,22 @@ d_write(char *arg)
 
   if (gfl & F_OPT_VERBOSE)
     {
-      print_str("NOTICE: %s: loading data..\n", datafile);
+      print_str("NOTICE: %s: loading input data..\n", infile_p);
+    }
+
+  if ((r = g_proc_mr(&g_act_1)))
+    {
+      goto end;
     }
 
   if (!(gfl & F_OPT_MODE_BINARY))
     {
+      g_act_1.gcb_post_proc = g_d_write_postgcb;
+
+      data_backup_records(datafile);
+
+      g_act_1.flags |= F_GH_NO_BACKUP;
+
       if ((r = m_load_input_n(&g_act_1, in)))
         {
           print_str("ERROR: DATA IMPORT: %s: [%d]: %s\n", datafile, r,
@@ -1659,6 +1700,19 @@ d_write(char *arg)
           ret = 5;
           goto end;
         }
+
+      if (g_act_1.w_buffer.offset > 0 && rebuild_data_file(datafile, &g_act_1))
+        {
+          print_str(MSG_GEN_DFRFAIL, datafile);
+          ret = 16;
+          goto end;
+        }
+      d_write_stats(datafile);
+      /*print_str("ERROR: %s: no records were loaded, aborting..\n", datafile);
+       ret = 15;
+       goto end;*/
+      goto end;
+
     }
   else
     {
@@ -1674,7 +1728,7 @@ d_write(char *arg)
       if ((r = load_data_md(&g_act_1.w_buffer, infile_p, &g_act_1)))
         {
           print_str(
-              "ERROR: %s: [%d]: could not load input data (binary source)\n",
+              "ERROR: DATA IMPORT: %s: [%d]: could not load input data (binary source)\n",
               datafile, r);
           ret = 12;
           goto end;
@@ -1684,13 +1738,6 @@ d_write(char *arg)
   if (g_act_1.flags & F_GH_FROMSTDIN)
     {
       g_act_1.flags ^= F_GH_FROMSTDIN;
-    }
-
-  if (!g_act_1.w_buffer.offset)
-    {
-      print_str("ERROR: %s: no records were loaded, aborting..\n", datafile);
-      ret = 15;
-      goto end;
     }
 
   if (gfl & F_OPT_VERBOSE)
@@ -1755,26 +1802,7 @@ d_write(char *arg)
     }
   else
     {
-      if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
-          && !(gfl0 & F_OPT_NOSTATS))
-        {
-
-#ifdef HAVE_ZLIB_H
-          if (g_act_1.flags & F_GH_IO_GZIP)
-            {
-              fprintf(stderr, MSG_GEN_WROTE2, datafile,
-                  (double) get_file_size(datafile) / 1024.0,
-                  (double) g_act_1.bw / 1024.0,
-                  (long long unsigned int) g_act_1.rw);
-            }
-          else
-            {
-              OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
-            }
-#else
-          OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
-#endif
-        }
+      d_write_stats(datafile);
     }
 
   end:
@@ -1785,6 +1813,76 @@ d_write(char *arg)
     }
 
   return ret;
+}
+
+int
+g_load_record(__g_handle hdl, const void *data, off_t max, uint16_t flags)
+{
+  g_setjmp(0, "g_load_record", NULL, NULL);
+  void *buffer = NULL;
+
+  if (flags & F_LOAD_RECORD_FLUSH)
+    {
+      if (hdl->w_buffer.offset == max)
+        {
+          hdl->w_buffer.flags |= F_MDA_FREE;
+          if (rebuild_data_file(hdl->file, hdl))
+            {
+              return 1;
+            }
+          p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
+          if (gfl & F_OPT_VERBOSE5)
+            {
+              print_str("NOTICE: scrubbing write cache..\n");
+            }
+          while (ptr)
+            {
+              ptr_s = ptr->next;
+              free(ptr->ptr);
+              bzero(ptr, sizeof(md_obj));
+              ptr = ptr_s;
+            }
+          hdl->w_buffer.pos = hdl->w_buffer.objects;
+          hdl->w_buffer.offset = 0;
+        }
+    }
+
+  if (flags & F_LOAD_RECORD_DATA)
+    {
+      buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
+
+      if (!buffer)
+        {
+          return 2;
+        }
+
+      memcpy(buffer, data, hdl->block_sz);
+    }
+
+  return 0;
+}
+
+int
+g_d_write_postgcb(void *buffer, void *p_hdl)
+{
+  __g_handle hdl = (__g_handle ) p_hdl;
+
+  int r;
+
+  if (g_bmatch(buffer, hdl, &hdl->w_buffer))
+    {
+      md_unlink(&hdl->w_buffer, hdl->w_buffer.pos);
+      return 1;
+    }
+
+  if ((r = g_load_record(hdl, (const void*) buffer, 32000,
+  F_LOAD_RECORD_FLUSH)))
+    {
+      printf("ERROR: could not flush data to storage device\n");
+      return 2;
+    }
+
+  return 0;
 }
 
 int

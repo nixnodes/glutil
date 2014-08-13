@@ -542,7 +542,8 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
         if (g_act_1.flags & F_GH_FFBUFFER)
           {
-            if ((r = g_load_record(&g_act_1, (const void*) iarg->dirlog)))
+            if ((r = g_load_record(&g_act_1, (const void*) iarg->dirlog,
+                MAX_WBUFFER_HOLD, F_LOAD_RECORD_ALL)))
               {
                 print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
                     (ulint64_t) g_act_1.w_buffer.offset, "wbuffer");
@@ -981,44 +982,6 @@ nukelog_find(char *dirn, int mode, struct nukelog *output)
   r_end:
 
   return r;
-}
-
-int
-g_load_record(__g_handle hdl, const void *data)
-{
-  g_setjmp(0, "g_load_record", NULL, NULL);
-  void *buffer = NULL;
-
-  if (hdl->w_buffer.offset == MAX_WBUFFER_HOLD)
-    {
-      hdl->w_buffer.flags |= F_MDA_FREE;
-      rebuild_data_file(hdl->file, hdl);
-      p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
-      if (gfl & F_OPT_VERBOSE3)
-        {
-          print_str("NOTICE: scrubbing write cache..\n");
-        }
-      while (ptr)
-        {
-          ptr_s = ptr->next;
-          free(ptr->ptr);
-          bzero(ptr, sizeof(md_obj));
-          ptr = ptr_s;
-        }
-      hdl->w_buffer.pos = hdl->w_buffer.objects;
-      hdl->w_buffer.offset = 0;
-    }
-
-  buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
-
-  if (!buffer)
-    {
-      return 2;
-    }
-
-  memcpy(buffer, data, hdl->block_sz);
-
-  return 0;
 }
 
 #define DWR_DO_NORM_WRITE(buffer, fh) { \

@@ -50,8 +50,7 @@ __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 
 int
 release_generate_block(char *name, ear *iarg);
-int
-g_load_record(__g_handle hdl, const void *data);
+
 int
 dirlog_write_record(struct dirlog *buffer, off_t offset, int whence);
 int
