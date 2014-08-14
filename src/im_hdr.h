@@ -85,7 +85,7 @@ typedef struct g_handle
   gzFile gz_fh, gz_fh1;
 #endif
   off_t offset, bw, br, total_sz;
-  off_t rw;
+  off_t rw, t_rw;
   uint32_t block_sz;
   uint64_t flags;
   mda buffer, w_buffer;

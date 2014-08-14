@@ -1687,7 +1687,7 @@ d_write(char *arg)
 
   if (!(gfl & F_OPT_MODE_BINARY))
     {
-      g_act_1.gcb_post_proc = g_d_write_postgcb;
+      g_act_1.gcb_post_proc = g_d_post_proc_gcb;
 
       data_backup_records(datafile);
 
@@ -1816,40 +1816,15 @@ d_write(char *arg)
 }
 
 int
-g_load_record(__g_handle hdl, const void *data, off_t max, uint16_t flags)
+g_load_record(__g_handle hdl, pmda w_buffer, const void *data, off_t max,
+    uint16_t flags)
 {
-  g_setjmp(0, "g_load_record", NULL, NULL);
   void *buffer = NULL;
-
-  if (flags & F_LOAD_RECORD_FLUSH)
-    {
-      if (hdl->w_buffer.offset == max)
-        {
-          hdl->w_buffer.flags |= F_MDA_FREE;
-          if (rebuild_data_file(hdl->file, hdl))
-            {
-              return 1;
-            }
-          p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
-          if (gfl & F_OPT_VERBOSE5)
-            {
-              print_str("NOTICE: scrubbing write cache..\n");
-            }
-          while (ptr)
-            {
-              ptr_s = ptr->next;
-              free(ptr->ptr);
-              bzero(ptr, sizeof(md_obj));
-              ptr = ptr_s;
-            }
-          hdl->w_buffer.pos = hdl->w_buffer.objects;
-          hdl->w_buffer.offset = 0;
-        }
-    }
 
   if (flags & F_LOAD_RECORD_DATA)
     {
-      buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
+
+      buffer = md_alloc(w_buffer, hdl->block_sz);
 
       if (!buffer)
         {
@@ -1859,11 +1834,45 @@ g_load_record(__g_handle hdl, const void *data, off_t max, uint16_t flags)
       memcpy(buffer, data, hdl->block_sz);
     }
 
+  if (flags & F_LOAD_RECORD_FLUSH)
+    {
+      if (w_buffer->offset == max)
+        {
+          w_buffer->flags |= F_MDA_FREE;
+          if (rebuild_data_file(hdl->file, hdl))
+            {
+              print_str(MSG_GEN_DFRFAIL, hdl->file);
+              return 1;
+            }
+
+          p_md_obj ptr = w_buffer->objects, ptr_s;
+
+          while (ptr)
+            {
+              ptr_s = ptr->next;
+              free(ptr->ptr);
+              ptr = ptr_s;
+            }
+          bzero(w_buffer->objects,
+              (size_t) sizeof(md_obj) * (size_t) w_buffer->count);
+          w_buffer->pos = w_buffer->objects;
+          w_buffer->offset = 0;
+
+        }
+    }
+
+  if ((gfl0 & F_OPT_PROGRESS) && hdl->t_rw != hdl->rw)
+    {
+      fprintf(stderr, "writing records: %llu..\r",
+          (unsigned long long int) hdl->rw);
+      hdl->t_rw = hdl->rw;
+    }
+
   return 0;
 }
 
 int
-g_d_write_postgcb(void *buffer, void *p_hdl)
+g_d_post_proc_gcb(void *buffer, void *p_hdl)
 {
   __g_handle hdl = (__g_handle ) p_hdl;
 
@@ -1875,7 +1884,8 @@ g_d_write_postgcb(void *buffer, void *p_hdl)
       return 1;
     }
 
-  if ((r = g_load_record(hdl, (const void*) buffer, 32000,
+  if ((r = g_load_record(hdl, &hdl->w_buffer, (const void*) buffer,
+  MAX_BWHOLD_BYTES / hdl->block_sz,
   F_LOAD_RECORD_FLUSH)))
     {
       printf("ERROR: could not flush data to storage device\n");
@@ -1935,9 +1945,12 @@ m_load_input_n(__g_handle hdl, FILE *input)
             }
           if (rw >= hdl->d_memb)
             {
-              if (hdl->gcb_post_proc)
+              if (NULL != hdl->gcb_post_proc)
                 {
-                  hdl->gcb_post_proc(st_buffer, (void*) hdl);
+                  if (0 != hdl->gcb_post_proc(st_buffer, (void*) hdl))
+                    {
+                      break;
+                    }
                 }
               rw = 0;
               rf = 0;

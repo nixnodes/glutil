@@ -34,6 +34,7 @@
  *   - % Made quicksort the default sorting algorithm (rev. 6_b3)
  *   - + Implemented selection sort (rev. 6_b4)
  *   - % Flush data to disk every so often, to avoid filling up memory buffer (-z) (rev. 7_b1)
+ *   - % Adjusted write buffer limits, added --progress (rev. 7_b2)
  *
  * v2.3:
  *

@@ -19,7 +19,7 @@
 
 #include <im_hdr.h>
 
-#define MSG_REDF_ABORT                  "WARNING: %s: aborting rebuild (will not be writing what was done up to here)\n"
+#define MSG_REDF_ABORT                  "WARNING: %s: aborting rebuild\n"
 #define MSG_UNRECOGNIZED_DATA_TYPE      "ERROR: [%s] unrecognized data type\n"
 
 #include <errno_int.h>
@@ -42,6 +42,8 @@
 #define F_LOAD_RECORD_DATA              ((uint16_t)1 << 2)
 
 #define F_LOAD_RECORD_ALL               (F_LOAD_RECORD_FLUSH|F_LOAD_RECORD_DATA)
+
+#define MAX_BWHOLD_BYTES                8388608
 
 typedef int
 (*__g_mdref)(__g_handle hdl, pmda md, off_t count);
@@ -77,13 +79,13 @@ flush_data_md(__g_handle hdl, char *outfile);
 int
 m_load_input_n(__g_handle hdl, FILE *input);
 int
-g_d_write_postgcb(void *buffer, void *p_hdl);
+g_d_post_proc_gcb(void *buffer, void *p_hdl);
 int
 g_enum_log(_d_enuml callback, __g_handle hdl, off_t *nres, void *arg);
 int
 determine_temp_path(char *file, char *output, size_t max_out);
 int
-g_load_record(__g_handle hdl, const void *data, off_t max, uint16_t flags);
+g_load_record(__g_handle hdl, pmda w_buffer, const void *data, off_t max, uint16_t flags);
 
 #define OPLOG_OUTPUT_NSTATS(dfile, sdst) { \
   if (sdst.bw > 0) \

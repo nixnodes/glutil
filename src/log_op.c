@@ -367,6 +367,8 @@ g_proc_mr(__g_handle hdl)
       hdl->g_proc3 = hdl->g_proc3_export;
     }
 
+  hdl->t_rw = 1;
+
   return 0;
 }
 

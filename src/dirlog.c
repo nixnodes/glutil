@@ -84,7 +84,6 @@ rebuild_dirlog(void)
   else
     {
       strncpy(g_act_1.mode, mode, strlen(mode));
-      data_backup_records(DIRLOG);
     }
 
   int dfex = file_exists(DIRLOG);
@@ -102,6 +101,9 @@ rebuild_dirlog(void)
     }
 
   int r = 1;
+
+  data_backup_records(DIRLOG);
+  g_act_1.flags |= F_GH_NO_BACKUP;
 
   if (!strncmp(g_act_1.mode, "r", 1) && dfex)
     {
@@ -542,8 +544,9 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
         if (g_act_1.flags & F_GH_FFBUFFER)
           {
-            if ((r = g_load_record(&g_act_1, (const void*) iarg->dirlog,
-                MAX_WBUFFER_HOLD, F_LOAD_RECORD_ALL)))
+            if ((r = g_load_record(&g_act_1, &g_act_1.w_buffer,
+                (const void*) iarg->dirlog,
+                MAX_BWHOLD_BYTES_DL / DL_SZ, F_LOAD_RECORD_ALL)))
               {
                 print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
                     (ulint64_t) g_act_1.w_buffer.offset, "wbuffer");
@@ -629,11 +632,6 @@ release_generate_block(char *name, ear *iarg)
         }
     }
 
-  if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-    {
-      print_str("ENTERING: %s\n", name);
-    }
-
   if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds)) < 1
       || !(iarg->dirlog->files)))
     {
@@ -654,11 +652,6 @@ release_generate_block(char *name, ear *iarg)
     }
 
   g_setjmp(0, "release_generate_block(2)", NULL, NULL);
-
-  if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-    {
-      print_str("EXITING: %s\n", name);
-    }
 
   if ((gfl & F_OPT_SFV) && !(gfl & F_OPT_NOWRITE))
     {
