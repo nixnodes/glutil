@@ -1,23 +1,20 @@
 #!/bin/sh
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 #
-GLUTIL="/bin/glutil-chroot"
-FILE_LOG_PATH=/ftp-data/glutil/db/filelog
+#GLUTIL=/bin/glutil-chroot
+SQLITE=/bin/sqlite3
+#
+FILE_LOG_PATH=/ftp-data/glutil/db/filelog.db
 #
 ############################################
 #
 
 echo "${@}" | egrep -q "([\`\>\<\|]|\$\()" && exit 2
 
-vstr=`echo "${@}" | sed -r 's/ /.*/'`
+[ -z "${@}" ] && exit 2
 
-[ -z "${vstr}" ] && {
-	vstr=".*"
-}
-
-${GLUTIL} -q altlog --nobuffer --altlog ${FILE_LOG_PATH} --silent \
-	iregexi basedir,"${vstr}" -print "{file}  [{?m:size/1024} k] [{?tl:time#%m/%d/%y}][{?tl:time#%H}:{?tl:time#%M}:{?tl:time#%S}]"
+${SQLITE} -separator '    ' ${FILE_LOG_PATH} "select path, (round(size/1024,2)), uid, gid from filelog where path LIKE '%${@}%';"
 
 exit 0
 
