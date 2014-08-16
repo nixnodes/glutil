@@ -5,9 +5,10 @@ by hooking the mk_index.sh script to ftp STOR commands.
 
 See installation instructions below;
 
-REQUIREMENTS:
+DEPENDECIES:
 
-	* glutil_2.4.5 or later, compiled for a chrooted environment
+	* glutil 2.4.5 or higher, compiled for a chrooted environment
+	* sqlite 3.6.20 or higher
 
 
 INSTALLATION:
@@ -47,12 +48,12 @@ INSTALLATION:
 		custom-fsearch	!8      		*
 		
 	* Configure 'stack_exec.sh' script to execute 'un_index.sh' and
-	  whatever other script that is already hooked to DELE command:
+	  whatever other script is already hooked to DELE command:
 	  
 	  	CHAIN=(				
 			"/bin/scripts/flog/un_index.sh"
+			"/bin/postdel"
 			"/bin/something.."
-			"/bin/someotherthing.."
 		)
 		
 	  Read description inside 'stack_exec.sh'
@@ -60,7 +61,7 @@ INSTALLATION:
 	* Build the initial index using 'filelog-rebuild' macro in 'macros.glutil',
 	  make sure to have the latest version of the file, then run:
 	
-		glutil -m filelog-rebuild --altlog /<glroot>/ftp-data/glutil/db/filelog
+		glutil -m filelog-rebuild --altlog /<glroot>/ftp-data/glutil/db/filelog.db
 
 USAGE:
 
