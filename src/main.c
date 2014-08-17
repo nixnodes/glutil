@@ -178,7 +178,7 @@ g_init(int argc, char **argv)
                 }
             }
 #endif
-          ptr = get_cfg_opt("min_homedir", &glconf, NULL);
+          /*ptr = get_cfg_opt("min_homedir", &glconf, NULL);
 
           if (ptr && !(ofl & F_OVRR_SITEROOT))
             {
@@ -188,7 +188,7 @@ g_init(int argc, char **argv)
                   print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
                       SITEROOT_N);
                 }
-            }
+            }*/
 
           ptr = get_cfg_opt("ftp-data", &glconf, NULL);
 
