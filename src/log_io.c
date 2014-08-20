@@ -213,11 +213,21 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   hdl->fh = fd;
 #ifdef HAVE_ZLIB_H
-  if (strncmp(mode, "a+", 2))
+  if (hdl->flags & F_GH_IS_GZIP)
     {
-      if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
+      if (NULL == strchr(mode, 0x2B))
         {
-          return 36;
+          if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
+            {
+              return 36;
+            }
+        }
+      else
+        {
+          print_str(
+              "ERROR: mode '%s': reading and writing to the same gzip file is not supported\n",
+              mode);
+          return 37;
         }
     }
 #endif

@@ -10,9 +10,8 @@
 #################################################################
 #
 # Defines the relative-to-siteroot path to
-# which this rule chain applies. The name of
-# this file doesn't matter, only this value
-# is taken into account when doing lookups.
+# which this rule chain applies. This setting
+# must match the filename.
 # Anything uploaded into 'path' is processed,
 # make sure 'r_skip_basedir' in 'gconf' is set
 # to filter unwanted directories.

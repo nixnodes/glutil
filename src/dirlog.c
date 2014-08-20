@@ -801,6 +801,7 @@ dirlog_find(char *dirn, int mode, uint32_t flags, void *callback)
   if (mode != 1)
     {
       g_close(&g_act_1);
+      g_cleanup(&g_act_1);
     }
 
   return ur;
@@ -872,6 +873,7 @@ dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback)
   if (mode != 1)
     {
       g_close(&g_act_1);
+      g_cleanup(&g_act_1);
     }
 
   return ur;
@@ -1141,7 +1143,7 @@ dirlog_update_record(char *argv)
 
       char *mode = "a";
 
-      if (!(gfl & F_OPT_DIR_FULL_REBUILD) && rl < MAX_uint64_t)
+      if (!(gfl & F_OPT_FORCE) && rl < MAX_uint64_t)
         {
           print_str(
               "WARNING: %s: [%llu] already exists in dirlog (use -f to overwrite)\n",
@@ -1162,8 +1164,10 @@ dirlog_update_record(char *argv)
           mode = "r+";
         }
 
-      if (g_fopen(DIRLOG, mode, 0, &g_act_1))
+      if ((r = g_fopen(DIRLOG, mode, 0, &g_act_1)))
         {
+          print_str("ERROR: %s: could not open log [%d], mode %s\n", DIRLOG, r,
+              mode);
           goto r_end;
         }
 

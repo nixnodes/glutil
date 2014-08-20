@@ -16,7 +16,12 @@ md_init(pmda md, int nm)
       return 1;
     }
   bzero(md, sizeof(mda));
-  md->objects = calloc(nm, sizeof(md_obj));
+  if (!(md->objects = calloc(nm, sizeof(md_obj))))
+    {
+      fprintf(stderr, "ERROR: md_init: could not allocate memory\n");
+      exit(0);
+    }
+
   md->count = nm;
   md->pos = md->objects;
   md->r_pos = md->objects;
