@@ -52,12 +52,23 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
-dt_rval_spec_accumulate(void *arg, char *match, char *output, size_t max_size,
+dt_rval_spec_basedir(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match, output, max_size, mppd);
+
+  if (p_o)
+    {
+      return g_basename(p_o);
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
 
   return output;
 }
+
 
 char *
 dt_rval_spec_gc(void *arg, char *match, char *output, size_t max_size,
@@ -521,6 +532,15 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
         {
+      case 0x62:
+        mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
+            mppd);
+        if (!mppd->fp_rval1)
+          {
+            return NULL;
+          }
+        return as_ref_to_val_lk(match, dt_rval_spec_basedir, (__d_drt_h ) mppd,
+        NULL);
       case 0x71:
         return as_ref_to_val_lk(match, ((__d_drt_h ) mppd)->st_ptr0,
             (__d_drt_h ) mppd, "%s");
@@ -532,7 +552,8 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           {
             return NULL;
           }
-        return as_ref_to_val_lk(match, dt_rval_spec_slen, (__d_drt_h )mppd, NULL);
+        return as_ref_to_val_lk(match, dt_rval_spec_slen, (__d_drt_h ) mppd,
+        NULL);
         break;
       case 0x74:
         ;

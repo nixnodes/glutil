@@ -144,16 +144,16 @@ Updated: 4/12/2013
 			multiplied and divided.
 			
 			Arithmetic operators:					
-				+Add
-				-Subtract
-				*Multiply
-				/Divide
-				%Modulo (integer remainder)
+				+   Add
+				-   Subtract
+				*   Multiply
+				/   Divide
+				%   Modulo (integer remainder)
 				
 			Bitwise operators:					
-				&AND
-				|OR
-				^XOR
+				&   AND
+				|   OR
+				^   XOR
 				<<  Bitwise left shift
 				>>  Bitwise right shift
 			
@@ -195,6 +195,9 @@ Updated: 4/12/2013
 				
 			'Some Show (2004)' is matched as 'Some Show', without having to
 			wipe (2004) out of the database.
+			
+	?b   <field>
+			Strip directory and suffix from filename stored in <field>
 			
 			
 	Mind that ',' ':' '(' ')' '{' and '}' always need to be escaped with '\'. 	

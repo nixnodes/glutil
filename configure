@@ -634,6 +634,8 @@ CPP
 GLUTIL_PREFIX
 ENABLE_PRECHECK_FALSE
 ENABLE_PRECHECK_TRUE
+ENABLE_PRECHECK_NONCHROOT_FALSE
+ENABLE_PRECHECK_NONCHROOT_TRUE
 ENABLE_CHROOT_OWNBIN_FALSE
 ENABLE_CHROOT_OWNBIN_TRUE
 am__fastdepCC_FALSE
@@ -731,6 +733,7 @@ enable_chroot
 enable_chroot_ownbin
 enable_gzip
 enable_precheck
+enable_precheck_nonchroot
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1368,6 +1371,7 @@ Optional Features:
   --enable-chroot-ownbin	 Build glutil for chrooted environment as a separate binary default=no
   --disable-gzip	  Disable gzip compression support
   --enable-precheck	  build glutil-precheck default=no
+  --enable-precheck-nonchrot	  build glutil-precheck for non-chrooted environment default=no
 
 Some influential environment variables:
   CC          C compiler command
@@ -4523,14 +4527,37 @@ else
 fi
 
 
- if test "$glutil_precheck" = "yes"; then
+# Check whether --enable-precheck-nonchroot was given.
+if test "${enable_precheck_nonchroot+set}" = set; then :
+  enableval=$enable_precheck_nonchroot; glutil_precheck_nonchroot="$enableval"
+else
+  glutil_precheck_nonchroot="no"
+fi
+
+
+if  test "$glutil_precheck_nonchroot" = "yes" ; then
+	cat >>confdefs.h <<_ACEOF
+#define PATH_PREFIX "$prefix"
+_ACEOF
+
+
+fi
+
+ if test "$glutil_precheck_nonchroot" = "yes"; then
+  ENABLE_PRECHECK_NONCHROOT_TRUE=
+  ENABLE_PRECHECK_NONCHROOT_FALSE='#'
+else
+  ENABLE_PRECHECK_NONCHROOT_TRUE='#'
+  ENABLE_PRECHECK_NONCHROOT_FALSE=
+fi
+
+	 if test "$glutil_precheck" = "yes"; then
   ENABLE_PRECHECK_TRUE=
   ENABLE_PRECHECK_FALSE='#'
 else
   ENABLE_PRECHECK_TRUE='#'
   ENABLE_PRECHECK_FALSE=
 fi
-
 
 GLUTIL_PREFIX=$prefix
 
@@ -6378,6 +6405,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CHROOT_OWNBIN_TRUE}" && test -z "${ENABLE_CHROOT_OWNBIN_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_CHROOT_OWNBIN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_PRECHECK_NONCHROOT_TRUE}" && test -z "${ENABLE_PRECHECK_NONCHROOT_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PRECHECK_NONCHROOT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_PRECHECK_TRUE}" && test -z "${ENABLE_PRECHECK_FALSE}"; then

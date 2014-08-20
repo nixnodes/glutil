@@ -8,9 +8,20 @@
 #ifndef PCE_CONFIG_H_
 #define PCE_CONFIG_H_
 
-#define PCE_F_OPT_SHAREDMEM     (a64 << 44)
+/* gl root  */
+#ifndef glroot
+#ifndef PATH_PREFIX
+#define glroot "/"
+#else
+#define glroot PATH_PREFIX
+#endif
+#endif
 
-#define PATH_PREFIX     ""
+#ifndef PATH_PREFIX
+#define PATH_PREFIX ""
+#endif
+
+#define PCE_F_OPT_SHAREDMEM     (a64 << 44)
 
 #ifndef pce_logfile
 #define pce_logfile PATH_PREFIX "/ftp-data/logs/glutil-precheck.log"
@@ -31,7 +42,6 @@
 #define tv_log PATH_PREFIX "/ftp-data/glutil/db/tvrage"
 #endif
 
-
 #ifndef pce_data_path
 #define pce_data_path PATH_PREFIX "/ftp-data/glutil/precheck-data"
 #endif
@@ -42,11 +52,6 @@
 
 #ifndef LOG_LEVEL
 #define LOG_LEVEL F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_WARNING|F_MSG_TYPE_ERROR|F_MSG_TYPE_NOTICE
-#endif
-
-/* gl root  */
-#ifndef glroot
-#define glroot "/"
 #endif
 
 /* site root, relative to gl root */

@@ -89,7 +89,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CHROOT_OWNBIN_FALSE@am__EXEEXT_1 = glutil$(EXEEXT)
 @ENABLE_CHROOT_OWNBIN_TRUE@am__EXEEXT_1 = glutil-chroot$(EXEEXT)
-@ENABLE_PRECHECK_TRUE@am__EXEEXT_2 = glutil-precheck$(EXEEXT)
+@ENABLE_PRECHECK_NONCHROOT_FALSE@@ENABLE_PRECHECK_TRUE@am__EXEEXT_2 = glutil-precheck$(EXEEXT)
+@ENABLE_PRECHECK_NONCHROOT_TRUE@am__EXEEXT_2 = glutil-precheck-nonchroot$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_glutil_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) init.$(OBJEXT) \
@@ -153,6 +154,24 @@ glutil_precheck_OBJECTS = $(am_glutil_precheck_OBJECTS)
 glutil_precheck_LDADD = $(LDADD)
 glutil_precheck_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(glutil_precheck_LDFLAGS) $(LDFLAGS) -o $@
+am_glutil_precheck_nonchroot_OBJECTS = pce/pce_signal.$(OBJEXT) \
+	pce/pce_init.$(OBJEXT) macros.$(OBJEXT) l_error.$(OBJEXT) \
+	errno_int.$(OBJEXT) str.$(OBJEXT) memory.$(OBJEXT) \
+	time.$(OBJEXT) misc.$(OBJEXT) lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
+	log_io.$(OBJEXT) log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
+	cfgv.$(OBJEXT) m_general.$(OBJEXT) sort.$(OBJEXT) \
+	m_string.$(OBJEXT) m_lom.$(OBJEXT) i_math.$(OBJEXT) \
+	arg_proc.$(OBJEXT) exech.$(OBJEXT) exec.$(OBJEXT) \
+	xref.$(OBJEXT) lref.$(OBJEXT) lref_gen.$(OBJEXT) \
+	lref_online.$(OBJEXT) lref_imdb.$(OBJEXT) \
+	lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) lref_sconf.$(OBJEXT) \
+	lref_gconf.$(OBJEXT) log_op.$(OBJEXT) omfp.$(OBJEXT) \
+	pce/pce_proc.$(OBJEXT) pce/pce_misc.$(OBJEXT)
+glutil_precheck_nonchroot_OBJECTS =  \
+	$(am_glutil_precheck_nonchroot_OBJECTS)
+glutil_precheck_nonchroot_LDADD = $(LDADD)
+glutil_precheck_nonchroot_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(glutil_precheck_nonchroot_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -182,9 +201,11 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(glutil_SOURCES) $(glutil_chroot_SOURCES) \
-	$(glutil_precheck_SOURCES)
+	$(glutil_precheck_SOURCES) \
+	$(glutil_precheck_nonchroot_SOURCES)
 DIST_SOURCES = $(glutil_SOURCES) $(glutil_chroot_SOURCES) \
-	$(glutil_precheck_SOURCES)
+	$(glutil_precheck_SOURCES) \
+	$(glutil_precheck_nonchroot_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -299,15 +320,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+@ENABLE_PRECHECK_NONCHROOT_TRUE@PRECHECK_APP = glutil-precheck-nonchroot
 @ENABLE_PRECHECK_TRUE@PRECHECK_APP = glutil-precheck
 @ENABLE_CHROOT_OWNBIN_FALSE@GLUTIL_APP = glutil
 @ENABLE_CHROOT_OWNBIN_TRUE@GLUTIL_APP = glutil-chroot
 glutil_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
 glutil_chroot_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
 glutil_precheck_SOURCES = pce/pce_signal.c pce/pce_init.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+glutil_precheck_nonchroot_SOURCES = pce/pce_signal.c pce/pce_init.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 glutil_LDFLAGS = -lz
 glutil_chroot_LDFLAGS = -lz
 glutil_precheck_LDFLAGS = -lz
+glutil_precheck_nonchroot_LDFLAGS = -lz
 all: all-am
 
 .SUFFIXES:
@@ -410,6 +434,10 @@ pce/pce_misc.$(OBJEXT): pce/$(am__dirstamp) \
 glutil-precheck$(EXEEXT): $(glutil_precheck_OBJECTS) $(glutil_precheck_DEPENDENCIES) $(EXTRA_glutil_precheck_DEPENDENCIES) 
 	@rm -f glutil-precheck$(EXEEXT)
 	$(AM_V_CCLD)$(glutil_precheck_LINK) $(glutil_precheck_OBJECTS) $(glutil_precheck_LDADD) $(LIBS)
+
+glutil-precheck-nonchroot$(EXEEXT): $(glutil_precheck_nonchroot_OBJECTS) $(glutil_precheck_nonchroot_DEPENDENCIES) $(EXTRA_glutil_precheck_nonchroot_DEPENDENCIES) 
+	@rm -f glutil-precheck-nonchroot$(EXEEXT)
+	$(AM_V_CCLD)$(glutil_precheck_nonchroot_LINK) $(glutil_precheck_nonchroot_OBJECTS) $(glutil_precheck_nonchroot_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

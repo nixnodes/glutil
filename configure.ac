@@ -63,8 +63,17 @@ AC_ARG_ENABLE(precheck,
 [  --enable-precheck	  build glutil-precheck [default=no]],
 glutil_precheck="$enableval", glutil_precheck="no")
 
-AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
+AC_ARG_ENABLE(precheck-nonchroot,
+[  --enable-precheck-nonchrot	  build glutil-precheck for non-chrooted environment [default=no]],
+glutil_precheck_nonchroot="$enableval", glutil_precheck_nonchroot="no")
 
+if [ test "$glutil_precheck_nonchroot" = "yes" ]; then	
+	AC_DEFINE_UNQUOTED([PATH_PREFIX], ["$prefix"])	
+
+fi
+
+AM_CONDITIONAL(ENABLE_PRECHECK_NONCHROOT, test "$glutil_precheck_nonchroot" = "yes")	
+	AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
 CFLAGS="-Wall -O2"
