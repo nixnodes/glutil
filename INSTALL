@@ -16,7 +16,15 @@ path.
 
 	make
 	make install
+	
+Copy scripts (optional):
 
+	cp -R scripts/* /glroot/bin/scripts/
+	
+Create custom logs data folder (optional):
+	
+	mkdir -p /glroot/ftp-data/glutil/db
+	
 Ensure procfs is mounted in /proc, if not, add the entry to /etc/fstab and/or mount
 it manually:
 
@@ -66,12 +74,22 @@ Clean previous build and compile:
 	make
 	make install
 	
+Copy sample config files:
+	
+	mkdir -p /glroot/ftp-data/glutil/precheck-config/
+	cp ftp-data/glutil/precheck-config/* /glroot/ftp-data/glutil/precheck-config/
+	
+Read the configuration files:
+
+	/glroot/ftp-data/glutil/precheck-config/gconf (global config)
+	/glroot/ftp-data/glutil/precheck-config/example (per section config)
+	
 'glutil-precheck' is installed in /glroot/bin with all log paths and glroot
 aligned to '/'.
 
 Precheck uses imdb/tvrage logs. Configurable hooks are available, used
 for calling lookup scripts and delayed nukes when data is not available
-locally. (read gconf file)
+locally. (read ftp-data/glutil/precheck-config/gconf)
 
 Ensure the log storage path and data is read/write for everyone:
 	chmod 777 /glroot/ftp-data/glutil/db
@@ -84,9 +102,9 @@ Install tvrage_get.sh and imdb_get.sh in /bin/scripts and configure them
 for log lookups. Ensure lookups are working properly in the normal
 environment.
 
-Run 'tvrage-installch' macro to try installing required
-libs automatically:
+Run '*-installch' macros to attempt installing required libs automatically:
 	glutil -m tvrage-installch
+	glutil -m imdb-installch
 	Find and copy libnss_files.so.2 libnss_dns.so.2 to /usr or /usr64 dir
 		(not always required, do this if the scripts can't resolve DNS records)
 		
