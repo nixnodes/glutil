@@ -1278,6 +1278,13 @@ opt_exec(void *arg, int m)
 }
 
 int
+opt_g_progress(void *arg, int m)
+{
+  gfl0 |= F_OPT_PROGRESS;
+  return 0;
+}
+
+int
 option_crc32(void *arg, int m)
 {
   g_setjmp(0, "option_crc32", NULL, NULL);
@@ -1472,4 +1479,5 @@ void *f_ref[] =
       opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats, (void*) 0,
       "--stats", opt_g_stats, (void*) 0, "-mlist", opt_g_mlist, (void*) 0,
       "--gz", opt_g_comp, (void*) 1, "--sortmethod", opt_g_swapmode, (void*) 1,
+      "--progress", opt_g_progress, (void*) 0,
       NULL, NULL, NULL };

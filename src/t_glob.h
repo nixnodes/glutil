@@ -191,6 +191,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_SMETHOD_Q                 (a64 << 18)
 #define F_OPT_SMETHOD_INSSORT           (a64 << 19)
 #define F_OPT_SMETHOD_SELECT            (a64 << 20)
+#define F_OPT_PROGRESS                  (a64 << 21)
 
 #define F_OPT_SMETHOD                   (F_OPT_SMETHOD_SWAP|F_OPT_SMETHOD_HEAP|F_OPT_SMETHOD_Q|F_OPT_SMETHOD_INSSORT|F_OPT_SMETHOD_SELECT)
 

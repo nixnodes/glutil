@@ -1,4 +1,4 @@
-#@REVISION:44
+#@REVISION:45
 #
 ## NOTE: Requires glutil 2.3.17 or higher
 #
@@ -256,8 +256,3 @@
 #
 #@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{m:exe} noop --preexec `{exe} --dupefile={m:q:dupefile@file} --backup dupefile -vv; rm -f {m:q:dupefile@file}; {exe} -R -x "{siteroot}" -print "file {basepath}{:nl}user {user}{:nl}time {mtime}{:nl}" ilom mode=8 --glroot "{m:glroot}" | glutil -z dupefile -vvvv --stdin --dupefile={m:q:dupefile@file}`
 #
-## <filelog-rebuild>
-#
-## Rebuild the filelog based on filesystem info
-#
-#@MACRO:filelog-rebuild|Rebuild the filelog based on filesystem info:{m:exe} noop --preexec `gl_root={m:glroot};{m:exe} -x {siteroot} -R lom "mode!=8 || size==0" or regex basepath,"^\." -print "file {?rd:path:^$gl_root}{:n}size {size}{:n}files 0{:n}time {mtime}{:n}user {uid}{:n}group {gid}{:n}status 0{:n}" | {m:exe} -z altlog -vvvv --gz 2 --altlog /tmp/glutil.frb.$$.tmp --nobackup; mv /tmp/glutil.frb.$$.tmp {m:q:altlog@file}; chmod 666 {m:q:altlog@file}`

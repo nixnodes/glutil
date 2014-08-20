@@ -34,6 +34,8 @@ typedef struct e_arg
 
 #define F_PS_STOP_TRAVERSE              ((uint8_t)1 << 1)
 
+#define MAX_BWHOLD_BYTES_DL             524288 * 2
+
 int
 update_records(char *dirname, int depth);
 int
@@ -50,8 +52,7 @@ __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 
 int
 release_generate_block(char *name, ear *iarg);
-int
-g_load_record(__g_handle hdl, const void *data);
+
 int
 dirlog_write_record(struct dirlog *buffer, off_t offset, int whence);
 int

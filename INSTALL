@@ -44,7 +44,7 @@ Set up prerequisites:
 
   Create and chmod /tmp in /glroot, if not already:
 	mkdir /glroot/tmp
-	chmod 777 /glroot/tmp
+	chmod 1777 /glroot/tmp
 	
   Mount procfs:
 	mount -t procfs proc /glroot/proc

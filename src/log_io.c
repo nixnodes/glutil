@@ -213,11 +213,21 @@ g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl)
 
   hdl->fh = fd;
 #ifdef HAVE_ZLIB_H
-  if (strncmp(mode, "a+", 2))
+  if (hdl->flags & F_GH_IS_GZIP)
     {
-      if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
+      if (NULL == strchr(mode, 0x2B))
         {
-          return 36;
+          if ((hdl->gz_fh = gzdopen(dup(fileno(hdl->fh)), mode)) == NULL)
+            {
+              return 36;
+            }
+        }
+      else
+        {
+          print_str(
+              "ERROR: mode '%s': reading and writing to the same gzip file is not supported\n",
+              mode);
+          return 37;
         }
     }
 #endif
@@ -1235,7 +1245,7 @@ rebuild_data_file(char *file, __g_handle hdl)
       return 0;
     }
 
-  if (gfl & F_OPT_VERBOSE)
+  if (gfl & F_OPT_VERBOSE4)
     {
       print_str("NOTICE: %s: flushing data to disk..\n", hdl->s_buffer);
     }
@@ -1249,14 +1259,13 @@ rebuild_data_file(char *file, __g_handle hdl)
       hdl->st_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     }
 
-  if (gfl & F_OPT_VERBOSE2)
+  if (gfl & F_OPT_VERBOSE3)
     {
       print_str("NOTICE: %s: using mode %o\n", hdl->s_buffer, hdl->st_mode);
 #ifdef HAVE_ZLIB_H
       if ((hdl->flags & F_GH_IO_GZIP))
         {
-          print_str(
-              "NOTICE: %s: gzip write compression enabled, level '%hhu'\n",
+          print_str("NOTICE: %s: gzip compression enabled, level '%hhu'\n",
               hdl->s_buffer, comp_level);
         }
 #endif
@@ -1337,7 +1346,7 @@ rebuild_data_file(char *file, __g_handle hdl)
   if (!(gfl & F_OPT_NOWRITE)
       && !((hdl->flags & F_GH_WAPPEND) && (hdl->flags & F_GH_DFWASWIPED)))
     {
-      if (data_backup_records(file))
+      if (!(hdl->flags & F_GH_NO_BACKUP) && data_backup_records(file))
         {
           ret = 3;
           if (!(gfl & F_OPT_NOWRITE))
@@ -1559,22 +1568,52 @@ flush_data_md(__g_handle hdl, char *outfile)
 
   if (hdl->flags & F_GH_IO_GZIP)
     {
-      gzclose(gz_fh);
+      if (gz_fh)
+        {
+          gzclose(gz_fh);
+        }
     }
 #endif
 
   if (!(gfl & F_OPT_MODE_RAWDUMP))
     {
-      fclose(fh);
+      if (fh)
+        {
+          fclose(fh);
+        }
 
       if (hdl->st_mode)
         {
           chmod(outfile, hdl->st_mode);
         }
-
     }
 
   return ret;
+}
+
+static void
+d_write_stats(char *datafile)
+{
+  if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
+      && !(gfl0 & F_OPT_NOSTATS))
+    {
+
+#ifdef HAVE_ZLIB_H
+      if (g_act_1.flags & F_GH_IO_GZIP)
+        {
+          fprintf(stderr, MSG_GEN_WROTE2, datafile,
+              (double) get_file_size(datafile) / 1024.0,
+              (double) g_act_1.bw / 1024.0,
+              (long long unsigned int) g_act_1.rw);
+        }
+      else
+        {
+          OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
+        }
+#else
+      OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
+#endif
+    }
 }
 
 int
@@ -1599,9 +1638,9 @@ d_write(char *arg)
       return 2;
     }
 
-  off_t f_sz = get_file_size(datafile);
+  //off_t f_sz = get_file_size(datafile);
 
-  g_act_1.flags |= F_GH_FFBUFFER | F_GH_D_WRITE;
+  g_act_1.flags |= F_GH_FFBUFFER | F_GH_D_WRITE | F_GH_WAPPEND | F_GH_DFNOWIPE;
 
 #ifdef HAVE_ZLIB_H
   if (gfl0 & F_OPT_GZIP)
@@ -1611,10 +1650,10 @@ d_write(char *arg)
     }
 #endif
 
-  if (f_sz > 0)
-    {
-      g_act_1.flags |= F_GH_WAPPEND | F_GH_DFNOWIPE;
-    }
+  /*if (f_sz > 0)
+   {
+   g_act_1.flags |= F_GH_WAPPEND | F_GH_DFNOWIPE;
+   }*/
 
   strncpy(g_act_1.file, datafile, strlen(datafile));
 
@@ -1640,6 +1679,7 @@ d_write(char *arg)
   else
     {
       in = stdin;
+      sprintf(infile_p, "stdin");
       g_act_1.flags |= F_GH_FROMSTDIN;
     }
 
@@ -1647,11 +1687,22 @@ d_write(char *arg)
 
   if (gfl & F_OPT_VERBOSE)
     {
-      print_str("NOTICE: %s: loading data..\n", datafile);
+      print_str("NOTICE: %s: loading input data..\n", infile_p);
+    }
+
+  if ((r = g_proc_mr(&g_act_1)))
+    {
+      goto end;
     }
 
   if (!(gfl & F_OPT_MODE_BINARY))
     {
+      g_act_1.gcb_post_proc = g_d_post_proc_gcb;
+
+      data_backup_records(datafile);
+
+      g_act_1.flags |= F_GH_NO_BACKUP;
+
       if ((r = m_load_input_n(&g_act_1, in)))
         {
           print_str("ERROR: DATA IMPORT: %s: [%d]: %s\n", datafile, r,
@@ -1659,6 +1710,19 @@ d_write(char *arg)
           ret = 5;
           goto end;
         }
+
+      if (g_act_1.w_buffer.offset > 0 && rebuild_data_file(datafile, &g_act_1))
+        {
+          print_str(MSG_GEN_DFRFAIL, datafile);
+          ret = 16;
+          goto end;
+        }
+      d_write_stats(datafile);
+      /*print_str("ERROR: %s: no records were loaded, aborting..\n", datafile);
+       ret = 15;
+       goto end;*/
+      goto end;
+
     }
   else
     {
@@ -1674,7 +1738,7 @@ d_write(char *arg)
       if ((r = load_data_md(&g_act_1.w_buffer, infile_p, &g_act_1)))
         {
           print_str(
-              "ERROR: %s: [%d]: could not load input data (binary source)\n",
+              "ERROR: DATA IMPORT: %s: [%d]: could not load input data (binary source)\n",
               datafile, r);
           ret = 12;
           goto end;
@@ -1684,13 +1748,6 @@ d_write(char *arg)
   if (g_act_1.flags & F_GH_FROMSTDIN)
     {
       g_act_1.flags ^= F_GH_FROMSTDIN;
-    }
-
-  if (!g_act_1.w_buffer.offset)
-    {
-      print_str("ERROR: %s: no records were loaded, aborting..\n", datafile);
-      ret = 15;
-      goto end;
     }
 
   if (gfl & F_OPT_VERBOSE)
@@ -1755,26 +1812,7 @@ d_write(char *arg)
     }
   else
     {
-      if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
-          && !(gfl0 & F_OPT_NOSTATS))
-        {
-
-#ifdef HAVE_ZLIB_H
-          if (g_act_1.flags & F_GH_IO_GZIP)
-            {
-              fprintf(stderr, MSG_GEN_WROTE2, datafile,
-                  (double) get_file_size(datafile) / 1024.0,
-                  (double) g_act_1.bw / 1024.0,
-                  (long long unsigned int) g_act_1.rw);
-            }
-          else
-            {
-              OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
-            }
-#else
-          OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
-#endif
-        }
+      d_write_stats(datafile);
     }
 
   end:
@@ -1785,6 +1823,86 @@ d_write(char *arg)
     }
 
   return ret;
+}
+
+int
+g_load_record(__g_handle hdl, pmda w_buffer, const void *data, off_t max,
+    uint16_t flags)
+{
+  void *buffer = NULL;
+
+  if (flags & F_LOAD_RECORD_DATA)
+    {
+
+      buffer = md_alloc(w_buffer, hdl->block_sz);
+
+      if (!buffer)
+        {
+          return 2;
+        }
+
+      memcpy(buffer, data, hdl->block_sz);
+    }
+
+  if (flags & F_LOAD_RECORD_FLUSH)
+    {
+      if (w_buffer->offset == max)
+        {
+          w_buffer->flags |= F_MDA_FREE;
+          if (rebuild_data_file(hdl->file, hdl))
+            {
+              print_str(MSG_GEN_DFRFAIL, hdl->file);
+              return 1;
+            }
+
+          p_md_obj ptr = w_buffer->objects, ptr_s;
+
+          while (ptr)
+            {
+              ptr_s = ptr->next;
+              free(ptr->ptr);
+              ptr = ptr_s;
+            }
+          bzero(w_buffer->objects,
+              (size_t) sizeof(md_obj) * (size_t) w_buffer->count);
+          w_buffer->pos = w_buffer->objects;
+          w_buffer->offset = 0;
+
+        }
+    }
+
+  if ((gfl0 & F_OPT_PROGRESS) && hdl->t_rw != hdl->rw)
+    {
+      fprintf(stderr, "writing records: %llu..\r",
+          (unsigned long long int) hdl->rw);
+      hdl->t_rw = hdl->rw;
+    }
+
+  return 0;
+}
+
+int
+g_d_post_proc_gcb(void *buffer, void *p_hdl)
+{
+  __g_handle hdl = (__g_handle ) p_hdl;
+
+  int r;
+
+  if (g_bmatch(buffer, hdl, &hdl->w_buffer))
+    {
+      md_unlink(&hdl->w_buffer, hdl->w_buffer.pos);
+      return 1;
+    }
+
+  if ((r = g_load_record(hdl, &hdl->w_buffer, (const void*) buffer,
+  MAX_BWHOLD_BYTES / hdl->block_sz,
+  F_LOAD_RECORD_FLUSH)))
+    {
+      printf("ERROR: could not flush data to storage device\n");
+      return 2;
+    }
+
+  return 0;
 }
 
 int
@@ -1837,9 +1955,12 @@ m_load_input_n(__g_handle hdl, FILE *input)
             }
           if (rw >= hdl->d_memb)
             {
-              if (hdl->gcb_post_proc)
+              if (NULL != hdl->gcb_post_proc)
                 {
-                  hdl->gcb_post_proc(st_buffer, (void*) hdl);
+                  if (0 != hdl->gcb_post_proc(st_buffer, (void*) hdl))
+                    {
+                      break;
+                    }
                 }
               rw = 0;
               rf = 0;

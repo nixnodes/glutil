@@ -84,7 +84,6 @@ rebuild_dirlog(void)
   else
     {
       strncpy(g_act_1.mode, mode, strlen(mode));
-      data_backup_records(DIRLOG);
     }
 
   int dfex = file_exists(DIRLOG);
@@ -102,6 +101,9 @@ rebuild_dirlog(void)
     }
 
   int r = 1;
+
+  data_backup_records(DIRLOG);
+  g_act_1.flags |= F_GH_NO_BACKUP;
 
   if (!strncmp(g_act_1.mode, "r", 1) && dfex)
     {
@@ -542,7 +544,9 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
 
         if (g_act_1.flags & F_GH_FFBUFFER)
           {
-            if ((r = g_load_record(&g_act_1, (const void*) iarg->dirlog)))
+            if ((r = g_load_record(&g_act_1, &g_act_1.w_buffer,
+                (const void*) iarg->dirlog,
+                MAX_BWHOLD_BYTES_DL / DL_SZ, F_LOAD_RECORD_ALL)))
               {
                 print_str(MSG_GEN_DFWRITE, iarg->dirlog->dirname, r,
                     (ulint64_t) g_act_1.w_buffer.offset, "wbuffer");
@@ -628,11 +632,6 @@ release_generate_block(char *name, ear *iarg)
         }
     }
 
-  if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-    {
-      print_str("ENTERING: %s\n", name);
-    }
-
   if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds)) < 1
       || !(iarg->dirlog->files)))
     {
@@ -653,11 +652,6 @@ release_generate_block(char *name, ear *iarg)
     }
 
   g_setjmp(0, "release_generate_block(2)", NULL, NULL);
-
-  if ((gfl & F_OPT_VERBOSE2) && !(iarg->flags & F_EAR_NOVERB))
-    {
-      print_str("EXITING: %s\n", name);
-    }
 
   if ((gfl & F_OPT_SFV) && !(gfl & F_OPT_NOWRITE))
     {
@@ -807,6 +801,7 @@ dirlog_find(char *dirn, int mode, uint32_t flags, void *callback)
   if (mode != 1)
     {
       g_close(&g_act_1);
+      g_cleanup(&g_act_1);
     }
 
   return ur;
@@ -878,6 +873,7 @@ dirlog_find_old(char *dirn, int mode, uint32_t flags, void *callback)
   if (mode != 1)
     {
       g_close(&g_act_1);
+      g_cleanup(&g_act_1);
     }
 
   return ur;
@@ -981,44 +977,6 @@ nukelog_find(char *dirn, int mode, struct nukelog *output)
   r_end:
 
   return r;
-}
-
-int
-g_load_record(__g_handle hdl, const void *data)
-{
-  g_setjmp(0, "g_load_record", NULL, NULL);
-  void *buffer = NULL;
-
-  if (hdl->w_buffer.offset == MAX_WBUFFER_HOLD)
-    {
-      hdl->w_buffer.flags |= F_MDA_FREE;
-      rebuild_data_file(hdl->file, hdl);
-      p_md_obj ptr = hdl->w_buffer.objects, ptr_s;
-      if (gfl & F_OPT_VERBOSE3)
-        {
-          print_str("NOTICE: scrubbing write cache..\n");
-        }
-      while (ptr)
-        {
-          ptr_s = ptr->next;
-          free(ptr->ptr);
-          bzero(ptr, sizeof(md_obj));
-          ptr = ptr_s;
-        }
-      hdl->w_buffer.pos = hdl->w_buffer.objects;
-      hdl->w_buffer.offset = 0;
-    }
-
-  buffer = md_alloc(&hdl->w_buffer, hdl->block_sz);
-
-  if (!buffer)
-    {
-      return 2;
-    }
-
-  memcpy(buffer, data, hdl->block_sz);
-
-  return 0;
 }
 
 #define DWR_DO_NORM_WRITE(buffer, fh) { \
@@ -1185,7 +1143,7 @@ dirlog_update_record(char *argv)
 
       char *mode = "a";
 
-      if (!(gfl & F_OPT_DIR_FULL_REBUILD) && rl < MAX_uint64_t)
+      if (!(gfl & F_OPT_FORCE) && rl < MAX_uint64_t)
         {
           print_str(
               "WARNING: %s: [%llu] already exists in dirlog (use -f to overwrite)\n",
@@ -1206,8 +1164,10 @@ dirlog_update_record(char *argv)
           mode = "r+";
         }
 
-      if (g_fopen(DIRLOG, mode, 0, &g_act_1))
+      if ((r = g_fopen(DIRLOG, mode, 0, &g_act_1)))
         {
+          print_str("ERROR: %s: could not open log [%d], mode %s\n", DIRLOG, r,
+              mode);
           goto r_end;
         }
 

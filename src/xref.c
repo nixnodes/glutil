@@ -65,9 +65,9 @@ g_legacy_guser(__d_xref data, size_t max_size, char *output, __d_drt_h mppd)
   if ((r = r_preload_guid_data(&mppd->hdl->uuid_stor, DEFPATH_PASSWD)))
     {
       /*if (r == 1)
-        {
-          print_str(MSG_GEN_NOFACC, GLROOT, DEFPATH_PASSWD);
-        }*/
+       {
+       print_str(MSG_GEN_NOFACC, GLROOT, DEFPATH_PASSWD);
+       }*/
       return 1;
     }
 
@@ -96,9 +96,9 @@ g_legacy_ggroup(__d_xref data, size_t max_size, char *output, __d_drt_h mppd)
   if ((r = r_preload_guid_data(&mppd->hdl->guid_stor, DEFPATH_GROUP)))
     {
       /*if (r == 1)
-        {
-          print_str(MSG_GEN_NOFACC, GLROOT, DEFPATH_GROUP);
-        }*/
+       {
+       print_str(MSG_GEN_NOFACC, GLROOT, DEFPATH_GROUP);
+       }*/
       return 1;
     }
 

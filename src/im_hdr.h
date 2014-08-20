@@ -54,6 +54,7 @@
 #define F_GH_D_WRITE                    (a64 << 42)
 #define F_GH_IS_GZIP                    (a64 << 43)
 #define F_GH_IS_ALTLOG                  (a64 << 44)
+#define F_GH_NO_BACKUP                  (a64 << 45)
 
 /* these bits determine log type */
 #define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE|F_GH_IS_ALTLOG)
@@ -84,7 +85,7 @@ typedef struct g_handle
   gzFile gz_fh, gz_fh1;
 #endif
   off_t offset, bw, br, total_sz;
-  off_t rw;
+  off_t rw, t_rw;
   uint32_t block_sz;
   uint64_t flags;
   mda buffer, w_buffer;

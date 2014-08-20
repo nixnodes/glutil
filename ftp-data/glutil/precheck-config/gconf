@@ -12,42 +12,42 @@
 ## Delete the parts matching this regex from
 ## the input directory.
 #
-r_path_clean 					([_\-\(\)\.\ \+](([1][98][0-9]{2,2}|[2][0][0-9]{2,2})|(S[0-9]{1,3}E[0-9]{1,3}|E(P|())[0-9]{1,3}|S[0-9]{1,3}).*)([_\-\(\)\.\ \+]|$).*)|([_\-\(\)\.\ \+](MACOSX|BLURAY|EUR|Creators[_\-\(\)\.\ \+]Edition|PATCH|DATAPACK|INTERNAL|FINNISH|GAMEFIX|READ[_\-\(\)\.\ \+]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DUTCH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[_\-\(\)\.\ \+]CUT|READNFO|DLC|INCL[_\-\(\)\.\ \+]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|GOTY|MULTI|Crack|DOX|FRENCH|VOBSUBS|SUBPACK|BOXSET|WS|FESTIVAL|(720|1080)(i|p)|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|REPACK|DC|XVID|UNCUT)([_\-\(\)\.\ \+\-]|$).*)|-([A-Z0-9a-z_\-]*$)
+r_path_clean 				     	([_\-\(\)\.\ \+](([1][98][0-9]{2,2}|[2][0][0-9]{2,2})|(S[0-9]{1,3}E[0-9]{1,3}|E(P|())[0-9]{1,3}|S[0-9]{1,3}).*)([_\-\(\)\.\ \+]|$).*)|([_\-\(\)\.\ \+](MACOSX|BLURAY|EUR|Creators[_\-\(\)\.\ \+]Edition|PATCH|DATAPACK|INTERNAL|FINNISH|GAMEFIX|READ[_\-\(\)\.\ \+]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DUTCH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[_\-\(\)\.\ \+]CUT|READNFO|DLC|INCL[_\-\(\)\.\ \+]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|GOTY|MULTI|Crack|DOX|FRENCH|VOBSUBS|SUBPACK|BOXSET|WS|FESTIVAL|(720|1080)(i|p)|RERIP|UNRATED|DVDSCR|TC|TS|CAM|EXTENDED|TELESYNC|DVDR|X264|HDTV|SDTV|PDTV|XXX|WORKPRINT|SUBBED|DUBBED|DOCU|THEATRICAL|RETAIL|SUBFIX|NFOFIX|DVDRIP|HDRIP|BRRIP|BDRIP|LIMITED|REPACK|DC|XVID|UNCUT)([_\-\(\)\.\ \+\-]|$).*)|-([A-Z0-9a-z_\-]*$)
 #
 #####################################################
 #
 ## Replace what matches this regex in the input
 ## string with ".*".
 #
-r_path_postproc 				[_\-\(\)\.\+\ ]+
+r_path_postproc 			     	[_\-\(\)\.\+\ ]+
 #
 #####################################################
 #
 ## Extract the year from directory string based on
-## this regex. If it's matched, database lookups
-## take the value into account.
+## this regex. If there's a match, database queries
+## take the matching substring value into account.
 #
-r_year_extract 					[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())
+r_year_extract 				     	[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\-\(\)\.\+\ ]|())
 #
 #####################################################
 #
 ## Do not process directories matching this regex.
 #
-r_skip_basedir					^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
+r_skip_basedir				     	^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
 #
 #####################################################
 #
 ## Exclude user(s) matching flags. Value is extracted
 ## from $FLAGS env variable. This is a REGEX.
 #
-r_exclude_user_flags			[1A]
+r_exclude_user_flags                 [1A]
 #
 #####################################################
 #
 ## Exclude user(s) matching this REGEX. Value is 
 ## extracted from $USER environment variable.
 #
-r_exclude_user					 ^(user1|user2)$
+r_exclude_user				     	^(user1|user2)$
 #
 #####################################################
 #
@@ -69,7 +69,7 @@ r_exclude_user					 ^(user1|user2)$
 ## are set to a sufficient value to hold your logs +
 ## some reserve for future growth (man sysctl).
 #
-use_shared_mem                  1
+use_shared_mem                       1
 #
 #####################################################
 #
@@ -86,23 +86,23 @@ use_shared_mem                  1
 ## we  wish to  execute a web  lookup  if log doesn't  
 ## contain the info. See also 'path_exec_on_match'.
 #
-execute_on_lookup_fail          1
+execute_on_lookup_fail               1
 #
 ## Each log needs to have its own exec string defined:
 #
-path_exec_on_lookup_fail_tvrage        	/bin/sh -c "{?rd:exe:-precheck$} -m tvrage-e -vvvv -arg1 '{pspec1}' --glroot / --tvlog {tvragefile}"
-path_exec_on_lookup_fail_imdb			/bin/sh -c "{?rd:exe:-precheck$} -m imdb-e -vvvv -arg1 '{pspec1}' --glroot / --imdblog {imdbfile}"
+path_exec_on_lookup_fail_tvrage      /bin/sh -c "{?rd:exe:-precheck$} -m tvrage-e -vvvv -arg1 '{pspec1}' --glroot / --tvlog {tvragefile}"
+path_exec_on_lookup_fail_imdb        /bin/sh -c "{?rd:exe:-precheck$} -m imdb-e -vvvv -arg1 '{pspec1}' --glroot / --imdblog {imdbfile}"
 #
 ###############################################################
 #
-## This is used to do a perform a delayed action (nuke/etc..), 
-## after the first lookup found nothing but the second (after 
-## performing 'path_exec_on_lookup_fail' call) suceeded.
+## This is used to perform a delayed action (nuke/etc..), 
+## after the first query returned nothing but the second (after 
+## executing 'path_exec_on_lookup_fail' call) suceeded.
 ## If 'execute_on_lookup_fail' is set to 2, only the forked
 ## instance executes this command if rule processor hits
 ## a match.
 #
-path_exec_on_match              /bin/nuker ..."
+path_exec_on_match                   /bin/nuker ..."
 #
 ###############################################################
 #
@@ -114,8 +114,20 @@ path_exec_on_match              /bin/nuker ..."
 ##
 ## Each is log configured separately.
 #
-lookup_match_strictness_imdb      	1
-lookup_match_strictness_tvrage     	1
+lookup_match_strictness_imdb      	 1
+lookup_match_strictness_tvrage     	 1
+#
+###############################################################
+#
+## Reflects all paths (or sections) defined in a siteroot;
+## The 'non-directory suffix' is stripped from path recieved
+## from glftpd, the result (substring from the beggining to
+## the last / in the path string) is matched against this
+## regex.
+## The matched part of the regex is used to locate the 
+## 
+#
+paths                              ^(xvid|x264)$
 #
 ###############################################################
 #

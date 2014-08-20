@@ -182,6 +182,7 @@ char *hpd_up =
         "  --loadq               Quit after loading data into memory\n"
         "  --loadqa              Quit after filtering/sorting\n"
         "                          Applies to dump operations only\n"
+        "  --progress            Show progress of the current operation (where it applies)\n"
         "  --nofq                Abort data (re)build operation unconditionally, if nothing was filtered\n"
         "  --noglconf            Disable reading settings from glftpd.conf\n"
         "  --nobackup            Disable log backup before rebuilding\n"

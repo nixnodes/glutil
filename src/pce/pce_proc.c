@@ -80,6 +80,7 @@ pce_proc(char *path, char *dir)
 
   if (!(s_b_p = reg_getsubm(path, gconf->r_sects, REG_EXTENDED, s_b, 255)))
     {
+      print_str("ERROR: %s: reg_getsubm failed\n", path);
       goto aft_end;
     }
 
@@ -696,7 +697,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
               if (fork())
                 {
                   print_str(
-                      "NOTICE: o_exec_on_lookup_fail == 2, forked child\n");
+                      "NOTICE: o_exec_on_lookup_fail == 2, forked process\n");
                   //gfl |= F_OPT_KILL_GLOBAL;
                   p_log->flags |= F_GH_LOCKED;
                   return 0;

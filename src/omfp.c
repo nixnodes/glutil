@@ -21,6 +21,8 @@
 
 uint32_t g_omfp_sto = 0, g_omfp_suto = 0;
 
+int (*int_printf) (const char *__restrict __format, ...) = printf;
+
 static int
 g_print_do_filter(__g_handle hdl, void *s_exec)
 {
