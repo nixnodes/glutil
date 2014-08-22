@@ -108,7 +108,7 @@ TVLOG_SORT=0
 ## (Re)load the log into shared memory segment
 ## after an update occurs
 #
-TVLOG_SHARED_MEM=1
+TVLOG_SHARED_MEM=0
 #
 VERBOSE=1
 #

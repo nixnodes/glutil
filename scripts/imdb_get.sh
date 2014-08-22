@@ -94,7 +94,7 @@ IMDBLOG_COMPRESSION=2
 ## (Re)load the log into shared memory segment
 ## after an update occurs
 #
-IMDB_SHARED_MEM=1
+IMDB_SHARED_MEM=0
 #
 ## Verbose output
 VERBOSE=1
