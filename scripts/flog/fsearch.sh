@@ -1,5 +1,4 @@
 #!/bin/sh
-#
 #@VERSION:0
 #@REVISION:1
 #GLUTIL=/bin/glutil-chroot

@@ -272,7 +272,10 @@ g_read(void *buffer, __g_handle hdl, size_t size)
   size_t fr;
 
 #ifdef HAVE_ZLIB_H
-  if ((fr = gzread(hdl->gz_fh, buffer, size)) != size)
+  if ((fr = (
+      hdl->flags & F_GH_IS_GZIP ?
+          gzread(hdl->gz_fh, buffer, size) : fread(buffer, 1, size, hdl->fh)))
+      != size)
 #else
   if ((fr = fread(buffer, 1, size, hdl->fh)) != size)
 #endif
@@ -292,6 +295,7 @@ g_read(void *buffer, __g_handle hdl, size_t size)
 
   hdl->br += fr;
   hdl->offset++;
+
 
   return buffer;
 }
