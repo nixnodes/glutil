@@ -149,11 +149,13 @@ Updated: 4/12/2013
 				*   Multiply
 				/   Divide
 				%   Modulo (integer remainder)
+				^   Power
+				~   Square root
+				$   Euclidean distance
 				
 			Bitwise operators:					
 				&   AND
-				|   OR
-				^   XOR
+				|   OR				
 				<<  Bitwise left shift
 				>>  Bitwise right shift
 			

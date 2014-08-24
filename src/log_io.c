@@ -296,7 +296,6 @@ g_read(void *buffer, __g_handle hdl, size_t size)
   hdl->br += fr;
   hdl->offset++;
 
-
   return buffer;
 }
 
@@ -348,6 +347,38 @@ g_close(__g_handle hdl)
   return 0;
 }
 
+static int
+g_clean_print_mech(pmda print_mech)
+{
+  p_md_obj ptr;
+
+  if (print_mech->objects)
+    {
+      ptr = md_first(print_mech);
+
+      while (ptr)
+        {
+          __d_exec_ch g_ptr = (__d_exec_ch) ptr->ptr;
+
+          p_md_obj p_ptr = md_first(&g_ptr->dtr.chains);
+
+          while (p_ptr)
+            {
+              md_g_free(p_ptr->ptr);
+              p_ptr = p_ptr->next;
+            }
+
+          md_g_free(&g_ptr->dtr.chains);
+          md_g_free(&g_ptr->dtr.math);
+          ptr = ptr->next;
+        }
+
+      return md_g_free(print_mech);
+    }
+
+  return 0;
+}
+
 int
 g_cleanup(__g_handle hdl)
 {
@@ -355,10 +386,13 @@ g_cleanup(__g_handle hdl)
 
   r += md_g_free(&hdl->buffer);
   r += md_g_free(&hdl->w_buffer);
-  r += md_g_free(&hdl->print_mech);
   r += md_g_free(&hdl->_accumulator);
   r += md_g_free(&hdl->uuid_stor);
   r += md_g_free(&hdl->guid_stor);
+
+  g_clean_print_mech(&hdl->print_mech);
+  g_clean_print_mech(&hdl->pre_print_mech);
+  g_clean_print_mech(&hdl->post_print_mech);
 
   p_md_obj ptr;
 

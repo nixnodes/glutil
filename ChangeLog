@@ -36,6 +36,7 @@
  *   - % Flush data to disk every so often, to avoid filling up memory buffer (-z) (rev. 7_b1)
  *   - % Adjusted write buffer limits, added --progress (rev. 7_b2)
  *   - ~ --nobuffer broken (rev. 8)
+ *   - + Nested parenthesis in math preprocessor (rev. 9_b1)
  *
  * v2.3:
  *

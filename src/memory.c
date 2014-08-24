@@ -210,6 +210,11 @@ md_alloc(pmda md, int b)
 {
   uint32_t flags = 0;
 
+  if (!md->count)
+    {
+      return NULL;
+    }
+
   if (md->offset >= md->count)
     {
       if (gfl & F_OPT_VERBOSE5)

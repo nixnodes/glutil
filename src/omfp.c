@@ -21,7 +21,8 @@
 
 uint32_t g_omfp_sto = 0, g_omfp_suto = 0;
 
-int (*int_printf) (const char *__restrict __format, ...) = printf;
+int
+(*int_printf)(const char *__restrict __format, ...) = printf;
 
 static int
 g_print_do_filter(__g_handle hdl, void *s_exec)
@@ -43,6 +44,12 @@ g_print_do_filter(__g_handle hdl, void *s_exec)
     }
 
   return r;
+}
+
+#define g_p_print(hdl) { \
+    void *t_ptr = calloc(1, hdl.block_sz); \
+    g_act_1.g_proc4_l((void*) &hdl, t_ptr, NULL); \
+    free(t_ptr); \
 }
 
 int
@@ -141,6 +148,14 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
         }
     }
 
+  if (g_act_1.flags & F_GH_PRE_PRINT)
+    {
+      void *s_act_mech = g_act_1.act_mech;
+      g_act_1.act_mech = &g_act_1.pre_print_mech;
+      g_p_print(g_act_1);
+      g_act_1.act_mech = (pmda) s_act_mech;
+    }
+
   if (gfl0 & F_OPT_LOADQA)
     {
       goto r_end;
@@ -189,6 +204,12 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
           g_act_1.file);
       EXITVAL = 2;
       goto r_end;
+    }
+
+  if (g_act_1.flags & F_GH_POST_PRINT)
+    {
+      g_act_1.act_mech = &g_act_1.post_print_mech;
+      g_p_print(g_act_1);
     }
 
   if (gfl & F_OPT_MODE_RAWDUMP)
@@ -261,7 +282,7 @@ void
 g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
 {
   char *s_ptr;
-  if (!(s_ptr = g_exech_build_string(ptr, &((__g_handle ) hdl)->print_mech,
+  if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
       (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
     {
       print_str("ERROR: could not assemble print string\n");
@@ -276,7 +297,7 @@ void
 g_omfp_eassemblef(void *hdl, void *ptr, char *sbuffer)
 {
   char *s_ptr;
-  if (!(s_ptr = g_exech_build_string(ptr, &((__g_handle ) hdl)->print_mech,
+  if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
       (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
     {
       print_str("ERROR: could not assemble print string\n");

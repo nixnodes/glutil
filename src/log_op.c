@@ -29,6 +29,8 @@
 
 #include <unistd.h>
 
+char *_print_ptr = NULL, *_print_ptr_post = NULL, *_print_ptr_pre = NULL;
+
 char *
 g_dgetf(char *str)
 {
@@ -154,6 +156,32 @@ data_backup_records(char *file)
     {
       print_str("NOTICE: %s: created data backup: %s\n", file, buffer);
     }
+  return 0;
+}
+
+static int
+g_op_load_print_mech(__g_handle hdl, pmda print_mech, char *print_ptr)
+{
+  size_t pp_l = strlen(print_ptr);
+  int r;
+
+  if (!pp_l || print_ptr[0] == 0xA)
+    {
+      print_str("ERROR: %s: empty print command\n", hdl->file);
+      return 2010;
+    }
+  if (pp_l > MAX_EXEC_STR)
+    {
+      print_str("ERROR: %s: print string too large\n", hdl->file);
+      return 2004;
+    }
+  if ((r = g_compile_exech(print_mech, hdl, print_ptr)))
+    {
+      print_str("ERROR: %s: [%d]: could not compile print string\n", hdl->file,
+          r);
+      return 2009;
+    }
+
   return 0;
 }
 
@@ -325,25 +353,12 @@ g_proc_mr(__g_handle hdl)
     {
       if (!hdl->print_mech.offset && _print_ptr)
         {
-          size_t pp_l = strlen(_print_ptr);
-
-          if (!pp_l || _print_ptr[0] == 0xA)
+          if ((r = g_op_load_print_mech(hdl, &hdl->print_mech, _print_ptr)))
             {
-              print_str("ERROR: %s: empty -print(f) command\n", hdl->file);
-              return 2010;
-            }
-          if (pp_l > MAX_EXEC_STR)
-            {
-              print_str("ERROR: %s: -print(f) string too large\n", hdl->file);
-              return 2004;
-            }
-          if ((r = g_compile_exech(&hdl->print_mech, hdl, _print_ptr)))
-            {
-              print_str("ERROR: %s: [%d]: could not compile print string\n",
-                  hdl->file, r);
-              return 2009;
+              return r;
             }
         }
+
       if ((gfl0 & F_OPT_PRINTF))
         {
           hdl->g_proc4 = g_omfp_eassemblef;
@@ -352,6 +367,8 @@ g_proc_mr(__g_handle hdl)
         {
           hdl->g_proc4 = g_omfp_eassemble;
         }
+
+      hdl->act_mech = &hdl->print_mech;
     }
   else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP))
     {
@@ -365,6 +382,44 @@ g_proc_mr(__g_handle hdl)
   else if (gfl & F_OPT_FORMAT_EXPORT)
     {
       hdl->g_proc3 = hdl->g_proc3_export;
+    }
+
+  if (gfl0 & F_OPT_PREPOSTPRINTS)
+    {
+      if (gfl0 & F_OPT_POSTPRINT)
+        {
+          if (!hdl->post_print_mech.offset && _print_ptr_post)
+            {
+              if ((r = g_op_load_print_mech(hdl, &hdl->post_print_mech,
+                  _print_ptr_post)))
+                {
+                  return r;
+                }
+              hdl->flags |= F_GH_POST_PRINT;
+            }
+        }
+
+      if (gfl0 & F_OPT_PREPRINT)
+        {
+          if (!hdl->pre_print_mech.offset && _print_ptr_pre)
+            {
+              if ((r = g_op_load_print_mech(hdl, &hdl->pre_print_mech,
+                  _print_ptr_pre)))
+                {
+                  return r;
+                }
+              hdl->flags |= F_GH_PRE_PRINT;
+            }
+        }
+
+      if ((gfl0 & F_OPT_PRINTF))
+        {
+          hdl->g_proc4_l = g_omfp_eassemblef;
+        }
+      else
+        {
+          hdl->g_proc4_l = g_omfp_eassemble;
+        }
     }
 
   hdl->t_rw = 1;

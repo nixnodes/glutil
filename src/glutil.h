@@ -40,7 +40,6 @@
 #define DEFF_GEN3                       "gen3.log"
 #define DEFF_GEN4                       "gen4.log"
 
-
 struct d_stats
 {
   uint64_t bw, br, rw;
@@ -68,7 +67,7 @@ char MACRO_ARG2[4096];
 char MACRO_ARG3[4096];
 
 void *_p_macro_argv;
-int _p_macro_argc ;
+int _p_macro_argc;
 
 uint32_t g_sleep;
 uint32_t g_usleep;
@@ -79,7 +78,6 @@ void *prio_argv_off;
 mda cfg_rf;
 
 uint32_t flags_udcfg;
-
 
 off_t max_hits;
 off_t max_results;

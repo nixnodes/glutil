@@ -70,7 +70,7 @@ typedef unsigned long long int ulint64_t;
 
 #define CRC_FILE_READ_BUFFER_SIZE       64512
 
-#define MAX_EXEC_STR                    262144
+#define MAX_EXEC_STR                    262144 * 4
 #define PIPE_READ_MAX                   0x2000
 #define MAX_DATAIN_F                    (V_MB*32)
 
@@ -192,6 +192,10 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_SMETHOD_INSSORT           (a64 << 19)
 #define F_OPT_SMETHOD_SELECT            (a64 << 20)
 #define F_OPT_PROGRESS                  (a64 << 21)
+#define F_OPT_PREPRINT                  (a64 << 22)
+#define F_OPT_POSTPRINT                 (a64 << 23)
+
+#define F_OPT_PREPOSTPRINTS             (F_OPT_PREPRINT|F_OPT_POSTPRINT)
 
 #define F_OPT_SMETHOD                   (F_OPT_SMETHOD_SWAP|F_OPT_SMETHOD_HEAP|F_OPT_SMETHOD_Q|F_OPT_SMETHOD_INSSORT|F_OPT_SMETHOD_SELECT)
 

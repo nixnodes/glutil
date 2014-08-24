@@ -29,6 +29,7 @@ typedef struct ___d_drt_h
   __g_handle hdl;
   char *match;
   mda math;
+  mda chains;
   regex_t preg;
   int regex_flags;
   char r_rep[2048];

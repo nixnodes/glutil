@@ -14,7 +14,7 @@
 #include <memory_t.h>
 
 
-#define MAX_VAR_LEN                             4096
+#define MAX_VAR_LEN                             4096 * 8
 
 /* generic types */
 

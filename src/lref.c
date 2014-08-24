@@ -69,6 +69,24 @@ dt_rval_spec_basedir(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
+char *
+dt_rval_spec_dirname(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match, output, max_size, mppd);
+
+  if (p_o)
+    {
+      strcp_s(output, max_size, p_o);
+      return g_dirname(output);
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
+
+  return output;
+}
 
 char *
 dt_rval_spec_gc(void *arg, char *match, char *output, size_t max_size,
@@ -122,15 +140,19 @@ dt_rval_spec_tf_gm(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
+#define dt_rval_spec_math_pp(type) { \
+  unsigned char v_b[16] = \
+    { 0 }; \
+  void *v_ptr = &v_b; \
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_b); \
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(type) v_ptr); \
+}
+
 char *
 dt_rval_spec_math_u64(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint64_t*) v_ptr);
+  dt_rval_spec_math_pp(uint64_t*);
   return output;
 }
 
@@ -138,11 +160,7 @@ char *
 dt_rval_spec_math_u32(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint32_t*) v_ptr);
+  dt_rval_spec_math_pp(uint32_t*);
   return output;
 }
 
@@ -150,11 +168,7 @@ char *
 dt_rval_spec_math_u16(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint16_t*) v_ptr);
+  dt_rval_spec_math_pp(uint16_t*);
   return output;
 }
 
@@ -162,11 +176,7 @@ char *
 dt_rval_spec_math_u8(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(uint8_t*) v_ptr);
+  dt_rval_spec_math_pp(uint8_t*);
   return output;
 }
 
@@ -174,11 +184,7 @@ char *
 dt_rval_spec_math_s64(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = (void*) &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int64_t*) v_ptr);
+  dt_rval_spec_math_pp(int64_t*);
   return output;
 }
 
@@ -186,11 +192,8 @@ char *
 dt_rval_spec_math_s32(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = (void*) &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int32_t*) v_ptr);
+  dt_rval_spec_math_pp(int32_t*);
+
   return output;
 }
 
@@ -198,11 +201,7 @@ char *
 dt_rval_spec_math_s16(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = (void*) &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int16_t*) v_ptr);
+  dt_rval_spec_math_pp(int16_t*);
   return output;
 }
 
@@ -210,11 +209,7 @@ char *
 dt_rval_spec_math_s8(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = (void*) &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_ptr);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(int8_t*) v_ptr);
+  dt_rval_spec_math_pp(int8_t*);
   return output;
 }
 
@@ -222,11 +217,7 @@ char *
 dt_rval_spec_math_f(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  unsigned char v_b[16] =
-    { 0 };
-  void *v_ptr = &v_b;
-  g_math_res(arg, &((__d_drt_h ) mppd)->math, &v_b);
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, *(float*) v_ptr);
+  dt_rval_spec_math_pp(float*);
   return output;
 }
 
@@ -446,14 +437,29 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
 
   return c;
 }
+/*
+ int g_proc_nested (char *input, char d, void *arg) {
 
+ }
+
+ void *
+ ref_to_val_af_math_bc(void *arg, char *match, char *output, size_t max_size,
+ __d_drt_h mppd) {
+ _g_math math_c = {0};
+
+
+ }
+ */
 void *
 ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
 {
   int m_ret = 0, m_ret2;
+  md_init(&mppd->chains, 8);
+  md_init(&mppd->math, 8);
 
-  if ((m_ret2 = g_process_math_string(mppd->hdl, match, &mppd->math, &m_ret, 0)))
+  if ((m_ret2 = g_process_math_string(mppd->hdl, match, &mppd->math,
+      &mppd->chains, &m_ret, NULL, 0, 0)))
     {
       printf("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
           m_ret);
@@ -462,7 +468,19 @@ ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
 
   if (mppd->math.offset)
     {
-      switch (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_TYPES)
+      __g_math math_f;
+
+      if (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_NITEM)
+        {
+          math_f =
+              ((pmda) ((__g_math ) mppd->math.objects->ptr)->next)->pos->ptr;
+        }
+      else
+        {
+          math_f = ((__g_math ) mppd->math.objects->ptr);
+        }
+
+      switch (math_f->flags & F_MATH_TYPES)
         {
       case F_MATH_INT:
         switch (((__g_math ) mppd->math.objects->ptr)->vb)
@@ -480,7 +498,7 @@ ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
           }
         break;
       case F_MATH_INT_S:
-        switch (((__g_math ) mppd->math.objects->ptr)->vb)
+        switch (math_f->vb)
           {
         case 1:
           return as_ref_to_val_lk(match, dt_rval_spec_math_s8, mppd, "%hhd");
@@ -504,6 +522,32 @@ ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
     {
       return NULL;
     }
+}
+
+#define RT_AF_RTP(arg, match, output, max_size, mppd) { \
+  mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size, mppd); \
+  if (!mppd->fp_rval1) \
+    { \
+      return NULL; \
+    } \
+}
+
+static void*
+rt_af_basedir(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  RT_AF_RTP(arg, match, output, max_size, mppd);
+  return as_ref_to_val_lk(match, dt_rval_spec_basedir, (__d_drt_h ) mppd,
+  NULL);
+}
+
+static void*
+rt_af_dirname(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  RT_AF_RTP(arg, match, output, max_size, mppd);
+  return as_ref_to_val_lk(match, dt_rval_spec_dirname, (__d_drt_h ) mppd,
+  NULL);
 }
 
 void *
@@ -533,14 +577,9 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
       switch (id[0])
         {
       case 0x62:
-        mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
-            mppd);
-        if (!mppd->fp_rval1)
-          {
-            return NULL;
-          }
-        return as_ref_to_val_lk(match, dt_rval_spec_basedir, (__d_drt_h ) mppd,
-        NULL);
+        return rt_af_basedir(arg, match, output, max_size, mppd);
+      case 0x64:
+        return rt_af_dirname(arg, match, output, max_size, mppd);
       case 0x71:
         return as_ref_to_val_lk(match, ((__d_drt_h ) mppd)->st_ptr0,
             (__d_drt_h ) mppd, "%s");

@@ -23,9 +23,11 @@
 }
 
 _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
-    g_omfp_eassemblef, g_xproc_print_d, g_xproc_print;
+    g_omfp_eassemblef, g_omfp_eassemble_post, g_omfp_eassemblef_post,
+    g_xproc_print_d, g_xproc_print;
 
-int (*int_printf) (const char *__restrict __format, ...);
+int
+(*int_printf)(const char *__restrict __format, ...);
 
 int
 g_print_stats(char *file, uint32_t flags, size_t block_sz);

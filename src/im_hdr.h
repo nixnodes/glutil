@@ -55,6 +55,8 @@
 #define F_GH_IS_GZIP                    (a64 << 43)
 #define F_GH_IS_ALTLOG                  (a64 << 44)
 #define F_GH_NO_BACKUP                  (a64 << 45)
+#define F_GH_POST_PRINT                 (a64 << 46)
+#define F_GH_PRE_PRINT                  (a64 << 47)
 
 /* these bits determine log type */
 #define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE|F_GH_IS_ALTLOG)
@@ -95,6 +97,9 @@ typedef struct g_handle
   __g_ipcbm ifrh_l0, ifrh_l1;
   _execv exec_args;
   mda print_mech;
+  mda post_print_mech;
+  mda pre_print_mech;
+  pmda act_mech;
   void *data;
   char s_buffer[PATH_MAX];
   char mv1_b[MAX_VAR_LEN];
@@ -110,7 +115,7 @@ typedef struct g_handle
   __g_proc_v g_proc1_lookup;
   _d_proc3 g_proc3, g_proc3_batch, g_proc3_export;
   _d_gcb_pp_hook gcb_post_proc;
-  _d_omfp g_proc4;
+  _d_omfp g_proc4, g_proc4_l;
   size_t j_offset, jm_offset;
   int d_memb;
   void *_x_ref;

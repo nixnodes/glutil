@@ -18,6 +18,9 @@
 #define F_MATH_TYPES                    (F_MATH_INT|F_MATH_INT_S|F_MATH_FLOAT)
 
 #define F_MATH_VAR_KNOWN                (a32 << 4)
+#define F_MATH_NITEM                    (a32 << 5)
+
+#define F_MATH_IS_SQRT                  (a32 << 10)
 
 typedef uint64_t
 (*g_op_tu)(uint64_t s, uint64_t d);
@@ -36,6 +39,7 @@ typedef struct ___g_math
   uint32_t flags;
   //g_t_pg g_t_ptr;
   void **_m_p;
+  void *next;
   g_op_tg op_t;
   size_t l_off;
   uint8_t vstor[8];
@@ -46,8 +50,8 @@ int
 g_math_res(void *d_ptr, pmda mdm, void *res);
 
 int
-g_process_math_string(__g_handle hdl, char *string, pmda mdm, int *ret,
-    uint32_t flags);
+g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
+    int *ret, void **p_ret, uint32_t flags, uint32_t int_flags);
 int
 g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
     __g_math *ret, uint32_t flags);

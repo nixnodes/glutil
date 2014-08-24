@@ -1263,6 +1263,50 @@ opt_printf(void *arg, int m)
 }
 
 int
+opt_postprintf(void *arg, int m)
+{
+  if ((_print_ptr_post = g_pg(arg, m)))
+    {
+      gfl0 |= F_OPT_POSTPRINT;
+      return 0;
+    }
+  return 4251;
+}
+
+int
+opt_postprint(void *arg, int m)
+{
+  if ((_print_ptr_post = g_pg(arg, m)))
+    {
+      gfl0 |= F_OPT_POSTPRINT;
+      return 0;
+    }
+  return 4250;
+}
+
+int
+opt_preprintf(void *arg, int m)
+{
+  if ((_print_ptr_pre = g_pg(arg, m)))
+    {
+      gfl0 |= F_OPT_PREPRINT;
+      return 0;
+    }
+  return 4251;
+}
+
+int
+opt_preprint(void *arg, int m)
+{
+  if ((_print_ptr_pre = g_pg(arg, m)))
+    {
+      gfl0 |= F_OPT_PREPRINT;
+      return 0;
+    }
+  return 4250;
+}
+
+int
 opt_stdin(void *arg, int m)
 {
   gfl0 |= F_OPT_STDIN;
@@ -1401,13 +1445,16 @@ void *f_ref[] =
       opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1, "-R", opt_g_recursive,
       (void*) 0, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
       opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-print",
-      opt_print, (void*) 1, "-printf", opt_printf, (void*) 1, "-stdin",
-      opt_stdin, (void*) 0, "--stdin", opt_stdin, (void*) 0, "--print",
-      opt_print, (void*) 1, "--printf", opt_printf, (void*) 1, "-b", opt_backup,
-      (void*) 1, "--postexec", opt_g_postexec, (void*) 1, "--preexec",
-      opt_g_preexec, (void*) 1, "--usleep", opt_g_usleep, (void*) 1, "--sleep",
-      opt_g_sleep, (void*) 1, "-arg1",
+      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1,
+      "-preprint", opt_preprint, (void*) 1, "-preprintf", opt_preprintf,
+           (void*) 1,
+      "-postprint", opt_postprint, (void*) 1, "-postprintf", opt_postprintf,
+      (void*) 1, "-print", opt_print, (void*) 1, "-printf", opt_printf,
+      (void*) 1, "-stdin", opt_stdin, (void*) 0, "--stdin", opt_stdin,
+      (void*) 0, "--print", opt_print, (void*) 1, "--printf", opt_printf,
+      (void*) 1, "-b", opt_backup, (void*) 1, "--postexec", opt_g_postexec,
+      (void*) 1, "--preexec", opt_g_preexec, (void*) 1, "--usleep",
+      opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1",
       NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
       NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
       "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
