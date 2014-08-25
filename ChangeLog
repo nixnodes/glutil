@@ -37,6 +37,7 @@
  *   - % Adjusted write buffer limits, added --progress (rev. 7_b2)
  *   - ~ --nobuffer broken (rev. 8)
  *   - + Nested parenthesis in math preprocessor (rev. 9_b1)
+ *   - + -preprint and -postprint (see --help) (rev. 9_b1)
  *
  * v2.3:
  *
