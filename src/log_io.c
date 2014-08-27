@@ -435,6 +435,11 @@ g_cleanup(__g_handle hdl)
                 {
                   clean_drt(drt);
                 }
+              md_g_free(&cond->match.lom);
+              if (cond->match.data)
+                {
+                  free(cond->match.data);
+                }
               free(cond);
               cond = cond_n;
             }
@@ -590,7 +595,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 #ifdef HAVE_ZLIB_H
   while (!g_load_data_check_of(
       (hdl->flags & F_GH_IS_GZIP) ? (void*) gz_fh : (void*) fh,
-      (hdl->flags & F_GH_IS_GZIP) ?  fh : fh, hdl))
+      (hdl->flags & F_GH_IS_GZIP) ? fh : fh, hdl))
 #else
   while (!g_load_data_check_of((void*) fh, NULL, hdl))
 #endif
