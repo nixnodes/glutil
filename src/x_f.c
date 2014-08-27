@@ -319,7 +319,7 @@ read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
   int r;
   FILE *fp;
 
-  if (file[0] == 0x2D && file[1] == 0x0)
+  if (file && file[0] == 0x2D && file[1] == 0x0)
     {
       fp = stdin;
     }

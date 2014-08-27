@@ -32,4 +32,26 @@ typedef struct option_reference_array
   void *function, *arg_cnt;
 }*p_ora;
 
+#define O_FI_STDIN(arg, m, code, code2) { \
+ b_in = g_pg(arg, m); \
+ if (NULL == b_in) { \
+     return code; \
+ } \
+ if (b_in[0] == 0x2D) \
+   { \
+     fh_in = stdin; \
+     fn_in = NULL; \
+   } \
+ else \
+   { \
+     if (file_exists(b_in)) \
+       { \
+         return code2; \
+       } \
+     fn_in = b_in; \
+     fh_in = NULL; \
+   } \
+}
+
+
 #endif /* ARG_PROC_H_ */

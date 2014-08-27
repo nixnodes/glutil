@@ -24,7 +24,7 @@ determine_datatype(__g_handle hdl, char *file);
 int
 g_proc_mr(__g_handle hdl);
 
-char *_print_ptr, *_print_ptr_post, *_print_ptr_pre;
+char *_print_ptr, *_print_ptr_post, *_print_ptr_pre, *_cl_print_ptr;
 
 int
 data_backup_records(char *file);

@@ -42,6 +42,7 @@
  *   - % Math preprocessor instructions can be used when LOM filtering (rev. 9_b2)
  *   - + '?p', '?P' and '?L' extended directives (read MANUAL) (rev. 9_b3)
  *   - ~ Misaligned field reads (accumulator) (rev. 9_b4)
+ *   - + '-print-', '-printf-', '-execv-', '-exec-' (read input from file/stdin) (rev. 9_b5)
  *
  * v2.3:
  *

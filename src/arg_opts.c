@@ -1251,6 +1251,26 @@ opt_print(void *arg, int m)
   return 4250;
 }
 
+#define MAX_PRINT_LINE_SIZE     ((1024*1024) / 4)
+
+int
+opt_print_stdin(void *arg, int m)
+{
+  char *b_in, *fn_in;
+  FILE *fh_in;
+
+  O_FI_STDIN(arg, m, 4273, 4274)
+
+  _cl_print_ptr = _print_ptr = calloc(MAX_PRINT_LINE_SIZE, 1);
+  if (read_file(fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
+    {
+      gfl0 |= F_OPT_PRINT;
+      return 0;
+    }
+
+  return 4280;
+}
+
 int
 opt_printf(void *arg, int m)
 {
@@ -1260,6 +1280,23 @@ opt_printf(void *arg, int m)
       return 0;
     }
   return 4251;
+}
+
+int
+opt_printf_stdin(void *arg, int m)
+{
+  char *b_in, *fn_in;
+  FILE *fh_in;
+
+  O_FI_STDIN(arg, m, 4323, 4324)
+
+  _cl_print_ptr = _print_ptr = calloc(MAX_PRINT_LINE_SIZE, 1);
+  if (read_file(fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
+    {
+      gfl0 |= F_OPT_PRINTF;
+      return 0;
+    }
+  return 4281;
 }
 
 int
@@ -1319,6 +1356,24 @@ opt_exec(void *arg, int m)
   exec_str = g_pd(arg, m, MAX_EXEC_STR);
   exc = g_do_exec_fb;
   return 0;
+}
+
+int
+opt_exec_stdin(void *arg, int m)
+{
+  char *b_in, *fn_in;
+  FILE *fh_in;
+
+  O_FI_STDIN(arg, m, 6838, 6839)
+
+  exec_str = calloc(MAX_EXEC_STR, 1);
+  if (read_file(fn_in, exec_str, MAX_EXEC_STR, 0, fh_in))
+    {
+      exc = g_do_exec_fb;
+      return 0;
+    }
+
+  return 6898;
 }
 
 int
@@ -1445,11 +1500,11 @@ void *f_ref[] =
       opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1, "-R", opt_g_recursive,
       (void*) 0, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
       opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1,
-      "-preprint", opt_preprint, (void*) 1, "-preprintf", opt_preprintf,
-           (void*) 1,
+      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-preprint",
+      opt_preprint, (void*) 1, "-preprintf", opt_preprintf, (void*) 1,
       "-postprint", opt_postprint, (void*) 1, "-postprintf", opt_postprintf,
-      (void*) 1, "-print", opt_print, (void*) 1, "-printf", opt_printf,
+      (void*) 1, "-print", opt_print, (void*) 1, "-print-", opt_print_stdin,
+      (void*) 1, "-printf-", opt_printf_stdin, (void*) 1, "-printf", opt_printf,
       (void*) 1, "-stdin", opt_stdin, (void*) 0, "--stdin", opt_stdin,
       (void*) 0, "--print", opt_print, (void*) 1, "--printf", opt_printf,
       (void*) 1, "-b", opt_backup, (void*) 1, "--postexec", opt_g_postexec,
@@ -1489,9 +1544,10 @@ void *f_ref[] =
       (void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
       "--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
       opt_g_followlinks, (void*) 0, "--execv", opt_execv, (void*) 1, "-execv",
-      opt_execv, (void*) 1, "-exec", opt_exec, (void*) 1, "--exec", opt_exec,
-      (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update, (void*) 0,
-      "--memlimit", opt_membuffer_limit, (void*) 1, "--memlimita",
+      opt_execv, (void*) 1, "-execv-", opt_execv_stdin, (void*) 1, "-exec",
+      opt_exec, (void*) 1, "-exec-", opt_exec_stdin, (void*) 1, "--exec",
+      opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
+      (void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "--memlimita",
       opt_membuffer_limit_in, (void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0,
       "--dupechk", opt_dirlog_chk_dupe, (void*) 0, "--nobuffer",
       opt_g_nobuffering, (void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0,

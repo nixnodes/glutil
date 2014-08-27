@@ -15,6 +15,7 @@
 #include <l_error.h>
 #include <misc.h>
 #include <str.h>
+#include <x_f.h>
 
 #include <unistd.h>
 #include <errno.h>
@@ -177,6 +178,23 @@ g_init_execv_bare(__execv exec_args, __g_handle hdl, char *i_exec_str)
 }
 
 int
+opt_execv_stdin(void *arg, int m)
+{
+  char *b_in, *fn_in;
+  FILE *fh_in;
+
+  O_FI_STDIN(arg, m, 6420, 6421)
+
+  exec_str = calloc(MAX_EXEC_STR, 1);
+  if (read_file(fn_in, exec_str, MAX_EXEC_STR, 0, fh_in))
+    {
+      return opt_execv(exec_str, 3);
+    }
+
+  return 6426;
+}
+
+int
 opt_execv(void *arg, int m)
 {
   int c = 0;
@@ -196,7 +214,14 @@ opt_execv(void *arg, int m)
 
   long count = amax / sizeof(char*);
 
-  exec_str = g_pd(arg, m, MAX_EXEC_STR);
+  if (m == 3)
+    {
+      exec_str = (char*) arg;
+    }
+  else
+    {
+      exec_str = g_pd(arg, m, MAX_EXEC_STR);
+    }
 
   if (!exec_str)
     {

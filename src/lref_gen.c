@@ -368,6 +368,13 @@ dt_rval_generic_newline(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_generic_cr(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  return MSG_CR;
+}
+
+char *
 dt_rval_generic_tab(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -464,7 +471,13 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
       case 0x74:
         return as_ref_to_val_lk(match, dt_rval_generic_tab, (__d_drt_h ) mppd,
             "%s");
-      case 0x5E:
+      case 0x72:
+        return as_ref_to_val_lk(match, dt_rval_generic_cr, (__d_drt_h ) mppd,
+            "%s");
+      case 0x52:
+        return as_ref_to_val_lk(match, dt_rval_generic_cr, (__d_drt_h ) mppd,
+            "%s");
+      case 0x4E:
         return as_ref_to_val_lk(match, dt_rval_generic_newline,
             (__d_drt_h ) mppd, "%s");
       case 0x54:

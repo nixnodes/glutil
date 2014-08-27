@@ -29,7 +29,7 @@
 
 #include <unistd.h>
 
-char *_print_ptr = NULL, *_print_ptr_post = NULL, *_print_ptr_pre = NULL;
+char *_print_ptr = NULL, *_cl_print_ptr = NULL, *_print_ptr_post = NULL, *_print_ptr_pre = NULL;
 
 char *
 g_dgetf(char *str)

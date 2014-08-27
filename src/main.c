@@ -180,15 +180,15 @@ g_init(int argc, char **argv)
 #endif
           /*ptr = get_cfg_opt("min_homedir", &glconf, NULL);
 
-          if (ptr && !(ofl & F_OVRR_SITEROOT))
-            {
-              snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
-              if ((gfl & F_OPT_VERBOSE5))
-                {
-                  print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
-                      SITEROOT_N);
-                }
-            }*/
+           if (ptr && !(ofl & F_OVRR_SITEROOT))
+           {
+           snprintf(SITEROOT_N, PATH_MAX, "%s", (char*) ptr->ptr);
+           if ((gfl & F_OPT_VERBOSE5))
+           {
+           print_str("NOTICE: GLCONF: using 'min_homedir': %s\n",
+           SITEROOT_N);
+           }
+           }*/
 
           ptr = get_cfg_opt("ftp-data", &glconf, NULL);
 
@@ -516,6 +516,11 @@ g_shutdown(void *arg)
   if (exec_str)
     {
       free(exec_str);
+    }
+
+  if (_cl_print_ptr)
+    {
+      free(_cl_print_ptr);
     }
 
   if (exec_v)

@@ -48,6 +48,8 @@ long amax;
 
 int
 opt_execv(void *arg, int m);
+int
+opt_execv_stdin(void *arg, int m);
 
 int
 process_exec_string(char *input, char *output, size_t max_size, void *callback,

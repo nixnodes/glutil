@@ -52,6 +52,7 @@ typedef unsigned long long int ulint64_t;
 #endif
 
 #define MSG_NL                          "\n"
+#define MSG_CR                          "\r"
 #define MSG_TAB                         "\t"
 
 #define MAX_uint64_t                    ((uint64_t) -1)
