@@ -15,6 +15,7 @@
 
 #define _D_DRT_HASREGEX         (a32 << 10)
 
+
 typedef struct ___d_drt_h
 {
   uint32_t flags;
@@ -34,9 +35,10 @@ typedef struct ___d_drt_h
   int regex_flags;
   char r_rep[2048];
   uint16_t r_rep_l;
-  uint64_t *p_accu;
   uint8_t uc_1;
   void *st_ptr0;
+  void *rt_cond;
+  char *st_p;
 } _d_drt_h, *__d_drt_h;
 
 #endif /* M_COMP_H_ */

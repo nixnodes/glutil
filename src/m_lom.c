@@ -751,6 +751,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
       char *m_field = calloc(field_l, 1);
       if (copy_and_term_math_field(field, m_field, field_l))
         {
+          free(m_field);
           return 31;
         }
 
@@ -761,9 +762,11 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
           print_str(
               "ERROR: [%d] [%d]: could not process math string (LOM): %s\n",
               m_ret2, m_ret, field);
+          free(m_field);
           return 32;
         }
 
+      free(m_field);
       __g_math math = m_get_def_val(&lom->math);
 
       lom->flags |= (math->flags & F_MATH_TYPES);

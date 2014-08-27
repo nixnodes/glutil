@@ -11,6 +11,7 @@
 #include <x_f.h>
 #include <gv_off.h>
 #include <str.h>
+#include <m_lom.h>
 
 #include <errno.h>
 #include <time.h>
@@ -104,7 +105,14 @@ dt_rval_spec_gc(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-char *
+static char *
+dt_rval_spec_print(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  return ((__d_drt_h ) mppd)->st_p;
+}
+
+static char *
 dt_rval_spec_tf_pl(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -113,7 +121,7 @@ dt_rval_spec_tf_pl(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-char *
+static char *
 dt_rval_spec_tf_pgm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -122,7 +130,7 @@ dt_rval_spec_tf_pgm(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-char *
+static char *
 dt_rval_spec_tf_l(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -131,7 +139,7 @@ dt_rval_spec_tf_l(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-char *
+static char *
 dt_rval_spec_tf_gm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -396,6 +404,21 @@ dt_rval_spec_regsub(void *arg, char *match, char *output, size_t max_size,
   return rs_o;
 }
 
+static char *
+dt_rval_spec_conditional(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __rt_c cond = (__rt_c ) ((__d_drt_h ) mppd)->rt_cond;
+  if (0 == g_lom_match(cond->mppd.hdl, arg, &cond->match))
+    {
+      return cond->p_exec(arg, match, output, max_size, &cond->mppd);
+    }
+
+  output[0] = 0x0;
+
+  return output;
+}
+
 #define MAX_RR_IN       0x1000000
 
 void *
@@ -407,23 +430,21 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
 
       if (match)
         {
-          if (strncmp("%s", defdc, 2))
+          size_t i = 0;
+          while (match[0] != 0x7D && match[0] != 0x2C && match[0] != 0x29
+              && match[0] != 0x3A && match[0] && i < sizeof(mppd->direc) - 2)
             {
-              size_t i = 0;
-              while (match[0] != 0x7D && match[0] != 0x2C && match[0] != 0x29
-                  && match[0] != 0x3A && match[0] && i < sizeof(mppd->direc) - 2)
-                {
-                  mppd->direc[i] = match[0];
-                  i++;
-                  match++;
-                }
-
-              if (1 < strlen(mppd->direc))
-                {
-                  mppd->direc[i] = 0x0;
-                  goto ct;
-                }
+              mppd->direc[i] = match[0];
+              i++;
+              match++;
             }
+
+          if (1 < strlen(mppd->direc))
+            {
+              mppd->direc[i] = 0x0;
+              goto ct;
+            }
+
         }
       if (mppd->direc[0] == 0x0)
         {
@@ -431,6 +452,7 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
           strncpy(mppd->direc, defdc, defdc_l);
           mppd->direc[defdc_l] = 0x0;
         }
+
     }
 
   ct:
@@ -527,8 +549,7 @@ rt_af_basedir(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
 {
   RT_AF_RTP(arg, match, output, max_size, mppd);
-  return as_ref_to_val_lk(match, dt_rval_spec_basedir, (__d_drt_h ) mppd,
-  NULL);
+  return as_ref_to_val_lk(match, dt_rval_spec_basedir, mppd, "%s");
 }
 
 static void*
@@ -536,8 +557,99 @@ rt_af_dirname(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
 {
   RT_AF_RTP(arg, match, output, max_size, mppd);
-  return as_ref_to_val_lk(match, dt_rval_spec_dirname, (__d_drt_h ) mppd,
-  NULL);
+  return as_ref_to_val_lk(match, dt_rval_spec_dirname, mppd, "%s");
+}
+
+static void*
+rt_af_conditional(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  int ret;
+
+  mppd->rt_cond = calloc(1, sizeof(_rt_c));
+  __rt_c cond = (void*) mppd->rt_cond;
+
+  char *ptr, *lom_st = ptr = strdup(match), *trigger;
+
+  while (ptr[0] && ptr[0] != 0x3A)
+    {
+      ptr++;
+    }
+
+  if (ptr[0] != 0x3A)
+    {
+      return NULL;
+    }
+
+  ptr[0] = 0x0;
+  ptr++;
+
+  trigger = ptr;
+
+  while (ptr[0] && ptr[0] != 0x7D)
+    {
+      ptr++;
+    }
+
+  //ptr[0] = 0x0;
+
+  int r;
+
+  if ((r = g_process_lom_string(mppd->hdl, lom_st, &cond->match, &ret,
+  F_GM_ISLOM | F_GM_NAND)))
+    {
+      print_str("ERROR: %s: [%d] [%d]: could not load LOM string\n",
+          mppd->hdl->file, r, ret);
+      free(lom_st);
+      return NULL;
+    }
+
+  size_t trigger_l = strlen(trigger);
+
+  if (trigger_l > sizeof(cond->c_exec))
+    {
+      print_str("ERROR: rt_af_conditional: command too long\n");
+      free(lom_st);
+      return NULL;
+
+    }
+
+  strncpy(cond->c_exec, trigger, trigger_l);
+  memcpy(&cond->mppd, mppd, sizeof(_d_drt_h));
+
+  free(lom_st);
+
+  cond->p_exec = mppd->hdl->g_proc1_lookup(arg, cond->c_exec, output, max_size,
+      &cond->mppd);
+
+  if (NULL == cond->p_exec)
+    {
+      print_str("ERROR: rt_af_conditional: could not resolve '%s'\n",
+          cond->c_exec);
+      return NULL;
+    }
+
+  return as_ref_to_val_lk(match, dt_rval_spec_conditional, mppd, "%s");
+}
+
+static void*
+rt_af_print(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  mppd->st_p = strdup(match);
+  char *ptr = mppd->st_p;
+
+  while (ptr[0] && ptr[0] != 0x7D)
+    {
+      ptr++;
+    }
+
+  if (ptr[0] == 0x7D)
+    {
+      ptr[0] = 0x0;
+    }
+
+  return as_ref_to_val_lk(match, dt_rval_spec_print, mppd, "%s");
 }
 
 void *
@@ -566,6 +678,10 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
         {
+      case 0x70:
+        return rt_af_print(arg, match, output, max_size, mppd);
+      case 0x4C:
+        return rt_af_conditional(arg, match, output, max_size, mppd);
       case 0x62:
         return rt_af_basedir(arg, match, output, max_size, mppd);
       case 0x64:

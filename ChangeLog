@@ -40,6 +40,7 @@
  *   - + -preprint and -postprint (see --help) (rev. 9_b1)
  *   - % Global vars made available in math preprocessor (rev. 9_b2)
  *   - % Math preprocessor instructions can be used when LOM filtering (rev. 9_b2)
+ *   - + '?s' and '?L' extended directives (read MANUAL) (rev. 9_b3)
  *
  * v2.3:
  *

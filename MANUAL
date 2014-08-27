@@ -201,6 +201,15 @@ Updated: 4/12/2013
 	?b   <field>
 			Strip directory and suffix from filename stored in <field>
 			
+	?d   <field>
+			Strip last component from file name <field>
+			
+	?s   <text>
+			Print <text>
+			
+	?L   <condition>:<field>
+			Evaluates <condition> (LOM syntax) and returns <field> if successfull;
+			
 			
 	Mind that ',' ':' '(' ')' '{' and '}' always need to be escaped with '\'. 	
 	

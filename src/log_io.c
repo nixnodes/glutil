@@ -412,6 +412,14 @@ g_cleanup(__g_handle hdl)
               regfree(&g_ptr->preg);
             }
           md_g_free(&g_ptr->dtr.math);
+          if (NULL != g_ptr->dtr.rt_cond)
+            {
+              free(g_ptr->dtr.rt_cond);
+            }
+          if (NULL != g_ptr->dtr.st_p)
+            {
+              free(g_ptr->dtr.st_p);
+            }
           ptr = ptr->next;
         }
 
