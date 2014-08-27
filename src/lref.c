@@ -113,6 +113,17 @@ dt_rval_spec_print(void *arg, char *match, char *output, size_t max_size,
 }
 
 static char *
+dt_rval_spec_print_format(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __rt_c cond = (__rt_c ) ((__d_drt_h ) mppd)->rt_cond;
+
+  snprintf(output, max_size, cond->mppd.direc,
+      cond->p_exec(arg, cond->mppd.st_p0, output, max_size, &cond->mppd));
+  return output;
+}
+
+static char *
 dt_rval_spec_tf_pl(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -431,9 +442,16 @@ as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
       if (match)
         {
           size_t i = 0;
-          while (match[0] != 0x7D && match[0] != 0x2C && match[0] != 0x29
-              && match[0] != 0x3A && match[0] && i < sizeof(mppd->direc) - 2)
+          while ((match[0] != 0x7D && match[0] != 0x2C && match[0] != 0x29
+                  && match[0] != 0x3A && match[0] && i < sizeof(mppd->direc) - 2))
             {
+              if (match[0] == 0x5C)
+                {
+                  while (match[0] == 0x5C)
+                    {
+                      match++;
+                    }
+                }
               mppd->direc[i] = match[0];
               i++;
               match++;
@@ -652,6 +670,29 @@ rt_af_print(void *arg, char *match, char *output, size_t max_size,
   return as_ref_to_val_lk(match, dt_rval_spec_print, mppd, "%s");
 }
 
+static void*
+rt_af_print_format(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+
+  mppd->rt_cond = calloc(1, sizeof(_rt_c));
+  __rt_c cond = (void*) mppd->rt_cond;
+
+  memcpy(&cond->mppd, mppd, sizeof(_d_drt_h));
+  cond->mppd.st_p0 = match;
+
+  cond->p_exec = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
+      &cond->mppd);
+
+  if (NULL == cond->p_exec)
+    {
+      print_str("ERROR: rt_af_print_format: could not resolve '%s'\n", match);
+      return NULL;
+    }
+
+  return as_ref_to_val_lk(match, dt_rval_spec_print_format, mppd, "%s");
+}
+
 void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
@@ -678,6 +719,8 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
         {
+      case 0x50:
+        return rt_af_print_format(arg, match, output, max_size, mppd);
       case 0x70:
         return rt_af_print(arg, match, output, max_size, mppd);
       case 0x4C:

@@ -379,6 +379,20 @@ g_clean_print_mech(pmda print_mech)
   return 0;
 }
 
+static void
+clean_drt(__d_drt_h mppd)
+{
+  md_g_free(&mppd->math);
+  if (NULL != mppd->rt_cond)
+    {
+      free(mppd->rt_cond);
+    }
+  if (NULL != mppd->st_p)
+    {
+      free(mppd->st_p);
+    }
+}
+
 int
 g_cleanup(__g_handle hdl)
 {
@@ -411,15 +425,20 @@ g_cleanup(__g_handle hdl)
             {
               regfree(&g_ptr->preg);
             }
-          md_g_free(&g_ptr->dtr.math);
-          if (NULL != g_ptr->dtr.rt_cond)
+          __rt_c cond = g_ptr->dtr.rt_cond;
+          while (cond)
             {
-              free(g_ptr->dtr.rt_cond);
+              __d_drt_h drt = &cond->mppd;
+              __rt_c cond_n = (__rt_c)drt->rt_cond;
+
+              if (drt)
+                {
+                  clean_drt(drt);
+                }
+              free(cond);
+              cond = cond_n;
             }
-          if (NULL != g_ptr->dtr.st_p)
-            {
-              free(g_ptr->dtr.st_p);
-            }
+          clean_drt(&g_ptr->dtr);
           ptr = ptr->next;
         }
 

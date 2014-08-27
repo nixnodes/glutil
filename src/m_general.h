@@ -110,5 +110,16 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm);
 
 _l_match _match_rr_l;
 
+#define MAX_RT_C_EXEC           4096
+
+
+typedef struct ___rt_conditional
+{
+  _d_drt_h mppd;
+  _g_match match;
+  char c_exec[MAX_RT_C_EXEC];
+  __g_proc_v p_exec;
+} _rt_c, *__rt_c;
+
 
 #endif /* M_GENERAL_H_ */

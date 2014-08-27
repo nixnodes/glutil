@@ -39,6 +39,8 @@ typedef struct ___d_drt_h
   void *st_ptr0;
   void *rt_cond;
   char *st_p;
+  char *st_p0;
 } _d_drt_h, *__d_drt_h;
+
 
 #endif /* M_COMP_H_ */

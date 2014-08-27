@@ -204,8 +204,11 @@ Updated: 4/12/2013
 	?d   <field>
 			Strip last component from file name <field>
 			
-	?s   <text>
+	?p   <text>
 			Print <text>
+			
+	?P   <field>#<format>
+			Print <field> formatted per <format> (printf)
 			
 	?L   <condition>:<field>
 			Evaluates <condition> (LOM syntax) and returns <field> if successfull;
