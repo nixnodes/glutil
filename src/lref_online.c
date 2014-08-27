@@ -134,7 +134,8 @@ char *
 dt_rval_online_ndir(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  strcp_s(output, max_size, ((struct ONLINE *) arg)->currentdir);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      ((struct ONLINE *) arg)->currentdir);
   return g_dirname(output);
 }
 
@@ -315,7 +316,6 @@ ref_to_val_ptr_online(void *arg, char *match, int *output)
 
   return NULL;
 }
-
 
 int
 online_format_block(void *iarg, char *output)
