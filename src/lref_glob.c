@@ -11,6 +11,8 @@
 #include <l_error.h>
 #include <mc_glob.h>
 
+int32_t glob_curtime = 0;
+
 void *
 g_get_glob_ptr(__g_handle hdl, char *field, int *output)
 {
@@ -42,6 +44,12 @@ g_get_glob_ptr(__g_handle hdl, char *field, int *output)
       *output = -32;
       memset((void*) &glob_float_stor[idx], 0x0, sizeof(float));
       return (void*) &glob_float_stor[idx];
+    }
+  else if (!strncmp(field, _MC_GLOB_CURTIME, 7))
+    {
+      *output = -33;
+      memset((void*) &glob_curtime, 0x0, sizeof(int64_t));
+      return (void*) &glob_curtime;
     }
 
   return NULL;

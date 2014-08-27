@@ -15,6 +15,7 @@
 
 #include <math.h>
 #include <errno.h>
+#include <time.h>
 
 int
 g_math_res(void *d_ptr, pmda mdm, void *res)
@@ -49,6 +50,12 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
         }
       else
         {
+          if (math->flags & F_MATH_HAS_CT)
+            {
+              int32_t *ct = (int32_t *) math->_glob_p;
+              *ct = (int32_t) time(NULL);
+            }
+
           bzero((void*) v_b, 8);
           memcpy((void*) v_b,
               (math->flags & F_MATH_IS_GLOB) ?
@@ -472,6 +479,11 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
       else
         {
           return 41;
+        }
+
+      if (vb == -33)
+        {
+          math->flags |= F_MATH_HAS_CT;
         }
 
       math->flags |= F_MATH_IS_GLOB;

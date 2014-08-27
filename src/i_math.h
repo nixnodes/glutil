@@ -22,6 +22,7 @@
 
 #define F_MATH_IS_SQRT                  (a32 << 10)
 #define F_MATH_IS_GLOB                  (a32 << 11)
+#define F_MATH_HAS_CT                   (a32 << 12)
 
 #define MLIB_TEST_MACRO                 _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 

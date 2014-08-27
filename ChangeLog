@@ -43,6 +43,7 @@
  *   - + '?p', '?P' and '?L' extended directives (read MANUAL) (rev. 9_b3)
  *   - ~ Misaligned field reads (accumulator) (rev. 9_b4)
  *   - + '-print-', '-printf-', '-execv-', '-exec-' (read input from file/stdin) (rev. 9_b5)
+ *   - + 'curtime' global field (math preprocessor) (rev 9_b6)
  *
  * v2.3:
  *

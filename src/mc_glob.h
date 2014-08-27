@@ -34,5 +34,6 @@
 #define _MC_GLOB_U64G                   "u64glob"
 #define _MC_GLOB_S64G                   "s64glob"
 #define _MC_GLOB_F32G                   "f32glob"
+#define _MC_GLOB_CURTIME                "curtime"
 
 #endif /* MC_GLOB_H_ */
