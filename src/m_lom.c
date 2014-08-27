@@ -931,7 +931,6 @@ g_lom_var(void *d_ptr, void *_lom)
         {
           g_math_res(d_ptr, &lom->math, lom->r_stor);
           right = (void*) lom->r_stor;
-
         }
     }
   else

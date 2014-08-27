@@ -121,7 +121,7 @@ sighdl_error(int sig, siginfo_t* siginfo, void* context)
   fprintf(stderr, "EXCEPTION: %s: [%s] [%s] [%s]%s%s\n", s_ptr1, g_sigjmp.type,
       s_ptr2, strerror(siginfo->si_errno), buffer1, s_ptr3);
 
-  usleep(450000);
+  //usleep(450000);
 
   g_sigjmp.ci++;
 
