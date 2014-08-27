@@ -11,6 +11,7 @@
 #include <i_math.h>
 
 #include <l_error.h>
+#include <lref_glob.h>
 
 #include <math.h>
 #include <errno.h>
@@ -49,7 +50,9 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
       else
         {
           bzero((void*) v_b, 8);
-          memcpy((void*) v_b, d_ptr + math->l_off, math->vb);
+          memcpy((void*) v_b,
+              (math->flags & F_MATH_IS_GLOB) ?
+                  math->_glob_p : d_ptr + math->l_off, math->vb);
           c_ptr = (void*) v_b;
         }
     }
@@ -72,12 +75,13 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
           if ((math->flags & F_MATH_VAR_KNOWN))
             {
               c_ptr = math->vstor;
-
             }
           else
             {
               bzero((void*) v_b, 8);
-              memcpy((void*) v_b, d_ptr + math->l_off, math->vb);
+              memcpy((void*) v_b,
+                  (math->flags & F_MATH_IS_GLOB) ?
+                      math->_glob_p : d_ptr + math->l_off, math->vb);
               c_ptr = (void*) v_b;
             }
         }
@@ -135,10 +139,6 @@ m_get_op_proc(char oper, __g_math math)
         }
       return math->_m_p[6];
     }
-  else if (oper == 0x5E)
-    {
-      return math->_m_p[7];
-    }
   else if (oper == 0x3C)
     {
       if ((math->flags & F_MATH_FLOAT))
@@ -155,6 +155,11 @@ m_get_op_proc(char oper, __g_math math)
         }
       return math->_m_p[9];
     }
+#if MLIB_TEST_MACRO
+  else if (oper == 0x5E)
+    {
+      return math->_m_p[7];
+    }
   else if (oper == 0x7E)
     {
       return math->_m_p[10];
@@ -163,6 +168,7 @@ m_get_op_proc(char oper, __g_math math)
     {
       return math->_m_p[11];
     }
+#endif
   else
     {
       return NULL;
@@ -290,6 +296,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
                   math->op_t = m_get_op_proc(ptr[0], math_c);
                   math->_m_p = math_c->_m_p;
                 }
+
               math->flags |= (math_c->flags & F_MATH_TYPES);
               math->vb = math_c->vb;
               math->l_off = math_c->l_off;
@@ -439,6 +446,40 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags)
   g_setjmp(0, "g_get_math_g_t_ptr", NULL, NULL);
 
   int vb = 0;
+  math->_glob_p = g_get_glob_ptr(hdl, field, &vb);
+
+  if (NULL != math->_glob_p)
+    {
+
+      if (vb > 0)
+        {
+          math->_m_p = _m_u64;
+          math->flags |= F_MATH_INT;
+          math->vb = sizeof(uint64_t);
+        }
+      else if (vb == -32)
+        {
+          math->_m_p = _m_f;
+          math->flags |= F_MATH_FLOAT;
+          math->vb = sizeof(float);
+        }
+      else if (vb < 0)
+        {
+          math->_m_p = _m_s64;
+          math->flags |= F_MATH_INT_S;
+          math->vb = sizeof(int64_t);
+        }
+      else
+        {
+          return 41;
+        }
+
+      math->flags |= F_MATH_IS_GLOB;
+
+      return 0;
+    }
+
+  vb = 0;
 
   size_t off = (size_t) hdl->g_proc2(hdl->_x_ref, field, &vb);
 
@@ -721,7 +762,7 @@ g_arith_bin_or_u64(void * s, void * d, void *o)
 {
   *((uint64_t*) o) = *((uint64_t*) s) | *((uint64_t*) d);
 }
-
+#if MLIB_TEST_MACRO
 void
 g_arith_pow_u64(void * s, void * d, void *o)
 {
@@ -741,6 +782,7 @@ g_arith_hypot_u64(void * s, void * d, void *o)
   *((uint64_t*) o) = (uint64_t) hypot((double) *((uint64_t*) s),
       (double) *((uint64_t*) d));
 }
+#endif
 
 void
 g_arith_bin_lshift_u64(void * s, void * d, void *o)
@@ -757,9 +799,15 @@ g_arith_bin_rshift_u64(void * s, void * d, void *o)
 static void *_m_u64[] =
   { g_arith_add_u64, g_arith_rem_u64, g_arith_mult_u64, g_arith_div_u64,
 
-  g_arith_mod_u64, g_arith_bin_and_u64, g_arith_bin_or_u64, g_arith_pow_u64,
-      g_arith_bin_lshift_u64, g_arith_bin_rshift_u64, g_arith_sqrt_u64,
-      g_arith_hypot_u64 };
+  g_arith_mod_u64, g_arith_bin_and_u64, g_arith_bin_or_u64,
+#if MLIB_TEST_MACRO
+      g_arith_pow_u64,
+#endif
+      g_arith_bin_lshift_u64, g_arith_bin_rshift_u64,
+#if MLIB_TEST_MACRO
+      g_arith_sqrt_u64, g_arith_hypot_u64
+#endif
+    };
 
 /*
 
@@ -907,25 +955,25 @@ g_arith_bin_or_s64(void * s, void * d, void *o)
   *((int64_t*) o) = *((int64_t*) s) | *((int64_t*) d);
 }
 
+#if MLIB_TEST_MACRO
 void
 g_arith_pow_s64(void * s, void * d, void *o)
 {
   *((int64_t*) o) = (int64_t) pow((double) *((int64_t*) s),
       (double) *((int64_t*) d));
 }
-
 void
 g_arith_sqrt_s64(void * s, void * d, void *o)
 {
   *((int64_t*) o) = (int64_t) sqrt((double) *((int64_t*) d));
 }
-
 void
 g_arith_hypot_s64(void * s, void * d, void *o)
 {
   *((int64_t*) o) = (int64_t) hypot((double) *((int64_t*) s),
       (double) *((int64_t*) d));
 }
+#endif
 
 void
 g_arith_bin_lshift_s64(void * s, void * d, void *o)
@@ -941,9 +989,15 @@ g_arith_bin_rshift_s64(void * s, void * d, void *o)
 
 static void *_m_s64[] =
   { g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
-      g_arith_mod_s64, g_arith_bin_and_s64, g_arith_bin_or_s64, g_arith_pow_s64,
-      g_arith_bin_lshift_s64, g_arith_bin_rshift_s64, g_arith_sqrt_s64,
-      g_arith_hypot_s64 };
+      g_arith_mod_s64, g_arith_bin_and_s64, g_arith_bin_or_s64,
+#if MLIB_TEST_MACRO
+      g_arith_pow_s64,
+#endif
+      g_arith_bin_lshift_s64, g_arith_bin_rshift_s64
+#if MLIB_TEST_MACRO
+      , g_arith_sqrt_s64, g_arith_hypot_s64
+#endif
+    };
 
 void
 g_arith_add_f(void * s, void * d, void *o)
@@ -969,6 +1023,7 @@ g_arith_div_f(void * s, void * d, void *o)
   *((float*) o) = *((float*) s) / *((float*) d);
 }
 
+#if MLIB_TEST_MACRO
 void
 g_arith_pow_f(void * s, void * d, void *o)
 {
@@ -987,6 +1042,8 @@ g_arith_hypot_f(void * s, void * d, void *o)
   *((float*) o) = (float) hypotf(*((float*) s), *((float*) d));
 }
 
+#endif
+
 void
 g_arith_dummy(void * s, void * d, void *o)
 {
@@ -995,5 +1052,40 @@ g_arith_dummy(void * s, void * d, void *o)
 
 static void *_m_f[] =
   { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy,
-      g_arith_dummy, g_arith_dummy, g_arith_pow_f, g_arith_dummy, g_arith_dummy,
-      g_arith_sqrt_f, g_arith_hypot_f };
+      g_arith_dummy, g_arith_dummy,
+#if MLIB_TEST_MACRO
+      g_arith_pow_f,
+#endif
+      g_arith_dummy, g_arith_dummy
+#if MLIB_TEST_MACRO
+      , g_arith_sqrt_f, g_arith_hypot_f
+#endif
+    };
+
+int
+is_ascii_arith_bin_oper(char c)
+{
+  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25 || c == 0x26
+      || c == 0x7C || c == 0x5E || c == 0x3C || c == 0x3E
+#if MLIB_TEST_MACRO
+      || c == 0x7E || c == 0x24
+#endif
+          )
+    {
+      return 0;
+    }
+  return 1;
+}
+
+__g_math
+m_get_def_val(pmda math)
+{
+  if (((__g_math ) math->objects->ptr)->flags & F_MATH_NITEM)
+    {
+      return ((pmda) ((__g_math ) math->objects->ptr)->next)->pos->ptr;
+    }
+  else
+    {
+      return ((__g_math ) math->objects->ptr);
+    }
+}

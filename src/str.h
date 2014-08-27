@@ -21,9 +21,6 @@ _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
     is_ascii_numeric, is_ascii_numeric_float;
 
 int
-is_ascii_arith_bin_oper(char c);
-
-int
 remove_repeating_chars(char *string, char c);
 char *
 strcp_s(char *dest, size_t max_size, char *source);

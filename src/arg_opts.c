@@ -1267,7 +1267,7 @@ opt_postprintf(void *arg, int m)
 {
   if ((_print_ptr_post = g_pg(arg, m)))
     {
-      gfl0 |= F_OPT_POSTPRINT;
+      gfl0 |= F_OPT_POSTPRINTF;
       return 0;
     }
   return 4251;
@@ -1289,7 +1289,7 @@ opt_preprintf(void *arg, int m)
 {
   if ((_print_ptr_pre = g_pg(arg, m)))
     {
-      gfl0 |= F_OPT_PREPRINT;
+      gfl0 |= F_OPT_PREPRINTF;
       return 0;
     }
   return 4251;

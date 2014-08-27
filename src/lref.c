@@ -461,29 +461,19 @@ ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
   if ((m_ret2 = g_process_math_string(mppd->hdl, match, &mppd->math,
       &mppd->chains, &m_ret, NULL, 0, 0)))
     {
-      printf("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
+      print_str("ERROR: [%d] [%d]: could not process math string\n", m_ret2,
           m_ret);
       return NULL;
     }
 
   if (mppd->math.offset)
     {
-      __g_math math_f;
-
-      if (((__g_math ) mppd->math.objects->ptr)->flags & F_MATH_NITEM)
-        {
-          math_f =
-              ((pmda) ((__g_math ) mppd->math.objects->ptr)->next)->pos->ptr;
-        }
-      else
-        {
-          math_f = ((__g_math ) mppd->math.objects->ptr);
-        }
+      __g_math math_f = m_get_def_val(&mppd->math);
 
       switch (math_f->flags & F_MATH_TYPES)
         {
       case F_MATH_INT:
-        switch (((__g_math ) mppd->math.objects->ptr)->vb)
+        switch (math_f->vb)
           {
         case 1:
           return as_ref_to_val_lk(match, dt_rval_spec_math_u8, mppd, "%hhu");

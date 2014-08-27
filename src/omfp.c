@@ -46,12 +46,6 @@ g_print_do_filter(__g_handle hdl, void *s_exec)
   return r;
 }
 
-#define g_p_print(hdl) { \
-    void *t_ptr = calloc(1, hdl.block_sz); \
-    g_act_1.g_proc4_l((void*) &hdl, t_ptr, NULL); \
-    free(t_ptr); \
-}
-
 int
 g_print_stats(char *file, uint32_t flags, size_t block_sz)
 {
@@ -148,13 +142,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
         }
     }
 
-  if (g_act_1.flags & F_GH_PRE_PRINT)
-    {
-      void *s_act_mech = g_act_1.act_mech;
-      g_act_1.act_mech = &g_act_1.pre_print_mech;
-      g_p_print(g_act_1);
-      g_act_1.act_mech = (pmda) s_act_mech;
-    }
+  g_do_ppprint(&g_act_1, F_GH_PRE_PRINT, &g_act_1.pre_print_mech,
+      g_act_1.g_proc4_pr);
 
   if (gfl0 & F_OPT_LOADQA)
     {
@@ -206,11 +195,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
       goto r_end;
     }
 
-  if (g_act_1.flags & F_GH_POST_PRINT)
-    {
-      g_act_1.act_mech = &g_act_1.post_print_mech;
-      g_p_print(g_act_1);
-    }
+  g_do_ppprint(&g_act_1, F_GH_POST_PRINT, &g_act_1.post_print_mech,
+      g_act_1.g_proc4_po);
 
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
@@ -247,6 +233,26 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
   g_close(&g_act_1);
 
   return EXITVAL;
+}
+
+#define g_p_print(hdl) { \
+    void *t_ptr = calloc(1, hdl->block_sz); \
+    hdl->g_proc4_l((void*) hdl, t_ptr, NULL); \
+    free(t_ptr); \
+}
+
+void
+g_do_ppprint(__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc)
+{
+  if (hdl->flags & t_flags)
+    {
+      void *s_act_mech = hdl->act_mech;
+      hdl->act_mech = p_mech;
+      void *t_ptr = calloc(1, hdl->block_sz);
+      g_proc((void*) hdl, t_ptr, NULL);
+      free(t_ptr);
+      hdl->act_mech = (pmda) s_act_mech;
+    }
 }
 
 void

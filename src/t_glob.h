@@ -194,8 +194,11 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_PROGRESS                  (a64 << 21)
 #define F_OPT_PREPRINT                  (a64 << 22)
 #define F_OPT_POSTPRINT                 (a64 << 23)
+#define F_OPT_PREPRINTF                 (a64 << 24)
+#define F_OPT_POSTPRINTF                (a64 << 25)
 
 #define F_OPT_PREPOSTPRINTS             (F_OPT_PREPRINT|F_OPT_POSTPRINT)
+#define F_OPT_PREPOSTPRINTFS            (F_OPT_PREPRINTF|F_OPT_POSTPRINTF)
 
 #define F_OPT_SMETHOD                   (F_OPT_SMETHOD_SWAP|F_OPT_SMETHOD_HEAP|F_OPT_SMETHOD_Q|F_OPT_SMETHOD_INSSORT|F_OPT_SMETHOD_SELECT)
 

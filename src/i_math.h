@@ -21,6 +21,9 @@
 #define F_MATH_NITEM                    (a32 << 5)
 
 #define F_MATH_IS_SQRT                  (a32 << 10)
+#define F_MATH_IS_GLOB                  (a32 << 11)
+
+#define MLIB_TEST_MACRO                 _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 
 typedef uint64_t
 (*g_op_tu)(uint64_t s, uint64_t d);
@@ -44,6 +47,7 @@ typedef struct ___g_math
   size_t l_off;
   uint8_t vstor[8];
   int vb;
+  void *_glob_p;
 } _g_math, *__g_math;
 
 int
@@ -76,5 +80,10 @@ static void *_m_s64[];
 g_op_t g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy;
 
 static void *_m_f[];
+
+int
+is_ascii_arith_bin_oper(char c);
+__g_math
+m_get_def_val(pmda math);
 
 #endif /* I_MATH_H_ */

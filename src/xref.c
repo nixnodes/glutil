@@ -1289,6 +1289,9 @@ g_dump_gen(char *root)
       return 1;
     }
 
+  g_do_ppprint(&ret.hdl, F_GH_PRE_PRINT, &ret.hdl.pre_print_mech,
+      ret.hdl.g_proc4_pr);
+
   if (!(ret.flags & F_PD_MATCHTYPES))
     {
       ret.flags |= F_PD_MATCHTYPES;
@@ -1346,6 +1349,9 @@ g_dump_gen(char *root)
         }
       goto enter;
     }
+
+  g_do_ppprint(&ret.hdl, F_GH_POST_PRINT, &ret.hdl.post_print_mech,
+      ret.hdl.g_proc4_po);
 
   if (!(gfl & F_OPT_FORMAT_BATCH) && (gfl0 & F_OPT_STATS))
     {

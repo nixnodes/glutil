@@ -169,17 +169,6 @@ is_ascii_uppercase_text(uint8_t in_c)
   return 1;
 }
 
-int
-is_ascii_arith_bin_oper(char c)
-{
-  if (c == 0x2B || c == 0x2D || c == 0x2A || c == 0x2F || c == 0x25 || c == 0x26
-      || c == 0x7C || c == 0x5E || c == 0x3C || c == 0x3E || c == 0x7E || c == 0x24)
-    {
-      return 0;
-    }
-  return 1;
-}
-
 char *
 s_char(char *input, char c, size_t max)
 {

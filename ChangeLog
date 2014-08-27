@@ -38,6 +38,8 @@
  *   - ~ --nobuffer broken (rev. 8)
  *   - + Nested parenthesis in math preprocessor (rev. 9_b1)
  *   - + -preprint and -postprint (see --help) (rev. 9_b1)
+ *   - % Global vars made available in math preprocessor (rev. 9_b2)
+ *   - % Math preprocessor instructions can be used when LOM filtering (rev. 9_b2)
  *
  * v2.3:
  *

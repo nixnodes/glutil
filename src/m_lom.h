@@ -19,13 +19,16 @@
 
 #define F_LM_TYPES                      (F_LM_CPRG|F_LM_LOM)
 
-#define F_LOM_LVAR_KNOWN                (a32 << 1)
-#define F_LOM_RVAR_KNOWN                (a32 << 2)
+#define F_LOM_INT                       (a32 << 1)
+#define F_LOM_INT_S                     (a32 << 2)
 #define F_LOM_FLOAT                     (a32 << 3)
-#define F_LOM_INT                       (a32 << 4)
-#define F_LOM_HASOPER                   (a32 << 5)
-#define F_LOM_FLOAT_DBL                 (a32 << 6)
-#define F_LOM_INT_S                     (a32 << 7)
+#define F_LOM_LVAR_KNOWN                (a32 << 4)
+#define F_LOM_RVAR_KNOWN                (a32 << 5)
+#define F_LOM_HASOPER                   (a32 << 6)
+#define F_LOM_FLOAT_DBL                 (a32 << 7)
+#define F_LOM_IS_LVAR_MATH              (a32 << 8)
+#define F_LOM_IS_RVAR_MATH              (a32 << 9)
+
 
 #define F_LOM_TYPES                     (F_LOM_FLOAT|F_LOM_INT|F_LOM_INT_S)
 #define F_LOM_VAR_KNOWN                 (F_LOM_LVAR_KNOWN|F_LOM_RVAR_KNOWN)
@@ -45,40 +48,11 @@ typedef struct ___lom_strings_header
   char string[8192];
 } _lom_s_h, *__lom_s_h;
 
-#define G_LOM_VAR_L(x, y) { \
-    if (lom->g_tf_ptr_left) \
-      { \
-        lom->y = lom->g_tf_ptr_left(d_ptr, lom->t_l_off); \
-      } \
-    else if (lom->g_t_ptr_left) \
-      { \
-        lom->y = (x) lom->g_t_ptr_left(d_ptr, lom->t_l_off); \
-      } \
-    else if (lom->g_ts_ptr_left) \
-      { \
-        lom->y = (x) lom->g_ts_ptr_left(d_ptr, lom->t_l_off); \
-      } \
-}
-
-#define G_LOM_VAR_R(x,y) { \
-    if (lom->g_tf_ptr_right) \
-      { \
-        lom->y = lom->g_tf_ptr_right(d_ptr, lom->t_r_off); \
-      } \
-    else if (lom->g_t_ptr_right) \
-      { \
-        lom->y = (x) lom->g_t_ptr_right(d_ptr, lom->t_r_off); \
-      } \
-    else if (lom->g_ts_ptr_right) \
-      { \
-        lom->y = (x) lom->g_ts_ptr_right(d_ptr, lom->t_r_off); \
-      } \
-}
 
 typedef int
 __d_lom_vp(void *d_ptr, void *_lom);
 
-__d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var_float, g_lom_var_accu_uint,
+__d_lom_vp g_lom_var_int, g_lom_var, g_lom_var_math, g_lom_var_float, g_lom_var_accu_uint,
     g_lom_var_accu_int, g_lom_var_accu_float;
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);

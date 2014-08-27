@@ -384,9 +384,9 @@ g_proc_mr(__g_handle hdl)
       hdl->g_proc3 = hdl->g_proc3_export;
     }
 
-  if (gfl0 & F_OPT_PREPOSTPRINTS)
+  if ((gfl0 & F_OPT_PREPOSTPRINTS) || (gfl0 & F_OPT_PREPOSTPRINTFS))
     {
-      if (gfl0 & F_OPT_POSTPRINT)
+      if ((gfl0 & F_OPT_POSTPRINT) || (gfl0 & F_OPT_POSTPRINTF))
         {
           if (!hdl->post_print_mech.offset && _print_ptr_post)
             {
@@ -397,9 +397,17 @@ g_proc_mr(__g_handle hdl)
                 }
               hdl->flags |= F_GH_POST_PRINT;
             }
+          if ((gfl0 & F_OPT_POSTPRINTF))
+            {
+              hdl->g_proc4_po = g_omfp_eassemblef;
+            }
+          else
+            {
+              hdl->g_proc4_po = g_omfp_eassemble;
+            }
         }
 
-      if (gfl0 & F_OPT_PREPRINT)
+      if ((gfl0 & F_OPT_PREPRINT) || (gfl0 & F_OPT_PREPRINTF))
         {
           if (!hdl->pre_print_mech.offset && _print_ptr_pre)
             {
@@ -410,16 +418,16 @@ g_proc_mr(__g_handle hdl)
                 }
               hdl->flags |= F_GH_PRE_PRINT;
             }
+          if ((gfl0 & F_OPT_PREPRINTF))
+            {
+              hdl->g_proc4_pr = g_omfp_eassemblef;
+            }
+          else
+            {
+              hdl->g_proc4_pr = g_omfp_eassemble;
+            }
         }
 
-      if ((gfl0 & F_OPT_PRINTF))
-        {
-          hdl->g_proc4_l = g_omfp_eassemblef;
-        }
-      else
-        {
-          hdl->g_proc4_l = g_omfp_eassemble;
-        }
     }
 
   hdl->t_rw = 1;
