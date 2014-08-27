@@ -135,8 +135,8 @@ dt_rval_online_ndir(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      ((struct ONLINE *) arg)->currentdir);
-  return g_dirname(output);
+      g_dirname(((struct ONLINE *) arg)->currentdir));
+  return output;
 }
 
 char *
