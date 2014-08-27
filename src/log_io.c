@@ -588,7 +588,9 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 
   uint8_t *b_output = (uint8_t*) hdl->data;
 #ifdef HAVE_ZLIB_H
-  while (!g_load_data_check_of((void*) gz_fh, fh, hdl))
+  while (!g_load_data_check_of(
+      (hdl->flags & F_GH_IS_GZIP) ? (void*) gz_fh : (void*) fh,
+      (hdl->flags & F_GH_IS_GZIP) ?  fh : fh, hdl))
 #else
   while (!g_load_data_check_of((void*) fh, NULL, hdl))
 #endif
@@ -612,7 +614,6 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 #ifdef HAVE_ZLIB_H
       if (hdl->flags & F_GH_IS_GZIP)
         {
-
           fr = gzread(gz_fh, &b_output[c_fr], hdl->total_sz - c_fr);
           if (fr == -1)
             {
@@ -738,7 +739,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
         {
           hdl->total_sz = hdl->block_sz;
         }
-      else if ((bdiff = (uint32_t)(hdl->total_sz % hdl->block_sz)))
+      else if ((bdiff = (uint32_t) (hdl->total_sz % hdl->block_sz)))
         {
           hdl->total_sz -= bdiff;
         }

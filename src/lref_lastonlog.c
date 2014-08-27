@@ -158,11 +158,6 @@ ref_to_val_lk_lastonlog(void *arg, char *match, char *output, size_t max_size,
       return as_ref_to_val_lk(match, dt_rval_lastonlog_download,
           (__d_drt_h ) mppd, "%lu");
     }
-  else if (!is_char_uppercase(match[0]))
-    {
-      return as_ref_to_val_lk(match, dt_rval_lastonlog_config,
-          (__d_drt_h ) mppd, "%s");
-    }
   else if (!strncmp(match, _MC_GLOB_USER, 4))
     {
       return as_ref_to_val_lk(match, dt_rval_lastonlog_user, (__d_drt_h ) mppd,

@@ -227,11 +227,6 @@ ref_to_val_lk_online(void *arg, char *match, char *output, size_t max_size,
       return as_ref_to_val_lk(match, dt_rval_online_rate, (__d_drt_h ) mppd,
           "%u");
     }
-  else if (!is_char_uppercase(match[0]))
-    {
-      return as_ref_to_val_lk(match, dt_rval_online_config, (__d_drt_h ) mppd,
-          "%s");
-    }
   else if (!strncmp(match, _MC_GLOB_BASEDIR, 7))
     {
       return as_ref_to_val_lk(match, dt_rval_online_basedir, (__d_drt_h ) mppd,
