@@ -186,7 +186,6 @@ g_is_higher_d(double s, double d)
   return 1;
 }
 
-
 int
 g_is_lower_d(double s, double d)
 {
@@ -238,7 +237,6 @@ g_is_notequal_f(float s, float d)
 {
   return (s >= d);
 }
-
 
 int
 g_is_lowerorequal_f(float s, float d)
