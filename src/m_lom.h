@@ -29,7 +29,6 @@
 #define F_LOM_IS_LVAR_MATH              (a32 << 8)
 #define F_LOM_IS_RVAR_MATH              (a32 << 9)
 
-
 #define F_LOM_TYPES                     (F_LOM_FLOAT|F_LOM_INT|F_LOM_INT_S)
 #define F_LOM_VAR_KNOWN                 (F_LOM_LVAR_KNOWN|F_LOM_RVAR_KNOWN)
 
@@ -48,7 +47,7 @@ typedef struct ___lom_strings_header
   char string[8192];
 } _lom_s_h, *__lom_s_h;
 
-#define G_LOM_VAR_L(x, y) { \
+#define G_LOM_VAR_L(x, y, d_ptr) { \
     if (lom->g_tf_ptr_left) \
       { \
         lom->y = (x)lom->g_tf_ptr_left(d_ptr, lom->t_l_off); \
@@ -61,9 +60,12 @@ typedef struct ___lom_strings_header
       { \
         lom->y = (x) lom->g_ts_ptr_left(d_ptr, lom->t_l_off); \
       } \
+    if ((lom->flags & F_LOM_IS_LVAR_MATH)) { \
+        g_math_res(d_ptr, &lom->math, &lom->y);\
+      } \
 }
 
-#define G_LOM_VAR_R(x,y) { \
+#define G_LOM_VAR_R(x,y, d_ptr) { \
     if (lom->g_tf_ptr_right) \
       { \
         lom->y = (x)lom->g_tf_ptr_right(d_ptr, lom->t_r_off); \
@@ -76,13 +78,17 @@ typedef struct ___lom_strings_header
       { \
         lom->y = (x) lom->g_ts_ptr_right(d_ptr, lom->t_r_off); \
       } \
+      if ((lom->flags & F_LOM_IS_RVAR_MATH)) { \
+          g_math_res(d_ptr, &lom->math, &lom->y);\
+      } \
 }
 
 typedef int
 __d_lom_vp(void *d_ptr, void *_lom);
 
-__d_lom_vp g_lom_var_int, g_lom_var, g_lom_var_math, g_lom_var_float, g_lom_var_accu_uint,
-    g_lom_var_accu_int, g_lom_var_accu_float;
+__d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var, g_lom_var_math,
+    g_lom_var_float, g_lom_var_accu_uint, g_lom_var_accu_int,
+    g_lom_var_accu_float;
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
 int

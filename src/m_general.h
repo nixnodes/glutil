@@ -67,13 +67,13 @@ typedef struct ___g_lom
   int
   (*g_fcomp_ptr)(float s, float d);
   int
-   (*g_comp_ptr)(void *s, void *d);
-  int
   (*g_lom_vp)(void *d_ptr, void * lom);
   g_op g_oper_ptr;
-  uint8_t l_stor[8];
-  uint8_t r_stor[8];
+
   void *left, *right;
+  uint64_t t_left, t_right;
+  int64_t ts_left, ts_right;
+  float tf_left, tf_right;
   /* --- */
   size_t t_l_off, t_r_off;
   void *p_glob_stor;
