@@ -41,6 +41,7 @@
  *   - % Global vars made available in math preprocessor (rev. 9_b2)
  *   - % Math preprocessor instructions can be used when LOM filtering (rev. 9_b2)
  *   - + '?p', '?P' and '?L' extended directives (read MANUAL) (rev. 9_b3)
+ *   - ~ Misaligned field reads (accumulator) (rev. 9_b4)
  *
  * v2.3:
  *

@@ -29,9 +29,11 @@ g_print_do_filter(__g_handle hdl, void *s_exec)
 {
   int r;
   hdl->exec_args.exc = NULL;
+  hdl->flags |= F_GH_NO_ACCU;
 
   r = g_filter(hdl, &hdl->buffer);
 
+  hdl->flags ^= F_GH_NO_ACCU;
   hdl->exec_args.exc = (__d_exec) s_exec;
 
   if (r == 1)
@@ -291,7 +293,7 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
   if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
       (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
     {
-      print_str("ERROR: could not assemble print string\n");
+      print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
       gfl |= F_OPT_KILL_GLOBAL;
       return;
     }
@@ -306,7 +308,7 @@ g_omfp_eassemblef(void *hdl, void *ptr, char *sbuffer)
   if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
       (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
     {
-      print_str("ERROR: could not assemble print string\n");
+      print_str("ERROR: g_omfp_eassemblef: could not assemble print string\n");
       gfl |= F_OPT_KILL_GLOBAL;
       return;
     }

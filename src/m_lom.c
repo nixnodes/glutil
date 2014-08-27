@@ -812,6 +812,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
 
 #define LOM_ALIGN(flags, bt_ptr_l, bt_ptr_r, t_ptr, g_vp, flg) { \
     lom->flags |= flg; \
+    lom->bt_ptr_r = t_ptr; \
 }
 
 int
@@ -920,14 +921,16 @@ g_lom_var(void *d_ptr, void *_lom)
   return 0;
 }
 
-#define LOM_VAR_ACCU(d_ptr, _lom) { \
+#define LOM_VAR_ACCU(x, y, d_ptr, _lom) { \
+    x *res = (x *) lom->p_glob_stor; \
   if (!(lom->flags & F_LOM_RVAR_KNOWN)) \
     { \
-      right = (d_ptr + lom->t_r_off); \
+      *res = *res + ( _lom->y(d_ptr,_lom->t_r_off) );\
     } \
   else \
     { \
-      right = (void*) lom->r_stor; \
+      x *rr = (x *) lom->r_stor; \
+      *res = *res + *rr;\
     } \
   lom->result = 1; \
 }
@@ -936,12 +939,8 @@ int
 g_lom_var_accu_uint(void *d_ptr, void *_lom)
 {
   __g_lom lom = (__g_lom ) _lom;
-  void *right;
 
-  LOM_VAR_ACCU(d_ptr, lom)
-
-  uint64_t *res = (uint64_t*) lom->p_glob_stor;
-  *res = *res + *(uint64_t*) right;
+  LOM_VAR_ACCU(uint64_t, g_t_ptr_right, d_ptr, lom)
 
   return 0;
 }
@@ -950,12 +949,8 @@ int
 g_lom_var_accu_int(void *d_ptr, void *_lom)
 {
   __g_lom lom = _lom;
-  void *right;
 
-  LOM_VAR_ACCU(d_ptr, lom)
-
-  int64_t *res = (int64_t*) lom->p_glob_stor;
-  *res = *res + *(int64_t*) right;
+  LOM_VAR_ACCU(int64_t, g_ts_ptr_right, d_ptr, lom)
 
   return 0;
 }
@@ -964,12 +959,8 @@ int
 g_lom_var_accu_float(void *d_ptr, void *_lom)
 {
   __g_lom lom = _lom;
-  void *right;
 
-  LOM_VAR_ACCU(d_ptr, lom)
-
-  float *res = (float*) lom->p_glob_stor;
-  *res = *res + *(float*) right;
+  LOM_VAR_ACCU(float, g_tf_ptr_right, d_ptr, lom)
 
   return 0;
 }
