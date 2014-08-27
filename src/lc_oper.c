@@ -167,13 +167,13 @@ g_is_s(int64_t s, int64_t d)
 int
 g_is_not(uint64_t s, uint64_t d)
 {
-  return s == 0;
+  return s != 0;
 }
 
 int
 g_is_not_s(int64_t s, int64_t d)
 {
-  return s == 0;
+  return s != 0;
 }
 
 int
