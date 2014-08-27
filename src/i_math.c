@@ -85,6 +85,11 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
             }
           else
             {
+              if (math->flags & F_MATH_HAS_CT)
+                {
+                  int32_t *ct = (int32_t *) math->_glob_p;
+                  *ct = (int32_t) time(NULL);
+                }
               bzero((void*) v_b, 8);
               memcpy((void*) v_b,
                   (math->flags & F_MATH_IS_GLOB) ?
