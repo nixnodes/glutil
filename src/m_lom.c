@@ -810,9 +810,27 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
   return -2;
 }
 
-#define LOM_ALIGN(flags, bt_ptr_l, bt_ptr_r, t_ptr, g_vp, flg) { \
+#define LOM_ALIGN(flags, bt_ptr_l, bt_ptr_r, t_ptr, g_vp, flg, vb) { \
     lom->flags |= flg; \
-    lom->bt_ptr_r = t_ptr; \
+    switch (flags & F_GLT_DIRECT) \
+       { \
+     case F_GLT_LEFT: \
+       lom->bt_ptr_l = t_ptr; \
+       if (vb < 0) { \
+          lom->vb_l = ~(vb); \
+       } else { \
+          lom->vb_l = vb; \
+       } \
+       break; \
+     case F_GLT_RIGHT: \
+       lom->bt_ptr_r = t_ptr; \
+       if (vb < 0) { \
+           lom->vb_r = ~(vb); \
+        } else { \
+           lom->vb_r = vb; \
+        } \
+       break; \
+       } \
 }
 
 int
@@ -822,39 +840,39 @@ g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off)
     {
   case -32:
     LOM_ALIGN(flags, g_tf_ptr_left, g_tf_ptr_right, g_tf_ptr, g_lom_var,
-        F_LOM_FLOAT)
+        F_LOM_FLOAT, *vb)
     break;
   case -2:
     LOM_ALIGN(flags, g_ts_ptr_left, g_ts_ptr_right, g_ts8_ptr, g_lom_var,
-        F_LOM_INT_S)
+        F_LOM_INT_S, *vb)
     break;
   case -3:
     LOM_ALIGN(flags, g_ts_ptr_left, g_ts_ptr_right, g_ts16_ptr, g_lom_var,
-        F_LOM_INT_S)
+        F_LOM_INT_S, *vb)
     break;
   case -5:
     LOM_ALIGN(flags, g_ts_ptr_left, g_ts_ptr_right, g_ts32_ptr, g_lom_var,
-        F_LOM_INT_S)
+        F_LOM_INT_S, *vb)
     break;
   case -9:
     LOM_ALIGN(flags, g_ts_ptr_left, g_ts_ptr_right, g_ts64_ptr, g_lom_var,
-        F_LOM_INT_S)
+        F_LOM_INT_S, *vb)
     break;
   case 1:
     LOM_ALIGN(flags, g_t_ptr_left, g_t_ptr_right, g_t8_ptr, g_lom_var,
-        F_LOM_INT)
+        F_LOM_INT, *vb)
     break;
   case 2:
     LOM_ALIGN(flags, g_t_ptr_left, g_t_ptr_right, g_t16_ptr, g_lom_var,
-        F_LOM_INT)
+        F_LOM_INT, *vb)
     break;
   case 4:
     LOM_ALIGN(flags, g_t_ptr_left, g_t_ptr_right, g_t32_ptr, g_lom_var,
-        F_LOM_INT)
+        F_LOM_INT, *vb)
     break;
   case 8:
     LOM_ALIGN(flags, g_t_ptr_left, g_t_ptr_right, g_t64_ptr, g_lom_var,
-        F_LOM_INT)
+        F_LOM_INT, *vb)
     break;
   default:
     return 608;
@@ -885,7 +903,9 @@ g_lom_var(void *d_ptr, void *_lom)
     {
       if (!(lom->flags & F_LOM_IS_LVAR_MATH))
         {
-          left = (d_ptr + lom->t_l_off);
+          memset(lom->l_stor, 0x0, sizeof(lom->l_stor));
+          memcpy(lom->l_stor, (d_ptr + lom->t_l_off), lom->vb_l);
+          left = (void*) lom->l_stor;
         }
       else
         {
@@ -902,7 +922,10 @@ g_lom_var(void *d_ptr, void *_lom)
     {
       if (!(lom->flags & F_LOM_IS_RVAR_MATH))
         {
-          right = (d_ptr + lom->t_r_off);
+          memset(lom->l_stor, 0x0, sizeof(lom->l_stor));
+          memcpy(lom->l_stor, (d_ptr + lom->t_r_off), lom->vb_r);
+          right = (void*) lom->r_stor;
+
         }
       else
         {

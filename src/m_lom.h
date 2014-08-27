@@ -48,6 +48,35 @@ typedef struct ___lom_strings_header
   char string[8192];
 } _lom_s_h, *__lom_s_h;
 
+#define G_LOM_VAR_L(x, y) { \
+    if (lom->g_tf_ptr_left) \
+      { \
+        lom->y = (x)lom->g_tf_ptr_left(d_ptr, lom->t_l_off); \
+      } \
+    else if (lom->g_t_ptr_left) \
+      { \
+        lom->y = (x) lom->g_t_ptr_left(d_ptr, lom->t_l_off); \
+      } \
+    else if (lom->g_ts_ptr_left) \
+      { \
+        lom->y = (x) lom->g_ts_ptr_left(d_ptr, lom->t_l_off); \
+      } \
+}
+
+#define G_LOM_VAR_R(x,y) { \
+    if (lom->g_tf_ptr_right) \
+      { \
+        lom->y = (x)lom->g_tf_ptr_right(d_ptr, lom->t_r_off); \
+      } \
+    else if (lom->g_t_ptr_right) \
+      { \
+        lom->y = (x) lom->g_t_ptr_right(d_ptr, lom->t_r_off); \
+      } \
+    else if (lom->g_ts_ptr_right) \
+      { \
+        lom->y = (x) lom->g_ts_ptr_right(d_ptr, lom->t_r_off); \
+      } \
+}
 
 typedef int
 __d_lom_vp(void *d_ptr, void *_lom);

@@ -79,6 +79,7 @@ typedef struct ___g_lom
   void *p_glob_stor;
   mda math;
   mda chains;
+  int vb_l, vb_r;
 } _g_lom, *__g_lom;
 
 typedef struct ___g_match_h
