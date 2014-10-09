@@ -74,7 +74,7 @@ get_file_size(char *file)
   if (stat(file, &st) == -1)
     return 0;
 
-  return st.st_size;
+  return (off_t) st.st_size;
 }
 
 time_t
@@ -374,6 +374,51 @@ read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
     }
 
   return read;
+}
+
+off_t
+enum_readline(char *file, void *buffer, size_t read_max, off_t max_l, FILE *_fp,
+    int
+    (*call_b)(char *b, void *a), void *arg)
+{
+  g_setjmp(0, "read_file", NULL, NULL);
+
+  FILE *fp;
+
+  if (file && file[0] == 0x2D && file[1] == 0x0)
+    {
+      fp = stdin;
+    }
+  else
+    {
+      if ((fp = fopen(file, "rb")) == NULL)
+        {
+          return 0;
+        }
+    }
+
+  off_t lc = 0;
+
+  while (fgets(buffer, read_max, fp) && lc < max_l && !ferror(fp) && !feof(fp))
+    {
+      char *s_b = (char*) buffer;
+      size_t l_len = strlen(s_b) - 1;
+      if (s_b[l_len] == 0xA)
+        {
+          s_b[l_len] = 0x0;
+        }
+      if (!call_b(buffer, arg))
+        {
+          lc++;
+        }
+    }
+
+  if (!_fp && fp != stdin)
+    {
+      fclose(fp);
+    }
+
+  return lc;
 }
 
 int

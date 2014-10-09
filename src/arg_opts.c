@@ -399,21 +399,21 @@ opt_g_sfv(void *arg, int m)
 }
 
 int
-opt_batch_output_formatting(void *arg, int m)
+opt_bo_formatting(void *arg, int m)
 {
   gfl |= F_OPT_FORMAT_BATCH | F_OPT_PS_SILENT;
   return 0;
 }
 
 int
-opt_export_output_formatting(void *arg, int m)
+opt_ex_o_formatting(void *arg, int m)
 {
   gfl |= F_OPT_FORMAT_EXPORT | F_OPT_PS_SILENT;
   return 0;
 }
 
 int
-opt_compact_output_formatting(void *arg, int m)
+opt_crof(void *arg, int m)
 {
   gfl |= F_OPT_FORMAT_COMP;
   return 0;
@@ -448,7 +448,7 @@ opt_g_shmdestroy(void *arg, int m)
 }
 
 static int
-opt_g_shmdestroyonexit(void *arg, int m)
+opt_g_shmdestonex(void *arg, int m)
 {
   gfl |= F_OPT_SHMDESTONEXIT;
   return 0;
@@ -483,7 +483,7 @@ opt_g_buffering(void *arg, int m)
 }
 
 int
-opt_g_followlinks(void *arg, int m)
+opt_g_flinks(void *arg, int m)
 {
   gfl |= F_OPT_FOLLOW_LINKS;
   return 0;
@@ -519,7 +519,7 @@ opt_update_single_record(void *arg, int m)
 }
 
 int
-opt_recursive_update_records(void *arg, int m)
+opt_rec_upd_records(void *arg, int m)
 {
   updmode = UPD_MODE_RECURSIVE;
   return 0;
@@ -632,7 +632,7 @@ opt_glconf_file(void *arg, int m)
 }
 
 int
-opt_dirlog_sections_file(void *arg, int m)
+opt_dirlog_sect_fl(void *arg, int m)
 {
   g_cpg(arg, DU_FLD, m, PATH_MAX - 1);
   return 0;
@@ -682,7 +682,7 @@ opt_g_xblk(void *arg, int m)
 }
 
 int
-opt_dirlog_rebuild_full(void *arg, int m)
+opt_dirlog_rb_full(void *arg, int m)
 {
   gfl |= F_OPT_DIR_FULL_REBUILD;
   return 0;
@@ -844,7 +844,7 @@ opt_dirlog_chk_dupe(void *arg, int m)
 }
 
 int
-opt_membuffer_limit(void *arg, int m)
+opt_memb_limit(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
   if (!buffer)
@@ -871,7 +871,7 @@ opt_membuffer_limit(void *arg, int m)
 }
 
 int
-opt_membuffer_limit_in(void *arg, int m)
+opt_memb_limit_in(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
   if (!buffer)
@@ -1188,7 +1188,7 @@ opt_g_usleep(void *arg, int m)
 }
 
 int
-opt_execv_stdout_redir(void *arg, int m)
+opt_execv_stdout_rd(void *arg, int m)
 {
   char *ptr = g_pg(arg, m);
   execv_stdout_redir = open(ptr, O_RDWR | O_CREAT,
@@ -1458,129 +1458,234 @@ opt_g_swapmode(void *arg, int m)
   return 0;
 }
 
-void *prio_f_ref[] =
-  { "noop", g_opt_mode_noop, (void*) 0, "--raw", opt_raw_dump, (void*) 0,
-      "silent", opt_silent, (void*) 0, "--silent", opt_silent, (void*) 0,
-      "-arg1", opt_g_arg1, (void*) 1, "--arg1", opt_g_arg1, (void*) 1, "-arg2",
-      opt_g_arg2, (void*) 1, "--arg2", opt_g_arg2, (void*) 1, "-arg3",
-      opt_g_arg3, (void*) 1, "--arg3", opt_g_arg3, (void*) 1, "-vvvvv",
-      opt_g_verbose5, (void*) 0, "-vvvv", opt_g_verbose4, (void*) 0, "-vvv",
-      opt_g_verbose3, (void*) 0, "-vv", opt_g_verbose2, (void*) 0, "-v",
-      opt_g_verbose, (void*) 0, "-m", prio_opt_g_macro, (void*) 1, "--info",
-      prio_opt_g_pinfo, (void*) 0, "--loglevel", opt_g_loglvl, (void*) 1,
-      "--logfile", opt_log_file, (void*) 1, "--log", opt_logging, (void*) 0,
-      "--dirlog", opt_dirlog_file, (void*) 1, "--ge1log", opt_GE1LOG, (void*) 1,
-      "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log", opt_GE3LOG, (void*) 1,
-      "--ge4log", opt_GE4LOG, (void*) 1, "--altlog", opt_altlog, (void*) 1,
-      "--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
-      "--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
-      (void*) 1, "--lastonlog", opt_lastonlog, (void*) 1, "--nukelog",
-      opt_nukelog_file, (void*) 1, "--sconf", opt_sconf, (void*) 1, "--gconf",
-      opt_gconf, (void*) 1, "--siteroot", opt_siteroot, (void*) 1, "--glroot",
-      opt_glroot, (void*) 1, "--noglconf", opt_g_noglconf, (void*) 0,
-      "--glconf", opt_glconf_file, (void*) 1,
-      NULL, NULL, NULL };
+_gg_opt gg_prio_f_ref[] =
+  {
+    { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
+    { .id = 0x0002, .on = "--raw", .ac = 0, .op = opt_raw_dump },
+    { .id = 0x0003, .on = "silent", .ac = 0, .op = opt_silent },
+    { .id = 0x0004, .on = "--silent", .ac = 0, .op = opt_silent },
+    { .id = 0x0005, .on = "-arg1", .ac = 1, .op = opt_g_arg1 },
+    { .id = 0x0006, .on = "--arg1", .ac = 1, .op = opt_g_arg1 },
+    { .id = 0x0007, .on = "-arg2", .ac = 1, .op = opt_g_arg2 },
+    { .id = 0x0008, .on = "--arg2", .ac = 1, .op = opt_g_arg2 },
+    { .id = 0x0009, .on = "-arg3", .ac = 1, .op = opt_g_arg3 },
+    { .id = 0x000A, .on = "--arg3", .ac = 1, .op = opt_g_arg3 },
+    { .id = 0x000B, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
+    { .id = 0x000C, .on = "-vvvv", .ac = 0, .op = opt_g_verbose4 },
+    { .id = 0x000D, .on = "-vvv", .ac = 0, .op = opt_g_verbose3 },
+    { .id = 0x000E, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
+    { .id = 0x000F, .on = "-v", .ac = 0, .op = opt_g_verbose },
+    { .id = 0x0010, .on = "-m", .ac = 1, .op = prio_opt_g_macro },
+    { .id = 0x0011, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
+    { .id = 0x0012, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
+    { .id = 0x0013, .on = "--logfile", .ac = 1, .op = opt_log_file },
+    { .id = 0x0014, .on = "--log", .ac = 0, .op = opt_logging },
+    { .id = 0x0015, .on = "--dirlog", .ac = 1, .op = opt_dirlog_file },
+    { .id = 0x0016, .on = "--ge1log", .ac = 1, .op = opt_GE1LOG },
+    { .id = 0x0017, .on = "--ge2log", .ac = 1, .op = opt_GE2LOG },
+    { .id = 0x0018, .on = "--ge3log", .ac = 1, .op = opt_GE3LOG },
+    { .id = 0x0019, .on = "--ge4log", .ac = 1, .op = opt_GE4LOG },
+    { .id = 0x001A, .on = "--altlog", .ac = 1, .op = opt_altlog },
+    { .id = 0x001B, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
+    { .id = 0x001C, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
+    { .id = 0x001D, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
+    { .id = 0x001E, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
+    { .id = 0x001F, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
+    { .id = 0x0020, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
+    { .id = 0x0021, .on = "--sconf", .ac = 1, .op = opt_sconf },
+    { .id = 0x0022, .on = "--gconf", .ac = 1, .op = opt_gconf },
+    { .id = 0x0023, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
+    { .id = 0x0024, .on = "--glroot", .ac = 1, .op = opt_glroot },
+    { .id = 0x0025, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
+    { .id = 0x0026, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
+    { 0x0 } };
 
-void *f_ref[] =
-  { "noop", g_opt_mode_noop, (void*) 0, "and", opt_g_operator_and, (void*) 0,
-      "or", opt_g_operator_or, (void*) 0, "--rev", opt_g_reverse, (void*) 0,
-      "lom", opt_g_lom_match, (void*) 1, "--lom", opt_g_lom_match, (void*) 1,
-      "ilom", opt_g_lom_imatch, (void*) 1, "--ilom", opt_g_lom_imatch,
-      (void*) 1, "--info", prio_opt_g_pinfo, (void*) 0, "sort", opt_g_sort,
-      (void*) 1, "--sort", opt_g_sort, (void*) 1, "-h", opt_g_dump_tv,
-      (void*) 0, "-k", opt_g_dump_game, (void*) 0, "--cdir", opt_g_cdironly,
-      (void*) 0, "--imatchq", opt_g_imatchq, (void*) 0, "--matchq",
-      opt_g_matchq, (void*) 0, "-a", opt_g_dump_imdb, (void*) 0, "-z",
-      opt_g_write, (void*) 1, "--infile", opt_g_infile, (void*) 1, "-xdev",
-      opt_g_xdev, (void*) 0, "--xdev", opt_g_xdev, (void*) 0, "-xblk",
-      opt_g_xblk, (void*) 0, "--xblk", opt_g_xblk, (void*) 0, "-file",
-      opt_g_udc_f, (void*) 0, "--file", opt_g_udc_f, (void*) 0, "-dir",
-      opt_g_udc_dir, (void*) 0, "--dir", opt_g_udc_dir, (void*) 0, "--loopmax",
-      opt_loop_max, (void*) 1, "--ghost", opt_check_ghost, (void*) 0, "-q",
-      opt_g_dg, (void*) 1, "-x", opt_g_udc, (void*) 1, "-R", opt_g_recursive,
-      (void*) 0, "-recursive", opt_g_recursive, (void*) 0, "--recursive",
-      opt_g_recursive, (void*) 0, "-g", opt_dump_grps, (void*) 0, "-t",
-      opt_dump_users, (void*) 0, "--backup", opt_backup, (void*) 1, "-preprint",
-      opt_preprint, (void*) 1, "-preprintf", opt_preprintf, (void*) 1,
-      "-postprint", opt_postprint, (void*) 1, "-postprintf", opt_postprintf,
-      (void*) 1, "-print", opt_print, (void*) 1, "-print-", opt_print_stdin,
-      (void*) 1, "-printf-", opt_printf_stdin, (void*) 1, "-printf", opt_printf,
-      (void*) 1, "-stdin", opt_stdin, (void*) 0, "--stdin", opt_stdin,
-      (void*) 0, "--print", opt_print, (void*) 1, "--printf", opt_printf,
-      (void*) 1, "-b", opt_backup, (void*) 1, "--postexec", opt_g_postexec,
-      (void*) 1, "--preexec", opt_g_preexec, (void*) 1, "--usleep",
-      opt_g_usleep, (void*) 1, "--sleep", opt_g_sleep, (void*) 1, "-arg1",
-      NULL, (void*) 1, "--arg1", NULL, (void*) 1, "-arg2",
-      NULL, (void*) 1, "--arg2", NULL, (void*) 1, "-arg3", NULL, (void*) 1,
-      "--arg3", NULL, (void*) 1, "-m", NULL, (void*) 1, "--imatch",
-      opt_g_imatch, (void*) 1, "imatch", opt_g_imatch, (void*) 1, "match",
-      opt_g_match, (void*) 1, "--match", opt_g_match, (void*) 1, "--fork",
-      opt_g_ex_fork, (void*) 1, "-vvvvv", opt_g_verbose5, (void*) 0, "-vvvv",
-      opt_g_verbose4, (void*) 0, "-vvv", opt_g_verbose3, (void*) 0, "-vv",
-      opt_g_verbose2, (void*) 0, "-v", opt_g_verbose, (void*) 0, "--loglevel",
-      opt_g_loglvl, (void*) 1, "--ftime", opt_g_ftime, (void*) 0, "--logfile",
-      opt_log_file, (void*) 0, "--log", opt_logging, (void*) 0, "silent",
-      opt_silent, (void*) 0, "--silent", opt_silent, (void*) 0, "--loop",
-      opt_g_loop, (void*) 1, "--daemon", opt_g_daemonize, (void*) 0, "-w",
-      opt_online_dump, (void*) 0, "--ipc", opt_shmipc, (void*) 1, "-l",
-      opt_lastonlog_dump, (void*) 0, "--ge1log", opt_GE1LOG, (void*) 1,
-      "--ge2log", opt_GE2LOG, (void*) 1, "--ge3log", opt_GE3LOG, (void*) 1,
-      "--gamelog", opt_gamelog, (void*) 1, "--tvlog", opt_tvlog, (void*) 1,
-      "--imdblog", opt_imdblog, (void*) 1, "--oneliners", opt_oneliner,
-      (void*) 1, "-o", opt_oneliner_dump, (void*) 0, "--lastonlog",
-      opt_lastonlog, (void*) 1, "-i", opt_dupefile_dump, (void*) 0,
-      "--dupefile", opt_dupefile, (void*) 1, "--sconf", opt_sconf, (void*) 1,
-      "--gconf", opt_gconf, (void*) 1, "--nowbuffer", opt_g_buffering,
-      (void*) 0, "--raw", opt_raw_dump, (void*) 0, "--binary", opt_binary,
-      (void*) 0, "iregexi", opt_g_iregexi, (void*) 1, "--iregexi",
-      opt_g_iregexi, (void*) 1, "iregex", opt_g_iregex, (void*) 1, "--iregex",
-      opt_g_iregex, (void*) 1, "regexi", opt_g_regexi, (void*) 1, "--regexi",
-      opt_g_regexi, (void*) 1, "regex", opt_g_regex, (void*) 1, "--regex",
-      opt_g_regex, (void*) 1, "-e", opt_rebuild, (void*) 1, "--comp",
-      opt_compact_output_formatting, (void*) 0, "--batch",
-      opt_batch_output_formatting, (void*) 0, "-E",
-      opt_export_output_formatting, (void*) 0, "--export",
-      opt_export_output_formatting, (void*) 0, "-y", opt_g_followlinks,
-      (void*) 0, "--allowsymbolic", opt_g_followlinks, (void*) 0,
-      "--followlinks", opt_g_followlinks, (void*) 0, "--allowlinks",
-      opt_g_followlinks, (void*) 0, "--execv", opt_execv, (void*) 1, "-execv",
-      opt_execv, (void*) 1, "-execv-", opt_execv_stdin, (void*) 1, "-exec",
-      opt_exec, (void*) 1, "-exec-", opt_exec_stdin, (void*) 1, "--exec",
-      opt_exec, (void*) 1, "--fix", opt_g_fix, (void*) 0, "-u", opt_g_update,
-      (void*) 0, "--memlimit", opt_membuffer_limit, (void*) 1, "--memlimita",
-      opt_membuffer_limit_in, (void*) 1, "-p", opt_dirlog_chk_dupe, (void*) 0,
-      "--dupechk", opt_dirlog_chk_dupe, (void*) 0, "--nobuffer",
-      opt_g_nobuffering, (void*) 0, "-n", opt_dirlog_dump_nukelog, (void*) 0,
-      "--help", print_help, (void*) 0, "--version", print_version, (void*) 0,
-      "--folders", opt_dirlog_sections_file, (void*) 1, "--dirlog",
-      opt_dirlog_file, (void*) 1, "--nukelog", opt_nukelog_file, (void*) 1,
-      "--siteroot", opt_siteroot, (void*) 1, "--glroot", opt_glroot, (void*) 1,
-      "--nowrite", opt_g_nowrite, (void*) 0, "--sfv", opt_g_sfv, (void*) 0,
-      "--crc32", option_crc32, (void*) 1, "--nobackup", opt_nobackup, (void*) 0,
-      "-c", opt_dirlog_check, (void*) 0, "--check", opt_dirlog_check, (void*) 0,
-      "--dump", opt_dirlog_dump, (void*) 0, "-d", opt_dirlog_dump, (void*) 0,
-      "-f", opt_g_force, (void*) 0, "-ff", opt_g_force2, (void*) 0, "-s",
-      opt_update_single_record, (void*) 1, "-r", opt_recursive_update_records,
-      (void*) 0, "--shmem", opt_g_shmem, (void*) 0, "--shmreload",
-      opt_g_shmreload, (void*) 0, "--loadq", opt_g_loadq, (void*) 0, "--loadqa",
-      opt_g_loadqa, (void*) 0, "--shmdestroy", opt_g_shmdestroy, (void*) 0,
-      "--shmdestonexit", opt_g_shmdestroyonexit, (void*) 0, "--maxres",
-      opt_g_maxresults, (void*) 1, "--maxhit", opt_g_maxhits, (void*) 1,
-      "--ifres", opt_g_ifres, (void*) 0, "--ifhit", opt_g_ifhit, (void*) 0,
-      "--ifrhe", opt_g_ifrh_e, (void*) 0, "--nofq", opt_g_nofq, (void*) 0,
-      "--esredir", opt_execv_stdout_redir, (void*) 1, "--noglconf",
-      opt_g_noglconf, (void*) 0, "--maxdepth", opt_g_maxdepth, (void*) 1,
-      "-maxdepth", opt_g_maxdepth, (void*) 1, "--mindepth", opt_g_mindepth,
-      (void*) 1, "-mindepth", opt_g_mindepth, (void*) 1, "--noereg",
-      opt_g_noereg, (void*) 0, "--fd", opt_g_fd, (void*) 0, "-fd", opt_g_fd,
-      (void*) 0, "--prune", opt_prune, (void*) 0, "--glconf", opt_glconf_file,
-      (void*) 1, "--ge4log", opt_GE4LOG, (void*) 1, "--altlog", opt_altlog,
-      (void*) 1, "--xretry", opt_g_xretry, (void*) 0, "--indepth",
-      opt_g_indepth, (void*) 0, "--full", opt_dirlog_rebuild_full, (void*) 0,
-      "--arr", opt_arrange, (void*) 1, "--nonukechk", opt_no_nuke_chk,
-      (void*) 0, "--rsleep", opt_g_loop_sleep, (void*) 1, "--rusleep",
-      opt_g_loop_usleep, (void*) 1, "--nostats", opt_g_nostats, (void*) 0,
-      "--stats", opt_g_stats, (void*) 0, "-mlist", opt_g_mlist, (void*) 0,
-      "--gz", opt_g_comp, (void*) 1, "--sortmethod", opt_g_swapmode, (void*) 1,
-      "--progress", opt_g_progress, (void*) 0,
-      NULL, NULL, NULL };
+_gg_opt gg_f_ref[] =
+  {
+    { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
+    { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },
+    { .id = 0x0003, .on = "or", .ac = 0, .op = opt_g_operator_or },
+    { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
+    { .id = 0x0005, .on = "lom", .ac = 1, .op = opt_g_lom_match },
+    { .id = 0x0006, .on = "--lom", .ac = 1, .op = opt_g_lom_match },
+    { .id = 0x0007, .on = "ilom", .ac = 1, .op = opt_g_lom_imatch },
+    { .id = 0x0008, .on = "--ilom", .ac = 1, .op = opt_g_lom_imatch },
+    { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
+    { .id = 0x000A, .on = "sort", .ac = 1, .op = opt_g_sort },
+    { .id = 0x000B, .on = "--sort", .ac = 1, .op = opt_g_sort },
+    { .id = 0x000C, .on = "-h", .ac = 0, .op = opt_g_dump_tv },
+    { .id = 0x000D, .on = "-k", .ac = 0, .op = opt_g_dump_game },
+    { .id = 0x000E, .on = "--cdir", .ac = 0, .op = opt_g_cdironly },
+    { .id = 0x000F, .on = "--imatchq", .ac = 0, .op = opt_g_imatchq },
+    { .id = 0x0010, .on = "--matchq", .ac = 0, .op = opt_g_matchq },
+    { .id = 0x0011, .on = "-a", .ac = 0, .op = opt_g_dump_imdb },
+    { .id = 0x0012, .on = "-z", .ac = 1, .op = opt_g_write },
+    { .id = 0x0013, .on = "--infile", .ac = 1, .op = opt_g_infile },
+    { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
+    { .id = 0x0015, .on = "--xdev", .ac = 0, .op = opt_g_xdev },
+    { .id = 0x0016, .on = "-xblk", .ac = 0, .op = opt_g_xblk },
+    { .id = 0x0017, .on = "--xblk", .ac = 0, .op = opt_g_xblk },
+    { .id = 0x0018, .on = "-file", .ac = 0, .op = opt_g_udc_f },
+    { .id = 0x0019, .on = "--file", .ac = 0, .op = opt_g_udc_f },
+    { .id = 0x001A, .on = "-dir", .ac = 0, .op = opt_g_udc_dir },
+    { .id = 0x001B, .on = "--dir", .ac = 0, .op = opt_g_udc_dir },
+    { .id = 0x001C, .on = "--loopmax", .ac = 1, .op = opt_loop_max },
+    { .id = 0x001D, .on = "--ghost", .ac = 0, .op = opt_check_ghost },
+    { .id = 0x001E, .on = "-q", .ac = 1, .op = opt_g_dg },
+    { .id = 0x001F, .on = "-x", .ac = 1, .op = opt_g_udc },
+    { .id = 0x0020, .on = "-R", .ac = 0, .op = opt_g_recursive },
+    { .id = 0x0021, .on = "-recursive", .ac = 0, .op = opt_g_recursive },
+    { .id = 0x0022, .on = "--recursive", .ac = 0, .op = opt_g_recursive },
+    { .id = 0x0023, .on = "-g", .ac = 0, .op = opt_dump_grps },
+    { .id = 0x0024, .on = "-t", .ac = 0, .op = opt_dump_users },
+    { .id = 0x0025, .on = "--backup", .ac = 1, .op = opt_backup },
+    { .id = 0x0026, .on = "-preprint", .ac = 1, .op = opt_preprint },
+    { .id = 0x0027, .on = "-preprintf", .ac = 1, .op = opt_preprintf },
+    { .id = 0x0028, .on = "-postprint", .ac = 1, .op = opt_postprint },
+    { .id = 0x0029, .on = "-postprintf", .ac = 1, .op = opt_postprintf },
+    { .id = 0x002A, .on = "-print", .ac = 1, .op = opt_print },
+    { .id = 0x002B, .on = "-print-", .ac = 1, .op = opt_print_stdin },
+    { .id = 0x002C, .on = "-printf-", .ac = 1, .op = opt_printf_stdin },
+    { .id = 0x002D, .on = "-printf", .ac = 1, .op = opt_printf },
+    { .id = 0x002E, .on = "-stdin", .ac = 0, .op = opt_stdin },
+    { .id = 0x002F, .on = "--stdin", .ac = 0, .op = opt_stdin },
+    { .id = 0x0030, .on = "--print", .ac = 1, .op = opt_print },
+    { .id = 0x0031, .on = "--printf", .ac = 1, .op = opt_printf },
+    { .id = 0x0032, .on = "-b", .ac = 1, .op = opt_backup },
+    { .id = 0x0033, .on = "--postexec", .ac = 1, .op = opt_g_postexec },
+    { .id = 0x0034, .on = "--preexec", .ac = 1, .op = opt_g_preexec },
+    { .id = 0x0035, .on = "--usleep", .ac = 1, .op = opt_g_usleep },
+    { .id = 0x0036, .on = "--sleep", .ac = 1, .op = opt_g_sleep },
+    { .id = 0x0037, .on = "-arg1", .ac = 1, .op = NULL },
+    { .id = 0x0038, .on = "--arg1", .ac = 1, .op = NULL },
+    { .id = 0x0039, .on = "-arg2", .ac = 1, .op = NULL },
+    { .id = 0x003A, .on = "--arg2", .ac = 1, .op = NULL },
+    { .id = 0x003B, .on = "-arg3", .ac = 1, .op = NULL },
+    { .id = 0x003C, .on = "--arg3", .ac = 1, .op = NULL },
+    { .id = 0x003D, .on = "-m", .ac = 1, .op = NULL },
+    { .id = 0x003E, .on = "--imatch", .ac = 1, .op = opt_g_imatch },
+    { .id = 0x003F, .on = "imatch", .ac = 1, .op = opt_g_imatch },
+    { .id = 0x0040, .on = "match", .ac = 1, .op = opt_g_match },
+    { .id = 0x0041, .on = "--match", .ac = 1, .op = opt_g_match },
+    { .id = 0x0042, .on = "--fork", .ac = 1, .op = opt_g_ex_fork },
+    { .id = 0x0043, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
+    { .id = 0x0044, .on = "-vvvv", .ac = 0, .op = opt_g_verbose4 },
+    { .id = 0x0045, .on = "-vvv", .ac = 0, .op = opt_g_verbose3 },
+    { .id = 0x0046, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
+    { .id = 0x0047, .on = "-v", .ac = 0, .op = opt_g_verbose },
+    { .id = 0x0048, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
+    { .id = 0x0049, .on = "--ftime", .ac = 0, .op = opt_g_ftime },
+    { .id = 0x004A, .on = "--logfile", .ac = 0, .op = opt_log_file },
+    { .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },
+    { .id = 0x004C, .on = "silent", .ac = 0, .op = opt_silent },
+    { .id = 0x004D, .on = "--silent", .ac = 0, .op = opt_silent },
+    { .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
+    { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
+    { .id = 0x0050, .on = "-w", .ac = 0, .op = opt_online_dump },
+    { .id = 0x0051, .on = "--ipc", .ac = 1, .op = opt_shmipc },
+    { .id = 0x0052, .on = "-l", .ac = 0, .op = opt_lastonlog_dump },
+    { .id = 0x0053, .on = "--ge1log", .ac = 1, .op = opt_GE1LOG },
+    { .id = 0x0054, .on = "--ge2log", .ac = 1, .op = opt_GE2LOG },
+    { .id = 0x0055, .on = "--ge3log", .ac = 1, .op = opt_GE3LOG },
+    { .id = 0x0056, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
+    { .id = 0x0057, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
+    { .id = 0x0058, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
+    { .id = 0x0059, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
+    { .id = 0x005A, .on = "-o", .ac = 0, .op = opt_oneliner_dump },
+    { .id = 0x005B, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
+    { .id = 0x005C, .on = "-i", .ac = 0, .op = opt_dupefile_dump },
+    { .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
+    { .id = 0x005E, .on = "--sconf", .ac = 1, .op = opt_sconf },
+    { .id = 0x005F, .on = "--gconf", .ac = 1, .op = opt_gconf },
+    { .id = 0x0060, .on = "--nowbuffer", .ac = 0, .op = opt_g_buffering },
+    { .id = 0x0061, .on = "--raw", .ac = 0, .op = opt_raw_dump },
+    { .id = 0x0062, .on = "--binary", .ac = 0, .op = opt_binary },
+    { .id = 0x0063, .on = "iregexi", .ac = 1, .op = opt_g_iregexi },
+    { .id = 0x0064, .on = "--iregexi", .ac = 1, .op = opt_g_iregexi },
+    { .id = 0x0065, .on = "iregex", .ac = 1, .op = opt_g_iregex },
+    { .id = 0x0066, .on = "--iregex", .ac = 1, .op = opt_g_iregex },
+    { .id = 0x0067, .on = "regexi", .ac = 1, .op = opt_g_regexi },
+    { .id = 0x0068, .on = "--regexi", .ac = 1, .op = opt_g_regexi },
+    { .id = 0x0069, .on = "regex", .ac = 1, .op = opt_g_regex },
+    { .id = 0x006A, .on = "--regex", .ac = 1, .op = opt_g_regex },
+    { .id = 0x006B, .on = "-e", .ac = 1, .op = opt_rebuild },
+    { .id = 0x006C, .on = "--comp", .ac = 0, .op = opt_crof },
+    { .id = 0x006D, .on = "--batch", .ac = 0, .op = opt_bo_formatting },
+    { .id = 0x006E, .on = "-E", .ac = 0, .op = opt_ex_o_formatting },
+    { .id = 0x006F, .on = "--export", .ac = 0, .op = opt_ex_o_formatting },
+    { .id = 0x0070, .on = "-y", .ac = 0, .op = opt_g_flinks },
+    { .id = 0x0071, .on = "--allowsymbolic", .ac = 0, .op = opt_g_flinks },
+    { .id = 0x0072, .on = "--followlinks", .ac = 0, .op = opt_g_flinks },
+    { .id = 0x0073, .on = "--allowlinks", .ac = 0, .op = opt_g_flinks },
+    { .id = 0x0074, .on = "--execv", .ac = 1, .op = opt_execv },
+    { .id = 0x0075, .on = "-execv", .ac = 1, .op = opt_execv },
+    { .id = 0x0076, .on = "-execv-", .ac = 1, .op = opt_execv_stdin },
+    { .id = 0x0077, .on = "-exec", .ac = 1, .op = opt_exec },
+    { .id = 0x0078, .on = "-exec-", .ac = 1, .op = opt_exec_stdin },
+    { .id = 0x0079, .on = "--exec", .ac = 1, .op = opt_exec },
+    { .id = 0x007A, .on = "--fix", .ac = 0, .op = opt_g_fix },
+    { .id = 0x007B, .on = "-u", .ac = 0, .op = opt_g_update },
+    { .id = 0x007C, .on = "--memlimit", .ac = 1, .op = opt_memb_limit },
+    { .id = 0x007D, .on = "--memlimita", .ac = 1, .op = opt_memb_limit_in },
+    { .id = 0x007E, .on = "-p", .ac = 0, .op = opt_dirlog_chk_dupe },
+    { .id = 0x007F, .on = "--dupechk", .ac = 0, .op = opt_dirlog_chk_dupe },
+    { .id = 0x0080, .on = "--nobuffer", .ac = 0, .op = opt_g_nobuffering },
+    { .id = 0x0081, .on = "-n", .ac = 0, .op = opt_dirlog_dump_nukelog },
+    { .id = 0x0082, .on = "--help", .ac = 0, .op = print_help },
+    { .id = 0x0083, .on = "--version", .ac = 0, .op = print_version },
+    { .id = 0x0084, .on = "--folders", .ac = 1, .op = opt_dirlog_sect_fl },
+    { .id = 0x0085, .on = "--dirlog", .ac = 1, .op = opt_dirlog_file },
+    { .id = 0x0086, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
+    { .id = 0x0087, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
+    { .id = 0x0088, .on = "--glroot", .ac = 1, .op = opt_glroot },
+    { .id = 0x0089, .on = "--nowrite", .ac = 0, .op = opt_g_nowrite },
+    { .id = 0x008A, .on = "--sfv", .ac = 0, .op = opt_g_sfv },
+    { .id = 0x008B, .on = "--crc32", .ac = 1, .op = option_crc32 },
+    { .id = 0x008C, .on = "--nobackup", .ac = 0, .op = opt_nobackup },
+    { .id = 0x008D, .on = "-c", .ac = 0, .op = opt_dirlog_check },
+    { .id = 0x008E, .on = "--check", .ac = 0, .op = opt_dirlog_check },
+    { .id = 0x008F, .on = "--dump", .ac = 0, .op = opt_dirlog_dump },
+    { .id = 0x0090, .on = "-d", .ac = 0, .op = opt_dirlog_dump },
+    { .id = 0x0091, .on = "-f", .ac = 0, .op = opt_g_force },
+    { .id = 0x0092, .on = "-ff", .ac = 0, .op = opt_g_force2 },
+    { .id = 0x0093, .on = "-s", .ac = 1, .op = opt_update_single_record },
+    { .id = 0x0094, .on = "-r", .ac = 0, .op = opt_rec_upd_records },
+    { .id = 0x0095, .on = "--shmem", .ac = 0, .op = opt_g_shmem },
+    { .id = 0x0096, .on = "--shmreload", .ac = 0, .op = opt_g_shmreload },
+    { .id = 0x0097, .on = "--loadq", .ac = 0, .op = opt_g_loadq },
+    { .id = 0x0098, .on = "--loadqa", .ac = 0, .op = opt_g_loadqa },
+    { .id = 0x0099, .on = "--shmdestroy", .ac = 0, .op = opt_g_shmdestroy },
+    { .id = 0x009A, .on = "--shmdestonexit", .ac = 0, .op = opt_g_shmdestonex },
+    { .id = 0x009B, .on = "--maxres", .ac = 1, .op = opt_g_maxresults },
+    { .id = 0x009C, .on = "--maxhit", .ac = 1, .op = opt_g_maxhits },
+    { .id = 0x009D, .on = "--ifres", .ac = 0, .op = opt_g_ifres },
+    { .id = 0x009E, .on = "--ifhit", .ac = 0, .op = opt_g_ifhit },
+    { .id = 0x009F, .on = "--ifrhe", .ac = 0, .op = opt_g_ifrh_e },
+    { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
+    { .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
+    { .id = 0x00A2, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
+    { .id = 0x00A3, .on = "--maxdepth", .ac = 1, .op = opt_g_maxdepth },
+    { .id = 0x00A4, .on = "-maxdepth", .ac = 1, .op = opt_g_maxdepth },
+    { .id = 0x00A5, .on = "--mindepth", .ac = 1, .op = opt_g_mindepth },
+    { .id = 0x00A6, .on = "-mindepth", .ac = 1, .op = opt_g_mindepth },
+    { .id = 0x00A7, .on = "--noereg", .ac = 0, .op = opt_g_noereg },
+    { .id = 0x00A8, .on = "--fd", .ac = 0, .op = opt_g_fd },
+    { .id = 0x00A9, .on = "-fd", .ac = 0, .op = opt_g_fd },
+    { .id = 0x00AA, .on = "--prune", .ac = 0, .op = opt_prune },
+    { .id = 0x00AB, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
+    { .id = 0x00AC, .on = "--ge4log", .ac = 1, .op = opt_GE4LOG },
+    { .id = 0x00AD, .on = "--altlog", .ac = 1, .op = opt_altlog },
+    { .id = 0x00AE, .on = "--xretry", .ac = 0, .op = opt_g_xretry },
+    { .id = 0x00AF, .on = "--indepth", .ac = 0, .op = opt_g_indepth },
+    { .id = 0x00B0, .on = "--full", .ac = 0, .op = opt_dirlog_rb_full },
+    { .id = 0x00B1, .on = "--arr", .ac = 1, .op = opt_arrange },
+    { .id = 0x00B2, .on = "--nonukechk", .ac = 0, .op = opt_no_nuke_chk },
+    { .id = 0x00B3, .on = "--rsleep", .ac = 1, .op = opt_g_loop_sleep },
+    { .id = 0x00B4, .on = "--rusleep", .ac = 1, .op = opt_g_loop_usleep },
+    { .id = 0x00B5, .on = "--nostats", .ac = 0, .op = opt_g_nostats },
+    { .id = 0x00B6, .on = "--stats", .ac = 0, .op = opt_g_stats },
+    { .id = 0x00B7, .on = "-mlist", .ac = 0, .op = opt_g_mlist },
+    { .id = 0x00B8, .on = "--gz", .ac = 1, .op = opt_g_comp },
+    { .id = 0x00B9, .on = "--sortmethod", .ac = 1, .op = opt_g_swapmode },
+    { .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
+    { 0x0 } };

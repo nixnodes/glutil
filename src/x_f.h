@@ -60,6 +60,10 @@ int
 write_file_text(char *data, char *file);
 size_t
 exec_and_redirect_output(char *command, FILE *output);
+off_t
+enum_readline(char *file, void *buffer, size_t read_max, off_t max_l, FILE *_fp,
+    int
+    (*call_b)(char *b, void *a), void *arg);
 
 typedef int
 _pf_eof(void *p);

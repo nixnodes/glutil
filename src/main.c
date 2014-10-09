@@ -29,6 +29,7 @@
 #include <xref.h>
 #include <x_f.h>
 #include <omfp.h>
+#include <imdb_pload.h>
 
 #include <stdio.h>
 #include <signal.h>
@@ -47,6 +48,13 @@ main(int argc, char *argv[])
   print_str = g_print_str;
   __pf_eof = g_feof;
 
+  /*mda ip_stor =
+   { 0 };
+   md_init(&ip_stor, 1000);
+   i_pload(IMDB_BASELIST, 913213212, &ip_stor);
+
+   exit(0);*/
+
   g_setjmp(0, "main", NULL, NULL);
   if ((r = setup_sighandlers()))
     {
@@ -58,7 +66,7 @@ main(int argc, char *argv[])
 
   _p_macro_argc = argc;
 
-  if ((r = parse_args(argc, argv, prio_f_ref)) > 0)
+  if ((r = parse_args(argc, argv, gg_prio_f_ref)) > 0)
     {
       print_str(MSG_INIT_CMDLINE_ERROR, r);
       EXITVAL = 2;
@@ -109,7 +117,7 @@ g_init(int argc, char **argv)
     {
       gfl |= F_OPT_PS_LOGGING;
     }
-  r = parse_args(argc, argv, f_ref);
+  r = parse_args(argc, argv, gg_f_ref);
 
   if (r == -2 || r == -1)
     {

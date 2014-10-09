@@ -12,6 +12,17 @@
 
 #include <stdio.h>
 
+typedef int
+(*__opt_cptr)(void *arg, int m);
+
+typedef struct ___gg_opt
+{
+  uint32_t id;
+  char *on;             // option name
+  uint8_t ac;           // arg count
+  __opt_cptr op;        // option proc funct
+} _gg_opt, *__gg_opt;
+
 void *
 g_pg(void *arg, int m);
 char *
@@ -22,9 +33,9 @@ g_cpg(void *arg, void *out, int m, size_t sz);
 char **
 build_argv(char *args, size_t max, int *c);
 int
-opt_execv_stdout_redir(void *arg, int m);
+opt_execv_stdout_rd(void *arg, int m);
 int
-parse_args(int argc, char **argv, void*fref_t[]);
+parse_args(int argc, char **argv, _gg_opt fref_t[]);
 
 typedef struct option_reference_array
 {
@@ -53,5 +64,7 @@ typedef struct option_reference_array
    } \
 }
 
+_gg_opt gg_f_ref[1024];
+_gg_opt gg_prio_f_ref[128];
 
 #endif /* ARG_PROC_H_ */

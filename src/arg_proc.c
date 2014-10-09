@@ -189,16 +189,16 @@ process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
   int
   (*proc_opt_generic)(void *arg, int m);
   int i = 0;
-  p_ora ora = (p_ora) reference_array;
+  __gg_opt ora = (__gg_opt) reference_array;
 
-  while (ora->option)
+  while (ora->id)
     {
-      size_t oo_l = strlen(ora->option);
-      if (oo_l == strlen(opt) && !strncmp(ora->option, opt, oo_l))
+      size_t oo_l = strlen(ora->on);
+      if (oo_l == strlen(opt) && !strncmp(ora->on, opt, oo_l))
         {
-          if (ora->function)
+          if (ora->op)
             {
-              proc_opt_generic = ora->function;
+              proc_opt_generic = ora->op;
               *ret = i;
               return proc_opt_generic(arg, m);
             }
@@ -215,7 +215,7 @@ process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
 }
 
 int
-parse_args(int argc, char **argv, void*fref_t[])
+parse_args(int argc, char **argv, _gg_opt fref_t[])
 {
   g_setjmp(0, "parse_args", NULL, NULL);
   int vi, ret, c = 0;
@@ -224,7 +224,7 @@ parse_args(int argc, char **argv, void*fref_t[])
 
   char *c_arg;
 
-  p_ora ora = (p_ora) fref_t;
+  __gg_opt ora = (__gg_opt) fref_t;
 
   for (i = 1, ret = 0, vi = -1; i < argc; i++, vi = -1)
     {
@@ -244,7 +244,7 @@ parse_args(int argc, char **argv, void*fref_t[])
 
           if ((ret = process_opt_n(c_arg, p_iseq, fref_t, 2, &vi)))
             {
-              if (fref_t != prio_f_ref)
+              if (fref_t != gg_prio_f_ref)
                 {
                   print_str("ERROR: [%d] malformed/invalid argument '%s'\n",
                       ret, c_arg);
@@ -259,7 +259,7 @@ parse_args(int argc, char **argv, void*fref_t[])
         {
           if ((ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi)))
             {
-              if (fref_t != prio_f_ref)
+              if (fref_t != gg_prio_f_ref)
                 {
                   print_str("ERROR: [%d] malformed/invalid argument '%s'\n",
                       ret, c_arg);
@@ -279,7 +279,7 @@ parse_args(int argc, char **argv, void*fref_t[])
 
       if (vi > -1)
         {
-          i += (int) (uintaa_t) ora[vi].arg_cnt;
+          i += (int) (uintaa_t) ora[vi].ac;
         }
 
       ll_end: ;
