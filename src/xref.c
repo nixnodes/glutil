@@ -267,15 +267,15 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
     }
   else if (!strncmp(match, _MC_X_ISREAD, 6))
     {
-      snprintf(output, max_size, "%hu", (uint8_t) !(access(data->name, R_OK)));
+      snprintf(output, max_size, "%huu", (uint8_t) !(access(data->name, R_OK)));
     }
   else if (!strncmp(match, _MC_X_ISWRITE, 7))
     {
-      snprintf(output, max_size, "%hu", (uint8_t) !(access(data->name, W_OK)));
+      snprintf(output, max_size, "%huu", (uint8_t) !(access(data->name, W_OK)));
     }
   else if (!strncmp(match, _MC_X_ISEXEC, 6))
     {
-      snprintf(output, max_size, "%hu", (uint8_t) !(access(data->name, X_OK)));
+      snprintf(output, max_size, "%huu", (uint8_t) !(access(data->name, X_OK)));
     }
   else if (!strncmp(match, _MC_X_UPERM, 5))
     {
@@ -1261,7 +1261,7 @@ g_dump_ug(char *ug)
 
   if (r < 0)
     {
-      print_str("ERROR: %s: [%d] %s\n", buffer, r, ie_tl(r, EMR_enum_dir));
+      print_str("ERROR: %s: %s\n", buffer, ie_tl(r, EMR_enum_dir));
     }
 
   return r;
@@ -1334,7 +1334,7 @@ g_dump_gen(char *root)
 
   if (r < 0)
     {
-      print_str("ERROR: %s: [%d] %s\n", ret.root, r, ie_tl(r, EMR_enum_dir));
+      print_str("ERROR: %s: %s\n", ret.root, ie_tl(r, EMR_enum_dir));
     }
 
   if ((gfl0 & F_OPT_XRETRY) && !ret.st_1 && !(gfl & F_OPT_KILL_GLOBAL))
@@ -1476,7 +1476,7 @@ g_xproc_rc(char *name, void *aa_rh, __g_eds eds)
       int r = enum_dir(name, g_process_directory, aa_rh, 0, eds);
       if (r < 0)
         {
-          print_str("ERROR: %s: [%d] %s\n", name, r, ie_tl(r, EMR_enum_dir));
+          print_str("ERROR: %s: %s\n", name, ie_tl(r, EMR_enum_dir));
         }
     }
 }
@@ -1506,6 +1506,7 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
             {
               break;
             }
+
           if (aa_rh->xproc_out)
             {
               aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);

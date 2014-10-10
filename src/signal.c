@@ -58,15 +58,14 @@ setup_sighandlers(void)
   return r;
 }
 
-
 void
 child_sig_handler(int signal, siginfo_t * si, void *p)
 {
   switch (si->si_code)
     {
   case CLD_KILLED:
-    print_str(
-        "NOTICE: Child process caught SIGINT (hit CTRL^C again to quit)\n");
+    fprintf(stderr,
+        "NOTICE: child process caught SIGINT (hit CTRL^C again to quit)\n");
     usleep(1000000);
     break;
   case CLD_EXITED:
@@ -74,7 +73,7 @@ child_sig_handler(int signal, siginfo_t * si, void *p)
   default:
     if (gfl & F_OPT_VERBOSE3)
       {
-        print_str("NOTICE: Child caught signal: %d \n", si->si_code);
+        fprintf(stderr, "NOTICE: child caught signal: %d \n", si->si_code);
       }
     break;
     }
@@ -86,26 +85,29 @@ sig_handler(int signal)
   switch (signal)
     {
   case SIGTERM:
-    print_str("NOTICE: Caught SIGTERM, terminating gracefully.\n");
+    fprintf(stderr, "NOTICE: caught SIGTERM, terminating gracefully\n");
     gfl |= F_OPT_KILL_GLOBAL;
     break;
   case SIGINT:
+
     if (gfl & F_OPT_KILL_GLOBAL)
       {
-        print_str("NOTICE: Caught SIGINT twice, terminating..\n");
-        exit(0);
+        fprintf(stderr, "NOTICE: forcefully terminating process\n");
+        _exit(0);
       }
     else
       {
-        print_str(
-            "NOTICE: Caught SIGINT, quitting (hit CTRL^C again to terminate by force)\n");
+        /*fprintf(stderr,
+         "NOTICE: caught SIGINT, quitting (hit CTRL^C again to terminate by force)\n");*/
         gfl |= F_OPT_KILL_GLOBAL;
       }
+#ifndef _MAKE_SBIN
     usleep(SIG_BREAK_TIMEOUT_NS);
+#endif
     break;
   default:
     usleep(SIG_BREAK_TIMEOUT_NS);
-    print_str("NOTICE: Caught signal %d\n", signal);
+    fprintf(stderr, "NOTICE: caught signal %d\n", signal);
     break;
     }
 }

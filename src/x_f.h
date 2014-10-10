@@ -26,8 +26,6 @@
 #define F_FC_MSET_SRC                   (a32 << 1)
 #define F_FC_MSET_DEST                  (a32 << 2)
 
-static uint32_t crc_32_tab[];
-
 #define UPDC32(octet,crc) (crc_32_tab[((crc) ^ ((uint8_t)octet)) & 0xff] ^ ((crc) >> 8))
 
 typedef struct gu_nfo

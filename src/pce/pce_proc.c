@@ -478,7 +478,7 @@ pce_rescomp(int m_i)
   case 5:
     return _lcs_ishigherorequal;
   case 6:
-    return _lcs_isnotorequal;
+    return _lcs_isnot;
     }
   return NULL;
 }

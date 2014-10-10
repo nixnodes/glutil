@@ -63,7 +63,6 @@ shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
   void *ptr;
   int ir = 0;
 
-
   int i_shmid = -1;
 
   if (!shmid)
@@ -149,7 +148,6 @@ g_map_shm(__g_handle hdl, key_t ipc)
     {
       if (((gfl & F_OPT_VERBOSE) && r != 1002) || (gfl & F_OPT_VERBOSE4))
         {
-
           print_str(
               "ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d] [%s]\n",
               MSG_DEF_SHM, (uint32_t) hdl->buffer.count,
@@ -165,15 +163,9 @@ g_map_shm(__g_handle hdl, key_t ipc)
       MSG_DEF_SHM, (uint32_t) hdl->buffer.count);
     }
 
-  hdl->flags |= F_GH_ISONLINE;
-  hdl->d_memb = 3;
-
-  hdl->g_proc1_lookup = ref_to_val_lk_online;
-  hdl->g_proc2 = ref_to_val_ptr_online;
-  hdl->g_proc3 = online_format_block;
-  hdl->g_proc3_batch = online_format_block_batch;
-  hdl->g_proc4 = g_omfp_norm;
-  hdl->jm_offset = (size_t) &((struct ONLINE*) NULL)->username;
+#ifndef _MAKE_SBIN
+  pdt_set_online(hdl);
+#endif
 
   return 0;
 }

@@ -25,8 +25,6 @@
 #include <log_io.h>
 #include <misc.h>
 
-#include <lref_online.h>
-
 #include <unistd.h>
 
 char *_print_ptr = NULL, *_cl_print_ptr = NULL, *_print_ptr_post = NULL, *_print_ptr_pre = NULL;
@@ -373,7 +371,7 @@ g_proc_mr(__g_handle hdl)
   else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP))
     {
       hdl->g_proc4 = g_omfp_ocomp;
-      hdl->g_proc3 = online_format_block_comp;
+      hdl->g_proc3 = hdl->g_proc3_extra;
       print_str(
           "+-------------------------------------------------------------------------------------------------------------------------------------------\n"
               "|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS                      \n"
@@ -438,6 +436,7 @@ g_proc_mr(__g_handle hdl)
 int
 determine_datatype(__g_handle hdl, char *file)
 {
+#ifndef _MAKE_SBIN
   if (!strncmp(file, DIRLOG, strlen(DIRLOG)))
     {
       pdt_set_dirlog(hdl);
@@ -502,6 +501,7 @@ determine_datatype(__g_handle hdl, char *file)
     {
       return 1;
     }
+#endif
 
   return 0;
 }

@@ -45,6 +45,8 @@
  *   - + '-print-', '-printf-', '-execv-', '-exec-' (read input from file/stdin) (rev. 9_b5)
  *   - + 'curtime' global field (math preprocessor) (rev 9_b6)
  *   - ~ LOM matching broken (with signed integers) (rev. 9_b7)
+ *   - ~ 'isnot' (!=) relational operator broken (LOM) (rev. 9_b9)
+ *   - + gfind, see NEWS file (rev. 9_b9)
  *
  * v2.3:
  *

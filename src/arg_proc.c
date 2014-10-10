@@ -215,20 +215,22 @@ process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
 }
 
 int
-parse_args(int argc, char **argv, _gg_opt fref_t[])
+parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
 {
   g_setjmp(0, "parse_args", NULL, NULL);
   int vi, ret, c = 0;
 
   int i;
 
-  char *c_arg;
+  char *c_arg = NULL;
+  char **c_argv = NULL;
 
   __gg_opt ora = (__gg_opt) fref_t;
 
   for (i = 1, ret = 0, vi = -1; i < argc; i++, vi = -1)
     {
       c_arg = argv[i];
+      c_argv = &argv[i];
 
       char *p_iseq = strchr(c_arg, 0x3D);
 
@@ -239,57 +241,70 @@ parse_args(int argc, char **argv, _gg_opt fref_t[])
           p_isl > 63 ? p_isl = 63 : 0;
           strncpy(bp_opt, c_arg, p_isl);
           bp_opt[p_isl] = 0x0;
-          c_arg = bp_opt;
           p_iseq++;
 
-          if ((ret = process_opt_n(c_arg, p_iseq, fref_t, 2, &vi)))
-            {
-              if (fref_t != gg_prio_f_ref)
-                {
-                  print_str("ERROR: [%d] malformed/invalid argument '%s'\n",
-                      ret, c_arg);
-                  c = -2;
-                  goto end;
-                }
-            }
-          goto ll_end;
-
+          ret = process_opt_n(bp_opt, p_iseq, fref_t, 2, &vi);
         }
       else
         {
-          if ((ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi)))
-            {
-              if (fref_t != gg_prio_f_ref)
-                {
-                  print_str("ERROR: [%d] malformed/invalid argument '%s'\n",
-                      ret, c_arg);
-                  c = -2;
-                  goto end;
-                }
-
-              //goto ll_end;
-
-            }
-          else
-            {
-              c++;
-            }
-
+          ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi);
         }
 
-      if (vi > -1)
+      if (ret == -2)
+        {
+          if (flags & F_PARSE_ARG_IGNORE_NOT_FOUND)
+            {
+              continue;
+            }
+        }
+      if (0 != ret)
+        {
+          if (!(flags & F_PARSE_ARG_SILENT))
+            {
+              if (ret == -2)
+                {
+                  print_str("ERROR: [%d] invalid option '%s'\n", ret, c_arg);
+                }
+              else if (ret == -4)
+                {
+                  print_str(
+                      "ERROR: [%d] CRITICAL: improperly configured option ref table, report this!\n",
+                      ret, c_arg);
+                }
+              else if (ret > 0)
+                {
+                  print_str("ERROR: [%d] '%s': bad option argument\n", ret,
+                      c_arg);
+                }
+
+            }
+          if (!(flags & F_PARSE_ARG_IGNORE_ERRORS))
+            {
+              c = -2;
+              break;
+            }
+        }
+      else
+        {
+          c++;
+        }
+
+      if (NULL == p_iseq && vi > -1)
         {
           i += (int) (uintaa_t) ora[vi].ac;
         }
-
-      ll_end: ;
     }
-  end:
 
-  if (!c)
+  if (!(flags & F_PARSE_ARG_IGNORE_ERRORS) && !c)
     {
       return -1;
     }
+
+
+  if ( NULL != la)
+      {
+        *la = (void**) c_argv;
+      }
 
   return ret;
 }

@@ -192,13 +192,14 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   if (!r_p)
     {
-      int r_e;
-
-      if (hdl->exec_args.exc
-          && WEXITSTATUS(
-              r_e = hdl->exec_args.exc(d_ptr, (void*) NULL, NULL, (void*)hdl)))
+      if (hdl->exec_args.exc)
         {
-          r_p = 1;
+          int r_e = hdl->exec_args.exc(d_ptr, (void*) NULL, NULL, (void*) hdl);
+          int r_stat = WEXITSTATUS(r_e);
+          if (0 != r_stat)
+            {
+              r_p = 1;
+            }
         }
     }
 

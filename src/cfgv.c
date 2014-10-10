@@ -59,7 +59,7 @@ ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
   mda s_tk =
     { 0 };
   int r;
-  size_t c_token = -1;
+  int c_token = -1;
   char *s_key = key;
 
   md_init(&s_tk, 4);
@@ -71,7 +71,6 @@ ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
       flags |= F_CFGV_RETURN_TOKEN_EX;
       c_token = atoi(s_tk_ptr->ptr);
       s_key = s_tk.objects->ptr;
-
     }
 
   p_md_obj ptr;

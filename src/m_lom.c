@@ -322,7 +322,9 @@ void *_lcs_islowerorequal[] =
 void *_lcs_ishigherorequal[] =
   { g_is_higherorequal, g_is_higherorequal_s, g_is_higherorequal_f };
 void *_lcs_isnotequal[] =
-  { g_is_not, g_is_not_s, g_is_not_equal_f };
+  { g_is_not_equal, g_is_not_equal_s, g_is_not_equal_f };
+void *_lcs_isnot[] =
+  { g_is_not, g_is_not_s, g_is_not_f };
 
 int
 g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field, void *right,
@@ -639,10 +641,6 @@ gl_var_known(__g_handle hdl, char *field, uint32_t flags, __g_lom lom)
           lom->flags |= F_LOM_INT;
         }
     }
-
-  uint64_t *tp_0;
-  int64_t *tp_1;
-  float *tp_2;
 
   switch (flags & F_GLT_DIRECT)
     {

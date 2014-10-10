@@ -114,7 +114,7 @@ typedef struct g_handle
   __g_proc_v g_proc1_ps;
   __d_ref_to_pv g_proc2;
   __g_proc_v g_proc1_lookup;
-  _d_proc3 g_proc3, g_proc3_batch, g_proc3_export;
+  _d_proc3 g_proc3, g_proc3_batch, g_proc3_export, g_proc3_extra;
   _d_gcb_pp_hook gcb_post_proc;
   _d_omfp g_proc4, g_proc4_pr, g_proc4_po;
   size_t j_offset, jm_offset;
@@ -131,14 +131,19 @@ _dt_set(__g_handle hdl);
 typedef void
 (*__dt_set)(__g_handle hdl);
 
+#ifdef _MAKE_SBIN
+_dt_set dt_set_dummy;
+
+#else
 _dt_set dt_set_dummy, dt_set_dirlog, dt_set_nukelog, dt_set_dupefile,
     dt_set_lastonlog, dt_set_oneliners, dt_set_imdb, dt_set_game, dt_set_tvrage,
     dt_set_gen1, dt_set_gen2, dt_set_gen3, dt_set_gen4, dt_set_gconf,
-    dt_set_sconf, dt_set_altlog;
+    dt_set_sconf, dt_set_altlog, dt_set_online;
 
 __dt_set pdt_set_dirlog, pdt_set_nukelog, pdt_set_dupefile, pdt_set_lastonlog,
     pdt_set_oneliners, pdt_set_imdb, pdt_set_game, pdt_set_tvrage, pdt_set_gen1,
     pdt_set_gen2, pdt_set_gen3, pdt_set_gen4, pdt_set_gconf, pdt_set_sconf,
-    pdt_set_altlog;
+    pdt_set_altlog, pdt_set_online;
+#endif
 
 #endif /* IM_HDR_H_ */

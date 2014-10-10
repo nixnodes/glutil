@@ -125,6 +125,6 @@ child_sig_handler(int, siginfo_t*, void*);
 int
 g_shutdown(void *arg);
 int
-g_init(int argc, char **argv);
+g_init(int argc, char **argv, char **l_arg);
 
 #endif /* GLUTIL_H_ */

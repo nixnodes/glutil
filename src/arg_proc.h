@@ -15,6 +15,11 @@
 typedef int
 (*__opt_cptr)(void *arg, int m);
 
+#define F_PARSE_ARG_IGNORE_ERRORS      (a32 << 1)
+#define F_PARSE_ARG_SILENT             (a32 << 2)
+#define F_PARSE_ARG_IGNORE_NOT_FOUND   (a32 << 3)
+#define F_PARSE_ARG_BREAK_NOT_FOUND    (a32 << 4)
+
 typedef struct ___gg_opt
 {
   uint32_t id;
@@ -35,7 +40,7 @@ build_argv(char *args, size_t max, int *c);
 int
 opt_execv_stdout_rd(void *arg, int m);
 int
-parse_args(int argc, char **argv, _gg_opt fref_t[]);
+parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags);
 
 typedef struct option_reference_array
 {

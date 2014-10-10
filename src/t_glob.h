@@ -22,7 +22,7 @@
 #define WEXITSTATUS(status)     (((status) & 0xff00) >> 8)
 #endif
 
-#ifndef _STDINT_H
+#if !defined(__APPLE__) && !defined(__MACH__) && !defined(_STDINT_H)
 typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
 #ifndef __uint32_t_defined
@@ -197,6 +197,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_POSTPRINT                 (a64 << 23)
 #define F_OPT_PREPRINTF                 (a64 << 24)
 #define F_OPT_POSTPRINTF                (a64 << 25)
+#define F_OPT_OIMEX00                   (a64 << 26)
 
 #define F_OPT_PREPOSTPRINTS             (F_OPT_PREPRINT|F_OPT_POSTPRINT)
 #define F_OPT_PREPOSTPRINTFS            (F_OPT_PREPRINTF|F_OPT_POSTPRINTF)

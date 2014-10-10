@@ -121,6 +121,7 @@ void *_lcs_ishigher[3];
 void *_lcs_islower[3];
 void *_lcs_islowerorequal[3];
 void *_lcs_ishigherorequal[3];
-void *_lcs_isnotorequal[3];
+void *_lcs_isnotequal[3];
+void *_lcs_isnot[3];
 
 #endif /* M_LOM_H_ */

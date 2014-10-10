@@ -87,38 +87,54 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@ENABLE_CHROOT_OWNBIN_FALSE@am__EXEEXT_1 = glutil$(EXEEXT)
+@ENABLE_CHROOT_OWNBIN_FALSE@@ENABLE_SEARCHBIN_FALSE@am__EXEEXT_1 = glutil$(EXEEXT)
+@ENABLE_CHROOT_OWNBIN_FALSE@@ENABLE_SEARCHBIN_TRUE@am__EXEEXT_1 = gfind$(EXEEXT)
 @ENABLE_CHROOT_OWNBIN_TRUE@am__EXEEXT_1 = glutil-chroot$(EXEEXT)
 @ENABLE_PRECHECK_NONCHROOT_FALSE@@ENABLE_PRECHECK_TRUE@am__EXEEXT_2 = glutil-precheck$(EXEEXT)
 @ENABLE_PRECHECK_NONCHROOT_TRUE@am__EXEEXT_2 = glutil-precheck-nonchroot$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_glutil_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) init.$(OBJEXT) \
-	main.$(OBJEXT) macros.$(OBJEXT) l_error.$(OBJEXT) \
-	errno_int.$(OBJEXT) str.$(OBJEXT) memory.$(OBJEXT) \
-	time.$(OBJEXT) misc.$(OBJEXT) lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
-	log_io.$(OBJEXT) log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
-	cfgv.$(OBJEXT) m_general.$(OBJEXT) sort.$(OBJEXT) \
-	m_string.$(OBJEXT) lref_glob.$(OBJEXT) m_lom.$(OBJEXT) \
-	i_math.$(OBJEXT) arg_proc.$(OBJEXT) exech.$(OBJEXT) \
-	exec.$(OBJEXT) xref.$(OBJEXT) lref.$(OBJEXT) \
-	lref_gen.$(OBJEXT) lref_dirlog.$(OBJEXT) \
-	lref_nukelog.$(OBJEXT) lref_dupefile.$(OBJEXT) \
-	lref_lastonlog.$(OBJEXT) lref_onliners.$(OBJEXT) \
-	lref_online.$(OBJEXT) lref_imdb.$(OBJEXT) \
-	lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) lref_gen1.$(OBJEXT) \
-	lref_gen2.$(OBJEXT) lref_gen3.$(OBJEXT) lref_gen4.$(OBJEXT) \
-	lref_sconf.$(OBJEXT) lref_gconf.$(OBJEXT) \
+am_gfind_OBJECTS = signal.$(OBJEXT) g_help.$(OBJEXT) \
+	arg_opts.$(OBJEXT) init.$(OBJEXT) main.$(OBJEXT) \
+	macros.$(OBJEXT) l_error.$(OBJEXT) errno_int.$(OBJEXT) \
+	str.$(OBJEXT) memory.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) \
+	lc_oper.$(OBJEXT) x_f.$(OBJEXT) log_io.$(OBJEXT) \
+	log_shm.$(OBJEXT) gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
+	m_general.$(OBJEXT) sort.$(OBJEXT) m_string.$(OBJEXT) \
+	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) i_math.$(OBJEXT) \
+	arg_proc.$(OBJEXT) exech.$(OBJEXT) exec.$(OBJEXT) \
+	xref.$(OBJEXT) lref.$(OBJEXT) lref_gen.$(OBJEXT) \
+	log_op.$(OBJEXT) omfp.$(OBJEXT)
+gfind_OBJECTS = $(am_gfind_OBJECTS)
+gfind_LDADD = $(LDADD)
+gfind_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(gfind_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am_glutil_OBJECTS = signal.$(OBJEXT) g_help.$(OBJEXT) \
+	arg_opts.$(OBJEXT) init.$(OBJEXT) main.$(OBJEXT) \
+	macros.$(OBJEXT) l_error.$(OBJEXT) errno_int.$(OBJEXT) \
+	str.$(OBJEXT) memory.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) \
+	lc_oper.$(OBJEXT) x_f.$(OBJEXT) log_io.$(OBJEXT) \
+	log_shm.$(OBJEXT) gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
+	m_general.$(OBJEXT) sort.$(OBJEXT) m_string.$(OBJEXT) \
+	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) i_math.$(OBJEXT) \
+	arg_proc.$(OBJEXT) exech.$(OBJEXT) exec.$(OBJEXT) \
+	xref.$(OBJEXT) lref.$(OBJEXT) lref_gen.$(OBJEXT) \
+	lref_dirlog.$(OBJEXT) lref_nukelog.$(OBJEXT) \
+	lref_dupefile.$(OBJEXT) lref_lastonlog.$(OBJEXT) \
+	lref_onliners.$(OBJEXT) lref_online.$(OBJEXT) \
+	lref_imdb.$(OBJEXT) lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) \
+	lref_gen1.$(OBJEXT) lref_gen2.$(OBJEXT) lref_gen3.$(OBJEXT) \
+	lref_gen4.$(OBJEXT) lref_sconf.$(OBJEXT) lref_gconf.$(OBJEXT) \
 	lref_altlog.$(OBJEXT) log_op.$(OBJEXT) omfp.$(OBJEXT) \
 	dirlog.$(OBJEXT)
 glutil_OBJECTS = $(am_glutil_OBJECTS)
 glutil_LDADD = $(LDADD)
 glutil_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(glutil_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_glutil_chroot_OBJECTS = signal.$(OBJEXT) arg_opts.$(OBJEXT) \
-	init.$(OBJEXT) main.$(OBJEXT) macros.$(OBJEXT) \
-	l_error.$(OBJEXT) errno_int.$(OBJEXT) str.$(OBJEXT) \
-	memory.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) \
+am_glutil_chroot_OBJECTS = signal.$(OBJEXT) g_help.$(OBJEXT) \
+	arg_opts.$(OBJEXT) init.$(OBJEXT) main.$(OBJEXT) \
+	macros.$(OBJEXT) l_error.$(OBJEXT) errno_int.$(OBJEXT) \
+	str.$(OBJEXT) memory.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) \
 	lc_oper.$(OBJEXT) x_f.$(OBJEXT) log_io.$(OBJEXT) \
 	log_shm.$(OBJEXT) gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
 	m_general.$(OBJEXT) sort.$(OBJEXT) m_string.$(OBJEXT) \
@@ -138,7 +154,7 @@ glutil_chroot_LDADD = $(LDADD)
 glutil_chroot_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(glutil_chroot_LDFLAGS) $(LDFLAGS) -o $@
 am__dirstamp = $(am__leading_dot)dirstamp
-am_glutil_precheck_OBJECTS = pce/pce_signal.$(OBJEXT) \
+am_glutil_precheck_OBJECTS = pce/pce_signal.$(OBJEXT) g_help.$(OBJEXT) \
 	pce/pce_init.$(OBJEXT) macros.$(OBJEXT) l_error.$(OBJEXT) \
 	errno_int.$(OBJEXT) str.$(OBJEXT) memory.$(OBJEXT) \
 	time.$(OBJEXT) misc.$(OBJEXT) lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
@@ -156,15 +172,16 @@ glutil_precheck_LDADD = $(LDADD)
 glutil_precheck_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(glutil_precheck_LDFLAGS) $(LDFLAGS) -o $@
 am_glutil_precheck_nonchroot_OBJECTS = pce/pce_signal.$(OBJEXT) \
-	pce/pce_init.$(OBJEXT) macros.$(OBJEXT) l_error.$(OBJEXT) \
-	errno_int.$(OBJEXT) str.$(OBJEXT) memory.$(OBJEXT) \
-	time.$(OBJEXT) misc.$(OBJEXT) lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
-	log_io.$(OBJEXT) log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
-	cfgv.$(OBJEXT) m_general.$(OBJEXT) sort.$(OBJEXT) \
-	m_string.$(OBJEXT) lref_glob.$(OBJEXT) m_lom.$(OBJEXT) \
-	i_math.$(OBJEXT) arg_proc.$(OBJEXT) exech.$(OBJEXT) \
-	exec.$(OBJEXT) xref.$(OBJEXT) lref.$(OBJEXT) \
-	lref_gen.$(OBJEXT) lref_online.$(OBJEXT) lref_imdb.$(OBJEXT) \
+	g_help.$(OBJEXT) pce/pce_init.$(OBJEXT) macros.$(OBJEXT) \
+	l_error.$(OBJEXT) errno_int.$(OBJEXT) str.$(OBJEXT) \
+	memory.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) \
+	lc_oper.$(OBJEXT) x_f.$(OBJEXT) log_io.$(OBJEXT) \
+	log_shm.$(OBJEXT) gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
+	m_general.$(OBJEXT) sort.$(OBJEXT) m_string.$(OBJEXT) \
+	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) i_math.$(OBJEXT) \
+	arg_proc.$(OBJEXT) exech.$(OBJEXT) exec.$(OBJEXT) \
+	xref.$(OBJEXT) lref.$(OBJEXT) lref_gen.$(OBJEXT) \
+	lref_online.$(OBJEXT) lref_imdb.$(OBJEXT) \
 	lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) lref_sconf.$(OBJEXT) \
 	lref_gconf.$(OBJEXT) log_op.$(OBJEXT) omfp.$(OBJEXT) \
 	pce/pce_proc.$(OBJEXT) pce/pce_misc.$(OBJEXT)
@@ -201,11 +218,11 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(glutil_SOURCES) $(glutil_chroot_SOURCES) \
+SOURCES = $(gfind_SOURCES) $(glutil_SOURCES) $(glutil_chroot_SOURCES) \
 	$(glutil_precheck_SOURCES) \
 	$(glutil_precheck_nonchroot_SOURCES)
-DIST_SOURCES = $(glutil_SOURCES) $(glutil_chroot_SOURCES) \
-	$(glutil_precheck_SOURCES) \
+DIST_SOURCES = $(gfind_SOURCES) $(glutil_SOURCES) \
+	$(glutil_chroot_SOURCES) $(glutil_precheck_SOURCES) \
 	$(glutil_precheck_nonchroot_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -323,16 +340,19 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @ENABLE_PRECHECK_NONCHROOT_TRUE@PRECHECK_APP = glutil-precheck-nonchroot
 @ENABLE_PRECHECK_TRUE@PRECHECK_APP = glutil-precheck
-@ENABLE_CHROOT_OWNBIN_FALSE@GLUTIL_APP = glutil
 @ENABLE_CHROOT_OWNBIN_TRUE@GLUTIL_APP = glutil-chroot
-glutil_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
-glutil_chroot_SOURCES = signal.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c 
-glutil_precheck_SOURCES = pce/pce_signal.c pce/pce_init.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
-glutil_precheck_nonchroot_SOURCES = pce/pce_signal.c pce/pce_init.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+@ENABLE_SEARCHBIN_FALSE@GLUTIL_APP = glutil
+@ENABLE_SEARCHBIN_TRUE@GLUTIL_APP = gfind
+glutil_SOURCES = signal.c g_help.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
+glutil_chroot_SOURCES = signal.c g_help.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c 
+glutil_precheck_SOURCES = pce/pce_signal.c g_help.c pce/pce_init.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+glutil_precheck_nonchroot_SOURCES = pce/pce_signal.c g_help.c pce/pce_init.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+gfind_SOURCES = signal.c g_help.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c memory.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c log_op.c omfp.c 
 glutil_LDFLAGS = -lz -lm
 glutil_chroot_LDFLAGS = -lz -lm
 glutil_precheck_LDFLAGS = -lz -lm
 glutil_precheck_nonchroot_LDFLAGS = -lz -lm
+gfind_LDFLAGS = -lm
 all: all-am
 
 .SUFFIXES:
@@ -410,6 +430,10 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
+gfind$(EXEEXT): $(gfind_OBJECTS) $(gfind_DEPENDENCIES) $(EXTRA_gfind_DEPENDENCIES) 
+	@rm -f gfind$(EXEEXT)
+	$(AM_V_CCLD)$(gfind_LINK) $(gfind_OBJECTS) $(gfind_LDADD) $(LIBS)
+
 glutil$(EXEEXT): $(glutil_OBJECTS) $(glutil_DEPENDENCIES) $(EXTRA_glutil_DEPENDENCIES) 
 	@rm -f glutil$(EXEEXT)
 	$(AM_V_CCLD)$(glutil_LINK) $(glutil_OBJECTS) $(glutil_LDADD) $(LIBS)
@@ -454,6 +478,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/errno_int.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exech.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g_help.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gv_off.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i_math.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/init.Po@am__quote@

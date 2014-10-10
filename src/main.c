@@ -30,6 +30,7 @@
 #include <x_f.h>
 #include <omfp.h>
 //#include <imdb_pload.h>
+#include <g_help.h>
 
 #include <stdio.h>
 #include <signal.h>
@@ -65,8 +66,11 @@ main(int argc, char *argv[])
     }
 
   _p_macro_argc = argc;
+  char **l_arg = NULL;
 
-  if ((r = parse_args(argc, argv, gg_prio_f_ref)) > 0)
+
+  if ((r = parse_args(argc, argv, gg_prio_f_ref, (void***) &l_arg,
+  F_PARSE_ARG_SILENT | F_PARSE_ARG_IGNORE_NOT_FOUND)) > 0)
     {
       print_str(MSG_INIT_CMDLINE_ERROR, r);
       EXITVAL = 2;
@@ -96,11 +100,15 @@ main(int argc, char *argv[])
     g_print_info();
     g_shutdown(NULL);
     break;
+  case UPD_MODE_NOOP:
+    goto exit_;
     }
 
   updmode = 0;
 
-  g_init(_p_macro_argc, p_argv);
+  g_init(_p_macro_argc, p_argv, l_arg);
+
+  exit_: ;
 
   g_shutdown(NULL);
 
@@ -108,21 +116,47 @@ main(int argc, char *argv[])
 }
 
 int
-g_init(int argc, char **argv)
+g_init(int argc, char **argv, char **l_arg)
 {
   g_setjmp(0, "g_init", NULL, NULL);
-  int r;
+  int r = 0;
 
   if (strlen(LOGFILE))
     {
       gfl |= F_OPT_PS_LOGGING;
     }
-  r = parse_args(argc, argv, gg_f_ref);
+
+#ifdef _MAKE_SBIN
+
+  p_argv_off = argv[1];
+
+  r = parse_args(argc - 1, &argv[1], gg_f_ref, NULL, 0);
+
+  if ( r == -1 )
+    {
+      r = 0;
+    }
+
+  if ( r == 0 )
+    {
+      updmode = UPD_MODE_DUMP_GEN;
+      flags_udcfg |= F_PD_RECURSIVE;
+      gfl |= F_OPT_VERBOSE;
+    }
+#else
+  r = parse_args(argc, argv, gg_f_ref, NULL, 0);
+#endif
 
   if (r == -2 || r == -1)
     {
-      print_version_long(NULL, 0);
-      print_str("Use --help for command info\n");
+      if (r == -1)
+        {
+          print_version_long(NULL, 0);
+        }
+#ifdef _MAKE_SBIN
+      print_str (HSTR_GFIND_USAGE);
+#endif
+      print_str("See --help for more info\n");
       EXITVAL = 4;
       return EXITVAL;
     }
@@ -149,7 +183,7 @@ g_init(int argc, char **argv)
       print_str("INIT: %s_%s-%s starting [PID: %d]\n",
       PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH, getpid());
     }
-
+#ifndef _MAKE_SBIN
   if (!(gfl & F_OPT_NOGLCONF))
     {
       if (strlen(GLCONF_I))
@@ -277,6 +311,7 @@ g_init(int argc, char **argv)
               "NOTICE: switching to non-destructive filesystem rebuild mode\n");
         }
     }
+#endif
 
   if ((gfl & F_OPT_VERBOSE))
     {
@@ -366,6 +401,7 @@ g_init(int argc, char **argv)
 
   switch (updmode)
     {
+#ifndef _MAKE_SBIN
   case UPD_MODE_RECURSIVE:
     EXITVAL = rebuild_dirlog();
     break;
@@ -414,7 +450,8 @@ g_init(int argc, char **argv)
   case UPD_MODE_FORK:
     if (p_argv_off)
       {
-        if ((EXITVAL = WEXITSTATUS(system(p_argv_off))))
+        int sret = system(p_argv_off), EXITVAL = WEXITSTATUS(sret);
+        if (0 != EXITVAL)
           {
             if (gfl & F_OPT_VERBOSE)
               {
@@ -433,9 +470,6 @@ g_init(int argc, char **argv)
   case UPD_MODE_DUMP_GRPS:
     EXITVAL = g_dump_ug(DEFPATH_GROUPS);
     break;
-  case UPD_MODE_DUMP_GEN:
-    EXITVAL = g_dump_gen(p_argv_off);
-    break;
   case UPD_MODE_WRITE:
     EXITVAL = d_write((char*) p_argv_off);
     break;
@@ -445,7 +479,11 @@ g_init(int argc, char **argv)
   case UPD_MODE_LIST_MACROS:
     EXITVAL = list_macros();
     break;
+#endif
   case UPD_MODE_NOOP:
+    break;
+  case UPD_MODE_DUMP_GEN:
+    EXITVAL = g_dump_gen(p_argv_off);
     break;
   default:
     print_help(NULL, -1);

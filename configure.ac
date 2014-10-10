@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.4.9_b8], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.4.9_b9], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
 AM_MAINTAINER_MODE([disable])
@@ -20,16 +20,26 @@ AC_DEFINE(_LARGEFILE_SOURCE64, [1],[Large files])
 AC_DEFINE(_FILE_OFFSET_BITS, [64],[Large files])
 
 AC_ARG_ENABLE(chroot,
-[  --enable-chroot	  Build glutil for chrooted environment [default=no]],
+[  --enable-chroot		Build glutil for chrooted environment [default=no]],
 glutil_chroot="$enableval", glutil_chroot="no")
 
 AC_ARG_ENABLE(chroot-ownbin,
-[  --enable-chroot-ownbin	 Build glutil for chrooted environment as a separate binary [default=no]],
+[  --enable-chroot-ownbin		Build glutil for chrooted environment as a separate binary [default=no]],
 glutil_chroot_ownbin="$enableval", glutil_chroot_ownbin="no")
 
 AC_ARG_ENABLE(gzip,
-[  --disable-gzip	  Disable gzip compression support],
-glutil_disable_gzip="yes", )
+[  --disable-gzip		Disable gzip compression support [default=no]],
+glutil_disable_gzip="yes", glutil_disable_gzip="no" )
+
+AC_ARG_ENABLE(gfind,
+[  --enable-gfind		Compile glutil-based search tool [default=no]],
+glutil_enable_sbin="yes", glutil_enable_sbin="no" )
+
+if [ test "$glutil_enable_sbin" = "yes" ]; then
+	AC_DEFINE([_MAKE_SBIN], [1], [//])
+
+	glutil_disable_gzip="yes"
+fi
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
 	AS_IF([test "$prefix" = "NONE"], 
@@ -69,11 +79,12 @@ glutil_precheck_nonchroot="$enableval", glutil_precheck_nonchroot="no")
 
 if [ test "$glutil_precheck_nonchroot" = "yes" ]; then	
 	AC_DEFINE_UNQUOTED([PATH_PREFIX], ["$prefix"])	
-
 fi
 
 AM_CONDITIONAL(ENABLE_PRECHECK_NONCHROOT, test "$glutil_precheck_nonchroot" = "yes")	
-	AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
+AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
+AM_CONDITIONAL(ENABLE_SEARCHBIN, test "$glutil_enable_sbin" = "yes")
+
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
 CFLAGS="-Wall -O2"
@@ -85,7 +96,7 @@ AC_HEADER_MAJOR
 
 GLUTIL_MSG_REQH="missing required header file"
 
-AS_IF([test "$glutil_disable_gzip" != "yes"], \
+AS_IF([test "$glutil_disable_gzip" = "no"], \
 AC_CHECK_HEADERS([zlib.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (zlib.h); use --disable-gzip to turn compression off])]) \
 )
 
@@ -122,7 +133,7 @@ AC_FUNC_FORK
 AC_FUNC_CHOWN
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
-AC_FUNC_REALLOC
+
 
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T

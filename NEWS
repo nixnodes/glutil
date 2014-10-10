@@ -1,3 +1,17 @@
+ * 10/10/2014 (2.4.9_b9)
+ 
+ 	Added 'gfind', a filesystem search tool with all of glutil's filtering and other relevant
+ 	functionality. Note that filtering option names have been inverted, for example, '--iregex'
+ 	has the same effect as '--regex' in default glutil tool does;
+ 	Since the nature of this tool is to search stuff out, default (non-inverted) filter options 
+ 	do matching as opposed to filtering (normal glutil behaviour).
+ 	
+ 	To compile, configure your build with:
+ 	
+ 		./configure --enable-gfind 
+ 		
+	Don't forget to 'make clean' first.	
+ 
  * 8/7/2014 (2.3.19_b2)
  
     Added features which allow automated rebuilds of the dupefile, see

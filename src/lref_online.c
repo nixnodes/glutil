@@ -12,9 +12,24 @@
 #include <lref_gen.h>
 #include <cfgv.h>
 #include <str.h>
+#include <omfp.h>
 
 #include <stdio.h>
 #include <time.h>
+
+void
+dt_set_online(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISONLINE;
+  hdl->d_memb = 3;
+  hdl->g_proc1_lookup = ref_to_val_lk_online;
+  hdl->g_proc2 = ref_to_val_ptr_online;
+  hdl->g_proc3 = online_format_block;
+  hdl->g_proc3_batch = online_format_block_batch;
+  hdl->g_proc3_extra = online_format_block_comp;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->jm_offset = (size_t) &((struct ONLINE*) NULL)->username;
+}
 
 char *
 dt_rval_online_ssl(void *arg, char *match, char *output, size_t max_size,
