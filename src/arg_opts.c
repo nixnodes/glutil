@@ -1660,7 +1660,7 @@ _gg_opt gg_f_ref[] =
     { .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },
     { .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
     { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
-#ifndef _MAKE_SBIN
+#ifdef _GL_DUMMY_NONE
         { .id = 0x0063, .on = "regexi", .ac = 1, .op = opt_g_iregexi },
         { .id = 0x0064, .on = "--regexi", .ac = 1, .op = opt_g_iregexi },
         { .id = 0x0065, .on = "regex", .ac = 1, .op = opt_g_iregex },
@@ -1677,8 +1677,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x0006, .on = "--ilom", .ac = 1, .op = opt_g_lom_match },
         { .id = 0x0007, .on = "lom", .ac = 1, .op = opt_g_lom_imatch },
         { .id = 0x0008, .on = "--lom", .ac = 1, .op = opt_g_lom_imatch },
-#else
-
+#endif
         { .id = 0x0067, .on = "regexi", .ac = 1, .op = opt_g_d_regexi},
         { .id = 0x0068, .on = "--regexi", .ac = 1, .op = opt_g_d_regexi},
         { .id = 0x0069, .on = "regex", .ac = 1, .op = opt_g_d_regex},
@@ -1687,7 +1686,6 @@ _gg_opt gg_f_ref[] =
         { .id = 0x0041, .on = "--match", .ac = 1, .op = opt_g_d_match},
         { .id = 0x0005, .on = "lom", .ac = 1, .op = opt_g_d_lom_match},
         { .id = 0x0006, .on = "--lom", .ac = 1, .op = opt_g_d_lom_match},
-#endif
         { .id = 0x1000, .on = "!", .ac = 0, .op = opt_g_negate },
         { .id = 0x1001, .on = "-fd:", .ac = 0, .op = opt_g_tfd },
         { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },

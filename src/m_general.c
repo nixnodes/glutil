@@ -23,7 +23,7 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
       if (hdl->flags & F_GH_IFRES)
         {
           hdl->flags ^= F_GH_IFRES;
-          *r_p = 1;
+          *r_p = 0;
         }
       md->rescnt++;
       if (!(hdl->flags & F_GH_NO_ACCU))
@@ -36,7 +36,7 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
       if (hdl->flags & F_GH_IFHIT)
         {
           hdl->flags ^= F_GH_IFHIT;
-          *r_p = 0;
+          *r_p = 1;
         }
       md->hitcnt++;
     }
@@ -255,7 +255,15 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
    }*/
 
   int r = 0;
-  if ((_gm->flags & F_GM_ISMATCH))
+
+  int rr;
+
+  if ((_gm->flags & F_GM_ISREGEX)
+      && (rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->reg_i_m)
+    {
+      r = 1;
+    }
+  else if ((_gm->flags & F_GM_ISMATCH))
     {
       size_t mstr_l = strlen(mstr);
 
@@ -267,13 +275,6 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
           r = 1;
         }
       goto end;
-    }
-  int rr;
-
-  if ((_gm->flags & F_GM_ISREGEX)
-      && (rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->reg_i_m)
-    {
-      r = 1;
     }
 
   end:

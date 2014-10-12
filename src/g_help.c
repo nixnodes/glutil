@@ -98,39 +98,25 @@ char *hpd_up =
     "filesystem"
 #endif
     " entry\n"
-    "                        currently being processed, see DATA_STRUCTURES (under FILESYSTEM) for\n"
+    "                        currently being processed, see DATA_STRUCTURES for\n"
     "                        available <field> params\n"
-
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
     "  --regexi [<var>,]<match>\n"
     "                        Case insensitive variant of --regex\n"
-    "  --iregex [<var>,]<match> \n"
-    "                        Same as --regex with negated match\n"
-    "  --iregexi [<var>,]<match>\n"
-    "                        Same as --regexi with negated match\n"
     "  --noereg              Disable POSIX Extended Regular Expression syntax (enabled by default)\n"
     "  --match [<field>,]<match>\n"
-    "                        Regular "
-#ifndef _MAKE_SBIN
-    "filter"
-#else
-    "match"
-#endif
-    " string (exact matches)\n"
+    "                        Regular string matching (exact matches)\n"
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
-    "  --imatch [<field>,]<match>\n"
-    "                        Inverted --match\n"
     "  --lom <<field> > 5.0 && <field> != 0 || <field> ..>\n"
     "                        Compare values by logical and comparison/relational operators\n"
     "                        Applies to any integer/floating point fields from data sources\n"
     "                          Use quotation marks to avoid collisions with bash operators\n"
     "                        Valid logical operators: && (and), || (or)\n"
     "                        Valid comparison/relational operators: =, !=, >, <, <=, >=\n"
-    "  --ilom <expression>   Same as --lom with negated match\n"
     "  --maxhit <limit>      Maximum number of positive filter matches (rest are forced negative)\n"
     "  --maxres <limit>      Maximum number of negative filter matches (rest are forced positive)\n"
     "  --ifhit               Ignore first match\n"
@@ -139,8 +125,10 @@ char *hpd_up =
     "  --matchq              Exit on first match\n"
     "  --imatchq             Exit on first result\n"
     "\n"
-    "  In between match arguments, logical or|and operators apply:\n"
-    "  \".. --<argument1> <or|and> --<margument2> ..\"\n"
+    "Operators:\n"
+    "  ! <expr>              True if <expr> is false (negates result). This character might need to be escaped.\n"
+    "  <expr1> or <expr2>    True when either of <expr1>, <expr2> is true.\n"
+    "  <expr1> and <expr2>   True if both <expr1> and <expr2> are true.\n"
     "\n Hooks:\n"
     "  -exec <command [{field}..{field}..]>\n"
     "                        While parsing data structure/filesystem, execute shell command for each record\n"

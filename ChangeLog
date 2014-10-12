@@ -48,6 +48,7 @@
  *   - ~ 'isnot' (!=) relational operator broken (LOM) (rev. 9_b9)
  *   - + gfind, see NEWS file (rev. 9_b9)
  *   - ~ Comparison operators (and/or between filtering options) broken (rev. 11_b1)
+ *   - % Negate filter parameters with !, old parameters (e.g. iregex) removed, (please read NEWS for more info) (rev. 12_b2) 
  *
  * v2.3:
  *

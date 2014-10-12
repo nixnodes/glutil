@@ -1,3 +1,22 @@
+ * 12/10/2014 (2.4.11)
+ 
+ 	Comparison logics operators (and/or) behaviour has changed (never worked properly) and
+ 	POSIX compilant negator options were implemented (old style [i]<lom|regex|..> has been
+ 	removed), this required some of the scripts and the macros.glutil file to be updated.
+ 	
+ 	The files affected by these changes are:
+ 	
+ 	 	- killslow.sh
+		- macros.glutil
+ 		- imdb_get.sh
+ 		- tvrage_get.sh
+ 		- gb_get.sh
+		
+	There is no backwards compatibility, users updating to glutil 2.4.11 or newer should
+	update the scripts too, or they will not work properly.
+	
+	See --help for more info on filtering options.
+
  * 10/10/2014 (2.4.9_b9)
  
  	Added 'gfind', a filesystem search tool with all of glutil's filtering and other relevant
@@ -15,71 +34,71 @@
  
  * 8/7/2014 (2.3.19_b2)
  
-    Added features which allow automated rebuilds of the dupefile, see
-    <dupefile-rebuild> and <dupefile-rebuild> macros (macros.glutil).
-    
-    Mind that glutil binary must also be updated.
+ 	Added features which allow automated rebuilds of the dupefile, see
+ 	<dupefile-rebuild> and <dupefile-rebuild> macros (macros.glutil).
+ 	
+ 	Mind that glutil binary must also be updated.
 
  * 19/6/2014 (2.3.19)
 
-    Major issue in 2.3.18 was fixed, in certain cases blank directory names were written
-    in during dirlog rebuild mode.
+ 	Major issue in 2.3.18 was fixed, in certain cases blank directory names were written
+ 	in during dirlog rebuild mode.
 
  * 19/6/2014 (2.3.18_b1)
  
-    Automake: --enable-precheck does not disable regular (or chrooted) binary build
+ 	Automake: --enable-precheck does not disable regular (or chrooted) binary build
  
  * 26/5/2014 (2.3.17_beta)
  
-    Now supports gzip compressed data sources, usefull for large
-    imdb/tvrage logs
+ 	Now supports gzip compressed data sources, usefull for large
+ 	imdb/tvrage logs
  
  * 25/5/2014 (2.3.17_beta)
-    Added a way to accumulate (add-up) any integer/floating point field across the whole
-    data source or just a part of it. For example, directory sizes from the dirlog can be
-    added up and stored into one of the available accumulators (see DATA_STRUCTURES).
-    
-    Filters are respected, anything not passing through will be ignored.
-    
-    How and where a value accumulates, is defined via a LOM filter hook;
-    Directives within a LOM command scope, which define the accumulation 
-    process, are not treated as filters and are ignored.
-    
-    Usage examples:
-    
+ 	Added a way to accumulate (add-up) any integer/floating point field across the whole
+ 	data source or just a part of it. For example, directory sizes from the dirlog can be
+ 	added up and stored into one of the available accumulators (see DATA_STRUCTURES).
+ 	
+ 	Filters are respected, anything not passing through will be ignored.
+ 	
+ 	How and where a value accumulates, is defined via a LOM filter hook;
+ 	Directives within a LOM command scope, which define the accumulation 
+ 	process, are not treated as filters and are ignored.
+ 	
+ 	Usage examples:
+ 	
 	  Count up folder files and sizes from all dirlog records:
-    
+ 	
 		glutil -d --ilom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
-    	
+ 		
 	  Increment by one for each record matched (regex and LOM filters applied):
    	  
 		glutil -d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
 		
-    ----------------------------------------------------------------------------------------------------------------------
+ 	----------------------------------------------------------------------------------------------------------------------
 		
-    Added -mlist, displays all available macros, with descriptions (if present)
-    
-    ----------------------------------------------------------------------------------------------------------------------
-    
-    Added dirlog-record-stats, imdb-record-avgstats, imdb-record-totalstats and imdb-record-stats
-    macros to macros.glutil.
-    
-    See descriptions by running:
-    
-    	glutil -mlist | egrep "^(imdb|dirlog)-record"
+ 	Added -mlist, displays all available macros, with descriptions (if present)
+ 	
+ 	----------------------------------------------------------------------------------------------------------------------
+ 	
+ 	Added dirlog-record-stats, imdb-record-avgstats, imdb-record-totalstats and imdb-record-stats
+ 	macros to macros.glutil.
+ 	
+ 	See descriptions by running:
+ 	
+		glutil -mlist | egrep "^(imdb|dirlog)-record"
  
  * 23/5/2014
-    Changed behaviour: dirlog rebuild does not skip empty directories unconditionally.
-    Instead, specifiy appropriate filtering parameters (e.g. --lom "size = 0 && files = 0")
-    at the command line when running a dirlog rebuld (-r).
+ 	Changed behaviour: dirlog rebuild does not skip empty directories unconditionally.
+ 	Instead, specifiy appropriate filtering parameters (e.g. --lom "size = 0 && files = 0")
+ 	at the command line when running a dirlog rebuld (-r).
  
  * 17/5/2014
-    Dump operations (-d, -n, ..) and filesystem traversal (-x) no longer output 
-    statistics by default (use '--stats' to revert to old behaviour)
+ 	Dump operations (-d, -n, ..) and filesystem traversal (-x) no longer output 
+ 	statistics by default (use '--stats' to revert to old behaviour)
   
  * 5/1/2014
-    Changed option name for full dirlog rebuild from '-f' to '--full' (2.3.10)
+ 	Changed option name for full dirlog rebuild from '-f' to '--full' (2.3.10)
  
  * 6/12/2013
-    Converted project to automake and fixed a bug (see ChangeLog)
+ 	Converted project to automake and fixed a bug (see ChangeLog)
  	
