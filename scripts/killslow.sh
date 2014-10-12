@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:12
+#@REVISION:13
 #@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
@@ -151,7 +151,7 @@ if [ $BXFER -lt 1 ]; then
 fi
 
 [ $IGNORE_LONE_RANGER -eq 1 ] && {
-	$7 -w --batch match "user,${3}" or iregex status,"^STOR\ " and ilom "bxfer" and imatch "ndir,${14}" | egrep -q "^ONLINE" || {
+	$7 -w --batch ! match "user,${3}" and regex status,"^STOR\ " and lom "bxfer" and match "ndir,${14}" | egrep -q "^ONLINE" || {
 		#echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
 		[ -f /tmp/du-ks/$4 ] && rm -f /tmp/du-ks/$4
 		exit 1
@@ -210,7 +210,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		}   	
 		[ $WIPE_FROM_DUPELOG -eq 1 ] && {
 			g_FILE=`echo "${6}" | cut -f 2- -d " "`
-			[ -n "$g_FILE" ]  && $7 -e dupefile match "file,$g_FILE" and match "user,${3}" --loglevel=6 -vvv -ff
+			[ -n "$g_FILE" ]  && $7 -e dupefile ! match "file,$g_FILE" or ! match "user,${3}" --loglevel=6 -vvv -ff
 		}
     fi    	
 elif [ $SLOW -eq 1 ]; then
