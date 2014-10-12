@@ -23,7 +23,7 @@
 #
 ## Retrieves game info using giantbomb API (XML)
 #
-## Requires: - glutil-1.9-34 or above
+## Requires: - glutil-2.4.11 or above
 ##			 - libxml2 v2.7.7 or above 
 ##           - curl, date, grep, egrep, sed
 #
