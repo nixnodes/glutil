@@ -70,6 +70,7 @@
 #define F_PD_RECURSIVE          (a32 << 1)
 #define F_PD_MATCHDIR           (a32 << 2)
 #define F_PD_MATCHREG           (a32 << 3)
+#define F_PD_XFD                (a32 << 4)
 
 #define F_PD_MATCHTYPES         (F_PD_MATCHDIR|F_PD_MATCHREG)
 

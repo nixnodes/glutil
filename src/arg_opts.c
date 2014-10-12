@@ -586,6 +586,90 @@ opt_backup(void *arg, int m)
   return 0;
 }
 
+static int
+opt_g_negate(void *arg, int m)
+{
+  ar_add(&ar_vref, AR_VRP_OPT_NEGATE_MATCH, -1);
+
+  ar_vref.flags |= F_MDA_ST_MISC00;
+
+  return 0;
+}
+
+static int
+opt_g_tfd(void *arg, int m)
+{
+  ar_add(&ar_vref, AR_VRP_OPT_TARGET_FD, -1);
+
+  ar_vref.flags |= F_MDA_ST_MISC00;
+
+  return 0;
+}
+
+static int
+regex_determine_negated(void)
+{
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+    {
+      return REG_NOMATCH;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+static int
+lom_determine_negated(void)
+{
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+    {
+      return F_GM_IMATCH;
+    }
+  else
+    {
+      return 0;
+    }
+
+}
+
+static int
+string_determine_negated(void)
+{
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+    {
+      return 1;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+int
+opt_g_d_lom_match(void *arg, int m)
+{
+  return opt_g_lom(arg, m, lom_determine_negated());
+}
+
+int
+opt_g_d_regex(void *arg, int m)
+{
+  return g_cprg(arg, m, 0, regex_determine_negated(), 0, F_GM_ISREGEX);
+}
+
+int
+opt_g_d_regexi(void *arg, int m)
+{
+  return g_cprg(arg, m, 0, regex_determine_negated(), REG_ICASE, F_GM_ISREGEX);
+}
+
+int
+opt_g_d_match(void *arg, int m)
+{
+  return g_cprg(arg, m, string_determine_negated(), 0, 0, F_GM_ISMATCH);
+}
+
 int
 opt_g_lom_match(void *arg, int m)
 {
@@ -1470,7 +1554,6 @@ opt_g_swapmode(void *arg, int m)
 
 _gg_opt gg_prio_f_ref[] =
   {
-    { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
     { .id = 0x0003, .on = "silent", .ac = 0, .op = opt_silent },
     { .id = 0x0004, .on = "--silent", .ac = 0, .op = opt_silent },
     { .id = 0x000B, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
@@ -1517,8 +1600,6 @@ _gg_opt gg_prio_f_ref[] =
 _gg_opt gg_f_ref[] =
   {
     { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
-    { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },
-    { .id = 0x0003, .on = "or", .ac = 0, .op = opt_g_operator_or },
     { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
     { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
     { .id = 0x000A, .on = "sort", .ac = 1, .op = opt_g_sort },
@@ -1580,40 +1661,37 @@ _gg_opt gg_f_ref[] =
     { .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
     { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
 #ifndef _MAKE_SBIN
-        { .id = 0x0063, .on = "iregexi", .ac = 1, .op = opt_g_iregexi },
-        { .id = 0x0064, .on = "--iregexi", .ac = 1, .op = opt_g_iregexi },
-        { .id = 0x0065, .on = "iregex", .ac = 1, .op = opt_g_iregex },
-        { .id = 0x0066, .on = "--iregex", .ac = 1, .op = opt_g_iregex },
-        { .id = 0x0067, .on = "regexi", .ac = 1, .op = opt_g_regexi },
-        { .id = 0x0068, .on = "--regexi", .ac = 1, .op = opt_g_regexi },
-        { .id = 0x0069, .on = "regex", .ac = 1, .op = opt_g_regex },
-        { .id = 0x006A, .on = "--regex", .ac = 1, .op = opt_g_regex },
-        { .id = 0x003E, .on = "--imatch", .ac = 1, .op = opt_g_imatch },
-        { .id = 0x003F, .on = "imatch", .ac = 1, .op = opt_g_imatch },
-        { .id = 0x0040, .on = "match", .ac = 1, .op = opt_g_match },
-        { .id = 0x0041, .on = "--match", .ac = 1, .op = opt_g_match },
-        { .id = 0x0005, .on = "lom", .ac = 1, .op = opt_g_lom_match },
-        { .id = 0x0006, .on = "--lom", .ac = 1, .op = opt_g_lom_match },
-        { .id = 0x0007, .on = "ilom", .ac = 1, .op = opt_g_lom_imatch },
-        { .id = 0x0008, .on = "--ilom", .ac = 1, .op = opt_g_lom_imatch },
+        { .id = 0x0063, .on = "regexi", .ac = 1, .op = opt_g_iregexi },
+        { .id = 0x0064, .on = "--regexi", .ac = 1, .op = opt_g_iregexi },
+        { .id = 0x0065, .on = "regex", .ac = 1, .op = opt_g_iregex },
+        { .id = 0x0066, .on = "--regex", .ac = 1, .op = opt_g_iregex },
+        { .id = 0x0067, .on = "iregexi", .ac = 1, .op = opt_g_regexi },
+        { .id = 0x0068, .on = "--iregexi", .ac = 1, .op = opt_g_regexi },
+        { .id = 0x0069, .on = "iregex", .ac = 1, .op = opt_g_regex },
+        { .id = 0x006A, .on = "--iregex", .ac = 1, .op = opt_g_regex },
+        { .id = 0x003E, .on = "--match", .ac = 1, .op = opt_g_imatch },
+        { .id = 0x003F, .on = "match", .ac = 1, .op = opt_g_imatch },
+        { .id = 0x0040, .on = "imatch", .ac = 1, .op = opt_g_match },
+        { .id = 0x0041, .on = "--imatch", .ac = 1, .op = opt_g_match },
+        { .id = 0x0005, .on = "ilom", .ac = 1, .op = opt_g_lom_match },
+        { .id = 0x0006, .on = "--ilom", .ac = 1, .op = opt_g_lom_match },
+        { .id = 0x0007, .on = "lom", .ac = 1, .op = opt_g_lom_imatch },
+        { .id = 0x0008, .on = "--lom", .ac = 1, .op = opt_g_lom_imatch },
 #else
-        { .id = 0x0063, .on = "iregexi", .ac = 1, .op = opt_g_regexi},
-        { .id = 0x0064, .on = "--iregexi", .ac = 1, .op = opt_g_regexi},
-        { .id = 0x0065, .on = "iregex", .ac = 1, .op = opt_g_regex},
-        { .id = 0x0066, .on = "--iregex", .ac = 1, .op = opt_g_regex},
-        { .id = 0x0067, .on = "regexi", .ac = 1, .op = opt_g_iregexi},
-        { .id = 0x0068, .on = "--regexi", .ac = 1, .op = opt_g_iregexi},
-        { .id = 0x0069, .on = "regex", .ac = 1, .op = opt_g_iregex},
-        { .id = 0x006A, .on = "--regex", .ac = 1, .op = opt_g_iregex},
-        { .id = 0x003E, .on = "--imatch", .ac = 1, .op = opt_g_match},
-        { .id = 0x003F, .on = "imatch", .ac = 1, .op = opt_g_match},
-        { .id = 0x0040, .on = "match", .ac = 1, .op = opt_g_imatch},
-        { .id = 0x0041, .on = "--match", .ac = 1, .op = opt_g_imatch},
-        { .id = 0x0005, .on = "lom", .ac = 1, .op = opt_g_lom_imatch},
-        { .id = 0x0006, .on = "--lom", .ac = 1, .op = opt_g_lom_imatch},
-        { .id = 0x0007, .on = "ilom", .ac = 1, .op = opt_g_lom_match},
-        { .id = 0x0008, .on = "--ilom", .ac = 1, .op = opt_g_lom_match},
+
+        { .id = 0x0067, .on = "regexi", .ac = 1, .op = opt_g_d_regexi},
+        { .id = 0x0068, .on = "--regexi", .ac = 1, .op = opt_g_d_regexi},
+        { .id = 0x0069, .on = "regex", .ac = 1, .op = opt_g_d_regex},
+        { .id = 0x006A, .on = "--regex", .ac = 1, .op = opt_g_d_regex},
+        { .id = 0x0040, .on = "match", .ac = 1, .op = opt_g_d_match},
+        { .id = 0x0041, .on = "--match", .ac = 1, .op = opt_g_d_match},
+        { .id = 0x0005, .on = "lom", .ac = 1, .op = opt_g_d_lom_match},
+        { .id = 0x0006, .on = "--lom", .ac = 1, .op = opt_g_d_lom_match},
 #endif
+        { .id = 0x1000, .on = "!", .ac = 0, .op = opt_g_negate },
+        { .id = 0x1001, .on = "-fd:", .ac = 0, .op = opt_g_tfd },
+        { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },
+        { .id = 0x0003, .on = "or", .ac = 0, .op = opt_g_operator_or },
         { .id = 0x0070, .on = "-y", .ac = 0, .op = opt_g_flinks },
         { .id = 0x0071, .on = "--allowsymbolic", .ac = 0, .op = opt_g_flinks },
         { .id = 0x0072, .on = "--followlinks", .ac = 0, .op = opt_g_flinks },
@@ -1652,8 +1730,6 @@ _gg_opt gg_f_ref[] =
         { .id = 0x00A5, .on = "--mindepth", .ac = 1, .op = opt_g_mindepth },
         { .id = 0x00A6, .on = "-mindepth", .ac = 1, .op = opt_g_mindepth },
         { .id = 0x00A7, .on = "--noereg", .ac = 0, .op = opt_g_noereg },
-        { .id = 0x00A8, .on = "--fd", .ac = 0, .op = opt_g_fd },
-        { .id = 0x00A9, .on = "-fd", .ac = 0, .op = opt_g_fd },
         { .id = 0x00AA, .on = "--prune", .ac = 0, .op = opt_prune },
         { .id = 0x00AE, .on = "--xretry", .ac = 0, .op = opt_g_xretry },
         { .id = 0x00AF, .on = "--indepth", .ac = 0, .op = opt_g_indepth },

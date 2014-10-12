@@ -1189,17 +1189,6 @@ g_xproc_print(void *hdl, void *ptr, char *sbuffer)
 void
 g_preproc_xhdl(__std_rh ret)
 {
-  if (ret->flags & F_PD_RECURSIVE)
-    {
-      if (!(gfl & F_OPT_XFD))
-        {
-          ret->xproc_rcl0 = g_xproc_rc;
-        }
-      else
-        {
-          ret->xproc_rcl1 = g_xproc_rc;
-        }
-    }
 
   if ((gfl & F_OPT_FORMAT_BATCH))
     {
@@ -1490,32 +1479,36 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
     {
       case DT_DIR:;
 
-      if (aa_rh->xproc_rcl0)
-        {
-          aa_rh->xproc_rcl0(name, (void*)aa_rh, eds);
-        }
-
       if ((gfl & F_OPT_KILL_GLOBAL) )
         {
           break;
         }
 
+      int ret = 0;
+
       if (aa_rh->flags & F_PD_MATCHDIR)
         {
-          if (g_xproc_m(type, name, aa_rh, eds))
+          if (0 == (ret = g_xproc_m(type, name, aa_rh, eds)))
             {
-              break;
+              if (aa_rh->xproc_out)
+                {
+                  aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
+                }
             }
 
-          if (aa_rh->xproc_out)
-            {
-              aa_rh->xproc_out(&aa_rh->hdl, (void*) &aa_rh->p_xref, (void*)aa_rh->p_xref.name);
-            }
         }
 
-      if (aa_rh->xproc_rcl1)
+      if ( (aa_rh->flags & F_PD_RECURSIVE) &&
+          !((0 != ret) && (aa_rh->hdl.flags & F_GH_TFD_PROCED)))
         {
-          aa_rh->xproc_rcl1(name, (void*)aa_rh, eds);
+          g_xproc_rc(name, (void*)aa_rh, eds);
+        }
+      else
+        {
+          if ( aa_rh->hdl.flags & F_GH_TFD_PROCED)
+            {
+              aa_rh->hdl.flags ^= F_GH_TFD_PROCED;
+            }
         }
 
       break;

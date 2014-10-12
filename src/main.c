@@ -68,7 +68,6 @@ main(int argc, char *argv[])
   _p_macro_argc = argc;
   char **l_arg = NULL;
 
-
   if ((r = parse_args(argc, argv, gg_prio_f_ref, (void***) &l_arg,
   F_PARSE_ARG_SILENT | F_PARSE_ARG_IGNORE_NOT_FOUND)) > 0)
     {
@@ -115,6 +114,20 @@ main(int argc, char *argv[])
   return EXITVAL;
 }
 
+static void
+g_throw_arerr(int r)
+{
+  if (r == -1)
+    {
+      print_version_long(NULL, 0);
+    }
+#ifdef _MAKE_SBIN
+  print_str (HSTR_GFIND_USAGE);
+#endif
+  print_str("See --help for more info\n");
+  EXITVAL = 4;
+}
+
 int
 g_init(int argc, char **argv, char **l_arg)
 {
@@ -128,13 +141,32 @@ g_init(int argc, char **argv, char **l_arg)
 
 #ifdef _MAKE_SBIN
 
-  p_argv_off = argv[1];
-
-  r = parse_args(argc - 1, &argv[1], gg_f_ref, NULL, 0);
-
-  if ( r == -1 )
+  if ( argc < 2 )
     {
-      r = 0;
+      //g_throw_arerr(-1);
+      p_argv_off = ".";
+
+    }
+  else
+    {
+      r = parse_args(2, argv, gg_f_ref, NULL, F_PARSE_ARG_SILENT);
+      size_t off = 0;
+
+      if ( (r == -1 || r == -2) ) {
+          p_argv_off = argv[1];
+          off++;
+      } else {
+          p_argv_off = argv[argc - 1];
+      }
+
+      argc--;
+
+      r = parse_args(argc, &argv[off], gg_f_ref, NULL, 0);
+
+      if ( r == -1 )
+        {
+          r = 0;
+        }
     }
 
   if ( r == 0 )
@@ -149,15 +181,7 @@ g_init(int argc, char **argv, char **l_arg)
 
   if (r == -2 || r == -1)
     {
-      if (r == -1)
-        {
-          print_version_long(NULL, 0);
-        }
-#ifdef _MAKE_SBIN
-      print_str (HSTR_GFIND_USAGE);
-#endif
-      print_str("See --help for more info\n");
-      EXITVAL = 4;
+      g_throw_arerr(r);
       return EXITVAL;
     }
 

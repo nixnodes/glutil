@@ -13,8 +13,8 @@
 #include <m_lom.h>
 #include <lc_oper.h>
 #include <arg_proc.h>
-#include <glutil.h>
 #include <l_error.h>
+#include <arg_opts.h>
 
 #include <regex.h>
 
@@ -86,6 +86,14 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
       }
     break;
     }
+
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
+    {
+      pgm->flags |= F_GM_TFD;
+    }
+
+  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
+  ar_remove(&ar_vref, AR_VRP_OPT_NEGATE_MATCH);
 
   l_sfo = L_STFO_FILTER;
 

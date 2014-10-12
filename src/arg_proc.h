@@ -72,4 +72,23 @@ typedef struct option_reference_array
 _gg_opt gg_f_ref[1024];
 _gg_opt gg_prio_f_ref[128];
 
+typedef struct ___ar_vrp
+{
+  int ttl;
+  uint32_t opt;
+} _ar_vrp, *__ar_vrp;
+
+__ar_vrp
+ar_find(pmda md, uint32_t opt);
+__ar_vrp
+ar_add(pmda md, uint32_t opt, int ttl);
+void
+ar_mod_ttl(pmda md, int by);
+int
+ar_remove(pmda md, uint32_t opt);
+
+#include <memory_t.h>
+
+mda ar_vref;
+
 #endif /* ARG_PROC_H_ */

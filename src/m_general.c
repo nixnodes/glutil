@@ -18,7 +18,7 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
 {
   __g_handle hdl = (__g_handle) phdl;
 
-  if (!*r_p)
+  if (*r_p)
     {
       if (hdl->flags & F_GH_IFRES)
         {
@@ -142,6 +142,10 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
     {
       if (hdl->max_results && md->rescnt >= hdl->max_results)
         {
+#ifdef _MAKE_SBIN
+          ofl |= F_BM_TERM;
+          gfl |= F_OPT_KILL_GLOBAL;
+#endif
           return 1;
         }
       if (hdl->max_hits && md->hitcnt >= hdl->max_hits)
@@ -151,7 +155,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
     }
 
   p_md_obj ptr = md_first(&hdl->_match_rr);
-  int r, r_p = 0;
+  int r, r_p = 1;
   __g_match _gm, _p_gm = NULL;
 
   while (ptr)
@@ -172,25 +176,35 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
       l_end:
 
+//printf("-:: %d\n", r);
+
       if (_p_gm && _p_gm->g_oper_ptr)
         {
+          //           printf("::> %d/%d, %d\n", r, r_p, _p_gm->g_oper_ptr == g_oper_and);
           r_p = _p_gm->g_oper_ptr(r_p, r);
+//          printf("::< %d\n",  r_p);
         }
       else
         {
           r_p = r;
         }
 
+      if ((_gm->flags & F_GM_TFD) && 0 == r)
+        {
+          hdl->flags |= F_GH_TFD_PROCED;
+        }
+
       _p_gm = _gm;
       ptr = ptr->next;
     }
 
+  //printf("!!:: %d\n\n", r_p);
   if (hdl->ifrh_l0)
     {
       hdl->ifrh_l0((void*) hdl, md, &r_p, d_ptr);
     }
 
-  if (!r_p)
+  if (r_p)
     {
       if (hdl->exec_args.exc)
         {
@@ -198,7 +212,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           int r_stat = WEXITSTATUS(r_e);
           if (0 != r_stat)
             {
-              r_p = 1;
+              r_p = 0;
             }
         }
     }
@@ -208,13 +222,13 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
       hdl->ifrh_l1((void*) hdl, md, &r_p, d_ptr);
     }
 
-  if (((gfl & F_OPT_MATCHQ) && r_p) || ((gfl & F_OPT_IMATCHQ) && !r_p))
+  if (((gfl & F_OPT_MATCHQ) && 0 == r_p) || ((gfl & F_OPT_IMATCHQ) && r_p))
     {
       ofl |= F_BM_TERM;
       gfl |= F_OPT_KILL_GLOBAL;
     }
 
-  return r_p;
+  return !(r_p);
 }
 
 int
@@ -277,27 +291,12 @@ opt_g_operator_or(void *arg, int m)
     }
   switch (_match_rr_l.flags & F_LM_TYPES)
     {
-
       case F_LM_CPRG:
       ;
-      if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1)
-        {
-          pgm->g_oper_ptr = g_oper_and;
-        }
-      else
-        {
-          pgm->g_oper_ptr = g_oper_or;
-        }
+      pgm->g_oper_ptr = g_oper_or;
       break;
       case F_LM_LOM:;
-      if (pgm->flags & F_GM_IMATCH)
-        {
-          pgm->g_oper_ptr = g_oper_and;
-        }
-      else
-        {
-          pgm->g_oper_ptr = g_oper_or;
-        }
+      pgm->g_oper_ptr = g_oper_or;
       break;
       default:
       return 7110;
@@ -317,27 +316,12 @@ opt_g_operator_and(void *arg, int m)
     }
   switch (_match_rr_l.flags & F_LM_TYPES)
     {
-
       case F_LM_CPRG:
       ;
-      if ( pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1)
-        {
-          pgm->g_oper_ptr = g_oper_or;
-        }
-      else
-        {
-          pgm->g_oper_ptr = g_oper_and;
-        }
+      pgm->g_oper_ptr = g_oper_and;
       break;
       case F_LM_LOM:;
-      if (pgm->flags & F_GM_IMATCH)
-        {
-          pgm->g_oper_ptr = g_oper_or;
-        }
-      else
-        {
-          pgm->g_oper_ptr = g_oper_and;
-        }
+      pgm->g_oper_ptr = g_oper_and;
       break;
       default:
       return 6110;

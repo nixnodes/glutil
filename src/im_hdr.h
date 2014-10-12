@@ -59,6 +59,10 @@
 #define F_GH_PRE_PRINT                  (a64 << 47)
 #define F_GH_NO_ACCU                    (a64 << 48)
 
+#define F_GH_TFD_PROCED                 (a64 << 55)
+
+#define F_GH_STATUS_FLAGS               (F_GH_TFD_PROCED)
+
 /* these bits determine log type */
 #define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE|F_GH_IS_ALTLOG)
 

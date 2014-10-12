@@ -19,6 +19,9 @@
 
 int execv_stdout_redir = -1;
 
+mda ar_vref =
+  { 0 };
+
 int
 g_cpg(void *arg, void *out, int m, size_t sz)
 {
@@ -214,11 +217,106 @@ process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
   return -2;
 }
 
+static void
+ar_check_ttl_expired(pmda md)
+{
+  p_md_obj ptr = md_first(md);
+
+  while (ptr)
+    {
+      __ar_vrp arp = (__ar_vrp) ptr->ptr;
+      if ( arp->ttl == 0 )
+        {
+          p_md_obj s_ptr = ptr->next;
+          md_unlink(md, ptr);
+          ptr = s_ptr;
+          continue;
+        }
+      ptr = ptr->next;
+    }
+}
+
+__ar_vrp
+ar_find(pmda md, uint32_t opt)
+{
+  p_md_obj ptr = md_first(md);
+
+  while (ptr)
+    {
+      __ar_vrp arp = (__ar_vrp) ptr->ptr;
+      if ( arp->opt == opt )
+        {
+          return arp;
+        }
+      ptr = ptr->next;
+    }
+
+  return NULL;
+}
+
+int
+ar_remove(pmda md, uint32_t opt)
+{
+  p_md_obj ptr = md_first(md);
+
+  while (ptr)
+    {
+      __ar_vrp arp = (__ar_vrp) ptr->ptr;
+      if ( arp->opt == opt )
+        {
+          p_md_obj s_ptr = ptr->next;
+          md_unlink(md, ptr);
+          ptr = s_ptr;
+          continue;
+
+        }
+      ptr = ptr->next;
+    }
+
+  return 1;
+}
+
+__ar_vrp
+ar_add(pmda md, uint32_t opt, int ttl)
+{
+  md_init(md, 8);
+
+  __ar_vrp ptr = md_alloc(md, sizeof(_ar_vrp));
+
+  ptr->opt = opt;
+  ptr->ttl = ttl;
+
+  return ptr;
+}
+
+void
+ar_mod_ttl(pmda md, int by)
+{
+  p_md_obj ptr = md_first(md);
+
+  while (ptr)
+    {
+      __ar_vrp arp = (__ar_vrp) ptr->ptr;
+      if ( arp->ttl > 0)
+        {
+          arp->ttl += by;
+        }
+      ptr = ptr->next;
+    }
+}
+
 int
 parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
 {
   g_setjmp(0, "parse_args", NULL, NULL);
   int vi, ret, c = 0;
+
+  if (ar_vref.count)
+    {
+      md_g_free(&ar_vref);
+    }
+
+  md_init(&ar_vref, 8);
 
   int i;
 
@@ -249,6 +347,9 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
         {
           ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi);
         }
+
+      ar_check_ttl_expired(&ar_vref);
+      ar_mod_ttl(&ar_vref, -1);
 
       if (ret == -2)
         {
@@ -300,11 +401,10 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
       return -1;
     }
 
-
   if ( NULL != la)
-      {
-        *la = (void**) c_argv;
-      }
+    {
+      *la = (void**) c_argv;
+    }
 
   return ret;
 }

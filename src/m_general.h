@@ -25,6 +25,7 @@
 #define F_GM_NAND                       (a32 << 5)
 #define F_GM_NOR                        (a32 << 6)
 #define F_GM_ISACCU                     (a32 << 7)
+#define F_GM_TFD                        (a32 << 8)
 
 #define F_GM_TYPES                      (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
 

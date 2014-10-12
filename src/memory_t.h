@@ -22,6 +22,9 @@
 #define F_MDA_FIRST_REUSED              (a32 << 6)
 #define F_MDA_ARR_DIST                  (a32 << 7)
 
+#define F_MDA_ST_MISC00                 (a32 << 30)
+#define F_MDA_ST_MISC01                 (a32 << 31)
+
 #define MDA_MDALLOC_RE                  (a32 << 1)
 
 typedef struct mda_object

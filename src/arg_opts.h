@@ -10,6 +10,9 @@
 
 #include <glutil.h>
 
+#define AR_VRP_OPT_NEGATE_MATCH         0x1
+#define AR_VRP_OPT_TARGET_FD            0x2
+
 int
 print_version_long(void *arg, int m);
 int

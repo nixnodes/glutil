@@ -14,12 +14,12 @@
 #include <gv_off.h>
 #include <i_math.h>
 #include <lref_glob.h>
+#include <arg_opts.h>
+#include <arg_proc.h>
+#include <mc_glob.h>
 
 #include <stdio.h>
 #include <errno.h>
-
-#include <arg_proc.h>
-#include <mc_glob.h>
 
 static void
 set_lom_vp(__g_lom lom)
@@ -1051,6 +1051,14 @@ opt_g_lom(void *arg, int m, uint32_t flags)
   _match_rr_l.flags = F_LM_LOM;
 
   pgm->data = buffer;
+
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
+    {
+      pgm->flags |= F_GM_TFD;
+    }
+
+  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
+  ar_remove(&ar_vref, AR_VRP_OPT_NEGATE_MATCH);
 
   return 0;
 }

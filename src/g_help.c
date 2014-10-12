@@ -51,8 +51,8 @@ char *hpd_up =
     "  -g                    Read all group files inside /ftp-data/groups\n"
     "  -x <root dir> [-R] [filters..] [--maxdepth=<limit>] [--mindepth=<limit>] [--fd] [-print] [ --r[u]sleep]..\n"
     "                        Traverse filesystem and processes each item found with available filters/hooks\n"
-    "                          --dir - scan directories only\n"
-    "                          --file - scan files only (default is both dirs and files)\n"
+    "                          --dir - scan directories only (obsolete)\n"
+    "                          --file - scan files only (obsolete)\n"
     "                          --cdir - process only the root directory itself\n"
     "                          --maxdepth - limit how deep into the directory tree recursor descends\n"
     "                          --mindepth - process only when recursor depth level is greater or equal to <limit>\n"
@@ -62,16 +62,8 @@ char *hpd_up =
     "                          --xretry - re-start the operation when no results\n"
 #else
     HSTR_GFIND_USAGE
-    "  --dir - scan directories only\n"
-    "  --file - scan files only (default is both dirs and files)\n"
-    "  --cdir - process only the root directory itself\n"
-    "  --maxdepth - limit how deep into the directory tree recursor descends\n"
-    "  --mindepth - process only when recursor depth level is greater or equal to <limit>\n"
-    "               note: depth level 0 is the current level (<root dir>)\n"
-    "  --fd - process filters/hooks before recursor descends into subdirectory\n"
-    "  --recursive, -R - traverse the whole <root dir> directory tree\n"
-    "  --xretry - re-start the operation when no results\n"
     "\n"
+    " Output:\n"
 #endif
     "  -print  <format>      Format output using {var} directives (see DATA_STRUCTURES for a field list)\n"
     "                          -print- <file|-> - read <format> from file/stdin\n"
@@ -97,8 +89,8 @@ char *hpd_up =
     "                          --arg[1-3] sets values that fill {m:arg[1-3]} variables inside a macro\n"
     "  -mlist                Display any available macro, with description (if present)\n"
 #endif
-    "\n Filter options:\n"
-    "  --iregex [<field>,]<match>\n"
+    "\n Filtering:\n"
+    "  --regex [<field>,]<match>\n"
     "                        Regex match against <field> value, based on the "
 #ifndef _MAKE_SBIN
     "data"
@@ -192,12 +184,16 @@ char *hpd_up =
     "                          Defaults to quicksort\n"
 #endif
     "\n"
+#ifndef _MAKE_SBIN
     "Options:\n"
+#else
+    "Misc:\n"
+#endif
     "  -f                    Force operation where it applies (use -ff for greater effect)\n"
     "  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
     "  --stats               Output statistics after operation finishes (applies to dump/parse ops)\n"
     "  --nostats             Disable operation statistics output\n"
-    "  -y, --followlinks     Follow symbolic links (default is skip)\n"
+    "  -y, --followlinks     Follow symbolic links (default is no)\n"
 #ifndef _MAKE_SBIN
     "  --nowrite             Perform a dry run, executing normally except no writing is done\n"
     "  --nobuffer            Disable data file memory buffering\n"
@@ -232,6 +228,15 @@ char *hpd_up =
     "  --loadqa              Quit after filtering/sorting\n"
     "                          Applies to dump operations only\n"
 #else
+    "  --dir                 Scan directories only (obsolete)\n"
+    "  --file                Scan files only (obsolete)\n"
+    "  --cdir                Process only the root directory itself\n"
+    "  --maxdepth            Limit how deep into the directory tree recursor descends\n"
+    "  --mindepth            Process only when recursor depth level is greater or equal to <limit>\n"
+    "                          note: depth level 0 is the current level (<root dir>)\n"
+    "  --fd                  Process filters/hooks before recursor descends into subdirectory\n"
+    "  --recursive, -R       Traverse the whole <root dir> directory tree\n"
+    "  --xretry              Re-start the operation when no results\n"
     "  --no-recursive        Disable recursive directory tree traversal\n"
 #endif
     "  --progress            Show progress of the current operation (where it applies)\n"
