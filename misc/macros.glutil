@@ -1,6 +1,6 @@
 #@REVISION:46
 #
-## NOTE: Requires glutil 2.3.17 or higher
+## NOTE: Requires glutil 2.4.11 or higher
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
