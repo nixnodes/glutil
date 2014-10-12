@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:34
+#@REVISION:35
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" --iregexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -208,7 +208,7 @@ if ! [ $7 -eq 2 ]; then
 
 #        if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 #                s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-#                cad $2 "--iregexi" "dir,^$s_q\$" "$3"
+#                cad $2 "regexi" "dir,^$s_q\$" "$3"
 #        fi
 
         DTMP=`imdb_do_query "$QUERY""&ex=1"`
@@ -264,7 +264,7 @@ if ! [ $7 -eq 2 ]; then
         [ -z "$iid" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                cad $2 "imatch" "imdbid,$iid" "$3"
+                cad $2 "match" "imdbid,$iid" "$3"
         fi
 
         DDT=`get_omdbapi_data "$iid"`
@@ -312,7 +312,7 @@ else
         QUERY="$8"
         YEAR_q="$9"
 
-		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad $2 "imatch" "imdbid,$iid" "$3"
+		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad $2 "match" "imdbid,$iid" "$3"
 
         DDT=`get_omdbapi_data "$iid"`
 
@@ -369,7 +369,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
                  [ -e "$3$LAPPEND" ] && {
-               	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb --regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
+               	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
                         echo "ERROR: $DIR_E: Failed removing old record" && exit 1
                 	}
                 }
@@ -377,7 +377,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
                 [ -e "$3$LAPPEND" ] && {
-               		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
+               		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb ! match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
                    	     echo "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
                		}
                	}
