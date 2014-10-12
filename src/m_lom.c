@@ -1033,16 +1033,10 @@ opt_g_lom(void *arg, int m, uint32_t flags)
     }
 
   pgm->flags = flags | F_GM_ISLOM;
-  if (pgm->flags & F_GM_IMATCH)
-    {
-      pgm->g_oper_ptr = g_oper_or;
-      pgm->flags |= F_GM_NOR;
-    }
-  else
-    {
-      pgm->g_oper_ptr = g_oper_and;
-      pgm->flags |= F_GM_NAND;
-    }
+
+  pgm->g_oper_ptr = g_oper_and;
+  pgm->flags |= F_GM_NAND;
+
 
   gfl |= F_OPT_HAS_G_LOM;
 

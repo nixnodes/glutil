@@ -47,6 +47,7 @@
  *   - ~ LOM matching broken (with signed integers) (rev. 9_b7)
  *   - ~ 'isnot' (!=) relational operator broken (LOM) (rev. 9_b9)
  *   - + gfind, see NEWS file (rev. 9_b9)
+ *   - ~ Comparison operators (and/or between filtering options) broken (rev. 11_b1)
  *
  * v2.3:
  *

@@ -55,16 +55,9 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
   pgm->regex_flags = regex_flags | g_regex_flags | REG_NOSUB;
   pgm->flags = flags;
 
-  if (pgm->reg_i_m == REG_NOMATCH || pgm->match_i_m == 1)
-    {
-      pgm->g_oper_ptr = g_oper_or;
-      pgm->flags |= F_GM_NOR;
-    }
-  else
-    {
-      pgm->g_oper_ptr = g_oper_and;
-      pgm->flags |= F_GM_NAND;
-    }
+  pgm->g_oper_ptr = g_oper_and;
+  pgm->flags |= F_GM_NAND;
+
 
   bzero(&_match_rr_l, sizeof(_match_rr_l));
   _match_rr_l.ptr = (void *) pgm;
