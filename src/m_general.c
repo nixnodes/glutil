@@ -28,10 +28,10 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
           *r_p = 0;
         }
       md->rescnt++;
-      /*if (!(hdl->flags & F_GH_NO_ACCU))
-       {
-       g_lom_accu(hdl, ptr, &hdl->_accumulator);
-       }*/
+      if (!(hdl->flags & F_GH_NO_ACCU))
+        {
+          g_lom_accu(hdl, ptr, &hdl->_accumulator);
+        }
     }
   else
     {
