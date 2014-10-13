@@ -427,16 +427,16 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
   int rt = 0;
   __g_lom lom;
 
-  if (!(flags & F_GM_ISACCU))
-    {
+ /* if (!(flags & F_GM_ISACCU))
+    {*/
       md_init(&match->lom, 16);
       lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
-    }
+ /*   }
   else
     {
       md_init(&hdl->_accumulator, 8);
       lom = (__g_lom ) md_alloc(&hdl->_accumulator, sizeof(_g_lom));
-    }
+    }*/
 
   if (!lom)
     {
@@ -605,14 +605,14 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
   if (rt)
     {
-      if (!(flags & F_GM_ISACCU))
-        {
+     /* if (!(flags & F_GM_ISACCU))
+        {*/
           md_unlink(&match->lom, match->lom.pos);
-        }
+      /*  }
       else
         {
           md_unlink(&hdl->_accumulator, hdl->_accumulator.pos);
-        }
+        }*/
     }
   else if (!(flags & F_GM_ISACCU))
     {
@@ -629,7 +629,15 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
     }
   else if ((flags & F_GM_ISACCU))
     {
-      match->flags |= flags;
+      match->flags |= F_GM_ISLOM | flags | F_GM_LOM_SET;
+      if (match->flags & F_GM_IMATCH)
+        {
+          match->match_i_m = G_NOMATCH;
+        }
+      else
+        {
+          match->match_i_m = G_MATCH;
+        }
     }
 
   return rt;

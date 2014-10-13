@@ -28,10 +28,10 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
           *r_p = 0;
         }
       md->rescnt++;
-      if (!(hdl->flags & F_GH_NO_ACCU))
-        {
-          g_lom_accu(hdl, ptr, &hdl->_accumulator);
-        }
+      /*if (!(hdl->flags & F_GH_NO_ACCU))
+       {
+       g_lom_accu(hdl, ptr, &hdl->_accumulator);
+       }*/
     }
   else
     {
@@ -207,8 +207,18 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
             {
               _p_gm = (__g_match) ptr->ptr;
               ptr = ptr->next;
-              continue;
             }
+          continue;
+        }
+      else if (r_p == 0 && (_gm->flags & F_GM_NAND))
+        {
+          ptr = ptr->next;
+          if (ptr)
+            {
+              _p_gm = (__g_match) ptr->ptr;
+              ptr = ptr->next;
+            }
+          continue;
         }
 
       l_end: ;

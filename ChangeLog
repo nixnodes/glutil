@@ -50,6 +50,7 @@
  *   - ~ Comparison operators (and/or between filtering options) broken (rev. 11_b1)
  *   - % Negate filter parameters with !, old parameters (e.g. iregex) removed, (please read NEWS for more info) (rev. 12_b2) 
  *   - ~ Accumulators affecting match results in certain cases (rev. 12_b3)
+ *   - ~ generic matching routine segfault (rev. 12_b4)
  *
  * v2.3:
  *
