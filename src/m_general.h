@@ -26,8 +26,11 @@
 #define F_GM_NOR                        (a32 << 6)
 #define F_GM_ISACCU                     (a32 << 7)
 #define F_GM_TFD                        (a32 << 8)
+#define F_GM_ISFNAME                    (a32 << 9)
+#define F_GM_LOM_SET                    (a32 << 10)
 
-#define F_GM_TYPES                      (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM)
+#define F_GM_TYPES                      (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM|F_GM_ISFNAME)
+#define F_GM_TYPES_STR                  (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISFNAME)
 
 
 
@@ -87,7 +90,7 @@ typedef struct ___g_match_h
 {
   uint32_t flags;
   char *match, *field;
-  int reg_i_m, match_i_m, regex_flags;
+  int match_i_m, regex_flags, fname_flags;
   regex_t preg;
   mda lom;
   g_op g_oper_ptr;

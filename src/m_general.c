@@ -13,6 +13,8 @@
 #include <log_op.h>
 #include <lc_oper.h>
 
+#include <fnmatch.h>
+
 void
 g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
 {
@@ -168,19 +170,23 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m)
             {
               r = 1;
-              goto l_end;
             }
         }
-
-      r = do_match(hdl, d_ptr, _gm);
-
-      l_end:
+      else if (_gm->flags & F_GM_TYPES_STR)
+        {
+          r = do_match(hdl, d_ptr, _gm);
+        }
+      else
+        {
+          goto l_end;
+        }
 
 //printf("-:: %d\n", r);
 
       if (_p_gm && _p_gm->g_oper_ptr)
         {
           //           printf("::> %d/%d, %d\n", r, r_p, _p_gm->g_oper_ptr == g_oper_and);
+
           r_p = _p_gm->g_oper_ptr(r_p, r);
 //          printf("::< %d\n",  r_p);
         }
@@ -193,6 +199,19 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
         {
           hdl->flags |= F_GH_TFD_PROCED;
         }
+
+      if (r_p == 1 && (_gm->flags & F_GM_NOR))
+        {
+          ptr = ptr->next;
+          if (ptr)
+            {
+              _p_gm = (__g_match) ptr->ptr;
+              ptr = ptr->next;
+              continue;
+            }
+        }
+
+      l_end: ;
 
       _p_gm = _gm;
       ptr = ptr->next;
@@ -259,7 +278,12 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
   int rr;
 
   if ((_gm->flags & F_GM_ISREGEX)
-      && (rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->reg_i_m)
+      && (rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->match_i_m)
+    {
+      r = 1;
+    }
+  else if ((_gm->flags & F_GM_ISFNAME)
+      && (rr = fnmatch(_gm->match, mstr, _gm->fname_flags)) == _gm->match_i_m)
     {
       r = 1;
     }

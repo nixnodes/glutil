@@ -256,7 +256,7 @@ g_proc_mr(__g_handle hdl)
       hdl->ifrh_l1 = g_ipcbm;
     }
 
-  if ((gfl & F_OPT_HAS_G_REGEX) || (gfl & F_OPT_HAS_G_MATCH))
+  if ((gfl & F_OPT_HAS_G_REGEX) || (gfl & F_OPT_HAS_G_MATCH) || (gfl & F_OPT_HAS_G_FNAME))
     {
       if ((r = g_load_strm(hdl)))
         {

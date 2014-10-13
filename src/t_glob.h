@@ -165,7 +165,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_NOGLCONF                  (a64 << 57)
 #define F_OPT_MAXDEPTH                  (a64 << 58)
 #define F_OPT_MINDEPTH                  (a64 << 59)
-#define F_OPT_XFD                       (a64 << 60)
+#define F_OPT_HAS_G_FNAME               (a64 << 60)
 #define F_OPT_ZPRUNEDUP                 (a64 << 61)
 #define F_OPT_DIR_FULL_REBUILD          (a64 << 62)
 #define F_OPT_FORMAT_EXPORT             (a64 << 63)
@@ -209,7 +209,7 @@ typedef unsigned long long int ulint64_t;
 #define F_DL_FOPEN_REWIND               (a32 << 3)
 #define F_DL_FOPEN_SHM                  (a32 << 4)
 
-#define F_OPT_HASMATCH                  (F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES)
+#define F_OPT_HASMATCH                  (F_OPT_HAS_G_REGEX|F_OPT_HAS_G_MATCH|F_OPT_HAS_G_LOM|F_OPT_HASMAXHIT|F_OPT_HASMAXRES|F_OPT_HAS_G_FNAME)
 #define F_OPT_VERBMAX                   (F_OPT_VERBOSE|F_OPT_VERBOSE2|F_OPT_VERBOSE3|F_OPT_VERBOSE4|F_OPT_VERBOSE5)
 
 #define F_OVRR_IPC                      (a32 << 1)

@@ -19,7 +19,7 @@
 #include <regex.h>
 
 int
-g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
+g_cprg(void *arg, int m, int match_i_m, int fn_flags, int regex_flags,
     uint32_t flags)
 {
   char *buffer = g_pg(arg, m);
@@ -51,22 +51,15 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
   pgm->data = buffer;
 
   pgm->match_i_m = match_i_m;
-  pgm->reg_i_m = reg_i_m;
-  pgm->regex_flags = regex_flags | g_regex_flags | REG_NOSUB;
   pgm->flags = flags;
 
   pgm->g_oper_ptr = g_oper_and;
   pgm->flags |= F_GM_NAND;
 
-
-  bzero(&_match_rr_l, sizeof(_match_rr_l));
-  _match_rr_l.ptr = (void *) pgm;
-  _match_rr_l.flags = F_LM_CPRG;
-
   switch (flags & F_GM_TYPES)
     {
   case F_GM_ISREGEX:
-    ;
+    pgm->regex_flags = regex_flags | g_regex_flags | REG_NOSUB;
     if (!(gfl & F_OPT_HAS_G_REGEX))
       {
         gfl |= F_OPT_HAS_G_REGEX;
@@ -78,7 +71,18 @@ g_cprg(void *arg, int m, int match_i_m, int reg_i_m, int regex_flags,
         gfl |= F_OPT_HAS_G_MATCH;
       }
     break;
+  case F_GM_ISFNAME:
+    pgm->fname_flags = fn_flags;
+    if (!(gfl & F_OPT_HAS_G_FNAME))
+      {
+        gfl |= F_OPT_HAS_G_FNAME;
+      }
+    break;
     }
+
+  bzero(&_match_rr_l, sizeof(_match_rr_l));
+  _match_rr_l.ptr = (void *) pgm;
+  _match_rr_l.flags = F_LM_CPRG;
 
   if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
     {
@@ -109,7 +113,7 @@ g_commit_strm_regex(__g_handle hdl, char *field, char *m, int reg_i_m,
       goto end;
     }
 
-  pgm->reg_i_m = reg_i_m;
+  pgm->match_i_m = reg_i_m;
   pgm->regex_flags = regex_flags | REG_NOSUB;
   pgm->flags = flags;
 
@@ -170,7 +174,7 @@ g_load_strm(__g_handle hdl)
   while (ptr)
     {
       _m_ptr = (__g_match) ptr->ptr;
-      if ( (_m_ptr->flags & F_GM_ISREGEX) || (_m_ptr->flags & F_GM_ISMATCH) )
+      if ( (_m_ptr->flags & F_GM_ISREGEX) || (_m_ptr->flags & F_GM_ISMATCH) || (_m_ptr->flags & F_GM_ISFNAME) )
         {
           i = 0;
           char *s_ptr = _m_ptr->data;

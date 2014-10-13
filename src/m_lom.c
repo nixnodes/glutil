@@ -133,7 +133,7 @@ g_load_lom(__g_handle hdl)
   while (ptr)
     {
       _m_ptr = (__g_match) ptr->ptr;
-      if ( _m_ptr->flags & F_GM_ISLOM )
+      if ( (_m_ptr->flags & F_GM_ISLOM ))
         {
           if ((r = g_process_lom_string(hdl, _m_ptr->data, _m_ptr, &ret,
                       _m_ptr->flags)))
@@ -143,6 +143,20 @@ g_load_lom(__g_handle hdl)
               rt = 1;
               break;
             }
+          if (!(_m_ptr->flags & F_GM_LOM_SET))
+            {
+              if ( _m_ptr->flags & F_GM_ISACCU )
+                {
+                  _m_ptr->flags ^= F_GM_ISLOM;
+                }
+              else
+                {
+                  print_str("ERROR: %s: invalid LOM match, no F_GM_LOM_SET or F_GM_ISACCU was set\n",
+                      hdl->file);
+                  rt = 2;
+                  break;
+                }
+            }
           c++;
         }
       ptr = ptr->next;
@@ -151,6 +165,7 @@ g_load_lom(__g_handle hdl)
   if (!rt)
     {
       hdl->flags |= F_GH_HASLOM;
+
       if (gfl & F_OPT_VERBOSE3)
         {
           print_str("NOTICE: %s: loaded %d LOM matches\n", hdl->file, c);
@@ -590,12 +605,19 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
   if (rt)
     {
-      md_unlink(&match->lom, match->lom.pos);
+      if (!(flags & F_GM_ISACCU))
+        {
+          md_unlink(&match->lom, match->lom.pos);
+        }
+      else
+        {
+          md_unlink(&hdl->_accumulator, hdl->_accumulator.pos);
+        }
     }
   else if (!(flags & F_GM_ISACCU))
     {
-      match->flags |= F_GM_ISLOM;
-      match->flags |= flags;
+      match->flags |= F_GM_ISLOM | flags | F_GM_LOM_SET;
+
       if (match->flags & F_GM_IMATCH)
         {
           match->match_i_m = G_NOMATCH;
@@ -604,6 +626,10 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
         {
           match->match_i_m = G_MATCH;
         }
+    }
+  else if ((flags & F_GM_ISACCU))
+    {
+      match->flags |= flags;
     }
 
   return rt;
@@ -1036,7 +1062,6 @@ opt_g_lom(void *arg, int m, uint32_t flags)
 
   pgm->g_oper_ptr = g_oper_and;
   pgm->flags |= F_GM_NAND;
-
 
   gfl |= F_OPT_HAS_G_LOM;
 

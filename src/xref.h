@@ -8,8 +8,6 @@
 #ifndef XREF_H_
 #define XREF_H_
 
-#define _GNU_SOURCE
-
 #include <glutil.h>
 #include <t_glob.h>
 

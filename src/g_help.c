@@ -90,27 +90,30 @@ char *hpd_up =
     "  -mlist                Display any available macro, with description (if present)\n"
 #endif
     "\n Filtering:\n"
-    "  --regex [<field>,]<match>\n"
-    "                        Regex match against <field> value, based on the "
+    "  --regex [<field>,]<pattern>\n"
+    "                        Match <field> value against regex <pattern>, value is based on the "
 #ifndef _MAKE_SBIN
     "data"
 #else
     "filesystem"
 #endif
     " entry\n"
-    "                        currently being processed, see DATA_STRUCTURES for\n"
-    "                        available <field> params\n"
+    "                        currently being processed, see DATA_STRUCTURES for available <field> params\n"
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
-    "  --regexi [<var>,]<match>\n"
+    "  --regexi [<var>,]<pattern>\n"
     "                        Case insensitive variant of --regex\n"
     "  --noereg              Disable POSIX Extended Regular Expression syntax (enabled by default)\n"
-    "  --match [<field>,]<match>\n"
+    "  --match [<field>,]<pattern>\n"
     "                        Regular string matching (exact matches)\n"
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
+    "  --name [<field>,]<pattern>\n"
+    "                        Match <field> value against shell <pattern> (fnmatch(3) lib function)\n"
+    "  --namei [<field>,]<pattern>\n"
+    "                        Case insensitive variant of --name\n"
     "  --lom <<field> > 5.0 && <field> != 0 || <field> ..>\n"
     "                        Compare values by logical and comparison/relational operators\n"
     "                        Applies to any integer/floating point fields from data sources\n"
@@ -173,9 +176,9 @@ char *hpd_up =
 #endif
     "\n"
 #ifndef _MAKE_SBIN
-    "Options:\n"
+    " Options:\n"
 #else
-    "Misc:\n"
+    " Misc:\n"
 #endif
     "  -f                    Force operation where it applies (use -ff for greater effect)\n"
     "  -v                    Increase verbosity level (use -vv or more for greater effect)\n"
