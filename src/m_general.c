@@ -181,14 +181,9 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           goto l_end;
         }
 
-//printf("-:: %d\n", r);
-
       if (_p_gm && _p_gm->g_oper_ptr)
         {
-          //           printf("::> %d/%d, %d\n", r, r_p, _p_gm->g_oper_ptr == g_oper_and);
-
           r_p = _p_gm->g_oper_ptr(r_p, r);
-//          printf("::< %d\n",  r_p);
         }
       else
         {
@@ -206,6 +201,11 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           if (ptr)
             {
               _p_gm = (__g_match) ptr->ptr;
+              if (_p_gm->flags & F_GM_TFD)
+                {
+                  _p_gm = _gm;
+                  continue;
+                }
               ptr = ptr->next;
             }
           continue;
@@ -216,6 +216,11 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           if (ptr)
             {
               _p_gm = (__g_match) ptr->ptr;
+              if (_p_gm->flags & F_GM_TFD)
+                {
+                  _p_gm = _gm;
+                  continue;
+                }
               ptr = ptr->next;
             }
           continue;
@@ -227,7 +232,6 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
       ptr = ptr->next;
     }
 
-  //printf("!!:: %d\n\n", r_p);
   if (hdl->ifrh_l0)
     {
       hdl->ifrh_l0((void*) hdl, md, &r_p, d_ptr);

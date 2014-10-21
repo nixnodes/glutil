@@ -11,7 +11,7 @@
 #include <l_error.h>
 #include <mc_glob.h>
 
-int32_t glob_curtime = 0;
+int64_t glob_curtime = 0;
 
 void *
 g_get_glob_ptr(__g_handle hdl, char *field, int *output)

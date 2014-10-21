@@ -1302,11 +1302,16 @@ g_dump_gen(char *root)
 
   if ((gfl & F_OPT_CDIRONLY) && !dir_exists(root))
     {
+      ret.flags |= F_PD_MATCHTYPES;
       ret.flags ^= F_PD_MATCHTYPES;
       ret.flags |= F_PD_MATCHDIR;
       ret.xproc_rcl0 = NULL;
       ret.xproc_rcl1 = NULL;
-      if (gfl & F_OPT_VERBOSE)
+      if (ret.flags & F_PD_RECURSIVE)
+        {
+          ret.flags ^= F_PD_RECURSIVE;
+        }
+      if (gfl & F_OPT_VERBOSE5)
         {
           print_str("NOTICE: %s is a directory\n", root);
         }
