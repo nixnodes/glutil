@@ -17,7 +17,7 @@
 #
 #########################################################################
 #@VERSION:1
-#@REVISION:0
+#@REVISION:1
 #@MACRO:mk-test:{m:exe} noop --preexec {spec1}
 #
 ## Simple debugger script
@@ -172,7 +172,7 @@ launch_test() {
 		return 1
 	}
 	echo -n "$1: eval literal matching:  "
-	lt_ms=`create_match_s "${lt_log}_fields" "${lt_log}_values" imatch`
+	lt_ms=`create_match_s "${lt_log}_fields" "${lt_log}_values" match`
 
 	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ${lt_ms} silent && {
 		echo -e "   \tOK"
@@ -183,7 +183,7 @@ launch_test() {
 		r=1
 	}
 	echo -n "$1: eval regex matching:  "
-	lt_ms=`create_match_s "${lt_log}_fields" "${lt_log}_values" iregex`
+	lt_ms=`create_match_s "${lt_log}_fields" "${lt_log}_values" regex`
 	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ${lt_ms} silent && {
 		echo -e "      \tOK"
 	} || {
@@ -194,7 +194,7 @@ launch_test() {
 	echo -n "$1: eval lom matching:  "
 	lt_ms=`create_match_lom "${lt_log}_lom_fields" "${lt_log}_lom_values"`
 
-	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ilom "${lt_ms}" silent && {
+	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} lom "${lt_ms}" silent && {
 		echo -e "\t\tOK"
 	} || {
 		echo -e "\t\tFAILED"
@@ -282,7 +282,7 @@ mkdir "${fs_td}" && {
 	echo "t1" > "${fs_td}/t1"
 	echo "t2" > "${fs_td}/t2"
 	echo "t3" > "${fs_td}/t3"
-	[ $(${GLUTIL} -x ${fs_td}/ --batch ilom "ctime > curtime-2000 && uid == `id -u`" | wc -l) -eq 3 ] && {
+	[ $(${GLUTIL} -x ${fs_td}/ --batch lom "ctime > curtime-2000 && uid == `id -u`" | wc -l) -eq 3 ] && {
 		echo -e " \tOK "
 	} || {
 		echo -e " \tBAD"
