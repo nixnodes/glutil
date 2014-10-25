@@ -599,8 +599,8 @@ pce_process_string_match(__g_handle hdl, __d_sconf ptr)
   if (!(r = pce_match_log(hdl, ptr, i_m)))
     {
       print_str(
-          "WARNING: '%s': rule chain hit positive REGEX match (pattern '%s' matches '%s'), blocking..\n",
-          hdl->file, ptr->match, cl_g_sub);
+          "WARNING: '%s': rule chain hit positive REGEX match (pattern '%s' matches '%s' (%d)), blocking..\n",
+          hdl->file, ptr->match, cl_g_sub, i_m);
       EXITVAL = 2;
       if (ptr->message[0])
         {
@@ -662,7 +662,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
       tt_m->g_oper_ptr = g_oper_and;
       tt_m->flags |= F_GM_NAND;
       tt_m->flags |= F_GM_ISLOM;
-      tt_m->match_i_m = 0;
+      tt_m->match_i_m = G_NOMATCH;
 
       if ((r = g_build_lom_packet_bare(p_log, lom, dgetr->d_yf, &year,
           _lcs_isequal, g_oper_and)))
@@ -674,7 +674,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 
     }
 
-  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_g_sub, 0,
+  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_g_sub, REG_NOMATCH,
   REG_EXTENDED | REG_ICASE, F_GM_ISREGEX)))
     {
       print_str("ERROR: unable to commit regex match : %d\n", r);

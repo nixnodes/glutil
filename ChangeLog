@@ -52,6 +52,7 @@
  *   - ~ Accumulators affecting match results in certain cases (rev. 11_b3)
  *   - ~ generic matching routine segfault (rev. 11_b4)
  *   - ~ Buffer overrun when referencing 'curtime' field (rev. 11_b5)
+ *   - ~ Log lookups had broken matching (glutil-precheck) (rev. 11_b6)
  *
  * v2.3:
  *
