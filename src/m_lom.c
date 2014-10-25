@@ -392,7 +392,7 @@ g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field, void *right,
     break;
     }
 
-  lom->flags |= F_LOM_RVAR_KNOWN;
+  lom->flags |= F_LOM_RVAR_KNOWN | F_GM_LOM_SET;
   lom->g_oper_ptr = lop;
 
   end:

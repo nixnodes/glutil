@@ -662,19 +662,19 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
       tt_m->g_oper_ptr = g_oper_and;
       tt_m->flags |= F_GM_NAND;
       tt_m->flags |= F_GM_ISLOM;
-      tt_m->match_i_m = G_NOMATCH;
+      tt_m->match_i_m = G_MATCH;
 
       if ((r = g_build_lom_packet_bare(p_log, lom, dgetr->d_yf, &year,
           _lcs_isequal, g_oper_and)))
         {
-          print_str(" ERROR: unable to commit lom match : %d\n", r);
+          print_str("ERROR: unable to commit LOM match : %d\n", r);
           p_log->flags |= F_GH_LOCKED;
           return 0;
         }
 
     }
 
-  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_g_sub, REG_NOMATCH,
+  if ((r = g_commit_strm_regex(p_log, dgetr->d_field, cl_g_sub, 0,
   REG_EXTENDED | REG_ICASE, F_GM_ISREGEX)))
     {
       print_str("ERROR: unable to commit regex match : %d\n", r);
@@ -815,7 +815,7 @@ pce_run_log_match(void *_hdl, void *_ptr, void *arg)
 {
   __g_handle hdl = (__g_handle) _hdl;
 
-  if (g_bmatch(_ptr, hdl,&hdl->buffer ))
+  if (g_bmatch(_ptr, hdl,&hdl->buffer ) == 0)
     {
       return -1;
     }
