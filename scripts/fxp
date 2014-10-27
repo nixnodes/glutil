@@ -1,0 +1,109 @@
+#!/bin/bash
+
+GLUTIL="/bin/glutil"
+
+BASE_PATH=${0}
+BASE_DIR=`dirname ${0}`
+
+. ${BASE_DIR}/fxp_sync.sh
+
+echoerr() { echo "$@" 1>&2; }
+
+[ -z "${2}" ] && echoerr "Missing site parameter" && exit 1
+
+proc_lock()
+{
+	mkfifo "${1}" 2> /dev/null
+	return $?
+}
+
+em_kill()
+{
+	[ -n "${2}" ] && rm -f "${2}"
+	pkill -9 -P ${1}
+	kill -9 ${1}
+}
+
+mode=${1}
+b_sec="${3}"
+b_site="${2}"		
+[ -z "${b_sec}" ] && b_sec=".*"
+argb=`echo ${@} | cut -f4- -d " " -s`
+set -- ${argb}
+
+. ${BASE_DIR}/atxfer/config
+
+#eval "sleep ${FXP_MAIN_TIMEOUT}; em_kill $$; em_kill $!" &
+#kmproc_pid=$!
+
+case ${mode} in
+	sync)
+		if [ "${b_site}" = "*" ]; then
+			for st in ${BASE_DIR}/atxfer/*; do
+				[ -d "${st}" ] && {
+					st_name=`basename "$st"`
+					${GLUTIL} --ge3log ${BASE_DIR}/atxfer/${st_name}/sections -q ge3 --silent -exec "${BASE_PATH} sync ${st_name} {?rd/g:ge1:(^\/|\/$)}"
+					#${BASE_PATH} sync `basename "$st"`
+				} 			
+			done
+		else
+			[ -z "${b_sec}" ] && echoerr "Missing section parameter" && exit 1			
+			proc_lock "${BASE_DIR}/atxfer/${b_site}/sync.lock" || { 
+				echoerr "already running sync on ${b_site}"				
+				exit 0
+			}
+			trap "rm -f ${BASE_DIR}/atxfer/${b_site}/sync.lock" 2 15 9 6 SIGTERM SIGINT
+			sync_section ${b_site} ${b_sec} ${BASE_DIR} ${GLUTIL}
+			rm -f "${BASE_DIR}/atxfer/${b_site}/sync.lock"
+		fi
+	;;
+	proc)	
+		remote_site="${1}"
+		! [ -n "${remote_site}" ] && echoerr "missing remote site" && exit 2
+		argb=`echo ${@} | cut -f2- -d " " -s`
+		set -- ${argb}		
+		proc_lock "${BASE_DIR}/atxfer/${b_site}/proc.lock" || { 
+			echo "already running proc on ${b_site}"
+			exit 0
+		}
+		trap "rm -f ${BASE_DIR}/atxfer/${b_site}/proc.lock" 2 15 9 6 SIGTERM SIGINT
+		${GLUTIL} --ge3log ${BASE_DIR}/atxfer/${b_site}/data -q ge3 -vvvv --regex "ge2,${b_sec}" \
+		 -execv "${BASE_DIR}/fxp_proc.sh {exe} "${b_site}" "{ge1}" "${BASE_DIR}" + {ge2} {?b:ge1} ${remote_site}" --silent ${@} 
+		rm "${BASE_DIR}/atxfer/${b_site}/proc.lock"
+	;;
+	proc-)		
+		${GLUTIL} --ge3log ${BASE_DIR}/atxfer/${b_site}/data -q ge3 -vvvv \
+		 -execv "${BASE_DIR}/fxp_proc.sh {exe} ${b_site} {ge1} ${BASE_DIR} -" --silent ${@}
+	;;
+	list)
+		[ -z "${b_sec}" ] && echo "Missing section parameter" && exit 2
+		${GLUTIL} --ge3log ${BASE_DIR}/atxfer/${b_site}/data -q ge3 -print "{?b:ge1}" --regex "ge2,${b_sec}" ${@}
+	;;
+	sync_s*)
+		sync_sections "${b_site}"
+	;;
+	search)
+		${GLUTIL} -x ${BASE_DIR}/atxfer/ -dir -exec "${GLUTIL} --ge3log {path}/data -q ge3 \
+			--regex \"ge1,${b_site}\" and ! --regex \"ge1,(\@$|\[NUKED\])\" \
+			-print {?b:path}\": \"\{?b:ge1\}" 
+	;;
+	xfer)
+		remote_site="${1}"
+		${GLUTIL} -x ${BASE_DIR}/atxfer/ -dir -exec "${GLUTIL}  --ge3log {path}/data -q ge3 \
+			--regex \"ge1,${b_site}\" and ! --regex \"ge1,(\@$|\[NUKED\])\" \
+			-print {?b:path}\": \"\{?b:ge1\} -execv \"${BASE_DIR}/fxp_proc.sh \"{exe}\" \"{?b:path}\" \"\{ge1\}\" \"${BASE_DIR}\" + \"\{ge2\}\" \"\{?b:ge1\}\" \"${remote_site}\" \""
+	;;
+	connect)		
+		. ${BASE_DIR}/atxfer/${b_site}/vars
+		
+		${LFTP} -e "`write_lftpf2 ${IP} ${PORT} ${USER} "${PASS}" | tr '\n' ' '`; ls -lah"
+	;;
+	*)
+		echo "No operation given"
+	;;
+	
+esac
+
+#kill -9 ${kmproc_pid}
+
+exit 0
