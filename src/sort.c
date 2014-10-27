@@ -224,7 +224,7 @@ g_selection_sort_exec(pmda m_ptr, __p_srd psrd)
   return ret;
 }
 
-static void
+void
 g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd)
 {
   int64_t i = left, j = right;
@@ -302,6 +302,21 @@ g_heap_siftdown(void **arr, int64_t start, int64_t end, __p_srd psrd)
     }
 }
 
+void
+g_heapsort(void **ref_arr, int64_t left, int64_t right, __p_srd psrd)
+{
+  int64_t start, end;
+
+  for (start = (right - 2) / 2; start >= 0; --start)
+    g_heap_siftdown(ref_arr, start, right, psrd);
+
+  for (end = (right - 1); end; --end)
+    {
+      g_swap_p(&ref_arr[end], &ref_arr[0]);
+      g_heap_siftdown(ref_arr, 0, end, psrd);
+    }
+}
+
 static int
 g_heapsort_exec(pmda m_ptr, __p_srd psrd)
 {
@@ -315,16 +330,7 @@ g_heapsort_exec(pmda m_ptr, __p_srd psrd)
       goto cl_end;
     }
 
-  int64_t start, end;
-
-  for (start = (m_ptr->offset - 2) / 2; start >= 0; --start)
-    g_heap_siftdown(ref_arr, start, m_ptr->offset, psrd);
-
-  for (end = (int64_t) (m_ptr->offset - 1); end; --end)
-    {
-      g_swap_p(&ref_arr[end], &ref_arr[0]);
-      g_heap_siftdown(ref_arr, 0, end, psrd);
-    }
+  g_heapsort(ref_arr, 0, (int64_t) m_ptr->offset, psrd);
 
   if (md_array_to_md(ref_arr, m_ptr))
     {
@@ -648,6 +654,7 @@ opt_g_sort(void *arg, int m)
         {
           return 4606;
         }
+
       ptr = ptr->next;
       s_ptr = (char*) ptr->ptr;
     }
@@ -666,6 +673,7 @@ opt_g_sort(void *arg, int m)
         {
           return 4608;
         }
+
       ptr = ptr->next;
     }
   else

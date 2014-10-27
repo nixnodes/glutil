@@ -84,6 +84,7 @@
 
 #define F_EDS_ROOTMINSET        (a32 << 1)
 #define F_EDS_KILL              (a32 << 2)
+#define F_EDS_SORT              (a32 << 3)
 
 #include <errno_int.h>
 
@@ -186,12 +187,19 @@ typedef struct ___d_xref
   _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
 
+#include <dirent.h>
+
+#include <sort_hdr.h>
+
 typedef struct ___g_eds
 {
   uint32_t flags;
   uint32_t r_minor, r_major;
   struct stat st;
   off_t depth;
+  void *tp_cb;
+  __d_sort_p sort_proc;
+  _srd srd;
 } _g_eds, *__g_eds;
 
 typedef void
@@ -250,8 +258,23 @@ d_xref_ct_fe(__d_xref_ct input, size_t sz);
 typedef int
 (*__d_edscb)(char *, unsigned char, void *, __g_eds);
 
+
+typedef int
+(*__d_edir)(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, DIR *dp);
+
 int
-enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds);
+enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, __d_edir point_cb);
+
+typedef int
+    (*__d_sf_p)(uint32_t flags, __g_eds eds);
+
+int
+g_f_sort(uint32_t flags, __g_eds eds);
+int
+tp_default(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, DIR *dp);
+int
+tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, DIR *dp);
+
 
 int
 ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd);

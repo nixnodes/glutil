@@ -1501,6 +1501,13 @@ opt_g_progress(void *arg, int m)
 }
 
 int
+opt_g_fsroot(void *arg, int m)
+{
+  gfl0 |= F_OPT_FSROOT;
+  return 0;
+}
+
+int
 option_crc32(void *arg, int m)
 {
   g_setjmp(0, "option_crc32", NULL, NULL);
@@ -1768,6 +1775,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x00B7, .on = "-mlist", .ac = 0, .op = opt_g_mlist },
         { .id = 0x00B8, .on = "--gz", .ac = 1, .op = opt_g_comp },
         { .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
+        { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
 #ifndef _MAKE_SBIN
         { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
         { .id = 0x006C, .on = "--comp", .ac = 0, .op = opt_crof },

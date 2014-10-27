@@ -52,7 +52,7 @@ list_macros(void)
 
   int ret = 0;
 
-  if ((ret = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds)) == 0)
+  if ((ret = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds, tp_default)) == 0)
     {
       print_str("ERROR: %s: no macros could be found\n", av.p_buf_1);
       ret = 2;
@@ -120,7 +120,7 @@ process_macro(void * arg, char **out)
 
   int r;
 
-  if ((r = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds)) == 0)
+  if ((r = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds, tp_default)) == 0)
     {
       print_str("ERROR: %s: macro not found\n", av.p_buf_1);
       return NULL;
@@ -418,7 +418,7 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
 
     break;
     case DT_DIR:;
-    int ret = enum_dir(name, ssd_4macro, arg, 0, eds);
+    int ret = enum_dir(name, ssd_4macro, arg, 0, eds, tp_default);
     if (ret < 0)
       {
         print_str("ERROR: ssd_4macro->enum_dir: %s: [%d] %s\n", name, ret,

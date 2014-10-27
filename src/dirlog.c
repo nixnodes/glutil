@@ -300,7 +300,7 @@ update_records(char *dirname, int depth)
 
   arg.eds = &eds;
 
-  int r = enum_dir(dirname, proc_section, &arg, 0, &eds);
+  int r = enum_dir(dirname, proc_section, &arg, 0, &eds, tp_default);
 
   if (r < 0)
     {
@@ -375,7 +375,7 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
             && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
           {
             r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0,
-            NULL);
+            NULL, tp_default);
             if (r < 0)
               {
                 print_str(
@@ -384,7 +384,7 @@ proc_directory(char *name, unsigned char type, void *arg, __g_eds eds)
               }
           }
 
-        r = enum_dir(name, proc_directory, iarg, 0, eds);
+        r = enum_dir(name, proc_directory, iarg, 0, eds, tp_default);
         if (r < 0)
           {
             print_str(
@@ -403,7 +403,7 @@ proc_sect_edec(char *name, void *callback, ear *iarg, __g_eds eds)
 {
   if (!((gfl & F_OPT_MAXDEPTH) && eds->depth >= max_depth))
     {
-      int r = enum_dir(name, callback, iarg, 0, eds);
+      int r = enum_dir(name, callback, iarg, 0, eds, tp_default);
       if (r < 0)
         {
           print_str("ERROR: proc_sect_edec->enum_dir->(%.16X): %s: [%d] %s\n",
@@ -623,7 +623,7 @@ release_generate_block(char *name, ear *iarg)
 
   if ((gfl & F_OPT_SFV) && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
     {
-      if ((r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL))
+      if ((r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL, tp_default))
           < 0)
         {
           print_str(
@@ -632,7 +632,7 @@ release_generate_block(char *name, ear *iarg)
         }
     }
 
-  if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds)) < 1
+  if (((r = enum_dir(name, proc_directory, iarg, 0, iarg->eds, tp_default)) < 1
       || !(iarg->dirlog->files)))
     {
       if (r < 0)
