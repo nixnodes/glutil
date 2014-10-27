@@ -1,12 +1,33 @@
+########################################################
+#                                                      #
+# Using multiple devices, each must have a config file #
+# like the example shown below;                        #
+# Macro is called with -arg1=<config file> (or execute #
+# 'site_clean.sh' passing <config file> as the first   #
+# argument) on each config file.                       #
+#                                                      #
+########################################################
 ROOT="/glftpd/site"
-
+#
+## Device containing $ROOT
+#
 DEVICE=/dev/sda2
+#
+## Minimum free space on device
+#
 MIN_FREE=1G
 #
-# Run even when not below $MIN_FREE
+## Run even when not below $MIN_FREE
 #
 ALWAYS_RUN=1
-
+#
+## Each section is defined as "<path> <percentage>"
+#
+## <path> is relative to $ROOT
+## <percentage> is the percentage of space (taking 
+##  $MIN_FREE into account) the section is allowed
+##  to use up
+#
 SECTIONS=(
 	"tv-x264 60"
 	"xvid 40"
