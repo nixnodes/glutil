@@ -62,5 +62,5 @@ for i in "${SECTIONS[@]}"; do
 	${GLUTIL} -x ${SITEROOT}/${path} -R -xdev --ftime -postprint \
 	"${SITEROOT}/${path}: {?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
 	 lom "u64glob0 += size" and lom "(u64glob0) > ${max_p}" and lom "u64glob1 += size" and lom "mode = 4" and lom "u64glob2 += 1" \
-	 -execv "echo purging(test) {mtime}: {path}"  lom "depth=1" --sort mtime
+	 -execv "echo purging(test) {mtime}: {path}"  lom "depth=1" --sort desc,mtime
 done
