@@ -1747,7 +1747,7 @@ e_comp_dn_d(const struct dirent *a, const struct dirent *b, __p_srd psrd)
 static int
 e_comp_date_a(const struct dirent *a, const struct dirent *b, __p_srd psrd)
 {
-  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", psrd->m_buf1,
+  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", (char*) psrd->sp_0,
       a->d_name);
   struct stat st1;
   if (-1 == lstat(psrd->m_buf2, &st1))
@@ -1755,7 +1755,7 @@ e_comp_date_a(const struct dirent *a, const struct dirent *b, __p_srd psrd)
       return 0;
     }
 
-  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", psrd->m_buf1,
+  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", (char*) psrd->sp_0,
       b->d_name);
   struct stat st2;
   if (-1 == lstat(psrd->m_buf2, &st2))
