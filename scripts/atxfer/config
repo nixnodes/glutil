@@ -1,0 +1,20 @@
+## mirror configuration
+#
+LFTP="lftp"
+HOME_SITE="x"
+#
+FXP_MAIN_TIMEOUT=3600
+#
+PRIORITY_FILES="*.sfv *.nfo *.diz"
+PARALLEL_TRANSFERS=2
+#
+SSL_FORCE=true
+SSL_FXP=true
+SSL_VERIFY_CERT=false
+#
+RECONNECT_INTERVAL=3
+LFTP_DEBUG=off
+#
+##
+FXP_PROC_MAX_FAIL=3
+SYNC_DEFAULT_FILTER_REGEX="\(incomplete\)|\[NUKED\]|\(no\-sfv\)"
