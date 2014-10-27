@@ -9,6 +9,6 @@ ALWAYS_RUN=1
 
 SECTIONS=(
 	"tv-x264 60"
-	"xvid 20"
+	"xvid 40"
 )
 
