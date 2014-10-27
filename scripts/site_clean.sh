@@ -1,6 +1,8 @@
 #!/bin/bash
 #@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
-
+#
+## Dependencies:    glutil-2.4.11_b9
+#
 GLUTIL="/bin/glutil"
 DF=/bin/df
 
