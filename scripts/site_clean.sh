@@ -71,3 +71,5 @@ for i in "${SECTIONS[@]}"; do
 	 lom "u64glob0 += size" and lom "(u64glob0) > ${max_p}" and lom "u64glob1 += size" and lom "mode = 4" and lom "u64glob2 += 1" \
 	 -execv "echo purging(test) {mtime}: {path}"  lom "depth=1" --sort desc,mtime
 done
+
+exit 0
