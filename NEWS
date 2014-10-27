@@ -1,3 +1,12 @@
+ * 27/10/2014 (2.4.11_b7)
+ 
+    Accumulators processing grouped was with general matching routines, meaning
+    that where you place the accumulating LOM statement affects whether it will
+    get processed. 
+    Also, the filtered results are affected by the accumulator statement, as it 
+    is treated as a normal filter. The result is always 1 (positive). 
+    Keep this in mind if using accumulators when forming filter strings.
+ 
  * 12/10/2014 (2.4.11)
  
  	Comparison logics operators (and/or) behaviour has changed (never worked properly) and

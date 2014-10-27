@@ -972,25 +972,31 @@ g_arith_bin_or_s64(void * s, void * d, void *o)
   *((int64_t*) o) = *((int64_t*) s) | *((int64_t*) d);
 }
 
-#if MLIB_TEST_MACRO
+
 void
 g_arith_pow_s64(void * s, void * d, void *o)
 {
+#if MLIB_TEST_MACRO
   *((int64_t*) o) = (int64_t) pow((double) *((int64_t*) s),
       (double) *((int64_t*) d));
+#endif
 }
 void
 g_arith_sqrt_s64(void * s, void * d, void *o)
 {
+#if MLIB_TEST_MACRO
   *((int64_t*) o) = (int64_t) sqrt((double) *((int64_t*) d));
+#endif
 }
 void
 g_arith_hypot_s64(void * s, void * d, void *o)
 {
+#if MLIB_TEST_MACRO
   *((int64_t*) o) = (int64_t) hypot((double) *((int64_t*) s),
       (double) *((int64_t*) d));
-}
 #endif
+}
+
 
 void
 g_arith_bin_lshift_s64(void * s, void * d, void *o)
@@ -1007,13 +1013,10 @@ g_arith_bin_rshift_s64(void * s, void * d, void *o)
 static void *_m_s64[] =
   { g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
       g_arith_mod_s64, g_arith_bin_and_s64, g_arith_bin_or_s64,
-#if MLIB_TEST_MACRO
       g_arith_pow_s64,
-#endif
       g_arith_bin_lshift_s64, g_arith_bin_rshift_s64
-#if MLIB_TEST_MACRO
       , g_arith_sqrt_s64, g_arith_hypot_s64
-#endif
+
     };
 
 void
@@ -1040,26 +1043,31 @@ g_arith_div_f(void * s, void * d, void *o)
   *((float*) o) = *((float*) s) / *((float*) d);
 }
 
-#if MLIB_TEST_MACRO
+
 void
 g_arith_pow_f(void * s, void * d, void *o)
 {
+#if MLIB_TEST_MACRO
   *((float*) o) = (float) powf(*((float*) s), *((float*) d));
+#endif
 }
 
 void
 g_arith_sqrt_f(void * s, void * d, void *o)
 {
+#if MLIB_TEST_MACRO
   *((float*) o) = (float) sqrtf(*((float*) d));
+#endif
 }
 
 void
 g_arith_hypot_f(void * s, void * d, void *o)
 {
+#if MLIB_TEST_MACRO
   *((float*) o) = (float) hypotf(*((float*) s), *((float*) d));
+#endif
 }
 
-#endif
 
 void
 g_arith_dummy(void * s, void * d, void *o)
@@ -1070,13 +1078,10 @@ g_arith_dummy(void * s, void * d, void *o)
 static void *_m_f[] =
   { g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f, g_arith_dummy,
       g_arith_dummy, g_arith_dummy,
-#if MLIB_TEST_MACRO
       g_arith_pow_f,
-#endif
       g_arith_dummy, g_arith_dummy
-#if MLIB_TEST_MACRO
       , g_arith_sqrt_f, g_arith_hypot_f
-#endif
+
     };
 
 int

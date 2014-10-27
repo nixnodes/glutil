@@ -412,6 +412,10 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
     {
       return g_legacy_ggroup(data, max_size, output, (__d_drt_h ) mppd);
     }
+  else if (!strncmp(match, _MC_X_DEPTH, 5))
+    {
+      snprintf(output, max_size, "%llu", (long long unsigned int) data->depth);
+    }
   else
     {
       output[0] = 0x0;
@@ -580,6 +584,12 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
       data->flags |= F_XRF_GET_CRC32;
       return &((__d_xref) NULL)->crc32;
     }
+  else if (!strncmp(match, _MC_X_DEPTH, 5))
+    {
+      *output = sizeof(data->depth);
+      ((__d_xref) arg)->flags |= F_XRF_GET_DEPTH;
+      return &((__d_xref) NULL)->depth;
+    }
   else if (!strncmp(match, "curtime", 7))
     {
       size_t xrf_cto = d_xref_ct_fe(&data->ct[0], GM_MAX);
@@ -632,6 +642,15 @@ dt_rval_x_path(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   return ((__d_xref) arg)->name;
+}
+
+char *
+dt_rval_x_depth(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+      (unsigned long long int) ((__d_xref) arg)->depth);
+  return output;
 }
 
 char *
@@ -1133,6 +1152,14 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_x_path ,(__d_drt_h)mppd, "%s");
     }
+  else if (!strncmp(match, _MC_X_DEPTH, 5))
+    {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_GET_DEPTH;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_depth ,(__d_drt_h)mppd, "%llu");
+    }
   else if (!strncmp(match, _MC_X_USER, 4))
     {
       int r;
@@ -1270,6 +1297,7 @@ g_dump_gen(char *root)
   _g_eds eds =
     { 0 };
 
+  ret.edsp = &eds;
   ret.flags = flags_udcfg;
   g_preproc_xhdl(&ret);
 
@@ -1437,6 +1465,10 @@ g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
   if (aa_rh->p_xref.flags & F_XRF_GET_CRC32)
     {
       file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
+    }
+  if (aa_rh->p_xref.flags & F_XRF_GET_DEPTH)
+    {
+      aa_rh->p_xref.depth = (uint64_t) aa_rh->edsp->depth;
     }
 }
 

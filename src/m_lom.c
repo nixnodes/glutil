@@ -427,16 +427,16 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
   int rt = 0;
   __g_lom lom;
 
-  if (!(flags & F_GM_ISACCU))
-    {
-      md_init(&match->lom, 16);
-      lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
-    }
-  else
-    {
-      md_init(&hdl->_accumulator, 8);
-      lom = (__g_lom ) md_alloc(&hdl->_accumulator, sizeof(_g_lom));
-    }
+  /*if (!(flags & F_GM_ISACCU))
+   {*/
+  md_init(&match->lom, 16);
+  lom = (__g_lom ) md_alloc(&match->lom, sizeof(_g_lom));
+  /* }
+   else
+   {
+   md_init(&hdl->_accumulator, 8);
+   lom = (__g_lom ) md_alloc(&hdl->_accumulator, sizeof(_g_lom));
+   }*/
 
   if (!lom)
     {
@@ -629,7 +629,7 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
     }
   else if ((flags & F_GM_ISACCU))
     {
-      match->flags |= flags;
+      match->flags |= flags | F_GM_ISLOM | F_GM_LOM_SET;
 
     }
 

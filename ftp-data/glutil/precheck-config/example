@@ -28,7 +28,7 @@ path=xvid
 #
 # There are three rule-match types available:
 #
-#	- REGEX matching
+#   - REGEX matching
 #   - Integer field relational matching
 #   - External match (execute some process and use 
 #			its return code)

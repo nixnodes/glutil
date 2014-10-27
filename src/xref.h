@@ -38,6 +38,7 @@
 #define _MC_X_BASEPATH          "basepath"
 #define _MC_X_DIRPATH           "dirpath"
 #define _MC_X_PATH              "path"
+#define _MC_X_DEPTH             "depth"
 #define _MC_X_UID               "uid"
 #define _MC_X_GID               "gid"
 #define _MC_X_ST_MODE           "stmode"
@@ -64,6 +65,7 @@
 #define F_XRF_GET_STCTIME       (a32 << 15)
 #define F_XRF_GET_SPERM         (a32 << 16)
 #define F_XRF_GET_PBITS         (a32 << 17)
+#define F_XRF_GET_DEPTH         (a32 << 18)
 
 #define F_PD_RECURSIVE          (a32 << 1)
 #define F_PD_MATCHDIR           (a32 << 2)
@@ -179,6 +181,7 @@ typedef struct ___d_xref
   uint32_t major;
   uint32_t minor;
   uint16_t pbits;
+  uint64_t depth;
   float sparseness;
   _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
@@ -207,6 +210,7 @@ typedef struct ___std_rh_0
   _d_omfp xproc_out;
   mda guid_stor;
   mda uuid_stor;
+  __g_eds edsp;
   char root[PATH_MAX];
 } _std_rh, *__std_rh;
 
