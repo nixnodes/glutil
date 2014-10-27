@@ -1,4 +1,6 @@
 #!/bin/bash
+#@MACRO:site-clean|Usage\: -arg1=<config file>:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
+
 
 GLUTIL="/bin/glutil"
 DF=/bin/df
