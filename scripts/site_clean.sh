@@ -1,10 +1,8 @@
 #!/bin/bash
-#@MACRO:site-clean|Usage\: -arg1=<config file>:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
-
+#@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
 
 GLUTIL="/bin/glutil"
 DF=/bin/df
-
 
 [ -n "${1}" ] && {
 	. ${1}
@@ -48,9 +46,14 @@ proc_tgmk_str()
 
 MIN_FREE=`proc_tgmk_str ${MIN_FREE}`
 
-used=`expr $(d_used ${DEVICE}) \* 1024`
 free=`expr $(d_free ${DEVICE}) \* 1024`
+
+[ ${ALWAYS_RUN} -eq 0 ] && 
+	[ ${free} -gt ${MIN_FREE} ] && exit 0
+
+used=`expr $(d_used ${DEVICE}) \* 1024`
 total=`expr ${free} + ${used}`
+
 max=`expr ${total} - ${MIN_FREE}`
 
 [ ${max} -lt 0 ] && echo "${path}: negative maximum, MIN_FREE shouldn't exceed device size" && exit 2
@@ -61,8 +64,8 @@ for i in "${SECTIONS[@]}"; do
 		
 	max_p=`expr $(expr ${max} / 100) \* ${percent}`
 			
-	${GLUTIL} -x ${SITEROOT}/${path} -R -xdev --ftime -postprint \
-	"${SITEROOT}/${path}: {?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
+	${GLUTIL} -x ${ROOT}/${path} -R -xdev --ftime -postprint \
+	"${ROOT}/${path}: {?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
 	 lom "u64glob0 += size" and lom "(u64glob0) > ${max_p}" and lom "u64glob1 += size" and lom "mode = 4" and lom "u64glob2 += 1" \
 	 -execv "echo purging(test) {mtime}: {path}"  lom "depth=1" --sort desc,mtime
 done

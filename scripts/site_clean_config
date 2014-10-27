@@ -1,10 +1,14 @@
-SITEROOT="/glftpd/site"
+ROOT="/glftpd/site"
 
 DEVICE=/dev/sda2
-MIN_FREE=32G
+MIN_FREE=1G
+#
+# Run even when not below $MIN_FREE
+#
+ALWAYS_RUN=1
 
 SECTIONS=(
 	"tv-x264 60"
-	"xvid 40"
+	"xvid 20"
 )
 
