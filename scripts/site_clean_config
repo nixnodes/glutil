@@ -1,0 +1,10 @@
+SITEROOT="/glftpd/site"
+
+DEVICE=/dev/sda2
+MIN_FREE=32G
+
+SECTIONS=(
+	"tv-x264 60"
+	"xvid 40"
+)
+
