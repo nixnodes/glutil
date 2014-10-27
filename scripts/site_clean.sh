@@ -60,7 +60,7 @@ for i in "${SECTIONS[@]}"; do
 	max_p=`expr $(expr ${max} / 100) \* ${percent}`
 			
 	${GLUTIL} -x ${SITEROOT}/${path} -R -xdev --ftime -postprint \
-	"{?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
+	"${SITEROOT}/${path}: {?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
 	 lom "u64glob0 += size" and lom "(u64glob0) > ${max_p}" and lom "u64glob1 += size" and lom "mode = 4" and lom "u64glob2 += 1" \
 	 -execv "echo purging(test) {mtime}: {path}"  lom "depth=1" --sort mtime
 done
