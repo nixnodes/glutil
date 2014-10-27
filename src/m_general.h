@@ -81,7 +81,8 @@ typedef struct ___g_lom
   /* --- */
   size_t t_l_off, t_r_off;
   void *p_glob_stor;
-  mda math;
+  mda math_l;
+  mda math_r;
   mda chains;
   int vb_l, vb_r;
 } _g_lom, *__g_lom;

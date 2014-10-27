@@ -61,7 +61,7 @@ typedef struct ___lom_strings_header
         lom->y = (x) lom->g_ts_ptr_left(d_ptr, lom->t_l_off); \
       } \
     if ((lom->flags & F_LOM_IS_LVAR_MATH)) { \
-        g_math_res(d_ptr, &lom->math, &lom->y);\
+        g_math_res(d_ptr, &lom->math_l, &lom->y);\
       } \
 }
 
@@ -79,7 +79,7 @@ typedef struct ___lom_strings_header
         lom->y = (x) lom->g_ts_ptr_right(d_ptr, lom->t_r_off); \
       } \
       if ((lom->flags & F_LOM_IS_RVAR_MATH)) { \
-          g_math_res(d_ptr, &lom->math, &lom->y);\
+          g_math_res(d_ptr, &lom->math_r, &lom->y);\
       } \
 }
 

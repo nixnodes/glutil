@@ -764,7 +764,8 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
   if (field[0] == 0x28)
     {
       md_init(&lom->chains, 8);
-      md_init(&lom->math, 8);
+      md_init(&lom->math_l, 8);
+      md_init(&lom->math_r, 8);
 
       size_t field_l = strlen(field);
       char *m_field = calloc(field_l, 1);
@@ -774,9 +775,23 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
           return 31;
         }
 
+      pmda p_math = NULL;
+
+      switch (flags & F_GLT_DIRECT)
+        {
+      case F_GLT_LEFT:
+        p_math = &lom->math_l;
+        break;
+      case F_GLT_RIGHT:
+        p_math = &lom->math_r;
+        break;
+      default:
+        return 34;
+        }
+
       int m_ret2, m_ret;
-      if ((m_ret2 = g_process_math_string(hdl, m_field, &lom->math,
-          &lom->chains, &m_ret, NULL, 0, 0)))
+      if ((m_ret2 = g_process_math_string(hdl, m_field, p_math, &lom->chains,
+          &m_ret, NULL, 0, 0)))
         {
           print_str(
               "ERROR: [%d] [%d]: could not process math string (LOM): %s\n",
@@ -786,7 +801,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
         }
 
       free(m_field);
-      __g_math math = m_get_def_val(&lom->math);
+      __g_math math = m_get_def_val(p_math);
 
       lom->flags |= (math->flags & F_MATH_TYPES);
 

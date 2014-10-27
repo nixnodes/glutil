@@ -55,6 +55,7 @@
  *   - ~ Log lookups had broken matching (glutil-precheck) (rev. 11_b6)
  *   - % Accumulators processing grouped with general matching routines (had separate routine before) (rev. 11_b7)
  *   - + 'depth' field (FILESYSTEM), see DATA_STRUCTURES (rev. 11_b7)
+ *   - ~ Left/right LOM math data structures overlapping (rev. 11_b8)
  *
  * v2.3:
  *
