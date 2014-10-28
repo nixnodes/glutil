@@ -44,6 +44,8 @@ char *cl_g_sub = cl_sub;
 
 char *post_m_exec_str = NULL;
 
+char *pp_msg_00[MAX_EXEC_STR + 1];
+
 int
 pce_proc(char *path, char *dir)
 {
@@ -172,6 +174,14 @@ pce_proc(char *path, char *dir)
       char b_sp2[4096];
       snprintf(b_sp2, 4096, "%s/%s", path, dir);
       spec_p2 = (char*) &b_sp2;
+      if (pce_f & F_PCE_HAS_PP_MSG)
+        {
+          spec_p1 = (char*) pp_msg_00;
+        }
+      else
+        {
+          spec_p1 = "Denied";
+        }
       pce_process_execv(&t_h, gconf->e_match, pce_prep_for_exec_r);
       g_cleanup(&t_h);
     }
@@ -325,7 +335,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
               EXITVAL = r;
-              if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
+              if (ptr->message[0])
                 {
                   pce_print_msg(ptr->message, p_log);
                 }
@@ -371,7 +381,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
             {
               print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
               EXITVAL = 2;
-              if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
+              if (ptr->message[0])
                 {
                   _g_handle t_h =
                     { 0};
@@ -394,7 +404,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
               EXITVAL = r;
-              if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
+              if (ptr->message[0])
                 {
                   pce_print_msg(ptr->message, &t_h);
                 }
@@ -437,7 +447,15 @@ pce_print_msg(char *input, __g_handle hdl)
       return 1;
     }
 
-  fwrite(b_glob, strlen(b_glob), 1, stdout);
+  if (!(pce_f & F_PCE_FORKED))
+    {
+      fwrite(b_glob, strlen(b_glob), 1, stdout);
+    }
+  else
+    {
+      snprintf((char *) pp_msg_00, MAX_EXEC_STR, "%s", b_glob);
+      pce_f |= F_PCE_HAS_PP_MSG;
+    }
 
   return 0;
 }
@@ -575,7 +593,7 @@ pce_process_lom_match(__g_handle hdl, __d_sconf ptr)
           "WARNING: rule chain hit positive LOM match (%s [%d] %s), blocking..\n",
           ptr->field, ptr->lcomp, ptr->match);
       EXITVAL = 2;
-      if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
+      if (ptr->message[0])
         {
           pce_print_msg(ptr->message, hdl);
         }
@@ -605,7 +623,7 @@ pce_process_string_match(__g_handle hdl, __d_sconf ptr)
           "WARNING: '%s': rule chain hit positive REGEX match (pattern '%s' matches '%s' (%d)), blocking..\n",
           hdl->file, ptr->match, cl_g_sub, i_m);
       EXITVAL = 2;
-      if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
+      if (ptr->message[0])
         {
           pce_print_msg(ptr->message, hdl);
         }
@@ -710,7 +728,7 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
                   setsid();
                   int pid2 = fork();
                   if (pid2 < 0)
-                    print_str("ERROR: can't fork after releasing.\n");
+                    print_str("ERROR: can't fork after releasing\n");
                   else if (pid2 > 0)
                     exit(0);
                   else

@@ -60,6 +60,7 @@
  *   - + Write full path to 'pspec2' global before 'path_exec_on_match' (precheck) (b11)
  *   - ~ Printing to stdout when forked (precheck) (b12)
  *   - ~ 'execute_on_lookup_fail' mode 2 not working (b13)
+ *   - + Write last message to 'pspec1' (b14)
  *
  * v2.3:
  *

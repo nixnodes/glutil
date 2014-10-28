@@ -13,6 +13,7 @@
 
 #define F_PCE_DONE_STR_PREPROC          (a32 << 1)
 #define F_PCE_FORKED                    (a32 << 2)
+#define F_PCE_HAS_PP_MSG                (a32 << 3)
 
 typedef struct __g_dgetr
 {
@@ -73,7 +74,6 @@ pce_pcl_stat(int r, __d_sconf ptr);
 typedef int
 _d_pce_plm(__g_handle hdl, __d_sconf ptr);
 
-
 int
 pce_process_exec(__g_handle hdl, char *exec_str);
 
@@ -95,5 +95,7 @@ _d_avoid_i pce_prep_for_exec, pce_prep_for_exec_r;
 
 int
 pce_process_execv(__g_handle hdl, char *ptr, __d_avoid_i ppfe);
+
+char *pp_msg_00[MAX_EXEC_STR + 1];
 
 #endif /* PCE_PROC_H_ */
