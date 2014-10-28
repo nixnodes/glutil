@@ -705,8 +705,35 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
                   p_log->flags |= F_GH_LOCKED;
                   return 0;
                 }
-              pce_f |= F_PCE_FORKED;
-              pce_lm = sconf->i32;
+              else
+                {
+                  setsid();
+                  int pid2 = fork();
+                  if (pid2 < 0)
+                    print_str("ERROR: can't fork after releasing.\n");
+                  else if (pid2 > 0)
+                    exit(0);
+                  else
+                    {
+                      close(0);
+                      close(1);
+                      close(2);
+                      umask(0);
+                      chdir("/");
+                    }
+
+                  if (fd_log)
+                    {
+                      fclose(fd_log);
+                    }
+
+                  fd_log = NULL;
+
+                  pce_enable_logging();
+
+                  pce_f |= F_PCE_FORKED;
+                  pce_lm = sconf->i32;
+                }
             }
 
           _g_handle t_h =

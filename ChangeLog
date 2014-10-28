@@ -59,6 +59,7 @@
  *   - + Sort currend directory (-x) (rev. 11_b9)
  *   - + Write full path to 'pspec2' global before 'path_exec_on_match' (precheck) (b11)
  *   - ~ Printing to stdout when forked (precheck) (b12)
+ *   - ~ 'execute_on_lookup_fail' mode 2 not working (b13)
  *
  * v2.3:
  *
