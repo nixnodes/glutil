@@ -9,6 +9,12 @@
 #
 #################################################################
 #
+## Enable logging
+#
+o_logging 			     			0
+#
+#####################################################
+#
 ## Delete the parts matching this regex from
 ## the input directory.
 #
