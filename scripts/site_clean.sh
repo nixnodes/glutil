@@ -1,4 +1,23 @@
 #!/bin/bash
+#
+#  Copyright (C) 2013 NixNodes
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# DO NOT EDIT/REMOVE THESE LINES
+#@VERSION:0
+#@REVISION:8
 #@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
 #
 ## Dependencies:    glutil-2.4.11_b9
@@ -45,6 +64,22 @@ proc_tgmk_str()
 	echo `expr ${p} \* ${mod}`
 }
 
+pinc() {
+	echo `expr ${1} + 1`
+}
+
+get_action()
+{
+	c=0
+	for l in "${ACTIONS[@]}"; do
+		[ `expr ${c} \% 2` -gt 0 ] && i=`pinc ${c}` && continue
+		[ "${l}" = "${1}" ] && {
+			echo ${ACTIONS[`pinc ${c}`]}
+		}
+		i=`pinc ${c}`
+	done
+}
+
 MIN_FREE=`proc_tgmk_str ${MIN_FREE}`
 
 free=`expr $(d_free ${DEVICE}) \* 1024`
@@ -60,9 +95,14 @@ max=`expr ${total} - ${MIN_FREE}`
 [ ${max} -lt 0 ] && echo "${path}: negative maximum, MIN_FREE shouldn't exceed device size" && exit 2
 
 for i in "${SECTIONS[@]}"; do
-	path=`echo ${i} | cut -d " " -f1`
-	percent=`echo ${i} | cut -d " " -f2`
-		
+	path=`echo ${i} | cut -d " " -f1`	
+	[ -z "${path}" ] && continue	
+	percent=`echo ${i} | cut -d " " -f2`	
+	[ -z "${percent}" ] && echo "${path}: missing percentage value" && continue	
+	action=`echo ${i} | cut -d " " -f3`			
+	[ -z "${action}" ] && echo "${path}: missing action" && continue	
+	action_cmd=`get_action "${action}"`	
+	[ -z "${action_cmd}" ] && echo "${path}: missing command (${action})" && continue	
 	max_p=`expr $(expr ${max} / 100) \* ${percent}`
 			
 	${GLUTIL} -x ${ROOT}/${path} -R -xdev --ftime -postprint \

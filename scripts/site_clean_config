@@ -29,7 +29,11 @@ ALWAYS_RUN=1
 ##  to use up
 #
 SECTIONS=(
-	"tv-x264 60"
-	"xvid 40"
+	"tv-x264 60 notify"
+	"xvid 40 notify"
 )
 
+ACTIONS=(
+	"wipe"  	"rm -Rf {path}"
+	"notify"  	"echo purging(test) {mtime}: {path}"
+)
