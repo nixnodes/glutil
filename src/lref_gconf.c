@@ -39,10 +39,10 @@ gconf_format_block(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\n",
+  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%hhu\n",
       data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
-      data->r_exclude_user, data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage);
+      data->r_exclude_user, data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging);
 
 }
 
@@ -51,10 +51,10 @@ gconf_format_block_batch(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\n",
+  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhu\x9%hhu\x9%hhu\n",
       data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
-      data->r_exclude_user, data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage);
+      data->r_exclude_user, data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging);
 
 }
 
@@ -76,10 +76,11 @@ gconf_format_block_exp(void *iarg, char *output)
       "r_exclude_user %s\n"
       "r_exclude_user_flags %s\n"
       "lookup_match_strictness_imdb %hhu\n"
-      "lookup_match_strictness_tvrage %hhu\n\n"
+      "lookup_match_strictness_tvrage %hhu\n"
+      "o_logging %hhu\n\n"
       , data->r_clean, data->r_postproc, data->r_yearm, data->r_skip_basedir, data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_exclude_user,
-      data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage);
+      data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging);
 
 }
 
@@ -106,6 +107,11 @@ ref_to_val_ptr_gconf(void *arg, char *match, int *output)
     {
       *output = ~((uint8_t) sizeof(data->o_lookup_strictness_tvrage));
       return &data->o_lookup_strictness_imdb;
+    }
+  else if (!strncmp(match, _MC_GCONF_LOGGING, 7))
+    {
+      *output = ~((uint8_t) sizeof(data->o_logging));
+      return &data->o_logging;
     }
 
   return NULL;
@@ -213,6 +219,14 @@ dt_rval_gconf_ex_uf(void *arg, char *match, char *output, size_t max_size,
   return ((__d_gconf) arg)->r_exclude_user_flags;
 }
 
+char *
+dt_rval_gconf_o_log(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_gconf) arg)->o_logging);
+  return output;
+}
+
 void *
 ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -278,6 +292,10 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp(match, _MC_GCONF_STRCTNST, 30))
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_e_strct2 , (__d_drt_h) mppd, "%hhu");
+    }
+  else if (!strncmp(match, _MC_GCONF_LOGGING, 7))
+    {
+      return as_ref_to_val_lk(match, dt_rval_gconf_o_log , (__d_drt_h) mppd, "%hhu");
     }
 
   return NULL;
@@ -428,6 +446,16 @@ gcb_gconf(void *buffer, char *key, char *val)
           return -1;
         }
       ptr->o_lookup_strictness_tvrage = v_ui;
+      return 1;
+    }
+  else if (k_l == 7 && !strncmp(key, _MC_GCONF_LOGGING, 7))
+    {
+      uint8_t v_ui = (uint8_t) strtoul(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return -1;
+        }
+      ptr->o_logging = v_ui;
       return 1;
     }
 

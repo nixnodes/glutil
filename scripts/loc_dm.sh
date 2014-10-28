@@ -18,8 +18,8 @@
 #########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:0
-#@MACRO:loc-dm:{m:exe} --daemon --glroot "{m:glroot}" --xretry -x "{m:glroot}/io/glud" --regex "basepath,gld\.in\." --lom "mode=1" --preexec `mkdir -p {m:glroot}/io/glud; chmod 777 {m:glroot}/io/glud` --loop 0 --usleep 300000 --silent -execv "{m:spec1} {path} {?rd:basepath:^gld\.in\.} {m:exe} {glroot}"
+#@REVISION:1
+#@MACRO:loc-dm:{m:exe} --daemon  --glroot "{m:glroot}" --xretry -x "{m:glroot}/io/glud" --regex "basepath,gld\.in\." --lom "mode=1" --preexec `mkdir -p {m:glroot}/io/glud; chmod 777 {m:glroot}/io/glud` --loop 0 --usleep 300000 --silent -execv "{m:spec1} {path} {?rd:basepath:^gld\.in\.} {m:exe} {glroot}"
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
 ## Offers functionality to processes that would otherwise require higher priviledges.
@@ -59,19 +59,30 @@ process_query(){
         	${GLUTIL} -q tvrage --tvlog "${3}" -vvvv --shmem --shmdestroy --loadq &&
         	async_reply OK || async_reply BAD
         ;;
-    *)
-    	async_reply UNKNOWN
+    nuke ) 
+	echo ${2} - "${3}" > /glftpd/io/test
+	ii=`${GLUTIL} -d --name "dir,*${2}" -exec "${glroot}/bin/nuker -N \"${4}\" -r /etc/glftpd.conf -n \"{dir}\" 3 \"${3}\"" --silent`
+		async_reply "${ii}" 
+	;;
+    unnuke ) 
+	ii=`${GLUTIL} -d --name "dir,*${2}" -exec "${glroot}/bin/nuker -N \"${4}\" -r /etc/glftpd.conf -u \"{dir}\" \"${3}\"" --silent`
+		async_reply "${ii}" 
+	;;
+        *)
+    	async_reply "UNKNOWN - ${@} - ${1} - ${2}"
     	;;
     esac
 }
 
 e_m=`cat ${1}`
 
-echo "${e_m}" | egrep -q '[\$\`]' && async_reply "ERROR" && {
+echo "${e_m}" | egrep -q '[$`]' && async_reply "SYNTAX ERROR" && {
 	rm -f "${g_f}"
 	exit 3
 }
 
-eval process_query ${e_m}
+#set -- ${e_m}
+
+eval process_query "${e_m}"
 
 rm -f "${g_f}"

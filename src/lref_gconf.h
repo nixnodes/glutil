@@ -30,6 +30,7 @@
 #define _MC_GCONF_EX_UF                 "r_exclude_user_flags"
 #define _MC_GCONF_STRCTNSI              "lookup_match_strictness_imdb"
 #define _MC_GCONF_STRCTNST              "lookup_match_strictness_tvrage"
+#define _MC_GCONF_LOGGING               "logging"
 
 #define GCONF_MAX_REG_EXPR        16384
 #define GCONF_MAX_EXEC            4096
@@ -55,6 +56,7 @@ typedef struct ___d_gconf
   int8_t o_exec_on_lookup_fail;
   int8_t o_lookup_strictness_imdb;
   int8_t o_lookup_strictness_tvrage;
+  int8_t o_logging;
   char r_clean[GCONF_MAX_REG_EXPR];
   char r_postproc[GCONF_MAX_REG_EXPR];
   char r_yearm[GCONF_MAX_REG_EXPR];
