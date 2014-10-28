@@ -94,10 +94,6 @@ get_post_action()
 	done
 }
 
-get_action notify
-get_post_action wipe
-
-exit
 
 MIN_FREE=`proc_tgmk_str ${MIN_FREE}`
 
