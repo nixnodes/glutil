@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:8
+#@REVISION:9
 #@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
 #
 ## Dependencies:    glutil-2.4.11_b9
@@ -72,13 +72,32 @@ get_action()
 {
 	c=0
 	for l in "${ACTIONS[@]}"; do
-		[ `expr ${c} \% 2` -gt 0 ] && c=`pinc ${c}` && continue
+		[ `expr ${c} \% 3` -gt 0 ] && c=`pinc ${c}` && continue
 		[ "${l}" = "${1}" ] && {
 			echo ${ACTIONS[`pinc ${c}`]}
+			break
 		}
 		c=`pinc ${c}`
 	done
 }
+
+get_post_action()
+{
+	c=0
+	for l in "${ACTIONS[@]}"; do
+		[ `expr ${c} \% 3` -gt 0 ] && c=`pinc ${c}` && continue
+		[ "${l}" = "${1}" ] && {
+			echo ${ACTIONS[`expr ${c} + 2`]}
+			break
+		}
+		c=`pinc ${c}`
+	done
+}
+
+get_action notify
+get_post_action wipe
+
+exit
 
 MIN_FREE=`proc_tgmk_str ${MIN_FREE}`
 
@@ -103,12 +122,14 @@ for i in "${SECTIONS[@]}"; do
 	[ -z "${action}" ] && echo "${path}: missing action" && continue	
 	action_cmd=`get_action "${action}"`	
 	[ -z "${action_cmd}" ] && echo "${path}: missing command (${action})" && continue	
+	action_post_cmd=`get_post_action "${action}"`
+		
 	max_p=`expr $(expr ${max} / 100) \* ${percent}`
 			
 	${GLUTIL} -x ${ROOT}/${path} -R -xdev --ftime -postprint \
 	"${ROOT}/${path}: {?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
 	 lom "u64glob0 += size" and lom "(u64glob0) > ${max_p}" and lom "u64glob1 += size" and lom "mode = 4" and lom "u64glob2 += 1" \
-	 -execv "${action_cmd}"  lom "depth=1" --sort desc,mtime
+	 -execv "${action_cmd}"  lom "depth=1" --sort desc,mtime --postexec "${action_post_cmd}"
 done
 
 exit 0
