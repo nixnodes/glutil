@@ -12,7 +12,6 @@ DF=/bin/df
 	. `dirname ${0}`/site_clean_config
 }
 
-
 ########################################
 
 d_used()

@@ -1920,18 +1920,18 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
   if (eds->flags & F_EDS_SORT)
     {
       eds->srd.sp_0 = dir;
-
       eds->sort_proc((void**) namelist, 0, ((int64_t) n) - eds->srd.off_right,
           &eds->srd);
     }
 
   while (n--)
     {
-      dirp = namelist[n];
       if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM))
         {
           break;
         }
+
+      dirp = namelist[n];
 
       size_t d_name_l = strlen(dirp->d_name);
 

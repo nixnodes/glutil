@@ -605,14 +605,14 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
   if (rt)
     {
-      if (!(flags & F_GM_ISACCU))
-        {
-          md_unlink(&match->lom, match->lom.pos);
-        }
-      else
-        {
-          md_unlink(&hdl->_accumulator, hdl->_accumulator.pos);
-        }
+      /* if (!(flags & F_GM_ISACCU))
+       {*/
+      md_unlink(&match->lom, match->lom.pos);
+      /*   }
+       else
+       {
+       md_unlink(&hdl->_accumulator, hdl->_accumulator.pos);
+       }*/
     }
   else if (!(flags & F_GM_ISACCU))
     {
