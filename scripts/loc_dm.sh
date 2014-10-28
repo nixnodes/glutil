@@ -55,7 +55,7 @@ process_query(){
         	async_reply OK || async_reply BAD
         ;;
     tvrage-lookup ) # <query> <tvrage log path> 
-        ${GLUTIL} -m tvrage-e -arg1 "${2}" --i "${3}" &&
+        ${GLUTIL} -m tvrage-e -arg1 "${2}" --tvlog "${3}" &&
         	${GLUTIL} -q tvrage --tvlog "${3}" -vvvv --shmem --shmdestroy --loadq &&
         	async_reply OK || async_reply BAD
         ;;
