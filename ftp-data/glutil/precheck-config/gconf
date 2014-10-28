@@ -108,7 +108,7 @@ path_exec_on_lookup_fail_imdb        /bin/sh -c "{?rd:exe:-precheck$} -m imdb-e 
 ## instance executes this command if rule processor hits
 ## a match.
 #
-path_exec_on_match                   /bin/nuker ..."
+#path_exec_on_match                   /bin/nuker ..."
 #
 ###############################################################
 #
