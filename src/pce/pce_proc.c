@@ -325,7 +325,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
               EXITVAL = r;
-              if (ptr->message[0])
+              if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
                 {
                   pce_print_msg(ptr->message, p_log);
                 }
