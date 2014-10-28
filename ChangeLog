@@ -57,6 +57,7 @@
  *   - + 'depth' field (FILESYSTEM), see DATA_STRUCTURES (rev. 11_b7)
  *   - ~ Left/right LOM math data structures overlapping (rev. 11_b8)
  *   - + Sort currend directory (-x) (rev. 11_b9)
+ *   - + Write full path to 'pspec2' global before 'path_exec_on_match' (precheck) (b11)
  *
  * v2.3:
  *

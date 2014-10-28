@@ -152,6 +152,7 @@ uint32_t ofl = 0;
 uint8_t l_sfo = 0;
 
 char *spec_p1 = NULL;
+char *spec_p2 = NULL;
 
 #ifndef _MAKE_SBIN
 __dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,

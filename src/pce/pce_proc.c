@@ -169,6 +169,9 @@ pce_proc(char *path, char *dir)
       _g_handle t_h =
         { 0 };
       t_h.g_proc1_lookup = ref_to_val_lk_generic;
+      char b_sp2[4096];
+      snprintf(b_sp2, 4096, "%s%s", path, dir);
+      spec_p2 = (char*) &b_sp2;
       pce_process_execv(&t_h, gconf->e_match, pce_prep_for_exec_r);
       g_cleanup(&t_h);
     }

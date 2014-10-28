@@ -137,6 +137,7 @@ uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
 uint32_t ofl = 0;
 
 char *spec_p1 = NULL;
+char *spec_p2 = NULL;
 
 __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
     pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,
