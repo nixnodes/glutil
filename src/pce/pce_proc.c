@@ -68,6 +68,12 @@ pce_proc(char *path, char *dir)
 
   gconf = (__d_gconf) h_gconf.buffer.pos->ptr;
 
+  if (gconf->o_logging > 0)
+    {
+      gfl |= F_OPT_PS_LOGGING;
+      pce_enable_logging();
+    }
+
   if (!gconf)
     {
       print_str("ERROR: %s: no info available\n", GCONFLOG);

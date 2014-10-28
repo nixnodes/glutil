@@ -153,8 +153,7 @@ main(int argc, char *argv[])
   print_str = pce_log;
   LOGLVL = LOG_LEVEL;
   setup_sighandlers();
-  gfl |= F_OPT_PS_LOGGING;
-  pce_enable_logging();
+
   //gfl |= F_OPT_PS_SILENT;
   pce_proc(argv[2], argv[1]);
 
