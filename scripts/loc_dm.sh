@@ -60,7 +60,6 @@ process_query(){
         	async_reply OK || async_reply BAD
         ;;
     nuke ) 
-	echo ${2} - "${3}" > /glftpd/io/test
 	ii=`${GLUTIL} -d --name "dir,*${2}" -exec "${glroot}/bin/nuker -N \"${4}\" -r /etc/glftpd.conf -n \"{dir}\" 3 \"${3}\"" --silent`
 		async_reply "${ii}" 
 	;;
@@ -69,7 +68,7 @@ process_query(){
 		async_reply "${ii}" 
 	;;
         *)
-    	async_reply "UNKNOWN - ${@} - ${1} - ${2}"
+    	async_reply "UNKNOWN"
     	;;
     esac
 }
