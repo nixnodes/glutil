@@ -72,11 +72,11 @@ get_action()
 {
 	c=0
 	for l in "${ACTIONS[@]}"; do
-		[ `expr ${c} \% 2` -gt 0 ] && i=`pinc ${c}` && continue
+		[ `expr ${c} \% 2` -gt 0 ] && c=`pinc ${c}` && continue
 		[ "${l}" = "${1}" ] && {
 			echo ${ACTIONS[`pinc ${c}`]}
 		}
-		i=`pinc ${c}`
+		c=`pinc ${c}`
 	done
 }
 
