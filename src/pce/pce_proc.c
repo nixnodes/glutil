@@ -371,7 +371,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
             {
               print_str("WARNING: '%s': rule chain hit positive match (%s), blocking..\n", cl_dir, ptr->match);
               EXITVAL = 2;
-              if (ptr->message[0])
+              if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
                 {
                   _g_handle t_h =
                     { 0};
@@ -394,7 +394,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
                   "WARNING: [%d] rule chain hit positive external match (%s), blocking..\n",
                   r, ptr->match);
               EXITVAL = r;
-              if (ptr->message[0])
+              if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
                 {
                   pce_print_msg(ptr->message, &t_h);
                 }
@@ -575,7 +575,7 @@ pce_process_lom_match(__g_handle hdl, __d_sconf ptr)
           "WARNING: rule chain hit positive LOM match (%s [%d] %s), blocking..\n",
           ptr->field, ptr->lcomp, ptr->match);
       EXITVAL = 2;
-      if (ptr->message[0])
+      if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
         {
           pce_print_msg(ptr->message, hdl);
         }
@@ -605,7 +605,7 @@ pce_process_string_match(__g_handle hdl, __d_sconf ptr)
           "WARNING: '%s': rule chain hit positive REGEX match (pattern '%s' matches '%s' (%d)), blocking..\n",
           hdl->file, ptr->match, cl_g_sub, i_m);
       EXITVAL = 2;
-      if (ptr->message[0])
+      if (ptr->message[0] && !(pce_f & F_PCE_FORKED))
         {
           pce_print_msg(ptr->message, hdl);
         }
