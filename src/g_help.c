@@ -90,7 +90,7 @@ char *hpd_up =
     "  -mlist                Display any available macro, with description (if present)\n"
 #endif
     "\n Filtering:\n"
-    "  --regex [<field>,]<pattern>\n"
+    "  -regex [<field>,]<pattern>\n"
     "                        Match <field> value against regex <pattern>, value is based on the "
 #ifndef _MAKE_SBIN
     "data"
@@ -102,19 +102,19 @@ char *hpd_up =
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
-    "  --regexi [<var>,]<pattern>\n"
+    "  -regexi [<var>,]<pattern>\n"
     "                        Case insensitive variant of --regex\n"
     "  --noereg              Disable POSIX Extended Regular Expression syntax (enabled by default)\n"
-    "  --match [<field>,]<pattern>\n"
+    "  -match [<field>,]<pattern>\n"
     "                        Regular string matching (exact matches)\n"
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
-    "  --name [<field>,]<pattern>\n"
+    "  -name [<field>,]<pattern>\n"
     "                        Match <field> value against shell <pattern> (fnmatch(3) lib function)\n"
-    "  --namei [<field>,]<pattern>\n"
+    "  -namei [<field>,]<pattern>\n"
     "                        Case insensitive variant of --name\n"
-    "  --lom <<field> > 5.0 && <field> != 0 || <field> ..>\n"
+    "  -lom <<field> > 5.0 && <field> != 0 || <field> ..>\n"
     "                        Compare values by logical and comparison/relational operators\n"
     "                        Applies to any integer/floating point fields from data sources\n"
     "                          Use quotation marks to avoid collisions with bash operators\n"
