@@ -36,14 +36,16 @@ SECTIONS=(
 	"xvid 40 notify"
 )
 #
-## Each command is defined as "<reference> <command>"
+## Each command is defined as "<reference> <command> <post_command>"
 #
 ## <reference> is used in $SECTIONS configuration,
 ##  pointing at the command to execute
 ##  <command> is executed when a section exceeds its 
 ##  aloted percentage
+##  <post_command> is executed after operation on a 
+##  section is completed
 #
 ACTIONS=(
-	"wipe"  	"rm -Rf {path}"
-	"notify"  	"echo purging(test) {mtime}: {path}"
+	"wipe"  	"rm -Rf {path}" "{exe} --check --fix --ghost"
+	"notify"  	"echo purging(test) {mtime}: {path}" "echo {exe} --check --fix --ghost"
 )
