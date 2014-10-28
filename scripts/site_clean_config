@@ -21,18 +21,28 @@ MIN_FREE=1G
 #
 ALWAYS_RUN=1
 #
-## Each section is defined as "<path> <percentage>"
+## Each section is defined as "<path> <percentage> <action>"
 #
 ## <path> is relative to $ROOT
 ## <percentage> is the percentage of space (taking 
 ##  $MIN_FREE into account) the section is allowed
 ##  to use up
+## <action> is the reference of command executed
+##  on oldest items in <path> exceeding its aloted
+##  <percentage> (see ACTIONS array below)
 #
 SECTIONS=(
 	"tv-x264 60 notify"
 	"xvid 40 notify"
 )
-
+#
+## Each command is defined as "<reference> <command>"
+#
+## <reference> is used in $SECTIONS configuration,
+##  pointing at the command to execute
+##  <command> is executed when a section exceeds its 
+##  aloted percentage
+#
 ACTIONS=(
 	"wipe"  	"rm -Rf {path}"
 	"notify"  	"echo purging(test) {mtime}: {path}"
