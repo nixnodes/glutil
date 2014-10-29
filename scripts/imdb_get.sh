@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:36
+#@REVISION:37
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" regexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -126,7 +126,21 @@ BASEDIR=`dirname $0`
 
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $IMDB_DATABASE_TYPE -gt 0 ] && LAPPEND="$IMDB_DATABASE_TYPE"
 
-[ -f "$BASEDIR/config" ] && . $BASEDIR/config
+[ -f "${BASEDIR}/config" ] && . ${BASEDIR}/config
+
+[ -f "${BASEDIR}/common" ] || { 
+	echo "ERROR: ${BASEDIR}/common missing"
+	exit 2
+}
+
+. ${BASEDIR}/common
+
+op_id=0
+
+echo "${10}" | grep -q "2" && { 
+	OUT_PRINT=0
+	op_id=1
+}
 
 IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" noop --imdblog="${3}${LAPPEND}"`
 
@@ -170,10 +184,12 @@ cad() {
         CTIME=`date +"%s"`
         [ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
         if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
-                echo "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
+                print_str "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
         else
                 if [ -n "$RTIME" ]; then
-                        [ $VERBOSE -gt 0 ] && echo "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
+                        [ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
+                        II_ID=`$1 --imdblog "$4$LAPPEND" -a ${2} "${3}" --imatchq -printf "{imdbid}" --silent --nobuffer --rev`
+                        [ ${op_id} -eq 1 ] && echo "${II_ID}"
                         exit 0
                 fi
         fi
@@ -226,7 +242,7 @@ if ! [ $7 -eq 2 ]; then
         }
 
         if [ $YR_F -eq 1 ] && [ $LOOSE_SEARCH -eq 0 ]; then
-                echo "WARNING: $QUERY ($YEAR_q): $TD: could not find by year, ignoring match.."
+                print_str "WARNING: $QUERY ($YEAR_q): $TD: could not find by year, ignoring match.."
         else
                 iid=`imdb_search "$DTMP"`
         fi
@@ -238,7 +254,7 @@ if ! [ $7 -eq 2 ]; then
                 IS_NAME=`echo "$DTMP" | $XMLLINT --xpath "((/IMDbResults//ImdbEntity)[1])" - 2> /dev/null |  sed -r 's/<[^>]+>//'| sed -r 's/<[^>]+>.*//' | sed -r 's/(^[ ]+)|([ ]+$)//g'`
                 SMODE=1
         else
-                echo "WARNING: $QUERY ($YEAR_q): $TD: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY : iMDB search failed, falling back to omdbapi.." 
+                print_str "WARNING: $QUERY ($YEAR_q): $TD: $IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$QUERY : iMDB search failed, falling back to omdbapi.." 
                 iid=`omdb_search "$QUERY"`
                 S_OMDB=1
         fi
@@ -246,13 +262,13 @@ if ! [ $7 -eq 2 ]; then
         S_LOOSE=0
 
         [ $LOOSE_SEARCH -eq 1 ] && [ -z "$iid" ] && {
-                echo "WARNING: $QUERY ($YEAR_q): $TD: omdbapi query failed, performing loose iMDB search.."
+                print_str "WARNING: $QUERY ($YEAR_q): $TD: omdbapi query failed, performing loose iMDB search.."
                 DTMP=`imdb_do_query "$QUERY"`
 
                 [ -n "$YEAR_q" ] && {
                                 DTMP_t=`imdb_get_by_year "$DTMP" $YEAR_q`
                                 [ -n "$DTMP_t" ] && DTMP="<IMDbResults>$DTMP_t</IMDbResults>" || {
-                                        echo "ERROR: $QUERY: $TD: could not find any object released in $YEAR_q, aborting.." 
+                                        print_str "ERROR: $QUERY: $TD: could not find any object released in $YEAR_q, aborting.." 
                                         exit 1
                                 }
                 }
@@ -261,7 +277,7 @@ if ! [ $7 -eq 2 ]; then
                 S_LOOSE=1
         }
 
-        [ -z "$iid" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
+        [ -z "$iid" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
                 cad $2 "match" "imdbid,$iid" "$3"
@@ -269,37 +285,37 @@ if ! [ $7 -eq 2 ]; then
 
         DDT=`get_omdbapi_data "$iid"`
 
-        [ -z "$DDT" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+        [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
 
         TYPE=`get_field type`
 
         if ! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES"; then
                 if [ $S_OMDB -eq 0 ]; then
-                        echo "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying omdbapi.."
+                        print_str "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying omdbapi.."
                         iid=`omdb_search "$QUERY"`
                         [ -z "$iid" ] &&
-                                echo "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using omdbapi search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1         
+                                print_str "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using omdbapi search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1         
                         DDT=`get_omdbapi_data "$iid"`
-                        [ -z "$DDT" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+                        [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
                         TITLE=`get_field title`
                         TYPE=`get_field type`
                 elif [ $LOOSE_SEARCH -eq 1 ] && [ $S_LOOSE -eq 0 ] ; then
-                        echo "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying loose search.."
+                        print_str "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying loose search.."
                         DTMP=`imdb_do_query "$QUERY"`
 
                         [ -n "$YEAR_q" ] && {
                                         DTMP_t=`imdb_get_by_year "$DTMP" $YEAR_q`
                                         [ -n "$DTMP_t" ] && DTMP="<IMDbResults>$DTMP_t</IMDbResults>" || {
-                                                echo "ERROR: $QUERY: $TD: could not find any object released in $YEAR_q, aborting.." 
+                                                print_str "ERROR: $QUERY: $TD: could not find any object released in $YEAR_q, aborting.." 
                                                 exit 1
                                         }
                         }
                         iid=`imdb_search "$DTMP"`
                         [ -z "$iid" ] &&
-                                echo "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using iMDB loose search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1      
+                                print_str "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using iMDB loose search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1      
                         DDT=`get_omdbapi_data "$iid"`
-                        [ -z "$DDT" ] && echo "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+                        [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
                         TITLE=`get_field title`
                         TYPE=`get_field type`
                 fi
@@ -316,17 +332,17 @@ else
 
         DDT=`get_omdbapi_data "$iid"`
 
-        [ -z "$DDT" ] && echo "ERROR: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+        [ -z "$DDT" ] && print_str "ERROR: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
         TYPE=`get_field type`
         TITLE=`get_field title`
 fi
 
-! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES" && echo "ERROR: $QUERY: $TD: invalid match (type is $TYPE): $IMDB_URL""?r=XML&i=$iid" && exit 1
+! echo $TYPE | egrep -q "$OMDB_ALLOWED_TYPES" && print_str "ERROR: $QUERY: $TD: invalid match (type is $TYPE): $IMDB_URL""?r=XML&i=$iid" && exit 1
 
 [ -n "$IMDB_TITLE_WIPE_CHARS" ] && TITLE=`echo "$TITLE" | sed -r "s/[${IMDB_TITLE_WIPE_CHARS}]+//g"`
 
-[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: could not extract movie title, fatal.." && exit 1
+[ -z "$TITLE" ] && print_str "ERROR: $QUERY: $TD: could not extract movie title, fatal.." && exit 1
 
 PLOT=`get_field plot`
 
@@ -370,25 +386,26 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
                  [ -e "$3$LAPPEND" ] && {
                	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
-                        echo "ERROR: $DIR_E: Failed removing old record" && exit 1
+                        print_str "ERROR: $DIR_E: Failed removing old record" && exit 1
                 	}
                 }
         elif [ $IMDB_DATABASE_TYPE -eq 1 ]; then
-                #[ -z "$TITLE" ] && echo "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
+                #[ -z "$TITLE" ] && print_str "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
                 [ -e "$3$LAPPEND" ] && {
                		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb ! match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
-                   	     echo "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
+                   	     print_str "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
                		}
                	}
         fi
 
 	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --imdblog="${3}${LAPPEND}" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to imdblog!!"
+	$2 --imdblog="${3}${LAPPEND}" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
-	[ "${10}" = "1" ] || [ ${IMDB_SHARED_MEM} -gt 0 ] && ${2} -q imdb --imdblog="${3}${LAPPEND}" --shmem --shmdestroy --silent
+	echo "${10}" | grep -q "1" || [ ${IMDB_SHARED_MEM} -gt 0 ] && ${2} -q imdb --imdblog="${3}${LAPPEND}" --shmem --shmdestroy --silent
 fi
 
-[ ${VERBOSE} -eq 1 ] && echo "IMDB: `echo "Q:'$QUERY ($YEAR_q)' | A:'$TITLE ($YEAR)'" | tr '+' ' '` : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
+[ ${VERBOSE} -eq 1 ] && print_str "IMDB: `echo "Q:'$QUERY ($YEAR_q)' | A:'$TITLE ($YEAR)'" | tr '+' ' '` : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"
+[ ${op_id} -eq 1 ] && echo "${iid}"
 
 exit 0
