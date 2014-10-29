@@ -72,6 +72,30 @@ opt_g_loglvl(void *arg, int m)
 }
 
 int
+opt_g_stdout_lvl(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (!buffer)
+    {
+      return 81192;
+    }
+
+  uint32_t stdout_lvl;
+
+  int r;
+
+  if (0 != (r = build_msg_reg(buffer, &stdout_lvl)))
+    {
+      return r;
+    }
+
+  STDOUT_LVL = stdout_lvl;
+
+  return 0;
+}
+
+int
 opt_g_verbose(void *arg, int m)
 {
   gfl |= F_OPT_VERBOSE;
@@ -1782,6 +1806,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x00B8, .on = "--gz", .ac = 1, .op = opt_g_comp },
         { .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
         { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
+        { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
 #ifndef _MAKE_SBIN
         { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
         { .id = 0x006C, .on = "--comp", .ac = 0, .op = opt_crof },

@@ -27,7 +27,7 @@ set ftp:use-size true;
 open -p ${PORT} ${IP};
 user ${USER} ${PASS};"
 . ${2}/atxfer/${r_site}/vars
-echo "mirror --only-missing --no-empty-dirs --continue --ignore-time \
+echo "mirror --continue --only-missing --no-empty-dirs --continue --ignore-time \
 		--verbose=9  --no-symlinks --size-range 1-99999999999999 --loop \
 		--depth-first \
 		${1} ftp://${USER}:${PASS}@${IP}:${PORT}${f_remote_basepath}/${f_l_basepath}"

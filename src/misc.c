@@ -84,6 +84,11 @@ g_print_str(const char * volatile buf, ...)
         }
     }
 
+  if (!(get_msg_type((char*) buf) & STDOUT_LVL))
+    {
+      return 0;
+    }
+
   char iserr = !(buf[0] == 0x45 && (buf[1] == 0x52 || buf[1] == 0x58));
 
   if ((iserr && (gfl & F_OPT_PS_SILENT)))
@@ -126,40 +131,148 @@ g_print_str(const char * volatile buf, ...)
 }
 
 uint32_t LOGLVL = F_MSG_TYPE_EEW;
+uint32_t STDOUT_LVL = F_MSG_TYPE_ANY;
 
 uint32_t
 get_msg_type(char *msg)
 {
-  if (!strncmp(msg, "INIT:", 5))
+  switch (msg[0])
     {
-      return F_MSG_TYPE_ANY;
-    }
-  if (!strncmp(msg, "EXCEPTION:", 10))
-    {
+  case 0x49: // I
+    return F_MSG_TYPE_ANY;
+    break;
+  case 0x45: // E
+    switch (msg[1])
+      {
+    case 0x58: // X
       return F_MSG_TYPE_EXCEPTION;
-    }
-  if (!strncmp(msg, "ERROR:", 6))
-    {
+      break;
+    default:
       return F_MSG_TYPE_ERROR;
-    }
-  if (!strncmp(msg, "WARNING:", 8))
-    {
-      return F_MSG_TYPE_WARNING;
-    }
-  if (!strncmp(msg, "NOTICE:", 7))
-    {
-      return F_MSG_TYPE_NOTICE;
-    }
-  if (!strncmp(msg, "MACRO:", 6))
-    {
-      return F_MSG_TYPE_NOTICE;
-    }
-  if (!strncmp(msg, "STATS:", 6))
-    {
-      return F_MSG_TYPE_STATS;
+      break;
+      }
+    break;
+  case 0x57: // W
+    return F_MSG_TYPE_WARNING;
+    break;
+  case 0x4E: // N
+    return F_MSG_TYPE_NOTICE;
+    break;
+  case 0x4D: // M
+    return F_MSG_TYPE_NOTICE;
+    break;
+  case 0x53: // S
+    return F_MSG_TYPE_STATS;
+    break;
     }
 
   return F_MSG_TYPE_NORMAL;
+}
+
+int
+build_msg_reg(char *arg, uint32_t *opt_r)
+{
+
+  mda sp_s =
+    { 0 };
+  md_init(&sp_s, 8);
+
+  int r = split_string(arg, 0x7C, &sp_s);
+
+  if (0 == r)
+    {
+      r = 81451;
+      goto end;
+    }
+
+  *opt_r = 0x0;
+
+  p_md_obj ptr = md_first(&sp_s);
+
+  while (ptr)
+    {
+      char *s_ptr = (char*) ptr->ptr;
+
+      uint32_t l_f = 0x0;
+
+      if (s_ptr[0] == 0x2D)
+        {
+          s_ptr++;
+          l_f |= 0x1;
+        }
+
+      uint32_t o_r = opt_get_msg_type(s_ptr);
+
+      if (0 == o_r)
+        {
+          r = 81452;
+          goto end;
+        }
+
+      if (l_f & 0x1)
+        {
+          if (*opt_r & o_r)
+            {
+              *opt_r ^= o_r;
+            }
+        }
+      else
+        {
+          *opt_r |= o_r;
+        }
+      ptr = ptr->next;
+    }
+
+  r = 0;
+
+  end: ;
+
+  md_g_free(&sp_s);
+
+  return r;
+}
+
+uint32_t
+opt_get_msg_type(char *msg)
+{
+  if (!strncmp(msg, "exception", 9))
+    {
+      return F_MSG_TYPE_EXCEPTION;
+    }
+  if (!strncmp(msg, "error", 5))
+    {
+      return F_MSG_TYPE_ERROR;
+    }
+  if (!strncmp(msg, "warning", 7))
+    {
+      return F_MSG_TYPE_WARNING;
+    }
+  if (!strncmp(msg, "notice", 6))
+    {
+      return F_MSG_TYPE_NOTICE;
+    }
+  if (!strncmp(msg, "macro", 5))
+    {
+      return F_MSG_TYPE_NOTICE;
+    }
+  if (!strncmp(msg, "stats", 5))
+    {
+      return F_MSG_TYPE_STATS;
+    }
+  if (!strncmp(msg, "other", 5))
+    {
+      return F_MSG_TYPE_NORMAL;
+    }
+  if (!strncmp(msg, "all", 3))
+    {
+      return F_MSG_TYPE_ANY;
+    }
+  if (!strncmp(msg, "any", 3))
+    {
+      return F_MSG_TYPE_ANY;
+    }
+
+  return 0;
 }
 
 int
