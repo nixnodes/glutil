@@ -144,6 +144,14 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     {
       strcp_s(output, max_size, spec_p2);
     }
+  else if (!strncmp(match, "pspec3", 6))
+    {
+      strcp_s(output, max_size, spec_p3);
+    }
+  else if (!strncmp(match, "pspec4", 6))
+    {
+      strcp_s(output, max_size, spec_p4);
+    }
   else if (!strncmp(match, "glconf", 6))
     {
       strcp_s(output, max_size, GLCONF_I);
@@ -407,6 +415,28 @@ dt_rval_generic_pspec2(void *arg, char *match, char *output, size_t max_size,
   return "";
 }
 
+char *
+dt_rval_generic_pspec3(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  if (spec_p3)
+    {
+      return spec_p3;
+    }
+  return "";
+}
+
+char *
+dt_rval_generic_pspec4(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  if (spec_p4)
+    {
+      return spec_p4;
+    }
+  return "";
+}
+
 #define MSG_GENERIC_BS         0x3A
 
 void *
@@ -564,6 +594,16 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp(match, "pspec2", 6))
     {
       return as_ref_to_val_lk(match, dt_rval_generic_pspec2, (__d_drt_h ) mppd,
+          "%s");
+    }
+  else if (!strncmp(match, "pspec3", 6))
+    {
+      return as_ref_to_val_lk(match, dt_rval_generic_pspec3, (__d_drt_h ) mppd,
+          "%s");
+    }
+  else if (!strncmp(match, "pspec4", 6))
+    {
+      return as_ref_to_val_lk(match, dt_rval_generic_pspec4, (__d_drt_h ) mppd,
           "%s");
     }
   else if (match[0] == 0x3F)

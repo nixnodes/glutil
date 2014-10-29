@@ -106,7 +106,7 @@ int64_t glob_curtime;
 char *GLOBAL_PREEXEC;
 char *GLOBAL_POSTEXEC;
 
-char *spec_p1, *spec_p2;
+char *spec_p1, *spec_p2, *spec_p3, *spec_p4;
 
 uint32_t g_omfp_sto, g_omfp_suto;
 

@@ -72,8 +72,9 @@
  *   - ~ 'execute_on_lookup_fail' mode 2 not working (glutil-precheck) (b13)
  *   - + Write last message to 'pspec1' (b14)
  *   - + --stdlog (see --help) (b15)
-  *   2.4.12:
- *   - + --mroot (rev. 12)
+ *   2.4.12:
+ *   - + --mroot
+ *   - ~ 'path' and 'dir' couldn't be referenced from per/section 'exec' strings
  *
  * v2.3:
  *

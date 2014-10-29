@@ -138,6 +138,8 @@ uint32_t ofl = 0;
 
 char *spec_p1 = NULL;
 char *spec_p2 = NULL;
+char *spec_p3 = NULL;
+char *spec_p4 = NULL;
 
 __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
     pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,

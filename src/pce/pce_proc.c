@@ -164,6 +164,9 @@ pce_proc(char *path, char *dir)
 
   off_t nres;
 
+  spec_p3 = path;
+  spec_p4 = dir;
+
   if ((r = g_enum_log(pce_match_build, &h_sconf, &nres, &lh_ref)))
     {
       print_str("ERROR: failed processing records in '%s', code %d\n", s_lp, r);
