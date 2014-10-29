@@ -38,6 +38,8 @@ char MACRO_ARG2[4096] =
 char MACRO_ARG3[4096] =
   { 0 };
 
+char *g_mroot = NULL;
+
 void *_p_macro_argv = NULL;
 int _p_macro_argc = 0;
 

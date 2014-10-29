@@ -11,7 +11,7 @@ ROOT="/glftpd/site"
 #
 ## Device containing $ROOT
 #
-DEVICE=/dev/sda2
+DEVICE=/dev/sdb
 #
 ## Minimum free space on device
 #
@@ -19,7 +19,7 @@ MIN_FREE=1G
 #
 ## Run even when not below $MIN_FREE
 #
-ALWAYS_RUN=1
+ALWAYS_RUN=0
 #
 ## Each section is defined as "<path> <percentage> <action>"
 #

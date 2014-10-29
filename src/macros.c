@@ -34,13 +34,26 @@ list_macros(void)
   char buffer[PATH_MAX] =
     { 0 };
 
-  if (self_get_path(buffer))
+  char *dirn;
+
+  if ((gfl0 & F_OPT_MROOT) && NULL != g_mroot)
     {
-      print_str(MSG_F_OWN_PATH);
-      return 1;
+      snprintf(buffer, PATH_MAX, "%s", g_mroot);
+      dirn = buffer;
+    }
+  else
+    {
+      if (self_get_path(buffer))
+        {
+          print_str(MSG_F_OWN_PATH);
+          return 1;
+        }
+      else
+        {
+          dirn = g_dirname(buffer);
+        }
     }
 
-  char *dirn = g_dirname(buffer);
   _si_argv0 av =
     { 0 };
   _g_eds eds =
@@ -52,7 +65,8 @@ list_macros(void)
 
   int ret = 0;
 
-  if ((ret = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds, tp_default)) == 0)
+  if ((ret = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds, tp_default))
+      == 0)
     {
       print_str("ERROR: %s: no macros could be found\n", av.p_buf_1);
       ret = 2;
@@ -84,13 +98,26 @@ process_macro(void * arg, char **out)
   char buffer[PATH_MAX] =
     { 0 };
 
-  if (self_get_path(buffer))
+  char *dirn;
+
+  if ((gfl0 & F_OPT_MROOT) && NULL != g_mroot)
     {
-      print_str(MSG_F_OWN_PATH);
-      return NULL;
+      snprintf(buffer, PATH_MAX, "%s", g_mroot);
+      dirn = buffer;
+    }
+  else
+    {
+      if (self_get_path(buffer))
+        {
+          print_str(MSG_F_OWN_PATH);
+          return NULL;
+        }
+      else
+        {
+          dirn = g_dirname(buffer);
+        }
     }
 
-  char *dirn = g_dirname(buffer);
   char *s_buffer = NULL;
 
   _si_argv0 av =
@@ -111,7 +138,7 @@ process_macro(void * arg, char **out)
 
   if (gfl & F_OPT_VERBOSE2)
     {
-      print_str("MACRO: '%s': searching for macro inside '%s/' (recursive)\n",
+      print_str("MACRO: '%s': searching for macro inside '%s' (recursive)\n",
           av.p_buf_1, dirn);
     }
 
@@ -120,14 +147,15 @@ process_macro(void * arg, char **out)
 
   int r;
 
-  if ((r = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds, tp_default)) == 0)
+  if ((r = enum_dir(dirn, ssd_4macro, &av, F_ENUMD_NOXBLK, &eds, tp_default))
+      == 0)
     {
       print_str("ERROR: %s: macro not found\n", av.p_buf_1);
       return NULL;
     }
   else if (r < 0)
     {
-      print_str("ERROR: list_macros->enum_dir: %s: [%d] %s\n", dirn, r,
+      print_str("ERROR: process_macro->enum_dir: %s: [%d] %s\n", dirn, r,
           ie_tl(r, EMR_enum_dir));
       return NULL;
     }

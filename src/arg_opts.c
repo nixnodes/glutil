@@ -1039,6 +1039,21 @@ opt_memb_limit_in(void *arg, int m)
 }
 
 int
+g_opt_mroot(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+  if (!buffer)
+    {
+      return 25173;
+    }
+
+  g_mroot = buffer;
+
+  gfl0 |= F_OPT_MROOT;
+  return 0;
+}
+
+int
 opt_g_arg1(void *arg, int m)
 {
   g_cpg(arg, MACRO_ARG1, m, 4095);
@@ -1648,6 +1663,8 @@ _gg_opt gg_prio_f_ref[] =
         { .id = 0x0025, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
         { .id = 0x0026, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
         { .id = 0x0010, .on = "-m", .ac = 1, .op = prio_opt_g_macro },
+        { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
+        { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
 #endif
         { 0x0 } };
 
@@ -1808,6 +1825,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
         { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
 #ifndef _MAKE_SBIN
+        { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
         { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
         { .id = 0x006C, .on = "--comp", .ac = 0, .op = opt_crof },
         { .id = 0x006D, .on = "--batch", .ac = 0, .op = opt_bo_formatting },

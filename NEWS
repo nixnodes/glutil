@@ -1,3 +1,14 @@
+ * 29/10/2014 (2.4.12)
+ 
+ 	Alot of bugs fixed, see changelog
+ 	
+ 	Read below about the changes to filtering syntax (see --help for new syntax),
+ 	most of the scripts will have to be updated (if you use them) when upgrading
+ 	to this version.
+ 	
+ 	'-mindepth' and '-maxdepth' have been obsoleted by the 'depth' field (see
+ 	DATA_STRUCTURES file under FILESYSTEM). 
+ 
  * 27/10/2014 (2.4.11_b7)
  
     Accumulators processing grouped was with general matching routines, meaning
@@ -13,13 +24,14 @@
  	POSIX compilant negator options were implemented (old style [i]<lom|regex|..> has been
  	removed), this required some of the scripts and the macros.glutil file to be updated.
  	
- 	The files affected by these changes are:
+ 	The files affected by these changes include (but aren't limited to):
  	
  	 	- killslow.sh
 		- macros.glutil
  		- imdb_get.sh
  		- tvrage_get.sh
  		- gb_get.sh
+ 		- macros.glutil
 		
 	There is no backwards compatibility, users updating to glutil 2.4.11 or newer should
 	update the scripts too, or they will not work properly.

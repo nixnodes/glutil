@@ -18,24 +18,33 @@
  *   - + '--loadqa' and '--sortmethod'
  *   - ~ Legacy sort function inverting order
  *   - + 'comp' field added to '?q' extended directive (check if log is compressed
+ *   2.4.1:
  *   - + Implemented quicksort algorithm (rev. 1_b1)
  *   - ~ Plugged memory leak (sorting functions) (rev. 1_b1)
+ *   2.4.2:
  *   - ~ qsort was broken (rev. 2)
+ *   2.4.3:
  *   - ~ Floating point values sorting broken (since 2.4.1) (rev. 3)
+ *   2.4.4:
  *   - % Changed default altlog output (rev. 4_b2)
  *   - ~ 'ipc' generic field broken (was showing PID instead of IPC key) (rev. 4_b3) 
  *   - + Implemented string sorting (rev. 4_b4)
  *   - % Made --sort <mode> parameter optional (rev. 4_b5)
+ *   2.4.5:
  *   - + 'nuser' and 'ngroup' dirlog fields (extra info), see DATA_STRUCTURES (rev. 5_b1)
  *   - ~ altlog data structure wasn't aligned to 4b (rev. 5_b2)
  *   - % Changed some altlog properties, update filelog scripts and rebuild filelog if using it (rev. 5)
+ *   2.4.6:
  *   - % Made --sort ..,<order> parameter optional (rev. 6_b1)
  *   - + Implemented insertion sort (rev. 6_b2)
  *   - % Made quicksort the default sorting algorithm (rev. 6_b3)
  *   - + Implemented selection sort (rev. 6_b4)
+ *   2.4.7:
  *   - % Flush data to disk every so often, to avoid filling up memory buffer (-z) (rev. 7_b1)
  *   - % Adjusted write buffer limits, added --progress (rev. 7_b2)
+ *   2.4.8:
  *   - ~ --nobuffer broken (rev. 8)
+ *   2.4.9:
  *   - + Nested parenthesis in math preprocessor (rev. 9_b1)
  *   - + -preprint and -postprint (see --help) (rev. 9_b1)
  *   - % Global vars made available in math preprocessor (rev. 9_b2)
@@ -47,6 +56,7 @@
  *   - ~ LOM matching broken (with signed integers) (rev. 9_b7)
  *   - ~ 'isnot' (!=) relational operator broken (LOM) (rev. 9_b9)
  *   - + gfind, see NEWS file (rev. 9_b9)
+ *   2.4.11:
  *   - ~ Comparison operators (and/or between filtering options) broken (rev. 11_b1)
  *   - % Negate filter parameters with !, old parameters (e.g. iregex) removed, (please read NEWS for more info) (rev. 11_b2) 
  *   - ~ Accumulators affecting match results in certain cases (rev. 11_b3)
@@ -57,11 +67,13 @@
  *   - + 'depth' field (FILESYSTEM), see DATA_STRUCTURES (rev. 11_b7)
  *   - ~ Left/right LOM math data structures overlapping (rev. 11_b8)
  *   - + Sort currend directory (-x) (rev. 11_b9)
- *   - + Write full path to 'pspec2' global before 'path_exec_on_match' (precheck) (b11)
- *   - ~ Printing to stdout when forked (precheck) (b12)
- *   - ~ 'execute_on_lookup_fail' mode 2 not working (b13)
+ *   - + Write full path to 'pspec2' global before 'path_exec_on_match' (glutil-precheck) (b11)
+ *   - ~ Printing to stdout when forked (glutil-precheck) (b12)
+ *   - ~ 'execute_on_lookup_fail' mode 2 not working (glutil-precheck) (b13)
  *   - + Write last message to 'pspec1' (b14)
  *   - + --stdlog (see --help) (b15)
+  *   2.4.12:
+ *   - + --mroot (rev. 12)
  *
  * v2.3:
  *

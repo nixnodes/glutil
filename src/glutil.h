@@ -66,6 +66,8 @@ char MACRO_ARG1[4096];
 char MACRO_ARG2[4096];
 char MACRO_ARG3[4096];
 
+char *g_mroot;
+
 void *_p_macro_argv;
 int _p_macro_argc;
 
