@@ -1,4 +1,4 @@
-#@REVISION:47
+#@REVISION:48
 #
 ## NOTE: Requires glutil 2.4.11 or higher
 #
@@ -212,13 +212,12 @@
 #
 #@MACRO:dirlog-record-stats| Counts up files/size information from all dirlog records and displays:{m:exe} -d --lom "u64glob0 += size && u64glob1 += files" --postexec `echo "{q:dirlog@file}: Total site size: $(expr {u64glob0} / 1048576)MB in {u64glob1} files ; $(expr {u64glob0} / {q:dirlog@count} / 1048576)MB in $(expr {u64glob1} / {q:dirlog@count}) files per directory on average"` --silent
 #
-## <imdb-record-stats>
+## <mdb-record-avgstats>
 #
 ## iMDB log - statistics - averages
 #
-## Dependencies: bc
-#
-#@MACRO:imdb-record-avgstats|iMDB log - statistics - averages, dependencies\: bc:{m:exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  lom "u64glob3 += runtime && u64glob2 += votes && u64glob1 += year && f32glob0 += score && u64glob0 += 1" --postexec `echo -e "IMDB: {q:imdb@file}: Average iMDB score/year/votes/runtime: $(echo 'scale=2; {f32glob0} / {u64glob0}' | bc -l) / $(echo 'scale=3; {u64glob1} / {u64glob0}' | bc -l) / $(echo 'scale=1; {u64glob2} / {u64glob0}' | bc -l) / $(expr {u64glob3} \/ {u64glob0})min"` --silent
+#@MACRO:imdb-record-avgstats|IMDB - Various averaged stats:{m:exe} -a --lom "f32glob0+=score||u64glob0+=1||f32glob1+=1.0||u64glob1+=year||u64glob2+=votes|u64glob3+=runtime" --silent -postprint "IMDB: {?q:imdb@file}: Average score/year/votes/runtime ( {?m:f32glob0/f32glob1#\%\.2f} / {?m:u64glob1/u64glob0} / {?m:u64glob2/u64glob0} / {?m:u64glob3/u64glob0}min )" --imdblog "{m:q:imdb@file}"
+#@MACRO:tvrage-record-avgstats|IMDB - Various averaged stats:{m:exe} -h lom "u64glob0+=1||u64glob1+=startyear||u64glob2+=seasons|u64glob3+=runtime" --silent -postprint "TVRAGE: {?q:tvrage@file}: Average year/runtime/seasons ( {?m:u64glob1/u64glob0} / {?m:u64glob3/u64glob0}min / {?m:u64glob2/u64glob0} )" --tvlog "{m:q:tvrage@file}"
 #
 ## iMDB log - total count statistics
 #
