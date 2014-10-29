@@ -89,7 +89,7 @@ TYPE_SPECIFIC_DB=0
 ## Setting this to 0 or removing it disables
 ## compression
 #
-IMDBLOG_COMPRESSION=2
+IMDBLOG_COMPRESSION=0
 #
 ## (Re)load the log into shared memory segment
 ## after an update occurs
