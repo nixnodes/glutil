@@ -74,10 +74,10 @@ char *hpd_up =
 #ifndef _MAKE_SBIN
     "  --stdin               Read data from stdin\n"
     "\n Input/output:\n"
-    "  -e <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
+    "  -e <dirlog|nukelog|dupefile|lastonlog|imdb|tvrage|game|ge1|ge2|ge3|ge4|sconf|gconf|altlog>\n"
     "                        Rebuild existing data file, based on filtering rules (see --exec,\n"
     "                          --[i]regex[i] and --[i]match\n"
-    "  -z <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1> [--infile=<file>] [--binary] [--prune] [--raw]\n"
+    "  -z <dirlog|nukelog|dupefile|lastonlog|imdb|tvrage|game|ge1|ge2|ge3|ge4|sconf|gconf|altlog> [--infile=<file>] [--binary] [--prune] [--raw]\n"
     "                        Create a binary record from ASCII data, insert it into the specified log\n"
     "                          Capture input from stdin, unless --infile is set\n"
     "                          --binary expects a normal binary log as input and merges it\n"

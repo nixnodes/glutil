@@ -75,6 +75,8 @@
  *   2.4.12:
  *   - + --mroot
  *   - ~ 'path' and 'dir' couldn't be referenced from per/section 'exec' strings
+ *   2.4.13:
+ *   - + Global vars can be referenced when regex matching rls strings (precheck) (1)
  *
  * v2.3:
  *

@@ -394,6 +394,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
                 {
                   _g_handle t_h =
                     { 0};
+                  t_h.g_proc1_lookup = ref_to_val_lk_generic;
                   pce_print_msg(ptr->message, &t_h);
                   g_cleanup(&t_h);
                 }

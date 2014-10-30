@@ -483,7 +483,7 @@ g_bitstr(uint64_t value, uint8_t bits, char *buffer)
 int
 print_version_long(void *arg, int m)
 {
-  print_str("* %s_%s-%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
+  print_str("* %s_%s.%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
   PACKAGE_VERSION, __STR_ARCH);
   return 0;
 }
