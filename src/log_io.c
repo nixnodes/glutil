@@ -695,7 +695,8 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
       if (!hdl->shmcflags)
         {
-          hdl->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IRGRP;
+          hdl->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
+              | S_IWGRP;
         }
 
       hdl->data = shmap(hdl->ipc_key, &hdl->ipcbuf, (size_t) hdl->total_sz,
