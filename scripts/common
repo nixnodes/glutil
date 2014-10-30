@@ -1,0 +1,8 @@
+OUT_PRINT=1
+
+print_str()
+{
+	[ ${OUT_PRINT} -eq 1 ] && {
+		echo "${@}"
+	}
+}
