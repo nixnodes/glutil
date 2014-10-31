@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:30
+#@REVISION:31
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` regexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
@@ -153,6 +153,20 @@ BASEDIR=`dirname $0`
 
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
 
+[ -f "${BASEDIR}/common" ] || { 
+	echo "ERROR: ${BASEDIR}/common missing"
+	exit 2
+}
+
+. ${BASEDIR}/common
+
+op_id=0
+
+echo "${10}" | grep -q "2" && { 
+	OUT_PRINT=0
+	op_id=1
+}
+
 IS_COMP=`${2} --preexec "echo -n {?q:tvrage@comp}" noop --tvlog="${3}${LAPPEND}"`
 
 [ -n "${IS_COMP}" ] && [ ${IS_COMP} -eq 1 ] && {	
@@ -187,10 +201,12 @@ cad() {
 	CTIME=`date +"%s"`
 	[ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
 	if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
-	 	echo "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
+	 	print_str "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
 	else
 		if [ -n "$RTIME" ]; then
-			[ $VERBOSE -gt 0 ] && echo "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
+			[ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
+			II_ID=`${1} --tvlog "$4$LAPPEND" -h $2 "$3" --imatchq -printf "{showid}" --silent --nobuffer --rev`
+            [ ${op_id} -eq 1 ] && echo "${II_ID}"
 			exit 0
 		fi
 	fi
@@ -214,7 +230,7 @@ fi
 
 if [ $7 -eq 2 ]; then
 	[ -z "$8" ] && {
-		echo "ERROR: missing show id"
+		print_str "ERROR: missing show id"
 		exit 1
 	}
 	SHOWID=${8}
@@ -222,7 +238,7 @@ if [ $7 -eq 2 ]; then
 		cad $2 "lom" "showid=${8}" "$3"	
 	fi
 	
-	[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"
+	[ $VERBOSE -gt 1 ] && print_str "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"
 	
 	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"`
 	SFIELD="/Showinfo"
@@ -231,7 +247,7 @@ if [ $7 -eq 2 ]; then
 	SNAME="showname"
 	SDATE="startdate"
 else
-	[ $VERBOSE -gt 1 ] && echo "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"
+	[ $VERBOSE -gt 1 ] && print_str "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"
 	DDT=`$CURL $CURL_FLAGS "$TVRAGE_URL""/feeds/full_search.php?""$q_TVR_KEY""show=""$QUERY""$YQ_O"`
 	SFIELD="/Results//show"
 	SLINK="link"
@@ -241,18 +257,18 @@ else
 fi
 
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
-	[ $VERBOSE -gt 0 ] && echo "$DDT - retrying.."
+	[ $VERBOSE -gt 0 ] && print_str "$DDT - retrying.."
 	sleep 2
 	$0 "$1" "$2" "$3" "$4" "$5" $6 $7 $8
 	exit $?
 }
 
 echo "$DDT" | egrep -q "^Invalid" && {
-	echo "$DDT - aborting.."
+	print_str "$DDT - aborting.."
 	exit 1
 }
 
-[ -z "$DDT" ] && echo "ERROR: $QUERY: $TD: unable to get show data (empty) - $8" && exit 1
+[ -z "$DDT" ] && print_str "ERROR: $QUERY: $TD: unable to get show data (empty) - $8" && exit 1
 
 get_field()
 {
@@ -269,8 +285,8 @@ get_field_t()
 	SHOWID=$8
 
 if [ -z "$SHOWID" ]; then 
-	echo "ERROR: $QUERY: $TD: could not get show id"
-	[ $VERBOSE -gt 0 ] && echo "$DDT"
+	print_str "ERROR: $QUERY: $TD: could not get show id"
+	[ $VERBOSE -gt 0 ] && print_str "$DDT"
 	exit 1
 fi
 
@@ -292,7 +308,7 @@ adjust_tc() {
 
 NAME=`get_field $SNAME`
 [ -n "$TITLE_WIPE_CHARS" ] && NAME=`echo "$NAME" | sed -r "s/[${TITLE_WIPE_CHARS}]+//g"`
-[ -z "$NAME" ] && echo "ERROR: $QUERY: $TD: could not extract show name, fatal.." && exit 1
+[ -z "$NAME" ] && print_str "ERROR: $QUERY: $TD: could not extract show name, fatal.." && exit 1
 
 GENRES=`get_field_t '/genres//genre[.]'`
 COUNTRY=`get_field "$SCOUNTRY"`
@@ -345,25 +361,26 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
 		
 	 	$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! regex "$DIR_E" --nofq --nostats --silent ${EXTRA_ARGS} || { 
-			echo "ERROR: $DIR_E: Failed removing old record"; exit 1 
+			print_str "ERROR: $DIR_E: Failed removing old record"; exit 1 
 		}
 		
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
 		[ -e "$3$LAPPEND" ] && {
 			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! lom "showid=$SHOWID" --nofq --nostats --silent ${EXTRA_ARGS} || {
-				echo "ERROR: $SHOWID: Failed removing old record"; exit 1 
+				print_str "ERROR: $SHOWID: Failed removing old record"; exit 1 
 			}
 		}
 	fi	
 	
 	echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\nstartyear $STARTYEAR\nendyear $ENDYEAR\nnetwork $NETWORK\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
+	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
 	rm /tmp/glutil.img.$$.tmp
 	[ ${TVLOG_SORT} -gt 0 ] && ${2} -e tvrage --tvlog="$3$LAPPEND" --nobackup --nostats --silent --sort num,asc,started
-	[ "${10}" = "1" ] || [ ${TVLOG_SHARED_MEM} -gt 0 ] && ${2} -q tvrage --tvlog="$3$LAPPEND" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
+	echo "${10}" | grep -q "1" || [ ${TVLOG_SHARED_MEM} -gt 0 ] && ${2} -q tvrage --tvlog="$3$LAPPEND" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
 fi
 
-[ ${VERBOSE} -eq 1 ] && echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
+[ ${VERBOSE} -eq 1 ] && print_str "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
+[ ${op_id} -eq 1 ] && echo "${SHOWID}"
 
 exit 0
