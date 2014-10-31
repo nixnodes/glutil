@@ -31,6 +31,7 @@
 #include <fcntl.h>          /* Definition of AT_* constants */
 #include <dirent.h>
 #include <math.h>
+#include <errno.h>
 
 int
 g_l_fmode_n(char *path, size_t max_size, char *output)
@@ -1618,6 +1619,10 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
                 }
 
               g_process_directory(name, dt_mode, arg, eds);
+            }
+          else
+            {
+              print_str("ERROR: %s: [%s] could not read link\n", name, strerror(errno));
             }
 
         }
