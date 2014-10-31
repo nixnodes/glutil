@@ -43,20 +43,20 @@ C_SITEROOT=`echo "${R_SITEROOT}" | sed -r 's/\//\\\\\//g'`
 
 T_PATH=`echo "${R_PATH}" | sed -r "s/^${C_SITEROOT}//"`
 
-[ -z "${T_PATH}" ] && echo "failed extracting base target path" && exit 2
+[ -z "${T_PATH}" ] && echo "failed extracting base target path" && exit 0
 
 ! [ -d "${BASE_DIR}" ] && { 
-	mkdir -p "${BASE_DIR}" && chmod 777 "${BASE_DIR}" || exit 2
+	mkdir -p "${BASE_DIR}" && chmod 777 "${BASE_DIR}" || exit 0
 }
 
 BT_PATH=`dirname "${T_PATH}"`
 
-[ -z "${BT_PATH}" ] || [ "${BT_PATH}" = "/" ] && echo "failed extracting directory part of base path - ${BT_PATH}" && exit 2
+[ -z "${BT_PATH}" ] || [ "${BT_PATH}" = "/" ] && echo "failed extracting directory part of base path - ${BT_PATH}" && exit 0
 
 DT_PATH="${BASE_DIR}${BT_PATH}"
 
 ! [ -d "${DT_PATH}" ] && {
- 	mkdir -p "${DT_PATH}" && chmod 777 "${DT_PATH}" || exit 2
+ 	mkdir -p "${DT_PATH}" && chmod 777 "${DT_PATH}" || exit 0
 }
 
 B_PATH=`basename "${T_PATH}"`
@@ -79,8 +79,6 @@ proc_sort() {
 				return 2
 			}			
 		}
-		
-		
 		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
 			echo "${C_PATH}/${B_PATH}"
