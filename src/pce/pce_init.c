@@ -141,6 +141,10 @@ char *spec_p2 = NULL;
 char *spec_p3 = NULL;
 char *spec_p4 = NULL;
 
+#include <sys/stat.h>
+
+int g_shmcflags = S_IRUSR | S_IWUSR;
+
 __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
     pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,
     pdt_set_oneliners = dt_set_dummy, pdt_set_imdb = dt_set_imdb, pdt_set_game =
