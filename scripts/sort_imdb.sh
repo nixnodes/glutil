@@ -82,7 +82,7 @@ proc_sort() {
 		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
 			echo "${C_PATH}/${B_PATH}"
-			#ln -s "${R_PATH}" "${C_PATH}"
+			ln -s "${R_PATH}" "${C_PATH}"
 		}
 	done
 	IFS=${s_IFS}
