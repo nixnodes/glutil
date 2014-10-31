@@ -1607,6 +1607,7 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
 
               if (stat(name, &aa_rh->p_xref.st))
                 {
+                  print_str("ERROR: %s: [%s] could not stat '%s'\n", name, strerror(errno), b_spl);
                   break;
                 }
 
