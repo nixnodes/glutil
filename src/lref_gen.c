@@ -104,13 +104,17 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     {
       strcp_s(output, max_size, GLROOT);
     }
+  else if (!strncmp(match, "siterootb", 9))
+    {
+      strcp_s(output, max_size, SITEROOT_N);
+    }
   else if (!strncmp(match, "siteroot", 8))
     {
       strcp_s(output, max_size, SITEROOT);
     }
   else if (!strncmp(match, "siterootn", 9))
     {
-      strcp_s(output, max_size, SITEROOT_N);
+      strcp_s(output, max_size, SITEROOT);
     }
   else if (!strncmp(match, "ftpdata", 7))
     {
@@ -541,14 +545,19 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
       return as_ref_to_val_lk(match, dt_rval_generic_glroot, (__d_drt_h ) mppd,
           "%s");
     }
-  else if (!strncmp(match, "siteroot", 8))
+  else if (!strncmp(match, "siterootb", 9))
     {
-      return as_ref_to_val_lk(match, dt_rval_generic_siteroot,
+      return as_ref_to_val_lk(match, dt_rval_generic_siterootn,
           (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, "siterootn", 9))
     {
-      return as_ref_to_val_lk(match, dt_rval_generic_siterootn,
+      return as_ref_to_val_lk(match, dt_rval_generic_siteroot,
+          (__d_drt_h ) mppd, "%s");
+    }
+  else if (!strncmp(match, "siteroot", 8))
+    {
+      return as_ref_to_val_lk(match, dt_rval_generic_siteroot,
           (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp(match, "ftpdata", 7))

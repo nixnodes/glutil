@@ -853,7 +853,7 @@ opt_dirlog_sect_fl(void *arg, int m)
 int
 print_version(void *arg, int m)
 {
-  print_str("%s_%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH);
+  print_str("%s-%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH);
   updmode = UPD_MODE_NOOP;
   return 0;
 }
