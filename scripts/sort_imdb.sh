@@ -17,13 +17,20 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:2
-#@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {glroot}{dir} none {glroot} {siteroot} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}` 
+#@REVISION:3
+#@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {dir} none {glroot} {siteroot} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}` 
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
 #
 ##########################################
+
+[ -f "${BASEDIR}/common" ] || { 
+	echo "ERROR: ${BASEDIR}/common missing"
+	exit 2
+}
+
+. ${BASEDIR}/common
 
 [ ${#5} -gt 1 ] && BASE_DIR=`echo "${5}" | sed -r 's/^[ ]+//' | sed -r 's/[ ]+$//'`
 
@@ -38,25 +45,27 @@ R_DIRECTOR="${9}"
 R_RATING="${10}"
 R_SCORE="${11}"
 
+[ "${R_ARG}" = "mute" ] && OUT_PRINT=0
+
 C_SITEROOT=`echo "${R_SITEROOT}" | sed -r 's/\//\\\\\//g'`
 
 
 T_PATH=`echo "${R_PATH}" | sed -r "s/^${C_SITEROOT}//"`
 
-[ -z "${T_PATH}" ] && echo "failed extracting base target path" && exit 0
+[ -z "${T_PATH}" ] && print_str "failed extracting base target path" && exit 0
 
 ! [ -d "${BASE_DIR}" ] && { 
-	mkdir -p "${BASE_DIR}" && chmod 777 "${BASE_DIR}" || exit 0
+	mkdir -p "${BASE_DIR}" && chmod 777 "${BASE_DIR}" || exit 2
 }
 
 BT_PATH=`dirname "${T_PATH}"`
 
-[ -z "${BT_PATH}" ] || [ "${BT_PATH}" = "/" ] && echo "failed extracting directory part of base path - ${BT_PATH}" && exit 0
+[ -z "${BT_PATH}" ] || [ "${BT_PATH}" = "/" ] && print_str "failed extracting directory part of base path - ${BT_PATH}" && exit 0
 
 DT_PATH="${BASE_DIR}${BT_PATH}"
 
 ! [ -d "${DT_PATH}" ] && {
- 	mkdir -p "${DT_PATH}" && chmod 777 "${DT_PATH}" || exit 0
+ 	mkdir -p "${DT_PATH}" && chmod 777 "${DT_PATH}" || exit 2
 }
 
 B_PATH=`basename "${T_PATH}"`
@@ -64,6 +73,8 @@ B_PATH=`basename "${T_PATH}"`
 C_GLROOT=`echo "${R_GLROOT}" | sed -r 's/\//\\\\\//g'`
 
 CR_PATH=`echo "${R_PATH}" | sed -r "s/^${C_GLROOT}//"`
+
+echo $T_PATH - $DT_PATH - $BT_PATH - ${R_SITEROOT} - $C_SITEROOT
 
 #[mode] [val]
 proc_sort() {
@@ -81,7 +92,7 @@ proc_sort() {
 		}
 		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
-			echo "${C_PATH}/${B_PATH}"
+			print_str "${C_PATH}/${B_PATH}"
 			ln -s "${CR_PATH}" "${C_PATH}"
 		}
 	done
@@ -95,6 +106,6 @@ proc_sort() {
 [ -n "${R_RATING}" ] && proc_sort Rating "${R_RATING}"
 [ -n "${R_SCORE}" ] && proc_sort Score "${R_SCORE}"
 
-chmod -R 777 "${BASE_DIR}"
+chmod -R 777 "${BASE_DIR}" || exit 2
 
 exit 0
