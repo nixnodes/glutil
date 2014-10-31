@@ -96,3 +96,5 @@ proc_sort() {
 [ -n "${R_SCORE}" ] && proc_sort Score "${R_SCORE}"
 
 chmod -R 777 "${BASE_DIR}"
+
+exit 0
