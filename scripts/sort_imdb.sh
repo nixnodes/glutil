@@ -85,7 +85,7 @@ proc_sort() {
 		[ -z "${O_VAL}" ] && continue
 		C_PATH="${DT_PATH}/${1}/${O_VAL}"
 		! [ -d "${C_PATH}" ] && {
-			mkdir -p "${C_PATH}" && chmod 777 "${C_PATH}" || {
+			mkdir -p "${C_PATH}" && chmod 777 "${C_PATH}" &> /dev/null || {
 				IFS=${s_IFS}
 				return 2
 			}			
@@ -93,7 +93,7 @@ proc_sort() {
 		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
 			print_str "${C_PATH}/${B_PATH}"
-			ln -s "${CR_PATH}" "${C_PATH}"
+			ln -s "${CR_PATH}" "${C_PATH}" &> /dev/null
 		}
 	done
 	IFS=${s_IFS}
@@ -106,6 +106,6 @@ proc_sort() {
 [ -n "${R_RATING}" ] && proc_sort Rating "${R_RATING}"
 [ -n "${R_SCORE}" ] && proc_sort Score "${R_SCORE}"
 
-chmod -R 777 "${BASE_DIR}" || exit 2
+#chmod -R 777 "${BASE_DIR}" || exit 2
 
 exit 0
