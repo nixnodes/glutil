@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:1
+#@REVISION:2
 #@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {glroot}{dir} none {glroot} {siteroot} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}` 
 #
 ##
@@ -25,9 +25,7 @@ BASE_DIR=/glftpd/site/_sorted
 #
 ##########################################
 
-
 [ ${#5} -gt 1 ] && BASE_DIR=`echo "${5}" | sed -r 's/^[ ]+//' | sed -r 's/[ ]+$//'`
-
 
 R_PATH="${1}"
 R_ARG=${2}
@@ -41,6 +39,7 @@ R_RATING="${10}"
 R_SCORE="${11}"
 
 C_SITEROOT=`echo "${R_SITEROOT}" | sed -r 's/\//\\\\\//g'`
+
 
 T_PATH=`echo "${R_PATH}" | sed -r "s/^${C_SITEROOT}//"`
 
@@ -62,6 +61,8 @@ DT_PATH="${BASE_DIR}${BT_PATH}"
 
 B_PATH=`basename "${T_PATH}"`
 
+C_GLROOT=`echo "${R_GLROOT}" | sed -r 's/\//\\\\\//g'`
+
 #[mode] [val]
 proc_sort() {
 	s_IFS=${IFS}
@@ -77,9 +78,11 @@ proc_sort() {
 			}			
 		}
 		
+		C_PATH=`echo "${C_PATH}" | sed -r "s/^${C_GLROOT}//"`
+		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
 			echo "${C_PATH}/${B_PATH}"
-			ln -s "${R_PATH}" "${C_PATH}"
+			#ln -s "${R_PATH}" "${C_PATH}"
 		}
 	done
 	IFS=${s_IFS}
@@ -89,9 +92,7 @@ proc_sort() {
 [ -n "${R_YEAR}" ] && proc_sort Year ${R_YEAR}
 [ -n "${R_ACTORS}" ] && proc_sort Actor "${R_ACTORS}"
 [ -n "${R_DIRECTOR}" ] && proc_sort Director "${R_DIRECTOR}"
-[ -n "${R_RATING}" ] && proc_sort Rating ${R_RATING}
-[ -n "${R_SCORE}" ] && proc_sort Score ${R_SCORE}
+[ -n "${R_RATING}" ] && proc_sort Rating "${R_RATING}"
+[ -n "${R_SCORE}" ] && proc_sort Score "${R_SCORE}"
 
 chmod -R 777 "${BASE_DIR}"
-
-#[ -n "${R_GENRE}" ] && {
