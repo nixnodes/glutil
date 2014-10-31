@@ -25,6 +25,8 @@ BASE_DIR=/glftpd/site/_sorted
 #
 ##########################################
 
+BASEDIR=`dirname $0`
+
 [ -f "${BASEDIR}/common" ] || { 
 	echo "ERROR: ${BASEDIR}/common missing"
 	exit 2
