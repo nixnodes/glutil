@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:38
-#@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@REVISION:39
+#@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0 '' '' 3` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" regexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
 #@MACRO:imdb-su-id|Update imdblog records using existing imdbID's, no searching is done:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}" 
@@ -121,8 +121,9 @@ XMLLINT="/usr/bin/xmllint"
 # recode binary (optional), gets rid of HTML entities
 RECODE="recode"
 
-
 BASEDIR=`dirname $0`
+
+echo "${10}" | grep -q "3" && IMDB_DATABASE_TYPE=0
 
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $IMDB_DATABASE_TYPE -gt 0 ] && LAPPEND="$IMDB_DATABASE_TYPE"
 
@@ -382,7 +383,7 @@ fi
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
         trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
-                GLR_E=`echo $4 | sed 's/\//\\\//g'`
+                GLR_E=`echo $4 | sed 's/\//\\\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
                  [ -e "$3$LAPPEND" ] && {
                	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {

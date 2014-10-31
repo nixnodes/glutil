@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:31
-#@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0` {m:arg2}
+#@REVISION:32
+#@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0 0 '' {m:arg3}` {m:arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` regexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
 #@MACRO:tvrage-su-id|Rebuild entire tvlog based on showid fields:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
@@ -148,6 +148,8 @@ title_regsub_string() {
 }
 
 BASEDIR=`dirname $0`
+
+echo "${10}" | grep -q "3" && TVRAGE_DATABASE_TYPE=0
 
 [ $TYPE_SPECIFIC_DB -eq 1 ] && [ $TVRAGE_DATABASE_TYPE -gt 0 ] && LAPPEND="$TVRAGE_DATABASE_TYPE"
 
@@ -357,11 +359,13 @@ ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
 if [ $UPDATE_TVLOG -eq 1 ]; then
 	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
 	if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
-		GLR_E=`echo $4 | sed 's/\//\\\//g'`	
-		DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`  
-		
-	 	$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! regex "$DIR_E" --nofq --nostats --silent ${EXTRA_ARGS} || { 
-			print_str "ERROR: $DIR_E: Failed removing old record"; exit 1 
+		GLR_E=`echo $4 | sed 's/\//\\\\\//g'`	
+		DIR_E=`echo $6 | sed "s/^$GLR_E//" `  
+
+		[ -e "$3$LAPPEND" ] && {
+	 		$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! regex "dir,${DIR_E}" --nofq --nostats --silent ${EXTRA_ARGS} || { 
+				print_str "ERROR: $DIR_E: Failed removing old record"; exit 1 
+			}
 		}
 		
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
