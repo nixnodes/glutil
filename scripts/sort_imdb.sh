@@ -63,6 +63,8 @@ B_PATH=`basename "${T_PATH}"`
 
 C_GLROOT=`echo "${R_GLROOT}" | sed -r 's/\//\\\\\//g'`
 
+CR_PATH=`echo "${R_PATH}" | sed -r "s/^${C_GLROOT}//"`
+
 #[mode] [val]
 proc_sort() {
 	s_IFS=${IFS}
@@ -78,11 +80,11 @@ proc_sort() {
 			}			
 		}
 		
-		C_PATH=`echo "${C_PATH}" | sed -r "s/^${C_GLROOT}//"`
+		
 		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
 			echo "${C_PATH}/${B_PATH}"
-			ln -s "${R_PATH}" "${C_PATH}"
+			ln -s "${CR_PATH}" "${C_PATH}"
 		}
 	done
 	IFS=${s_IFS}
