@@ -18,7 +18,7 @@
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
 #@REVISION:3
-#@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {dir} none {glroot} {siteroot} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}` 
+#@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {dir} none \"\" {siterootb} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}`
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
