@@ -57,10 +57,10 @@ T_PATH=`echo "${R_PATH}" | sed -r "s/^${C_SITEROOT}//"`
 [ -z "${T_PATH}" ] && print_str "failed extracting base target path" && exit 0
 
 ! [ -d "${BASE_DIR}" ] && { 
-	mkdir -p "${BASE_DIR}" && { 
+	mkdir -p "${BASE_DIR}" &> /dev/null && { 
 		chmod 777 "${BASE_DIR}" &> /dev/null
 	} || {
-		exit 2
+		exit 0
 	}
 }
 
@@ -71,10 +71,10 @@ BT_PATH=`dirname "${T_PATH}"`
 DT_PATH="${BASE_DIR}${BT_PATH}"
 
 ! [ -d "${DT_PATH}" ] && {
- 	mkdir -p "${DT_PATH}" && {
+ 	mkdir -p "${DT_PATH}" &> /dev/null && {
  		 chmod 777 "${DT_PATH}" &> /dev/null
 	} || {
-		exit 2
+		exit 0
 	}
 }
 
@@ -93,7 +93,7 @@ proc_sort() {
 		[ -z "${O_VAL}" ] && continue
 		C_PATH="${DT_PATH}/${1}/${O_VAL}"
 		! [ -d "${C_PATH}" ] && {
-			mkdir -p "${C_PATH}" || {
+			mkdir -p "${C_PATH}" &> /dev/null || {
 				chmod 777 "${C_PATH}" &> /dev/null
 				IFS=${s_IFS}
 				return 2
