@@ -300,6 +300,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
         {
           p_log = md_alloc(lh_ref, sizeof(_g_handle));
           p_log->flags |= F_GH_HASMATCHES;
+          p_log->shmatflags = SHM_RDONLY;
           p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
           | S_IWGRP;
 

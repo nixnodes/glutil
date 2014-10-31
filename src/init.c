@@ -62,6 +62,10 @@ size_t max_datain_f = MAX_DATAIN_F;
 
 key_t SHM_IPC = (key_t) shm_ipc;
 
+#include <sys/stat.h>
+
+int g_shmcflags = S_IRUSR | S_IWUSR;
+
 char GLROOT[PATH_MAX] =
   { glroot };
 char SITEROOT_N[PATH_MAX] =

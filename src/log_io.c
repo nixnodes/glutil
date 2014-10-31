@@ -695,8 +695,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
 
       if (!hdl->shmcflags)
         {
-          hdl->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
-              | S_IWGRP;
+          hdl->shmcflags = g_shmcflags;
         }
 
       hdl->data = shmap(hdl->ipc_key, &hdl->ipcbuf, (size_t) hdl->total_sz,
@@ -1031,7 +1030,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
         }
       else
         {
-          print_str("NOTICE: %s: %s [%llu kB]\n", hdl->file,
+          print_str("NOTICE: %s: %s [%llu kB] [%hhu%hhu%hhu]\n", hdl->file,
               (hdl->flags & F_GH_SHM) ?
                   hdl->shmid == -1 && !(hdl->flags & F_GH_SHMRB) ?
                       "loading data into shared memory segment" :
@@ -1040,10 +1039,12 @@ g_buffer_into_memory(char *file, __g_handle hdl)
                       "mapping shared memory segment"
                   :
                   "loading data file into memory",
-
               (hdl->flags & F_GH_SHM) && hdl->shmid != -1 ?
                   (ulint64_t) hdl->ipcbuf.shm_segsz / 1024 :
-                  (ulint64_t) hdl->total_sz / 1024);
+                  (ulint64_t) hdl->total_sz / 1024,
+              (uint8_t) ((g_shmcflags & S_IRWXU) >> 6),
+              (uint8_t) ((g_shmcflags & S_IRWXG) >> 3),
+              (uint8_t) ((g_shmcflags & S_IRWXO)));
 
         }
     }

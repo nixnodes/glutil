@@ -172,6 +172,12 @@ int
 opt_g_loop_sleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 7190;
+    }
+
   g_omfp_sto = (uint32_t) strtoul(buffer, NULL, 10);
   if (g_omfp_sto)
     {
@@ -185,6 +191,12 @@ int
 opt_g_loop_usleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 7201;
+    }
+
   g_omfp_suto = (uint32_t) strtoul(buffer, NULL, 10);
   if (g_omfp_suto)
     {
@@ -253,10 +265,12 @@ int
 opt_loop_max(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
   if (buffer == NULL)
     {
       return 9080;
     }
+
   errno = 0;
   loop_max = (uint64_t) strtol(buffer, NULL, 10);
   if ((errno == ERANGE && (loop_max == LONG_MAX || loop_max == LONG_MIN))
@@ -319,6 +333,12 @@ static int
 opt_g_maxresults(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 19022;
+    }
+
   max_results = (off_t) strtoll(buffer, NULL, 10);
   gfl |= F_OPT_HASMAXRES;
   l_sfo = L_STFO_FILTER;
@@ -329,6 +349,12 @@ static int
 opt_g_maxhits(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 19032;
+    }
+
   max_hits = (off_t) strtoll(buffer, NULL, 10);
   gfl |= F_OPT_HASMAXHIT;
   l_sfo = L_STFO_FILTER;
@@ -339,6 +365,12 @@ int
 opt_g_maxdepth(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 19042;
+    }
+
   max_depth = ((off_t) strtoll(buffer, NULL, 10)) + 1;
   gfl |= F_OPT_MAXDEPTH;
   return 0;
@@ -348,6 +380,12 @@ int
 opt_g_mindepth(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (buffer == NULL)
+    {
+      return 19052;
+    }
+
   min_depth = ((off_t) strtoll(buffer, NULL, 10)) + 1;
   gfl |= F_OPT_MINDEPTH;
   return 0;
@@ -506,7 +544,10 @@ opt_g_nobuffering(void *arg, int m)
 int
 opt_g_buffering(void *arg, int m)
 {
-  gfl ^= F_OPT_WBUFFER;
+  if (gfl & F_OPT_WBUFFER)
+    {
+      gfl ^= F_OPT_WBUFFER;
+    }
   return 0;
 }
 
@@ -521,6 +562,36 @@ int
 opt_g_ftime(void *arg, int m)
 {
   gfl |= F_OPT_PS_TIME;
+  return 0;
+}
+
+static int
+g_opt_shmflg(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 32141;
+    }
+
+  if (strlen(buffer) != 3)
+    {
+      return 32142;
+    }
+
+  int t_flg = (int) strtol(buffer, NULL, 8);
+
+  g_shmcflags = t_flg;
+
+  return 0;
+}
+
+
+static int
+g_opt_shmro(void *arg, int m)
+{
+  gfl0 |= F_OPT_SHMRO;
   return 0;
 }
 
@@ -840,7 +911,7 @@ int
 opt_arrange(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  if (!buffer)
+  if (NULL == buffer)
     {
       return 5610;
     }
@@ -988,10 +1059,12 @@ int
 opt_memb_limit(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  if (!buffer)
+
+  if (NULL == buffer)
     {
       return 3512;
     }
+
   long long int l_buffer = atoll(buffer);
   if (l_buffer > 1024)
     {
@@ -1015,10 +1088,12 @@ int
 opt_memb_limit_in(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  if (!buffer)
+
+  if (NULL == buffer)
     {
       return 3513;
     }
+
   long long int l_buffer = atoll(buffer);
   if (l_buffer > 8192)
     {
@@ -1042,7 +1117,8 @@ int
 g_opt_mroot(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
-  if (!buffer)
+
+  if (NULL == buffer)
     {
       return 25173;
     }
@@ -1329,6 +1405,17 @@ int
 opt_g_sleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 25511;
+    }
+
+  if (buffer[0] == 0x0)
+    {
+      return 25512;
+    }
+
   g_sleep = (uint32_t) strtoul(buffer, NULL, 10);
 
   return 0;
@@ -1338,6 +1425,17 @@ int
 opt_g_usleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 25611;
+    }
+
+  if (buffer[0] == 0x0)
+    {
+      return 25612;
+    }
+
   g_usleep = (uint32_t) strtoul(buffer, NULL, 10);
 
   return 0;
@@ -1347,6 +1445,12 @@ int
 opt_execv_stdout_rd(void *arg, int m)
 {
   char *ptr = g_pg(arg, m);
+
+  if (NULL == ptr)
+    {
+      return 28621;
+    }
+
   execv_stdout_redir = open(ptr, O_RDWR | O_CREAT,
       (mode_t) (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
   if (execv_stdout_redir == -1)
@@ -1369,6 +1473,11 @@ int
 opt_shmipc(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 53411;
+    }
 
   if (!strlen(buffer))
     {
@@ -1430,7 +1539,7 @@ opt_print_stdin(void *arg, int m)
 int
 opt_printf(void *arg, int m)
 {
-  if ((_print_ptr = g_pg(arg, m)))
+  if (NULL != (_print_ptr = g_pg(arg, m)))
     {
       gfl0 |= F_OPT_PRINTF;
       return 0;
@@ -1469,7 +1578,7 @@ opt_postprintf(void *arg, int m)
 int
 opt_postprint(void *arg, int m)
 {
-  if ((_print_ptr_post = g_pg(arg, m)))
+  if (NULL != (_print_ptr_post = g_pg(arg, m)))
     {
       gfl0 |= F_OPT_POSTPRINT;
       return 0;
@@ -1480,7 +1589,7 @@ opt_postprint(void *arg, int m)
 int
 opt_preprintf(void *arg, int m)
 {
-  if ((_print_ptr_pre = g_pg(arg, m)))
+  if (NULL != (_print_ptr_pre = g_pg(arg, m)))
     {
       gfl0 |= F_OPT_PREPRINTF;
       return 0;
@@ -1491,7 +1600,7 @@ opt_preprintf(void *arg, int m)
 int
 opt_preprint(void *arg, int m)
 {
-  if ((_print_ptr_pre = g_pg(arg, m)))
+  if (NULL != (_print_ptr_pre = g_pg(arg, m)))
     {
       gfl0 |= F_OPT_PREPRINT;
       return 0;
@@ -1550,22 +1659,14 @@ int
 option_crc32(void *arg, int m)
 {
   g_setjmp(0, "option_crc32", NULL, NULL);
-  char *buffer;
-  if (m == 2)
-    {
-      buffer = (char *) arg;
-    }
-  else
-    {
-      buffer = ((char **) arg)[0];
-    }
-
-  updmode = UPD_MODE_NOOP;
+  char *buffer = g_pg(arg, m);
 
   if (NULL == buffer)
     {
       return 55272;
     }
+
+  updmode = UPD_MODE_NOOP;
 
   uint32_t crc32;
 
@@ -1860,6 +1961,8 @@ _gg_opt gg_f_ref[] =
         { .id = 0x0086, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
         { .id = 0x0087, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
         { .id = 0x0088, .on = "--glroot", .ac = 1, .op = opt_glroot },
+        { .id = 0x1288, .on = "--shmcflags", .ac = 1, .op = g_opt_shmflg },
+        { .id = 0x1288, .on = "--shmro", .ac = 0, .op = g_opt_shmro },
         { .id = 0x0023, .on = "-g", .ac = 0, .op = opt_dump_grps },
         { .id = 0x0024, .on = "-t", .ac = 0, .op = opt_dump_users },
         { .id = 0x0032, .on = "-b", .ac = 1, .op = opt_backup },

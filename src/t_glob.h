@@ -200,6 +200,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_OIMEX00                   (a64 << 26)
 #define F_OPT_FSROOT                    (a64 << 27)
 #define F_OPT_MROOT                     (a64 << 28)
+#define F_OPT_SHMRO                     (a64 << 29)
 
 #define F_OPT_PREPOSTPRINTS             (F_OPT_PREPRINT|F_OPT_POSTPRINT)
 #define F_OPT_PREPOSTPRINTFS            (F_OPT_PREPRINTF|F_OPT_POSTPRINTF)

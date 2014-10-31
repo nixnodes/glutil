@@ -96,6 +96,8 @@ off_t max_depth, min_depth;
 
 char b_glob[MAX_EXEC_STR + 1];
 
+int g_shmcflags;
+
 #define MAX_GLOB_STOR_AR_COUNT          255
 
 uint64_t glob_ui64_stor[MAX_GLOB_STOR_AR_COUNT];
