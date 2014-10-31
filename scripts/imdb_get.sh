@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:37
+#@REVISION:38
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0" regexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -32,7 +32,7 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-2.4.11 or above
+## Requires: - glutil-2.4.13-2 or above
 ##           - libxml2 v2.7.7 or above 
 ##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
