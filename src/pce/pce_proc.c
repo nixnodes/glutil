@@ -166,7 +166,7 @@ pce_proc(char *path, char *dir)
 
   char b_sp2[4096];
   snprintf(b_sp2, 4096, "%s/%s", path, dir);
-  spec_p2 = (char*) &b_sp2;
+  spec_p2 = (char*) b_sp2;
   spec_p3 = path;
 
   if ((r = g_enum_log(pce_match_build, &h_sconf, &nres, &lh_ref)))
