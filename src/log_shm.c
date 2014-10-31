@@ -70,14 +70,13 @@ shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
       shmid = &i_shmid;
     }
 
-  if (gfl0 & F_OPT_SHMRO)
-    {
-      shmflg |= SHM_RDONLY;
-    }
-
   if (*ret & R_SHMAP_ALREADY_EXISTS)
     {
       ir = 1;
+      if (gfl0 & F_OPT_SHMRO)
+        {
+          shmflg |= SHM_RDONLY;
+        }
     }
   else if ((*shmid = shmget(ipc, size,
   IPC_CREAT | IPC_EXCL | cflags)) == -1)
@@ -96,6 +95,10 @@ shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
                   *ret |= R_SHMAP_FAILED_ATTACH;
                 }
               return NULL;
+            }
+          if (gfl0 & F_OPT_SHMRO)
+            {
+              shmflg |= SHM_RDONLY;
             }
         }
       else

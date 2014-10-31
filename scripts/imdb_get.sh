@@ -402,7 +402,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
 	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
 	$2 --imdblog="${3}${LAPPEND}" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
-	echo "${10}" | grep -q "1" || [ ${IMDB_SHARED_MEM} -gt 0 ] && ${2} -q imdb --imdblog="${3}${LAPPEND}" --shmem --shmdestroy --silent
+	echo "${10}" | grep -q "1" || [ ${IMDB_SHARED_MEM} -gt 0 ] && ${2} -q imdb --imdblog="${3}${LAPPEND}" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
 fi
 
 [ ${VERBOSE} -eq 1 ] && print_str "IMDB: `echo "Q:'$QUERY ($YEAR_q)' | A:'$TITLE ($YEAR)'" | tr '+' ' '` : $IMDBURL""title/$iid : $RATING $VOTES $GENRE"

@@ -361,7 +361,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || echo "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
 	rm /tmp/glutil.img.$$.tmp
 	[ ${TVLOG_SORT} -gt 0 ] && ${2} -e tvrage --tvlog="$3$LAPPEND" --nobackup --nostats --silent --sort num,asc,started
-	[ "${10}" = "1" ] || [ ${TVLOG_SHARED_MEM} -gt 0 ] && ${2} -q tvrage --tvlog="$3$LAPPEND" --shmem --shmdestroy --silent
+	[ "${10}" = "1" ] || [ ${TVLOG_SHARED_MEM} -gt 0 ] && ${2} -q tvrage --tvlog="$3$LAPPEND" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
 fi
 
 [ ${VERBOSE} -eq 1 ] && echo "TVRAGE: `echo "Q:'$QUERY' | A:'$NAME'" | tr '+' ' '` : $TD : $LINK : $CLASS | $GENRES"
