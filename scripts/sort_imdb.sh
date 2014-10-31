@@ -76,8 +76,6 @@ C_GLROOT=`echo "${R_GLROOT}" | sed -r 's/\//\\\\\//g'`
 
 CR_PATH=`echo "${R_PATH}" | sed -r "s/^${C_GLROOT}//"`
 
-echo $T_PATH - $DT_PATH - $BT_PATH - ${R_SITEROOT} - $C_SITEROOT
-
 #[mode] [val]
 proc_sort() {
 	s_IFS=${IFS}
