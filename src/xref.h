@@ -42,6 +42,7 @@
 #define _MC_X_UID               "uid"
 #define _MC_X_GID               "gid"
 #define _MC_X_ST_MODE           "stmode"
+#define _MC_X_RLINK             "rlink"
 #define _MC_X_USER              _MC_GLOB_USER
 #define _MC_X_GROUP             _MC_GLOB_GROUP
 

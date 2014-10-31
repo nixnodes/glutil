@@ -40,6 +40,8 @@ typedef struct ___d_drt_h
   void *rt_cond;
   char *st_p;
   char *st_p0;
+  char *st_p1;
+  void *mppd_next;
 } _d_drt_h, *__d_drt_h;
 
 

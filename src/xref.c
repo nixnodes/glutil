@@ -657,6 +657,32 @@ dt_rval_x_depth(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_x_rlink(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  uint8_t d_mode = IFTODT(((__d_xref) arg)->st.st_mode);
+
+  if (d_mode != DT_LNK)
+    {
+      output[0] = 0x0;
+      return output;
+    }
+
+  char b_spl[PATH_MAX];
+  ssize_t b_spl_l;
+  if ((b_spl_l = readlink(((__d_xref) arg)->name, b_spl, PATH_MAX)) != (ssize_t) -1 )
+    {
+      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, b_spl);
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
+
+  return output;
+}
+
+char *
 dt_rval_x_basepath(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -918,7 +944,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   void *ptr;
-  if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size, mppd)))
+  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
     {
       return ptr;
     }
@@ -1162,6 +1188,14 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
           ((__d_xref) arg)->flags |= F_XRF_GET_DEPTH;
         }
       return as_ref_to_val_lk(match, dt_rval_x_depth ,(__d_drt_h)mppd, "%llu");
+    }
+  else if (!strncmp(match, _MC_X_RLINK, 5))
+    {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
+      return as_ref_to_val_lk(match, dt_rval_x_rlink ,(__d_drt_h)mppd, "%s");
     }
   else if (!strncmp(match, _MC_X_USER, 4))
     {
@@ -1611,7 +1645,7 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
                   break;
                 }
 
-              uint8_t dt_mode=IFTODT(aa_rh->p_xref.st.st_mode);
+              uint8_t dt_mode = IFTODT(aa_rh->p_xref.st.st_mode);
 
               if (dt_mode == DT_DIR && (p_spl=strstr(name, b_spl)) && p_spl == name)
                 {

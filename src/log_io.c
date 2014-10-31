@@ -347,6 +347,40 @@ g_close(__g_handle hdl)
   return 0;
 }
 
+static void
+clean_drt(__d_drt_h mppd)
+{
+  if (NULL != mppd->mppd_next)
+    {
+      clean_drt((__d_drt_h) mppd->mppd_next);
+      free(mppd->mppd_next);
+    }
+
+  md_g_free(&mppd->math);
+  /*if (NULL != mppd->rt_cond)
+   {
+   free(mppd->rt_cond);
+   }*/
+  if (NULL != mppd->st_p)
+    {
+      free(mppd->st_p);
+    }
+
+  __rt_c cond = (__rt_c ) mppd->rt_cond;
+
+  if (NULL != cond)
+    {
+      md_g_free(&cond->match.lom);
+      if (NULL != cond->match.data)
+        {
+          free(cond->match.data);
+        }
+
+      free(cond);
+      mppd->rt_cond = NULL;
+    }
+}
+
 static int
 g_clean_print_mech(pmda print_mech)
 {
@@ -369,7 +403,8 @@ g_clean_print_mech(pmda print_mech)
             }
 
           md_g_free(&g_ptr->dtr.chains);
-          md_g_free(&g_ptr->dtr.math);
+
+          clean_drt(&g_ptr->dtr);
           ptr = ptr->next;
         }
 
@@ -377,20 +412,6 @@ g_clean_print_mech(pmda print_mech)
     }
 
   return 0;
-}
-
-static void
-clean_drt(__d_drt_h mppd)
-{
-  md_g_free(&mppd->math);
-  if (NULL != mppd->rt_cond)
-    {
-      free(mppd->rt_cond);
-    }
-  if (NULL != mppd->st_p)
-    {
-      free(mppd->st_p);
-    }
 }
 
 int
@@ -425,24 +446,10 @@ g_cleanup(__g_handle hdl)
             {
               regfree(&g_ptr->preg);
             }
-          __rt_c cond = g_ptr->dtr.rt_cond;
-          while (cond)
-            {
-              __d_drt_h drt = &cond->mppd;
-              __rt_c cond_n = (__rt_c)drt->rt_cond;
 
-              if (drt)
-                {
-                  clean_drt(drt);
-                }
-              md_g_free(&cond->match.lom);
-              if (cond->match.data)
-                {
-                  free(cond->match.data);
-                }
-              free(cond);
-              cond = cond_n;
-            }
+          //g_ptr->dtr.rt_cond = NULL;
+          /*cond = cond_n;
+           }*/
           clean_drt(&g_ptr->dtr);
           ptr = ptr->next;
         }
