@@ -57,7 +57,11 @@ T_PATH=`echo "${R_PATH}" | sed -r "s/^${C_SITEROOT}//"`
 [ -z "${T_PATH}" ] && print_str "failed extracting base target path" && exit 0
 
 ! [ -d "${BASE_DIR}" ] && { 
-	mkdir -p "${BASE_DIR}" && chmod 777 "${BASE_DIR}" || exit 2
+	mkdir -p "${BASE_DIR}" && { 
+		chmod 777 "${BASE_DIR}" &> /dev/null
+	} || {
+		exit 2
+	}
 }
 
 BT_PATH=`dirname "${T_PATH}"`
@@ -67,7 +71,11 @@ BT_PATH=`dirname "${T_PATH}"`
 DT_PATH="${BASE_DIR}${BT_PATH}"
 
 ! [ -d "${DT_PATH}" ] && {
- 	mkdir -p "${DT_PATH}" && chmod 777 "${DT_PATH}" || exit 2
+ 	mkdir -p "${DT_PATH}" && {
+ 		 chmod 777 "${DT_PATH}" &> /dev/null
+	} || {
+		exit 2
+	}
 }
 
 B_PATH=`basename "${T_PATH}"`
@@ -85,14 +93,15 @@ proc_sort() {
 		[ -z "${O_VAL}" ] && continue
 		C_PATH="${DT_PATH}/${1}/${O_VAL}"
 		! [ -d "${C_PATH}" ] && {
-			mkdir -p "${C_PATH}" && chmod 777 "${C_PATH}" &> /dev/null || {
+			mkdir -p "${C_PATH}" || {
+				chmod 777 "${C_PATH}" &> /dev/null
 				IFS=${s_IFS}
 				return 2
 			}			
 		}
 		
 		! [ -e "${C_PATH}/${B_PATH}" ] && { 
-			print_str "${C_PATH}/${B_PATH}"
+			print_str "${C_PATH}/${B_PATH}" 
 			ln -s "${CR_PATH}" "${C_PATH}" &> /dev/null
 		}
 	done
@@ -106,6 +115,6 @@ proc_sort() {
 [ -n "${R_RATING}" ] && proc_sort Rating "${R_RATING}"
 [ -n "${R_SCORE}" ] && proc_sort Score "${R_SCORE}"
 
-#chmod -R 777 "${BASE_DIR}" || exit 2
+chmod -R 777 "${BASE_DIR}" &> /dev/null
 
 exit 0
