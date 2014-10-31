@@ -78,6 +78,7 @@
  *   2.4.13:
  *   - + Global vars can be referenced when regex matching rls strings (precheck) (1)
  *   - + --shmcflags and --shmro (see --help) (2)
+ *   ~ - Some early errors weren't logged (precheck) (3)
  *
  * v2.3:
  *

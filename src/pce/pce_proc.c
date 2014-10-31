@@ -49,6 +49,9 @@ char *pp_msg_00[MAX_EXEC_STR + 1];
 int
 pce_proc(char *path, char *dir)
 {
+  gfl |= F_OPT_PS_LOGGING;
+  pce_enable_logging();
+
   if (!path || !dir)
     {
       print_str("ERROR: insufficient arguments from ftpd\n");
@@ -68,16 +71,20 @@ pce_proc(char *path, char *dir)
 
   gconf = (__d_gconf) h_gconf.buffer.pos->ptr;
 
-  if (gconf->o_logging > 0)
+  if (NULL == gconf)
     {
-      gfl |= F_OPT_PS_LOGGING;
-      pce_enable_logging();
+      print_str("ERROR: %s: no global configuration was loaded\n", GCONFLOG);
+      goto aft_end;
     }
 
-  if (!gconf)
+  if (gconf->o_logging == 0)
     {
-      print_str("ERROR: %s: no info available\n", GCONFLOG);
-      goto aft_end;
+      gfl ^= F_OPT_PS_LOGGING;
+      if (fd_log)
+        {
+          fclose(fd_log);
+        }
+      fd_log = NULL;
     }
 
   gfl ^= G_HFLAGS;
@@ -786,8 +793,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 
           g_cleanup(p_log);
           /*p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
-              | S_IWGRP;
-          p_log->shmatflags = SHM_RDONLY;*/
+           | S_IWGRP;
+           p_log->shmatflags = SHM_RDONLY;*/
           p_log->flags |= F_GH_HASMATCHES;
           uint64_t s_gfl = gfl;
           if (gfl & F_OPT_SHAREDMEM)
