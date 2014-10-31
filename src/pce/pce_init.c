@@ -143,7 +143,7 @@ char *spec_p4 = NULL;
 
 #include <sys/stat.h>
 
-int g_shmcflags = S_IRUSR | S_IWUSR;
+int g_shmcflags = S_IRUSR | S_IRGRP | S_IROTH;
 
 __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
     pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,

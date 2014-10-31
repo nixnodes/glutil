@@ -64,7 +64,7 @@ key_t SHM_IPC = (key_t) shm_ipc;
 
 #include <sys/stat.h>
 
-int g_shmcflags = S_IRUSR | S_IWUSR;
+int g_shmcflags = S_IRUSR | S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;;
 
 char GLROOT[PATH_MAX] =
   { glroot };

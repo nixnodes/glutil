@@ -159,8 +159,7 @@ echo >> /tmp/glutil.$$.pce
 ${GLUTIL} -z gconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/gconf" && 
 		echo "BUILD: 'GCONF': OK"
 
-${GLUTIL} -q gconf --loadq --shmem --shmdestroy --silent --gconf "${DATA_PATH}/gconf"
-${GLUTIL} -q gconf --loadq --shmem --shmreload --silent --gconf "${DATA_PATH}/gconf"
+${GLUTIL} -q gconf --shmem --loadq --silent --shmdestroy --shmreload --shmcflags 444 --gconf "${DATA_PATH}/gconf"
 
 rm -f /tmp/glutil.$$.pce
 
