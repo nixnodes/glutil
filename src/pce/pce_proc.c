@@ -300,7 +300,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
         {
           p_log = md_alloc(lh_ref, sizeof(_g_handle));
           p_log->flags |= F_GH_HASMATCHES;
-          p_log->shmatflags = SHM_RDONLY;
+          //p_log->shmatflags = SHM_RDONLY;
           p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
           | S_IWGRP;
 
@@ -785,9 +785,9 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           print_str("NOTICE: %s: retrying lookup\n", p_log->file);
 
           g_cleanup(p_log);
-          p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
+          /*p_log->shmcflags = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP
               | S_IWGRP;
-          p_log->shmatflags = SHM_RDONLY;
+          p_log->shmatflags = SHM_RDONLY;*/
           p_log->flags |= F_GH_HASMATCHES;
           uint64_t s_gfl = gfl;
           if (gfl & F_OPT_SHAREDMEM)
