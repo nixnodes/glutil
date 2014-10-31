@@ -1598,7 +1598,7 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
       else
         {
           char b_spl[PATH_MAX];
-          ssize_t b_spl_l;
+          int b_spl_l;
           if ( (b_spl_l=readlink(name, b_spl, PATH_MAX)) > 0 )
             {
               b_spl[b_spl_l] = 0x0;
@@ -1622,7 +1622,10 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
             }
           else
             {
-              print_str("ERROR: %s: [%s] could not read link\n", name, strerror(errno));
+              if ( b_spl_l == -1 )
+                {
+                  print_str("ERROR: %s: [%s] could not read link\n", name, strerror(errno));
+                }
             }
 
         }
