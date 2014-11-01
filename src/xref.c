@@ -720,9 +720,7 @@ char *
 dt_rval_x_size(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      (ulint64_t) get_file_size(((__d_xref) arg)->name));
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, (ulint64_t) ((__d_xref) arg)->st.st_size);
   return output;
 }
 
@@ -1473,7 +1471,8 @@ g_preproc_dm(char *name, __d_xref p_xref, unsigned char type, __std_rh aa_rh)
         {
           bzero(&p_xref->st, sizeof(struct stat));
           ret = 1;
-          print_str("ERROR: '%s': could not stat [%s]\n", name, strerror(errno));
+          print_str("ERROR: '%s': could not stat [%s]\n", name,
+              strerror(errno));
         }
       else
         {

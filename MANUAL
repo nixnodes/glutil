@@ -50,7 +50,7 @@ Updated: 4/12/2013
 			globally.
 			
 			For example, assume we are processing the nukelog:						
-				-n ilom "status=0" -print '{basedir} was NUKED {mult}x by {nuker} on {?tl:time#%d %h at %H:%M}'
+				-n lom "status=0" -print '{basedir} was NUKED {mult}x by {nuker} on {?tl:time#%d %h at %H:%M}'
 				
 			This returns only nuked releases (status=0):				
 				Some.Folder-TAG was NUKED 3x by someuser on 30 Jun at 11:07 
@@ -111,7 +111,16 @@ Updated: 4/12/2013
 	
  EXTENDED DIRECTIVES:
 			
-	[?<directive>:]arg[:arg2:..][#<format>]
+	[?<option>]:[<field|(directive)>][#<format>]
+	
+	Legend:
+	
+	<field>		 -	only a reference to the actual data, strictly
+					fields which are listed in DATA_STRUCTURES 
+	<directive>	 -	actual data field or an extended directive
+	<expression> -	logical/relational or mathematical expression
+	<pattern>	 - 	string matching pattern (e.g. REGEX)
+	
 	
 	?c	 <num repeat>:<char>				
 			Character generator. Example use: '{?c:3:\t}' - prints three tab's.
@@ -134,7 +143,7 @@ Updated: 4/12/2013
 	?tl		Same as '?t', only the timestamp is converted relative to 
 			the user's specified timezone.
 			
-	?l	 <field>
+	?l	 <directive>
 			Prints the length of the field data based output string. Applies to 
 			integer/float fields too, measuring their length in string form.
 			
@@ -160,15 +169,15 @@ Updated: 4/12/2013
 				>>  Bitwise right shift
 			
 			Example:
-				-d -print '{?m:size/1024/1024}MB in {files} files, {?m:size/files/1024/1024}MB avg per file {?c:2:\t} {basedir}' ilom 'files > 0'
+				-d -print '{?m:size/(1024*2)}MB in {files} files, {?m:(size/files)/(1024*1024)}MB avg per file {?c:2:\t} {basedir}' --lom 'files>0' --sort size
 				
 			Output:
 				...
 				356MB in 28 files, 12MB avg per file 		 Some.Folder-TAG
-				...
+				...				
 				
-	?rs  [/[<flags>]]:<field>:<pattern>:<string>
-			Before outputing/filtering the string returned by <field>, substitute
+	?rs  [/[<flags>]]:<directive>:<pattern>:<string>
+			Before outputing/filtering the string returned by <directive>, substitute
 			part(s) matching regex <pattern> with <string>. 
 			Works on all integer/float fields.
 			
@@ -180,43 +189,43 @@ Updated: 4/12/2013
 			Replace float dots in 'score' field with commas before 
 			printing to stdout:
 			
-				-a ilom "score>7.0" -print '{?rs:score:[.]:\,} {?c:1:\t}{title}'
+				-a lom "score>7.0" -print '{?rs:score:[.]:\,} {?c:1:\t}{title}'
 										
 			Output:				
 				7,7		Some Movie
 				...
 				
 			
-	?rd  [/[<flags>]]:<field>:<pattern>
-			Delete matching regex <pattern> from returned string.
+	?rd  [/[<flags>]]:<directive>:<pattern>
+			Delete matching regex <pattern> from string returned by <directive>.
 						
 			Remove any (..) tags that may be present in tvrage shownames, before
 			doing a regex query in tvlog for 'Some Show':
 			
-				-h -print '{name}' iregexi '?rd/g:name:([ ]+|())\\(.*\\)([ ]+|()),^Some Show$'
+				-h -print '{name}' --regexi '?rd/g:name:([ ]+|())\\(.*\\)([ ]+|()),^Some Show$'
 				
 			'Some Show (2004)' is matched as 'Some Show', without having to
 			wipe (2004) out of the database.
 			
-	?b   <field>
-			Strip directory and suffix from filename stored in <field>
+	?b   <directive>
+			Strip directory and suffix from filename stored in <directive>
 			
-	?d   <field>
-			Strip last component from file name <field>
+	?d   <directive>
+			Strip last component from file name <directive>
 			
 	?p   <text>
 			Print <text>
 			
-	?P   <field>#<format>
-			Print <field> formatted per <format> (printf)
+	?P   <directive>#<format>
+			Print <directive> formatted per <format> (printf)
 			
-	?L   <condition>:<field>
-			Evaluates <condition> (LOM syntax) and returns <field> if successfull
+	?L   <expression>:<directive1>:<directive2>
+			Evaluates <expression> (LOM syntax) and executes <directive1> if 
+			<expression> evaluates true and <directive2> if false.
 			
-	?X   <FILESYSTEM field>:<field>
-			Resolves <field> (current data input) and triggers a FILESYSTEM lookup
-			of field <FILESYSTEM field>, using the resolved <field> result as the
-			path.
+	?X   <directive (FILESYSTEM)>:<directive>
+			Resolves <directive> (current data input) and executes <directive (FILESYSTEM)>, 
+			using the resolved <field> result as the path.			
 			
 			One instance where this could be usefull is when checking for dead links,
 			for example:
@@ -236,8 +245,11 @@ Updated: 4/12/2013
 			is done, using the path to which the link is pointing (determined by calling 'rlink').
 			Returned value is the result of 'isread', using the value returned by 'rlink'.
 			
-			<field> can be whatever fields are available for the data being processed (see DATA_STRUCTURES)
-			<FILESYSTEM field> can only be fields related to the filesystem (DATA_STRUCTURES, under FILESYSTEM)
+			<directive> executes on the data currently being processed (see DATA_STRUCTURES)
+			<directive (FILESYSTEM)> executes on filesystem data generated from given path
+			(result of <directive>) as requested by the directive itself (DATA_STRUCTURES, 
+			under FILESYSTEM)
+			 
 			
 			
 	Mind that ',' ':' '(' ')' '{' and '}' always need to be escaped with '\'. 	
@@ -257,11 +269,11 @@ Updated: 4/12/2013
 	Extended directives can be used with with -exec[v], -print[f] and string filters 
 	(--[i]regex[i]/--[i]match):
 	
-		-d imatch "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
+		-d --match "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
 		
 		or
 		
-		-d imatch "?tl:time#%d %h,23 Sep" -execv "echo {basedir} was created \"{?tl:time#%d %h at %H:%M}\""			
+		-d --match "?tl:time#%d %h,23 Sep" -execv "echo {basedir} was created \"{?tl:time#%d %h at %H:%M}\""			
 		
 	Prints only records created on 23'rd of September from the dirlog, custom formatted.
 
@@ -298,10 +310,10 @@ Updated: 4/12/2013
 	 ...
 	
 	
-	Now do the same, but apply a regex filter (--iregex) to dirnames 
+	Now do the same, but apply a regex filter (--regex) to dirnames 
 	to -exec ONLY what is matched and quit after first match (--imatchq):
 	
-	 ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --iregex \
+	 ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --regex \
 	 "\/The\.Simpsons" --imatchq
 	
 	Output:
@@ -377,16 +389,16 @@ Updated: 4/12/2013
 	Say we want to do something with releases (in this case just 'echo'), 
 	with a score lower than 5.0, but higher than 0
 	
-	-a --silent --ilom="score < 5.0 && score" --execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
+	-a --silent --lom="score < 5.0 && score" --execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
 	
 	Display all titles with score higher than 6.0, sort by score ascending:
 	
-	-a --ilom="score > 6.0" --sort num,asc,score --batch | cut -f 3,6
+	-a --lom="score > 6.0" --sort num,asc,score --batch | cut -f 3,6
 	
 	Display all titles with score higher than 7.1 of genre Comedy,
 	sorted by score ascending:
 	
-	-a --ilom="score > 7.1" --iregexi "genres,Comedy" --sort num,asc,score --batch | cut -f 3,6
+	-a --lom="score > 7.1" --regexi "genres,Comedy" --sort num,asc,score --batch | cut -f 3,6
 
 
  FOLDERS FILE (filesystem based dirlog rebuild only):
@@ -473,9 +485,9 @@ Updated: 4/12/2013
 	
 	  Count up folder files and sizes from all dirlog records:
 	
-		-d --ilom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
+		-d --lom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
 		
 	  Increment by one for each record matched (regex and LOM filters applied):
 	  
-		-d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
+		-d --lom "u64glob7 += 1" --regex "a" --lom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
  

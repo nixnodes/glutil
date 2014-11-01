@@ -226,9 +226,10 @@ dt_rval_spec_conditional(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   __rt_c cond = (__rt_c ) ((__d_drt_h ) mppd)->rt_cond;
-  __d_drt_h mppd_next = (__d_drt_h ) ((__d_drt_h ) mppd)->mppd_next;
-  if (0 == g_lom_match(mppd_next->hdl, arg, &cond->match))
+
+  if (0 == g_lom_match(((__d_drt_h ) mppd)->hdl, arg, &cond->match))
     {
+      __d_drt_h mppd_next = (__d_drt_h ) ((__d_drt_h ) mppd)->mppd_next;
       char *p_o = cond->p_exec(arg, match, ((__d_drt_h ) mppd)->tp_b0,
           sizeof(((__d_drt_h ) mppd)->tp_b0), mppd_next);
 
@@ -240,11 +241,22 @@ dt_rval_spec_conditional(void *arg, char *match, char *output, size_t max_size,
         {
           output[0] = 0x0;
         }
-      return output;
     }
   else
     {
-      output[0] = 0x0;
+      __d_drt_h mppd_aux_next = (__d_drt_h ) ((__d_drt_h ) mppd)->mppd_aux_next;
+      char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
+          ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
+          mppd_aux_next);
+
+      if (NULL != p_o)
+        {
+          snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, p_o);
+        }
+      else
+        {
+          output[0] = 0x0;
+        }
     }
 
   return output;
@@ -757,6 +769,7 @@ rt_af_conditional(void *arg, char *match, char *output, size_t max_size,
   while (ptr[0] && ptr[0] != 0x3A)
     {
       ptr++;
+      match++;
     }
 
   if (ptr[0] != 0x3A)
@@ -769,15 +782,9 @@ rt_af_conditional(void *arg, char *match, char *output, size_t max_size,
 
   ptr[0] = 0x0;
   ptr++;
+  match++;
 
-  trigger = ptr;
-
-  while (ptr[0] && ptr[0] != 0x7D)
-    {
-      ptr++;
-    }
-
-  //ptr[0] = 0x0;
+  trigger = match;
 
   int r;
 
@@ -792,33 +799,38 @@ rt_af_conditional(void *arg, char *match, char *output, size_t max_size,
       return NULL;
     }
 
-  size_t trigger_l = strlen(trigger);
-
-  if (trigger_l > sizeof(cond->c_exec))
-    {
-      print_str("ERROR: rt_af_conditional: command too long\n");
-      free(lom_st);
-      free(mppd->rt_cond);
-      mppd->rt_cond = NULL;
-      return NULL;
-
-    }
-
-  strncpy(cond->c_exec, trigger, trigger_l);
-  //memcpy(&cond->mppd, mppd, sizeof(_d_drt_h));
-  mppd->mppd_next = l_mppd_create_copy(mppd);
-
   free(lom_st);
 
-  cond->p_exec = mppd->hdl->g_proc1_lookup(arg, cond->c_exec, output, max_size,
+  mppd->mppd_next = l_mppd_create_copy(mppd);
+  mppd->mppd_aux_next = l_mppd_create_copy(mppd);
+
+  cond->p_exec = mppd->hdl->g_proc1_lookup(arg, trigger, output, max_size,
       mppd->mppd_next);
 
   if (NULL == cond->p_exec)
     {
-      print_str("ERROR: rt_af_conditional: could not resolve '%s'\n",
-          cond->c_exec);
+      print_str("ERROR: rt_af_conditional->p_exec: could not resolve '%s'\n",
+          trigger);
       free(mppd->rt_cond);
       mppd->rt_cond = NULL;
+      return NULL;
+    }
+
+  if (NULL == ((__d_drt_h ) mppd->mppd_next)->varg_l
+      || ((__d_drt_h ) mppd->mppd_next)->varg_l[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_conditional: could not resolve 'else' proc\n");
+      return NULL;
+    }
+
+  mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg,
+      ((__d_drt_h ) mppd->mppd_next)->varg_l, output, max_size,
+      mppd->mppd_aux_next);
+
+  if (NULL == mppd->fp_rval1)
+    {
+      print_str("ERROR: rt_af_conditional->fp_rval1: could not resolve '%s'\n",
+          ((__d_drt_h ) mppd->mppd_next)->varg_l);
       return NULL;
     }
 

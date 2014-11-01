@@ -83,6 +83,8 @@
  *   - + 'rlink' field (FILESYSTEM) (4)
  *   - + '?X' extended directive (5)
  *   - ~ Fixed an unsafe 'snprintf' call, allowed for injection (5)
+ *   - % Expanded on '?L' directive to include 'else' action (6)
+ *   - ~ 'size' was resolving links instead of reading link size (6)
  *
  * v2.3:
  *

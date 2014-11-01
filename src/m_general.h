@@ -122,7 +122,6 @@ _l_match _match_rr_l;
 typedef struct ___rt_conditional
 {
   _g_match match;
-  char c_exec[MAX_RT_C_EXEC];
   __g_proc_v p_exec;
 } _rt_c, *__rt_c;
 
