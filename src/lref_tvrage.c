@@ -264,11 +264,14 @@ void *
 ref_to_val_lk_tvrage(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  PROC_SH_EX(match)
+
   void *ptr;
-  if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size, mppd)))
+  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
     {
       return ptr;
     }
+
   if (!strncmp(match, _MC_GLOB_TIME, 4))
     {
       return as_ref_to_val_lk(match, dt_rval_tvrage_time, (__d_drt_h ) mppd,

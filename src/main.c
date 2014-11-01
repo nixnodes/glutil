@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <lref.h>
+
 int
 (*print_str)(const char * volatile buf, ...);
 
@@ -48,6 +50,13 @@ main(int argc, char *argv[])
 
   print_str = g_print_str;
   __pf_eof = g_feof;
+
+  /*char output[8192];
+  l_mppd_shell_ex(argv[1], output, sizeof(output));
+
+  fputs(output, stdout);
+
+  exit(0);*/
 
   /*mda ip_stor =
    { 0 };

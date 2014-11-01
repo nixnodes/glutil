@@ -79,6 +79,7 @@ FLAGS:
    minor      I     ID of the device in class
    inode      I     inode number
    links      I     Number of hard links
+   rlink      S     Read value of a symbolic link
    uid        I     User ID of owner
    gid        I     Uroup ID of owner
    user       S     Username of the owner

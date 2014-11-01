@@ -79,6 +79,8 @@
  *   - + Global vars can be referenced when regex matching rls strings (precheck) (1)
  *   - + --shmcflags and --shmro (see --help) (2)
  *   - ~ Some early errors weren't logged (precheck) (3)
+ *   - % Extended directives recursive execution (4)
+ *   - + 'rlink' field (FILESYSTEM) (4)
  *
  * v2.3:
  *

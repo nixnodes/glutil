@@ -356,14 +356,22 @@ clean_drt(__d_drt_h mppd)
       free(mppd->mppd_next);
     }
 
+  if (NULL != mppd->mppd_aux_next)
+    {
+      clean_drt((__d_drt_h) mppd->mppd_aux_next);
+      free(mppd->mppd_aux_next);
+    }
+
   md_g_free(&mppd->math);
-  /*if (NULL != mppd->rt_cond)
-   {
-   free(mppd->rt_cond);
-   }*/
+
   if (NULL != mppd->st_p)
     {
       free(mppd->st_p);
+    }
+
+  if ( NULL != mppd->v_p0)
+    {
+      free(mppd->v_p0);
     }
 
   __rt_c cond = (__rt_c ) mppd->rt_cond;

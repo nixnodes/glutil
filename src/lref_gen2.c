@@ -376,8 +376,10 @@ void *
 ref_to_val_lk_gen2(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  PROC_SH_EX(match)
+
   void *ptr;
-  if ((ptr = ref_to_val_lk_generic(NULL, match, output, max_size, mppd)))
+  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
     {
       return ptr;
     }

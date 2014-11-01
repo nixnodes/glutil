@@ -668,11 +668,10 @@ dt_rval_x_rlink(void *arg, char *match, char *output, size_t max_size,
       return output;
     }
 
-  char b_spl[PATH_MAX];
   ssize_t b_spl_l;
-  if ((b_spl_l = readlink(((__d_xref) arg)->name, b_spl, PATH_MAX)) != (ssize_t) -1 )
+  if ((b_spl_l = readlink(((__d_xref) arg)->name, output, max_size - 1)) != (ssize_t) -1 )
     {
-      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, b_spl);
+      output[b_spl_l] = 0x0;
     }
   else
     {
@@ -943,6 +942,8 @@ void*
 ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  PROC_SH_EX(match)
+
   void *ptr;
   if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
     {
@@ -1457,85 +1458,87 @@ g_dump_gen(char *root)
 }
 
 void
-g_preproc_dm(char *name, __std_rh aa_rh, unsigned char type)
+g_preproc_dm(char *name, __d_xref p_xref, unsigned char type, __std_rh aa_rh)
 {
   size_t s_l = strlen(name);
   s_l >= PATH_MAX ? s_l = PATH_MAX - 1 : s_l;
-  strncpy(aa_rh->p_xref.name, name, s_l);
-  aa_rh->p_xref.name[s_l] = 0x0;
-  if (aa_rh->p_xref.flags & F_XRF_DO_STAT)
+  strncpy(p_xref->name, name, s_l);
+  p_xref->name[s_l] = 0x0;
+  if (p_xref->flags & F_XRF_DO_STAT)
     {
-      if (lstat(name, &aa_rh->p_xref.st))
+      if (lstat(name, &p_xref->st))
         {
-          bzero(&aa_rh->p_xref.st, sizeof(struct stat));
+          bzero(&p_xref->st, sizeof(struct stat));
         }
       else
         {
-          if (aa_rh->p_xref.flags & F_XRF_GET_STCTIME)
+          if (p_xref->flags & F_XRF_GET_STCTIME)
             {
-              aa_rh->p_xref.st.st_ctime = get_file_creation_time(
-                  &aa_rh->p_xref.st);
+              p_xref->st.st_ctime = get_file_creation_time(&p_xref->st);
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_UPERM)
+          if (p_xref->flags & F_XRF_GET_UPERM)
             {
-              aa_rh->p_xref.uperm = (aa_rh->p_xref.st.st_mode & S_IRWXU) >> 6;
+              p_xref->uperm = (p_xref->st.st_mode & S_IRWXU) >> 6;
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_GPERM)
+          if (p_xref->flags & F_XRF_GET_GPERM)
             {
-              aa_rh->p_xref.gperm = (aa_rh->p_xref.st.st_mode & S_IRWXG) >> 3;
+              p_xref->gperm = (p_xref->st.st_mode & S_IRWXG) >> 3;
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_OPERM)
+          if (p_xref->flags & F_XRF_GET_OPERM)
             {
-              aa_rh->p_xref.operm = (aa_rh->p_xref.st.st_mode & S_IRWXO);
+              p_xref->operm = (p_xref->st.st_mode & S_IRWXO);
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_SPERM)
+          if (p_xref->flags & F_XRF_GET_SPERM)
             {
-              aa_rh->p_xref.sperm = (aa_rh->p_xref.st.st_mode
+              p_xref->sperm = (p_xref->st.st_mode
                   & (S_ISUID | S_ISGID | S_ISVTX)) >> 9;
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_PBITS)
+          if (p_xref->flags & F_XRF_GET_PBITS)
             {
-              aa_rh->p_xref.pbits = aa_rh->p_xref.st.st_mode
+              p_xref->pbits = p_xref->st.st_mode
                   & (S_ISUID | S_ISGID | S_ISVTX | S_IRWXO | S_IRWXG | S_IRWXU);
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_MINOR)
+          if (p_xref->flags & F_XRF_GET_MINOR)
             {
-              aa_rh->p_xref.minor = minor(aa_rh->p_xref.st.st_dev);
+              p_xref->minor = minor(p_xref->st.st_dev);
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_MAJOR)
+          if (p_xref->flags & F_XRF_GET_MAJOR)
             {
-              aa_rh->p_xref.major = major(aa_rh->p_xref.st.st_dev);
+              p_xref->major = major(p_xref->st.st_dev);
             }
-          if (aa_rh->p_xref.flags & F_XRF_GET_SPARSE)
+          if (p_xref->flags & F_XRF_GET_SPARSE)
             {
-              aa_rh->p_xref.sparseness = file_sparseness(&aa_rh->p_xref.st);
+              p_xref->sparseness = file_sparseness(&p_xref->st);
             }
         }
     }
 
-  if (aa_rh->p_xref.flags & F_XRF_GET_DT_MODE)
+  if (p_xref->flags & F_XRF_GET_DT_MODE)
     {
-      aa_rh->p_xref.type = type;
+      p_xref->type = type;
     }
-  if (aa_rh->p_xref.flags & F_XRF_GET_READ)
+  if (p_xref->flags & F_XRF_GET_READ)
     {
-      aa_rh->p_xref.r = (uint8_t) !(access(aa_rh->p_xref.name, R_OK));
+      p_xref->r = (uint8_t) !(access(p_xref->name, R_OK));
     }
-  if (aa_rh->p_xref.flags & F_XRF_GET_WRITE)
+  if (p_xref->flags & F_XRF_GET_WRITE)
     {
-      aa_rh->p_xref.w = (uint8_t) !(access(aa_rh->p_xref.name, W_OK));
+      p_xref->w = (uint8_t) !(access(p_xref->name, W_OK));
     }
-  if (aa_rh->p_xref.flags & F_XRF_GET_EXEC)
+  if (p_xref->flags & F_XRF_GET_EXEC)
     {
-      aa_rh->p_xref.x = (uint8_t) !(access(aa_rh->p_xref.name, X_OK));
+      p_xref->x = (uint8_t) !(access(p_xref->name, X_OK));
     }
-  if (aa_rh->p_xref.flags & F_XRF_GET_CRC32)
+  if (p_xref->flags & F_XRF_GET_CRC32)
     {
-      file_crc32(aa_rh->p_xref.name, &aa_rh->p_xref.crc32);
+      file_crc32(p_xref->name, &p_xref->crc32);
     }
-  if (aa_rh->p_xref.flags & F_XRF_GET_DEPTH)
+  if (p_xref->flags & F_XRF_GET_DEPTH)
     {
-      aa_rh->p_xref.depth = (uint64_t) aa_rh->edsp->depth;
+      if ( NULL != aa_rh)
+        {
+          p_xref->depth = (uint64_t) aa_rh->edsp->depth;
+        }
     }
 }
 
@@ -1547,7 +1550,7 @@ g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds)
       return 1;
     }
 
-  g_preproc_dm(name, aa_rh, type);
+  g_preproc_dm(name, &aa_rh->p_xref, type, aa_rh);
   if ((g_bmatch((void*) &aa_rh->p_xref, &aa_rh->hdl, &aa_rh->hdl.buffer)))
     {
       aa_rh->st_2++;

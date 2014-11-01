@@ -231,7 +231,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
             {
               if (!(int_flags & F_PROC_MATH_STR_INB))
                 {
-                  return 11;
+                  return 0;
                 }
               else
                 {

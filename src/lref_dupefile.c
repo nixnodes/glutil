@@ -5,7 +5,6 @@
  *      Author: reboot
  */
 
-
 #include <glutil.h>
 #include "config.h"
 
@@ -37,7 +36,6 @@ dt_set_dupefile(__g_handle hdl)
   hdl->ipc_key = IPC_KEY_DUPEFILE;
   hdl->jm_offset = (size_t) &((struct dupefile*) NULL)->filename;
 }
-
 
 int
 dupefile_format_block(void *iarg, char *output)
@@ -102,6 +100,14 @@ void *
 ref_to_val_lk_dupefile(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  PROC_SH_EX(match)
+
+  void *ptr;
+  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
+    {
+      return ptr;
+    }
+
   if (!strncmp(match, _MC_GLOB_TIME, 4))
     {
       return as_ref_to_val_lk(match, dt_rval_dupefile_time, (__d_drt_h ) mppd,
