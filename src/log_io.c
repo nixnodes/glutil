@@ -374,6 +374,11 @@ clean_drt(__d_drt_h mppd)
       free(mppd->v_p0);
     }
 
+  if (NULL != mppd->st_p0)
+    {
+      free(mppd->st_p0);
+    }
+
   __rt_c cond = (__rt_c ) mppd->rt_cond;
 
   if (NULL != cond)

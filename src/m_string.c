@@ -186,8 +186,6 @@ g_load_strm(__g_handle hdl)
 
           if (s_ptr[i] == 0x2C && i != (off_t) 4096)
             {
-              printf("%s\n", s_ptr);
-
               _m_ptr->dtr.hdl = hdl;
               if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, s_ptr, hdl->mv1_b, MAX_VAR_LEN, &_m_ptr->dtr)))
                 {

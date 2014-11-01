@@ -272,7 +272,7 @@ ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
 
   bzero(ptr->s_ret, sizeof(ptr->s_ret));
 
-  snprintf(ptr->s_ret, sizeof(ptr->s_ret), buffer);
+  snprintf(ptr->s_ret, sizeof(ptr->s_ret), "%s", buffer);
   snprintf(ptr->p_buf_2, PATH_MAX, "%s", name);
 
   if (access(name, X_OK))

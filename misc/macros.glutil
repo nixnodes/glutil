@@ -255,4 +255,3 @@
 #
 #@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{m:exe} noop --preexec `{exe} --dupefile={m:q:dupefile@file} --backup dupefile -vv; rm -f {m:q:dupefile@file}; {exe} -R -x "{siteroot}" -print "file {basepath}{:nl}user {user}{:nl}time {mtime}{:nl}" lom mode=8 --glroot "{m:glroot}" | glutil -z dupefile -vvvv --stdin --dupefile={m:q:dupefile@file}`
 #
-#@MACRO:test-t|t:{m:exe} -d -v -print "{?rd/g:(?m:size):/}" --sort desc,size --maxres=12

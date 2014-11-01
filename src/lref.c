@@ -120,7 +120,7 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, __d_drt_h mppd)
 
   if ( NULL != mppd)
     {
-      ptr = &input[c+2];
+      ptr = &input[c + 2];
 
       if (ptr[0] == 0x3A)
         {
@@ -144,6 +144,11 @@ g_get_stf(char *match)
     }
 
   ptr--;
+
+  if (ptr[0] == 0x29)
+    {
+      return NULL;
+    }
 
   while (ptr[0] != 0x7D && ptr[0] != 0x23 && ptr[0])
     {
@@ -847,7 +852,7 @@ rt_af_print_format(void *arg, char *match, char *output, size_t max_size,
 
   mppd->mppd_next = l_mppd_create_copy(mppd);
 
-  mppd->st_p0 = match;
+  mppd->st_p0 = strdup(match);
 
   mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
       mppd->mppd_next);
@@ -869,20 +874,24 @@ dt_rval_xstat(void *arg, char *match, char *output, size_t max_size, void *mppd)
   __d_drt_h mppd_f = (__d_drt_h ) ((__d_drt_h ) mppd)->mppd_aux_next;
 
   char *p_o = ((__d_drt_h ) mppd)->fp_rval2(arg, ((__d_drt_h ) mppd)->varg_l,
-      ((__d_drt_h ) mppd_f)->tp_b0, sizeof(((__d_drt_h ) mppd_f)->tp_b0),
-      mppd_f);
+      output, max_size, mppd_f);
 
   if (NULL != p_o)
     {
       __d_xref pxrf = ((__d_drt_h ) mppd)->v_p0;
 
-      g_preproc_dm(p_o, pxrf, 0x0, NULL);
+      if (0 == g_preproc_dm(p_o, pxrf, 0x0, NULL))
+        {
+          char *x_p_o = ((__d_drt_h ) mppd)->fp_rval1((void*) pxrf,
+              ((__d_drt_h ) mppd)->st_p0, ((__d_drt_h ) mppd)->tp_b0,
+              sizeof(((__d_drt_h ) mppd)->tp_b0), mppd_x);
 
-      char *x_p_o = ((__d_drt_h ) mppd)->fp_rval1((void*) pxrf,
-          ((__d_drt_h ) mppd)->st_p0, ((__d_drt_h ) mppd_x)->tp_b0,
-          sizeof(((__d_drt_h ) mppd_x)->tp_b0), mppd_x);
-
-      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, x_p_o);
+          snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, x_p_o);
+        }
+      else
+        {
+          output[0] = 0x0;
+        }
     }
   else
     {
@@ -900,7 +909,7 @@ rt_af_xstat(void *arg, char *match, char *output, size_t max_size,
   mppd->mppd_next = l_mppd_create_copy(mppd);
   mppd->mppd_aux_next = l_mppd_create_copy(mppd);
 
-  mppd->st_p0 = match;
+  mppd->st_p0 = strdup(match);
   mppd->v_p0 = calloc(1, sizeof(_d_xref));
 
   mppd->fp_rval1 = ref_to_val_lk_x(mppd->v_p0, match, output, max_size,

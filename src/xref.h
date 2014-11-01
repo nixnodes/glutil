@@ -244,7 +244,7 @@ void
 g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
 int
 g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds);
-void
+int
 g_preproc_dm(char *name, __d_xref p_xref, unsigned char type,  __std_rh aa_rh);
 
 _d_rtv_lk ref_to_val_lk_x;

@@ -211,7 +211,33 @@ Updated: 4/12/2013
 			Print <field> formatted per <format> (printf)
 			
 	?L   <condition>:<field>
-			Evaluates <condition> (LOM syntax) and returns <field> if successfull;
+			Evaluates <condition> (LOM syntax) and returns <field> if successfull
+			
+	?X   <FILESYSTEM field>:<field>
+			Resolves <field> (current data input) and triggers a FILESYSTEM lookup
+			of field <FILESYSTEM field>, using the resolved <field> result as the
+			path.
+			
+			One instance where this could be usefull is when checking for dead links,
+			for example:
+			
+				-x / -R lom "mode=10" -print "Readable: [ {(?X:(isread):(?P:rlink#%s))} ] {path} -> {rlink}"
+				
+			Output:
+			
+				...
+				Readable: [ 0 ] /usr/bin/pvresize -> lvm
+				Readable: [ 0 ] /usr/bin/iptables -> xtables-multi
+				Readable: [ 1 ] /usr/bin/servertool -> /usr/lib/jvm/default-runtime/bin/servertool
+				Readable: [ 1 ] /usr/bin/lrelease-qt4 -> /usr/lib/qt4/bin/lrelease
+				...
+			
+			To simplify on this example, a filesystem field lookup ('isread' in this case)
+			is done, using the path to which the link is pointing (determined by calling 'rlink').
+			Returned value is the result of 'isread', using the value returned by 'rlink'.
+			
+			<field> can be whatever fields are available for the data being processed (see DATA_STRUCTURES)
+			<FILESYSTEM field> can only be fields related to the filesystem (DATA_STRUCTURES, under FILESYSTEM)
 			
 			
 	Mind that ',' ':' '(' ')' '{' and '}' always need to be escaped with '\'. 	

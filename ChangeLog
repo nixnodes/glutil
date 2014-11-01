@@ -81,6 +81,8 @@
  *   - ~ Some early errors weren't logged (precheck) (3)
  *   - % Extended directives recursive execution (4)
  *   - + 'rlink' field (FILESYSTEM) (4)
+ *   - + '?X' extended directive (5)
+ *   - ~ Fixed an unsafe 'snprintf' call, allowed for injection (5)
  *
  * v2.3:
  *
