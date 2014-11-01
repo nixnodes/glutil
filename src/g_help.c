@@ -158,7 +158,7 @@ char *hpd_up =
     "\n Misc:\n"
     "  -b, --backup <dirlog|nukelog|dupefile|lastonlog|imdb|game|tvrage|ge1>\n"
     "                        Perform backup on specified log\n"
-    "  --sort [<mode>,][<order>,]<field>\n"
+    "  -sort [<mode>,][<order>,]<field>\n"
     "                        Sort data log entries\n"
     "                          <mode> (optional) can be either 'num' (numeric) or 'str' (string)\n"
     "                            If no <mode> parameter is given, it is determined automatically,\n"

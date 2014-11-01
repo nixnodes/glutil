@@ -85,6 +85,7 @@
  *   - ~ Fixed an unsafe 'snprintf' call, allowed for injection (5)
  *   - % Expanded on '?L' directive to include 'else' action (6)
  *   - ~ 'size' was resolving links instead of reading link size (6)
+ *   - % Automatically typecast between float<->int (math) (7)
  *
  * v2.3:
  *

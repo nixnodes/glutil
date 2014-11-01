@@ -719,7 +719,7 @@ ref_to_val_af_math(void *arg, char *match, char *output, size_t max_size,
           }
         break;
       case F_MATH_FLOAT:
-        return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, "%f");
+        return as_ref_to_val_lk(match, dt_rval_spec_math_f, mppd, "%.2f");
       default:
         return NULL;
         }
