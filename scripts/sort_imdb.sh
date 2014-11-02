@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:3
+#@REVISION:4
 #@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {dir} none \"\" {siterootb} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}`
 #
 ##
@@ -96,7 +96,7 @@ proc_sort() {
 			}			
 		}
 		
-		! [ -e "${C_PATH}/${B_PATH}" ] && { 
+		! [ -h "${C_PATH}/${B_PATH}" ] && { 
 			print_str "${C_PATH}/${B_PATH}" 
 			ln -s "${CR_PATH}" "${C_PATH}" &> /dev/null
 		}
