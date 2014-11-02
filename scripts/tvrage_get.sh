@@ -17,12 +17,12 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:34
+#@REVISION:35
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0 0 '' {m:arg3}` {m:arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0 0 '' {m:arg3}` regexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
 #@MACRO:tvrage-su-id|Rebuild entire tvlog based on showid fields:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
-#@MACRO:tvrage-e|Lookup/process using a specific TVRage query (by show name) [-arg1=<showname>]:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0 '' '' {m:arg3}"
+#@MACRO:tvrage-e|Lookup/process using a specific TVRage query (by show name) [-arg1=<showname>]:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{m:arg2}' 0 '' '' {m:arg3}"
 #@MACRO:tvrage-e-id|Lookup/process using a specific TVRage query (by show id) [-arg1=<showid>]:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '-' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 '{m:arg1}'"
 #@MACRO:tvrage-e-full|Retrieve a full show list from TVRage and build/update log based on returned showids:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; for i in $(curl http://services.tvrage.com/feeds/show_list.php | sed -r 's/<show><id>|<\/id><name>.*|<(\/|())shows>|<\?xml.*>//g' | sed -r '/^$/d'); do if echo "$i" | egrep -q '^[0-9]+$'; then {m:spec1} '-' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 "$i"; else echo "ERROR: invalid id: '$i'"; fi; done`
 #
