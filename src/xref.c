@@ -442,7 +442,7 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
   else if (!strncmp(match,_MC_GLOB_MODE, 4))
     {
       *output = sizeof(data->type);
-      data->flags |= F_XRF_GET_DT_MODE;
+      data->flags |= F_XRF_GET_DT_MODE|F_XRF_DO_STAT;
       return &((__d_xref) NULL)->type;
     }
   else if (!strncmp(match,_MC_X_ST_MODE, 6))
@@ -960,7 +960,7 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     {
       if (arg)
         {
-          ((__d_xref) arg)->flags |= F_XRF_GET_DT_MODE;
+          ((__d_xref) arg)->flags |= F_XRF_GET_DT_MODE|F_XRF_DO_STAT;
         }
       return as_ref_to_val_lk(match, dt_rval_x_mode ,(__d_drt_h)mppd, "%u");
     }
@@ -1514,13 +1514,13 @@ g_preproc_dm(char *name, __d_xref p_xref, unsigned char type, __std_rh aa_rh)
             {
               p_xref->sparseness = file_sparseness(&p_xref->st);
             }
+          if (p_xref->flags & F_XRF_GET_DT_MODE)
+            {
+              p_xref->type = IFTODT(p_xref->st.st_mode);
+            }
         }
     }
 
-  if (p_xref->flags & F_XRF_GET_DT_MODE)
-    {
-      p_xref->type = type;
-    }
   if (p_xref->flags & F_XRF_GET_READ)
     {
       p_xref->r = (uint8_t) !(access(p_xref->name, R_OK));

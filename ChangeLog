@@ -86,6 +86,7 @@
  *   - % Expanded on '?L' directive to include 'else' action (6)
  *   - ~ 'size' was resolving links instead of reading link size (6)
  *   - % Automatically typecast between float<->int (math) (7)
+ *   - ~ Use stat instead of relying on readdir to get dt_mode (g_preproc_dm) (8)
  *
  * v2.3:
  *
