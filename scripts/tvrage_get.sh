@@ -17,9 +17,9 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:33
+#@REVISION:34
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0 0 '' {m:arg3}` {m:arg2}
-#@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0` regexi "dir,{m:arg1}"  {m:arg2} 
+#@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0 0 '' {m:arg3}` regexi "dir,{m:arg1}"  {m:arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
 #@MACRO:tvrage-su-id|Rebuild entire tvlog based on showid fields:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
 #@MACRO:tvrage-e|Lookup/process using a specific TVRage query (by show name) [-arg1=<showname>]:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 0 '' '' {m:arg3}"
