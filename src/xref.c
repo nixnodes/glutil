@@ -1992,6 +1992,7 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
           || (d_name_l == 2 && dirp->d_name[0] == 0x2E
               && dirp->d_name[1] == 0x2E))
         {
+          free(dirp);
           continue;
         }
 
