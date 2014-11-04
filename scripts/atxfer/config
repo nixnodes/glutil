@@ -1,7 +1,7 @@
 ## mirror configuration
 #
 LFTP="lftp"
-HOME_SITE="x"
+HOME_SITE="IDC"
 #
 FXP_MAIN_TIMEOUT=3600
 #

@@ -1766,6 +1766,7 @@ _gg_opt gg_prio_f_ref[] =
         { .id = 0x0010, .on = "-m", .ac = 1, .op = prio_opt_g_macro },
         { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
         { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
+        { .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
 #endif
         { 0x0 } };
 
