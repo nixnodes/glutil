@@ -293,7 +293,7 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
       _g_dgetr dgetr =
         { 0};
 
-      log_s = pce_dgetlf(&dgetr, ptr->i32);
+      log_s = pce_dgetlf(&dgetr, (int)ptr->i32);
 
       if ( !log_s )
         {
@@ -563,10 +563,37 @@ pce_process_exec(__g_handle hdl, char *exec_str)
   return 0;
 }
 
+static int
+preproc_lom_rc(void *data, __d_sconf ptr)
+{
+  switch (ptr->i32)
+    {
+  case 1:
+    ;
+    if (gconf->o_imdb_skip_zero_score > 0 && !strncmp(ptr->field, "score", 5))
+      {
+        __d_imdb d_imdb = (__d_imdb) data;
+        if (d_imdb->rating == (float)0)
+          {
+            print_str("WARNING: imdb score is 0, ignoring rule\n", ptr->field);
+            return 1;
+          }
+      }
+    break;
+  }
+
+return 0;
+}
+
 int
 pce_process_lom_match(__g_handle hdl, __d_sconf ptr)
 {
   int i_m = 1, r;
+
+  if (preproc_lom_rc(hdl->buffer.pos->ptr, ptr))
+    {
+      return 0;
+    }
 
   if (ptr->invert == 1)
     {
