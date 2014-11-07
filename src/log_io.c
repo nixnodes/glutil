@@ -379,6 +379,11 @@ clean_drt(__d_drt_h mppd)
       free(mppd->st_p0);
     }
 
+  if ( mppd->flags & _D_DRT_HASREGEX)
+    {
+      regfree(&mppd->preg);
+    }
+
   __rt_c cond = (__rt_c ) mppd->rt_cond;
 
   if (NULL != cond)
@@ -508,7 +513,8 @@ int
 g_claf_mech(void *ptr)
 {
   __d_exec_ch ach = (__d_exec_ch) ptr;
-  regfree(&ach->dtr.preg);
+  clean_drt(&ach->dtr);
+
   return 0;
 }
 
