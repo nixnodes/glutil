@@ -88,6 +88,7 @@
  *   - % Automatically typecast between float<->int (math) (7)
  *   - ~ Use stat instead of relying on readdir to get dt_mode (g_preproc_dm) (8)
  *   - ~ Fix -execv memory leak (9)
+ *   - + o_lookup_strictness_tvrage added (gconf) (10)
  *
  * v2.3:
  *
