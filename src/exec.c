@@ -344,7 +344,7 @@ l_execv(char *exec, char **argv)
 
   if (c_pid == (pid_t) -1)
     {
-      fprintf(stderr, "ERROR: %s: fork failed\n", exec);
+      fprintf(stderr, "ERROR: %s: fork failed [%s]\n", exec, strerror(errno));
       return 1;
     }
 
