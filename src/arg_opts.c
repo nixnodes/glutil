@@ -1927,6 +1927,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
         { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
         { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
+        { .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
 #ifndef _MAKE_SBIN
         { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
         { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },

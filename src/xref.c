@@ -23,6 +23,7 @@
 #include <misc.h>
 #include <errno_int.h>
 #include <sort_hdr.h>
+#include <arg_proc.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -936,6 +937,59 @@ dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
+int
+opt_xref_sl_dat(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 24155;
+    }
+
+  _d_xref xr_dummy =
+    {
+      { 0 } };
+  _d_drt_h ddr_dummy =
+    { 0 };
+
+  xr_dummy.flags = 0x0;
+
+  mda sp_i =
+    { 0 };
+  md_init(&sp_i, 32);
+
+  int r_c = split_string(buffer, 0x7C, &sp_i);
+
+  if (r_c < 1)
+    {
+      print_str("ERROR: opt_xref_sl_dat: must contain atleast one argument\n");
+      md_g_free(&sp_i);
+      return 24156;
+    }
+
+  p_md_obj ptr = md_first(&sp_i);
+
+  while (ptr)
+    {
+
+      if ( NULL
+          == ref_to_val_lk_x((void*) &xr_dummy, (char*) ptr->ptr, NULL, 0,
+              (void*) &ddr_dummy))
+        {
+          print_str("ERROR: opt_xref_sl_dat: invalid option '%s'\n",
+              (char*) ptr->ptr);
+        }
+      ptr = ptr->next;
+    }
+
+  xref_flags = xr_dummy.flags;
+
+  md_g_free(&sp_i);
+
+  return 0;
+}
+
 void*
 ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
@@ -1252,8 +1306,19 @@ g_xproc_print(void *hdl, void *ptr, char *sbuffer)
 void
 g_preproc_xhdl(__std_rh ret)
 {
-
-  if ((gfl & F_OPT_FORMAT_BATCH))
+  if (gfl & F_OPT_MODE_RAWDUMP)
+    {
+      ret->xproc_out = g_omfp_raw;
+      if (0 != xref_flags)
+        {
+          ret->p_xref.flags |= xref_flags;
+        }
+      else
+        {
+          ret->p_xref.flags |= F_XRF_ALL_STAT;
+        }
+    }
+  else if ((gfl & F_OPT_FORMAT_BATCH))
     {
       ret->xproc_out = g_xproc_print;
     }
@@ -1467,7 +1532,7 @@ g_preproc_dm(char *name, __d_xref p_xref, unsigned char type, __std_rh aa_rh)
 
   if (p_xref->flags & F_XRF_DO_STAT)
     {
-      if (lstat(name, &p_xref->st))
+      if (lstat(name, &p_xref->st) == -1)
         {
           bzero(&p_xref->st, sizeof(struct stat));
           ret = 1;

@@ -157,6 +157,8 @@ uint32_t ofl = 0;
 
 uint8_t l_sfo = 0;
 
+uint32_t xref_flags = 0;
+
 char *spec_p1 = NULL;
 char *spec_p2 = NULL;
 char *spec_p3 = NULL;

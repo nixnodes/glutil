@@ -119,6 +119,7 @@ process_macro(void * arg, char **out)
     }
 
   char *s_buffer = NULL;
+  char **s_ptr = NULL;
 
   _si_argv0 av =
     { 0 };
@@ -128,13 +129,13 @@ process_macro(void * arg, char **out)
   av.ret = -1;
   av.flags |= F_MMODE_EXEC;
 
-  if (strlen(a_ptr) > sizeof(av.p_buf_1))
+  if (strlen(a_ptr) >= sizeof(av.p_buf_1))
     {
       print_str("ERROR: invalid macro name\n");
       return NULL;
     }
 
-  strncpy(av.p_buf_1, a_ptr, strlen(a_ptr));
+  snprintf(av.p_buf_1, sizeof(av.p_buf_1), "%s", a_ptr);
 
   if (gfl & F_OPT_VERBOSE2)
     {
@@ -157,23 +158,26 @@ process_macro(void * arg, char **out)
     {
       print_str("ERROR: process_macro->enum_dir: %s: [%d] %s\n", dirn, r,
           ie_tl(r, EMR_enum_dir));
-      return NULL;
+      s_ptr = NULL;
+      goto end;
     }
 
   if (av.ret == -1)
     {
       print_str("ERROR: %s: could not find macro\n", av.p_buf_1);
-      return NULL;
+      s_ptr = NULL;
+      goto end;
     }
 
   if (av.ret > 0)
     {
       print_str("ERROR: %s: could not run macro, error '%d'\n", av.p_buf_1,
           av.ret);
-      return NULL;
+      s_ptr = NULL;
+      goto end;
     }
 
-  strncpy(b_spec1, av.p_buf_2, strlen(av.p_buf_2));
+  snprintf(b_spec1, sizeof(b_spec1), "%s", av.p_buf_2);
 
   if (gfl & F_OPT_VERBOSE2)
     {
@@ -181,7 +185,6 @@ process_macro(void * arg, char **out)
     }
 
   s_buffer = (char*) malloc(MAX_EXEC_STR + 1);
-  char **s_ptr = NULL;
 
   if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
       ref_to_val_macro,
@@ -196,10 +199,12 @@ process_macro(void * arg, char **out)
   int c = 0;
   s_ptr = build_argv(s_buffer, 4096, &c);
 
-  if (!c)
+  if (0 == c)
     {
       print_str("ERROR: %s: macro was declared, but no arguments found\n",
           av.p_buf_1);
+      s_ptr = NULL;
+      goto end;
     }
 
   _p_macro_argc = c;
@@ -217,12 +222,12 @@ process_macro(void * arg, char **out)
 
   end:
 
-  if (av.buffer)
+  if (NULL != av.buffer)
     {
       free(av.buffer);
     }
 
-  if (s_buffer)
+  if (NULL != s_buffer)
     {
       free(s_buffer);
     }
@@ -270,7 +275,7 @@ ssd_mmode_exec(char *name, __si_argv0 ptr, char *buffer)
       return -1;
     }
 
-  bzero(ptr->s_ret, sizeof(ptr->s_ret));
+  //bzero(ptr->s_ret, sizeof(ptr->s_ret));
 
   snprintf(ptr->s_ret, sizeof(ptr->s_ret), "%s", buffer);
   snprintf(ptr->p_buf_2, PATH_MAX, "%s", name);

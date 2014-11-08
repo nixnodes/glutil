@@ -611,7 +611,7 @@ void *
 as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc)
 {
 
-  if (defdc)
+  if (NULL != defdc)
     {
       match = g_get_stf(match);
 

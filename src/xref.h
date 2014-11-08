@@ -68,6 +68,9 @@
 #define F_XRF_GET_PBITS         (a32 << 17)
 #define F_XRF_GET_DEPTH         (a32 << 18)
 
+#define F_XRF_ALL_STAT          (F_XRF_DO_STAT|F_XRF_GET_STCTIME|F_XRF_GET_UPERM|F_XRF_GET_GPERM|F_XRF_GET_OPERM|F_XRF_GET_SPERM|F_XRF_GET_PBITS|F_XRF_GET_MINOR|F_XRF_GET_MAJOR|F_XRF_GET_SPARSE|F_XRF_GET_DT_MODE)
+
+
 #define F_PD_RECURSIVE          (a32 << 1)
 #define F_PD_MATCHDIR           (a32 << 2)
 #define F_PD_MATCHREG           (a32 << 3)
@@ -245,7 +248,7 @@ g_xproc_rc(char *name, void *aa_rh, __g_eds eds);
 int
 g_xproc_m(unsigned char type, char *name, __std_rh aa_rh, __g_eds eds);
 int
-g_preproc_dm(char *name, __d_xref p_xref, unsigned char type,  __std_rh aa_rh);
+g_preproc_dm(char *name, __d_xref p_xref, unsigned char type, __std_rh aa_rh);
 
 _d_rtv_lk ref_to_val_lk_x;
 __d_ref_to_pval ref_to_val_ptr_x;
@@ -259,23 +262,25 @@ d_xref_ct_fe(__d_xref_ct input, size_t sz);
 typedef int
 (*__d_edscb)(char *, unsigned char, void *, __g_eds);
 
-
 typedef int
-(*__d_edir)(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, DIR *dp);
+(*__d_edir)(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
+    DIR *dp);
 
 int
-enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, __d_edir point_cb);
+enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
+    __d_edir point_cb);
 
 typedef int
-    (*__d_sf_p)(uint32_t flags, __g_eds eds);
+(*__d_sf_p)(uint32_t flags, __g_eds eds);
 
 int
 g_f_sort(uint32_t flags, __g_eds eds);
 int
-tp_default(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, DIR *dp);
+tp_default(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
+    DIR *dp);
 int
-tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds, DIR *dp);
-
+tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
+    DIR *dp);
 
 int
 ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd);
@@ -287,6 +292,9 @@ g_dump_gen(char *root);
 
 float
 file_sparseness(const struct stat *p);
+
+int
+opt_xref_sl_dat(void *arg, int m);
 
 #define dt_rval_x_guid(stor, id) \
 { \
