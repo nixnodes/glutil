@@ -587,7 +587,6 @@ g_opt_shmflg(void *arg, int m)
   return 0;
 }
 
-
 static int
 g_opt_shmro(void *arg, int m)
 {
@@ -1737,6 +1736,7 @@ _gg_opt gg_prio_f_ref[] =
     { .id = 0x0011, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
     { .id = 0x0082, .on = "--help", .ac = 0, .op = print_help },
     { .id = 0x0083, .on = "--version", .ac = 0, .op = print_version },
+    { .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
 #ifndef _MAKE_SBIN
         { .id = 0x0005, .on = "-arg1", .ac = 1, .op = opt_g_arg1 },
         { .id = 0x0006, .on = "--arg1", .ac = 1, .op = opt_g_arg1 },
@@ -1766,7 +1766,7 @@ _gg_opt gg_prio_f_ref[] =
         { .id = 0x0010, .on = "-m", .ac = 1, .op = prio_opt_g_macro },
         { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
         { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
-        { .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
+        { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
 #endif
         { 0x0 } };
 

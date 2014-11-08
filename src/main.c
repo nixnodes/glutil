@@ -52,11 +52,11 @@ main(int argc, char *argv[])
   __pf_eof = g_feof;
 
   /*char output[8192];
-  l_mppd_shell_ex(argv[1], output, sizeof(output));
+   l_mppd_shell_ex(argv[1], output, sizeof(output));
 
-  fputs(output, stdout);
+   fputs(output, stdout);
 
-  exit(0);*/
+   exit(0);*/
 
   /*mda ip_stor =
    { 0 };
@@ -91,10 +91,11 @@ main(int argc, char *argv[])
     {
   case PRIO_UPD_MODE_MACRO:
     ;
-    uint64_t gfl_s = (gfl & (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF));
+    uint64_t gfl_s = (gfl
+        & (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF | F_OPT_DAEMONIZE));
     char **ptr;
     ptr = process_macro(prio_argv_off, NULL);
-    if (ptr)
+    if (NULL != ptr)
       {
         _p_macro_argv = p_argv = ptr;
         gfl = gfl_s;
@@ -161,12 +162,15 @@ g_init(int argc, char **argv, char **l_arg)
       r = parse_args(2, argv, gg_f_ref, NULL, F_PARSE_ARG_SILENT);
       size_t off = 0;
 
-      if ( (r == -1 || r == -2) ) {
+      if ( (r == -1 || r == -2) )
+        {
           p_argv_off = argv[1];
           off++;
-      } else {
+        }
+      else
+        {
           p_argv_off = argv[argc - 1];
-      }
+        }
 
       argc--;
 
