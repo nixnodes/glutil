@@ -1,7 +1,11 @@
 #!/bin/bash
 
-CONFIG_PATH="/glftpd/ftp-data/glutil/precheck-config"
-DATA_PATH="/glftpd//ftp-data/glutil/precheck-data"
+[ -z "${1}" ] && P_CONFIG="precheck-config" || P_CONFIG="${1}"
+[ -z "${2}" ] && P_DATA="precheck-data" || P_DATA="${2}"
+
+
+CONFIG_PATH="/glftpd/ftp-data/glutil/${P_CONFIG}"
+DATA_PATH="/glftpd//ftp-data/glutil/${P_DATA}"
 GLUTIL="/glftpd/bin/glutil"
 
 #########################################################
