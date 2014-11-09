@@ -256,8 +256,8 @@ opt_g_comp(void *arg, int m)
   __pf_eof = gz_feof;
   return 0;
 #else
-  print_str("WARNING: compression not available, this executable was not compiled with zlib\n");
-  return 0;
+  print_str("ERROR: this executable was not compiled with zlib, compression is not available\n");
+  return 41513;
 #endif
 }
 

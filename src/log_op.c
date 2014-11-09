@@ -27,7 +27,8 @@
 
 #include <unistd.h>
 
-char *_print_ptr = NULL, *_cl_print_ptr = NULL, *_print_ptr_post = NULL, *_print_ptr_pre = NULL;
+char *_print_ptr = NULL, *_cl_print_ptr = NULL, *_print_ptr_post = NULL,
+    *_print_ptr_pre = NULL;
 
 char *
 g_dgetf(char *str)
@@ -95,6 +96,10 @@ g_dgetf(char *str)
   else if (!strncmp(str, "altlog", 6))
     {
       return ALTLOG;
+    }
+  else if (!strncmp(str, "x", 1))
+    {
+      return XLOG;
     }
   return NULL;
 }
@@ -256,7 +261,8 @@ g_proc_mr(__g_handle hdl)
       hdl->ifrh_l1 = g_ipcbm;
     }
 
-  if ((gfl & F_OPT_HAS_G_REGEX) || (gfl & F_OPT_HAS_G_MATCH) || (gfl & F_OPT_HAS_G_FNAME))
+  if ((gfl & F_OPT_HAS_G_REGEX) || (gfl & F_OPT_HAS_G_MATCH)
+      || (gfl & F_OPT_HAS_G_FNAME))
     {
       if ((r = g_load_strm(hdl)))
         {
@@ -493,9 +499,9 @@ determine_datatype(__g_handle hdl, char *file)
     {
       pdt_set_gconf(hdl);
     }
-  else if (!strncmp(file, ALTLOG, strlen(ALTLOG)))
+  else if (!strncmp(file, XLOG, strlen(XLOG)))
     {
-      pdt_set_altlog(hdl);
+      pdt_set_x(hdl);
     }
   else
     {

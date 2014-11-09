@@ -48,6 +48,7 @@
 #define IPC_KEY_SCONFLOG        0xDEAD2200
 #define IPC_KEY_GCONFLOG        0xDEAD2300
 #define IPC_KEY_ALTLOG          0xDEAD2400
+#define IPC_KEY_X               0xDEAD2500
 
 /*
  * log file path
@@ -127,6 +128,12 @@
 
 #ifndef alt_log
 #define alt_log CONF_PREFIX "/ftp-data/logs/altlog"
+#endif
+
+/* filesystem shadow log */
+
+#ifndef x_log
+#define x_log "-"
 #endif
 
 /* see MANUAL */

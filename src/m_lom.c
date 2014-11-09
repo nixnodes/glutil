@@ -298,6 +298,13 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
           oper_l = 2;
           oper = ptr;
         }
+      else
+        {
+          if (ptr[0] != 0x0)
+            {
+              return 14;
+            }
+        }
 
       while (!is_opr(ptr[0]))
         {
@@ -505,7 +512,7 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 
   if ((r = g_get_lom_g_t_ptr(hdl, r_ptr, lom, F_GLT_RIGHT)))
     {
-      rt = r + 1;
+      rt = r;
       goto end;
     }
 
@@ -639,9 +646,14 @@ g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
 static int
 gl_var_known(__g_handle hdl, char *field, uint32_t flags, __g_lom lom)
 {
-  errno = 0;
+
   uint32_t t_f = 0;
   int base = 10;
+
+  if ((is_ascii_numhex(field[0])))
+    {
+      return 200;
+    }
 
   if (field[0] == 0x30 && (field[1] == 0x78 || field[1] == 0x58))
     {
@@ -668,6 +680,8 @@ gl_var_known(__g_handle hdl, char *field, uint32_t flags, __g_lom lom)
           lom->flags |= F_LOM_INT;
         }
     }
+
+  errno = 0;
 
   switch (flags & F_GLT_DIRECT)
     {
@@ -711,7 +725,12 @@ gl_var_known(__g_handle hdl, char *field, uint32_t flags, __g_lom lom)
 
   if (errno == ERANGE)
     {
-      return 4;
+      return 204;
+    }
+
+  if (errno == EINVAL)
+    {
+      return 205;
     }
 
   lom->flags |= t_f;

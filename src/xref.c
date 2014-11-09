@@ -6,6 +6,7 @@
  */
 
 #include <glutil.h>
+#include "config.h"
 #include <t_glob.h>
 #include <l_sb.h>
 #include <cfgv.h>
@@ -33,6 +34,23 @@
 #include <dirent.h>
 #include <math.h>
 #include <errno.h>
+
+void
+dt_set_x(__g_handle hdl)
+{
+  hdl->flags |= F_GH_ISFSX;
+  hdl->block_sz = sizeof(_d_xref);
+  hdl->d_memb = 1;
+  hdl->g_proc0 = NULL;
+  hdl->g_proc1_lookup = ref_to_val_lk_x;
+  hdl->g_proc2 = ref_to_val_ptr_x;
+  hdl->g_proc3 = x_format_block;
+  hdl->g_proc3_batch = x_format_block;
+  hdl->g_proc3_export = x_format_block;
+  hdl->g_proc4 = g_omfp_norm;
+  hdl->ipc_key = IPC_KEY_X;
+  hdl->jm_offset = (size_t) &((__d_xref) NULL)->name;
+}
 
 int
 g_l_fmode_n(char *path, size_t max_size, char *output)
@@ -437,122 +455,182 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
   if (!strncmp(match, _MC_GLOB_SIZE, 4))
     {
       *output = sizeof(data->st.st_size);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_size;
     }
   else if (!strncmp(match,_MC_GLOB_MODE, 4))
     {
       *output = sizeof(data->type);
-      data->flags |= F_XRF_GET_DT_MODE|F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_DT_MODE|F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->type;
     }
   else if (!strncmp(match,_MC_X_ST_MODE, 6))
     {
       *output = sizeof(data->st.st_mode);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_mode;
     }
   else if (!strncmp(match, _MC_X_ISREAD, 6))
     {
       *output = ~((int) sizeof(data->r));
-      data->flags |= F_XRF_GET_READ;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_READ;
+        }
       return &((__d_xref) NULL)->r;
     }
   else if (!strncmp(match, _MC_X_ISWRITE, 7))
     {
       *output = ~((int) sizeof(data->w));
-      data->flags |= F_XRF_GET_WRITE;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_WRITE;
+        }
       return &((__d_xref) NULL)->w;
     }
   else if (!strncmp(match, _MC_X_ISEXEC, 6))
     {
       *output = ~((int) sizeof(data->x));
-      data->flags |= F_XRF_GET_EXEC;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_EXEC;
+        }
       return &((__d_xref) NULL)->x;
     }
   else if (!strncmp(match, _MC_X_UPERM, 5))
     {
       *output = sizeof(data->uperm);
-      data->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_UPERM | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->uperm;
     }
   else if (!strncmp(match, _MC_X_GPERM, 5))
     {
       *output = sizeof(data->gperm);
-      data->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_GPERM | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->gperm;
     }
   else if (!strncmp(match, _MC_X_OPERM, 5))
     {
       *output = sizeof(data->operm);
-      data->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_OPERM | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->operm;
     }
   else if (!strncmp(match, _MC_X_SPERM, 5))
     {
       *output = sizeof(data->operm);
-      data->flags |= F_XRF_GET_SPERM | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_SPERM | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->sperm;
     }
   else if (!strncmp(match, _MC_X_PBITS, 5))
     {
       *output = sizeof(data->pbits);
-      data->flags |= F_XRF_GET_PBITS | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_PBITS | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->pbits;
     }
   else if (!strncmp(match, _MC_X_DEVID, 5))
     {
       *output = sizeof(data->st.st_dev);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_dev;
     }
   else if (!strncmp(match, _MC_X_MINOR, 5))
     {
       *output = sizeof(data->minor);
-      data->flags |= F_XRF_GET_MINOR | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_MINOR | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->minor;
     }
   else if (!strncmp(match, _MC_X_MAJOR, 5))
     {
       *output = sizeof(data->major);
-      data->flags |= F_XRF_GET_MAJOR | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_MAJOR | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->major;
     }
   else if (!strncmp(match, _MC_X_SPARSE, 6))
     {
       *output = -32;
-      data->flags |= F_XRF_GET_SPARSE | F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_SPARSE | F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->sparseness;
     }
   else if (!strncmp(match, _MC_X_INODE, 5))
     {
       *output = sizeof(data->st.st_ino);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_ino;
     }
   else if (!strncmp(match, _MC_X_LINKS, 5))
     {
       *output = sizeof(data->st.st_nlink);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_nlink;
     }
   else if (!strncmp(match, _MC_X_UID, 3))
     {
       *output = sizeof(data->st.st_uid);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_uid;
     }
   else if (!strncmp(match, _MC_X_GID, 3))
     {
       *output = sizeof(data->st.st_gid);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_gid;
     }
 #if defined HAVE_STRUCT_STAT_ST_BLKSIZE
   else if (!strncmp(match, _MC_X_BLKSIZE, 7))
     {
       *output = sizeof(data->st.st_blksize);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_blksize;
     }
 #endif
@@ -560,67 +638,85 @@ ref_to_val_ptr_x(void *arg, char *match, int *output)
   else if (!strncmp(match, _MC_X_BLOCKS, 6))
     {
       *output = sizeof(data->st.st_blocks);
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_blocks;
     }
 #endif
   else if (!strncmp(match, _MC_X_ATIME, 5))
     {
       *output = ~((int) sizeof(data->st.st_atime));
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_atime;
     }
   else if (!strncmp(match, _MC_X_CTIME, 5))
     {
       *output = ~((int) sizeof(data->st.st_ctime));
-      data->flags |= F_XRF_DO_STAT|F_XRF_GET_STCTIME;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT|F_XRF_GET_STCTIME;
+        }
       return &((__d_xref) NULL)->st.st_ctime;
     }
   else if (!strncmp(match, _MC_X_MTIME, 5))
     {
       *output = ~((int) sizeof(data->st.st_mtime));
-      data->flags |= F_XRF_DO_STAT;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_DO_STAT;
+        }
       return &((__d_xref) NULL)->st.st_mtime;
     }
   else if (!strncmp(match, _MC_X_CRC32, 5))
     {
       *output = sizeof(data->crc32);
-      data->flags |= F_XRF_GET_CRC32;
+      if (NULL != data)
+        {
+          data->flags |= F_XRF_GET_CRC32;
+        }
       return &((__d_xref) NULL)->crc32;
     }
   else if (!strncmp(match, _MC_X_DEPTH, 5))
     {
       *output = sizeof(data->depth);
-      ((__d_xref) arg)->flags |= F_XRF_GET_DEPTH;
+      if (NULL != data)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_GET_DEPTH;
+        }
       return &((__d_xref) NULL)->depth;
     }
-  else if (!strncmp(match, "curtime", 7))
-    {
-      size_t xrf_cto = d_xref_ct_fe(&data->ct[0], GM_MAX);
-      if (xrf_cto == -1)
-        {
-          print_str("ERROR: ct slot limit exceeded!\n");
-          gfl = F_OPT_KILL_GLOBAL;
-          EXITVAL = 4;
-          return NULL;
-        }
-      data->ct[xrf_cto].active = 1;
-      data->ct[xrf_cto].curtime = time(NULL);
-      switch (match[7])
-        {
-          case 0x2D:;
-          //data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
-          data->ct[xrf_cto].curtime -= atoi(&match[8]);
-          break;
-          case 0x2B:;
-          //data->ct[xrf_cto].ct_off = atoi(&match[8]);
-          data->ct[xrf_cto].curtime += atoi(&match[8]);
-          break;
-        }
-      data->flags |= F_XRF_GET_CTIME;
-      *output = ~((int) sizeof(data->ct[xrf_cto].curtime));
-      return &((__d_xref) NULL)->ct[xrf_cto].curtime;
-    }
+  /*else if (!strncmp(match, "curtime", 7))
+   {
+   size_t xrf_cto = d_xref_ct_fe(&data->ct[0], GM_MAX);
+   if (xrf_cto == -1)
+   {
+   print_str("ERROR: ct slot limit exceeded!\n");
+   gfl = F_OPT_KILL_GLOBAL;
+   EXITVAL = 4;
+   return NULL;
+   }
+   data->ct[xrf_cto].active = 1;
+   data->ct[xrf_cto].curtime = time(NULL);
+   switch (match[7])
+   {
+   case 0x2D:;
+   //data->ct[xrf_cto].ct_off = ~atoi(&match[8]);
+   data->ct[xrf_cto].curtime -= atoi(&match[8]);
+   break;
+   case 0x2B:;
+   //data->ct[xrf_cto].ct_off = atoi(&match[8]);
+   data->ct[xrf_cto].curtime += atoi(&match[8]);
+   break;
+   }
+   data->flags |= F_XRF_GET_CTIME;
+   *output = ~((int) sizeof(data->ct[xrf_cto].curtime));
+   return &((__d_xref) NULL)->ct[xrf_cto].curtime;
+   }*/
 
   return NULL;
 }
@@ -1303,11 +1399,27 @@ g_xproc_print(void *hdl, void *ptr, char *sbuffer)
   printf("%s\n", sbuffer);
 }
 
+int
+x_format_block(void *iarg, char *output)
+{
+  __d_xref ptr = (__d_xref) iarg;
+  return print_str("%s\n", ptr->name);
+}
+
 void
 g_preproc_xhdl(__std_rh ret)
 {
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
+#ifdef HAVE_ZLIB_H
+      if (gfl0 & F_OPT_GZIP)
+        {
+          g_set_compression_opts(comp_level, &ret->hdl);
+          ret->hdl.flags |= F_GH_IO_GZIP;
+        }
+
+#endif
+
       ret->xproc_out = g_omfp_raw;
       if (0 != xref_flags)
         {
@@ -1315,7 +1427,8 @@ g_preproc_xhdl(__std_rh ret)
         }
       else
         {
-          ret->p_xref.flags |= F_XRF_ALL_STAT;
+          ret->p_xref.flags |= F_XRF_ALL_STAT | F_XRF_GET_DT_MODE
+              | F_XRF_GET_READ | F_XRF_GET_WRITE | F_XRF_GET_EXEC;
         }
     }
   else if ((gfl & F_OPT_FORMAT_BATCH))

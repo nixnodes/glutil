@@ -84,6 +84,13 @@ get_file_creation_time(struct stat *st)
 }
 
 int
+check_path(char *path)
+{
+  struct stat sb;
+  return stat(path, &sb);
+}
+
+int
 file_exists(char *file)
 {
   int r = get_file_type(file);

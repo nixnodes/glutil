@@ -64,7 +64,7 @@
 #define F_GH_STATUS_FLAGS               (F_GH_TFD_PROCED)
 
 /* these bits determine log type */
-#define F_GH_ISTYPE                     (F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE|F_GH_IS_ALTLOG)
+#define F_GH_ISTYPE                     (F_GH_ISFSX|F_GH_ISGCONF|F_GH_ISSCONF|F_GH_ISGENERIC4|F_GH_ISGENERIC3|F_GH_ISGENERIC2|F_GH_ISGENERIC1|F_GH_ISNUKELOG|F_GH_ISDIRLOG|F_GH_ISDUPEFILE|F_GH_ISLASTONLOG|F_GH_ISONELINERS|F_GH_ISONLINE|F_GH_ISIMDB|F_GH_ISGAME|F_GH_ISFSX|F_GH_ISTVRAGE|F_GH_IS_ALTLOG)
 
 #define F_GH_ISSHM                      (F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP                       (F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
@@ -128,7 +128,15 @@ typedef struct g_handle
   int shmatflags;
   mda guid_stor;
   mda uuid_stor;
+  int h_errno;
+  int h_errno_gz;
+  const char *h_errstr_gz;
 } _g_handle, *__g_handle;
+
+#define G_HDL_ERRNO_DL_READ        1
+#define G_HDL_ERRNO_DL_FOPEN       2
+#define G_HDL_ERRNO_DL_FOPEN_GZ    3
+#define G_HDL_ERRNO_ALLOC          4
 
 typedef void
 _dt_set(__g_handle hdl);
@@ -142,12 +150,12 @@ _dt_set dt_set_dummy;
 _dt_set dt_set_dummy, dt_set_dirlog, dt_set_nukelog, dt_set_dupefile,
     dt_set_lastonlog, dt_set_oneliners, dt_set_imdb, dt_set_game, dt_set_tvrage,
     dt_set_gen1, dt_set_gen2, dt_set_gen3, dt_set_gen4, dt_set_gconf,
-    dt_set_sconf, dt_set_altlog, dt_set_online;
+    dt_set_sconf, dt_set_altlog, dt_set_online, dt_set_x;
 
 __dt_set pdt_set_dirlog, pdt_set_nukelog, pdt_set_dupefile, pdt_set_lastonlog,
     pdt_set_oneliners, pdt_set_imdb, pdt_set_game, pdt_set_tvrage, pdt_set_gen1,
     pdt_set_gen2, pdt_set_gen3, pdt_set_gen4, pdt_set_gconf, pdt_set_sconf,
-    pdt_set_altlog, pdt_set_online;
+    pdt_set_altlog, pdt_set_online, pdt_set_x;
 #endif
 
 #endif /* IM_HDR_H_ */

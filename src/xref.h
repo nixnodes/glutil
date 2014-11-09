@@ -173,6 +173,8 @@ typedef struct ___d_xref_ct
   int ct_off;
 } _d_xref_ct, *__d_xref_ct;
 
+#pragma pack(push, 4)
+
 typedef struct ___d_xref
 {
   char name[PATH_MAX];
@@ -188,8 +190,9 @@ typedef struct ___d_xref
   uint16_t pbits;
   uint64_t depth;
   float sparseness;
-  _d_xref_ct ct[GM_MAX / 16];
 } _d_xref, *__d_xref;
+
+#pragma pack(pop)
 
 #include <dirent.h>
 
@@ -284,6 +287,9 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
 
 int
 ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd);
+
+int
+x_format_block(void *iarg, char *output);
 
 int
 g_dump_ug(char *ug);

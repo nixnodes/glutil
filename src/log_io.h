@@ -52,6 +52,8 @@ int
 d_write(char *arg);
 int
 g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl);
+void
+g_set_compression_opts(uint8_t level, __g_handle hdl);
 void *
 g_read(void *buffer, __g_handle hdl, size_t size);
 int

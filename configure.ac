@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.4.13-11], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.4.13-12], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 AM_INIT_AUTOMAKE([subdir-objects]) 
 AM_MAINTAINER_MODE([disable])
@@ -29,8 +29,8 @@ AC_ARG_ENABLE(chroot-ownbin,
 glutil_chroot_ownbin="$enableval", glutil_chroot_ownbin="no")
 
 AC_ARG_ENABLE(gzip,
-[  --disable-gzip		Disable gzip compression support [default=no]],
-glutil_disable_gzip="yes", glutil_disable_gzip="no" )
+[  --enable-gzip		Enable gzip compression support [default=no]],
+glutil_enable_gzip="yes", glutil_enable_gzip="no" )
 
 AC_ARG_ENABLE(gfind,
 [  --enable-gfind		Compile glutil-based search tool [default=no]],
@@ -39,7 +39,7 @@ glutil_enable_sbin="yes", glutil_enable_sbin="no" )
 if [ test "$glutil_enable_sbin" = "yes" ]; then
 	AC_DEFINE([_MAKE_SBIN], [1], [//])
 
-	glutil_disable_gzip="yes"
+	glutil_enable_gzip="no"
 fi
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
@@ -97,8 +97,8 @@ AC_HEADER_MAJOR
 
 GLUTIL_MSG_REQH="missing required header file"
 
-AS_IF([test "$glutil_disable_gzip" = "no"], \
-AC_CHECK_HEADERS([zlib.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (zlib.h); use --disable-gzip to turn compression off])]) \
+AS_IF([test "$glutil_enable_gzip" = "yes"], \
+AC_CHECK_HEADERS([zlib.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (zlib.h); install zlib-devel or remove --enable-gzip])]) \
 )
 
 AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (fnctl.h)])])
@@ -126,7 +126,7 @@ AC_CHECK_FUNCS([strtoul],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtoul)])])
 AC_CHECK_FUNCS([strtoull],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (strtoull)])])
 AC_CHECK_FUNCS([utime],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (utime)])])
 
-#AS_IF([test "$glutil_disable_gzip" != "yes"], \
+#AS_IF([test "$glutil_enable_gzip" = "yes"], \
 #AC_CHECK_FUNCS([gzread],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (gzread)])])
 #)
 

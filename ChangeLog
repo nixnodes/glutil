@@ -91,6 +91,10 @@
  *   - + o_lookup_strictness_tvrage added (gconf) (10)
  *   - + precheck ignores rule if imdb_skip_zero_score > 0 and score = 0 (10)
  *   - ~ --daemon on command line is passed along to macro (11) 
+ *   - ~ '-lom' argument processing bug (12)
+ *   - + --xflags and 'x' log type (see --help) (12)
+ *   - % Removed obsolete 'curtime' field used with '-x' (12)
+ *   - % Gzip disabled by default (to enable compile with --enable-gzip) (12) 
  *
  * v2.3:
  *

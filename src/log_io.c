@@ -59,7 +59,7 @@ static _emr EMR_flush_data_md[] =
     { .code = 0, .err_msg = _E_MSG_FDM_DEF, .has_errno = 0 } };
 
 #ifdef HAVE_ZLIB_H
-static void
+void
 g_set_compression_opts(uint8_t level, __g_handle hdl)
 {
   snprintf(hdl->w_mode, sizeof(hdl->w_mode), "wb%hhu", level);
@@ -588,6 +588,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
     {
       if (NULL == (fh = fopen(file, "rb")))
         {
+          hdl->h_errno = G_HDL_ERRNO_DL_FOPEN;
           return 0;
         }
     }
@@ -600,6 +601,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 
   if ((gz_fh = gzdopen(dup(fileno(fh)), "rb")) == NULL)
     {
+      hdl->h_errno = G_HDL_ERRNO_DL_FOPEN_GZ;
       return 0;
     }
 
@@ -628,11 +630,19 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
     {
       if ((hdl->flags & F_GH_FROMSTDIN) || (hdl->flags & F_GH_IS_GZIP))
         {
-          if (!fr && !(hdl->total_sz - c_fr))
+          if (!(hdl->total_sz - c_fr))
             {
-              hdl->total_sz *= 2;
-              hdl->data = realloc(hdl->data, hdl->total_sz);
-              b_output = hdl->data;
+
+              hdl->total_sz += (off_t) (hdl->block_sz * 1024);
+              void *n_data = realloc(hdl->data, hdl->total_sz);
+
+              if (NULL == n_data)
+                {
+                  hdl->h_errno = G_HDL_ERRNO_ALLOC;
+                  return 0;
+                }
+
+              b_output = hdl->data = n_data;
             }
         }
       else
@@ -668,6 +678,28 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
         }
 
     }
+#ifdef HAVE_ZLIB_H
+  if (hdl->flags & F_GH_IS_GZIP)
+    {
+      int gz_errnum = 0;
+      hdl->h_errstr_gz = gzerror(gz_fh, &gz_errnum);
+      hdl->h_errno = G_HDL_ERRNO_DL_READ;
+      hdl->h_errno_gz = gz_errnum;
+
+    }
+  else
+    {
+      if (ferror(fh))
+        {
+          hdl->h_errno = G_HDL_ERRNO_DL_READ;
+        }
+    }
+#else
+  if (ferror(fh))
+    {
+      hdl->h_errno = G_HDL_ERRNO_DL_READ;
+    }
+#endif
 
   if (ferror(fh))
     {
@@ -804,6 +836,12 @@ load_data_md(pmda md, char *file, __g_handle hdl)
               hdl->total_sz = b_read;
               return 20110;
             }
+
+          if (0 != hdl->h_errno)
+            {
+              return 20111;
+            }
+
           if (b_read != hdl->total_sz)
             {
               hdl->total_sz = b_read;
@@ -849,7 +887,9 @@ g_buffer_into_memory(char *file, __g_handle hdl)
       return 0;
     }
 
-  if (gfl0 & F_OPT_STDIN)
+  hdl->h_errno = 0;
+
+  if ((gfl0 & F_OPT_STDIN) || file[0] == 0x2D)
     {
       hdl->flags |= F_GH_FROMSTDIN;
     }
@@ -1080,12 +1120,13 @@ g_buffer_into_memory(char *file, __g_handle hdl)
   if ((r = load_data_md(&hdl->buffer, hdl->file, hdl)))
     {
       print_str(
-          "ERROR: %s: [%llu/%llu] [%llu] [%u] could not load data!%s [%d] [%s]\n",
+          "ERROR: %s: [%llu/%llu] [%llu] [%u] could not load data!%s [%d] [%d] [%s] [%s]\n",
           hdl->file, (ulint64_t) hdl->buffer.count,
           (ulint64_t) (hdl->total_sz / hdl->block_sz), hdl->total_sz,
           hdl->block_sz,
           (hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
-          strerror(errno));
+          hdl->h_errno, hdl->h_errno_gz ? hdl->h_errstr_gz : "GZNOSYSERR",
+          errno ? strerror(errno) : "NOSYSERR");
 
       return 20209;
     }

@@ -64,7 +64,8 @@ key_t SHM_IPC = (key_t) shm_ipc;
 
 #include <sys/stat.h>
 
-int g_shmcflags = S_IRUSR | S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;;
+int g_shmcflags = S_IRUSR | S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
+;
 
 char GLROOT[PATH_MAX] =
   { glroot };
@@ -106,6 +107,9 @@ char GCONFLOG[PATH_MAX] =
   { gconf_log };
 char ALTLOG[PATH_MAX] =
   { alt_log };
+char XLOG[PATH_MAX] =
+  { x_log };
+
 
 #ifdef GLCONF
 char GLCONF_I[PATH_MAX] =
@@ -171,7 +175,9 @@ __dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,
     pdt_set_game = dt_set_game, pdt_set_tvrage = dt_set_tvrage, pdt_set_gen1 =
         dt_set_gen1, pdt_set_gen2 = dt_set_gen2, pdt_set_gen3 = dt_set_gen3,
     pdt_set_gen4 = dt_set_gen4, pdt_set_gconf = dt_set_gconf, pdt_set_sconf =
-        dt_set_sconf, pdt_set_altlog = dt_set_altlog, pdt_set_online = dt_set_online;
+        dt_set_sconf, pdt_set_altlog = dt_set_altlog, pdt_set_online =
+        dt_set_online, pdt_set_x = dt_set_x;
+;
 #endif
 int
 (*__pf_eof)(void *p);

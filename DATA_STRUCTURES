@@ -63,7 +63,7 @@ FLAGS:
    u64glob[0-255]
    f32glob[0-255]
    
- Do not reference them with brackets, correct example:
+ Do not reference them with square brackets around indexes, correct example:
  
    .. {s64glob3} .. {f32glob19} ..
    
@@ -102,8 +102,7 @@ FLAGS:
    st_mode    I     Permission value
    crc32      I     CRC32 of file (hexadecimal)
    dec-crc32  S     CRC32 of file (decimal)
-   depth      I     Current directory tree depth
-   curtime    I     Seconds passed since Epoch (when LOM matching, trailing +/- increase/decrease this value, e.g curtime-3600, curtime+7200, ..)
+   depth      I     Current directory tree depth  
    c:<key>    S     Retrieve line starting with <key>, followed by a space or tab (meant for glftpd config files)
   
 

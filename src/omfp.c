@@ -266,6 +266,7 @@ g_omfp_norm(void *hdl, void *ptr, char *sbuffer)
 void
 g_omfp_raw(void * hdl, void *ptr, char *sbuffer)
 {
+
 #ifdef HAVE_ZLIB_H
   if (((__g_handle ) hdl)->flags & F_GH_IO_GZIP)
     {

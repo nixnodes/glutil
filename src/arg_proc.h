@@ -60,8 +60,9 @@ typedef struct option_reference_array
    } \
  else \
    { \
-     if (file_exists(b_in)) \
+     if (check_path(b_in) == -1) \
        { \
+         print_str("ERROR: could not open '%s' [%s]\n", b_in, strerror(errno)); \
          return code2; \
        } \
      fn_in = b_in; \
