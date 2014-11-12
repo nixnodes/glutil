@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:43
+#@REVISION:44
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --lom "mode=4" --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0 '' '' 3` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0 '' '' {m:arg3}" regexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -284,7 +284,7 @@ if ! [ $7 -eq 2 ]; then
         [ -z "$iid" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                cad ${2} "match" "imdbid,$iid" "$3"
+                cad ${2} "match" "imdbid,$iid" "${3}"
         fi
 
         DDT=`get_omdbapi_data "$iid"`
@@ -302,7 +302,10 @@ if ! [ $7 -eq 2 ]; then
                                 print_str "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using omdbapi search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1         
                         DDT=`get_omdbapi_data "$iid"`
                         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
-                        TITLE=`get_field title`
+                        if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
+                			cad ${2} "match" "imdbid,$iid" "${3}"
+		        		fi
+			TITLE=`get_field title`
                         TYPE=`get_field type`
                 elif [ $LOOSE_SEARCH -eq 1 ] && [ $S_LOOSE -eq 0 ] ; then
                         print_str "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying loose search.."
@@ -320,6 +323,9 @@ if ! [ $7 -eq 2 ]; then
                                 print_str "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using iMDB loose search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1      
                         DDT=`get_omdbapi_data "$iid"`
                         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
+                        if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
+                			cad ${2} "match" "imdbid,$iid" "${3}"
+		        		fi
                         TITLE=`get_field title`
                         TYPE=`get_field type`
                 fi
@@ -332,7 +338,7 @@ else
         QUERY="$8"
         YEAR_q="$9"
 
-		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad ${2} "match" "imdbid,$iid" "$3"
+	[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad ${2} "match" "imdbid,$iid" "${3}"
 
         DDT=`get_omdbapi_data "$iid"`
 
