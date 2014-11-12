@@ -97,6 +97,8 @@
  *   - % Gzip disabled by default (to enable compile with --enable-gzip) (12) 
  *   2.4.14:
  *   - + Force precedence on match expressions (see --help)
+ *   2.4.15:
+ *   - ~ 'curtime' returning zero
  *
  * v2.3:
  *

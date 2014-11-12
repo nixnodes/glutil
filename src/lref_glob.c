@@ -10,19 +10,23 @@
 
 #include <l_error.h>
 #include <mc_glob.h>
+#include <str.h>
+
+#include <errno.h>
 
 int64_t glob_curtime = 0;
 
-void *
-g_get_glob_ptr(__g_handle hdl, char *field, int *output)
+static void *
+g_proc_gstor(__g_handle hdl, char *field, int *output)
 {
-  g_setjmp(0, "g_get_glob_ptr", NULL, NULL);
+  if (is_ascii_numeric(field[7]))
+    {
+      return NULL;
+    }
 
-  int l_off = 7;
+  int idx = (int) strtol(&field[7], NULL, 10);
 
-  int idx = (int) strtol(&field[l_off], NULL, 10);
-
-  if (!(idx >= 0 && idx <= MAX_GLOB_STOR_AR_COUNT))
+  if (errno == ERANGE || errno == EINVAL)
     {
       return NULL;
     }
@@ -45,12 +49,23 @@ g_get_glob_ptr(__g_handle hdl, char *field, int *output)
       memset((void*) &glob_float_stor[idx], 0x0, sizeof(float));
       return (void*) &glob_float_stor[idx];
     }
-  else if (!strncmp(field, _MC_GLOB_CURTIME, 7))
+
+  return NULL;
+}
+
+void *
+g_get_glob_ptr(__g_handle hdl, char *field, int *output)
+{
+  g_setjmp(0, "g_get_glob_ptr", NULL, NULL);
+
+  if (!strncmp(field, _MC_GLOB_CURTIME, 7))
     {
       *output = -33;
       memset((void*) &glob_curtime, 0x0, sizeof(int64_t));
       return (void*) &glob_curtime;
     }
-
-  return NULL;
+  else
+    {
+      return g_proc_gstor(hdl, field, output);
+    }
 }

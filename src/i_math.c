@@ -656,6 +656,11 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags,
           return 4;
         }
 
+      if (errno == EINVAL)
+        {
+          return 14;
+        }
+
       math->flags |= t_f;
 
       return 0;
