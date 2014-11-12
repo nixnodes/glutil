@@ -230,7 +230,7 @@ Updated: 4/12/2013
 			One instance where this could be usefull is when checking for dead links,
 			for example:
 			
-				-x / -R lom "mode=10" -print "Readable: [ {(?X:(isread):(?P:rlink#%s))} ] {path} -> {rlink}"
+				-x / -R lom "mode=10" -print "Readable: [ {(?X:(isread):(?P:rlink))} ] {path} -> {rlink}"
 				
 			Output:
 			
