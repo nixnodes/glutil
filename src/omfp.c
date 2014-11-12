@@ -70,6 +70,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   void *buffer = calloc(1, g_act_1.block_sz);
 
+  pt_g_bmatch proc_match = g_bmatch;
+
   int r = 0;
 
   if (gfl & F_OPT_SORT)
@@ -126,22 +128,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
           g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
         }
 
-      p_md_obj lm_ptr = md_first(&g_act_1._match_rr), lm_s_ptr;
-
-      while (lm_ptr)
-        {
-          __g_match gm_ptr = (__g_match ) lm_ptr->ptr;
-          if (gm_ptr->flags & F_GM_TYPES)
-            {
-              lm_s_ptr = lm_ptr;
-              lm_ptr = lm_ptr->next;
-              md_unlink(&g_act_1._match_rr, lm_s_ptr);
-            }
-          else
-            {
-              lm_ptr = lm_ptr->next;
-            }
-        }
+      proc_match = g_bmatch_dummy;
     }
 
   g_do_ppprint(&g_act_1, F_GH_PRE_PRINT, &g_act_1.pre_print_mech,
@@ -169,7 +156,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
               break;
             }
 
-          if ((r = g_bmatch(ptr, &g_act_1, &g_act_1.buffer)))
+          if ((r = proc_match(ptr, &g_act_1, &g_act_1.buffer)))
             {
               if (r == -1)
                 {

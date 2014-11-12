@@ -14,7 +14,6 @@
 #include <fp_types.h>
 #include <stdio.h>
 
-
 #define G_MATCH         ((int)0)
 #define G_NOMATCH       ((int)1)
 
@@ -28,11 +27,10 @@
 #define F_GM_TFD                        (a32 << 8)
 #define F_GM_ISFNAME                    (a32 << 9)
 #define F_GM_LOM_SET                    (a32 << 10)
+#define F_GM_IS_MOBJ                    (a32 << 11)
 
 #define F_GM_TYPES                      (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM|F_GM_ISFNAME)
 #define F_GM_TYPES_STR                  (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISFNAME)
-
-
 
 typedef float
 (*g_tf_p)(void *base, size_t offset);
@@ -49,9 +47,20 @@ g_filter(__g_handle hdl, pmda md);
 int
 g_bmatch(void *, __g_handle, pmda md);
 int
+g_bmatch_dummy(void *d_ptr, __g_handle hdl, pmda md);
+
+typedef int
+(*pt_g_bmatch)(void *, __g_handle, pmda md);
+
+int
 opt_g_operator_or(void *arg, int m);
 int
 opt_g_operator_and(void *arg, int m);
+
+int
+opt_g_m_raise_level(void *arg, int m);
+int
+opt_g_m_lower_level(void *arg, int m);
 
 typedef struct ___g_lom
 {
@@ -99,9 +108,11 @@ typedef struct ___g_match_h
   _d_drt_h dtr;
   char *data;
   void *hdl_ref;
+  pmda next;
 } _g_match, *__g_match;
 
 mda _match_rr;
+pmda _match_clvl;
 
 typedef struct ___last_match
 {
@@ -118,12 +129,10 @@ _l_match _match_rr_l;
 
 #define MAX_RT_C_EXEC           4096
 
-
 typedef struct ___rt_conditional
 {
   _g_match match;
   __g_proc_v p_exec;
 } _rt_c, *__rt_c;
-
 
 #endif /* M_GENERAL_H_ */

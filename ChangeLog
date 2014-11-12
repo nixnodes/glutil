@@ -95,6 +95,8 @@
  *   - + --xflags and 'x' log type (see --help) (12)
  *   - % Removed obsolete 'curtime' field used with '-x' (12)
  *   - % Gzip disabled by default (to enable compile with --enable-gzip) (12) 
+ *   2.4.14:
+ *   - + Force precedence on match expressions (see --help)
  *
  * v2.3:
  *

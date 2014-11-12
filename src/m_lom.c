@@ -115,21 +115,12 @@ g_lom_match_bare(__g_handle hdl, void *d_ptr, __g_lom lom)
   return lom->result;
 }
 
-int
-g_load_lom(__g_handle hdl)
+static int
+g_proc_lom(__g_handle hdl, pmda match_rr, int *loaded)
 {
-  g_setjmp(0, "g_load_lom", NULL, NULL);
-
-  if ((hdl->flags & F_GH_HASLOM))
-    {
-      return 0;
-    }
-
-  int rt = 0;
-
-  p_md_obj ptr = md_first(&hdl->_match_rr);
+  p_md_obj ptr = md_first(match_rr);
   __g_match _m_ptr;
-  int r, ret, c = 0;
+  int r, ret;
   while (ptr)
     {
       _m_ptr = (__g_match) ptr->ptr;
@@ -140,8 +131,7 @@ g_load_lom(__g_handle hdl)
             {
               print_str("ERROR: %s: [%d] [%d]: could not load LOM string\n",
                   hdl->file, r, ret);
-              rt = 1;
-              break;
+              return 1;
             }
           if (!(_m_ptr->flags & F_GM_LOM_SET))
             {
@@ -153,27 +143,54 @@ g_load_lom(__g_handle hdl)
                 {
                   print_str("ERROR: %s: invalid LOM match, no F_GM_LOM_SET or F_GM_ISACCU was set\n",
                       hdl->file);
-                  rt = 2;
-                  break;
+                  return 2;
                 }
             }
-          c++;
+          *loaded += 1;
+        }
+      else if (_m_ptr->flags & F_GM_IS_MOBJ)
+        {
+          int rt;
+          if ((rt = g_proc_lom(hdl, _m_ptr->next, loaded)))
+            {
+              return rt;
+            }
         }
       ptr = ptr->next;
     }
 
-  if (!rt)
+  return 0;
+}
+
+int
+g_load_lom(__g_handle hdl)
+{
+  g_setjmp(0, "g_load_lom", NULL, NULL);
+
+  if ((hdl->flags & F_GH_HASLOM))
+    {
+      return 0;
+    }
+
+  int loaded = 0;
+  int rt;
+  if ((rt = g_proc_lom(hdl, &hdl->_match_rr, &loaded)))
+    {
+      return rt;
+    }
+
+  if (loaded > 0)
     {
       hdl->flags |= F_GH_HASLOM;
 
       if (gfl & F_OPT_VERBOSE3)
         {
-          print_str("NOTICE: %s: loaded %d LOM matches\n", hdl->file, c);
+          print_str("NOTICE: %s: loaded %d LOM matches\n", hdl->file, loaded);
         }
     }
   else
     {
-      print_str("ERROR: %s: [%d] LOM specified, but none could be loaded\n",
+      print_str("ERROR: %s: [%d] LOM specified, but none was loaded\n",
           hdl->file, rt);
       gfl |= F_OPT_KILL_GLOBAL;
       EXITVAL = 1;
@@ -1100,9 +1117,9 @@ opt_g_lom(void *arg, int m, uint32_t flags)
 
   gfl |= F_OPT_HAS_G_LOM;
 
-  bzero(&_match_rr_l, sizeof(_match_rr_l));
+  //bzero(&_match_rr_l, sizeof(_match_rr_l));
   _match_rr_l.ptr = (void *) pgm;
-  _match_rr_l.flags = F_LM_LOM;
+  //_match_rr_l.flags = F_LM_LOM;
 
   pgm->data = buffer;
 

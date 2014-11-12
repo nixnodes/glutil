@@ -110,7 +110,6 @@ char ALTLOG[PATH_MAX] =
 char XLOG[PATH_MAX] =
   { x_log };
 
-
 #ifdef GLCONF
 char GLCONF_I[PATH_MAX] =
   { GLCONF };
@@ -142,6 +141,8 @@ sigjmp g_sigjmp =
 
 mda _match_rr =
   { 0 };
+
+pmda _match_clvl = &_match_rr;
 
 _l_match _match_rr_l =
   { 0 };

@@ -22,6 +22,20 @@ int execv_stdout_redir = -1;
 mda ar_vref =
   { 0 };
 
+
+int
+default_determine_negated(void)
+{
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+    {
+      return 1;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
 int
 g_cpg(void *arg, void *out, int m, size_t sz)
 {

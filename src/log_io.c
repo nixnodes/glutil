@@ -449,31 +449,7 @@ g_cleanup(__g_handle hdl)
 
   p_md_obj ptr;
 
-  if (hdl->_match_rr.objects)
-    {
-      ptr = md_first(&hdl->_match_rr);
-
-      while (ptr)
-        {
-          __g_match g_ptr = (__g_match) ptr->ptr;
-          if ( g_ptr->flags & F_GM_ISLOM)
-            {
-              md_g_free(&g_ptr->lom);
-            }
-          if ( g_ptr->flags & F_GM_ISREGEX)
-            {
-              regfree(&g_ptr->preg);
-            }
-
-          //g_ptr->dtr.rt_cond = NULL;
-          /*cond = cond_n;
-           }*/
-          clean_drt(&g_ptr->dtr);
-          ptr = ptr->next;
-        }
-
-      r += md_g_free(&hdl->_match_rr);
-    }
+  r += md_g_free_cb(&hdl->_match_rr, g_cl_mrr);
 
   if (hdl->exec_args.ac_ref.objects)
     {
@@ -516,6 +492,34 @@ g_claf_mech(void *ptr)
   clean_drt(&ach->dtr);
 
   return 0;
+}
+
+int
+g_cl_mrr(void *ptr)
+{
+  __g_match g_ptr = (__g_match) ptr;
+  if ( g_ptr->flags & F_GM_ISLOM)
+    {
+      md_g_free(&g_ptr->lom);
+    }
+
+  if ( g_ptr->flags & F_GM_ISREGEX)
+    {
+      regfree(&g_ptr->preg);
+    }
+
+  clean_drt(&g_ptr->dtr);
+
+  if ( (g_ptr->flags & F_GM_IS_MOBJ) && g_ptr->next )
+    {
+      int rt = md_g_free_cb(g_ptr->next, g_cl_mrr);
+      free(g_ptr->next);
+      return rt;
+    }
+  else
+    {
+      return 0;
+    }
 }
 
 int

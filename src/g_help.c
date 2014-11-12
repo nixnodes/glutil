@@ -133,6 +133,7 @@ char *hpd_up =
     "  --imatchq             Exit on first result\n"
     "\n"
     "Operators:\n"
+    "  ( <expr> )            Force precedence. Parentheses needs to be escaped in most cases, '\\( ... \\)'\n"
     "  ! <expr>              True if <expr> is false (negates result). This character might need to be escaped.\n"
     "  <expr1> or <expr2>    True when either of <expr1>, <expr2> is true.\n"
     "  <expr1> and <expr2>   True if both <expr1> and <expr2> are true.\n"

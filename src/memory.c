@@ -166,13 +166,6 @@ md_relink_n(pmda md, off_t base)
 p_md_obj
 md_first(pmda md)
 {
-
-  /*if (md->first && md->first != md->objects) {
-   if (md->first->ptr) {
-   return md->first;
-   }
-   }*/
-
   off_t off = 0;
   p_md_obj ptr = md->objects;
 
@@ -385,7 +378,8 @@ md_swap_s(pmda md, p_md_obj md_o1, p_md_obj md_o2)
 }
 
 int
-md_copy(pmda source, pmda dest, size_t block_sz)
+md_copy(pmda source, pmda dest, size_t block_sz, int
+(*cb)(void *source, void *dest, void *ptr))
 {
   if (!source || !dest)
     {
@@ -411,6 +405,10 @@ md_copy(pmda source, pmda dest, size_t block_sz)
           break;
         }
       memcpy(d_ptr, ptr->ptr, block_sz);
+      if (NULL != cb)
+        {
+          cb((void*) ptr->ptr, (void*) dest, (void*) d_ptr);
+        }
       ptr = ptr->next;
     }
 

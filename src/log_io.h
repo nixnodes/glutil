@@ -71,6 +71,8 @@ gh_rewind(__g_handle hdl);
 int
 g_claf_mech(void *ptr);
 int
+g_cl_mrr(void *ptr);
+int
 g_buffer_into_memory(char *file, __g_handle hdl);
 int
 g_cleanup(__g_handle hdl);

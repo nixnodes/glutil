@@ -12,6 +12,8 @@
 #include <l_error.h>
 #include <log_op.h>
 #include <lc_oper.h>
+#include <arg_proc.h>
+#include <arg_opts.h>
 
 #include <fnmatch.h>
 
@@ -29,9 +31,9 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
         }
       md->rescnt++;
       /*if (!(hdl->flags & F_GH_NO_ACCU))
-        {
-          g_lom_accu(hdl, ptr, &hdl->_accumulator);
-        }*/
+       {
+       g_lom_accu(hdl, ptr, &hdl->_accumulator);
+       }*/
     }
   else
     {
@@ -47,14 +49,14 @@ g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
 __g_match
 g_global_register_match(void)
 {
-  md_init(&_match_rr, 32);
+  md_init(_match_clvl, 32);
 
-  if (_match_rr.offset >= GM_MAX)
+  if (_match_clvl->offset >= GM_MAX)
     {
       return NULL;
     }
 
-  return (__g_match ) md_alloc(&_match_rr, sizeof(_g_match));
+  return (__g_match ) md_alloc(_match_clvl, sizeof(_g_match));
 
 }
 
@@ -137,39 +139,32 @@ g_filter(__g_handle hdl, pmda md)
   return r;
 }
 
-int
-g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
+static int
+g_bm_proc(void *d_ptr, __g_handle hdl, pmda match_rr)
 {
-  if (md)
-    {
-      if (hdl->max_results && md->rescnt >= hdl->max_results)
-        {
-#ifdef _MAKE_SBIN
-          ofl |= F_BM_TERM;
-          gfl |= F_OPT_KILL_GLOBAL;
-#endif
-          return 1;
-        }
-      if (hdl->max_hits && md->hitcnt >= hdl->max_hits)
-        {
-          return 0;
-        }
-    }
 
-  p_md_obj ptr = md_first(&hdl->_match_rr);
+  p_md_obj ptr = md_first(match_rr);
   int r, r_p = 1;
   __g_match _gm, _p_gm = NULL;
 
   while (ptr)
     {
-      r = 0;
+      //r = 0;
       _gm = (__g_match) ptr->ptr;
 
-      if ((_gm->flags & F_GM_ISLOM))
+      if ((_gm->flags & F_GM_IS_MOBJ))
+        {
+          r = !(g_bm_proc(d_ptr, hdl, _gm->next) == _gm->match_i_m);
+        }
+      else if ((_gm->flags & F_GM_ISLOM))
         {
           if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m)
             {
               r = 1;
+            }
+          else
+            {
+              r = 0;
             }
         }
       else if (_gm->flags & F_GM_TYPES_STR)
@@ -226,11 +221,41 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           continue;
         }
 
-      l_end: ;
+      l_end:;
 
       _p_gm = _gm;
       ptr = ptr->next;
     }
+
+  return r_p;
+}
+
+int
+g_bmatch_dummy(void *d_ptr, __g_handle hdl, pmda md)
+{
+  return 0;
+}
+
+int
+g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
+{
+  if (NULL != md)
+    {
+      if (hdl->max_results && md->rescnt >= hdl->max_results)
+        {
+#ifdef _MAKE_SBIN
+          ofl |= F_BM_TERM;
+          gfl |= F_OPT_KILL_GLOBAL;
+#endif
+          return 1;
+        }
+      if (hdl->max_hits && md->hitcnt >= hdl->max_hits)
+        {
+          return 0;
+        }
+    }
+
+  int r_p = g_bm_proc(d_ptr, hdl, &hdl->_match_rr);
 
   if (hdl->ifrh_l0)
     {
@@ -328,19 +353,13 @@ opt_g_operator_or(void *arg, int m)
     {
       return 7100;
     }
-  switch (_match_rr_l.flags & F_LM_TYPES)
+
+  if ( pgm->flags & F_GM_NAND)
     {
-      case F_LM_CPRG:
-      ;
-      pgm->g_oper_ptr = g_oper_or;
-      break;
-      case F_LM_LOM:;
-      pgm->g_oper_ptr = g_oper_or;
-      break;
-      default:
-      return 7110;
-      break;
+      pgm->flags ^= F_GM_NAND;
     }
+
+  pgm->g_oper_ptr = g_oper_or;
   pgm->flags |= F_GM_NOR;
   return 0;
 }
@@ -353,19 +372,71 @@ opt_g_operator_and(void *arg, int m)
     {
       return 6100;
     }
-  switch (_match_rr_l.flags & F_LM_TYPES)
+
+  if ( pgm->flags & F_GM_NOR)
     {
-      case F_LM_CPRG:
-      ;
-      pgm->g_oper_ptr = g_oper_and;
-      break;
-      case F_LM_LOM:;
-      pgm->g_oper_ptr = g_oper_and;
-      break;
-      default:
-      return 6110;
-      break;
+      pgm->flags ^= F_GM_NOR;
     }
+
+  pgm->g_oper_ptr = g_oper_and;
   pgm->flags |= F_GM_NAND;
+  return 0;
+}
+
+int
+opt_g_m_raise_level(void *arg, int m)
+{
+  __g_match pgm = g_global_register_match();
+
+  pgm->flags |= F_GM_IS_MOBJ;
+  pgm->match_i_m = default_determine_negated();
+
+  pgm->g_oper_ptr = g_oper_and;
+  pgm->flags |= F_GM_NAND;
+
+  _match_rr_l.ptr = (void *) pgm;
+
+  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
+    {
+      pgm->flags |= F_GM_TFD;
+    }
+
+  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
+  ar_remove(&ar_vref, AR_VRP_OPT_NEGATE_MATCH);
+
+  pgm->next = calloc(1, sizeof(mda));
+  md_init((pmda) pgm->next, 16);
+
+  ((pmda) pgm->next)->lref_ptr = _match_clvl;
+  _match_clvl = pgm->next;
+
+  return 0;
+}
+
+int
+opt_g_m_lower_level(void *arg, int m)
+{
+
+  if (NULL == _match_clvl->lref_ptr)
+    {
+      return 99150;
+    }
+
+  _match_clvl = (void*) _match_clvl->lref_ptr;
+
+  if (NULL == _match_clvl->pos)
+    {
+      return 99151;
+    }
+
+  __g_match pgm = _match_clvl->pos->ptr;
+
+  if (NULL == pgm)
+    {
+      return 99152;
+    }
+
+  _match_rr_l.ptr = (void *) pgm;
+
   return 0;
 }

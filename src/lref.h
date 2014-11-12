@@ -32,15 +32,22 @@ int
 rtv_q(void *query, char *output, size_t max_size);
 
 char*
-l_mppd_shell_ex(char *input, char *output, size_t max_size, __d_drt_h mppd);
+l_mppd_shell_ex(char *input, char *output, size_t max_size, void **l_nr, char l, char r);
+
+#define LMS_EX_L          0x28
+#define LMS_EX_R          0x29
 
 #define PROC_SH_EX(match) \
 { \
 char m_b[MAX_SHARG_SZ]; \
-  if (NULL == (match = l_mppd_shell_ex(match, m_b, MAX_SHARG_SZ, mppd))) \
+  void *l_next_ref = NULL; \
+  if (NULL == (match = l_mppd_shell_ex(match, m_b, MAX_SHARG_SZ, &l_next_ref, LMS_EX_L, LMS_EX_R))) \
     { \
       return NULL; \
     } \
+    if (NULL != mppd && l_next_ref != NULL) { \
+        ((__d_drt_h) mppd)->varg_l = (char*)l_next_ref; \
+    }\
 };
 
 #endif /* LREF_H_ */

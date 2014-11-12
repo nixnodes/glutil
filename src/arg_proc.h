@@ -42,6 +42,9 @@ opt_execv_stdout_rd(void *arg, int m);
 int
 parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags);
 
+int
+default_determine_negated(void);
+
 typedef struct option_reference_array
 {
   char *option;

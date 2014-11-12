@@ -188,6 +188,25 @@ g_op_load_print_mech(__g_handle hdl, pmda print_mech, char *print_ptr)
   return 0;
 }
 
+static int
+g_h_deepcp_mrr(void *source, void *dest, void *d_ptr)
+{
+
+  __g_match src_pmd = (__g_match) source;
+  if ( src_pmd->flags & F_GM_IS_MOBJ)
+    {
+      pmda t_md = calloc(1, sizeof(mda));
+
+      md_copy(src_pmd->next, t_md, sizeof(_g_match), g_h_deepcp_mrr);
+
+      __g_match dest_pmd = (__g_match) d_ptr;
+
+      dest_pmd->next = t_md;
+    }
+
+  return 0;
+}
+
 int
 g_proc_mr(__g_handle hdl)
 {
@@ -213,7 +232,8 @@ g_proc_mr(__g_handle hdl)
 
   if (!(hdl->flags & F_GH_HASMATCHES))
     {
-      if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match))))
+      if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match),
+          g_h_deepcp_mrr)))
         {
           print_str("ERROR: %s: could not copy matches to handle\n", hdl->file);
           return 2000;

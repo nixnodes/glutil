@@ -39,11 +39,9 @@ l_mppd_create_copy(__d_drt_h mppd)
   return mppd_next;
 }
 
-#define LMS_EX_L          0x28
-#define LMS_EX_R          0x29
-
 char*
-l_mppd_shell_ex(char *input, char *output, size_t max_size, __d_drt_h mppd)
+l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
+    char r)
 {
   char *ptr = input;
   char left, right;
@@ -66,9 +64,9 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, __d_drt_h mppd)
           ptr++;
         }
 
-      if ( NULL != mppd)
+      if ( NULL != l_nr)
         {
-          mppd->varg_l = ptr;
+          *l_nr = (void*) ptr;
         }
 
       return input;
@@ -118,7 +116,7 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, __d_drt_h mppd)
       ptr[0] = 0x0;
     }
 
-  if ( NULL != mppd)
+  if ( NULL != l_nr)
     {
       ptr = &input[c + 2];
 
@@ -127,7 +125,7 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, __d_drt_h mppd)
           ptr++;
         }
 
-      mppd->varg_l = ptr;
+      *l_nr = (void*) ptr;
     }
 
   return output;

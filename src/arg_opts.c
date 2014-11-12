@@ -722,19 +722,6 @@ lom_determine_negated(void)
 }
 
 static int
-string_determine_negated(void)
-{
-  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
-    {
-      return 1;
-    }
-  else
-    {
-      return 0;
-    }
-}
-
-static int
 fname_determine_negated(void)
 {
   if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
@@ -768,13 +755,13 @@ opt_g_d_regexi(void *arg, int m)
 int
 opt_g_d_match(void *arg, int m)
 {
-  return g_cprg(arg, m, string_determine_negated(), 0, 0, F_GM_ISMATCH);
+  return g_cprg(arg, m, default_determine_negated(), 0, 0, F_GM_ISMATCH);
 }
 
 int
 opt_g_d_fname(void *arg, int m)
 {
-  return g_cprg(arg, m, string_determine_negated(), 0, 0, F_GM_ISFNAME);
+  return g_cprg(arg, m, default_determine_negated(), 0, 0, F_GM_ISFNAME);
 }
 
 int
@@ -1874,6 +1861,8 @@ _gg_opt gg_f_ref[] =
         { .id = 0x1001, .on = "-fd:", .ac = 0, .op = opt_g_tfd },
         { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },
         { .id = 0x0003, .on = "or", .ac = 0, .op = opt_g_operator_or },
+        { .id = 0x0004, .on = "(", .ac = 0, .op = opt_g_m_raise_level },
+        { .id = 0x0005, .on = ")", .ac = 0, .op = opt_g_m_lower_level },
         { .id = 0x0070, .on = "-y", .ac = 0, .op = opt_g_flinks },
         { .id = 0x0071, .on = "--allowsymbolic", .ac = 0, .op = opt_g_flinks },
         { .id = 0x0072, .on = "--followlinks", .ac = 0, .op = opt_g_flinks },

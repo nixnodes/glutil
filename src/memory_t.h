@@ -69,7 +69,8 @@ md_unlink(pmda md, p_md_obj md_o);
 void *
 md_alloc(pmda md, int b);
 int
-md_copy(pmda source, pmda dest, size_t block_sz);
+md_copy(pmda source, pmda dest, size_t block_sz, int
+(*cb)(void *source, void *dest, void *ptr));
 int
 is_memregion_null(void *addr, size_t size);
 int

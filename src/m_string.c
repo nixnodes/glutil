@@ -80,9 +80,9 @@ g_cprg(void *arg, int m, int match_i_m, int fn_flags, int regex_flags,
     break;
     }
 
-  bzero(&_match_rr_l, sizeof(_match_rr_l));
+  //bzero(&_match_rr_l, sizeof(_match_rr_l));
   _match_rr_l.ptr = (void *) pgm;
-  _match_rr_l.flags = F_LM_CPRG;
+  //_match_rr_l.flags = F_LM_CPRG;
 
   if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
     {
@@ -154,21 +154,12 @@ g_commit_strm_regex(__g_handle hdl, char *field, char *m, int reg_i_m,
   return r;
 }
 
-int
-g_load_strm(__g_handle hdl)
+static int
+g_proc_strm(__g_handle hdl, pmda match_rr, int *loaded)
 {
-  g_setjmp(0, "g_load_strm", NULL, NULL);
-
-  if ((hdl->flags & F_GH_HASSTRM))
-    {
-      return 0;
-    }
-
-  int rt = 0;
-
-  p_md_obj ptr = md_first(&hdl->_match_rr);
+  p_md_obj ptr = md_first(match_rr);
   __g_match _m_ptr;
-  int c = 0;
+
   size_t i;
 
   while (ptr)
@@ -218,27 +209,55 @@ g_load_strm(__g_handle hdl)
                 }
             }
 
-          c++;
+          *loaded += 1;
+        }
+      else if (_m_ptr->flags & F_GM_IS_MOBJ)
+        {
+          int rt;
+          if ((rt = g_proc_strm(hdl, _m_ptr->next, loaded)))
+            {
+              return rt;
+            }
         }
       ptr = ptr->next;
     }
 
-  if (!rt)
+  return 0;
+}
+
+int
+g_load_strm(__g_handle hdl)
+{
+  g_setjmp(0, "g_load_strm", NULL, NULL);
+
+  if ((hdl->flags & F_GH_HASSTRM))
+    {
+      return 0;
+    }
+
+  int loaded = 0;
+  int rt;
+  if ((rt = g_proc_strm(hdl, &hdl->_match_rr, &loaded)))
+    {
+      return rt;
+    }
+
+  if (loaded > 0)
     {
       hdl->flags |= F_GH_HASSTRM;
       if (gfl & F_OPT_VERBOSE3)
         {
           print_str("NOTICE: %s: pre-processed %d string match filters\n",
-              hdl->file, c);
+              hdl->file, loaded);
         }
+      return 0;
     }
   else
     {
       print_str(
-          "ERROR: %s: [%d] string matches specified, but none could be processed\n",
+          "ERROR: %s: [%d] string matches specified, but none were processed\n",
           hdl->file, rt);
-
+      return 1;
     }
 
-  return rt;
 }

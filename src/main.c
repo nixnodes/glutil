@@ -571,6 +571,7 @@ g_shutdown(void *arg)
   free_cfg_rf(&cfg_rf);
   free_cfg(&glconf);
 
+
   if ((gfl & F_OPT_PS_LOGGING) && fd_log)
     {
       fclose(fd_log);
