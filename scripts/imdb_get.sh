@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:42
+#@REVISION:43
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} --lom "mode=4" --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0 '' '' 3` {m:arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0 '' '' {m:arg3}" regexi "dir,{m:arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
@@ -123,6 +123,8 @@ RECODE="recode"
 
 BASEDIR=`dirname $0`
 
+GLROOT="${4}"
+
 [ -f "${BASEDIR}/config" ] && . ${BASEDIR}/config
 
 echo "${10}" | grep -q "3" && IMDB_DATABASE_TYPE=0
@@ -143,6 +145,8 @@ echo "${10}" | grep -q "2" && {
 	op_id=1
 }
 
+try_lock_r 12 imdb_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
+
 IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" noop --imdblog="${3}${LAPPEND}"`
 
 [ -n "${IS_COMP}" ] && [ ${IS_COMP} -eq 1 ] && {	
@@ -160,7 +164,7 @@ IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" noop --imdblog="${3}${LAPPEN
 		EXTRA_ARGS="--gz ${IMDBLOG_COMPRESSION}"
 	}
 
-[[ $7 -eq 1 ]] && [[ $IMDB_DATABASE_TYPE -eq 1 ]] && TD=`basename "$1"` || TD="$1"
+[[ ${7} -eq 1 ]] && [[ $IMDB_DATABASE_TYPE -eq 1 ]] && TD=`basename "$1"` || TD="$1"
 
 imdb_do_query() {
         $CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$1"
@@ -181,14 +185,14 @@ get_omdbapi_data() {
 }
 
 cad() {
-        RTIME=`$1 --imdblog "$4$LAPPEND" -a ${2} "${3}" --imatchq -printf "{time}" --silent --nobuffer --rev`
+        RTIME=`${1} --imdblog "${4}${LAPPEND}" -a ${2} "${3}" --imatchq -printf "{time}" --silent --nobuffer --rev`
         CTIME=`date +"%s"`
         [ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
         if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
                 print_str "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
         else
                 if [ -n "$RTIME" ]; then
-                        [ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [$2 $3]: already exists in database (`expr $DIFF1 / 60` min old)"
+                        [ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [${2} ${3}]: already exists in database (`expr ${DIFF1} / 60` min old)"
                         II_ID=`$1 --imdblog "$4$LAPPEND" -a ${2} "${3}" --imatchq -printf "{imdbid}" --silent --nobuffer --rev`
                         [ ${op_id} -eq 1 ] && echo "${II_ID}"
                         exit 0
@@ -200,7 +204,6 @@ get_field()
 {
         echo "$DDT" | $XMLLINT --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g"
 }
-
 
 if ! [ $7 -eq 2 ]; then
         echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
@@ -225,13 +228,13 @@ if ! [ $7 -eq 2 ]; then
 
 #        if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 #                s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-#                cad $2 "regexi" "dir,^$s_q\$" "$3"
+#                cad ${2} "regexi" "dir,^$s_q\$" "$3"
 #        fi
 
         DTMP=`imdb_do_query "$QUERY""&ex=1"`
 
         imdb_get_by_year() {
-                echo "$1" | xmllint --xpath "(((/IMDbResults//ImdbEntity)))" - 2> /dev/null | sed -r "s/<\/ImdbEntity>/\0\\n/g" | egrep "<Description>$2" | tr -d '\n'
+                echo "${1}" | xmllint --xpath "(((/IMDbResults//ImdbEntity)))" - 2> /dev/null | sed -r "s/<\/ImdbEntity>/\0\\n/g" | egrep "<Description>${2}" | tr -d '\n'
         }
 
         unset iid
@@ -281,7 +284,7 @@ if ! [ $7 -eq 2 ]; then
         [ -z "$iid" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                cad $2 "match" "imdbid,$iid" "$3"
+                cad ${2} "match" "imdbid,$iid" "$3"
         fi
 
         DDT=`get_omdbapi_data "$iid"`
@@ -329,7 +332,7 @@ else
         QUERY="$8"
         YEAR_q="$9"
 
-		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad $2 "match" "imdbid,$iid" "$3"
+		[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad ${2} "match" "imdbid,$iid" "$3"
 
         DDT=`get_omdbapi_data "$iid"`
 
@@ -386,7 +389,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
                  [ -e "$3$LAPPEND" ] && {
-               	 	$2 --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
+               	 	${2} --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
                         print_str "ERROR: $DIR_E: Failed removing old record" && exit 1
                 	}
                 }
@@ -394,14 +397,14 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 #[ -z "$TITLE" ] && print_str "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
                 [ -e "$3$LAPPEND" ] && {
-               		$2 --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb ! match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
+               		${2} --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb ! match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
                    	     print_str "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
                		}
                	}
         fi
 
 	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\n\n" > /tmp/glutil.img.$$.tmp
-	$2 --imdblog="${3}${LAPPEND}" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to imdblog!!"
+	${2} --imdblog="${3}${LAPPEND}" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to imdblog!!"
 	rm /tmp/glutil.img.$$.tmp
 	echo "${10}" | grep -q "1" || [ ${IMDB_SHARED_MEM} -gt 0 ] && ${2} -q imdb --imdblog="${3}${LAPPEND}" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
 fi

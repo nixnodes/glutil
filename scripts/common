@@ -1,3 +1,14 @@
+# PRIVATE
+_lock()             { flock -$1 ${2}; }
+_clear_lock()  { _lock u ${1}; _lock xn ${1}; rm -f "${2}"; }
+_prepare_lock()  { eval "exec ${1}>\"${2}\""; }
+
+# PUBLIC
+exlock_now()        { _lock xn ${1}; }  # obtain an exclusive lock immediately or fail
+exlock()            { _lock x ${1}; }   # obtain an exclusive lock
+shlock()            { _lock s ${1}; }   # obtain a shared lock
+unlock()            { _lock u ${1}; }   # drop a lock
+
 OUT_PRINT=1
 
 print_str()
@@ -5,4 +16,86 @@ print_str()
 	[ ${OUT_PRINT} -eq 1 ] && {
 		echo "${@}"
 	}
+}
+
+ctime()
+{
+	date +%s
+}
+
+bc_dcalc() { 
+	echo "x=${1}; if(x<1) print 0; x" | bc; 
+}
+
+get_trap()
+{
+	echo "$(trap -p)" | egrep "${1}$" | sed -r "s/^trap \-\- '//" | sed -r "s/' ${1}$//"
+}
+
+validate_ipv4()
+{
+        echo "${1}" | egrep -q '^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})((:)[0-9]{1,6}|$)$'
+        return $?
+}
+
+LOCK_BASEPATH="${GLROOT}/var/lock"
+CT_BARE=`basename "${0}" | sed -r 's/\.[a-zA-Z0-9]+$//'`
+
+mk_lockdir()
+{
+	[ -d "${LOCK_BASEPATH}/lock-${1}" ] || {
+		mkdir -p "${LOCK_BASEPATH}/${1}"
+		chmod 777 "${LOCK_BASEPATH}"
+		chmod 777 "${LOCK_BASEPATH}/${1}"		
+	}
+}
+
+stack_trap()
+{
+	p_trap="$(get_trap ${2})"
+	[ -n "${p_trap}" ] && p_trap="${p_trap}; "
+	trap "${p_trap}${1}" ${2}
+}
+
+try_lock()
+{
+        mk_lockdir ${2}
+		CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
+
+        _prepare_lock ${1} "${CT_F_LOCKFILE}"
+        exlock_now ${1} || {
+                exit 1
+        }
+
+       	stack_trap "_clear_lock ${1} ${CT_F_LOCKFILE}" EXIT
+}
+
+try_lock_r()
+{  	
+	mk_lockdir ${2}
+	CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
+	
+	tl_to=${4}	
+	i=0
+
+	while [ ${i} -lt ${tl_to} ]; do
+	        _prepare_lock ${1} "${CT_F_LOCKFILE}"
+
+        	exlock_now ${1} && {
+        		stack_trap "_clear_lock ${1} ${CT_F_LOCKFILE}" EXIT		       
+				return 0
+        	}
+		i=`expr ${i} + 1`
+		sleep 1
+	done
+
+	echo "${5}"
+
+	exit 0
+}
+
+controls_unlock()
+{
+		CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
+        _clear_lock ${1} "${CT_F_LOCKFILE}";
 }
