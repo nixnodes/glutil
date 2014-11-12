@@ -24,6 +24,8 @@ g_proc_gstor(__g_handle hdl, char *field, int *output)
       return NULL;
     }
 
+  errno = 0;
+
   int idx = (int) strtol(&field[7], NULL, 10);
 
   if (errno == ERANGE || errno == EINVAL)
