@@ -225,7 +225,7 @@ Updated: 4/12/2013
 			
 	?X   <directive (FILESYSTEM)>:<directive>
 			Resolves <directive> (current data input) and executes <directive (FILESYSTEM)>, 
-			using the resolved <field> result as the path.			
+			using the result of <directive> as the path.			
 			
 			One instance where this could be usefull is when checking for dead links,
 			for example:
