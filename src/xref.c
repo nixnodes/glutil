@@ -1571,7 +1571,7 @@ g_dump_gen(char *root)
 
   if (gfl & F_OPT_SORT)
     {
-      if (0 != (r = g_f_sort(g_sort_flags, &eds)))
+      if (0 != (r = g_f_sort(g_sort_flags, &eds, &ret.hdl)))
         {
           print_str("ERROR: [%d]: sort settings preproc failed!\n", r);
           goto end;
@@ -1963,120 +1963,14 @@ enum_dir(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
   return r;
 }
 
-static int
-e_comp_dn_a(const struct dirent *a, const struct dirent *b, __p_srd psrd)
-{
-  return strcoll(a->d_name, b->d_name) < 0;
-}
-
-static int
-e_comp_dn_d(const struct dirent *a, const struct dirent *b, __p_srd psrd)
-{
-  return strcoll(a->d_name, b->d_name) > 0;
-}
-
-static int
-e_comp_date_a(const struct dirent *a, const struct dirent *b, __p_srd psrd)
-{
-  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", (char*) psrd->sp_0,
-      a->d_name);
-  struct stat st1;
-  if (-1 == lstat(psrd->m_buf2, &st1))
-    {
-      return 0;
-    }
-
-  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", (char*) psrd->sp_0,
-      b->d_name);
-  struct stat st2;
-  if (-1 == lstat(psrd->m_buf2, &st2))
-    {
-      return 0;
-    }
-
-  return (st1.st_mtime < st2.st_mtime);
-}
-
-static int
-e_comp_date_d(const struct dirent *a, const struct dirent *b, __p_srd psrd)
-{
-  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", (char*) psrd->sp_0,
-      a->d_name);
-  struct stat st1;
-  if (-1 == lstat(psrd->m_buf2, &st1))
-    {
-      return 0;
-    }
-
-  snprintf(psrd->m_buf2, sizeof(psrd->m_buf2), "%s/%s", (char*) psrd->sp_0,
-      b->d_name);
-  struct stat st2;
-  if (-1 == lstat(psrd->m_buf2, &st2))
-    {
-      return 0;
-    }
-
-  return (st1.st_mtime > st2.st_mtime);
-}
-
-static int
-g_sort_f_date(uint32_t flags, __g_eds eds)
-{
-  switch (flags & F_GSORT_ORDER)
-    {
-  case F_GSORT_DESC:
-    eds->srd.m_op = (gs_cmp_p) e_comp_date_d;
-    eds->srd.m_op_opp = (gs_cmp_p) e_comp_date_a;
-    break;
-  case F_GSORT_ASC:
-    eds->srd.m_op = (gs_cmp_p) e_comp_date_a;
-    eds->srd.m_op_opp = (gs_cmp_p) e_comp_date_d;
-    break;
-  default:
-    ;
-    return 3;
-    }
-
-  return 0;
-}
-
-static int
-g_sort_f_string(uint32_t flags, __g_eds eds)
-{
-  switch (flags & F_GSORT_ORDER)
-    {
-  case F_GSORT_DESC:
-    eds->srd.m_op = (gs_cmp_p) e_comp_dn_a;
-    eds->srd.m_op_opp = (gs_cmp_p) e_comp_dn_d;
-    break;
-  case F_GSORT_ASC:
-    eds->srd.m_op = (gs_cmp_p) e_comp_dn_d;
-    eds->srd.m_op_opp = (gs_cmp_p) e_comp_dn_a;
-    break;
-  default:
-    ;
-    return 3;
-    }
-
-  return 0;
-}
-
-static void*
-g_s_proc_num(void)
-{
-  if (!strncmp(g_sort_field, _MC_X_MTIME, 5))
-    {
-      return g_sort_f_date;
-    }
-  else
-    {
-      return NULL;
-    }
-}
-
 int
-g_f_sort(uint32_t flags, __g_eds eds)
+g_f_sort(uint32_t flags, __g_eds eds, __g_handle hdl)
 {
+  if (NULL == g_sort_field)
+    {
+      return 2;
+    }
+
   switch (gfl0 & F_OPT_SMETHOD)
     {
   case F_OPT_SMETHOD_HEAP:
@@ -2092,11 +1986,15 @@ g_f_sort(uint32_t flags, __g_eds eds)
     break;
     }
 
-//eds->srd.m_op
+  g_invert_sort_order(&flags);
+
+  eds->srd.mppd.hdl = hdl;
+
+  int ret;
 
   if (!(flags & F_GSORT_TYPE))
     {
-      if (g_s_proc_num() != NULL)
+      if (!g_check_is_data_numeric(hdl, g_sort_field))
         {
           flags |= F_GSORT_NUMERIC;
         }
@@ -2106,28 +2004,59 @@ g_f_sort(uint32_t flags, __g_eds eds)
         }
     }
 
-  int ret = 0;
-
   switch (flags & F_GSORT_TYPE)
     {
   case F_GSORT_NUMERIC:
     ;
-    __d_sf_p nsf_cb = g_s_proc_num();
-    if ( NULL == nsf_cb)
-      {
-        return 12;
-      }
-    ret = nsf_cb(flags, eds);
+    ret = g_sort_numeric(hdl, g_sort_field, flags, &eds->srd);
     break;
   case F_GSORT_STRING:
     ;
-    ret = g_sort_f_string(flags, eds);
+    ret = g_sort_string(hdl, g_sort_field, flags, &eds->srd);
     break;
   default:
     return 11;
     }
 
+  if (0 != ret)
+    {
+      return ret;
+    }
+
   return ret;
+}
+
+static __d_xref *
+build_xarr(char *dir, struct dirent **namelist, int n, __std_rh aa_rh,
+    char *field)
+{
+  struct dirent *dirp;
+  __d_xref *x_arr = calloc(n, sizeof(void*));
+
+  char buf[PATH_MAX];
+
+  while (n--)
+    {
+      dirp = namelist[n];
+      x_arr[n] = calloc(1, sizeof(_d_xref));
+      x_arr[n]->flags |= ((__d_xref ) aa_rh->hdl._x_ref)->flags;
+      x_arr[n]->dirp = dirp;
+      snprintf(buf, PATH_MAX, "%s/%s", dir, dirp->d_name);
+      remove_repeating_chars(buf, 0x2F);
+      g_preproc_dm(buf, x_arr[n], dirp->d_type, aa_rh);
+    }
+
+  return x_arr;
+}
+
+static void
+tp_clean_xarr(__d_xref *x_arr, int n)
+{
+  while (n--)
+    {
+      free(x_arr[n]->dirp);
+      free(x_arr[n]);
+    }
 }
 
 int
@@ -2139,6 +2068,8 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
 
   int r = 0, ir;
 
+  __std_rh aa_rh = (__std_rh) arg;
+
   struct dirent **namelist;
 
   int n = scandir(dir, &namelist, NULL, e_comp_dir);
@@ -2148,22 +2079,23 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
       return -3;
     }
 
-  if (eds->flags & F_EDS_SORT)
-    {
-      eds->srd.sp_0 = dir;
-      eds->sort_proc((void**) namelist, 0, ((int64_t) n) - eds->srd.off_right,
-          &eds->srd);
-    }
+  __d_xref *x_arr = build_xarr(dir, namelist, n, aa_rh, g_sort_field);
+
+  free(namelist);
+
+  eds->srd.sp_0 = dir;
+  eds->sort_proc((void**) x_arr, 0, ((int64_t) n) - eds->srd.off_right,
+      &eds->srd);
 
   while (n--)
     {
       if ((gfl & F_OPT_KILL_GLOBAL) || (gfl & F_OPT_TERM_ENUM))
         {
+          tp_clean_xarr(x_arr, n);
           break;
         }
 
-      dirp = namelist[n];
-
+      dirp = x_arr[n]->dirp;
       size_t d_name_l = strlen(dirp->d_name);
 
       if ((d_name_l == 1 && dirp->d_name[0] == 0x2E)
@@ -2171,6 +2103,7 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
               && dirp->d_name[1] == 0x2E))
         {
           free(dirp);
+          free(x_arr[n]);
           continue;
         }
 
@@ -2188,11 +2121,13 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
         }
 
       free(dirp);
+      free(x_arr[n]);
 
       if (!(ir = callback_f(buf, _dirp.d_type, arg, eds)))
         {
           if (f & F_ENUMD_ENDFIRSTOK)
             {
+              tp_clean_xarr(x_arr, n);
               r = 0;
               break;
             }
@@ -2205,13 +2140,14 @@ tp_sorted(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
         {
           if (f & F_ENUMD_BREAKONBAD)
             {
+              tp_clean_xarr(x_arr, n);
               //r = ir;
               break;
             }
         }
     }
 
-  free(namelist);
+  free(x_arr);
 
   return r;
 }

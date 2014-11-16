@@ -111,15 +111,18 @@ Updated: 4/12/2013
 	
  EXTENDED DIRECTIVES:
 			
-	[?<option>]:[<field|(directive)>][#<format>]
-	
 	Legend:
 	
+	<name>  	 -  directive name
 	<field>		 -	only a reference to the actual data, strictly
 					fields which are listed in DATA_STRUCTURES 
 	<directive>	 -	actual data field or an extended directive
 	<expression> -	logical/relational or mathematical expression
 	<pattern>	 - 	string matching pattern (e.g. REGEX)
+	<format>     -  Format string (printf(3) or strftime(3))
+	
+	
+	[?<name>]:[<field|(directive)>|option..][..][#<format>]
 	
 	
 	?c	 <num repeat>:<char>				
@@ -133,15 +136,17 @@ Updated: 4/12/2013
 			\s  Space
 			\\  Literal backslash ('\')
 			
-	?t	 <field>#<conversion specs>
-			Using field data, formats an unix timestamp into a readable 
-			string (GMT) according to the <format> specification. 
-			See 'man 3 strftime' for conversion	specifications (passed 
+	?t	 <field|(<expression>)>#<format>
+			Formats data  returned by  <field>  (if using parenthesis, 
+			a math <expression> is expected) as a readable string (GMT) 
+			using  according to the <format> specification. 
+			See 'strftime(3)' for conversion	specifications (passed 
 			after #). If no conversion specifier characters are given, 
 			format defaults to: '%d/%h/%Y %H:%M:%S'
 			
-	?tl		Same as '?t', only the timestamp is converted relative to 
-			the user's specified timezone.
+	?tl  <field|(<expression>)>#<format>
+			Same as '?t', only the timestamp is converted relative to 
+			the system's timezone.
 			
 	?l	 <directive>
 			Prints the length of the field data based output string. Applies to 
@@ -169,21 +174,24 @@ Updated: 4/12/2013
 				>>  Bitwise right shift
 			
 			Example:
-				-d -print '{?m:size/(1024*2)}MB in {files} files, {?m:(size/files)/(1024*1024)}MB avg per file {?c:2:\t} {basedir}' --lom 'files>0' --sort size
+			
+				-d -print '{?m:size/(1024^2)}MB in {files} files, {?m:(size/files)/(1024*1024)}MB avg per file {?c:2:\t} {basedir}' --lom 'files>0' --sort size
 				
 			Output:
 				...
 				356MB in 28 files, 12MB avg per file 		 Some.Folder-TAG
 				...				
 				
-	?rs  [/[<flags>]]:<directive>:<pattern>:<string>
+	?rs  [/[<flags>]]:<directive>:<pattern>:<string|(directive)>
 			Before outputing/filtering the string returned by <directive>, substitute
-			part(s) matching regex <pattern> with <string>. 
-			Works on all integer/float fields.
+			part(s) matching regex <pattern> with <string|(directive)>. 
+			Works on all types.
 			
 			<flags> are:
 				i	Case insensitive
 				g 	Match every instance
+				n   Match-any-character operators don't match a newline
+				b   Use POSIX Basic Regular Expression syntax
 						
 						
 			Replace float dots in 'score' field with commas before 
@@ -217,7 +225,7 @@ Updated: 4/12/2013
 			Print <text>
 			
 	?P   <directive>#<format>
-			Print <directive> formatted per <format> (printf)
+			Print result of <directive> formatted per <format> (printf(3))
 			
 	?L   <expression>:<directive1>:<directive2>
 			Evaluates <expression> (LOM syntax) and executes <directive1> if 
@@ -252,7 +260,8 @@ Updated: 4/12/2013
 			 
 			
 			
-	Mind that ',' ':' '(' ')' '{' and '}' always need to be escaped with '\'. 	
+	Mind that ',' ':' '(' ')' '{' and '}' need to be escaped with '\' whenever used inside the scope
+	of a directive.
 	
 	Char directives:
 	
@@ -260,11 +269,19 @@ Updated: 4/12/2013
 	{:n}	New line
 			
 				
-	If #<format> is defined, it gets passed to the standard C printf family function which outputs 
-	the requested field, however some extended directives, e.g. '?t' use <format> for other purposes 
-	('?l' doesn't use it at all). It applies to all integer fields. Be very careful when using this, 
-	for security reasons users should never be allowed to specify this option freely.
+	If #<format> is defined, it gets passed to the standard C printf(3) family function which outputs 
+	the requested field (or in case of ?t and ?tl, strftime(3)). Make sure to enclose the entire  
+	directive, including #<format>, in parenthesis:
 	
+		-d -print '{(?t:time#%D %T)}'
+		
+	Most of the data fields aren't processed using printf(3) by default for performance reasons,
+	therefore can't be formatted when referenced directly;
+	If you wish to format field data or results of a directive, use the ?P extended directive:
+	
+		-d -print '{(?P:dir#Hello world - %.25s)}'
+		
+	Read about '?P' above.
 	
 	Extended directives can be used with with -exec[v], -print[f] and string filters 
 	(--[i]regex[i]/--[i]match):

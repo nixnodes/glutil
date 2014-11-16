@@ -39,9 +39,59 @@ l_mppd_create_copy(__d_drt_h mppd)
   return mppd_next;
 }
 
+static char*
+l_mppd_shex_resnp(char *input, char *output, size_t max_size, void** l_nr,
+    uint32_t flags)
+{
+  size_t st_len = strlen(input);
+
+  if (st_len >= max_size)
+    {
+      st_len = max_size - 1;
+    }
+
+  strncpy(output, input, st_len);
+  output[st_len] = 0x0;
+
+  size_t c = 0, w_c = 0;
+
+  char *ptr = output;
+
+  while (ptr[0] && ptr[0] != 0x3A && ptr[0] != 0x7D)
+    {
+      if (ptr[0] == 0x5C)
+        {
+          memmove(ptr, &ptr[1], strlen(&ptr[1]) + 1);
+          c++;
+        }
+      c++;
+      w_c++;
+      ptr++;
+    }
+
+  if (flags & F_MPPD_SHX_TZERO)
+    {
+      output[w_c] = 0x0;
+    }
+
+  if ( NULL != l_nr)
+    {
+      ptr = &input[c];
+
+      if (ptr[0] == 0x3A)
+        {
+          ptr++;
+        }
+
+      *l_nr = (void*) ptr;
+    }
+
+  return output;
+}
+
 char*
 l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
-    char r)
+    char r, uint32_t flags)
 {
   char *ptr = input;
   char left, right;
@@ -54,22 +104,7 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
     }
   else
     {
-      while (ptr[0] && ptr[0] != 0x3A)
-        {
-          ptr++;
-        }
-
-      if (ptr[0] == 0x3A)
-        {
-          ptr++;
-        }
-
-      if ( NULL != l_nr)
-        {
-          *l_nr = (void*) ptr;
-        }
-
-      return input;
+      return l_mppd_shex_resnp(ptr, output, max_size, l_nr, flags);
     }
 
   size_t st_len = strlen(ptr);
@@ -80,6 +115,7 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
     }
 
   strncpy(output, ptr, st_len);
+  output[st_len] = 0x0;
 
   uint32_t lvl = 1;
   size_t c = 0;
@@ -88,7 +124,12 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
 
   while (0x0 != ptr[0])
     {
-      if (ptr[0] == left)
+      if (ptr[0] == 0x5C)
+        {
+          memmove(ptr, &ptr[1], strlen(&ptr[1]) + 1);
+          c++;
+        }
+      else if (ptr[0] == left)
         {
           lvl++;
         }
@@ -307,30 +348,33 @@ dt_rval_spec_print_format(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
+typedef struct tm*
+(*g_tp_p)(const time_t *__timer);
+
 static char *
-dt_rval_spec_tf_pl(void *arg, char *match, char *output, size_t max_size,
+dt_rval_spec_tf_m(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  time_t uts = (time_t) g_ts32_ptr(arg, ((__d_drt_h ) mppd)->vp_off1);
-  strftime(output, max_size, ((__d_drt_h ) mppd)->direc, localtime(&uts));
+  g_tp_p tproc_ptr = (g_tp_p) ((__d_drt_h ) mppd)->st_p1;
+
+  unsigned char v_b[16] =
+    { 0 };
+  void *v_ptr = &v_b;
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, v_b);
+
+  time_t uts = *((time_t*) v_ptr);
+
+  strftime(output, max_size, ((__d_drt_h ) mppd)->direc, tproc_ptr(&uts));
   return output;
 }
 
 static char *
-dt_rval_spec_tf_pgm(void *arg, char *match, char *output, size_t max_size,
+dt_rval_spec_tf_p(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  g_tp_p tproc_ptr = (g_tp_p) ((__d_drt_h ) mppd)->st_p1;
   time_t uts = (time_t) g_ts32_ptr(arg, ((__d_drt_h ) mppd)->vp_off1);
-  strftime(output, max_size, ((__d_drt_h ) mppd)->direc, gmtime(&uts));
-  return output;
-}
-
-static char *
-dt_rval_spec_tf_l(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
-{
-  strftime(output, max_size, ((__d_drt_h ) mppd)->direc,
-      localtime(&((__d_drt_h ) mppd)->ts_1));
+  strftime(output, max_size, ((__d_drt_h ) mppd)->direc, tproc_ptr(&uts));
   return output;
 }
 
@@ -338,8 +382,9 @@ static char *
 dt_rval_spec_tf_gm(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  g_tp_p tproc_ptr = (g_tp_p) ((__d_drt_h ) mppd)->st_p1;
   strftime(output, max_size, ((__d_drt_h ) mppd)->direc,
-      gmtime(&((__d_drt_h ) mppd)->ts_1));
+      tproc_ptr(&((__d_drt_h ) mppd)->ts_1));
   return output;
 }
 
@@ -430,7 +475,7 @@ dt_rval_spec_regsub_dg(void *arg, char *match, char *output, size_t max_size,
 {
   __d_drt_h _mppd = (__d_drt_h) mppd;
 
-  char *rs_p = _mppd->fp_rval2(arg, match, ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0), _mppd->mppd_next);
+  char *rs_p = _mppd->fp_rval1(arg, match, ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0), _mppd->mppd_next);
   size_t o_l = strlen(rs_p) + 1;
 
   if (output != rs_p)
@@ -464,8 +509,20 @@ dt_rval_spec_regsub_g(void *arg, char *match, char *output, size_t max_size,
 {
   __d_drt_h _mppd = (__d_drt_h) mppd;
 
-  char *rs_p = _mppd->fp_rval2(arg, match, ((__d_drt_h ) mppd)->tp_b0,
-      sizeof(((__d_drt_h ) mppd)->tp_b0), _mppd->mppd_next);
+  char *rs_p = _mppd->fp_rval1(arg, match, _mppd->tp_b0,
+      sizeof(_mppd->tp_b0), _mppd->mppd_next);
+
+  char *rep_p;
+  if ( NULL != _mppd->fp_rval2)
+    {
+      rep_p = _mppd->fp_rval2(arg, (char*)_mppd->varg_l, _mppd->r_rep,
+          sizeof(_mppd->r_rep), _mppd->mppd_aux_next);
+      _mppd->r_rep_l = strlen(rep_p);
+    }
+  else
+    {
+      rep_p = (char*)_mppd->r_rep;
+    }
 
   size_t o_l = strlen(rs_p);
 
@@ -479,7 +536,7 @@ dt_rval_spec_regsub_g(void *arg, char *match, char *output, size_t max_size,
     {
       if (rm[0].rm_so == 0 && rm[0].rm_eo == o_l)
         {
-          strncpy(&rs_o[rs_w], _mppd->r_rep, _mppd->r_rep_l);
+          strncpy(&rs_o[rs_w], rep_p, _mppd->r_rep_l);
           rs_o[_mppd->r_rep_l+rs_w] = 0x0;
           return rs_o;
         }
@@ -487,14 +544,14 @@ dt_rval_spec_regsub_g(void *arg, char *match, char *output, size_t max_size,
         {
           if (!rm[0].rm_so)
             {
-              strncpy(rs_o, _mppd->r_rep, _mppd->r_rep_l);
+              strncpy(rs_o, rep_p, _mppd->r_rep_l);
               strncpy(&rs_o[_mppd->r_rep_l], rs_p, o_l);
               rs_o[_mppd->r_rep_l+o_l] = 0x0;
             }
           else if (rm[0].rm_so == o_l)
             {
               strncpy(rs_o, rs_p, o_l);
-              strncpy(&rs_o[o_l], _mppd->r_rep, _mppd->r_rep_l);
+              strncpy(&rs_o[o_l], rep_p, _mppd->r_rep_l);
               rs_o[_mppd->r_rep_l+o_l] = 0x0;
             }
           else
@@ -511,7 +568,7 @@ dt_rval_spec_regsub_g(void *arg, char *match, char *output, size_t max_size,
 
       strncpy(&rs_o[rs_w], m_p, rm[0].rm_so);
       rs_w += (size_t)rm[0].rm_so;
-      strncpy(&rs_o[rs_w], _mppd->r_rep, _mppd->r_rep_l);
+      strncpy(&rs_o[rs_w], rep_p, _mppd->r_rep_l);
       rs_w += _mppd->r_rep_l;
       m_p = &m_p[rm[0].rm_eo];
       r_eo = rm[0].rm_eo;
@@ -538,7 +595,7 @@ dt_rval_spec_regsub_d(void *arg, char *match, char *output, size_t max_size,
 {
   __d_drt_h _mppd = (__d_drt_h) mppd;
 
-  char *rs_p = _mppd->fp_rval2(arg, match, ((__d_drt_h ) mppd)->tp_b0,
+  char *rs_p = _mppd->fp_rval1(arg, match, ((__d_drt_h ) mppd)->tp_b0,
       sizeof(((__d_drt_h ) mppd)->tp_b0), _mppd->mppd_next);
 
   regmatch_t rm[2];
@@ -576,8 +633,20 @@ dt_rval_spec_regsub(void *arg, char *match, char *output, size_t max_size,
 {
   __d_drt_h _mppd = (__d_drt_h) mppd;
 
-  char *rs_p = _mppd->fp_rval2(arg, match,
+  char *rs_p = _mppd->fp_rval1(arg, match,
       ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0), _mppd->mppd_next);
+
+  char *rep_p;
+  if ( NULL != _mppd->fp_rval2)
+    {
+      rep_p = _mppd->fp_rval2(arg, (char*)_mppd->varg_l, _mppd->r_rep,
+          sizeof(_mppd->r_rep), _mppd->mppd_aux_next);
+      _mppd->r_rep_l = strlen(rep_p);
+    }
+  else
+    {
+      rep_p = (char*)_mppd->r_rep;
+    }
 
   regmatch_t rm[2];
 
@@ -595,7 +664,7 @@ dt_rval_spec_regsub(void *arg, char *match, char *output, size_t max_size,
     }
 
   strncpy(rs_o, rs_p, rm[0].rm_so);
-  strncpy(&rs_o[rm[0].rm_so], _mppd->r_rep, _mppd->r_rep_l);
+  strncpy(&rs_o[rm[0].rm_so], rep_p, _mppd->r_rep_l);
   strncpy(&rs_o[rm[0].rm_so+_mppd->r_rep_l], &rs_p[rm[0].rm_eo], o_l - rm[0].rm_eo);
 
   rs_o[rm[0].rm_so+_mppd->r_rep_l + (o_l - rm[0].rm_eo)] = 0x0;
@@ -844,6 +913,10 @@ rt_af_print(void *arg, char *match, char *output, size_t max_size,
 
   while (ptr[0] && ptr[0] != 0x7D)
     {
+      if (ptr[0] == 0x5C)
+        {
+          memmove(ptr, &ptr[1], strlen(&ptr[1]) + 1);
+        }
       ptr++;
     }
 
@@ -952,6 +1025,284 @@ rt_af_xstat(void *arg, char *match, char *output, size_t max_size,
   return as_ref_to_val_lk(match, dt_rval_xstat, mppd, "%s");
 }
 
+static void*
+rt_af_regex(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd, char *id)
+{
+  char *r_match = match;
+
+  mppd->mppd_next = l_mppd_create_copy(mppd);
+  mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
+      mppd->mppd_next);
+
+  if (NULL == mppd->fp_rval1)
+    {
+      print_str("ERROR: rt_af_regex: could not resolve directive: '%s'\n",
+          match);
+      return NULL;
+    }
+
+  if ( NULL == ((__d_drt_h ) mppd->mppd_next)->varg_l
+      || ((__d_drt_h ) mppd->mppd_next)->varg_l[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_regex: could not resolve pattern\n");
+      return NULL;
+    }
+
+  char *r_b = malloc(REG_PATTERN_BUFFER_MAX + 1);
+  void *l_next_ref = NULL;
+
+  char *s_ptr = l_mppd_shell_ex(((__d_drt_h ) mppd->mppd_next)->varg_l, r_b,
+  REG_PATTERN_BUFFER_MAX, &l_next_ref,
+  LMS_EX_L,
+  LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == s_ptr)
+    {
+      print_str("ERROR: rt_af_regex: could not parse pattern: '%s'\n",
+          ((__d_drt_h ) mppd->mppd_next)->varg_l);
+      return NULL;
+    }
+
+  match = (char*) l_next_ref;
+
+  if (NULL == match)
+    {
+      print_str(
+          "ERROR: rt_af_regex: could not extract pattern: l_mppd_shell_ex failed\n");
+      free(r_b);
+      return NULL;
+    }
+
+  void *cb_p;
+
+  char *id_f = id;
+  id_f++;
+  if (id[1] == 0x64)
+    {
+      cb_p = dt_rval_spec_regsub_d;
+    }
+  else if (id[1] == 0x73)
+    {
+      cb_p = dt_rval_spec_regsub;
+      if (match[0] == 0x0)
+        {
+          mppd->r_rep[0] = 0x0;
+          mppd->r_rep_l = 0;
+
+        }
+      else
+        {
+          if (match[0] == 0x28)
+            {
+
+              mppd->mppd_aux_next = l_mppd_create_copy(mppd);
+              mppd->fp_rval2 = mppd->hdl->g_proc1_lookup(arg, match, output,
+                  max_size, mppd->mppd_aux_next);
+
+              if (NULL == mppd->fp_rval1)
+                {
+                  print_str(
+                      "ERROR: rt_af_regex: could not resolve directive: '%s'\n",
+                      match);
+                  return NULL;
+                }
+            }
+          else
+            {
+              char *ptr = l_mppd_shell_ex(match, mppd->r_rep,
+              REG_PATTERN_BUFFER_MAX, &l_next_ref,
+              LMS_EX_L,
+              LMS_EX_R, F_MPPD_SHX_TZERO);
+
+              if (NULL == ptr)
+                {
+                  print_str(
+                      "ERROR: rt_af_regex: could not process substitution string\n");
+                  free(r_b);
+                  return NULL;
+                }
+
+              mppd->r_rep_l = strlen(mppd->r_rep);
+            }
+        }
+    }
+  else
+    {
+      free(r_b);
+      return NULL;
+    }
+
+  mppd->regex_flags |= REG_EXTENDED;
+
+  if (id_f[1] == 0x2F)
+    {
+      id_f = &id[2];
+      while (id_f[0] != 0x3A && id_f[0])
+        {
+          switch (id_f[0])
+            {
+          case 0x67:
+            if (cb_p == dt_rval_spec_regsub_d)
+              {
+                cb_p = dt_rval_spec_regsub_dg;
+              }
+            else
+              {
+                cb_p = dt_rval_spec_regsub_g;
+              }
+            break;
+          case 0x69:
+            mppd->regex_flags |= REG_ICASE;
+            break;
+          case 0x6E:
+            mppd->regex_flags |= REG_NEWLINE;
+            break;
+          case 0x62:
+            if (mppd->regex_flags & REG_EXTENDED)
+              {
+                mppd->regex_flags ^= REG_EXTENDED;
+              }
+            break;
+            }
+          id_f++;
+        }
+    }
+
+  int rr = regcomp(&mppd->preg, s_ptr, mppd->regex_flags);
+
+  if (rr)
+    {
+      print_str("ERROR: rt_af_regex: [%d] could not compile pattern: '%s'\n",
+          rr, s_ptr);
+      free(r_b);
+      return NULL;
+    }
+
+  free(r_b);
+  mppd->flags |= _D_DRT_HASREGEX;
+
+  return as_ref_to_val_lk(r_match, cb_p, mppd, "%s");
+}
+
+static void*
+rt_af_time(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd, char *id)
+{
+  strncpy(mppd->direc, "%d/%h/%Y %H:%M:%S", 18);
+  as_ref_to_val_lk(match, NULL, mppd, "%d/%h/%Y %H:%M:%S");
+
+  switch (id[1])
+    {
+  case 0x6C:
+    mppd->st_p1 = (void*) localtime;
+    break;
+  default:
+    mppd->st_p1 = (void*) gmtime;
+    break;
+    }
+
+  if (match[0] == 0x28)
+    {
+      md_init(&mppd->chains, 8);
+      md_init(&mppd->math, 8);
+
+      int ret, p_ret;
+
+      if ((ret = g_process_math_string(mppd->hdl, match, &mppd->math,
+          &mppd->chains, &p_ret, NULL, 0, 0)))
+        {
+          print_str(
+              "ERROR: rt_af_time: [%d] [%d]: could not process math string\n",
+              ret, p_ret);
+          return NULL;
+        }
+
+      return dt_rval_spec_tf_m;
+    }
+  else
+    {
+      if (is_ascii_numeric((uint8_t) match[0]) && match[0] != 0x2B
+          && match[0] != 0x2D)
+        {
+          int vb;
+          mppd->vp_off1 = (size_t) mppd->hdl->g_proc2(mppd->hdl->_x_ref, match,
+              &vb);
+
+          return dt_rval_spec_tf_p;
+        }
+      else
+        {
+          errno = 0;
+          mppd->ts_1 = (time_t) strtol(match, NULL, 10);
+          if (errno == ERANGE || errno == EINVAL)
+            {
+              print_str("ERROR: rt_af_time: numeric conversion failed: '%s'",
+                  match);
+              return NULL;
+            }
+          return dt_rval_spec_tf_gm;
+        }
+    }
+}
+
+static void*
+rt_af_spec_chr(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  char *c = match;
+  while (match[0] != 0x3A && match[0] != 0x29 && match[0])
+    {
+      match++;
+    }
+
+  if (!match[0])
+    {
+      return NULL;
+    }
+
+  match++;
+
+  if (match[0] == 0x5C)
+    {
+      match++;
+      switch (match[0])
+        {
+      case 0x6E:
+        mppd->c_1 = 0xA;
+        break;
+      case 0x72:
+        mppd->c_1 = 0xD;
+        break;
+      case 0x5C:
+        mppd->c_1 = 0x5C;
+        break;
+      case 0x74:
+        mppd->c_1 = 0x9;
+        break;
+      case 0x73:
+        mppd->c_1 = 0x20;
+        break;
+      default:
+        mppd->c_1 = match[0];
+        }
+    }
+  else
+    {
+      mppd->c_1 = match[0];
+    }
+
+  errno = 0;
+  mppd->t_1 = strtoul(c, NULL, 10);
+  if (mppd->t_1 == ULONG_MAX && errno == ERANGE)
+    {
+      return NULL;
+    }
+
+  return dt_rval_spec_gc;
+
+}
+
 void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
@@ -1010,274 +1361,18 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         break;
       case 0x74:
         ;
-        strncpy(mppd->direc, "%d/%h/%Y %H:%M:%S", 18);
-        as_ref_to_val_lk(match, NULL, mppd, "%d/%h/%Y %H:%M:%S");
-        if (is_ascii_numeric((uint8_t) match[0]) && match[0] != 0x2B
-            && match[0] != 0x2D)
-          {
-            int vb;
-            mppd->vp_off1 = (size_t) mppd->hdl->g_proc2(mppd->hdl->_x_ref,
-                match, &vb);
-            switch (id[1])
-              {
-            case 0x6C:
-              return dt_rval_spec_tf_pl;
-              break;
-            default:
-              return dt_rval_spec_tf_pgm;
-              break;
-              }
-          }
-        else
-          {
-            errno = 0;
-            mppd->ts_1 = (time_t) strtol(match, NULL, 10);
-            if (errno == ERANGE)
-              {
-                return NULL;
-              }
-
-            switch (id[1])
-              {
-            case 0x6C:
-              return dt_rval_spec_tf_l;
-              break;
-            default:
-              return dt_rval_spec_tf_gm;
-              break;
-              }
-          }
-
-        break;
+        return rt_af_time(arg, match, output, max_size, mppd, id);
       case 0x63:
         ;
-        char *c = match;
-        while (match[0] != 0x3A && match[0] != 0x29 && match[0])
-          {
-            match++;
-          }
-
-        if (!match[0])
-          {
-            return NULL;
-          }
-
-        match++;
-
-        if (match[0] == 0x5C)
-          {
-            match++;
-            switch (match[0])
-              {
-            case 0x6E:
-              mppd->c_1 = 0xA;
-              break;
-            case 0x72:
-              mppd->c_1 = 0xD;
-              break;
-            case 0x5C:
-              mppd->c_1 = 0x5C;
-              break;
-            case 0x74:
-              mppd->c_1 = 0x9;
-              break;
-            case 0x73:
-              mppd->c_1 = 0x20;
-              break;
-            default:
-              mppd->c_1 = match[0];
-              }
-          }
-        else
-          {
-            mppd->c_1 = match[0];
-          }
-
-        errno = 0;
-        mppd->t_1 = strtoul(c, NULL, 10);
-        if (mppd->t_1 == ULONG_MAX && errno == ERANGE)
-          {
-            return NULL;
-          }
-
-        return dt_rval_spec_gc;
+        return rt_af_spec_chr(arg, match, output, max_size, mppd);
       case 0x6D:
         ;
         return ref_to_val_af_math(arg, match, output, max_size, mppd);
         break;
       case 0x72:
         ;
-        char *p_match;
-
-        if (match[0] == 0x28)
-          {
-            p_match = &match[1];
-            size_t m_dep = 0;
-
-            while (match[0])
-              {
-                if (match[0] == 0x28)
-                  {
-                    m_dep++;
-                  }
-                else if (match[0] == 0x29)
-                  {
-                    m_dep--;
-                    if (!m_dep)
-                      {
-                        break;
-                      }
-                  }
-                match++;
-              }
-
-            if (!match[0])
-              {
-                return NULL;
-              }
-
-            match++;
-          }
-        else
-          {
-            p_match = match;
-            while (match[0] != 0x3A && match[0])
-              {
-                match++;
-              }
-          }
-
-        if (match[0] != 0x3A)
-          {
-            return NULL;
-          }
-
-        match++;
-
-        char *r_match = match;
-        size_t r_l = 0;
-
-        while (((match[0] != 0x7D && match[0] != 0x3A && match[0] != 0x2C)
-            || match[-1] == 0x5C) && match[0])
-          {
-            match++;
-            r_l++;
-          }
-
-        if (!match[0])
-          {
-            return NULL;
-          }
-
-        if (r_l > MAX_RR_IN || !r_l)
-          {
-            return NULL;
-          }
-
-        char *r_b = malloc(r_l + 1);
-
-        //strncpy(r_b, r_match, r_l);
-
-        match = r_match;
-        r_l = 0;
-        while (((match[0] != 0x7D && match[0] != 0x3A && match[0] != 0x2C)
-            || match[-1] == 0x5C) && match[0])
-          {
-            if (match[0] == 0x5C && match[1] != 0x5C)
-              {
-                match++;
-                continue;
-              }
-            r_b[r_l] = match[0];
-            match++;
-            r_l++;
-          }
-
-        r_b[r_l] = 0x0;
-
-        mppd->mppd_next = l_mppd_create_copy(mppd);
-        mppd->fp_rval2 = mppd->hdl->g_proc1_lookup(arg, p_match, output,
-            max_size, mppd->mppd_next);
-
-        if (!mppd->fp_rval2)
-          {
-            free(r_b);
-            return NULL;
-          }
-
-        void *cb_p;
-
-        char *id_f = id;
-        id_f++;
-        if (id[1] == 0x64)
-          {
-            cb_p = dt_rval_spec_regsub_d;
-          }
-        else if (id[1] == 0x73)
-          {
-            cb_p = dt_rval_spec_regsub;
-            if (match[0] == 0x3A)
-              {
-                match++;
-                mppd->r_rep_l = 0;
-                while (((match[0] != 0x7D && match[0] != 0x2C)
-                    || match[-1] == 0x5C) && match[0] && mppd->r_rep_l < 2048)
-                  {
-                    if (match[0] == 0x5C && match[1] != 0x5C)
-                      {
-                        match++;
-                        continue;
-                      }
-                    mppd->r_rep[mppd->r_rep_l] = match[0];
-                    mppd->r_rep_l++;
-                    match++;
-                  }
-                mppd->r_rep[mppd->r_rep_l] = 0x0;
-              }
-          }
-        else
-          {
-            free(r_b);
-            return NULL;
-          }
-
-        if (id_f[1] == 0x2F)
-          {
-            id_f = &id[2];
-            while (id_f[0] != 0x3A && id_f[0])
-              {
-                switch (id_f[0])
-                  {
-                case 0x67:
-                  if (cb_p == dt_rval_spec_regsub_d)
-                    {
-                      cb_p = dt_rval_spec_regsub_dg;
-                    }
-                  else
-                    {
-                      cb_p = dt_rval_spec_regsub_g;
-                    }
-                  break;
-                case 0x69:
-                  mppd->regex_flags |= REG_ICASE;
-                  break;
-                  }
-                id_f++;
-              }
-          }
-
-        int rr = regcomp(&mppd->preg, r_b, REG_EXTENDED | mppd->regex_flags);
-
-        mppd->flags |= _D_DRT_HASREGEX;
-
-        free(r_b);
-
-        if (rr)
-          {
-            return NULL;
-          }
-
-        return as_ref_to_val_lk(r_match, cb_p, mppd, "%s");
+        return rt_af_regex(arg, match, output, max_size, mppd, id);
+        break;
         }
     }
   return NULL;

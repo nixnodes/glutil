@@ -33,13 +33,14 @@ typedef struct ___d_drt_h
   mda chains;
   regex_t preg;
   int regex_flags;
-  char r_rep[2048];
+  char r_rep[65536];
   uint16_t r_rep_l;
   uint8_t uc_1;
   void *st_ptr0;
   void *rt_cond;
   char *st_p;
   char *st_p0;
+  char *st_p1;
   void *v_p0;
   void *mppd_next;
   void *mppd_aux_next;

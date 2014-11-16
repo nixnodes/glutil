@@ -173,6 +173,8 @@ typedef struct ___d_xref_ct
   int ct_off;
 } _d_xref_ct, *__d_xref_ct;
 
+#include <dirent.h>
+
 #pragma pack(push, 4)
 
 typedef struct ___d_xref
@@ -190,6 +192,7 @@ typedef struct ___d_xref
   uint16_t pbits;
   uint64_t depth;
   float sparseness;
+  struct dirent *dirp;
 } _d_xref, *__d_xref;
 
 #pragma pack(pop)
@@ -277,7 +280,7 @@ typedef int
 (*__d_sf_p)(uint32_t flags, __g_eds eds);
 
 int
-g_f_sort(uint32_t flags, __g_eds eds);
+g_f_sort(uint32_t flags, __g_eds eds, __g_handle hdl);
 int
 tp_default(char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
     DIR *dp);

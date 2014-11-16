@@ -362,6 +362,15 @@ clean_drt(__d_drt_h mppd)
       free(mppd->mppd_aux_next);
     }
 
+  p_md_obj p_ptr = md_first(&mppd->chains);
+
+  while (p_ptr)
+    {
+      md_g_free(p_ptr->ptr);
+      p_ptr = p_ptr->next;
+    }
+
+  md_g_free(&mppd->chains);
   md_g_free(&mppd->math);
 
   if (NULL != mppd->st_p)
@@ -411,16 +420,6 @@ g_clean_print_mech(pmda print_mech)
       while (ptr)
         {
           __d_exec_ch g_ptr = (__d_exec_ch) ptr->ptr;
-
-          p_md_obj p_ptr = md_first(&g_ptr->dtr.chains);
-
-          while (p_ptr)
-            {
-              md_g_free(p_ptr->ptr);
-              p_ptr = p_ptr->next;
-            }
-
-          md_g_free(&g_ptr->dtr.chains);
 
           clean_drt(&g_ptr->dtr);
           ptr = ptr->next;

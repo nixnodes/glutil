@@ -390,7 +390,7 @@ g_swapsort_exec(pmda m_ptr, __p_srd psrd)
   return 0;
 }
 
-static int
+int
 g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
 {
   g_setjmp(0, "g_sort_numeric", NULL, NULL);
@@ -472,7 +472,7 @@ g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
   return 0;
 }
 
-static int
+int
 g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
 {
   g_setjmp(0, "g_sort_string", NULL, NULL);
@@ -502,7 +502,7 @@ g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
   return 0;
 }
 
-static int
+int
 g_check_is_data_numeric(__g_handle hdl, char *field)
 {
   int dummy_vb = 0;
@@ -695,4 +695,20 @@ opt_g_sort(void *arg, int m)
   l_sfo = L_STFO_SORT;
 
   return 0;
+}
+
+void
+g_invert_sort_order(uint32_t *flags)
+{
+  switch (*flags & F_GSORT_ORDER)
+    {
+  case F_GSORT_ASC:
+    *flags ^= F_GSORT_ASC;
+    *flags |= F_GSORT_DESC;
+    break;
+  case F_GSORT_DESC:
+    *flags ^= F_GSORT_DESC;
+    *flags |= F_GSORT_ASC;
+    break;
+    }
 }

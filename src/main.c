@@ -50,7 +50,13 @@ main(int argc, char *argv[])
 
   print_str = g_print_str;
   __pf_eof = g_feof;
+/*
+  char output[8192];
 
+  print_str(":: %s :: %s ::\n", argv[1], g_resolve_esc(argv[1], output, 8192));
+
+
+  exit(0);*/
   /*char output[8192];
    l_mppd_shell_ex(argv[1], output, sizeof(output));
 
@@ -570,7 +576,6 @@ g_shutdown(void *arg)
   g_cleanup(&g_act_2);
   free_cfg_rf(&cfg_rf);
   free_cfg(&glconf);
-
 
   if ((gfl & F_OPT_PS_LOGGING) && fd_log)
     {
