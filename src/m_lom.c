@@ -667,7 +667,7 @@ gl_var_known(__g_handle hdl, char *field, uint32_t flags, __g_lom lom)
   uint32_t t_f = 0;
   int base = 10;
 
-  if ((is_ascii_numhex(field[0])))
+  if (is_ascii_numhex_n(field))
     {
       return 200;
     }
