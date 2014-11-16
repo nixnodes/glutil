@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT THESE LINES
 #@VERSION:1
-#@REVISION:9
-#@MACRO:gamescore|Game info lookup based on folder names (filesystem) [-arg1=<path>]:{m:exe} -x {m:arg1} --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -execv `{m:spec1} {basepath} {exe} {gamefile} {glroot} {siterootn} {path}`
+#@REVISION:10
+#@MACRO:gamescore|Game info lookup based on folder names (filesystem) [-arg1=<path>]:{m:exe} -x {m:arg1} -lom "depth>0" --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -execv `{m:spec1} {basepath} {exe} {gamefile} {glroot} {siterootn} {path}`
 #@MACRO:gamescore-d|Game info lookup based on folder names (dirlog) [-arg1=<regex>]:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -execv "{m:spec1} {basedir} {exe} {gamefile} {glroot} {siterootn} {dir}" regexi "dir,{m:arg1}" 
 #
 ## Retrieves game info using giantbomb API (XML)

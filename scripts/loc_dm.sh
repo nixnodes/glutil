@@ -18,8 +18,8 @@
 #########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:1
-#@MACRO:loc-dm:{m:exe} --daemon  --glroot "{m:glroot}" --xretry -x "{m:glroot}/io/glud" --regex "basepath,gld\.in\." --lom "mode=1" --preexec `mkdir -p {m:glroot}/io/glud; chmod 777 {m:glroot}/io/glud` --loop 0 --usleep 300000 --silent -execv "{m:spec1} {path} {?rd:basepath:^gld\.in\.} {m:exe} {glroot}"
+#@REVISION:2
+#@MACRO:loc-dm:{m:exe} --daemon  --glroot "{m:glroot}" --xretry -x "{m:glroot}/io/glud" -lom "depth>0" -regex "basepath,gld\.in\." --lom "mode=1" --preexec `mkdir -p {m:glroot}/io/glud; chmod 777 {m:glroot}/io/glud` --loop 0 --usleep 300000 --silent -execv "{m:spec1} {path} {?rd:basepath:^gld\.in\.} {m:exe} {glroot}"
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
 ## Offers functionality to processes that would otherwise require higher priviledges.

@@ -17,7 +17,7 @@
 #
 #########################################################################
 #@VERSION:1
-#@REVISION:1
+#@REVISION:2
 #@MACRO:mk-test:{m:exe} noop --preexec {spec1}
 #
 ## Simple debugger script
@@ -282,7 +282,7 @@ mkdir "${fs_td}" && {
 	echo "t1" > "${fs_td}/t1"
 	echo "t2" > "${fs_td}/t2"
 	echo "t3" > "${fs_td}/t3"
-	[ $(${GLUTIL} -x ${fs_td}/ --batch lom "ctime > (acurtime-2000) && uid == `id -u`" | wc -l) -eq 3 ] && {
+	[ $(${GLUTIL} -x ${fs_td}/ --batch lom "ctime > (acurtime-2000) && uid == `id -u`" | wc -l) -eq 4 ] && {
 		echo -e " \tOK "
 	} || {
 		echo -e " \tBAD"

@@ -99,12 +99,15 @@
  *   - + Force precedence on match expressions (see --help)
  *   2.4.15:
  *   - ~ 'curtime' returning zero
- *   2.4.16
+ *   2.4.16:
  *   - ~ Negative values in LOM expressions failing
  *   - ~ REGEX extended directives fixed up and features added (see MANUAL)
  *   - ~ Memory leak (math)
  *   - + Math operations can be done on input data before formatting ('?t' and '?tl')
  *   - + Sort by any filesystem field available (-x)
+ *   2.4.17:
+ *   - ~ Filesystem processor ignoring root path
+ *   - + '--xloop'
  *
  * v2.3:
  *

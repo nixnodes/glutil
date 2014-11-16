@@ -1034,6 +1034,13 @@ dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size,
 }
 
 int
+opt_xref_depth(void *arg, int m)
+{
+  gfl0 |= F_OPT_DEPTH;
+  return 0;
+}
+
+int
 opt_xref_sl_dat(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
@@ -1455,6 +1462,18 @@ g_preproc_xhdl(__std_rh ret)
         }
     }
 
+  if ((ret->flags & F_PD_RECURSIVE))
+    {
+      if (gfl0 & F_OPT_DEPTH)
+        {
+          ret->xproc_rcl0 = g_xproc_rc;
+        }
+      else
+        {
+          ret->xproc_rcl1 = g_xproc_rc;
+        }
+    }
+
   ret->hdl.flags |= F_GH_ISFSX;
   ret->hdl.g_proc1_lookup = ref_to_val_lk_x;
   ret->hdl.jm_offset = (size_t) ((__d_xref ) NULL)->name;
@@ -1497,6 +1516,19 @@ g_dump_ug(char *ug)
     }
 
   return r;
+}
+
+static void
+g_proc_out_once(__std_rh ret, __g_eds eds, void *tp_cb)
+{
+
+  int r = enum_dir(ret->root, g_process_directory, (void*) ret, 0, eds, tp_cb);
+
+  if (r < 0)
+    {
+      print_str("ERROR: %s: %s\n", ret->root, ie_tl(r, EMR_enum_dir));
+    }
+
 }
 
 int
@@ -1596,14 +1628,44 @@ g_dump_gen(char *root)
 
   enter: ;
 
-  r = enum_dir(ret.root, g_process_directory, &ret, 0, &eds, tp_cb);
-
-  if (r < 0)
+  if (gfl0 & F_OPT_DEPTH)
     {
-      print_str("ERROR: %s: %s\n", ret.root, ie_tl(r, EMR_enum_dir));
+      g_proc_out_once(&ret, &eds, tp_cb);
     }
 
-  if ((gfl0 & F_OPT_XRETRY) && !ret.st_1 && !(gfl & F_OPT_KILL_GLOBAL))
+  int xpm_ret = 0;
+
+  if (ret.flags & F_PD_MATCHDIR)
+    {
+      if (0 == (xpm_ret = g_xproc_m(DT_DIR, ret.root, &ret, &eds)))
+        {
+          if (ret.xproc_out)
+            {
+              g_preproc_dm(ret.root, &ret.p_xref, DT_DIR, &ret);
+              ret.xproc_out(&ret.hdl, (void*) &ret.p_xref,
+                  (void*) ret.p_xref.name);
+            }
+        }
+
+    }
+
+  if (!(gfl0 & F_OPT_DEPTH))
+    {
+      if (!((0 != xpm_ret) && (ret.hdl.flags & F_GH_TFD_PROCED)))
+        {
+          g_proc_out_once(&ret, &eds, tp_cb);
+        }
+      else
+        {
+          if (ret.hdl.flags & F_GH_TFD_PROCED)
+            {
+              ret.hdl.flags ^= F_GH_TFD_PROCED;
+            }
+        }
+    }
+
+  if ((((gfl0 & F_OPT_XRETRY) && !ret.st_1) || (gfl0 & F_OPT_XLOOP))
+      && !(gfl & F_OPT_KILL_GLOBAL))
     {
       if (g_sleep)
         {
@@ -1777,6 +1839,11 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
           break;
         }
 
+      if (NULL != aa_rh->xproc_rcl0)
+        {
+          aa_rh->xproc_rcl0(name, (void*)aa_rh, eds);
+        }
+
       int ret = 0;
 
       if (aa_rh->flags & F_PD_MATCHDIR)
@@ -1791,16 +1858,18 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
 
         }
 
-      if ( (aa_rh->flags & F_PD_RECURSIVE) &&
-          !((0 != ret) && (aa_rh->hdl.flags & F_GH_TFD_PROCED)))
+      if (NULL != aa_rh->xproc_rcl1)
         {
-          g_xproc_rc(name, (void*)aa_rh, eds);
-        }
-      else
-        {
-          if ( aa_rh->hdl.flags & F_GH_TFD_PROCED)
+          if ( !((0 != ret) && (aa_rh->hdl.flags & F_GH_TFD_PROCED)))
             {
-              aa_rh->hdl.flags ^= F_GH_TFD_PROCED;
+              aa_rh->xproc_rcl1(name, (void*)aa_rh, eds);
+            }
+          else
+            {
+              if ( aa_rh->hdl.flags & F_GH_TFD_PROCED)
+                {
+                  aa_rh->hdl.flags ^= F_GH_TFD_PROCED;
+                }
             }
         }
 

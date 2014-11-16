@@ -1388,6 +1388,13 @@ opt_g_xretry(void *arg, int m)
 }
 
 int
+opt_g_xloop(void *arg, int m)
+{
+  gfl0 |= F_OPT_XLOOP;
+  return 0;
+}
+
+int
 opt_g_sleep(void *arg, int m)
 {
   char *buffer = g_pg(arg, m);
@@ -1766,6 +1773,7 @@ _gg_opt gg_f_ref[] =
     { .id = 0x000B, .on = "--sort", .ac = 1, .op = opt_g_sort },
     { .id = 0x000B, .on = "-sort", .ac = 1, .op = opt_g_sort },
     { .id = 0x000E, .on = "--cdir", .ac = 0, .op = opt_g_cdironly },
+    { .id = 0x000E, .on = "-prune", .ac = 0, .op = opt_g_cdironly },
     { .id = 0x000F, .on = "--imatchq", .ac = 0, .op = opt_g_imatchq },
     { .id = 0x0010, .on = "--matchq", .ac = 0, .op = opt_g_matchq },
     { .id = 0x0013, .on = "--infile", .ac = 1, .op = opt_g_infile },
@@ -1859,6 +1867,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x0406, .on = "-lom", .ac = 1, .op = opt_g_d_lom_match },
         { .id = 0x1000, .on = "!", .ac = 0, .op = opt_g_negate },
         { .id = 0x1001, .on = "-fd:", .ac = 0, .op = opt_g_tfd },
+        { .id = 0x1001, .on = "-prune:", .ac = 0, .op = opt_g_tfd },
         { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },
         { .id = 0x0003, .on = "or", .ac = 0, .op = opt_g_operator_or },
         { .id = 0x0004, .on = "(", .ac = 0, .op = opt_g_m_raise_level },
@@ -1903,6 +1912,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x00A7, .on = "--noereg", .ac = 0, .op = opt_g_noereg },
         { .id = 0x00AA, .on = "--prune", .ac = 0, .op = opt_prune },
         { .id = 0x00AE, .on = "--xretry", .ac = 0, .op = opt_g_xretry },
+        { .id = 0x22AE, .on = "--xloop", .ac = 0, .op = opt_g_xloop },
         { .id = 0x00AF, .on = "--indepth", .ac = 0, .op = opt_g_indepth },
         { .id = 0x00B0, .on = "--full", .ac = 0, .op = opt_dirlog_rb_full },
         { .id = 0x00B1, .on = "--arr", .ac = 1, .op = opt_arrange },
@@ -1917,6 +1927,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
         { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
         { .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
+        { .id = 0x5513, .on = "--depth", .ac = 0, .op = opt_xref_depth },
 #ifndef _MAKE_SBIN
         { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
         { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },

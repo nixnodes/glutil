@@ -304,6 +304,8 @@ file_sparseness(const struct stat *p);
 
 int
 opt_xref_sl_dat(void *arg, int m);
+int
+opt_xref_depth(void *arg, int m);
 
 #define dt_rval_x_guid(stor, id) \
 { \

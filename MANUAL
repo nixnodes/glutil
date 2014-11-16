@@ -1,4 +1,4 @@
-Updated: 4/12/2013
+Updated: 16/11/2014
   
  INPUT/OUTPUT OPERATIONS:
 
@@ -107,18 +107,18 @@ Updated: 4/12/2013
 	massive file could be parsed (64-bit file size, not taking filesystem limits into account).
 	
 	All match/hook operators apply.
-	
+		
 	
  EXTENDED DIRECTIVES:
 			
 	Legend:
 	
-	<name>  	 -  directive name
-	<field>		 -	only a reference to the actual data, strictly
+	<name>       -  directive name
+	<field>      -	only a reference to the actual data, strictly
 					fields which are listed in DATA_STRUCTURES 
-	<directive>	 -	actual data field or an extended directive
+	<directive>  -	actual data field or an extended directive
 	<expression> -	logical/relational or mathematical expression
-	<pattern>	 - 	string matching pattern (e.g. REGEX)
+	<pattern>    - 	string matching pattern (e.g. REGEX)
 	<format>     -  Format string (printf(3) or strftime(3))
 	
 	
