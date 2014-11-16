@@ -10,6 +10,8 @@
 
 #define REG_MATCHES_MAX                 4
 
+#define REG_PATTERN_BUFFER_MAX          131072
+
 #include <fp_types.h>
 
 #include <stdio.h>
@@ -20,6 +22,9 @@ _d_is_am is_ascii_text, is_ascii_lowercase_text, is_ascii_alphanumeric,
     is_ascii_hexadecimal, is_ascii_uppercase_text, is_ascii_numhex,
     is_ascii_numeric, is_ascii_numeric_float;
 
+
+int
+is_ascii_numhex_n(char *in_c);
 int
 remove_repeating_chars(char *string, char c);
 char *
@@ -69,5 +74,7 @@ char *
 g_zerom_r(char *input, char m);
 char *
 g_zerom(char *input, char m);
+char*
+g_resolve_esc(char *input, char *output, size_t max_size);
 
 #endif /* STR_H_ */

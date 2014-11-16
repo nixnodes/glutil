@@ -82,7 +82,7 @@ strcp_s(char *dest, size_t max_size, char *source)
 }
 
 int
-is_ascii_text(uint8_t in_c)
+is_ascii_text(char in_c)
 {
   if ((in_c >= 0x0 && in_c <= 0x7F))
     {
@@ -93,7 +93,7 @@ is_ascii_text(uint8_t in_c)
 }
 
 int
-is_ascii_lowercase_text(uint8_t in_c)
+is_ascii_lowercase_text(char in_c)
 {
   if ((in_c >= 0x61 && in_c <= 0x7A))
     {
@@ -104,7 +104,7 @@ is_ascii_lowercase_text(uint8_t in_c)
 }
 
 int
-is_ascii_alphanumeric(uint8_t in_c)
+is_ascii_alphanumeric(char in_c)
 {
   if ((in_c >= 0x61 && in_c <= 0x7A) || (in_c >= 0x41 && in_c <= 0x5A)
       || (in_c >= 0x30 && in_c <= 0x39))
@@ -116,7 +116,7 @@ is_ascii_alphanumeric(uint8_t in_c)
 }
 
 int
-is_ascii_numeric(uint8_t in_c)
+is_ascii_numeric(char in_c)
 {
   if ((in_c >= 0x30 && in_c <= 0x39))
     {
@@ -127,7 +127,7 @@ is_ascii_numeric(uint8_t in_c)
 }
 
 int
-is_ascii_numeric_float(uint8_t in_c)
+is_ascii_numeric_float(char in_c)
 {
   if ((in_c >= 0x30 && in_c <= 0x39) || in_c == 0x2E)
     {
@@ -138,7 +138,7 @@ is_ascii_numeric_float(uint8_t in_c)
 }
 
 int
-is_ascii_hexadecimal(uint8_t in_c)
+is_ascii_hexadecimal(char in_c)
 {
   if ((in_c >= 0x41 && in_c <= 0x46) || (in_c >= 0x61 && in_c <= 0x66))
     {
@@ -148,7 +148,7 @@ is_ascii_hexadecimal(uint8_t in_c)
 }
 
 int
-is_ascii_numhex(uint8_t in_c)
+is_ascii_numhex(char in_c)
 {
   if ((in_c >= 0x30 && in_c <= 0x39) || (in_c >= 0x41 && in_c <= 0x46)
       || (in_c >= 0x61 && in_c <= 0x66))
@@ -159,7 +159,18 @@ is_ascii_numhex(uint8_t in_c)
 }
 
 int
-is_ascii_uppercase_text(uint8_t in_c)
+is_ascii_numhex_n(char *in_c)
+{
+  if (!is_ascii_numhex(in_c[0])
+      || (in_c[0] == 0x2D && !is_ascii_numhex((uint8_t) in_c[1])))
+    {
+      return 0;
+    }
+  return 1;
+}
+
+int
+is_ascii_uppercase_text(char in_c)
 {
   if ((in_c >= 0x41 && in_c <= 0x5A))
     {
@@ -586,4 +597,26 @@ g_zerom(char *input, char m)
       input++;
     }
   return input;
+}
+
+char*
+g_resolve_esc(char *input, char *output, size_t max_size)
+{
+  size_t w = 0;
+  char *ptr = output;
+  while (input[0] && w < max_size)
+    {
+      if (input[0] == 0x5C)
+        {
+          input++;
+        }
+      ptr[0] = input[0];
+      ptr++;
+      input++;
+      w++;
+    }
+
+  ptr[0] = 0x0;
+
+  return output;
 }
