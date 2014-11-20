@@ -17,10 +17,10 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:9
+#@REVISION:10
 #@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
 #
-## Dependencies:    glutil-2.4.11_b9
+## Dependencies:    glutil-2.4.15
 #
 GLUTIL="/bin/glutil"
 DF=/bin/df
@@ -94,7 +94,6 @@ get_post_action()
 	done
 }
 
-
 MIN_FREE=`proc_tgmk_str ${MIN_FREE}`
 
 free=`expr $(d_free ${DEVICE}) \* 1024`
@@ -108,6 +107,7 @@ total=`expr ${free} + ${used}`
 max=`expr ${total} - ${MIN_FREE}`
 
 [ ${max} -lt 0 ] && echo "${path}: negative maximum, MIN_FREE shouldn't exceed device size" && exit 2
+
 
 for i in "${SECTIONS[@]}"; do
 	path=`echo ${i} | cut -d " " -f1`	
@@ -123,9 +123,9 @@ for i in "${SECTIONS[@]}"; do
 	max_p=`expr $(expr ${max} / 100) \* ${percent}`
 			
 	${GLUTIL} -x ${ROOT}/${path} -R -xdev --ftime -postprint \
-	"${ROOT}/${path}: {?L:(u64glob2) != 0:?m:u64glob1/(1024^2)}{?L:(u64glob2) = 0:?p:0}/{?m:(u64glob0/(1024^2))} M purged total" \
-	 lom "u64glob0 += size" and lom "(u64glob0) > ${max_p}" and lom "u64glob1 += size" and lom "mode = 4" and lom "u64glob2 += 1" \
-	 -execv "${action_cmd}"  lom "depth=1" --sort desc,mtime --postexec "${action_post_cmd}"
+	"${ROOT}/${path}: {?L:(u64glob2) != 0:(?m:u64glob1/(1024^3)):(?p:0)}/{?m:(u64glob0/(1024^3))} G purged total" \
+	 -lom "u64glob0 += size" and \( -lom "(u64glob0) > ${max_p}" and -lom "u64glob1 += size" \) and \( -lom "mode = 4 || mode = 8" and lom "u64glob2 += 1" \) \
+	 -execv "${action_cmd}"  -lom "depth=1" --sort desc,mtime --postexec "${action_post_cmd}"
 done
 
 exit 0
