@@ -129,6 +129,9 @@ Updated: 16/11/2014
 		or
 			
 		{(?<name>:[<..>]<field|(<directive>[#<format>])>[<..>][#<format>])}
+		
+		
+	Options:
 	
 	
 	?c	 <num repeat>:<char>				
