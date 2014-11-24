@@ -106,7 +106,7 @@ Updated: 16/11/2014
 	Since glutil is set by default to compile with large file offsets, theoretically a 
 	massive file could be parsed (64-bit file size, not taking filesystem limits into account).
 	
-	All match/hook operators apply.
+	All match/hook options apply.
 		
 	
  EXTENDED DIRECTIVES:
@@ -119,7 +119,8 @@ Updated: 16/11/2014
 	<directive>  -	actual data field or an extended directive
 	<expression> -	logical/relational or mathematical expression
 	<pattern>    - 	string matching pattern (e.g. REGEX)
-	<format>     -  Format string (printf(3) or strftime(3))
+	<format>     -  Format string (printf(3) or strftime(3)), can
+	                also be this tool's internal format
 	
 	
 	[?<name>]:[<field|(directive)>|option..][..][#<format>]
@@ -277,8 +278,19 @@ Updated: 16/11/2014
 			Output:
 			
 				/glftpd/ftp-data/users/siska - 688
+				
+	?Q   <format>
+			Allows for nesting of the built-in -print(f) <format>.
 			
-			 
+			Example usage (format a path and pass it to '?x'):
+			
+				-w -print "{?x:(?Q:(\{glroot\}/ftp-data/users/\{user\})):FLAGS}"
+				
+			Output:
+			
+				..
+				13ABCDEFGHI
+				..
 			
 			
 	Mind that ',' ':' '(' ')' '{' and '}' need to be escaped with '\' whenever used inside the scope
