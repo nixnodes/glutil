@@ -119,26 +119,6 @@ dt_rval_online_rate(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
-dt_rval_online_config(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
-{
-  char p_b0[64];
-  int ic = 0;
-
-  while (match[ic] != 0x7D && ic < 64)
-    {
-      p_b0[ic] = match[ic];
-      ic++;
-    }
-
-  p_b0[ic] = 0x0;
-
-  return ref_to_val_get_cfgval(((struct ONLINE *) arg)->username, p_b0,
-  DEFPATH_USERS,
-  F_CFGV_BUILD_FULL_STRING | F_CFGV_BUILD_DATA_PATH, output, max_size);
-}
-
-char *
 dt_rval_online_basedir(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {

@@ -107,7 +107,8 @@
  *   - + Sort by any filesystem field available (-x)
  *   2.4.17:
  *   - ~ Filesystem processor ignoring root path
- *   - + '--xloop'
+ *   - + '--xloop' and '--depth'
+ *   - + 'x' directive (read MANUAL)
  *
  * v2.3:
  *

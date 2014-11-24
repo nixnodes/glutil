@@ -257,6 +257,27 @@ Updated: 16/11/2014
 			<directive (FILESYSTEM)> executes on filesystem data generated from given path
 			(result of <directive>) as requested by the directive itself (DATA_STRUCTURES, 
 			under FILESYSTEM)
+			
+	?x   <directive>:<key>@<token>
+			Scans file returned by <directive> line by line, tokenizes (delimiting by space and tab)
+			and matches the first token to <key>. When matched, the result is everything after <key>, 
+			unless a token is specifically requested:
+			
+				-x /glftpd/ftp-data/users/ -lom "depth=1" -v -print "{path} - {?x:(path):ALLUP}"
+				
+			Output:
+			
+				/glftpd/ftp-data/users/someone - 13 1285419 688 0 0 0 0 0 0 0 0 0 1118 7488426 14483 0 0 0 0 0 0 0 0 0
+				
+				
+			Request the third token:			
+				
+				-x /glftpd/ftp-data/users/ -lom "depth=1" -v -print "{path} - {?x:(path):ALLUP@3}"
+				
+			Output:
+			
+				/glftpd/ftp-data/users/siska - 688
+			
 			 
 			
 			

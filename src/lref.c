@@ -1303,6 +1303,60 @@ rt_af_spec_chr(void *arg, char *match, char *output, size_t max_size,
 
 }
 
+#include <cfgv.h>
+
+static char *
+dt_rval_spec_sf(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1(arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+      _mppd->mppd_next);
+
+  return ref_to_val_get_cfgval(p_b0, _mppd->r_rep,
+  NULL,
+  F_CFGV_BUILD_FULL_STRING, output, max_size);
+}
+
+static void*
+rt_af_sf(void *arg, char *match, char *output, size_t max_size, __d_drt_h mppd)
+{
+
+  mppd->mppd_next = l_mppd_create_copy(mppd);
+
+  mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
+      mppd->mppd_next);
+
+  if (NULL == mppd->fp_rval1)
+    {
+      print_str("ERROR: rt_af_sf: could not resolve: '%s'\n", match);
+      return NULL;
+    }
+
+  if (NULL == ((__d_drt_h ) mppd->mppd_next)->varg_l
+      || ((__d_drt_h ) mppd->mppd_next)->varg_l[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_sf: could not resolve field argument: '%s'\n",
+          match);
+      return NULL;
+    }
+
+  void *l_next_ref;
+
+  char *ptr = l_mppd_shell_ex(((__d_drt_h ) mppd->mppd_next)->varg_l,
+      mppd->r_rep, sizeof(mppd->r_rep), &l_next_ref,
+      LMS_EX_L,
+      LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == ptr || ptr[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_sf: could not resolve key: %s\n", match);
+      return NULL;
+    }
+
+  return as_ref_to_val_lk(match, dt_rval_spec_sf, mppd, "%s");
+}
+
 void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
@@ -1372,6 +1426,10 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
       case 0x72:
         ;
         return rt_af_regex(arg, match, output, max_size, mppd, id);
+        break;
+      case 0x78:
+        ;
+        return rt_af_sf(arg, match, output, max_size, mppd);
         break;
         }
     }
