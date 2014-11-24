@@ -17,12 +17,12 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:13
-#@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{m:exe} -w --loop=1 --silent --daemon --loglevel=3 -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
+#@REVISION:14
+#@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{m:exe} -w --loop=1 --silent --daemon --loglevel=3 --glroot={m:glroot} -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {?x:(?Q:(\{glroot\}/ftp-data/users/\{user\})):FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Requires: - glutil-2.4.11 or above
+## Requires: - glutil-2.4.17 or above
 ##           - date, kill, expr, sleep, stat
 ## Usage (manual): /glroot/bin/glutil -w --loop=1 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
@@ -38,7 +38,7 @@
 ###########################[ BEGIN OPTIONS ]#############################
 #
 ## Minimum allowed transfer rate (bytes per second)
-MINRATE=512000
+MINRATE=5120001111
 #
 # Maximum time a transfer can be under the speed limit, before killing it (seconds)
 MAXSLOWTIME=7
@@ -60,7 +60,7 @@ BANUSER=20
 EXEMPTUSERS="user1|user2"
 #
 ## Do NOT enforce limit on siteops
-EXEMPTSITEOPS=1
+EXEMPTSITEOPS=0
 #
 ## Enforce only on files matching this expression
 FILES_ENFORCED="\.(r([0-9]{1,3}|ar)|mkv|avi|mp((e|())g|[34]))$"
@@ -71,7 +71,7 @@ PATHS_FILTERED="\/(sample|cover(s|())|proof)(($)|\/)"
 #
 ## Do not enforce when only one user is uploading
 ## into a certain directory
-IGNORE_LONE_RANGER=0
+IGNORE_LONE_RANGER=1
 #
 ## Remove file the violator was uploading, immediately
 ## after sending process the kill signal
@@ -88,6 +88,8 @@ LOG_TO_GLFTPD=0
 
 BASEDIR=`dirname $0`
 [ -f "$BASEDIR/config" ] && . $BASEDIR/config
+
+echo $8
 
 ban_user() {	
 
@@ -151,8 +153,8 @@ if [ $BXFER -lt 1 ]; then
 fi
 
 [ $IGNORE_LONE_RANGER -eq 1 ] && {
-	$7 -w --batch ! match "user,${3}" and regex status,"^STOR\ " and lom "bxfer" and match "ndir,${14}" | egrep -q "^ONLINE" || {
-		#echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
+	$7 -w --batch ! match "user,${3}" and \( regex status,"^STOR\ " and lom "bxfer" and match "ndir,${14}" \) | egrep -q "^ONLINE" || {
+		echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
 		[ -f /tmp/du-ks/$4 ] && rm -f /tmp/du-ks/$4
 		exit 1
 	}
@@ -223,4 +225,3 @@ fi
 	[ -f "/tmp/du-ks/$4" ] && rm -f "/tmp/du-ks/$4"
 
 exit 1
-
