@@ -109,6 +109,7 @@
  *   - ~ Filesystem processor ignoring root path
  *   - + '--xloop' and '--depth'
  *   - + 'x' directive (read MANUAL)
+ *   - + 'Q' directive (read MANUAL)
  *
  * v2.3:
  *

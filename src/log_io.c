@@ -373,6 +373,8 @@ clean_drt(__d_drt_h mppd)
   md_g_free(&mppd->chains);
   md_g_free(&mppd->math);
 
+  g_clean_print_mech(&mppd->sub_mech);
+
   if (NULL != mppd->st_p)
     {
       free(mppd->st_p);
@@ -408,7 +410,7 @@ clean_drt(__d_drt_h mppd)
     }
 }
 
-static int
+int
 g_clean_print_mech(pmda print_mech)
 {
   p_md_obj ptr;

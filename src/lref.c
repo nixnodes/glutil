@@ -12,6 +12,7 @@
 #include <gv_off.h>
 #include <str.h>
 #include <m_lom.h>
+#include <exech.h>
 
 #include <errno.h>
 #include <time.h>
@@ -57,7 +58,7 @@ l_mppd_shex_resnp(char *input, char *output, size_t max_size, void** l_nr,
 
   char *ptr = output;
 
-  while (ptr[0] && ptr[0] != 0x3A && ptr[0] != 0x7D)
+  while (ptr[0] && ptr[0] != 0x3A && ptr[0] != 0x7D && ptr[0] != 0x23)
     {
       if (ptr[0] == 0x5C)
         {
@@ -344,6 +345,29 @@ dt_rval_spec_print_format(void *arg, char *match, char *output, size_t max_size,
     {
       output[0] = 0x0;
     }
+
+  return output;
+}
+
+static char *
+dt_rval_spec_print_format_int(void *arg, char *match, char *output,
+    size_t max_size, void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  __d_drt_h _mppd_next = _mppd->mppd_next;
+
+  char *s_ptr;
+  if (NULL
+      == (s_ptr = g_exech_build_string(arg, &_mppd->sub_mech, _mppd->hdl,
+          _mppd_next->tp_b0, sizeof(_mppd_next->tp_b0))))
+    {
+      print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
+      gfl |= F_OPT_KILL_GLOBAL;
+      output[0] = 0x0;
+      return output;
+    }
+
+  snprintf(output, max_size, _mppd->direc, _mppd_next->tp_b0);
 
   return output;
 }
@@ -950,6 +974,40 @@ rt_af_print_format(void *arg, char *match, char *output, size_t max_size,
   return as_ref_to_val_lk(match, dt_rval_spec_print_format, mppd, "%s");
 }
 
+static void*
+rt_af_print_format_int(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  int r;
+
+  __d_drt_h _mppd = mppd;
+
+  void *l_next_ref;
+
+  char *s_ptr = l_mppd_shell_ex(match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+      &l_next_ref,
+      LMS_EX_L,
+      LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == s_ptr)
+    {
+      print_str(
+          "ERROR: rt_af_print_format_int: could not parse print string: '%s'\n", match);
+    }
+
+  mppd->mppd_next = l_mppd_create_copy(mppd);
+
+  if ((r = g_compile_exech(&_mppd->sub_mech, _mppd->hdl, _mppd->tp_b0)))
+    {
+      print_str(
+          "ERROR: rt_af_print_format_int: [%d]: could not compile print string: '%s'\n",
+          r, s_ptr);
+      return NULL;
+    }
+
+  return as_ref_to_val_lk(match, dt_rval_spec_print_format_int, mppd, "%s");
+}
+
 static char *
 dt_rval_xstat(void *arg, char *match, char *output, size_t max_size, void *mppd)
 {
@@ -1387,6 +1445,8 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         return rt_af_xstat(arg, match, output, max_size, mppd);
       case 0x50:
         return rt_af_print_format(arg, match, output, max_size, mppd);
+      case 0x51:
+        return rt_af_print_format_int(arg, match, output, max_size, mppd);
       case 0x70:
         return rt_af_print(arg, match, output, max_size, mppd);
       case 0x4C:

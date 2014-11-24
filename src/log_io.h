@@ -77,6 +77,8 @@ g_buffer_into_memory(char *file, __g_handle hdl);
 int
 g_cleanup(__g_handle hdl);
 int
+g_clean_print_mech(pmda print_mech);
+int
 rebuild_data_file(char *file, __g_handle hdl);
 int
 flush_data_md(__g_handle hdl, char *outfile);
