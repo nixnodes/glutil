@@ -17,9 +17,12 @@
 #include <exech.h>
 #include <misc.h>
 
+#include <net_io.h>
+
 #include <setjmp.h>
 
 uint32_t g_omfp_sto = 0, g_omfp_suto = 0;
+int fd_out;
 
 int
 (*int_printf)(const char *__restrict __format, ...) = printf;
@@ -245,6 +248,37 @@ g_do_ppprint(__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc)
 }
 
 void
+g_omfp_write(int fd, char *buffer, size_t max_size, void *arg)
+{
+  write(fd_out, buffer, max_size);
+}
+
+void
+g_omfp_write_nl(int fd, char *buffer, size_t max_size, void *arg)
+{
+  write(fd_out, buffer, max_size);
+  write(fd_out, "\n", 1);
+}
+
+#ifdef _G_SSYS_NET
+
+void
+g_omfp_q_nssys(int fd, char *buffer, size_t max_size, void *arg)
+{
+  __sock_o pso = (__sock_o) arg;
+
+  int ret;
+  if ((ret = net_push_to_sendq(pso, buffer, max_size, 0)) == -1)
+    {
+      printf(
+          "ERROR: g_omfp_q_nssys: net_push_to_sendq failed, socket: [%d], code: [%d]\n",
+          pso->sock, ret);
+    }
+}
+
+#endif
+
+void
 g_omfp_norm(void *hdl, void *ptr, char *sbuffer)
 {
   ((__g_handle ) hdl)->g_proc3(ptr, sbuffer);
@@ -261,10 +295,10 @@ g_omfp_raw(void * hdl, void *ptr, char *sbuffer)
     }
   else
     {
-      fwrite(ptr, ((__g_handle ) hdl)->block_sz, 1, stdout);
+      write(fd_out, ptr, ((__g_handle ) hdl)->block_sz);
     }
 #else
-  fwrite(ptr, ((__g_handle ) hdl)->block_sz, 1, stdout);
+  write(fd_out, ptr, ((__g_handle ) hdl)->block_sz);
 #endif
 }
 
@@ -279,29 +313,14 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
 {
   char *s_ptr;
   if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
-      (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+      (__g_handle) hdl, b_glob, MAX_EXEC_STR - 4)))
     {
       print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
       gfl |= F_OPT_KILL_GLOBAL;
       return;
     }
 
-  printf("%s\n", b_glob);
-}
+  ((__g_handle) hdl)->w_d(fd_out, b_glob, strlen(b_glob), NULL);
 
-void
-g_omfp_eassemblef(void *hdl, void *ptr, char *sbuffer)
-{
-  char *s_ptr;
-  if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
-      (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
-    {
-      print_str("ERROR: g_omfp_eassemblef: could not assemble print string\n");
-      gfl |= F_OPT_KILL_GLOBAL;
-      return;
-    }
-
-  printf("%s", b_glob);
-  fflush(stdout);
 }
 

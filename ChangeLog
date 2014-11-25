@@ -110,6 +110,7 @@
  *   - + '--xloop' and '--depth'
  *   - + 'x' directive (read MANUAL)
  *   - + 'Q' directive (read MANUAL)
+ *   - + Multi-threaded net engine (disabled by default)
  *
  * v2.3:
  *

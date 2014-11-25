@@ -66,6 +66,8 @@ typedef unsigned long long int ulint64_t;
 
 #define a64                             ((ulint64_t) 1)
 #define a32                             ((uint32_t) 1)
+#define a16                             ((uint16_t) 1)
+#define a8                              ((uint8_t) 1)
 
 #define V_MB                            0x100000
 

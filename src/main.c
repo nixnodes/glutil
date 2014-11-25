@@ -29,6 +29,7 @@
 #include <xref.h>
 #include <x_f.h>
 #include <omfp.h>
+#include <glutil_net.h>
 //#include <imdb_pload.h>
 #include <g_help.h>
 
@@ -50,26 +51,7 @@ main(int argc, char *argv[])
 
   print_str = g_print_str;
   __pf_eof = g_feof;
-/*
-  char output[8192];
-
-  print_str(":: %s :: %s ::\n", argv[1], g_resolve_esc(argv[1], output, 8192));
-
-
-  exit(0);*/
-  /*char output[8192];
-   l_mppd_shell_ex(argv[1], output, sizeof(output));
-
-   fputs(output, stdout);
-
-   exit(0);*/
-
-  /*mda ip_stor =
-   { 0 };
-   md_init(&ip_stor, 1000);
-   i_pload(IMDB_BASELIST, 913213212, &ip_stor);
-
-   exit(0);*/
+  fd_out = fileno(stdout);
 
   g_setjmp(0, "main", NULL, NULL);
   if ((r = setup_sighandlers()))
@@ -528,6 +510,11 @@ g_init(int argc, char **argv, char **l_arg)
   case UPD_MODE_DUMP_GEN:
     EXITVAL = g_dump_gen(p_argv_off);
     break;
+#ifdef _G_SSYS_NET
+  case UPD_MODE_NETWORK:
+    EXITVAL = net_deploy();
+    break;
+#endif
   default:
     print_help(NULL, -1);
     print_str("ERROR: no mode specified\n");

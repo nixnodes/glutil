@@ -256,7 +256,7 @@ opt_g_comp(void *arg, int m)
   __pf_eof = gz_feof;
   return 0;
 #else
-  print_str("ERROR: this executable was not compiled with zlib, compression is not available\n");
+  print_str("ERROR: this executable was not compiled with zlib, compression disabled\n");
   return 41513;
 #endif
 }
@@ -1715,6 +1715,103 @@ opt_g_swapmode(void *arg, int m)
   return 0;
 }
 
+#ifdef _G_SSYS_NET
+
+#include <net_io.h>
+#include <net_proto.h>
+#include <glutil_net.h>
+
+#define OPT_CONNECT_MODE_NULL            0x0
+#define OPT_CONNECT_MODE_SERV            0x1
+
+static int
+opt_queue_connection(void *arg, uint32_t flags)
+{
+  char *mode = ((char **) arg)[0];
+  char *log = ((char **) arg)[1];
+  char *host = ((char **) arg)[2];
+  char *port = ((char **) arg)[3];
+
+  if (!host)
+    {
+      return 10;
+    }
+
+  if (!port)
+    {
+      return 11;
+    }
+
+  if (!mode)
+    {
+      return 12;
+    }
+
+  if (!log)
+    {
+      return 13;
+    }
+
+  errno = 0;
+  int i_mode = (int) strtol(mode, NULL, 10);
+
+  if ((i_mode == LONG_MIN || i_mode == LONG_MAX)
+      && (errno == EINVAL || errno == ERANGE))
+    {
+      return 15;
+    }
+
+  md_init(&_boot_pca, 64);
+
+  __sock_ca ca;
+
+  if (NULL == (ca = md_alloc(&_boot_pca, sizeof(_sock_ca))))
+    {
+      return 16;
+    }
+
+  switch (i_mode)
+    {
+  case OPT_CONNECT_MODE_SERV:
+    ca->socket_register = &_sock_r;
+    ca->rc0 = net_gl_socket_init0;
+    ca->rc1 = net_gl_socket_init1;
+    ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
+    break;
+  case OPT_CONNECT_MODE_NULL:
+    ca->socket_register = &_sock_r;
+    break;
+  default:
+    printf("opt_connect: invalid mode: %d\n", i_mode);
+    md_unlink(&_boot_pca, _boot_pca.pos);
+    return 17;
+    }
+
+  ca->host = host;
+  ca->port = port;
+  ca->flags = flags | F_OPSOCK_INIT_SENDQ;
+  ca->thread_register = &_thrd_r;
+  ca->st_p0 = log;
+
+  updmode = UPD_MODE_NETWORK;
+
+  return 0;
+}
+
+static int
+opt_connect(void *arg, int m)
+{
+  return opt_queue_connection(arg, F_OPSOCK_CONNECT);
+}
+
+static int
+opt_listen(void *arg, int m)
+{
+  return opt_queue_connection(arg, F_OPSOCK_LISTEN);
+}
+
+#endif
+
 _gg_opt gg_prio_f_ref[] =
   {
     { .id = 0x0003, .on = "silent", .ac = 0, .op = opt_silent },
@@ -1766,6 +1863,10 @@ _gg_opt gg_prio_f_ref[] =
 
 _gg_opt gg_f_ref[] =
   {
+#ifdef _G_SSYS_NET
+    { .id = 0x3101, .on = "-connect", .ac = 4, .op = opt_connect },
+    { .id = 0x3104, .on = "-listen", .ac = 4, .op = opt_listen },
+#endif
     { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
     { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
     { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },

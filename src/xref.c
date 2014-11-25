@@ -1442,13 +1442,18 @@ g_preproc_xhdl(__std_rh ret)
     {
       ret->xproc_out = g_xproc_print;
     }
-  else if ((gfl0 & F_OPT_PRINT))
+  else if ((gfl0 & (F_OPT_PRINT | F_OPT_PRINTF)))
     {
       ret->xproc_out = g_omfp_eassemble;
-    }
-  else if ((gfl0 & F_OPT_PRINTF))
-    {
-      ret->xproc_out = g_omfp_eassemblef;
+      if ((gfl0 & F_OPT_PRINTF))
+        {
+          ret->hdl.w_d = g_omfp_write;
+        }
+      else
+        {
+          ret->hdl.w_d = g_omfp_write_nl;
+        }
+
     }
   else
     {

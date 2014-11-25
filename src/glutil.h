@@ -120,6 +120,9 @@ g_print_str(const char * volatile buf, ...);
 int
 (*__pf_eof)(void *p);
 
+mda _sock_r;
+mda _boot_pca;
+
 #include <signal.h>
 
 int

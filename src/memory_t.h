@@ -21,6 +21,7 @@
 #define F_MDA_EOF                       (a32 << 5)
 #define F_MDA_FIRST_REUSED              (a32 << 6)
 #define F_MDA_ARR_DIST                  (a32 << 7)
+#define F_MDA_NO_REALLOC                (a32 << 8)
 
 #define F_MDA_ST_MISC00                 (a32 << 30)
 #define F_MDA_ST_MISC01                 (a32 << 31)
@@ -34,6 +35,10 @@ typedef struct mda_object
   void *prev;
 }*p_md_obj, md_obj;
 
+#ifdef _G_SSYS_THREAD
+#include        <pthread.h>
+#endif
+
 typedef struct mda_header
 {
   p_md_obj objects; /* holds references */
@@ -41,6 +46,9 @@ typedef struct mda_header
   off_t offset, r_offset, count, hitcnt, rescnt;
   uint32_t flags;
   void *lref_ptr;
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_t mutex;
+#endif
 } mda, *pmda;
 
 int
@@ -77,5 +85,14 @@ int
 md_md_to_array(pmda source, void **dest);
 int
 md_array_to_md(void ** source, pmda dest);
+
+#define F_MDALLOC_NOLINK                (a32 << 1)
+
+void *
+md_alloc_le (pmda md, size_t b, uint32_t flags, void *refptr);
+void *
+md_unlink_le(pmda md, p_md_obj md_o);
+int
+md_init_le(pmda md, int nm);
 
 #endif /* MEMORY_H_ */

@@ -1,12 +1,14 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.4.16], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.4.17], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
-AM_INIT_AUTOMAKE([subdir-objects]) 
-AM_MAINTAINER_MODE([disable])
 
+AM_INIT_AUTOMAKE([subdir-objects silent-rules]) 
+AM_MAINTAINER_MODE([disable])
 AM_PROG_CC_C_O
+AM_SILENT_RULES([yes])
+
 AC_PROG_CC_STDC
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -36,11 +38,42 @@ AC_ARG_ENABLE(gfind,
 [  --enable-gfind		Compile glutil-based search tool [default=no]],
 glutil_enable_sbin="yes", glutil_enable_sbin="no" )
 
+AC_ARG_ENABLE(networking,
+[  --enable-networking		Enable network subsystem (MT engine) [default=no]],
+glutil_enable_net="yes", glutil_enable_net="no" )
+
+AC_ARG_ENABLE(precheck,
+[  --enable-precheck	  build glutil-precheck [default=no]],
+glutil_precheck="$enableval", glutil_precheck="no")
+
+AC_ARG_ENABLE(precheck-nonchroot,
+[  --enable-precheck-nonchrot	  build glutil-precheck for non-chrooted environment [default=no]],
+glutil_precheck_nonchroot="$enableval", glutil_precheck_nonchroot="no")
+
+if [ test "$glutil_precheck_nonchroot" = "yes" ]; then	
+	AC_DEFINE_UNQUOTED([PATH_PREFIX], ["$prefix"])	
+fi
+
+if [ test "$glutil_enable_gzip" = "yes" ]; then	
+	LDFLAGS="${LDFLAGS} -lz"
+fi
+
 if [ test "$glutil_enable_sbin" = "yes" ]; then
 	AC_DEFINE([_MAKE_SBIN], [1], [//])
-
 	glutil_enable_gzip="no"
 fi
+
+if [ test "$glutil_enable_net" = "yes" ]; then
+ 	if [ test "$glutil_enable_sbin" = "no" ]; then
+		AC_DEFINE([_G_SSYS_NET], [1], [//])
+		AC_DEFINE([_G_SSYS_THREAD], [1], [//])
+		LDFLAGS="${LDFLAGS} -lpthread -lssl -lcrypto"
+	else
+		glutil_enable_net="no"
+	fi
+fi
+
+
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
 	AS_IF([test "$prefix" = "NONE"], 
@@ -70,21 +103,11 @@ AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
 
 AS_VAR_SET(datadir, ["$prefix/scripts"])
 
-AC_ARG_ENABLE(precheck,
-[  --enable-precheck	  build glutil-precheck [default=no]],
-glutil_precheck="$enableval", glutil_precheck="no")
-
-AC_ARG_ENABLE(precheck-nonchroot,
-[  --enable-precheck-nonchrot	  build glutil-precheck for non-chrooted environment [default=no]],
-glutil_precheck_nonchroot="$enableval", glutil_precheck_nonchroot="no")
-
-if [ test "$glutil_precheck_nonchroot" = "yes" ]; then	
-	AC_DEFINE_UNQUOTED([PATH_PREFIX], ["$prefix"])	
-fi
 
 AM_CONDITIONAL(ENABLE_PRECHECK_NONCHROOT, test "$glutil_precheck_nonchroot" = "yes")	
 AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 AM_CONDITIONAL(ENABLE_SEARCHBIN, test "$glutil_enable_sbin" = "yes")
+AM_CONDITIONAL(ENABLE_NET_SUBSYS, test "$glutil_enable_net" = "yes")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 

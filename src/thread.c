@@ -1,0 +1,222 @@
+#ifdef _G_SSYS_THREAD
+
+#include "glutil.h"
+
+#include <thread.h>
+
+#include <pthread.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+
+mda _thrd_r =
+  { 0 };
+
+int
+mutex_init(pthread_mutex_t *mutex, int flags, int robust)
+{
+  pthread_mutexattr_t mattr;
+
+  pthread_mutexattr_init(&mattr);
+  pthread_mutexattr_settype(&mattr, flags);
+  pthread_mutexattr_setrobust(&mattr, robust);
+
+  return pthread_mutex_init(mutex, &mattr);
+}
+
+int
+thread_create(void *call, int id, pmda thrd_r, uint16_t role,
+    uint16_t oper_mode)
+{
+
+  mutex_lock(&thrd_r->mutex);
+
+  int r;
+
+  po_thrd object;
+
+  if (!(object = md_alloc_le(thrd_r, sizeof(o_thrd), 0, NULL)))
+    {
+      r = -11;
+      goto end;
+    }
+
+  if ((r = pthread_create(&object->pt, NULL, call, (void *) object)))
+    {
+      goto end;
+    }
+
+  object->id = id;
+  object->role = role;
+  object->oper_mode = oper_mode;
+  md_init_le(&object->in_objects, 512);
+  md_init_le(&object->proc_objects, 4096);
+  object->in_objects.flags |= F_MDA_REFPTR;
+  object->proc_objects.flags |= F_MDA_REFPTR;
+
+  r = mutex_init(&object->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+
+  end:
+
+  pthread_mutex_unlock(&thrd_r->mutex);
+
+  return r;
+}
+
+int
+thread_destroy(p_md_obj ptr)
+{
+  int r;
+
+  po_thrd pthrd = (po_thrd) ptr->ptr;
+
+  if ((r = pthread_cancel(pthrd->pt)) != 0)
+    {
+      return r;
+    }
+
+  void *res;
+
+  if ((r = pthread_join(pthrd->pt, &res)) != 0)
+    {
+      return r;
+    }
+
+  if (res != PTHREAD_CANCELED)
+    {
+      return 1010;
+    }
+
+  if (md_unlink_le(&_thrd_r, ptr))
+    {
+      return 1012;
+    }
+
+  return 0;
+}
+
+p_md_obj
+search_thrd_id(pthread_t *pt)
+{
+  p_md_obj ptr = _thrd_r.first;
+
+  while (ptr)
+    {
+      if (((po_thrd) ptr->ptr)->pt == *pt)
+        {
+          return ptr;
+        }
+      ptr = ptr->next;
+    }
+  return NULL;
+}
+
+int
+spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,
+    uint16_t oper_mode)
+{
+  int i, r;
+  for (i = num; i; i--)
+    {
+      if ((r = thread_create(call, id, thread_register, role, oper_mode)))
+        {
+          break;
+        }
+    }
+  return r;
+}
+
+int
+push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
+{
+  mutex_lock(&threadr->mutex);
+
+  p_md_obj thrd_ptr = threadr->first;
+  po_thrd sel_thread = NULL;
+  float lowest_score = 10000000.0;
+
+  while (thrd_ptr)
+    {
+      po_thrd thread = (po_thrd) thrd_ptr->ptr;
+
+      mutex_lock(&thread->in_objects.mutex);
+      mutex_lock(&thread->proc_objects.mutex);
+
+      if (thread->in_objects.offset == thread->in_objects.count)
+        {
+          goto end_l;
+        }
+
+      float score = scalc(&thread->in_objects, &thread->proc_objects, object,
+          (void*) thread);
+
+      if (0.0 == score)
+        {
+          pthread_mutex_unlock(&thread->in_objects.mutex);
+          pthread_mutex_unlock(&thread->proc_objects.mutex);
+          sel_thread = thread;
+          break;
+        }
+
+      if (score == -1.0)
+        {
+          goto end_l;
+        }
+
+      if (score < lowest_score)
+        {
+          sel_thread = thread;
+          lowest_score = score;
+        }
+
+      end_l: ;
+
+      pthread_mutex_unlock(&thread->in_objects.mutex);
+      pthread_mutex_unlock(&thread->proc_objects.mutex);
+
+      thrd_ptr = thrd_ptr->next;
+    }
+
+  int r;
+
+  if (!sel_thread)
+    {
+      pthread_mutex_unlock(&threadr->mutex);
+      return 1;
+    }
+
+  mutex_lock(&sel_thread->in_objects.mutex);
+
+  if (!md_alloc_le(&sel_thread->in_objects, 0, 0, (void*) object))
+    {
+      r = 2;
+    }
+  else
+    {
+      r = 0;
+    }
+
+  pthread_mutex_unlock(&sel_thread->in_objects.mutex);
+
+  pthread_mutex_unlock(&threadr->mutex);
+
+  return r;
+}
+
+void
+mutex_lock(pthread_mutex_t *mutex)
+{
+  switch (pthread_mutex_lock(mutex))
+    {
+  case 0:
+    return;
+  case EOWNERDEAD:
+    fprintf(stderr, "EOWNERDEAD: %d: calling pthread_mutex_consistent\n",
+        getpid());
+    pthread_mutex_consistent(mutex);
+    }
+}
+
+#endif

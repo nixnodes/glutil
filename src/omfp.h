@@ -34,4 +34,11 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz);
 void
 g_do_ppprint(__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc);
 
+void
+g_omfp_write(int fd, char *buffer, size_t max_size, void*);
+void
+g_omfp_write_nl(int fd, char *buffer, size_t max_size, void*);
+
+int     fd_out;
+
 #endif /* OMFP_H_ */

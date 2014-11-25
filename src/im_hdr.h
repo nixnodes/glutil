@@ -121,6 +121,7 @@ typedef struct g_handle
   _d_proc3 g_proc3, g_proc3_batch, g_proc3_export, g_proc3_extra;
   _d_gcb_pp_hook gcb_post_proc;
   _d_omfp g_proc4, g_proc4_pr, g_proc4_po;
+  __d_is_wb w_d;
   size_t j_offset, jm_offset;
   int d_memb;
   void *_x_ref;

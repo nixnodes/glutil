@@ -8,6 +8,8 @@
 #include <glutil.h>
 #include <memory_t.h>
 
+#include <thread.h>
+
 int
 md_init(pmda md, int nm)
 {
@@ -15,25 +17,39 @@ md_init(pmda md, int nm)
     {
       return 1;
     }
+
   bzero(md, sizeof(mda));
-  if (!(md->objects = calloc(nm, sizeof(md_obj))))
+  if (!(md->objects = calloc(nm + 1, sizeof(md_obj))))
     {
       fprintf(stderr, "ERROR: md_init: could not allocate memory\n");
-      exit(0);
+      abort();
     }
 
   md->count = nm;
   md->pos = md->objects;
   md->r_pos = md->objects;
   md->first = md->objects;
+
+#ifdef _G_SSYS_THREAD
+  mutex_init(&md->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+#endif
+
   return 0;
 }
 
 int
 md_g_free(pmda md)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
   if (!md || !md->objects)
-    return 1;
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
+      return 1;
+    }
 
   if (!(md->flags & F_MDA_REFPTR))
     {
@@ -49,6 +65,9 @@ md_g_free(pmda md)
           ptr = ptr_s;
         }
     }
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
 
   free(md->objects);
   bzero(md, sizeof(mda));
@@ -60,8 +79,17 @@ int
 md_g_free_cb(pmda md, int
 (*cb)(void *))
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
   if (!md || !md->objects)
-    return 1;
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
+      return 1;
+    }
 
   if (!(md->flags & F_MDA_REFPTR))
     {
@@ -78,6 +106,10 @@ md_g_free_cb(pmda md, int
           ptr = ptr_s;
         }
     }
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
 
   free(md->objects);
   bzero(md, sizeof(mda));
@@ -166,6 +198,10 @@ md_relink_n(pmda md, off_t base)
 p_md_obj
 md_first(pmda md)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
   off_t off = 0;
   p_md_obj ptr = md->objects;
 
@@ -173,10 +209,15 @@ md_first(pmda md)
     {
       if (ptr->ptr)
         {
+#ifdef _G_SSYS_THREAD
+          pthread_mutex_unlock(&md->mutex);
+#endif
           return ptr;
         }
     }
-
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
   return NULL;
 }
 
@@ -201,19 +242,35 @@ md_last(pmda md)
 void *
 md_alloc(pmda md, int b)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
   uint32_t flags = 0;
 
   if (!md->count)
     {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
       return NULL;
     }
 
   if (md->offset >= md->count)
     {
+      if (md->flags & F_MDA_NO_REALLOC)
+        {
+          print_str("ERROR: md structure ran out of memory\n");
+#ifdef _G_SSYS_THREAD
+          pthread_mutex_unlock(&md->mutex);
+#endif
+          return NULL;
+        }
+
       if (gfl & F_OPT_VERBOSE5)
         {
           print_str(
-              "NOTICE: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
+              "WARNING: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
               (ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count);
         }
       md->objects = realloc(md->objects, (md->count * sizeof(md_obj)) * 2);
@@ -236,7 +293,7 @@ md_alloc(pmda md, int b)
       if (gfl & F_OPT_VERBOSE5)
         {
           print_str(
-              "NOTICE: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
+              "WARNING: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
               (ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count,
               (ulint64_t) rlc);
         }
@@ -252,16 +309,27 @@ md_alloc(pmda md, int b)
 
   if (pcntr >= md->count)
     {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
       return NULL;
     }
 
-  if (md->pos > md->objects && !(md->pos - 1)->ptr)
+  if (!(md->flags & F_MDA_NO_REALLOC))
     {
-      flags |= MDA_MDALLOC_RE;
+      if (md->pos > md->objects && !(md->pos - 1)->ptr)
+        {
+          flags |= MDA_MDALLOC_RE;
+        }
     }
 
   if (md->pos->ptr)
-    return NULL;
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
+      return NULL;
+    }
 
   if (md->flags & F_MDA_REFPTR)
     {
@@ -291,6 +359,9 @@ md_alloc(pmda md, int b)
           md_relink(md);
         }
     }
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
 
   return md->pos->ptr;
 }
@@ -302,6 +373,10 @@ md_unlink(pmda md, p_md_obj md_o)
     {
       return NULL;
     }
+
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
 
   p_md_obj c_ptr = NULL;
 
@@ -318,17 +393,29 @@ md_unlink(pmda md, p_md_obj md_o)
     }
 
   md->offset--;
-  if (md->pos == md_o && c_ptr)
+  if (md->pos == md_o)
     {
-      md->pos = c_ptr;
+      if (NULL != c_ptr)
+        {
+          md->pos = c_ptr;
+        }
+      else
+        {
+          md->pos = md->objects;
+        }
     }
   if (!(md->flags & F_MDA_REFPTR) && md_o->ptr)
     {
       free(md_o->ptr);
     }
+
   md_o->ptr = NULL;
   md_o->next = NULL;
   md_o->prev = NULL;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
 
   return (void*) c_ptr;
 }
@@ -390,6 +477,10 @@ md_copy(pmda source, pmda dest, size_t block_sz, int
     {
       return 2;
     }
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&source->mutex);
+#endif
+
   int ret = 0;
   p_md_obj ptr = md_first(source);
   void *d_ptr;
@@ -419,9 +510,14 @@ md_copy(pmda source, pmda dest, size_t block_sz, int
 
   if (source->offset != dest->offset)
     {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&source->mutex);
+#endif
       return 3;
     }
-
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&source->mutex);
+#endif
   return 0;
 }
 
@@ -486,4 +582,154 @@ is_memregion_null(void *addr, size_t size)
       i--;
     }
   return i;
+}
+
+int
+md_init_le(pmda md, int nm)
+{
+  if (!md || md->objects)
+    {
+      return 1;
+    }
+
+  bzero(md, sizeof(mda));
+  if (!(md->objects = calloc(nm + 1, sizeof(md_obj))))
+    {
+      fprintf(stderr, "ERROR: md_init: could not allocate memory\n");
+      abort();
+    }
+
+  md->count = (off_t) nm;
+  md->pos = md->objects;
+  md->first = NULL;
+#ifdef _G_SSYS_THREAD
+  mutex_init(&md->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+#endif
+
+  return 0;
+}
+
+void *
+md_alloc_le(pmda md, size_t b, uint32_t flags, void *refptr)
+{
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
+  if (md->offset >= md->count)
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
+      return NULL;
+    }
+
+  p_md_obj pos = md->objects;
+  ssize_t pcntr = 0;
+
+  while (pos->ptr && pcntr < md->count)
+    {
+      pcntr++;
+      pos++;
+    }
+
+  if (pcntr >= md->count)
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
+      return NULL;
+    }
+
+  if (md->flags & F_MDA_REFPTR)
+    {
+      pos->ptr = refptr;
+    }
+  else
+    {
+      pos->ptr = calloc(1, b);
+    }
+
+  if (!md->first)
+    {
+      md->first = pos;
+    }
+  else
+    {
+      if (!(flags & F_MDALLOC_NOLINK))
+        {
+          md->pos->next = pos;
+          pos->prev = md->pos;
+        }
+    }
+
+  md->pos = pos;
+  md->offset++;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+  return md->pos->ptr;
+}
+
+void *
+md_unlink_le(pmda md, p_md_obj md_o)
+{
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
+  p_md_obj c_ptr = NULL;
+
+  if (md_o->prev)
+    {
+      ((p_md_obj) md_o->prev)->next = (p_md_obj) md_o->next;
+      c_ptr = md_o->prev;
+
+    }
+
+  if (md_o->next)
+    {
+      ((p_md_obj) md_o->next)->prev = (p_md_obj) md_o->prev;
+      c_ptr = md_o->next;
+
+    }
+
+  if (md->first == md_o)
+    {
+      md->first = c_ptr;
+    }
+
+  md->offset--;
+
+  if (NULL == md->first && md->offset > 0)
+    {
+      abort();
+    }
+
+  if (md->pos == md_o)
+    {
+      if (NULL != c_ptr)
+        {
+          md->pos = c_ptr;
+        }
+      else
+        {
+          md->pos = md->objects;
+        }
+    }
+  if (!(md->flags & F_MDA_REFPTR) && md_o->ptr)
+    {
+      free(md_o->ptr);
+    }
+
+  md_o->ptr = NULL;
+  md_o->next = NULL;
+  md_o->prev = NULL;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+
+  return (void*) c_ptr;
 }

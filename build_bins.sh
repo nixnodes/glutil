@@ -5,7 +5,7 @@ build()
 {
 	make clean || return 2
 	./configure ${1} || return 2
-	make LDFLAGS="${2}" || return 2
+	make LDFLAGS="${LDFLAGS} ${2}" || return 2
 	for i in ${3}; do
 		cp src/${i} ${OUT}/${i}${4} || return 2
 	done

@@ -230,7 +230,7 @@ g_proc_mr(__g_handle hdl)
       hdl->j_offset = 2;
     }
 
-  if (!(hdl->flags & F_GH_HASMATCHES))
+  if (!(hdl->flags & F_GH_HASMATCHES) && _match_rr.count > 0)
     {
       if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match),
           g_h_deepcp_mrr)))
@@ -362,7 +362,7 @@ g_proc_mr(__g_handle hdl)
 #ifdef HAVE_ZLIB_H
       if (hdl->flags & F_GH_IO_GZIP)
         {
-          if ((hdl->gz_fh1 = gzdopen(fileno(stdout), hdl->w_mode)) == NULL)
+          if ((hdl->gz_fh1 = gzdopen(fd_out, hdl->w_mode)) == NULL)
             {
               return 2015;
             }
@@ -383,13 +383,15 @@ g_proc_mr(__g_handle hdl)
             }
         }
 
+      hdl->g_proc4 = g_omfp_eassemble;
+
       if ((gfl0 & F_OPT_PRINTF))
         {
-          hdl->g_proc4 = g_omfp_eassemblef;
+          hdl->w_d = g_omfp_write;
         }
       else
         {
-          hdl->g_proc4 = g_omfp_eassemble;
+          hdl->w_d = g_omfp_write_nl;
         }
 
       hdl->act_mech = &hdl->print_mech;
@@ -421,13 +423,16 @@ g_proc_mr(__g_handle hdl)
                 }
               hdl->flags |= F_GH_POST_PRINT;
             }
+
+          hdl->g_proc4_po = g_omfp_eassemble;
+
           if ((gfl0 & F_OPT_POSTPRINTF))
             {
-              hdl->g_proc4_po = g_omfp_eassemblef;
+              hdl->w_d = g_omfp_write;
             }
           else
             {
-              hdl->g_proc4_po = g_omfp_eassemble;
+              hdl->w_d = g_omfp_write_nl;
             }
         }
 
@@ -442,13 +447,16 @@ g_proc_mr(__g_handle hdl)
                 }
               hdl->flags |= F_GH_PRE_PRINT;
             }
+
+          hdl->g_proc4_pr = g_omfp_eassemble;
+
           if ((gfl0 & F_OPT_PREPRINTF))
             {
-              hdl->g_proc4_pr = g_omfp_eassemblef;
+              hdl->w_d = g_omfp_write;
             }
           else
             {
-              hdl->g_proc4_pr = g_omfp_eassemble;
+              hdl->w_d = g_omfp_write_nl;
             }
         }
 

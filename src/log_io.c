@@ -252,15 +252,15 @@ g_read(void *buffer, __g_handle hdl, size_t size)
       return (void *) hdl->buffer.pos->ptr;
     }
 
-  if (!buffer)
+  if (NULL == buffer)
     {
-      print_str("IO ERROR: %s: no buffer to write to\n", hdl->file);
+      print_str("ERROR: %s: no buffer to write to\n", hdl->file);
       return NULL;
     }
 
-  if (!hdl->fh)
+  if (NULL == hdl->fh)
     {
-      print_str("IO ERROR: %s: data file handle not open\n", hdl->file);
+      print_str("ERROR: %s: data file handle not open\n", hdl->file);
       return NULL;
     }
 

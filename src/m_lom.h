@@ -83,6 +83,10 @@ typedef struct ___lom_strings_header
       } \
 }
 
+#define G_LOM_VAR(x,y, d_ptr, g_ptr) { \
+      lom->y = (x)lom->g_ptr(d_ptr, lom->t_r_off); \
+}
+
 typedef int
 __d_lom_vp(void *d_ptr, void *_lom);
 
