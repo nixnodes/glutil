@@ -29,7 +29,9 @@
 #include <xref.h>
 #include <x_f.h>
 #include <omfp.h>
+#ifdef _G_SSYS_NET
 #include <glutil_net.h>
+#endif
 //#include <imdb_pload.h>
 #include <g_help.h>
 

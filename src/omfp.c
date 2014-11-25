@@ -17,8 +17,6 @@
 #include <exech.h>
 #include <misc.h>
 
-#include <net_io.h>
-
 #include <setjmp.h>
 
 uint32_t g_omfp_sto = 0, g_omfp_suto = 0;
@@ -261,6 +259,8 @@ g_omfp_write_nl(int fd, char *buffer, size_t max_size, void *arg)
 }
 
 #ifdef _G_SSYS_NET
+
+#include <net_io.h>
 
 void
 g_omfp_q_nssys(int fd, char *buffer, size_t max_size, void *arg)
