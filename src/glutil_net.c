@@ -51,7 +51,7 @@ process_ca_requests(pmda md)
 int
 net_deploy(void)
 {
-  md_init_le(&_sock_r, 16);
+  md_init_le(&_sock_r, 512);
   md_init_le(&_thrd_r, 64);
 
   ssl_init();
@@ -113,7 +113,7 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   int r;
 
-  if ((r = g_bmatch(data, hdl, &g_act_1.buffer)))
+  if ((r = g_bmatch(data, hdl, &hdl->buffer)))
     {
       if (r == -1)
         {
@@ -126,7 +126,7 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   omfp_timeout;
 
-  hdl->g_proc4((void*) hdl, data, NULL);
+  hdl->g_proc4((void*) hdl, data, (void*) pso);
 
   l_end: ;
 

@@ -836,6 +836,8 @@ net_worker(void *args)
   thrd->buffer0 = malloc(THREAD_DEFAULT_BUFFER0_SIZE);
   thrd->buffer0_size = THREAD_DEFAULT_BUFFER0_SIZE;
 
+  pthread_t _tid = thrd->pt;
+
   pthread_mutex_unlock(&thrd->mutex);
 
   for (;;)
@@ -863,7 +865,7 @@ net_worker(void *args)
         {
           print_str(
               "NOTICE: [%X]: push %llu items onto worker thread stack, %llu exist in chain\n",
-              (uint32_t) thrd->pt,
+              (uint32_t) _tid,
               (unsigned long long int) thrd->in_objects.offset,
               (unsigned long long int) thrd->proc_objects.offset);
         }
@@ -881,7 +883,7 @@ net_worker(void *args)
           if (!(t_pso->flags & F_OPSOCK_ACT))
             {
               print_str("NOTICE: [%X]: not importing %d, still active\n",
-                  (uint32_t) thrd->pt, t_pso->sock);
+                  (uint32_t) _tid, t_pso->sock);
               pthread_mutex_unlock(&t_pso->mutex);
               goto io_loend;
             }
@@ -918,7 +920,7 @@ net_worker(void *args)
         {
           __sock_o pso = (__sock_o ) ptr->ptr;
 
-          if (!pso)
+          if (NULL == pso)
             {
               print_str("ERROR: proc_objects empty member\n");
               abort();
@@ -932,7 +934,6 @@ net_worker(void *args)
 
               if (2 == (r = net_destroy_connection(pso)))
                 {
-                  pthread_mutex_unlock(&pso->mutex);
                   goto l_end;
                 }
 
@@ -940,13 +941,13 @@ net_worker(void *args)
                 {
                   print_str(
                       "ERROR: [%X] net_destroy_connection failed, socket [%d], critical\n",
-                      (uint32_t) thrd->pt, pso->sock);
+                      (uint32_t) _tid, pso->sock);
                   abort();
                 }
               else
                 {
                   print_str("NOTICE: [%X] socket closed [%d] status:[%d]\n",
-                      (uint32_t) thrd->pt, pso->sock, r);
+                      (uint32_t) _tid, pso->sock, r);
                 }
 
               pthread_mutex_unlock(&pso->mutex);
@@ -980,26 +981,21 @@ net_worker(void *args)
 
           pso->flags |= F_OPSOCK_ST_HOOKED;
 
-          pthread_mutex_unlock(&pso->mutex);
-
           errno = 0;
 
           switch ((r = pso->rcv_cb(pso, pso->host_ctx, &_thrd_r, pso->buffer0)))
             {
           case 2:
-            mutex_lock(&pso->mutex);
             if (!pso->counters.b_read)
               {
                 mutex_lock(&pso->sendq.mutex);
                 if (!pso->sendq.offset)
                   {
                     pthread_mutex_unlock(&pso->sendq.mutex);
-                    pthread_mutex_unlock(&pso->mutex);
                     goto e_end;
                   }
                 pthread_mutex_unlock(&pso->sendq.mutex);
               }
-            pthread_mutex_unlock(&pso->mutex);
             break;
           case 0:
             int_state |= F_WORKER_INT_STATE_ACT;
@@ -1012,16 +1008,13 @@ net_worker(void *args)
                 errno,
                 errno ? strerror_r(errno, thrd->buffer0, 1024) : "");
 
-            mutex_lock(&pso->mutex);
-
             pso->flags |= F_OPSOCK_TERM;
-
-            pthread_mutex_unlock(&pso->mutex);
 
             if (!pso->counters.b_read)
               {
                 goto e_end;
               }
+            break;
             }
 
           if (NULL != pso->rcv1)
@@ -1037,24 +1030,16 @@ net_worker(void *args)
                     "ERROR: data processor failed with status %d, socket: [%d]\n",
                     r, pso->sock);
 
-                mutex_lock(&pso->mutex);
-
                 pso->flags |= F_OPSOCK_TERM;
-
-                pthread_mutex_unlock(&pso->mutex);
 
                 break;
                 }
             }
 
-          mutex_lock(&pso->mutex);
-
           if (pso->unit_size == pso->counters.b_read)
             {
               pso->counters.b_read = 0;
             }
-
-          pthread_mutex_unlock(&pso->mutex);
 
           mutex_lock(&pso->sendq.mutex);
 
@@ -1077,16 +1062,14 @@ net_worker(void *args)
 
           e_end: ;
 
-          mutex_lock(&pso->mutex);
-
           if (pso->flags & F_OPSOCK_ST_HOOKED)
             {
               pso->flags ^= F_OPSOCK_ST_HOOKED;
             }
 
-          pthread_mutex_unlock(&pso->mutex);
-
           l_end: ;
+
+          pthread_mutex_unlock(&pso->mutex);
 
           ptr = ptr->next;
         }

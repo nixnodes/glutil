@@ -107,28 +107,27 @@ am_gfind_OBJECTS = signal.$(OBJEXT) g_help.$(OBJEXT) memory.$(OBJEXT) \
 	lref_gen.$(OBJEXT) log_op.$(OBJEXT) omfp.$(OBJEXT)
 gfind_OBJECTS = $(am_gfind_OBJECTS)
 gfind_DEPENDENCIES =
-am__glutil_SOURCES_DIST = signal.c g_help.c memory.c thread.c \
-	arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c \
-	time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c \
-	cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c \
-	i_math.c arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c \
-	lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c \
+am__glutil_SOURCES_DIST = signal.c g_help.c memory.c arg_opts.c init.c \
+	main.c macros.c l_error.c errno_int.c str.c time.c misc.c \
+	lc_oper.c x_f.c log_io.c log_shm.c gv_off.c cfgv.c m_general.c \
+	sort.c m_string.c lref_glob.c m_lom.c i_math.c arg_proc.c \
+	exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c \
+	lref_nukelog.c lref_dupefile.c lref_lastonlog.c \
 	lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c \
 	lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c \
 	lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c \
-	dirlog.c net_io.c net_proto.c glutil_net.c
+	dirlog.c thread.c net_io.c net_proto.c glutil_net.c
 @ENABLE_NET_SUBSYS_FALSE@am_glutil_OBJECTS = signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	thread.$(OBJEXT) arg_opts.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	init.$(OBJEXT) main.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	macros.$(OBJEXT) l_error.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	errno_int.$(OBJEXT) str.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	time.$(OBJEXT) misc.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	log_io.$(OBJEXT) log_shm.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	m_general.$(OBJEXT) sort.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	m_string.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	arg_opts.$(OBJEXT) init.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	main.$(OBJEXT) macros.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	l_error.$(OBJEXT) errno_int.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	str.$(OBJEXT) time.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	misc.$(OBJEXT) lc_oper.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	x_f.$(OBJEXT) log_io.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	cfgv.$(OBJEXT) m_general.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	sort.$(OBJEXT) m_string.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	i_math.$(OBJEXT) arg_proc.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	exech.$(OBJEXT) exec.$(OBJEXT) \
@@ -189,28 +188,27 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c thread.c \
 @ENABLE_NET_SUBSYS_TRUE@	omfp.$(OBJEXT) dirlog.$(OBJEXT)
 glutil_OBJECTS = $(am_glutil_OBJECTS)
 glutil_DEPENDENCIES =
-am__glutil_chroot_SOURCES_DIST = signal.c g_help.c memory.c thread.c \
-	arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c \
-	time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c \
-	cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c \
-	i_math.c arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c \
+am__glutil_chroot_SOURCES_DIST = signal.c g_help.c memory.c arg_opts.c \
+	init.c main.c macros.c l_error.c errno_int.c str.c time.c \
+	misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c cfgv.c \
+	m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c \
+	arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c \
 	lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c \
 	lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c \
 	lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c \
 	lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c \
-	dirlog.c net_io.c net_proto.c glutil_net.c
+	dirlog.c thread.c net_io.c net_proto.c glutil_net.c
 @ENABLE_NET_SUBSYS_FALSE@am_glutil_chroot_OBJECTS = signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	thread.$(OBJEXT) arg_opts.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	init.$(OBJEXT) main.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	macros.$(OBJEXT) l_error.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	errno_int.$(OBJEXT) str.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	time.$(OBJEXT) misc.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	log_io.$(OBJEXT) log_shm.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	m_general.$(OBJEXT) sort.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	m_string.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	arg_opts.$(OBJEXT) init.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	main.$(OBJEXT) macros.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	l_error.$(OBJEXT) errno_int.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	str.$(OBJEXT) time.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	misc.$(OBJEXT) lc_oper.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	x_f.$(OBJEXT) log_io.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	cfgv.$(OBJEXT) m_general.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_FALSE@	sort.$(OBJEXT) m_string.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	i_math.$(OBJEXT) arg_proc.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	exech.$(OBJEXT) exec.$(OBJEXT) \
@@ -272,18 +270,17 @@ am__glutil_chroot_SOURCES_DIST = signal.c g_help.c memory.c thread.c \
 glutil_chroot_OBJECTS = $(am_glutil_chroot_OBJECTS)
 glutil_chroot_DEPENDENCIES =
 am__glutil_precheck_SOURCES_DIST = pce/pce_signal.c g_help.c memory.c \
-	thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c \
-	time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c \
-	cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c \
-	i_math.c arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c \
+	pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c \
+	misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c cfgv.c \
+	m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c \
+	arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c \
 	lref_online.c lref_imdb.c lref_tvrage.c lref_game.c \
 	lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c \
-	pce/pce_misc.c net_io.c net_proto.c
+	pce/pce_misc.c thread.c net_io.c net_proto.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @ENABLE_NET_SUBSYS_FALSE@am_glutil_precheck_OBJECTS =  \
 @ENABLE_NET_SUBSYS_FALSE@	pce/pce_signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	thread.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	pce/pce_init.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	macros.$(OBJEXT) l_error.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	errno_int.$(OBJEXT) str.$(OBJEXT) \
@@ -335,18 +332,16 @@ am__dirstamp = $(am__leading_dot)dirstamp
 glutil_precheck_OBJECTS = $(am_glutil_precheck_OBJECTS)
 glutil_precheck_DEPENDENCIES =
 am__glutil_precheck_nonchroot_SOURCES_DIST = pce/pce_signal.c g_help.c \
-	memory.c thread.c pce/pce_init.c macros.c l_error.c \
-	errno_int.c str.c time.c misc.c lc_oper.c x_f.clog_io.c \
-	log_shm.c gv_off.c cfgv.c m_general.c sort.c m_string.c \
-	lref_glob.c m_lom.c i_math.c arg_proc.c exech.c exec.c xref.c \
-	lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c \
-	lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c \
-	pce/pce_proc.c pce/pce_misc.c x_f.c net_io.c net_proto.c \
-	log_io.c
+	memory.c pce/pce_init.c macros.c l_error.c errno_int.c str.c \
+	time.c misc.c lc_oper.c x_f.clog_io.c log_shm.c gv_off.c \
+	cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c \
+	i_math.c arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c \
+	lref_online.c lref_imdb.c lref_tvrage.c lref_game.c \
+	lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c \
+	pce/pce_misc.c thread.c x_f.c net_io.c net_proto.c log_io.c
 @ENABLE_NET_SUBSYS_FALSE@am_glutil_precheck_nonchroot_OBJECTS =  \
 @ENABLE_NET_SUBSYS_FALSE@	pce/pce_signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_FALSE@	thread.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	pce/pce_init.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	macros.$(OBJEXT) l_error.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	errno_int.$(OBJEXT) str.$(OBJEXT) \
@@ -552,13 +547,13 @@ top_srcdir = @top_srcdir@
 @ENABLE_CHROOT_OWNBIN_TRUE@GLUTIL_APP = glutil-chroot
 @ENABLE_SEARCHBIN_FALSE@GLUTIL_APP = glutil
 @ENABLE_SEARCHBIN_TRUE@GLUTIL_APP = gfind
-@ENABLE_NET_SUBSYS_FALSE@glutil_SOURCES = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c  log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
+@ENABLE_NET_SUBSYS_FALSE@glutil_SOURCES = signal.c g_help.c memory.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c  log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
 @ENABLE_NET_SUBSYS_TRUE@glutil_SOURCES = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c glutil_net.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
-@ENABLE_NET_SUBSYS_FALSE@glutil_chroot_SOURCES = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c 
+@ENABLE_NET_SUBSYS_FALSE@glutil_chroot_SOURCES = signal.c g_help.c memory.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c 
 @ENABLE_NET_SUBSYS_TRUE@glutil_chroot_SOURCES = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c glutil_net.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c 
-@ENABLE_NET_SUBSYS_FALSE@glutil_precheck_SOURCES = pce/pce_signal.c g_help.c memory.c thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+@ENABLE_NET_SUBSYS_FALSE@glutil_precheck_SOURCES = pce/pce_signal.c g_help.c memory.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 @ENABLE_NET_SUBSYS_TRUE@glutil_precheck_SOURCES = pce/pce_signal.c g_help.c memory.c thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c  log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
-@ENABLE_NET_SUBSYS_FALSE@glutil_precheck_nonchroot_SOURCES = pce/pce_signal.c g_help.c memory.c thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.clog_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+@ENABLE_NET_SUBSYS_FALSE@glutil_precheck_nonchroot_SOURCES = pce/pce_signal.c g_help.c memory.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.clog_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 @ENABLE_NET_SUBSYS_TRUE@glutil_precheck_nonchroot_SOURCES = pce/pce_signal.c g_help.c memory.c thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 gfind_SOURCES = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c xref.c lref.c lref_gen.c log_op.c omfp.c 
 glutil_LDADD = -lm 

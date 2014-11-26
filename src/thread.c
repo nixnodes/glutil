@@ -208,14 +208,37 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
 void
 mutex_lock(pthread_mutex_t *mutex)
 {
-  switch (pthread_mutex_lock(mutex))
+  int r;
+  switch (r = pthread_mutex_lock(mutex))
     {
   case 0:
     return;
   case EOWNERDEAD:
-    fprintf(stderr, "EOWNERDEAD: %d: calling pthread_mutex_consistent\n",
+    fprintf(stderr,
+        "ERROR: %d: calling pthread_mutex_consistent [EOWNERDEAD]\n", getpid());
+    if (0 == pthread_mutex_consistent(mutex))
+      {
+        mutex_lock(mutex);
+      }
+    else
+      {
+        fprintf(stderr, "ERROR: %d: pthread_mutex_consistent failed\n",
+            getpid());
+        abort();
+      }
+    return;
+  case EAGAIN:
+    usleep(10000);
+    mutex_lock(mutex);
+    return;
+  case ENOTRECOVERABLE:
+    fprintf(stderr, "ERROR: %d: pthread_mutex_lock: [ENOTRECOVERABLE]\n",
         getpid());
-    pthread_mutex_consistent(mutex);
+    abort();
+    return;
+  default:
+    fprintf(stderr, "ERROR: %d: pthread_mutex_lock: [%d]\n", getpid(), r);
+    abort();
     }
 }
 
