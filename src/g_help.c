@@ -107,7 +107,7 @@ char *hpd_up =
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
     "  -regexi [<var>,]<pattern>\n"
-    "                        Case insensitive variant of --regex\n"
+    "                        Case insensitive variant of -regex\n"
     "  --noereg              Disable POSIX Extended Regular Expression syntax (enabled by default)\n"
     "  -match [<field>,]<pattern>\n"
     "                        Regular string matching (exact matches)\n"
@@ -117,7 +117,7 @@ char *hpd_up =
     "  -name [<field>,]<pattern>\n"
     "                        Match <field> value against shell <pattern> (fnmatch(3) lib function)\n"
     "  -namei [<field>,]<pattern>\n"
-    "                        Case insensitive variant of --name\n"
+    "                        Case insensitive variant of -name\n"
     "  -lom <[(]expression[)]>\n"
     "                        Compare values by logical and comparison/relational operators\n"
     "                        Applies to any integer/floating point fields from data sources\n"
