@@ -95,4 +95,9 @@ md_unlink_le(pmda md, p_md_obj md_o);
 int
 md_init_le(pmda md, int nm);
 
+#ifdef _G_SSYS_THREAD
+off_t
+md_get_off_ts(pmda md);
+#endif
+
 #endif /* MEMORY_H_ */

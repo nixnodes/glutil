@@ -24,6 +24,7 @@
 #include <sort_hdr.h>
 #include <exec_t.h>
 #include <l_error.h>
+#include <str.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -1721,44 +1722,197 @@ opt_g_swapmode(void *arg, int m)
 #include <net_proto.h>
 #include <glutil_net.h>
 
-#define OPT_CONNECT_MODE_NULL            0x0
-#define OPT_CONNECT_MODE_SERV            0x1
+static int
+n_proc_intval(char *left, char *right, int *outval, int min, int max)
+{
+  errno = 0;
+  int ret = (int) strtol(right, NULL, 10);
+
+  if ((errno == EINVAL || errno == ERANGE))
+    {
+      print_str("ERROR: net_opt_parse: '%s': invalid value: '%d'\n", left, ret);
+      return 1;
+    }
+
+  if (ret < min || ret > max)
+    {
+      print_str("ERROR: net_opt_parse: '%s': value out of range: '%d'\n", left,
+          ret);
+      return 1;
+    }
+
+  *outval = ret;
+
+  return 0;
+}
+
+static int
+netctl_opt_parse(pmda md, void *arg)
+{
+  p_md_obj ptr = md->objects;
+  char *left = (char*) ptr->ptr, *right;
+
+  if (NULL == ptr->next)
+    {
+      print_str("ERROR: net_opt_parse: option '%s' missing value\n", left);
+      return 1;
+    }
+
+  right = (char*) ((p_md_obj) ptr->next)->ptr;
+
+  if (!strncmp(left, "thread_max", 10))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+        {
+          return 1;
+        }
+      net_opts.max_worker_threads = i_val;
+    }
+  else if (!strncmp(left, "sock_max", 8))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+        {
+          return 1;
+        }
+      net_opts.max_sock = (uint16_t) i_val;
+    }
+  else if (!strncmp(left, "threads_listen", 14))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+        {
+          return 1;
+        }
+      net_opts.thread_l = (uint16_t) i_val;
+    }
+  else if (!strncmp(left, "threads_recv", 12))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+        {
+          return 1;
+        }
+      net_opts.thread_r = (uint16_t) i_val;
+    }
+  else
+    {
+      print_str("ERROR: netctl_opt_parse: '%s': unknown option\n", left);
+      return 1;
+    }
+
+  return 0;
+}
+
+static int
+opt_netctl(void *arg, int m)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 24200;
+    }
+
+  if (0 != g_parse_opts(buffer, netctl_opt_parse, (void*) NULL, P_OPT_DL_O,
+  P_OPT_DL_V))
+    {
+      return 24201;
+    }
+
+  return 0;
+}
+
+static int
+net_opt_parse(pmda md, void *arg)
+{
+  p_md_obj ptr = md->objects;
+  char *left = (char*) ptr->ptr, *right;
+
+  __sock_ca ca = (__sock_ca) arg;
+
+  if (!strncmp("ssl", left, 3))
+    {
+      ca->flags |= F_OPSOCK_SSL;
+      return 0;
+    }
+
+  if (NULL == ptr->next)
+    {
+      print_str("ERROR: net_opt_parse: option '%s' missing value\n", left);
+      return 1;
+    }
+
+  right = (char*) ((p_md_obj) ptr->next)->ptr;
+
+  if (!strncmp("mode", left, 4))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+        {
+          return 1;
+        }
+
+      ca->mode = (uint8_t) i_val;
+    }
+  else if (!strncmp("log", left, 3))
+    {
+      if (NULL == g_dgetf(right))
+        {
+          print_str("ERROR: net_opt_parse: '%s': invalid log: '%s'\n", left,
+              right);
+          return 1;
+        }
+      snprintf(ca->b0, sizeof(ca->b0), "%s", right);
+      ca->ca_flags |= F_CA_HAS_LOG;
+    }
+  else if (!strncmp("sslcert", left, 7))
+    {
+      snprintf(ca->b1, sizeof(ca->b1), "%s", right);
+      ca->ssl_cert = (char*) ca->b1;
+      ca->ca_flags |= F_CA_HAS_SSL_CERT;
+      ca->flags |= F_OPSOCK_SSL;
+    }
+  else if (!strncmp("sslkey", left, 6))
+    {
+      snprintf(ca->b2, sizeof(ca->b2), "%s", right);
+      ca->ssl_key = (char*) ca->b2;
+      ca->ca_flags |= F_CA_HAS_SSL_KEY;
+      ca->flags |= F_OPSOCK_SSL;
+    }
+  else
+    {
+      print_str("ERROR: net_opt_parse: '%s': unknown option\n", left);
+      return 1;
+    }
+
+  return 0;
+}
+
+#define OPT_CONNECT_MODE_NULL            (uint8_t)0
+#define OPT_CONNECT_MODE_SERV            (uint8_t)1
 
 static int
 opt_queue_connection(void *arg, uint32_t flags)
 {
-  char *mode = ((char **) arg)[0];
-  char *log = ((char **) arg)[1];
-  char *host = ((char **) arg)[2];
-  char *port = ((char **) arg)[3];
+  char *opt = ((char **) arg)[0];
+  char *host = ((char **) arg)[1];
+  char *port = ((char **) arg)[2];
 
-  if (!host)
+  if (NULL == opt)
     {
-      return 10;
+      return 24110;
     }
 
-  if (!port)
+  if (NULL == host)
     {
-      return 11;
+      return 24111;
     }
 
-  if (!mode)
+  if (NULL == port)
     {
-      return 12;
-    }
-
-  if (!log)
-    {
-      return 13;
-    }
-
-  errno = 0;
-  int i_mode = (int) strtol(mode, NULL, 10);
-
-  if ((i_mode == LONG_MIN || i_mode == LONG_MAX)
-      && (errno == EINVAL || errno == ERANGE))
-    {
-      return 15;
+      return 24112;
     }
 
   md_init(&_boot_pca, 64);
@@ -1767,31 +1921,72 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (NULL == (ca = md_alloc(&_boot_pca, sizeof(_sock_ca))))
     {
-      return 16;
+      return 24116;
     }
 
-  switch (i_mode)
+  if (0 != g_parse_opts(opt, net_opt_parse, (void*) ca, P_OPT_DL_O,
+  P_OPT_DL_V))
     {
-  case OPT_CONNECT_MODE_SERV:
+      return 24140;
+    }
+
+  if (!(ca->ca_flags & F_CA_HAS_LOG))
+    {
+      print_str("ERROR: opt_queue_connection: [%s:%s] missing 'log' option\n",
+          host, port);
+      return 24141;
+    }
+
+  if (ca->flags & F_OPSOCK_SSL)
+    {
+      if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))
+        {
+          print_str("WARNING: [%s:%s] using default key: %s\n", host, port,
+              net_opts.ssl_key_def);
+          ca->ssl_key = net_opts.ssl_key_def;
+        }
+      if (!(ca->ca_flags & F_CA_HAS_SSL_CERT))
+        {
+          print_str("WARNING: [%s:%s] using default cert: %s\n", host, port,
+              net_opts.ssl_cert_def);
+          ca->ssl_cert = net_opts.ssl_cert_def;
+        }
+    }
+
+  errno = 0;
+
+  switch (ca->mode)
+    {
+  case OPT_CONNECT_MODE_SERV :
     ca->socket_register = &_sock_r;
     ca->rc0 = net_gl_socket_init0;
-    ca->rc1 = net_gl_socket_init1;
+    //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
     break;
-  case OPT_CONNECT_MODE_NULL:
+  case OPT_CONNECT_MODE_NULL :
+    /*print_str("ERROR: opt_queue_connection: [%s:%s] missing mode\n", host,
+     port);
+     md_unlink(&_boot_pca, _boot_pca.pos);
+     return 24167;*/
     ca->socket_register = &_sock_r;
+    ca->rc0 = net_gl_socket_init0;
+    //ca->rc1 = net_gl_socket_init1;
+    ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
+    ca->mode = 1;
     break;
   default:
-    printf("opt_connect: invalid mode: %d\n", i_mode);
+    print_str("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n", host,
+        port, ca->mode);
     md_unlink(&_boot_pca, _boot_pca.pos);
-    return 17;
+    return 24168;
     }
 
   ca->host = host;
   ca->port = port;
-  ca->flags = flags | F_OPSOCK_INIT_SENDQ;
-  ca->thread_register = &_thrd_r;
-  ca->st_p0 = log;
+  ca->flags |= flags | F_OPSOCK_INIT_SENDQ;
+  ca->thread_register = &_net_thrd_r;
+
+  ca->st_p0 = (char*) ca->b0;
 
   updmode = UPD_MODE_NETWORK;
 
@@ -1864,72 +2059,73 @@ _gg_opt gg_prio_f_ref[] =
 _gg_opt gg_f_ref[] =
   {
 #ifdef _G_SSYS_NET
-    { .id = 0x3101, .on = "-connect", .ac = 4, .op = opt_connect },
-    { .id = 0x3104, .on = "-listen", .ac = 4, .op = opt_listen },
+        { .id = 0x3101, .on = "-connect", .ac = 3, .op = opt_connect },
+        { .id = 0x3104, .on = "-listen", .ac = 3, .op = opt_listen },
+        { .id = 0x3105, .on = "-netctl", .ac = 1, .op = opt_netctl },
 #endif
-    { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
-    { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
-    { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
-    { .id = 0x000B, .on = "sort", .ac = 1, .op = opt_g_sort },
-    { .id = 0x000B, .on = "--sort", .ac = 1, .op = opt_g_sort },
-    { .id = 0x000B, .on = "-sort", .ac = 1, .op = opt_g_sort },
-    { .id = 0x000E, .on = "--cdir", .ac = 0, .op = opt_g_cdironly },
-    { .id = 0x000E, .on = "-prune", .ac = 0, .op = opt_g_cdironly },
-    { .id = 0x000F, .on = "--imatchq", .ac = 0, .op = opt_g_imatchq },
-    { .id = 0x0010, .on = "--matchq", .ac = 0, .op = opt_g_matchq },
-    { .id = 0x0013, .on = "--infile", .ac = 1, .op = opt_g_infile },
-    { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
-    { .id = 0x0015, .on = "--xdev", .ac = 0, .op = opt_g_xdev },
-    { .id = 0x0016, .on = "-xblk", .ac = 0, .op = opt_g_xblk },
-    { .id = 0x0017, .on = "--xblk", .ac = 0, .op = opt_g_xblk },
-    { .id = 0x0018, .on = "-file", .ac = 0, .op = opt_g_udc_f },
-    { .id = 0x0019, .on = "--file", .ac = 0, .op = opt_g_udc_f },
-    { .id = 0x001A, .on = "-dir", .ac = 0, .op = opt_g_udc_dir },
-    { .id = 0x001B, .on = "--dir", .ac = 0, .op = opt_g_udc_dir },
-    { .id = 0x001C, .on = "--loopmax", .ac = 1, .op = opt_loop_max },
-    { .id = 0x001D, .on = "--ghost", .ac = 0, .op = opt_check_ghost },
-    { .id = 0x0020, .on = "-R", .ac = 0, .op = opt_g_recursive },
-    { .id = 0x0021, .on = "-recursive", .ac = 0, .op = opt_g_recursive },
-    { .id = 0x0022, .on = "--recursive", .ac = 0, .op = opt_g_recursive },
-    { .id = 0x0020, .on = "--no-recursive", .ac = 0, .op = opt_g_rec_off },
-    { .id = 0x0025, .on = "--backup", .ac = 1, .op = opt_backup },
-    { .id = 0x0026, .on = "-preprint", .ac = 1, .op = opt_preprint },
-    { .id = 0x0027, .on = "-preprintf", .ac = 1, .op = opt_preprintf },
-    { .id = 0x0028, .on = "-postprint", .ac = 1, .op = opt_postprint },
-    { .id = 0x0029, .on = "-postprintf", .ac = 1, .op = opt_postprintf },
-    { .id = 0x002A, .on = "-print", .ac = 1, .op = opt_print },
-    { .id = 0x002B, .on = "-print-", .ac = 1, .op = opt_print_stdin },
-    { .id = 0x002C, .on = "-printf-", .ac = 1, .op = opt_printf_stdin },
-    { .id = 0x002D, .on = "-printf", .ac = 1, .op = opt_printf },
-    { .id = 0x002E, .on = "-stdin", .ac = 0, .op = opt_stdin },
-    { .id = 0x002F, .on = "--stdin", .ac = 0, .op = opt_stdin },
-    { .id = 0x0030, .on = "--print", .ac = 1, .op = opt_print },
-    { .id = 0x0031, .on = "--printf", .ac = 1, .op = opt_printf },
-    { .id = 0x0033, .on = "--postexec", .ac = 1, .op = opt_g_postexec },
-    { .id = 0x0034, .on = "--preexec", .ac = 1, .op = opt_g_preexec },
-    { .id = 0x0035, .on = "--usleep", .ac = 1, .op = opt_g_usleep },
-    { .id = 0x0036, .on = "--sleep", .ac = 1, .op = opt_g_sleep },
-    { .id = 0x0037, .on = "-arg1", .ac = 1, .op = NULL },
-    { .id = 0x0038, .on = "--arg1", .ac = 1, .op = NULL },
-    { .id = 0x0039, .on = "-arg2", .ac = 1, .op = NULL },
-    { .id = 0x003A, .on = "--arg2", .ac = 1, .op = NULL },
-    { .id = 0x003B, .on = "-arg3", .ac = 1, .op = NULL },
-    { .id = 0x003C, .on = "--arg3", .ac = 1, .op = NULL },
-    { .id = 0x003D, .on = "-m", .ac = 1, .op = NULL },
-    { .id = 0x0042, .on = "--fork", .ac = 1, .op = opt_g_ex_fork },
-    { .id = 0x0043, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
-    { .id = 0x0044, .on = "-vvvv", .ac = 0, .op = opt_g_verbose4 },
-    { .id = 0x0045, .on = "-vvv", .ac = 0, .op = opt_g_verbose3 },
-    { .id = 0x0046, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
-    { .id = 0x0047, .on = "-v", .ac = 0, .op = opt_g_verbose },
-    { .id = 0x004C, .on = "silent", .ac = 0, .op = opt_silent },
-    { .id = 0x004D, .on = "--silent", .ac = 0, .op = opt_silent },
-    { .id = 0x004A, .on = "--logfile", .ac = 0, .op = opt_log_file },
-    { .id = 0x0048, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
-    { .id = 0x0049, .on = "--ftime", .ac = 0, .op = opt_g_ftime },
-    { .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },
-    { .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
-    { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
+        { .id = 0x0001, .on = "noop", .ac = 0, .op = g_opt_mode_noop },
+        { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
+        { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
+        { .id = 0x000B, .on = "sort", .ac = 1, .op = opt_g_sort },
+        { .id = 0x000B, .on = "--sort", .ac = 1, .op = opt_g_sort },
+        { .id = 0x000B, .on = "-sort", .ac = 1, .op = opt_g_sort },
+        { .id = 0x000E, .on = "--cdir", .ac = 0, .op = opt_g_cdironly },
+        { .id = 0x000E, .on = "-prune", .ac = 0, .op = opt_g_cdironly },
+        { .id = 0x000F, .on = "--imatchq", .ac = 0, .op = opt_g_imatchq },
+        { .id = 0x0010, .on = "--matchq", .ac = 0, .op = opt_g_matchq },
+        { .id = 0x0013, .on = "--infile", .ac = 1, .op = opt_g_infile },
+        { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
+        { .id = 0x0015, .on = "--xdev", .ac = 0, .op = opt_g_xdev },
+        { .id = 0x0016, .on = "-xblk", .ac = 0, .op = opt_g_xblk },
+        { .id = 0x0017, .on = "--xblk", .ac = 0, .op = opt_g_xblk },
+        { .id = 0x0018, .on = "-file", .ac = 0, .op = opt_g_udc_f },
+        { .id = 0x0019, .on = "--file", .ac = 0, .op = opt_g_udc_f },
+        { .id = 0x001A, .on = "-dir", .ac = 0, .op = opt_g_udc_dir },
+        { .id = 0x001B, .on = "--dir", .ac = 0, .op = opt_g_udc_dir },
+        { .id = 0x001C, .on = "--loopmax", .ac = 1, .op = opt_loop_max },
+        { .id = 0x001D, .on = "--ghost", .ac = 0, .op = opt_check_ghost },
+        { .id = 0x0020, .on = "-R", .ac = 0, .op = opt_g_recursive },
+        { .id = 0x0021, .on = "-recursive", .ac = 0, .op = opt_g_recursive },
+        { .id = 0x0022, .on = "--recursive", .ac = 0, .op = opt_g_recursive },
+        { .id = 0x0020, .on = "--no-recursive", .ac = 0, .op = opt_g_rec_off },
+        { .id = 0x0025, .on = "--backup", .ac = 1, .op = opt_backup },
+        { .id = 0x0026, .on = "-preprint", .ac = 1, .op = opt_preprint },
+        { .id = 0x0027, .on = "-preprintf", .ac = 1, .op = opt_preprintf },
+        { .id = 0x0028, .on = "-postprint", .ac = 1, .op = opt_postprint },
+        { .id = 0x0029, .on = "-postprintf", .ac = 1, .op = opt_postprintf },
+        { .id = 0x002A, .on = "-print", .ac = 1, .op = opt_print },
+        { .id = 0x002B, .on = "-print-", .ac = 1, .op = opt_print_stdin },
+        { .id = 0x002C, .on = "-printf-", .ac = 1, .op = opt_printf_stdin },
+        { .id = 0x002D, .on = "-printf", .ac = 1, .op = opt_printf },
+        { .id = 0x002E, .on = "-stdin", .ac = 0, .op = opt_stdin },
+        { .id = 0x002F, .on = "--stdin", .ac = 0, .op = opt_stdin },
+        { .id = 0x0030, .on = "--print", .ac = 1, .op = opt_print },
+        { .id = 0x0031, .on = "--printf", .ac = 1, .op = opt_printf },
+        { .id = 0x0033, .on = "--postexec", .ac = 1, .op = opt_g_postexec },
+        { .id = 0x0034, .on = "--preexec", .ac = 1, .op = opt_g_preexec },
+        { .id = 0x0035, .on = "--usleep", .ac = 1, .op = opt_g_usleep },
+        { .id = 0x0036, .on = "--sleep", .ac = 1, .op = opt_g_sleep },
+        { .id = 0x0037, .on = "-arg1", .ac = 1, .op = NULL },
+        { .id = 0x0038, .on = "--arg1", .ac = 1, .op = NULL },
+        { .id = 0x0039, .on = "-arg2", .ac = 1, .op = NULL },
+        { .id = 0x003A, .on = "--arg2", .ac = 1, .op = NULL },
+        { .id = 0x003B, .on = "-arg3", .ac = 1, .op = NULL },
+        { .id = 0x003C, .on = "--arg3", .ac = 1, .op = NULL },
+        { .id = 0x003D, .on = "-m", .ac = 1, .op = NULL },
+        { .id = 0x0042, .on = "--fork", .ac = 1, .op = opt_g_ex_fork },
+        { .id = 0x0043, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
+        { .id = 0x0044, .on = "-vvvv", .ac = 0, .op = opt_g_verbose4 },
+        { .id = 0x0045, .on = "-vvv", .ac = 0, .op = opt_g_verbose3 },
+        { .id = 0x0046, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
+        { .id = 0x0047, .on = "-v", .ac = 0, .op = opt_g_verbose },
+        { .id = 0x004C, .on = "silent", .ac = 0, .op = opt_silent },
+        { .id = 0x004D, .on = "--silent", .ac = 0, .op = opt_silent },
+        { .id = 0x004A, .on = "--logfile", .ac = 0, .op = opt_log_file },
+        { .id = 0x0048, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
+        { .id = 0x0049, .on = "--ftime", .ac = 0, .op = opt_g_ftime },
+        { .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },
+        { .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
+        { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
 #ifdef _GL_DUMMY_NONE
         { .id = 0x0063, .on = "regexi", .ac = 1, .op = opt_g_iregexi},
         { .id = 0x0064, .on = "--regexi", .ac = 1, .op = opt_g_iregexi},

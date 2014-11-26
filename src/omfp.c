@@ -263,12 +263,29 @@ g_omfp_write_nl(int fd, char *buffer, size_t max_size, void *arg)
 #include <net_io.h>
 
 void
-g_omfp_q_nssys(int fd, char *buffer, size_t max_size, void *arg)
+g_omfp_q_nssys(int fd, char *buffer, size_t size, void *arg)
 {
   __sock_o pso = (__sock_o) arg;
 
   int ret;
-  if ((ret = net_push_to_sendq(pso, buffer, max_size, 0)) == -1)
+  if ((ret = net_push_to_sendq(pso, buffer, size, 0)) == -1)
+    {
+      printf(
+          "ERROR: g_omfp_q_nssys: net_push_to_sendq failed, socket: [%d], code: [%d]\n",
+          pso->sock, ret);
+    }
+}
+
+void
+g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg)
+{
+  __sock_o pso = (__sock_o) arg;
+
+  buffer[size] = 0xA;
+  buffer[size+1] = 0x0;
+
+  int ret;
+  if ((ret = net_push_to_sendq(pso, buffer, size + 2, 0)) == -1)
     {
       printf(
           "ERROR: g_omfp_q_nssys: net_push_to_sendq failed, socket: [%d], code: [%d]\n",
@@ -320,7 +337,7 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
       return;
     }
 
-  ((__g_handle) hdl)->w_d(fd_out, b_glob, strlen(b_glob), NULL);
+  ((__g_handle) hdl)->w_d(fd_out, b_glob, strlen(b_glob), (void*)sbuffer);
 
 }
 

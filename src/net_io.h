@@ -34,7 +34,7 @@
 #define SOCK_SSL_ACCEPT_TIMEOUT         60
 #define SOCK_SSL_CONNECT_TIMEOUT        60
 
-#define SOCKET_POOLING_FREQUENCY_MAX    250000
+#define SOCKET_POOLING_FREQUENCY_MAX    750000
 #define SOCKET_POOLING_FREQUENCY_MIN    1000
 #define SOCKET_POOLING_FREQUENCY_HIRES  1
 
@@ -49,9 +49,7 @@
 #define F_WORKER_INT_STATE_ACT          (a8 << 1)
 #define F_WORKER_INT_STATE_ACT_HIRES    (a8 << 2)
 
-
 #define NET_PUSH_SENDQ_ASSUME_PTR	(a16 << 1)
-
 
 #include <memory_t.h>
 #include <thread.h>
@@ -63,11 +61,11 @@
 #include <openssl/ssl.h>
 
 typedef int
-(*_p_s_cb) (void *, void *, void *, void *);
+(*_p_s_cb)(void *, void *, void *, void *);
 typedef int
-(*_t_stocb) (void *);
+(*_t_stocb)(void *);
 typedef int
-(*_p_ssend) (void*, void *, size_t length);
+(*_p_ssend)(void*, void *, size_t length);
 
 typedef struct __sock_timers
 {
@@ -121,16 +119,16 @@ typedef struct ___sock_o
 } _sock_o, *__sock_o;
 
 typedef int
-(*_p_sc_cb) (__sock_o sock_o);
+(*_p_sc_cb)(__sock_o sock_o);
 
 typedef int
-p_sc_cb (__sock_o sock_o);
+p_sc_cb(__sock_o sock_o);
 
 typedef int
-(p_s_cb) (__sock_o spso, pmda base, pmda threadr, void *data);
+(p_s_cb)(__sock_o spso, pmda base, pmda threadr, void *data);
 
 typedef int
-(*__p_s_cb) (__sock_o spso, pmda base, pmda threadr, void *data);
+(*__p_s_cb)(__sock_o spso, pmda base, pmda threadr, void *data);
 
 /*
  * int
@@ -139,58 +137,68 @@ typedef int
  char *ssl_key)
  * */
 
+#define F_CA_HAS_LOG               (a32 << 1)
+#define F_CA_HAS_SSL_CERT          (a32 << 2)
+#define F_CA_HAS_SSL_KEY           (a32 << 3)
+
 typedef struct ___sock_create_args
 {
   char *host, *port;
-  uint32_t flags;
+  uint32_t flags, ca_flags;
   _p_sc_cb rc0, rc1, proc;
   pmda socket_register, thread_register;
   char *ssl_cert;
   char *ssl_key;
   ssize_t unit_size;
   void *st_p0;
+  char b0[4096];
+  char b1[PATH_MAX];
+  char b2[PATH_MAX];
+  uint8_t mode;
 } _sock_ca, *__sock_ca;
 
 p_sc_cb rc_tst, rc_ghs;
 
 int
-net_connect_socket (int fd, struct addrinfo *aip);
+net_connect_socket(int fd, struct addrinfo *aip);
 int
-bind_socket (int fd, struct addrinfo *aip);
+bind_socket(int fd, struct addrinfo *aip);
 int
-check_socket_event (__sock_o pso);
+check_socket_event(__sock_o pso);
 int
-net_worker (void *args);
+net_worker(void *args);
 
 void
-ssl_init (void);
+net_nw_ssig_term_r(pmda objects);
+
+void
+ssl_init(void);
 
 p_s_cb net_recv, net_recv_ssl, net_accept_ssl, net_accept, net_connect_ssl;
 
 int
-net_open_listening_socket (char *addr, char *port, __sock_ca args);
+net_open_listening_socket(char *addr, char *port, __sock_ca args);
 int
-net_open_connection (char *addr, char *port, __sock_ca args);
+net_open_connection(char *addr, char *port, __sock_ca args);
 float
-net_get_score (pmda in, pmda out, __sock_o pso, po_thrd thread);
+net_get_score(pmda in, pmda out, __sock_o pso, po_thrd thread);
 void
-net_send_sock_term_sig (__sock_o pso);
+net_send_sock_term_sig(__sock_o pso);
 int
-net_ssend_b (__sock_o pso, void *data, size_t length);
+net_ssend_b(__sock_o pso, void *data, size_t length);
 int
-net_ssend_ssl_b (__sock_o pso, void *data, size_t length);
+net_ssend_ssl_b(__sock_o pso, void *data, size_t length);
 int
-net_ssend (__sock_o pso, void *data, size_t length);
+net_ssend(__sock_o pso, void *data, size_t length);
 int
-net_link_sockets (__sock_o pso1, __sock_o pso2);
+net_link_sockets(__sock_o pso1, __sock_o pso2);
 int
-net_link_with_all_registered_sockets (pmda sockr, __sock_o pso,
-				      uint16_t match_oper_mode);
+net_link_with_all_registered_sockets(pmda sockr, __sock_o pso,
+    uint16_t match_oper_mode);
 int
-net_push_to_sendq (__sock_o pso, void *data, size_t size, uint16_t flags);
+net_push_to_sendq(__sock_o pso, void *data, size_t size, uint16_t flags);
 int
-net_sendq_broadcast (pmda base, __sock_o source, void *data, size_t size);
-
+net_sendq_broadcast(pmda base, __sock_o source, void *data, size_t size);
 
 #endif
 

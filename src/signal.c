@@ -65,15 +65,14 @@ child_sig_handler(int signal, siginfo_t * si, void *p)
     {
   case CLD_KILLED:
     fprintf(stderr,
-        "NOTICE: child process caught SIGINT (hit CTRL^C again to quit)\n");
-    usleep(1000000);
+        "NOTICE: child process caught SIGINT\n");
     break;
   case CLD_EXITED:
     break;
   default:
     if (gfl & F_OPT_VERBOSE3)
       {
-        fprintf(stderr, "NOTICE: child caught signal: %d \n", si->si_code);
+        fprintf(stderr, "NOTICE: child caught signal: %d\n", si->si_code);
       }
     break;
     }
@@ -89,24 +88,23 @@ sig_handler(int signal)
     gfl |= F_OPT_KILL_GLOBAL;
     break;
   case SIGINT:
-
+    ;
     if (gfl & F_OPT_KILL_GLOBAL)
       {
-        fprintf(stderr, "NOTICE: forcefully terminating process\n");
+        fprintf(stderr, "WARNING: forcefully terminating process\n");
         _exit(0);
       }
     else
       {
-        /*fprintf(stderr,
-         "NOTICE: caught SIGINT, quitting (hit CTRL^C again to terminate by force)\n");*/
+#ifdef _G_SSYS_NET
+        fprintf(stderr, "NOTICE: caught SIGINT, signaling global kill..\n");
+#endif
         gfl |= F_OPT_KILL_GLOBAL;
       }
-#ifndef _MAKE_SBIN
-    usleep(SIG_BREAK_TIMEOUT_NS);
-#endif
+
     break;
   default:
-    usleep(SIG_BREAK_TIMEOUT_NS);
+    //usleep(SIG_BREAK_TIMEOUT_NS);
     fprintf(stderr, "NOTICE: caught signal %d\n", signal);
     break;
     }

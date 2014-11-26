@@ -18,7 +18,7 @@ md_init(pmda md, int nm)
       return 1;
     }
 
-  bzero(md, sizeof(mda));
+  //bzero(md, sizeof(mda));
   if (!(md->objects = calloc(nm + 1, sizeof(md_obj))))
     {
       fprintf(stderr, "ERROR: md_init: could not allocate memory\n");
@@ -733,3 +733,14 @@ md_unlink_le(pmda md, p_md_obj md_o)
 
   return (void*) c_ptr;
 }
+
+#ifdef _G_SSYS_THREAD
+off_t
+md_get_off_ts(pmda md)
+{
+  mutex_lock(&md->mutex);
+  off_t ret = md->offset;
+  pthread_mutex_unlock(&md->mutex);
+  return ret;
+}
+#endif

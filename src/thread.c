@@ -1,5 +1,3 @@
-#ifdef _G_SSYS_THREAD
-
 #include "glutil.h"
 
 #include <thread.h>
@@ -11,7 +9,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-mda _thrd_r =
+mda _net_thrd_r =
   { 0 };
 
 int
@@ -72,6 +70,8 @@ thread_destroy(p_md_obj ptr)
 
   po_thrd pthrd = (po_thrd) ptr->ptr;
 
+  mutex_lock(&pthrd->mutex);
+
   if ((r = pthread_cancel(pthrd->pt)) != 0)
     {
       return r;
@@ -89,7 +89,9 @@ thread_destroy(p_md_obj ptr)
       return 1010;
     }
 
-  if (md_unlink_le(&_thrd_r, ptr))
+  pthread_mutex_unlock(&pthrd->mutex);
+
+  if (md_unlink_le(&_net_thrd_r, ptr))
     {
       return 1012;
     }
@@ -97,19 +99,59 @@ thread_destroy(p_md_obj ptr)
   return 0;
 }
 
-p_md_obj
-search_thrd_id(pthread_t *pt)
+int
+thread_broadcast_kill(pmda thread_r)
 {
-  p_md_obj ptr = _thrd_r.first;
+  int c = 0;
+
+  mutex_lock(&thread_r->mutex);
+
+  p_md_obj ptr = thread_r->first;
 
   while (ptr)
     {
-      if (((po_thrd) ptr->ptr)->pt == *pt)
-        {
-          return ptr;
-        }
+      po_thrd pthrd = (po_thrd) ptr->ptr;
+      mutex_lock(&pthrd->mutex);
+      pthrd->flags |= F_THRD_TERM;
+      pthread_mutex_unlock(&pthrd->mutex);
+      c++;
       ptr = ptr->next;
     }
+
+  pthread_mutex_unlock(&thread_r->mutex);
+
+  return c;
+}
+
+off_t
+thread_register_count(pmda thread_r)
+{
+  mutex_lock(&thread_r->mutex);
+  off_t ret = thread_r->offset;
+  pthread_mutex_unlock(&thread_r->mutex);
+  return ret;
+}
+
+p_md_obj
+search_thrd_id(pmda thread_r, pthread_t *pt)
+{
+  mutex_lock(&thread_r->mutex);
+  p_md_obj ptr = _net_thrd_r.first;
+
+  while (ptr)
+    {
+      po_thrd pthrd = (po_thrd) ptr->ptr;
+      mutex_lock(&pthrd->mutex);
+      if (pthrd->pt == *pt)
+        {
+          pthread_mutex_unlock(&pthrd->mutex);
+          pthread_mutex_unlock(&thread_r->mutex);
+          return ptr;
+        }
+      pthread_mutex_unlock(&pthrd->mutex);
+      ptr = ptr->next;
+    }
+  pthread_mutex_unlock(&thread_r->mutex);
   return NULL;
 }
 
@@ -237,9 +279,11 @@ mutex_lock(pthread_mutex_t *mutex)
     abort();
     return;
   default:
-    fprintf(stderr, "ERROR: %d: pthread_mutex_lock: [%d]\n", getpid(), r);
+    ;
+    char err_b[1024];
+    fprintf(stderr, "ERROR: %d: pthread_mutex_lock: [%d] [%s]\n", getpid(), r,
+        strerror_r(r, (char*) err_b, sizeof(err_b)));
     abort();
     }
 }
 
-#endif

@@ -58,10 +58,8 @@ main(int argc, char *argv[])
   g_setjmp(0, "main", NULL, NULL);
   if ((r = setup_sighandlers()))
     {
-      print_str(
-          "WARNING: UNABLE TO SETUP SIGNAL HANDLERS! (this is weird, please report it!) [%d]\n",
-          r);
-      sleep(5);
+      print_str("ERROR: could not setup signal handlers [%d]\n", r);
+      return 2;
     }
 
   _p_macro_argc = argc;
@@ -620,6 +618,9 @@ g_shutdown(void *arg)
 
   md_g_free(&_match_rr);
   md_g_free(&_md_gsort);
+#ifdef _G_SSYS_NET
+  md_g_free(&_boot_pca);
+#endif
 
   _p_macro_argc = 0;
 

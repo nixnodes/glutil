@@ -58,6 +58,10 @@
 #define F_GH_POST_PRINT                 (a64 << 46)
 #define F_GH_PRE_PRINT                  (a64 << 47)
 #define F_GH_NO_ACCU                    (a64 << 48)
+#define F_GH_W_NSSYS                    (a64 << 49)
+#define F_GH_EXECRD_PIPE_OUT            (a64 << 50)
+#define F_GH_EXECRD_HAS_PIPE            (a64 << 51)
+#define F_GH_PRINT                      (a64 << 52)
 
 #define F_GH_TFD_PROCED                 (a64 << 55)
 
@@ -132,6 +136,8 @@ typedef struct g_handle
   int h_errno;
   int h_errno_gz;
   const char *h_errstr_gz;
+  int pfd_out[2];
+  char strerr_b[1024];
 } _g_handle, *__g_handle;
 
 #define G_HDL_ERRNO_DL_READ        1

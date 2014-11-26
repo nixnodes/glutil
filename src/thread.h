@@ -63,10 +63,15 @@ mutex_init(pthread_mutex_t *mutex, int flags, int robust);
 int
 thread_destroy(p_md_obj ptr);
 
-mda _thrd_r;
+mda _net_thrd_r;
 
 p_md_obj
-search_thrd_id(pthread_t *pt);
+search_thrd_id(pmda thread_r, pthread_t *pt);
+int
+thread_broadcast_kill(pmda thread_r);
+off_t
+thread_register_count(pmda thread_r);
+
 int
 spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,
     uint16_t oper_mode);

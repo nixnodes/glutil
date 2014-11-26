@@ -258,7 +258,7 @@ g_do_exec_v(void *buffer, void *callback, char *ex_str, void * p_hdl)
 {
   __g_handle hdl = (__g_handle) p_hdl;
   process_execv_args(buffer, hdl);
-  return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c);
+  return l_execv(hdl->exec_args.exec_v_path, hdl->exec_args.argv_c, hdl);
 }
 
 int
@@ -302,14 +302,16 @@ g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
     }
 }
 
-int
-prep_for_exec(void)
+#define MSG_PFE_DUP2ERR         "ERROR: prep_for_exec: dup2 failed [%s]\n"
+
+static int
+prep_for_exec(__g_handle hdl)
 {
   const char inputfile[] = "/dev/null";
 
   if (close(STDIN_FILENO) < 0)
     {
-      fprintf(stdout, "ERROR: could not close stdin\n");
+      print_str("ERROR: could not close stdin\n");
       return 1;
     }
   else
@@ -320,37 +322,60 @@ prep_for_exec(void)
 #endif
           ) < 0)
         {
-          fprintf(stdout, "ERROR: could not open %s\n", inputfile);
+          print_str("ERROR: could not open %s\n", inputfile);
         }
     }
 
-  if (execv_stdout_redir != -1)
+  if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
-      dup2(execv_stdout_redir, STDOUT_FILENO);
+      close(hdl->pfd_out[0]);
+      if (dup2(hdl->pfd_out[1], STDOUT_FILENO) == -1)
+        {
+          print_str(MSG_PFE_DUP2ERR,
+              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+        }
+    }
+  else if (execv_stdout_redir != -1)
+    {
+      if (dup2(execv_stdout_redir, STDOUT_FILENO) == -1)
+        {
+          print_str(MSG_PFE_DUP2ERR,
+              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+        }
     }
 
   return 0;
 }
 
 int
-l_execv(char *exec, char **argv)
+l_execv(char *exec, char **argv, __g_handle hdl)
 {
   pid_t c_pid;
 
   fflush(stdout);
   fflush(stderr);
 
-  c_pid = fork();
-
-  if (c_pid == (pid_t) -1)
+  if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
-      fprintf(stderr, "ERROR: %s: fork failed [%s]\n", exec, strerror(errno));
+      if (pipe(hdl->pfd_out) == -1)
+        {
+          print_str("ERROR: l_execv: could not open pipe [%s]\n",
+              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          return 1;
+        }
+      hdl->flags |= F_GH_EXECRD_HAS_PIPE;
+    }
+
+  if ((c_pid = fork()) == (pid_t) -1)
+    {
+      fprintf(stderr, "ERROR: %s: fork failed [%s]\n", exec,
+          strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
       return 1;
     }
 
-  if (!c_pid)
+  if (0 == c_pid)
     {
-      if (prep_for_exec())
+      if (prep_for_exec(hdl))
         {
           _exit(1);
         }
@@ -358,18 +383,24 @@ l_execv(char *exec, char **argv)
         {
           execv(exec, argv);
           fprintf(stderr, "ERROR: %s: execv failed to execute [%s]\n", exec,
-              strerror(errno));
+              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           _exit(1);
         }
     }
+
+  if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
+    {
+      close(hdl->pfd_out[1]);
+    }
+
   int status;
   while (waitpid(c_pid, &status, 0) == (pid_t) -1)
     {
       if (errno != EINTR)
         {
           fprintf(stderr,
-              "ERROR: %s:failed waiting for child process to finish [%s]\n",
-              exec, strerror(errno));
+              "ERROR: %s: failed waiting for child process to finish [%s]\n",
+              exec, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           return 2;
         }
     }

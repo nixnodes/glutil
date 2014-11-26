@@ -207,6 +207,41 @@ g_h_deepcp_mrr(void *source, void *dest, void *d_ptr)
   return 0;
 }
 
+static void
+g_determine_output(__g_handle hdl, uint64_t *gfl0, uint64_t f)
+{
+  if ((*gfl0 & f))
+    {
+#ifdef _G_SSYS_NET
+      if (hdl->flags & F_GH_W_NSSYS)
+        {
+          hdl->w_d = g_omfp_q_nssys;
+        }
+      else
+        {
+#endif
+          hdl->w_d = g_omfp_write;
+#ifdef _G_SSYS_NET
+        }
+#endif
+    }
+  else
+    {
+#ifdef _G_SSYS_NET
+      if (hdl->flags & F_GH_W_NSSYS)
+        {
+          hdl->w_d = g_omfp_q_nssys_nl;
+        }
+      else
+        {
+#endif
+          hdl->w_d = g_omfp_write_nl;
+#ifdef _G_SSYS_NET
+        }
+#endif
+    }
+}
+
 int
 g_proc_mr(__g_handle hdl)
 {
@@ -373,7 +408,7 @@ g_proc_mr(__g_handle hdl)
     {
       hdl->g_proc3 = hdl->g_proc3_batch;
     }
-  else if ((gfl0 & F_OPT_PRINT) || (gfl0 & F_OPT_PRINTF))
+  else if (gfl0 & (F_OPT_PRINT | F_OPT_PRINTF))
     {
       if (!hdl->print_mech.offset && _print_ptr)
         {
@@ -385,16 +420,11 @@ g_proc_mr(__g_handle hdl)
 
       hdl->g_proc4 = g_omfp_eassemble;
 
-      if ((gfl0 & F_OPT_PRINTF))
-        {
-          hdl->w_d = g_omfp_write;
-        }
-      else
-        {
-          hdl->w_d = g_omfp_write_nl;
-        }
+      g_determine_output(hdl, &gfl0, F_OPT_PRINTF);
 
       hdl->act_mech = &hdl->print_mech;
+
+      hdl->flags |= F_GH_PRINT;
     }
   else if ((hdl->flags & F_GH_ISONLINE) && (gfl & F_OPT_FORMAT_COMP))
     {
@@ -426,14 +456,8 @@ g_proc_mr(__g_handle hdl)
 
           hdl->g_proc4_po = g_omfp_eassemble;
 
-          if ((gfl0 & F_OPT_POSTPRINTF))
-            {
-              hdl->w_d = g_omfp_write;
-            }
-          else
-            {
-              hdl->w_d = g_omfp_write_nl;
-            }
+          g_determine_output(hdl, &gfl0, F_OPT_POSTPRINTF);
+
         }
 
       if ((gfl0 & F_OPT_PREPRINT) || (gfl0 & F_OPT_PREPRINTF))
@@ -450,16 +474,9 @@ g_proc_mr(__g_handle hdl)
 
           hdl->g_proc4_pr = g_omfp_eassemble;
 
-          if ((gfl0 & F_OPT_PREPRINTF))
-            {
-              hdl->w_d = g_omfp_write;
-            }
-          else
-            {
-              hdl->w_d = g_omfp_write_nl;
-            }
-        }
+          g_determine_output(hdl, &gfl0, F_OPT_PREPRINTF);
 
+        }
     }
 
   hdl->t_rw = 1;

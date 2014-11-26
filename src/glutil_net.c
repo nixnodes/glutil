@@ -1,5 +1,3 @@
-#ifdef _G_SSYS_NET
-
 #include <glutil.h>
 
 #include <glutil_net.h>
@@ -12,6 +10,19 @@
 
 #include <pthread.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+
+_net_opt net_opts =
+  { .max_sock = 512, .thread_l = 4, .thread_r = 32, .st_p0 = NULL,
+      .max_worker_threads = 64, .ssl_cert_def = "server.crt", .ssl_key_def =
+          "server.key" };
+
+mda _sock_r =
+  { 0 };
+mda _boot_pca =
+  { 0 };
 
 static int
 process_ca_requests(pmda md)
@@ -28,7 +39,7 @@ process_ca_requests(pmda md)
           case F_OPSOCK_CONNECT:
           if ((ret = net_open_connection (pca->host, pca->port, pca)))
             {
-              printf ("error: net_open_connection: host:%s port:%s, status:[%d] %s\n",
+              print_str ("ERROR: net_open_connection: host:%s port:%s, status:[%d] %s\n",
                   pca->host, pca->port, ret, ret < 0 ? strerror(errno) : "");
               fail++;
             }
@@ -36,23 +47,35 @@ process_ca_requests(pmda md)
           case F_OPSOCK_LISTEN:
           if ((ret = net_open_listening_socket (pca->host, pca->port, pca)))
             {
-              printf ("error: net_open_listening_socket: host:%s port:%s, status:[%d] %s\n",
+              print_str ("ERROR: net_open_listening_socket: host:%s port:%s, status:[%d] %s\n",
                   pca->host, pca->port, ret, ret < 0 ? strerror(errno) : "");
               fail++;
             }
           break;
         }
-      ptr = md_unlink_le(md, ptr);
+      ptr = ptr->next;
     }
 
   return fail;
 }
 
+#define NET_WTHRD_CLEANUP_TIMEOUT               30
+
 int
 net_deploy(void)
 {
-  md_init_le(&_sock_r, 512);
-  md_init_le(&_thrd_r, 64);
+  if (((int) net_opts.thread_l + (int) net_opts.thread_r)
+      > net_opts.max_worker_threads)
+    {
+      print_str(
+          "ERROR: net_deploy: requested thread count exceeds 'max_worker_threads' [%d/%d]\n",
+          ((int) net_opts.thread_l + (int) net_opts.thread_r),
+          net_opts.max_worker_threads);
+      return -1;
+    }
+
+  md_init_le(&_sock_r, (int) net_opts.max_sock);
+  md_init_le(&_net_thrd_r, (int) net_opts.max_worker_threads);
 
   ssl_init();
 
@@ -65,23 +88,46 @@ net_deploy(void)
   if (s != 0)
     {
       print_str("ERROR: pthread_sigmask failed: %d\n", s);
+      abort();
       return 1;
     }
 
   int r;
 
-  if ((r = spawn_threads(4, net_worker, 0, &_thrd_r, THREAD_ROLE_NET_WORKER,
+  if ((r = spawn_threads(net_opts.thread_l, net_worker, 0, &_net_thrd_r,
+  THREAD_ROLE_NET_WORKER,
   SOCKET_OPMODE_LISTENER)))
     {
-      print_str("ERROR: spawn_threads failed (listeners): %d\n", r);
+      print_str("ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n",
+          r);
       return 2;
     }
+  else
+    {
+      if (gfl & F_OPT_VERBOSE)
+        {
+          print_str(
+              "NOTICE: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
+              net_opts.thread_l);
+        }
+    }
 
-  if ((r = spawn_threads(8, net_worker, 0, &_thrd_r, THREAD_ROLE_NET_WORKER,
+  if ((r = spawn_threads(net_opts.thread_r, net_worker, 0, &_net_thrd_r,
+  THREAD_ROLE_NET_WORKER,
   SOCKET_OPMODE_RECIEVER)))
     {
-      print_str("ERROR: spawn_threads failed (recievers): %d\n", r);
+      print_str("ERROR: spawn_threads failed [SOCKET_OPMODE_RECIEVER]: %d\n",
+          r);
       return 2;
+    }
+  else
+    {
+      if (gfl & F_OPT_VERBOSE)
+        {
+          print_str(
+              "NOTICE: deployed %hu socket worker threads [SOCKET_OPMODE_RECIEVER]\n",
+              net_opts.thread_r);
+        }
     }
 
   if (process_ca_requests(&_boot_pca))
@@ -95,7 +141,62 @@ net_deploy(void)
       sleep(5);
     }
 
+  if (gfl & F_OPT_VERBOSE3)
+    {
+      print_str("NOTICE: sending F_OPSOCK_TERM to all sockets\n");
+    }
+  net_nw_ssig_term_r(&_sock_r);
+
+  if (gfl & F_OPT_VERBOSE3)
+    {
+      print_str("NOTICE: sending F_THRD_TERM to all worker threads\n");
+    }
+  thread_broadcast_kill(&_net_thrd_r);
+
+  if (gfl & F_OPT_VERBOSE)
+    {
+      print_str("NOTICE: waiting for threads to exit..\n");
+    }
+
+  while (thread_register_count(&_net_thrd_r) > 0)
+    {
+      usleep(10000);
+    }
+
+  md_g_free(&_net_thrd_r);
+
+  if (gfl & F_OPT_VERBOSE)
+    {
+      print_str("NOTICE: server shutting down..\n");
+    }
+
   return 0;
+}
+
+static void
+net_proc_piped_q(__sock_o pso, __g_handle hdl)
+{
+  uint8_t buffer[8192];
+
+  ssize_t r_sz;
+
+  while ((r_sz = read(hdl->pfd_out[0], buffer, sizeof(buffer))) > 0)
+    {
+      if (net_push_to_sendq(pso, buffer, r_sz, 0) == -1)
+        {
+          printf(
+              "ERROR: net_proc_piped_q: net_push_to_sendq failed, socket: [%d]\n",
+              pso->sock);
+        }
+    }
+
+  close(hdl->pfd_out[0]);
+
+  if (r_sz == -1)
+    {
+      print_str("ERROR: net_proc_piped_q: [%d]: pipe read failed [%s]\n",
+          pso->sock, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+    }
 }
 
 int
@@ -126,7 +227,16 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   omfp_timeout;
 
-  hdl->g_proc4((void*) hdl, data, (void*) pso);
+  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
+      && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
+    {
+      net_proc_piped_q(pso, hdl);
+    }
+
+  if (hdl->flags & F_GH_PRINT)
+    {
+      hdl->g_proc4((void*) hdl, data, (void*) pso);
+    }
 
   l_end: ;
 
@@ -138,11 +248,18 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 static int
 net_gl_socket_destroy(__sock_o pso)
 {
+  int _tid = syscall(SYS_gettid);
+
   mutex_lock(&pso->mutex);
 
   int r = g_cleanup((__g_handle ) pso->va_p0);
   free(pso->va_p0);
   pso->va_p0 = NULL;
+
+  if (gfl & F_OPT_VERBOSE3)
+    {
+      print_str("NOTICE: [%d] socket closed: [%d]\n", (int) _tid, pso->sock);
+    }
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -162,7 +279,7 @@ net_gl_socket_init0(__sock_o pso)
         break;
       }
 
-    print_str("NOTICE: accepted %d\n", pso->sock);
+    //print_str("NOTICE: accepted %d\n", pso->sock);
 
     if ( NULL == pso->st_p0)
       {
@@ -198,6 +315,9 @@ net_gl_socket_init0(__sock_o pso)
 
     int r;
 
+    hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
+    snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
+
     if ((r = g_proc_mr(hdl)))
       {
         print_str("ERROR: [%d] net_gl_socket_init0: g_proc_mr failed [%d]\n",
@@ -206,10 +326,12 @@ net_gl_socket_init0(__sock_o pso)
         return 2;
       }
 
-    if (gfl & F_OPT_VERBOSE)
+    int _tid = syscall(SYS_gettid);
+
+    if (gfl & F_OPT_VERBOSE3)
       {
-        print_str("NOTICE: [%d] socket interface active; '%s'\n", pso->sock,
-            (char*) pso->st_p0);
+        print_str("NOTICE: [%d]: [%d] socket interface active [%s]\n", _tid,
+            pso->sock, (char*) pso->st_p0);
       }
 
     pso->unit_size = (ssize_t) hdl->block_sz;
@@ -238,4 +360,3 @@ net_gl_socket_init1(__sock_o pso)
   return 0;
 }
 
-#endif

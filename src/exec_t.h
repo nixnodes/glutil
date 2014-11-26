@@ -29,11 +29,9 @@ int
 process_execv_args(void *data, __g_handle hdl);
 int
 process_execv_args_bare(void *data, __g_handle hdl, __execv exec_args);
-int
-prep_for_exec(void);
 
 int
-l_execv(char *exec, char **argv);
+l_execv(char *exec, char **argv, __g_handle hdl);
 
 char *exec_str;
 char **exec_v;

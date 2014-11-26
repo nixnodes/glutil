@@ -4,7 +4,6 @@
  *  Created on: Dec 29, 2013
  *      Author: reboot
  */
-#ifdef _G_SSYS_NET
 
 #include "glutil.h"
 #include <net_io.h>
@@ -17,6 +16,7 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <time.h>
@@ -28,11 +28,6 @@
 #include <openssl/rand.h>
 
 static pthread_mutex_t *mutex_buf = NULL;
-
-mda _sock_r =
-  { 0 };
-mda _boot_pca =
-  { 0 };
 
 static void
 ssl_locking_function(int mode, int n, const char *file, int line)
@@ -187,18 +182,18 @@ ssl_show_certs(SSL* ssl)
   cert = SSL_get_peer_certificate(ssl); /* Get certificates (if available) */
   if (cert != NULL)
     {
-      print_str("Peer certificates:\n");
+      print_str("NOTICE: Peer certificates:\n");
       line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-      print_str("Subject: %s\n", line);
+      print_str("NOTICE: Subject: %s\n", line);
       free(line);
       line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-      print_str("Issuer: %s\n", line);
+      print_str("NOTICE: Issuer: %s\n", line);
       free(line);
       X509_free(cert);
     }
   else
     {
-      print_str("No certificates.\n");
+      print_str("WARNING: No certificates\n");
     }
 }
 
@@ -220,7 +215,7 @@ bind_socket(int fd, struct addrinfo *aip)
       return 101;
     }
 
-  if (listen(fd, SOMAXCONN - (SOMAXCONN / 4)))
+  if (listen(fd, SOMAXCONN - (SOMAXCONN / 2)))
     {
       return 102;
     }
@@ -274,13 +269,14 @@ net_destroy_connection(__sock_o so)
 
       if (!(so->flags & F_OPSOCK_TS_DISCONNECTED))
         {
-          if (shutdown(so->sock, SHUT_RDWR) == -1)
+          if ((ret = shutdown(so->sock, SHUT_RDWR)) == -1)
             {
               char err_buffer[1024];
               print_str(
 
               "ERROR: socket: [%d] shutdown - code:[%d] errno:[%d] %s\n",
-                  so->sock, ret, errno, strerror_r(errno, err_buffer, 1024));
+                  so->sock, ret, errno,
+                  strerror_r(errno, err_buffer, sizeof(err_buffer)));
             }
           else
             {
@@ -622,8 +618,8 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
         {
           net_open_listening_socket_cleanup(args->socket_register, aip, fd);
           print_str(
-              "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s\n",
-              fd, r, args->ssl_cert);
+              "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s / %s\n",
+              fd, r, args->ssl_cert, args->ssl_key);
           ERR_print_errors_fp(stderr);
           return 12;
         }
@@ -804,8 +800,9 @@ net_proc_sendq(__sock_o pso)
               ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
               continue;
               case 1:
-              printf ("NOTICE: [%d]: net_proc_sendq: send data failed, payload size: %zd\n", pso->sock, psqp->size);
+              printf ("ERROR: [%d]: net_proc_sendq: send data failed, payload size: %zd\n", pso->sock, psqp->size);
               ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
+              net_send_sock_term_sig(pso);
               goto end;
               case 2:
               goto end;
@@ -819,6 +816,53 @@ net_proc_sendq(__sock_o pso)
   ssize_t off_ret = pso->sendq.offset;
 
   return off_ret;
+}
+
+void
+net_nw_ssig_term_r(pmda objects)
+{
+  mutex_lock(&objects->mutex);
+
+  p_md_obj ptr = objects->first;
+
+  while (ptr)
+    {
+      __sock_o pso = (__sock_o) ptr->ptr;
+
+      mutex_lock(&pso->mutex);
+
+      if (!(pso->flags & F_OPSOCK_TERM))
+        {
+          pso->flags |= F_OPSOCK_TERM;
+        }
+
+      pthread_mutex_unlock(&pso->mutex);
+
+      ptr = ptr->next;
+    }
+
+  pthread_mutex_unlock(&objects->mutex);
+}
+
+#define NET_SOCKWAIT_TO         ((time_t)30)
+
+static int
+net_proc_sock_term(po_thrd thrd)
+{
+
+  off_t num_active = 0;
+  num_active += md_get_off_ts(&thrd->proc_objects);
+  num_active += md_get_off_ts(&thrd->in_objects);
+
+  if (num_active == 0)
+    {
+      return 0;
+    }
+  else
+    {
+      return 1;
+    }
+
 }
 
 int
@@ -836,7 +880,8 @@ net_worker(void *args)
   thrd->buffer0 = malloc(THREAD_DEFAULT_BUFFER0_SIZE);
   thrd->buffer0_size = THREAD_DEFAULT_BUFFER0_SIZE;
 
-  pthread_t _tid = thrd->pt;
+  pthread_t _pt = thrd->pt;
+  int _tid = syscall(SYS_gettid);
 
   pthread_mutex_unlock(&thrd->mutex);
 
@@ -846,29 +891,35 @@ net_worker(void *args)
 
       if (thrd->flags & F_THRD_TERM)
         {
-          print_str("NOTICE: [%d]: exiting thread..\n", (int) thrd->pt);
-          pthread_mutex_unlock(&thrd->mutex);
-          break;
+          if (net_proc_sock_term(thrd) == 0)
+            {
+              /*print_str("NOTICE: net_worker: [%d]: thread shutting down..\n",
+                  _tid);*/
+              pthread_mutex_unlock(&thrd->mutex);
+              break;
+            }
         }
 
       pthread_mutex_unlock(&thrd->mutex);
 
       mutex_lock(&thrd->in_objects.mutex);
-      mutex_lock(&thrd->proc_objects.mutex);
 
-      if (!thrd->in_objects.offset)
+      if (0 == thrd->in_objects.offset)
         {
           pthread_mutex_unlock(&thrd->in_objects.mutex);
           goto begin_proc;
         }
       else
         {
-          print_str(
-              "NOTICE: [%X]: push %llu items onto worker thread stack, %llu exist in chain\n",
-              (uint32_t) _tid,
-              (unsigned long long int) thrd->in_objects.offset,
-              (unsigned long long int) thrd->proc_objects.offset);
+          /*
+              print_str(
+                  "NOTICE: [%d]: push %llu items onto worker thread stack, %llu exist in chain\n",
+                  _tid, (unsigned long long int) thrd->in_objects.offset,
+                  (unsigned long long int) thrd->proc_objects.offset);
+            */
         }
+
+      mutex_lock(&thrd->proc_objects.mutex);
 
       p_md_obj iobj_ptr = thrd->in_objects.first;
       while (iobj_ptr)
@@ -882,8 +933,8 @@ net_worker(void *args)
           mutex_lock(&t_pso->mutex);
           if (!(t_pso->flags & F_OPSOCK_ACT))
             {
-              print_str("NOTICE: [%X]: not importing %d, still active\n",
-                  (uint32_t) _tid, t_pso->sock);
+              print_str("NOTICE: [%d]: not importing %d, still active\n",
+                  (int) _tid, t_pso->sock);
               pthread_mutex_unlock(&t_pso->mutex);
               goto io_loend;
             }
@@ -904,8 +955,6 @@ net_worker(void *args)
 
       pthread_mutex_unlock(&thrd->in_objects.mutex);
 
-      begin_proc: ;
-
       if (!thrd->proc_objects.offset)
         {
           pthread_mutex_unlock(&thrd->proc_objects.mutex);
@@ -913,6 +962,8 @@ net_worker(void *args)
         }
 
       pthread_mutex_unlock(&thrd->proc_objects.mutex);
+
+      begin_proc: ;
 
       ptr = thrd->proc_objects.first;
 
@@ -940,14 +991,9 @@ net_worker(void *args)
               if (r == 1)
                 {
                   print_str(
-                      "ERROR: [%X] net_destroy_connection failed, socket [%d], critical\n",
-                      (uint32_t) _tid, pso->sock);
+                      "ERROR: [%d] net_destroy_connection failed, socket [%d], critical\n",
+                      (int) _tid, pso->sock);
                   abort();
-                }
-              else
-                {
-                  print_str("NOTICE: [%X] socket closed [%d] status:[%d]\n",
-                      (uint32_t) _tid, pso->sock, r);
                 }
 
               pthread_mutex_unlock(&pso->mutex);
@@ -983,18 +1029,24 @@ net_worker(void *args)
 
           errno = 0;
 
-          switch ((r = pso->rcv_cb(pso, pso->host_ctx, &_thrd_r, pso->buffer0)))
+          pthread_mutex_unlock(&pso->mutex);
+
+          switch ((r = pso->rcv_cb(pso, pso->host_ctx, &_net_thrd_r,
+              pso->buffer0)))
             {
           case 2:
             if (!pso->counters.b_read)
               {
+                mutex_lock(&pso->mutex);
                 mutex_lock(&pso->sendq.mutex);
                 if (!pso->sendq.offset)
                   {
                     pthread_mutex_unlock(&pso->sendq.mutex);
+                    pthread_mutex_unlock(&pso->mutex);
                     goto e_end;
                   }
                 pthread_mutex_unlock(&pso->sendq.mutex);
+                pthread_mutex_unlock(&pso->mutex);
               }
             break;
           case 0:
@@ -1008,52 +1060,57 @@ net_worker(void *args)
                 errno,
                 errno ? strerror_r(errno, thrd->buffer0, 1024) : "");
 
+            mutex_lock(&pso->mutex);
+
             pso->flags |= F_OPSOCK_TERM;
 
             if (!pso->counters.b_read)
               {
                 goto e_end;
               }
+
+            pthread_mutex_unlock(&pso->mutex);
+
             break;
             }
 
           if (NULL != pso->rcv1)
             {
-              switch ((r = pso->rcv1(pso, pso->host_ctx, &_thrd_r, pso->buffer0)))
+              switch ((r = pso->rcv1(pso, pso->host_ctx, &_net_thrd_r,
+                  pso->buffer0)))
                 {
               case 0:
                 break;
               case -2:
                 break;
               default:
+                mutex_lock(&pso->mutex);
+
                 print_str(
                     "ERROR: data processor failed with status %d, socket: [%d]\n",
                     r, pso->sock);
 
                 pso->flags |= F_OPSOCK_TERM;
 
+                pthread_mutex_unlock(&pso->mutex);
+
                 break;
                 }
             }
+
+          mutex_lock(&pso->sendq.mutex);
 
           if (pso->unit_size == pso->counters.b_read)
             {
               pso->counters.b_read = 0;
             }
 
-          mutex_lock(&pso->sendq.mutex);
-
           if (pso->sendq.offset > 0)
             {
               ssize_t sendq_rem;
-              if ((sendq_rem = net_proc_sendq(pso)) == 0)
+              if ((sendq_rem = net_proc_sendq(pso)) != 0)
                 {
-                  print_str("NOTICE: sendq was flushed, socket:[%d]\n",
-                      pso->sock);
-                }
-              else
-                {
-                  print_str("NOTICE: sendq: %zd items remain, socket:[%d]\n",
+                  print_str("WARNING: sendq: %zd items remain, socket:[%d]\n",
                       pso->sendq.offset, pso->sock);
                 }
             }
@@ -1061,6 +1118,8 @@ net_worker(void *args)
           pthread_mutex_unlock(&pso->sendq.mutex);
 
           e_end: ;
+
+          mutex_lock(&pso->mutex);
 
           if (pso->flags & F_OPSOCK_ST_HOOKED)
             {
@@ -1082,7 +1141,6 @@ net_worker(void *args)
         {
           int_state ^= F_WORKER_INT_STATE_ACT;
           pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
-
         }
       else
         {
@@ -1094,6 +1152,24 @@ net_worker(void *args)
 
       usleep(pooling_timeout);
     }
+
+  mutex_lock(&_net_thrd_r.mutex);
+
+  p_md_obj ptr_thread = search_thrd_id(&_net_thrd_r, &_pt);
+
+  if (NULL == ptr_thread)
+    {
+      print_str(
+          "ERROR: net_worker: [%d]: thread already unregistered on exit (search_thrd_id failed)\n",
+          (int) _tid);
+    }
+  else
+    {
+      md_unlink_le(&_net_thrd_r, ptr_thread);
+    }
+
+  pthread_mutex_unlock(&_net_thrd_r.mutex);
+
   return 0;
 }
 
@@ -1562,4 +1638,3 @@ net_ssend(__sock_o pso, void *data, size_t length)
   return 0;
 }
 
-#endif

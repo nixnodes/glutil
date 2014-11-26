@@ -95,4 +95,13 @@ ar_remove(pmda md, uint32_t opt);
 
 mda ar_vref;
 
+#define P_OPT_DL_O      0x7C
+#define P_OPT_DL_V      0x3D
+
+typedef int
+(*_p_opt_cb)(pmda opt, void *arg);
+
+int
+g_parse_opts(char *input, _p_opt_cb _proc, void *arg, int dl_o, int dl_v);
+
 #endif /* ARG_PROC_H_ */

@@ -158,7 +158,8 @@ g_map_shm(__g_handle hdl, key_t ipc)
               "ERROR: %s: [%u/%u] [%u] [%u] could not map shared memory segment! [%d] [%s]\n",
               MSG_DEF_SHM, (uint32_t) hdl->buffer.count,
               (uint32_t) (hdl->total_sz / hdl->block_sz),
-              (uint32_t) hdl->total_sz, hdl->block_sz, r, strerror(errno));
+              (uint32_t) hdl->total_sz, hdl->block_sz, r,
+              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
         }
       return r;
     }

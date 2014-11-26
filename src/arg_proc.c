@@ -10,6 +10,8 @@
 #include "arg_proc.h"
 #include "arg_opts.h"
 
+#include <str.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -21,7 +23,6 @@ int execv_stdout_redir = -1;
 
 mda ar_vref =
   { 0 };
-
 
 int
 default_determine_negated(void)
@@ -423,3 +424,60 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
   return ret;
 }
 
+int
+g_parse_opts(char *input, _p_opt_cb _proc, void *arg, int dl_o, int dl_v)
+{
+  mda m_dl_o =
+    { 0 };
+  md_init(&m_dl_o, 32);
+
+  int ret = 0;
+
+  int c = split_string(input, dl_o, &m_dl_o);
+
+  if (c == 0)
+    {
+      ret = 1;
+      goto end_1;
+    }
+
+  p_md_obj ptr_o = m_dl_o.objects;
+
+  while (ptr_o)
+    {
+      char *opt = (char*) ptr_o->ptr;
+
+      mda m_dl_v =
+        { 0 };
+      md_init(&m_dl_v, 8);
+
+      if (split_string(opt, dl_v, &m_dl_v) == 0)
+        {
+          md_g_free(&m_dl_v);
+          ret = 2;
+          goto end_1;
+        }
+
+      if (m_dl_v.offset < 1)
+        {
+          ret = 3;
+          goto end_1;
+        }
+
+      if (0 != _proc(&m_dl_v, arg))
+        {
+          ret = 4;
+          goto end_1;
+        }
+
+      md_g_free(&m_dl_v);
+
+      ptr_o = ptr_o->next;
+    }
+
+  end_1: ;
+
+  md_g_free(&m_dl_o);
+
+  return ret;
+}

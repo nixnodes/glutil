@@ -38,6 +38,10 @@ void
 g_omfp_write(int fd, char *buffer, size_t max_size, void*);
 void
 g_omfp_write_nl(int fd, char *buffer, size_t max_size, void*);
+void
+g_omfp_q_nssys(int fd, char *buffer, size_t max_size, void *arg);
+void
+g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg);
 
 int     fd_out;
 

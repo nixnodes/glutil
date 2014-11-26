@@ -138,8 +138,8 @@ get_msg_type(char *msg)
 {
   switch (msg[0])
     {
-  case 0x49: // I
-    return F_MSG_TYPE_ANY;
+  case 0x4E: // N
+    return F_MSG_TYPE_NOTICE;
     break;
   case 0x45: // E
     switch (msg[1])
@@ -147,7 +147,7 @@ get_msg_type(char *msg)
     case 0x58: // X
       return F_MSG_TYPE_EXCEPTION;
       break;
-    default:
+    case 0x52: // R
       return F_MSG_TYPE_ERROR;
       break;
       }
@@ -155,14 +155,23 @@ get_msg_type(char *msg)
   case 0x57: // W
     return F_MSG_TYPE_WARNING;
     break;
-  case 0x4E: // N
-    return F_MSG_TYPE_NOTICE;
-    break;
   case 0x4D: // M
-    return F_MSG_TYPE_NOTICE;
+    if (msg[1] == 0x41) //A
+      {
+        return F_MSG_TYPE_NOTICE;
+      }
     break;
   case 0x53: // S
-    return F_MSG_TYPE_STATS;
+    if (msg[1] == 0x54) //T
+      {
+        return F_MSG_TYPE_STATS;
+      }
+    break;
+  case 0x49: // I
+    if (msg[1] == 0x4E) //N
+      {
+        return F_MSG_TYPE_ANY;
+      }
     break;
     }
 

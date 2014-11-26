@@ -94,7 +94,7 @@ char infile_p[PATH_MAX];
 
 off_t max_depth, min_depth;
 
-char b_glob[MAX_EXEC_STR + 1];
+char b_glob[MAX_EXEC_STR + 4];
 
 int g_shmcflags;
 
@@ -119,9 +119,6 @@ g_print_str(const char * volatile buf, ...);
 
 int
 (*__pf_eof)(void *p);
-
-mda _sock_r;
-mda _boot_pca;
 
 #include <signal.h>
 
