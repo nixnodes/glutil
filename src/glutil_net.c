@@ -15,7 +15,7 @@
 #include <sys/types.h>
 
 _net_opt net_opts =
-  { .max_sock = 512, .thread_l = 4, .thread_r = 32, .st_p0 = NULL,
+  { .max_sock = 512, .thread_l = 1, .thread_r = 32, .st_p0 = NULL,
       .max_worker_threads = 64, .ssl_cert_def = "server.crt", .ssl_key_def =
           "server.key" };
 
@@ -222,16 +222,11 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
               "ERROR: net_baseline_gl_data_in: %s: [%d] matching record failed\n",
               pso->st_p0, r);
         }
+
       goto l_end;
     }
 
   omfp_timeout;
-
-  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
-      && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
-    {
-      net_proc_piped_q(pso, hdl);
-    }
 
   if (hdl->flags & F_GH_PRINT)
     {
@@ -239,6 +234,12 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
     }
 
   l_end: ;
+
+  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
+      && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
+    {
+      net_proc_piped_q(pso, hdl);
+    }
 
   pthread_mutex_unlock(&pso->mutex);
 

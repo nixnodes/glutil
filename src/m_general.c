@@ -271,6 +271,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           if (0 != r_stat)
             {
               r_p = 0;
+              EXITVAL = r_stat;
             }
         }
     }

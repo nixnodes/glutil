@@ -328,12 +328,14 @@ prep_for_exec(__g_handle hdl)
 
   if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
+
       close(hdl->pfd_out[0]);
       if (dup2(hdl->pfd_out[1], STDOUT_FILENO) == -1)
         {
           print_str(MSG_PFE_DUP2ERR,
               strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
         }
+
     }
   else if (execv_stdout_redir != -1)
     {
@@ -357,6 +359,7 @@ l_execv(char *exec, char **argv, __g_handle hdl)
 
   if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
+
       if (pipe(hdl->pfd_out) == -1)
         {
           print_str("ERROR: l_execv: could not open pipe [%s]\n",

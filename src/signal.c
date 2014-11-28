@@ -97,7 +97,7 @@ sig_handler(int signal)
     else
       {
 #ifdef _G_SSYS_NET
-        fprintf(stderr, "NOTICE: caught SIGINT, signaling global kill..\n");
+        //fprintf(stderr, "NOTICE: caught SIGINT, signaling global kill..\n");
 #endif
         gfl |= F_OPT_KILL_GLOBAL;
       }

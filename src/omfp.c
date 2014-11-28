@@ -209,9 +209,9 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
               (unsigned long long int) c : g_act_1.buffer.count);
     }
 
-  if (!c)
+  if (0 == c && 0 == EXITVAL)
     {
-      EXITVAL = 1;
+      EXITVAL = 2;
     }
 
   r_end:
