@@ -17,12 +17,12 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:14
-#@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{m:exe} -w --loop=1 --silent --daemon --loglevel=3 --glroot={m:glroot} -execv "{m:spec1} {bxfer} {lupdtime} {user} {pid} {rate} {status} {exe} {?x:(?Q:(\{glroot\}/ftp-data/users/\{user\})):FLAGS} {dir} {usroot} {logroot} {time} {host} {ndir} {glroot}"
+#@REVISION:15
+#@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{exe} -w --loop=1 --silent --daemon --loglevel=3 --glroot={glroot} -execv "{spec1} \{bxfer\} \{lupdtime\} \{user\} \{pid\} \{rate\} \{status\} \{exe\} \{?x:(?Q:(\\{glroot\\}/ftp-data/users/\\{user\\})):FLAGS\} \{dir\} \{usroot\} \{logroot\} \{time\} \{host\} \{ndir\} \{glroot\}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Requires: - glutil-2.4.17 or above
+## Requires: - glutil-2.5 or above
 ##           - date, kill, expr, sleep, stat
 ## Usage (manual): /glroot/bin/glutil -w --loop=1 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
@@ -38,7 +38,7 @@
 ###########################[ BEGIN OPTIONS ]#############################
 #
 ## Minimum allowed transfer rate (bytes per second)
-MINRATE=5120001111
+MINRATE=512000
 #
 # Maximum time a transfer can be under the speed limit, before killing it (seconds)
 MAXSLOWTIME=7
@@ -87,7 +87,7 @@ LOG_TO_GLFTPD=0
 ############################[ END OPTIONS ]##############################
 
 BASEDIR=`dirname $0`
-[ -f "$BASEDIR/config" ] && . $BASEDIR/config
+[ -f "$BASEDIR/killslow_config" ] && . $BASEDIR/killslow_config
 
 echo $8
 
@@ -153,7 +153,7 @@ if [ $BXFER -lt 1 ]; then
 fi
 
 [ $IGNORE_LONE_RANGER -eq 1 ] && {
-	$7 -w --batch ! match "user,${3}" and \( regex status,"^STOR\ " and lom "bxfer" and match "ndir,${14}" \) | egrep -q "^ONLINE" || {
+	$7 -w --batch -l: user ! -match "${3}" and \( -l: status -regex "^STOR\ " and -lom "bxfer" and -l: ndir -match "${14}" \) | egrep -q "^ONLINE" || {
 		echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
 		[ -f /tmp/du-ks/$4 ] && rm -f /tmp/du-ks/$4
 		exit 1
@@ -212,7 +212,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		}   	
 		[ $WIPE_FROM_DUPELOG -eq 1 ] && {
 			g_FILE=`echo "${6}" | cut -f 2- -d " "`
-			[ -n "$g_FILE" ]  && $7 -e dupefile ! match "file,$g_FILE" or ! match "user,${3}" --loglevel=6 -vvv -ff
+			[ -n "$g_FILE" ]  && $7 -e dupefile -l: file ! -match "$g_FILE" or -l: user ! match "${3}" --loglevel=6 -vvv -ff
 		}
     fi    	
 elif [ $SLOW -eq 1 ]; then
