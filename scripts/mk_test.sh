@@ -17,8 +17,8 @@
 #
 #########################################################################
 #@VERSION:1
-#@REVISION:2
-#@MACRO:mk-test:{m:exe} noop --preexec {spec1}
+#@REVISION:3
+#@MACRO:mk-test:{exe} -noop --preexec `{spec1}`
 #
 ## Simple debugger script
 #
@@ -113,7 +113,7 @@ create_match_s() {
     a=("${!f}"); b=("${!v}")
 	y=0
 	for i in ${a[@]}; do	
-		echo -n "$3 $i,${b[$y]} "
+		echo -n "-l: $i -$3 ${b[$y]} "
 		y=`expr $y + 1`
 	done
 
@@ -164,8 +164,8 @@ launch_test() {
 		lt_ft=${lt_log}
 	fi
 	echo -n "$1: creating test log.. "
-	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv &&
-	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv && {
+	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} --silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv &&
+	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} --silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv && {
 		echo -e "       \tOK"
 	} || {
 		echo -e "       \tFAILED"
@@ -174,7 +174,7 @@ launch_test() {
 	echo -n "$1: eval literal matching:  "
 	lt_ms=`create_match_s "${lt_log}_fields" "${lt_log}_values" match`
 
-	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ${lt_ms} silent && {
+	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ${lt_ms} --silent && {
 		echo -e "   \tOK"
 	} || {
 		echo -e "   \tFAILED"
@@ -184,7 +184,7 @@ launch_test() {
 	}
 	echo -n "$1: eval regex matching:  "
 	lt_ms=`create_match_s "${lt_log}_fields" "${lt_log}_values" regex`
-	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ${lt_ms} silent && {
+	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} ${lt_ms} --silent && {
 		echo -e "      \tOK"
 	} || {
 		echo -e "      \tFAILED"
@@ -194,7 +194,7 @@ launch_test() {
 	echo -n "$1: eval lom matching:  "
 	lt_ms=`create_match_lom "${lt_log}_lom_fields" "${lt_log}_lom_values"`
 
-	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} lom "${lt_ms}" silent && {
+	${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} -lom "${lt_ms}" --silent && {
 		echo -e "\t\tOK"
 	} || {
 		echo -e "\t\tFAILED"
@@ -205,7 +205,7 @@ launch_test() {
 	echo -n "$1: exec field translate:  "
 	lt_ms=`get_exec_str "${lt_log}_fields"`
 	
-	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -exec "echo \"${lt_ms}\"" --imatchq silent`
+	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -exec "echo \"${lt_ms}\"" --imatchq --silent`
 	lt_rv=`get_exec_vals "${lt_log}_values"`
 	[ "$lt_rf" == "$lt_rv" ]  && {
 		echo -e "    \tOK"
@@ -217,7 +217,7 @@ launch_test() {
 		return 1
 	}	
 	echo -n "$1: execv field translate:  "
-	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -execv "echo \"${lt_ms}\"" --imatchq silent`
+	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -execv "echo \"${lt_ms}\"" --imatchq --silent`
 	lt_rv=`get_exec_vals "${lt_log}_values"`
 	[ "$lt_rf" == "$lt_rv" ]  && {
 		echo -e "   \tOK"
@@ -230,7 +230,7 @@ launch_test() {
 	}	
 	
 	echo -n "$1: print field translate:  "
-	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -print "${lt_ms}" --imatchq silent`
+	lt_rf=`${GLUTIL} -q ${lt_log} --${lt_ft} ${g_td} -print "${lt_ms}" --imatchq --silent`
 	lt_rv=`get_exec_vals "${lt_log}_values"`
 	[ "$lt_rf" == "$lt_rv" ]  && {
 		echo -e "   \tOK"
@@ -282,7 +282,7 @@ mkdir "${fs_td}" && {
 	echo "t1" > "${fs_td}/t1"
 	echo "t2" > "${fs_td}/t2"
 	echo "t3" > "${fs_td}/t3"
-	[ $(${GLUTIL} -x ${fs_td}/ --batch lom "ctime > (acurtime-2000) && uid == `id -u`" | wc -l) -eq 4 ] && {
+	[ $(${GLUTIL} -x ${fs_td}/ --batch -lom "ctime > (acurtime-2000) && uid == `id -u`" | wc -l) -eq 4 ] && {
 		echo -e " \tOK "
 	} || {
 		echo -e " \tBAD"
