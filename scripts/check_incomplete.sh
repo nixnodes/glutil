@@ -17,9 +17,9 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:1
-#@MACRO:incomplete:{m:exe} -d -execv "{m:spec1} {dir} {exe} {glroot} {m:arg1}" --silent
-#@MACRO:incomplete-c:{m:exe} -d -execv "{m:spec1} {dir} {exe} {glroot} {m:arg2}" regex "{m:arg1}" --silent
+#@REVISION:2
+#@MACRO:incomplete:{exe} -d -execv "{spec1} \{dir\} \{exe\} \{glroot\} {arg1}" --silent
+#@MACRO:incomplete-c:{exe} -d -execv "{spec1} \{dir\} \{exe\} \{glroot\} {arg2}" -regex "{arg1}" --silent
 #
 ## Checks a release for incomplete/corrupt files by comparing SFV data with filesystem
 #
@@ -86,6 +86,6 @@ DIR="${GLROOT}${1}"
 
 ! [ -d "${DIR}" ] && exit 1
 
-$2 -x "${DIR}" regexi "\.sfv$" -execv "$0 {path} $2 $3 cdir $4" --silent -recursive
+${2} -x "${DIR}" -regexi "\.sfv$" -execv "${0} {path} ${2} ${3} cdir ${4}" --silent -R
 
 exit 1
