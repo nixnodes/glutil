@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:3
+#@REVISION:4
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
 ## Requires: - glutil-2.5 or above
@@ -63,6 +63,11 @@ script_join_verstring()
 	echo "`script_get_version "${1}"`.`script_get_revision "${1}"`"
 }
 
+[ -f "${BASE_PATH}/script_update_config" ] && . ${BASE_PATH}/script_update_config || {
+	echo "ERROR: "${BASE_PATH}/script_update_config": missing configuration file"
+	exit 1
+}
+
 [ -z "${GLROOT}" ] && {
 	echo "ERROR: could not get glroot" 
 	exit 1
@@ -78,8 +83,6 @@ if [ "${1}" = all ]; then
 else
 	match="${1}"
 fi
-
-[ -f "${BASE_PATH}/script_update_config" ] && . ${BASE_PATH}/script_update_config
 
 trap "rm -f /tmp/glutil.script_update.$$.tmp" 2 15 9 6 EXIT
 
