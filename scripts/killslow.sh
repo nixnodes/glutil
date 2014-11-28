@@ -89,8 +89,6 @@ LOG_TO_GLFTPD=0
 BASEDIR=`dirname $0`
 [ -f "$BASEDIR/killslow_config" ] && . $BASEDIR/killslow_config
 
-echo $8
-
 ban_user() {	
 
 	[ -z "$1" ] && return 0	
@@ -212,7 +210,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		}   	
 		[ $WIPE_FROM_DUPELOG -eq 1 ] && {
 			g_FILE=`echo "${6}" | cut -f 2- -d " "`
-			[ -n "$g_FILE" ]  && $7 -e dupefile -l: file ! -match "$g_FILE" or -l: user ! match "${3}" --loglevel=6 -vvv -ff
+			[ -n "$g_FILE" ]  && $7 -e dupefile -l: file ! -match "$g_FILE" or -l: user ! -match "${3}" --loglevel=6 -vvv -ff
 		}
     fi    	
 elif [ $SLOW -eq 1 ]; then
