@@ -1,4 +1,4 @@
-#@REVISION:53
+#@REVISION:54
 #
 ## NOTE: Requires glutil 2.5 or higher
 #
@@ -45,7 +45,7 @@
 #
 #@MACRO:dirlog-rebuild|Rebuild directory log based on 'glutil.folders':{exe} -r -v {arg1}
 #
-#@MACRO:dirlog-rebuild-skipempty|Rebuild directory log based on 'glutil.folders' (skip empty directories):{exe} -r -v ! lom "size = 0 && files = 0" {arg1}
+#@MACRO:dirlog-rebuild-skipempty|Rebuild directory log based on 'glutil.folders' (skip empty directories):{exe} -r -v ! -lom "size = 0 && files = 0" {arg1}
 #
 ## <dirlog-full-rebuild>
 #
@@ -53,7 +53,7 @@
 #
 #@MACRO:dirlog-full-rebuild|Rebuild directory log:{exe} -r -v --full {arg1}
 #
-#@MACRO:dirlog-full-rebuild-skipempty|Rebuild directory log (skip empty directories):{exe} -r --full -v ! lom "size = 0 && files = 0" {arg1}
+#@MACRO:dirlog-full-rebuild-skipempty|Rebuild directory log (skip empty directories):{exe} -r --full -v ! -lom "size = 0 && files = 0" {arg1}
 #
 ## <dirlog-update>
 #
@@ -62,7 +62,7 @@
 #
 #@MACRO:dirlog-update|Update directory log with new records and remove records that are missing from filesystem:{exe} -r -u --full --postexec "\{exe\} --check --fix --ghost -v {arg2}" {arg1}
 #
-#@MACRO:dirlog-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (skip empty directories):{exe} -r -u --full --stats ! lom "size = 0 && files = 0" --postexec "\{exe\} --check --fix --ghost -v {arg2}" {arg1}
+#@MACRO:dirlog-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (skip empty directories):{exe} -r -u --full --stats ! -lom "size = 0 && files = 0" --postexec "\{exe\} --check --fix --ghost -v {arg2}" {arg1}
 #
 ## <dirlog-full-update>
 #
@@ -71,7 +71,7 @@
 #
 #@MACRO:dirlog-full-update|Update directory log with new records and remove records that are missing from filesystem (full):{exe} -r -u --stats --full --postexec "{exe} --check --fix --ghost -v {arg2}" {arg1}
 #
-#@MACRO:dirlog-full-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (full) (skip empty directories):{exe} -r -u --stats --full --stats ! lom "size = 0 && files = 0" --postexec "{exe} --check --fix --ghost -v {arg2}" {arg1}
+#@MACRO:dirlog-full-update-skipempty|Update directory log with new records and remove records that are missing from filesystem (full) (skip empty directories):{exe} -r -u --stats --full --stats ! -lom "size = 0 && files = 0" --postexec "{exe} --check --fix --ghost -v {arg2}" {arg1}
 #
 ## <dirlog-dupe>
 #
@@ -148,7 +148,7 @@
 #@MACRO:imdb-clean-dupes|Erase duplicate records in imdblog; Requires glutil-1.9-9 or above:{exe} -a --imdblog={q:imdb@file} --preexec `{exe} --imdblog={q:imdb@file} --backup imdb -vv` -execv `{exe} -e imdb --imdblog={q:imdb@file} -l: basedir ! -match "\{basedir\}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #@MACRO:imdb-clean-dupes-id|Erase duplicate imdbID records in imdblog; Requires glutil-1.9-9 or above:{exe} -a --imdblog={q:imdb@file} --preexec `{exe} --imdblog={q:imdb@file} --backup imdb -vv` -execv `{exe} -e imdb --imdblog={q:imdb@file} -l: imdbid ! -match "\{imdbid\}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #@MACRO:tvrage-clean-dupes|Erase duplicate records in tvlog; Requires glutil-1.9-9 or above:{exe} -h --tvlog={q:tvrage@file} --preexec `{exe} --tvlog={q:tvrage@file} --backup tvrage -vv` -execv `{exe} -e tvrage --tvlog={q:tvrage@file} -l: basedir ! -match "\{basedir\}" --nofq --loglevel=6 --ifhit --nobackup` --silent
-#@MACRO:tvrage-clean-dupes-id|Erase duplicate showid records in tvlog; Requires glutil-1.9-9 or above:{exe} -h --tvlog={q:tvrage@file} --preexec `{exe} --tvlog={q:tvrage@file} --backup tvrage -vv` -execv `{exe} -e tvrage --tvlog={q:tvrage@file} ! lom "showid=\{showid\}" --nofq --loglevel=6 --ifhit --nobackup` --silent
+#@MACRO:tvrage-clean-dupes-id|Erase duplicate showid records in tvlog; Requires glutil-1.9-9 or above:{exe} -h --tvlog={q:tvrage@file} --preexec `{exe} --tvlog={q:tvrage@file} --backup tvrage -vv` -execv `{exe} -e tvrage --tvlog={q:tvrage@file} ! -lom "showid=\{showid\}" --nofq --loglevel=6 --ifhit --nobackup` --silent
 #
 ## <dirlog-clean-empty>
 #
@@ -167,7 +167,7 @@
 ## If no path is given, glutil reverts to default 
 ##  (attempts extracting from glftpd.conf)
 #
-#@MACRO:dirlog-clean-empty|Clean dirlog records that are size 0 and have no files:{exe} -e dirlog ! lom "size == 0 && files == 0" --nofq -vvv {arg1}
+#@MACRO:dirlog-clean-empty|Clean dirlog records that are size 0 and have no files:{exe} -e dirlog ! -lom "size == 0 && files == 0" --nofq -vvv {arg1}
 #
 ## <dirlog-clean-junk>
 #
@@ -180,7 +180,7 @@
 ## Does the job of both <dirlog-clean-empty> 
 ##  and <dirlog-clean-junk>
 #
-#@MACRO:dirlog-full-clean|Does the job of both <dirlog-clean-empty> and <dirlog-clean-junk>:{exe} -e dirlog -vvvv --nofq -l: basedir ! -regexi "^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" and ! lom "size=0&&files=0"
+#@MACRO:dirlog-full-clean|Does the job of both <dirlog-clean-empty> and <dirlog-clean-junk>:{exe} -e dirlog -vvvv --nofq -l: basedir ! -regexi "^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" and ! -lom "size=0&&files=0"
 #
 ## <dirlog-trim>
 #
@@ -210,20 +210,20 @@
 ## Counts up files/size information from all dirlog
 ## records and displays
 #
-#@MACRO:dirlog-record-stats| Counts up files/size information from all dirlog records and displays:{exe} -d --lom "u64glob0 += size && u64glob1 += files" --postexec `echo "\{q:dirlog@file\}: Total site size: $(expr \{u64glob0\} / 1048576)MB in \{u64glob1\} files ; $(expr \{u64glob0\} / \{q:dirlog@count\} / 1048576)MB in $(expr \{u64glob1\} / \{q:dirlog@count\}) files per directory on average"` --silent
+#@MACRO:dirlog-record-stats| Counts up files/size information from all dirlog records and displays:{exe} -d -lom "u64glob0 += size && u64glob1 += files" --postexec `echo "\{q:dirlog@file\}: Total site size: $(expr \{u64glob0\} / 1048576)MB in \{u64glob1\} files ; $(expr \{u64glob0\} / \{q:dirlog@count\} / 1048576)MB in $(expr \{u64glob1\} / \{q:dirlog@count\}) files per directory on average"` --silent
 #
 ## <mdb-record-avgstats>
 #
 ## iMDB log - statistics - averages
 #
-#@MACRO:imdb-record-avgstats|IMDB - Various averaged stats:{exe} -a --lom "f32glob0+=score||u64glob0+=1||f32glob1+=1.0||u64glob1+=year||u64glob2+=votes|u64glob3+=runtime" --silent -postprint "IMDB: \{?q:imdb@file\}: Average score/year/votes/runtime ( \{?m:f32glob0/f32glob1#\%\.2f\} / \{?m:u64glob1/u64glob0\} / \{?m:u64glob2/u64glob0\} / \{?m:u64glob3/u64glob0\}min )" --imdblog "{q:imdb@file}"
-#@MACRO:tvrage-record-avgstats|IMDB - Various averaged stats:{exe} -h lom "u64glob0+=1||u64glob1+=startyear||u64glob2+=seasons|u64glob3+=runtime" --silent -postprint "TVRAGE: \{?q:tvrage@file\}: Average year/runtime/seasons ( \{?m:u64glob1/u64glob0\} / \{?m:u64glob3/u64glob0\}min / \{?m:u64glob2/u64glob0\} )" --tvlog "{q:tvrage@file}"
+#@MACRO:imdb-record-avgstats|IMDB - Various averaged stats:{exe} -a -lom "f32glob0+=score||u64glob0+=1||f32glob1+=1.0||u64glob1+=year||u64glob2+=votes||u64glob3+=runtime" --silent -postprint "IMDB: {?q:imdb@file}: Average score/year/votes/runtime ( \{?m:f32glob0/f32glob1#\%\.2f\} / \{?m:u64glob1/u64glob0\} / \{?m:u64glob2/u64glob0\} / \{?m:u64glob3/u64glob0\}min )" --imdblog "{q:imdb@file}"
+#@MACRO:tvrage-record-avgstats|IMDB - Various averaged stats:{exe} -h -lom "u64glob0+=1||u64glob1+=startyear||u64glob2+=seasons||u64glob3+=runtime" --silent -postprint "TVRAGE: \{?q:tvrage@file\}: Average year/runtime/seasons ( \{?m:u64glob1/u64glob0\} / \{?m:u64glob3/u64glob0\}min / \{?m:u64glob2/u64glob0\} )" --tvlog "{q:tvrage@file}"
 #
 ## iMDB log - total count statistics
 #
 ## Dependencies: bc
 #
-#@MACRO:imdb-record-totalstats|iMDB log - total count statistics, dependencies\: bc:{exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  lom "u64glob3 += runtime && u64glob2 += votes" --postexec `echo -e "IMDB: \{q:imdb@file\}: Total votes/runtime: \{u64glob2\} / $(echo 'scale=2; \{u64glob3\} / 60' | bc -l)hrs"` --silent
+#@MACRO:imdb-record-totalstats|iMDB log - total count statistics, dependencies\: bc:{exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  -lom "u64glob3 += runtime && u64glob2 += votes" --postexec `echo -e "IMDB: \{q:imdb@file\}: Total votes/runtime: \{u64glob2\} / $(echo 'scale=2; \{u64glob3\} / 60' | bc -l)hrs"` --silent
 #
 ## <imdb-stats>
 #
@@ -253,9 +253,9 @@
 #
 ## Rebuild the dupefile based on filesystem info
 #
-#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{exe} -noop --preexec `\{exe\} --dupefile={q:dupefile@file} --backup dupefile -vv; rm -f {q:dupefile@file}; \{exe\} -R -x "\{siteroot\}" -lom "depth>0" -print "file \{basepath\}{:nl}user \{user\}{:nl}time {mtime}{:nl}" lom mode=8 --glroot "{glroot}" | glutil -z dupefile -vvvv --stdin --dupefile={q:dupefile@file}`
+#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{exe} -noop --preexec `\{exe\} --dupefile={q:dupefile@file} --backup dupefile -vv; rm -f {q:dupefile@file}; \{exe\} -R -x "\{siteroot\}" -lom "depth>0" -print "file \{basepath\}{:nl}user \{user\}{:nl}time {mtime}{:nl}" -lom mode=8 --glroot "{glroot}" | glutil -z dupefile -vvvv --stdin --dupefile={q:dupefile@file}`
 #
-#@MACRO:clean-deadlinks|Deletes dead symlinks [-arg1=<rootpath>] [-arg2=prefix]:/bin/glutil -x "{arg1}" -lom "depth>0" -R lom "mode=10" -l: "(?X:(isread):(?P:rlink#{arg2}%s))" -match "0" --silent -execv "rm -f \{path\}"
+#@MACRO:clean-deadlinks|Deletes dead symlinks [-arg1=<rootpath>] [-arg2=prefix]:/bin/glutil -x "{arg1}" -lom "depth>0" -R -lom "mode=10" -l: "(?X:(isread):(?P:rlink#{arg2}%s))" -match "0" --silent -execv "rm -f \{path\}"
 #@MACRO:clean-deadlinks-rmbasedir|Deletes dead symlinks [-arg1=<rootpath>] [-arg2=prefix]:/bin/glutil -x "{arg1}" -lom "depth>0" -R -lom "mode=10" -l: "(?X:(isread):(?P:rlink#{arg2}%s))" -match "0" --silent -exec `rm -f "\{path\}"; rmdir "\{?d:path\}"`
 
 #@MACRO:clean-path|Deletes oldest files, exceeding <limit> GBytes [-arg1=<limit> -arg2=<path>]:glutil  -x {arg2} -lom "depth>0" -v --sort desc,mtime -lom "mode=8" -lom "u64glob0+=size" -lom "(u64glob0) > ({arg1}*(1024^3))" -execv "rm -f \{path\}"
