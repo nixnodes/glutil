@@ -17,9 +17,9 @@
 #
 # DO NOT EDIT THESE LINES
 #@VERSION:1
-#@REVISION:10
-#@MACRO:gamescore|Game info lookup based on folder names (filesystem) [-arg1=<path>]:{m:exe} -x {m:arg1} -lom "depth>0" --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" --dir -execv `{m:spec1} {basepath} {exe} {gamefile} {glroot} {siterootn} {path}`
-#@MACRO:gamescore-d|Game info lookup based on folder names (dirlog) [-arg1=<regex>]:{m:exe} -d --silent -v --loglevel=5 --preexec "{m:exe} -v --backup game" -execv "{m:spec1} {basedir} {exe} {gamefile} {glroot} {siterootn} {dir}" regexi "dir,{m:arg1}" 
+#@REVISION:11
+#@MACRO:gamescore|Game info lookup based on folder names (filesystem) [-arg1=<path>]:{exe} -x {arg1} -lom "depth>0" --silent -v --loglevel=5 --preexec "{exe} -v --backup game" --dir -execv `{spec1} \{basepath\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} \{path\}`
+#@MACRO:gamescore-d|Game info lookup based on folder names (dirlog) [-arg1=<regex>]:{exe} -d --silent -v --loglevel=5 --preexec "{exe} -v --backup game" -execv "{spec1} \{basedir\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} \{dir\}" -regexi "{arg1}" 
 #
 ## Retrieves game info using giantbomb API (XML)
 #
@@ -89,7 +89,7 @@ if [ $UPDATE_GAMELOG -eq 1 ]; then
 	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" 2 15 9 6
 	GLR_E=`echo $4 | sed 's/\//\\\\\//g'`	   
 	DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-	$2 -k regex "$DIR_E" --imatchq > /dev/null || $2 -f -e game ! match "$DIR_E" > /dev/null
+	$2 -k -regex "$DIR_E" --imatchq > /dev/null || $2 -f -e game ! -match "$DIR_E" > /dev/null
 	echo -en "dir $DIR_E\ntime `date +%s`\nscore $RES\n\n" > "/tmp/glutil.gg.$$.tmp"
 	$2 -z game --nobackup --silent < "/tmp/glutil.gg.$$.tmp" || echo "ERROR: failed writing to gamelog!!"
 	rm /tmp/glutil.gg.$$.tmp

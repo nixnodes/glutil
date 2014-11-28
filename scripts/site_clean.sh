@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (C) 2013 NixNodes
+#  Copyright (C) 2014 NixNodes
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,10 +17,10 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:10
-#@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{m:exe} noop --postexec "{m:spec1} {m:arg1}"
+#@REVISION:11
+#@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{exe} -noop --postexec "{spec1} {arg1}"
 #
-## Dependencies:    glutil-2.4.15
+## Dependencies:    glutil-2.5
 #
 GLUTIL="/bin/glutil"
 DF=/bin/df
@@ -124,7 +124,7 @@ for i in "${SECTIONS[@]}"; do
 			
 	${GLUTIL} -x ${ROOT}/${path} -R -xdev --ftime -postprint \
 	"${ROOT}/${path}: {?L:(u64glob2) != 0:(?m:u64glob1/(1024^3)):(?p:0)}/{?m:(u64glob0/(1024^3))} G purged total" \
-	 -lom "u64glob0 += size" and \( -lom "(u64glob0) > ${max_p}" and -lom "u64glob1 += size" \) and \( -lom "mode = 4 || mode = 8" and lom "u64glob2 += 1" \) \
+	 -lom "u64glob0 += size" and \( -lom "(u64glob0) > ${max_p}" and -lom "u64glob1 += size" \) and \( -lom "mode = 4 || mode = 8" and -lom "u64glob2 += 1" \) \
 	 -execv "${action_cmd}"  -lom "depth=1" --sort desc,mtime --postexec "${action_post_cmd}"
 done
 

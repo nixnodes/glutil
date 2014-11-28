@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  Copyright (C) 2013 NixNodes
+#  Copyright (C) 2014 NixNodes
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:4
-#@MACRO:imdb-sort|imdb sort:{m:exe} --silent -q imdb --imdblog "{m:q:imdb@file}" -execv `{m:spec1} {dir} none \"\" {siterootb} "{m:arg1} " {genre} {year} {actors} {director} {rated} {score}`
+#@REVISION:5
+#@MACRO:imdb-sort|imdb sort:{exe} --silent -q imdb --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
