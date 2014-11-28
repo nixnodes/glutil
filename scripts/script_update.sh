@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
 ## Requires: - glutil-2.5 or above
@@ -141,7 +141,7 @@ for item in "${SOURCES[@]}"; do
 			fi
 			
 			if [ ${upgrade_ver} -eq ${current_ver} ]; then
-				echo "WARNING: ${path}: already installed (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` = `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
+				[ ${VERBOSE} -gt 0 ] && echo "WARNING: ${path}: already installed (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` = `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
 				continue
 			fi
 			
