@@ -109,14 +109,14 @@ char *hpd_up =
     "  -regexi <pattern> ([-l:<field>] -regexi <pattern>)\n"
     "                        Case insensitive variant of -regex\n"
     "  --noereg              Disable POSIX Extended Regular Expression syntax (enabled by default)\n"
-    "  -match [<field>,]<pattern>\n"
-    "                        Regular string matching (exact matches)\n"
+    "  -match <pattern> ([-l:<field>] -match <pattern>)\n"
+    "                        Exact string matching\n"
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
-    "  -name [<field>,]<pattern>\n"
+    "  -name <pattern> ([-l:<field>] -name <pattern>)\n"
     "                        Match <field> value against shell <pattern> (fnmatch(3) lib function)\n"
-    "  -namei [<field>,]<pattern>\n"
+    "  -namei <pattern> ([-l:<field>] -namei <pattern>)\n"
     "                        Case insensitive variant of -name\n"
     "  -lom <[(]expression[)]>\n"
     "                        Compare values by logical and comparison/relational operators\n"

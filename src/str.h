@@ -77,6 +77,6 @@ g_zerom(char *input, char m);
 char*
 g_resolve_esc(char *input, char *output, size_t max_size);
 char *
-g_p_escape_once(char *input);
+g_p_escape_once(char *input, char *match);
 
 #endif /* STR_H_ */

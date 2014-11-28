@@ -146,9 +146,8 @@ process_macro(void * arg, char **out)
           av.p_buf_1, dirn);
     }
 
-
   _g_handle hdl =
-     { 0 };
+    { 0 };
   _g_eds eds =
     { 0 };
 
@@ -208,7 +207,9 @@ process_macro(void * arg, char **out)
       goto end;
     }
 
-  g_p_escape_once(s_buffer);
+  char *escape_only = "{}";
+
+  g_p_escape_once(s_buffer, escape_only);
 
   int c = 0;
   s_ptr = build_argv(s_buffer, 4096, &c);

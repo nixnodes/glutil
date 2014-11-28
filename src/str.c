@@ -621,14 +621,28 @@ g_resolve_esc(char *input, char *output, size_t max_size)
   return output;
 }
 
+static int
+ar_has_char(char *match, char q)
+{
+  while (0x0 != match[0])
+    {
+      if (match[0] == q)
+        {
+          return 0;
+        }
+      match++;
+    }
+  return 1;
+}
+
 char *
-g_p_escape_once(char *input)
+g_p_escape_once(char *input, char *match)
 {
   char *ptr = input;
   int c = 0;
   while (0x0 != ptr[0])
     {
-      if (ptr[0] == 0x5C)
+      if (ptr[0] == 0x5C && (0x0 != ptr[1] && 0 == ar_has_char(match, ptr[1])))
         {
           memmove(ptr, &ptr[1], strlen(&ptr[1]) + 1);
           c++;
