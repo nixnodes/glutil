@@ -1,3 +1,6 @@
+#@VERSION:0
+#@REVISION:2
+
 # PRIVATE
 _lock()             { flock -$1 ${2}; }
 _clear_lock()  { _lock u ${1}; _lock xn ${1}; rm -f "${2}"; }
