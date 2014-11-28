@@ -319,7 +319,8 @@ dt_rval_spec_dirname(void *arg, char *match, char *output, size_t max_size,
 
   if (NULL != p_o)
     {
-      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, g_dirname(p_o));
+      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, p_o);
+      g_dirname(output);
     }
   else
     {
@@ -1587,7 +1588,7 @@ rtv_q(void *query, char *output, size_t max_size)
   mda md_s =
     { 0 };
 
-    md_init(&md_s, 2);
+  md_init(&md_s, 2);
   p_md_obj ptr;
 
   if (split_string(query, 0x40, &md_s) != 2)

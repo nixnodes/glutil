@@ -8,7 +8,7 @@
  * v2.5:
  *
  *   - % Changed how field is passed to string matching parameters
- *   -  
+ *   - ~ '?d' was modifying data storage area
  *
  * v2.4:
  *
