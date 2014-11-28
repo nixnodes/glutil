@@ -17,22 +17,22 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:45
-#@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} -lom "depth>0" --lom "mode=4" --silent --dir --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" --execv `{m:spec1} {basepath} {exe} {imdbfile} {glroot} {siterootn} {path} 0 '' '' 3` {m:arg2}
-#@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {basedir} {exe} {imdbfile} {glroot} {siterootn} {dir} 0 '' '' {m:arg3}" regexi "dir,{m:arg1}" 
-#@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1 {year}" 
-#@MACRO:imdb-su-id|Update imdblog records using existing imdbID's, no searching is done:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {imdbid} {exe} {imdbfile} {glroot} {siterootn} {dir} 2 {basedir} {year}" 
-#@MACRO:imdb-su-f1:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb" -execv "{m:spec1} {dir} {exe} {imdbfile} {glroot} {siterootn} {dir} 1" regex "dir,\/"
-#@MACRO:imdb-e-id|iMDB lookups based on -arg1 input (imdbID) [-arg1=<imdbid>]:{m:exe} -a --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb; {m:spec1} {m:arg1} {exe} {imdbfile} {glroot} {siterootn} '-' 2 '-' 0" 
-#@MACRO:imdb-e|iMDB lookups based on -arg1 input [-arg1=<query>]:{m:exe} noop --imdblog={m:q:imdb@file} --silent --loglevel=1 --preexec "{m:exe} --imdblog={m:q:imdb@file} --backup imdb; {m:spec1} '{m:arg1}' '{exe}' '{imdbfile}' '{glroot}' '{siterootn}' '{m:arg2}' 0 '' '' {m:arg3}"
+#@REVISION:46
+#@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --lom "mode=4" --silent --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
+#@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
+#@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
+#@MACRO:imdb-su-id|Update imdblog records using existing imdbID's, no searching is done:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{imdbid\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 2 \{basedir\} \{year\}" 
+#@MACRO:imdb-su-f1:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1" -l: dir -regex "\/"
+#@MACRO:imdb-e-id|iMDB lookups based on -arg1 input (imdbID) [-arg1=<imdbid>]:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb; {spec1} {arg1} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} '-' 2 '-' 0" 
+#@MACRO:imdb-e|iMDB lookups based on -arg1 input [-arg1=<query>]:{exe} -noop  --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb; {spec1} '{arg1}' '\{exe\}' '\{imdbfile\}' '\{glroot\}' '\{siterootn\}' '{arg2}' 0 '' '' {arg3}"
 #
 ## Install script dependencies + libs into glftpd root (requires mlocate)
 #
-#@MACRO:imdb-installch|Install required libraries into glFTPd root:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/recode /bin/awk"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#@MACRO:imdb-installch|Install required libraries into glFTPd root:{exe} -noop  --preexec `! updatedb -e "\{glroot\}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/recode /bin/awk"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "\{glroot\}$f" ] || if cp --preserve=all "$f" "\{glroot\}$f"; then echo "$lf: \{glroot\}$f"; fi; done; [ -f "\{glroot\}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "\{glroot\}/bin/$(basename "$lf")"; then echo "\{glroot\}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-2.4.13-2 or above
+## Requires: - glutil-2.5 or above
 ##           - libxml2 v2.7.7 or above 
 ##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
@@ -147,7 +147,7 @@ echo "${10}" | grep -q "2" && {
 
 try_lock_r 12 imdb_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 
-IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" noop --imdblog="${3}${LAPPEND}"`
+IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" -noop  --imdblog="${3}${LAPPEND}"`
 
 [ -n "${IS_COMP}" ] && [ ${IS_COMP} -eq 1 ] && {	
 	[ -z "${IMDBLOG_COMPRESSION}" ] && {
@@ -185,14 +185,14 @@ get_omdbapi_data() {
 }
 
 cad() {
-        RTIME=`${1} --imdblog "${4}${LAPPEND}" -a ${2} "${3}" --imatchq -printf "{time}" --silent --nobuffer --rev`
+        RTIME=`${1} --imdblog "${4}${LAPPEND}" -a -l: "${5}" ${2} "${3}" --imatchq -printf "{time}" --silent --nobuffer --rev`
         CTIME=`date +"%s"`
         [ -n "$RTIME" ] && DIFF1=`expr $CTIME - $RTIME` && DIFF=`expr $DIFF1 / 86400`
         if [ $RECORD_MAX_AGE -gt 0 ] && [ -n "$DIFF" ] && [ $DIFF -ge $RECORD_MAX_AGE ]; then
                 print_str "NOTICE: $QUERY: $SHOWID: Record too old ($DIFF days) updating.."
         else
                 if [ -n "$RTIME" ]; then
-                        [ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [${2} ${3}]: already exists in database (`expr ${DIFF1} / 60` min old)"
+                        [ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [${2} ${3} (${5})]: already exists in database (`expr ${DIFF1} / 60` min old)"
                         II_ID=`$1 --imdblog "$4$LAPPEND" -a ${2} "${3}" --imatchq -printf "{imdbid}" --silent --nobuffer --rev`
                         [ ${op_id} -eq 1 ] && echo "${II_ID}"
                         exit 0
@@ -228,7 +228,7 @@ if ! [ $7 -eq 2 ]; then
 
 #        if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 #                s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-#                cad ${2} "regexi" "dir,^$s_q\$" "$3"
+#                cad ${2} "regexi" "^$s_q\$" "${3}" "dir"
 #        fi
 
         DTMP=`imdb_do_query "$QUERY""&ex=1"`
@@ -284,7 +284,7 @@ if ! [ $7 -eq 2 ]; then
         [ -z "$iid" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                cad ${2} "match" "imdbid,$iid" "${3}"
+                cad ${2} "-match" "$iid" "${3}" "imdbid"
         fi
 
         DDT=`get_omdbapi_data "$iid"`
@@ -303,7 +303,7 @@ if ! [ $7 -eq 2 ]; then
                         DDT=`get_omdbapi_data "$iid"`
                         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
                         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                			cad ${2} "match" "imdbid,$iid" "${3}"
+                			cad ${2} "-match" "$iid" "${3}" "imdbid"
 		        		fi
 			TITLE=`get_field title`
                         TYPE=`get_field type`
@@ -324,7 +324,7 @@ if ! [ $7 -eq 2 ]; then
                         DDT=`get_omdbapi_data "$iid"`
                         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
                         if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
-                			cad ${2} "match" "imdbid,$iid" "${3}"
+                			cad ${2} "-match" "${iid}" "${3}" "imdbid"
 		        		fi
                         TITLE=`get_field title`
                         TYPE=`get_field type`
@@ -338,7 +338,7 @@ else
         QUERY="$8"
         YEAR_q="$9"
 
-	[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad ${2} "match" "imdbid,$iid" "${3}"
+	[ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ] && cad ${2} "-match" "${iid}" "${3}" "imdbid"
 
         DDT=`get_omdbapi_data "$iid"`
 
@@ -395,7 +395,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
                  [ -e "$3$LAPPEND" ] && {
-               	 	${2} --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
+               	 	${2} --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! -regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
                         print_str "ERROR: $DIR_E: Failed removing old record" && exit 1
                 	}
                 }
@@ -403,7 +403,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                 #[ -z "$TITLE" ] && print_str "ERROR: $QUERY: $TD: failed extracting movie title" && exit 1
                 DIR_E=$QUERY
                 [ -e "$3$LAPPEND" ] && {
-               		${2} --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb ! match "imdbid,${iid}" --nostats --silent ${EXTRA_ARGS} || {
+               		${2} --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb -l: imdbid ! -match "${iid}" --nostats --silent ${EXTRA_ARGS} || {
                    	     print_str "ERROR: $iid: Failed removing old record - $iid - $3$LAPPEND"; exit 1
                		}
                	}

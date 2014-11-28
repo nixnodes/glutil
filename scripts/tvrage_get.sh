@@ -17,22 +17,22 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:37
-#@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{m:exe} -x {m:arg1} -lom "depth>0" --silent --dir --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basepath} {exe} {tvragefile} {glroot} {siterootn} {path} 0 0 '' {m:arg3}` {m:arg2}
-#@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{m:exe} -d --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 0 0 '' {m:arg3}` regexi "dir,{m:arg1}"  {m:arg2} 
-#@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 1`
-#@MACRO:tvrage-su-id|Rebuild entire tvlog based on showid fields:{m:exe} -h --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage" -execv `{m:spec1} {basedir} {exe} {tvragefile} {glroot} {siterootn} {dir} 2 {showid}`
-#@MACRO:tvrage-e|Lookup/process using a specific TVRage query (by show name) [-arg1=<showname>]:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '{m:arg1}' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' '{m:arg2}' 0 '' '' {m:arg3}"
-#@MACRO:tvrage-e-id|Lookup/process using a specific TVRage query (by show id) [-arg1=<showid>]:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec "{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; {m:spec1} '-' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 '{m:arg1}'"
-#@MACRO:tvrage-e-full|Retrieve a full show list from TVRage and build/update log based on returned showids:{m:exe} noop --tvlog={m:q:tvrage@file} --silent --loglevel=1 --preexec `{m:exe} --tvlog={m:q:tvrage@file} --backup tvrage; for i in $(curl http://services.tvrage.com/feeds/show_list.php | sed -r 's/<show><id>|<\/id><name>.*|<(\/|())shows>|<\?xml.*>//g' | sed -r '/^$/d'); do if echo "$i" | egrep -q '^[0-9]+$'; then {m:spec1} '-' '{exe}' '{tvragefile}' '{glroot}' '{siterootn}' 0 2 "$i"; else echo "ERROR: invalid id: '$i'"; fi; done`
+#@REVISION:38
+#@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' {arg3}` {arg2}
+#@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 
+#@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 1`
+#@MACRO:tvrage-su-id|Rebuild entire tvlog based on showid fields:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 2 \{showid\}`
+#@MACRO:tvrage-e|Lookup/process using a specific TVRage query (by show name) [-arg1=<showname>]:{exe} -noop --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage; {spec1} '{arg1}' '\{exe\}' '\{tvragefile\}' '\{glroot\}' '\{siterootn\}' '{arg2}' 0 '' '' {arg3}"
+#@MACRO:tvrage-e-id|Lookup/process using a specific TVRage query (by show id) [-arg1=<showid>]:{exe} -noop --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage; {spec1} '-' '\{exe\}' '\{tvragefile\}' '\{glroot\}' '\{siterootn\}' 0 2 '{arg1}'"
+#@MACRO:tvrage-e-full|Retrieve a full show list from TVRage and build/update log based on returned showids:{exe} -noop --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec `{exe} --tvlog={q:tvrage@file} --backup tvrage; for i in $(curl http://services.tvrage.com/feeds/show_list.php | sed -r 's/<show><id>|<\/id><name>.*|<(\/|())shows>|<\?xml.*>//g' | sed -r '/^$/d'); do if echo "$i" | egrep -q '^[0-9]+$'; then {spec1} '-' '\{exe\}' '\{tvragefile\}' '\{glroot\}' '\{siterootn\}' 0 2 "$i"; else echo "ERROR: invalid id: '$i'"; fi; done`
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
-#@MACRO:tvrage-installch|Install required libraries into glFTPd root:{m:exe} noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/rev /bin/cut /bin/recode"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#@MACRO:tvrage-installch|Install required libraries into glFTPd root:{exe} -noop --preexec `! updatedb -e "\{glroot\}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/rev /bin/cut /bin/recode"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '\{print $3\}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "\{glroot\}$f" ] || if cp --preserve=all "$f" "\{glroot\}$f"; then echo "$lf: \{glroot\}$f"; fi; done; [ -f "\{glroot\}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "\{glroot\}/bin/$(basename "$lf")"; then echo "\{glroot\}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets show info using TVRAGE API (XML)
 #
-## Requires: - glutil-2.4.13-2 or above
+## Requires: - glutil-2.5 or above
 ##			 - libxml2 v2.7.7 or above
 ##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
 #
@@ -173,7 +173,7 @@ echo "${10}" | grep -q "2" && {
 
 try_lock_r 12 tvr_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 
-IS_COMP=`${2} --preexec "echo -n {?q:tvrage@comp}" noop --tvlog="${3}${LAPPEND}"`
+IS_COMP=`${2} --preexec "echo -n {?q:tvrage@comp}" -noop --tvlog="${3}${LAPPEND}"`
 
 [ -n "${IS_COMP}" ] && [ ${IS_COMP} -eq 1 ] && {	
 	[ -z "${TVLOG_COMPRESSION}" ] && {
@@ -241,7 +241,7 @@ if [ $7 -eq 2 ]; then
 	}
 	SHOWID=${8}
 	if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
-		cad $2 "lom" "showid=${8}" "$3"	
+		cad $2 "-lom" "showid=${8}" "$3"	
 	fi
 	
 	[ $VERBOSE -gt 1 ] && print_str "NOTICE: query: $QUERY: $TD - ""$TVRAGE_URL""/""$q_FEEDS""/showinfo.php?""$q_TVR_KEY""sid=""$8"
@@ -262,6 +262,8 @@ else
 	SDATE="started"
 fi
 
+[ -z "$DDT" ] && print_str "ERROR: $QUERY: $TD: unable to get show data (empty) - $8" && exit 1
+
 echo "$DDT" | egrep -q "exceeded[a-zA-Z\' ]*max_user_connections" && {
 	[ $VERBOSE -gt 0 ] && print_str "$DDT - retrying.."
 	sleep 2
@@ -273,8 +275,6 @@ echo "$DDT" | egrep -q "^Invalid" && {
 	print_str "$DDT - aborting.."
 	exit 1
 }
-
-[ -z "$DDT" ] && print_str "ERROR: $QUERY: $TD: unable to get show data (empty) - $8" && exit 1
 
 get_field()
 {
@@ -297,7 +297,7 @@ if [ -z "$SHOWID" ]; then
 fi
 
 if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
-	cad $2 "lom" "showid=${SHOWID}" "$3"	
+	cad $2 "-lom" "showid=${SHOWID}" "$3"	
 fi
 
 adjust_tc() {
@@ -367,7 +367,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" `  
 
 		[ -e "$3$LAPPEND" ] && {
-	 		$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! regex "dir,${DIR_E}" --nofq --nostats --silent ${EXTRA_ARGS} || { 
+	 		$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! -regex "${DIR_E}" --nofq --nostats --silent ${EXTRA_ARGS} || { 
 				print_str "ERROR: $DIR_E: Failed removing old record"; exit 1 
 			}
 		}
@@ -375,7 +375,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
 		[ -e "$3$LAPPEND" ] && {
-			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! lom "showid=$SHOWID" --nofq --nostats --silent ${EXTRA_ARGS} || {
+			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! -lom "showid=$SHOWID" --nofq --nostats --silent ${EXTRA_ARGS} || {
 				print_str "ERROR: $SHOWID: Failed removing old record"; exit 1 
 			}
 		}
