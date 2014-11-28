@@ -38,8 +38,7 @@ int
 g_memcomp(const void *p1, const void *p2, off_t size);
 char *
 g_bitstr(uint64_t value, uint8_t bits, char *buffer);
-int
-find_absolute_path(char *exec, char *output);
+
 uint32_t
 opt_get_msg_type(char *msg);
 int

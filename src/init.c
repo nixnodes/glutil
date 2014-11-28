@@ -41,6 +41,8 @@ char MACRO_ARG3[4096] =
 char *g_mroot = NULL;
 
 void *_p_macro_argv = NULL;
+char **_p_argv = NULL;
+
 int _p_macro_argc = 0;
 
 uint32_t g_sleep = 0;

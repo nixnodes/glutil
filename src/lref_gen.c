@@ -306,7 +306,7 @@ dt_rval_generic_exe(void *arg, char *match, char *output, size_t max_size,
 {
   if (self_get_path(output))
     {
-      strcp_s(output, max_size, "UNKNOWN");
+      output[0x0] = 0;
     }
   return output;
 }

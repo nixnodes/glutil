@@ -893,7 +893,7 @@ net_worker(void *args)
           if (net_proc_sock_term(thrd) == 0)
             {
               /*print_str("NOTICE: net_worker: [%d]: thread shutting down..\n",
-                  _tid);*/
+               _tid);*/
               pthread_mutex_unlock(&thrd->mutex);
               break;
             }
@@ -911,11 +911,11 @@ net_worker(void *args)
       else
         {
           /*
-              print_str(
-                  "NOTICE: [%d]: push %llu items onto worker thread stack, %llu exist in chain\n",
-                  _tid, (unsigned long long int) thrd->in_objects.offset,
-                  (unsigned long long int) thrd->proc_objects.offset);
-            */
+           print_str(
+           "NOTICE: [%d]: push %llu items onto worker thread stack, %llu exist in chain\n",
+           _tid, (unsigned long long int) thrd->in_objects.offset,
+           (unsigned long long int) thrd->proc_objects.offset);
+           */
         }
 
       mutex_lock(&thrd->proc_objects.mutex);

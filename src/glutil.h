@@ -69,6 +69,7 @@ char MACRO_ARG3[4096];
 char *g_mroot;
 
 void *_p_macro_argv;
+char **_p_argv;
 int _p_macro_argc;
 
 uint32_t g_sleep;

@@ -173,6 +173,46 @@ file_crc32(char *file, uint32_t *crc_out)
 }
 
 int
+find_absolute_path(char *exec, char *output)
+{
+  char *env = getenv("PATH");
+
+  if (!env)
+    {
+      return 1;
+    }
+
+  mda s_p =
+    { 0 };
+
+  md_init(&s_p, 64);
+
+  int p_c = split_string(env, 0x3A, &s_p);
+
+  if (p_c < 1)
+    {
+      return 2;
+    }
+
+  p_md_obj ptr = md_first(&s_p);
+
+  while (ptr)
+    {
+      snprintf(output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
+      if (!access(output, R_OK | X_OK))
+        {
+          md_g_free(&s_p);
+          return 0;
+        }
+      ptr = ptr->next;
+    }
+
+  md_g_free(&s_p);
+
+  return 3;
+}
+
+int
 self_get_path(char *out)
 {
   g_setjmp(0, "self_get_path", NULL, NULL);
@@ -199,15 +239,15 @@ self_get_path(char *out)
 
   read:
 
-  if ((r = readlink(path, out, PATH_MAX)) == -1)
+  if ((r = readlink(path, out, PATH_MAX)) < 1)
     {
-      return 2;
+      if ((r = find_absolute_path(_p_argv[0], out)))
+        {
+          snprintf(out, PATH_MAX, "%s", _p_argv[0]);
+        }
+      return 0;
     }
 
-  if (r == 0)
-    {
-      return 3;
-    }
   out[r] = 0x0;
   return 0;
 }

@@ -48,7 +48,7 @@ int
 int
 main(int argc, char *argv[])
 {
-  char **p_argv = (char**) argv;
+  char **p_argv = _p_argv = (char**) argv;
   int r;
 
   print_str = g_print_str;

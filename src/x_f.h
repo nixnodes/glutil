@@ -46,6 +46,9 @@ file_crc32(char *file, uint32_t *crc_out);
 
 _d_achar_i self_get_path, file_exists, get_file_type, dir_exists, check_path;
 
+int
+find_absolute_path(char *exec, char *output);
+
 #include <xref.h>
 
 int
