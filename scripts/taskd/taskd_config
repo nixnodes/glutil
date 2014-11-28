@@ -1,0 +1,7 @@
+MODULES_PATH=modules
+
+
+### [ mod_nuke ] ###
+
+MOD_NUKE_USER=glftpd
+MOD_NUKE_MULTIPLIER=3

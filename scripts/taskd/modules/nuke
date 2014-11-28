@@ -1,0 +1,53 @@
+#@VERSION:0
+#@REVISION:1
+
+mod_nuke_proc_failed()
+{
+	if [ ${1} -eq 2 ]; then
+		echo "ERROR: mod_nuke: '${2}': not found"
+	else
+		echo "ERROR: mod_nuke: operation failed: ${1}"
+	fi
+	return ${1}
+}
+
+mod_nuke()
+{
+	[ -z "${2}" ] && {
+		echo "ERROR: mod_nuke: missing search query"
+		return 1
+	}
+	
+	mod_nuke_reason="${3}"
+	
+	[ -z "${mod_nuke_reason}" ] && {
+		mod_nuke_reason="/"
+	}
+	
+	mod_nuke_msg_lockfail="ERROR: mod_nuke: could not obtain lock" 
+	
+	case ${1} in
+		1) # nuke	
+			try_lock_r 12 taskd "glob_nuker" 15 "${mod_nuke_msg_lockfail}"
+			${GLUTIL} -d -l: basedir -name "${2}" -execv "${GLROOT}/bin/nuker -N ${MOD_NUKE_USER} -r /etc/glftpd.conf -n {dir} ${MOD_NUKE_MULTIPLIER} ${mod_nuke_reason} " --silent || {
+				mod_nuke_proc_failed ${?} "${2}"
+				return $?
+			}
+		;;
+		2) # unnuke
+			try_lock_r 12 taskd "glob_nuker" 15 "${mod_nuke_msg_lockfail}"
+			${GLUTIL} -d -l: basedir -name "${2}" -execv "${GLROOT}/bin/nuker -N ${MOD_NUKE_USER} -r /etc/glftpd.conf -u {dir} ${mod_nuke_reason}" --silent || {
+				mod_nuke_proc_failed ${?} "${2}"
+				return $?
+			}
+		;;
+		*)
+			echo "ERROR: mod_nuke: invalid nuke mode (1/2, nuke/unnuke)"
+			return 1
+		;;
+	esac
+	
+	return 0
+}
+
+register_module 12 mod_nuke
