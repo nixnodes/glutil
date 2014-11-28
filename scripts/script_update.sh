@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:1
-#@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} \"{arg1}\" {glroot}`
+#@REVISION:2
+#@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
 ## Requires: - glutil-2.5 or above
 ##             curl
