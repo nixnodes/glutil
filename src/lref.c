@@ -21,6 +21,39 @@
 #include <lref.h>
 #include <xref.h>
 
+char *
+g_extract_vfield(char *input, char *output, size_t max_size, size_t offset)
+{
+  char *o_out = output;
+  input += offset;
+  size_t c = 0;
+
+  max_size--;
+
+  while ((input[0] != 0x7D) && 0 != input[0] && c < max_size)
+    {
+
+      while (input[0] == 0x5C)
+        {
+          output[0] = input[0];
+          input++;
+          output++;
+          c++;
+        }
+      output[0] = input[0];
+      input++;
+      output++;
+      c++;
+    }
+
+  if (c == max_size)
+    {
+      return NULL;
+    }
+
+  return o_out;
+}
+
 static void *
 l_mppd_create_copy(__d_drt_h mppd)
 {
@@ -210,7 +243,7 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
       ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
       ((__d_drt_h ) mppd)->mppd_next);
 
-  if (p_o)
+  if (NULL != p_o)
     {
       snprintf(output, max_size, "%zu", strlen(p_o));
     }
@@ -220,6 +253,41 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
     }
   return output;
 }
+
+#ifdef _G_SSYS_CRYPTO
+
+#include <g_crypto.h>
+
+static char *
+dt_rval_spec_sha1(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
+      ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
+      ((__d_drt_h ) mppd)->mppd_next);
+
+  if (NULL != p_o)
+    {
+      _pid_sha1 out, *o_ptr = crypto_calc_sha1((unsigned char*) p_o,
+          strlen(p_o), &out);
+      if (NULL != o_ptr)
+        {
+          return crypto_sha1_to_ascii(o_ptr, output);
+        }
+      else
+        {
+          output[0] = 0x0;
+          return output;
+        }
+    }
+  else
+    {
+      output[0] = 0x0;
+      return output;
+    }
+  return output;
+}
+#endif
 
 char *
 dt_rval_spec_basedir(void *arg, char *match, char *output, size_t max_size,
@@ -992,7 +1060,8 @@ rt_af_print_format_int(void *arg, char *match, char *output, size_t max_size,
   if (NULL == s_ptr)
     {
       print_str(
-          "ERROR: rt_af_print_format_int: could not parse print string: '%s'\n", match);
+          "ERROR: rt_af_print_format_int: could not parse print string: '%s'\n",
+          match);
     }
 
   mppd->mppd_next = l_mppd_create_copy(mppd);
@@ -1491,6 +1560,22 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         ;
         return rt_af_sf(arg, match, output, max_size, mppd);
         break;
+#ifdef _G_SSYS_CRYPTO
+      case 0x53:
+        mppd->mppd_next = l_mppd_create_copy(mppd);
+
+        mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
+            mppd->mppd_next);
+
+        if (NULL == mppd->fp_rval1)
+          {
+            return NULL;
+          }
+
+        return as_ref_to_val_lk(match, dt_rval_spec_sha1, (__d_drt_h ) mppd,
+        NULL);
+        break;
+#endif
         }
     }
   return NULL;
@@ -1502,12 +1587,12 @@ rtv_q(void *query, char *output, size_t max_size)
   mda md_s =
     { 0 };
 
-  md_init(&md_s, 2);
+    md_init(&md_s, 2);
   p_md_obj ptr;
 
   if (split_string(query, 0x40, &md_s) != 2)
     {
-      bzero(output, max_size);
+      output[0] = 0x0;
       return 0;
     }
 

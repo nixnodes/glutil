@@ -32,4 +32,7 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds);
 int
 list_macros(void);
 
+_d_rtv_lk
+ref_to_val_lk_macro;
+
 #endif /* MACROS_T_H_ */

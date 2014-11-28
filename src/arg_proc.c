@@ -201,11 +201,10 @@ build_argv(char *args, size_t max, int *c)
   return ptr;
 }
 
-int
-process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
+static int
+process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret,
+    void *data)
 {
-  int
-  (*proc_opt_generic)(void *arg, int m);
   int i = 0;
   __gg_opt ora = (__gg_opt) reference_array;
 
@@ -216,9 +215,8 @@ process_opt_n(char *opt, void *arg, void *reference_array, int m, int *ret)
         {
           if (ora->op)
             {
-              proc_opt_generic = ora->op;
               *ret = i;
-              return proc_opt_generic(arg, m);
+              return ora->op(arg, m, data);
             }
           else
             {
@@ -292,7 +290,7 @@ ar_remove(pmda md, uint32_t opt)
 }
 
 __ar_vrp
-ar_add(pmda md, uint32_t opt, int ttl)
+ar_add(pmda md, uint32_t opt, int ttl, void *arg)
 {
   md_init(md, 8);
 
@@ -300,6 +298,7 @@ ar_add(pmda md, uint32_t opt, int ttl)
 
   ptr->opt = opt;
   ptr->ttl = ttl;
+  ptr->arg = arg;
 
   return ptr;
 }
@@ -340,6 +339,9 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
 
   __gg_opt ora = (__gg_opt) fref_t;
 
+  _g_vop vop =
+    { 0 };
+
   for (i = 1, ret = 0, vi = -1; i < argc; i++, vi = -1)
     {
       c_arg = argv[i];
@@ -356,11 +358,12 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
           bp_opt[p_isl] = 0x0;
           p_iseq++;
 
-          ret = process_opt_n(bp_opt, p_iseq, fref_t, 2, &vi);
+          ret = process_opt_n(bp_opt, p_iseq, fref_t, 2, &vi, (void*) &vop);
         }
       else
         {
-          ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi);
+          ret = process_opt_n(c_arg, (char*) &argv[i + 1], fref_t, 0, &vi,
+              (void*) &vop);
         }
 
       ar_check_ttl_expired(&ar_vref);
@@ -407,7 +410,13 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
 
       if (NULL == p_iseq && vi > -1)
         {
-          i += (int) (uintaa_t) ora[vi].ac;
+          uint8_t ac = ora[vi].ac;
+          if (0 != vop.ac_s)
+            {
+              ac += vop.ac_s;
+              vop.ac_s = 0;
+            }
+          i += (int) ac;
         }
     }
 

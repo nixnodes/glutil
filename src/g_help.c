@@ -94,7 +94,7 @@ char *hpd_up =
     "  -mlist                Display any available macro, with description (if present)\n"
 #endif
     "\n Filtering:\n"
-    "  -regex [<field>,]<pattern>\n"
+    "  -regex <pattern> ([-l:<field>] -regex <pattern>)\n"
     "                        Match <field> value against regex <pattern>, value is based on the "
 #ifndef _MAKE_SBIN
     "data"
@@ -106,7 +106,7 @@ char *hpd_up =
 #ifndef _MAKE_SBIN
     "                          Used with -r, -e, -p, -d, -i, -l, -o, -w, -t, -g, -x, -a, -k, -h, -n, -q\n"
 #endif
-    "  -regexi [<var>,]<pattern>\n"
+    "  -regexi <pattern> ([-l:<field>] -regexi <pattern>)\n"
     "                        Case insensitive variant of -regex\n"
     "  --noereg              Disable POSIX Extended Regular Expression syntax (enabled by default)\n"
     "  -match [<field>,]<pattern>\n"
@@ -139,6 +139,7 @@ char *hpd_up =
     "  <expr1> or <expr2>    True when either of <expr1>, <expr2> is true.\n"
     "  <expr1> and <expr2>   True if both <expr1> and <expr2> are true.\n"
     "  -prune: [..] <expr>   Do not descend into directory when <expr> is false. Applies only when traversing filesystem.\n"
+    "  -l: <field>           Forces the next string match (-regex, -name, ..) to perform lookup on <field>"
     "\n Hooks:\n"
     "  -exec <command [{field}..{field}..]>\n"
     "                        While parsing data structure/filesystem, execute shell command for each record\n"

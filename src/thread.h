@@ -10,9 +10,10 @@
 #ifndef THREAD_H_
 #define THREAD_H_ 1
 
-#include <memory_t.h>
+#include <stdint.h>
+#include <inttypes.h>
 
-#include <stdio.h>
+#include <memory_t.h>
 
 #include <pthread.h>
 

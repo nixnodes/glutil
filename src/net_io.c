@@ -5,7 +5,6 @@
  *      Author: reboot
  */
 
-#include "glutil.h"
 #include <net_io.h>
 #include <thread.h>
 

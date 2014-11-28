@@ -22,7 +22,7 @@ dt_set_gen3(__g_handle hdl)
 {
   hdl->flags |= F_GH_ISGENERIC3;
   hdl->block_sz = G3_SZ;
-  hdl->d_memb = 10;
+  hdl->d_memb = 1;
   hdl->g_proc0 = gcb_gen3;
   hdl->g_proc1_lookup = ref_to_val_lk_gen3;
   hdl->g_proc2 = ref_to_val_ptr_gen3;

@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 typedef int
-(*__opt_cptr)(void *arg, int m);
+(*__opt_cptr)(void *arg, int m, void *opt);
 
 #define F_PARSE_ARG_IGNORE_ERRORS      (a32 << 1)
 #define F_PARSE_ARG_SILENT             (a32 << 2)
@@ -28,6 +28,11 @@ typedef struct ___gg_opt
   __opt_cptr op;        // option proc funct
 } _gg_opt, *__gg_opt;
 
+typedef struct ___g_vop
+{
+  uint8_t ac_s;
+} _g_vop, *__g_vop;
+
 void *
 g_pg(void *arg, int m);
 char *
@@ -38,7 +43,7 @@ g_cpg(void *arg, void *out, int m, size_t sz);
 char **
 build_argv(char *args, size_t max, int *c);
 int
-opt_execv_stdout_rd(void *arg, int m);
+opt_execv_stdout_rd(void *arg, int m, void *opt);
 int
 parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags);
 
@@ -80,12 +85,13 @@ typedef struct ___ar_vrp
 {
   int ttl;
   uint32_t opt;
+  void *arg;
 } _ar_vrp, *__ar_vrp;
 
 __ar_vrp
 ar_find(pmda md, uint32_t opt);
 __ar_vrp
-ar_add(pmda md, uint32_t opt, int ttl);
+ar_add(pmda md, uint32_t opt, int ttl, void *arg);
 void
 ar_mod_ttl(pmda md, int by);
 int

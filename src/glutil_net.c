@@ -39,7 +39,7 @@ process_ca_requests(pmda md)
           case F_OPSOCK_CONNECT:
           if ((ret = net_open_connection (pca->host, pca->port, pca)))
             {
-              print_str ("ERROR: net_open_connection: host:%s port:%s, status:[%d] %s\n",
+              print_str ("ERROR: net_open_connection: host: %s port: %s, status:[%d] %s\n",
                   pca->host, pca->port, ret, ret < 0 ? strerror(errno) : "");
               fail++;
             }
@@ -47,7 +47,7 @@ process_ca_requests(pmda md)
           case F_OPSOCK_LISTEN:
           if ((ret = net_open_listening_socket (pca->host, pca->port, pca)))
             {
-              print_str ("ERROR: net_open_listening_socket: host:%s port:%s, status:[%d] %s\n",
+              print_str ("ERROR: net_open_listening_socket: host: %s port: %s, status:[%d] %s\n",
                   pca->host, pca->port, ret, ret < 0 ? strerror(errno) : "");
               fail++;
             }

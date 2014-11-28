@@ -1034,14 +1034,14 @@ dt_rval_x_deccrc32(void *arg, char *match, char *output, size_t max_size,
 }
 
 int
-opt_xref_depth(void *arg, int m)
+opt_xref_depth(void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_DEPTH;
   return 0;
 }
 
 int
-opt_xref_sl_dat(void *arg, int m)
+opt_xref_sl_dat(void *arg, int m, void *opt)
 {
   char *buffer = g_pg(arg, m);
 

@@ -45,9 +45,9 @@ __d_exec exc;
 long amax;
 
 int
-opt_execv(void *arg, int m);
+opt_execv(void *arg, int m, void *opt);
 int
-opt_execv_stdin(void *arg, int m);
+opt_execv_stdin(void *arg, int m, void *opt);
 
 int
 process_exec_string(char *input, char *output, size_t max_size, void *callback,

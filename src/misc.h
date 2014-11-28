@@ -49,5 +49,5 @@ uint32_t LOGLVL;
 uint32_t STDOUT_LVL;
 
 int
-print_version_long(void *arg, int m);
+print_version_long(void *arg, int m, void *opt);
 #endif /* MISC_H_ */

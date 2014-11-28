@@ -57,7 +57,7 @@ typedef int
 int
 do_sort(__g_handle hdl, char *field, uint32_t flags);
 int
-opt_g_sort(void *arg, int m);
+opt_g_sort(void *arg, int m, void *opt);
 void
 g_invert_sort_order(uint32_t *flags);
 int

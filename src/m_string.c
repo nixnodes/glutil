@@ -20,7 +20,7 @@
 
 int
 g_cprg(void *arg, int m, int match_i_m, int fn_flags, int regex_flags,
-    uint32_t flags)
+    uint32_t flags, void *opt)
 {
   char *buffer = g_pg(arg, m);
 
@@ -89,8 +89,16 @@ g_cprg(void *arg, int m, int match_i_m, int fn_flags, int regex_flags,
       pgm->flags |= F_GM_TFD;
     }
 
+  __ar_vrp ptr;
+
+  if ( NULL != (ptr = ar_find(&ar_vref, AR_VRP_OPT_TARGET_LOOKUP)))
+    {
+      pgm->field = (char*) ptr->arg;
+    }
+
   ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
   ar_remove(&ar_vref, AR_VRP_OPT_NEGATE_MATCH);
+  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_LOOKUP);
 
   l_sfo = L_STFO_FILTER;
 
@@ -154,50 +162,45 @@ g_commit_strm_regex(__g_handle hdl, char *field, char *m, int reg_i_m,
   return r;
 }
 
+static void *
+dt_rval_default_generic(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  return (void*) (arg + ((__d_drt_h) mppd)->hdl->jm_offset);
+}
+
 static int
 g_proc_strm(__g_handle hdl, pmda match_rr, int *loaded)
 {
   p_md_obj ptr = md_first(match_rr);
   __g_match _m_ptr;
 
-  size_t i;
-
   while (ptr)
     {
       _m_ptr = (__g_match) ptr->ptr;
       if ( (_m_ptr->flags & F_GM_ISREGEX) || (_m_ptr->flags & F_GM_ISMATCH) || (_m_ptr->flags & F_GM_ISFNAME) )
         {
-          i = 0;
-          char *s_ptr = _m_ptr->data;
-          while ((s_ptr[i] != 0x2C || (s_ptr[i] == 0x2C && s_ptr[i - 1] == 0x5C))
-              && i < 4096 && s_ptr[i])
-            {
-              i++;
-            }
 
-          if (s_ptr[i] == 0x2C && i != (off_t) 4096)
+          if (NULL != _m_ptr->field)
             {
+              if (NULL == hdl->g_proc1_lookup )
+                {
+                  print_str("ERROR: %s: g_proc_strm: no lookup table exists for this log (report this)\n", hdl->file, _m_ptr->field);
+                  return 11;
+                }
               _m_ptr->dtr.hdl = hdl;
-              if (hdl->g_proc1_lookup && (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, s_ptr, hdl->mv1_b, MAX_VAR_LEN, &_m_ptr->dtr)))
+              if ( NULL == (_m_ptr->pmstr_cb = hdl->g_proc1_lookup(hdl->_x_ref, _m_ptr->field, hdl->mv1_b, MAX_VAR_LEN, &_m_ptr->dtr)) )
                 {
-                  _m_ptr->field = s_ptr;
-                  s_ptr = &s_ptr[i + 1];
+                  print_str("ERROR: %s: g_proc_strm: field lookup failed: '%s'\n", hdl->file, _m_ptr->field);
+                  return 12;
                 }
-              else
-                {
-                  if ( !hdl->g_proc1_lookup )
-                    {
-                      print_str("ERROR: %s: MPARSE: lookup failed for '%s', no lookup table exists\n", hdl->file, s_ptr);
-                      return 11;
-                    }
-                  if (gfl & F_OPT_VERBOSE3)
-                    {
-                      print_str("WARNING: %s: could not lookup field '%s', assuming it wasn't requested..\n", hdl->file, s_ptr);
-                    }
-                }
+
+            } else {
+                _m_ptr->dtr.hdl = hdl;
+                _m_ptr->pmstr_cb = dt_rval_default_generic;
             }
 
-          _m_ptr->match = s_ptr;
+          _m_ptr->match = _m_ptr->data;
 
           if (_m_ptr->flags & F_GM_ISREGEX)
             {

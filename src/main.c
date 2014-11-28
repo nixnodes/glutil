@@ -117,7 +117,7 @@ g_throw_arerr(int r)
 {
   if (r == -1)
     {
-      print_version_long(NULL, 0);
+      print_version_long(NULL, 0, NULL);
     }
 #ifdef _MAKE_SBIN
   print_str (HSTR_GFIND_USAGE);
@@ -516,7 +516,7 @@ g_init(int argc, char **argv, char **l_arg)
     break;
 #endif
   default:
-    print_help(NULL, -1);
+    print_help(NULL, -1, NULL);
     print_str("ERROR: no mode specified\n");
     break;
     }

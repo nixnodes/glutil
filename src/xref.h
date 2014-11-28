@@ -303,9 +303,9 @@ float
 file_sparseness(const struct stat *p);
 
 int
-opt_xref_sl_dat(void *arg, int m);
+opt_xref_sl_dat(void *arg, int m, void *opt);
 int
-opt_xref_depth(void *arg, int m);
+opt_xref_depth(void *arg, int m, void *opt);
 
 #define dt_rval_x_guid(stor, id) \
 { \

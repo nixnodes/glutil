@@ -12,11 +12,12 @@
 
 #define AR_VRP_OPT_NEGATE_MATCH         0x1
 #define AR_VRP_OPT_TARGET_FD            0x2
+#define AR_VRP_OPT_TARGET_LOOKUP        0x3
 
 int
-print_version_long(void *arg, int m);
+print_version_long(void *arg, int m, void *opt);
 int
-print_help(void *arg, int m);
+print_help(void *arg, int m, void *opt);
 
 
 

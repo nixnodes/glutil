@@ -8,11 +8,12 @@
 #ifndef MEMORY_H_
 #define MEMORY_H_
 
-#include <fp_types.h>
-#include <t_glob.h>
+//#include <fp_types.h>
+//#include <t_glob.h>
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
+
 
 #define F_MDA_REFPTR                    (a32 << 1)
 #define F_MDA_FREE                      (a32 << 2)
@@ -60,9 +61,9 @@ md_g_free(pmda md);
 int
 md_g_free_cb(pmda md, int
 (*cb)(void *));
-uintaa_t
+ssize_t
 md_relink(pmda md);
-uintaa_t
+ssize_t
 md_relink_n(pmda md, off_t base);
 p_md_obj
 md_first(pmda md);

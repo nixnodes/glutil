@@ -89,7 +89,7 @@ pce_sighdl_error(int sig, siginfo_t* siginfo, void* context)
     }
 
   snprintf(buffer1, 4096, ", fault address: 0x%.16llX",
-      (ulint64_t) (uintaa_t) siginfo->si_addr);
+      (ulint64_t) siginfo->si_addr);
 
   switch (g_sigjmp.id)
     {

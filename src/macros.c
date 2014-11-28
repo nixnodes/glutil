@@ -17,8 +17,10 @@
 #include <exec_t.h>
 #include <arg_proc.h>
 #include <lref.h>
+#include <lref_gen.h>
+#include <exech.h>
 #include <errno_int.h>
-#include <errno.h>
+#include <log_io.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,6 +28,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
+#include <errno.h>
 
 int
 list_macros(void)
@@ -143,6 +146,9 @@ process_macro(void * arg, char **out)
           av.p_buf_1, dirn);
     }
 
+
+  _g_handle hdl =
+     { 0 };
   _g_eds eds =
     { 0 };
 
@@ -186,15 +192,23 @@ process_macro(void * arg, char **out)
 
   s_buffer = (char*) malloc(MAX_EXEC_STR + 1);
 
-  if ((r = process_exec_string(av.s_ret, s_buffer, MAX_EXEC_STR,
-      ref_to_val_macro,
-      NULL)))
-    {
+  hdl.g_proc1_lookup = ref_to_val_lk_macro;
 
-      print_str("ERROR: [%d]: could not process exec string: '%s'\n", r,
-          av.s_ret);
+  if ((r = g_compile_exech(&hdl.print_mech, &hdl, (char*) av.s_ret)))
+    {
+      print_str("ERROR: %s: [%d]: could not compile exec string: '%s'\n",
+          "MACRO", r, av.s_ret);
       goto end;
     }
+
+  if (NULL == (g_exech_build_string(NULL, &hdl.print_mech, &hdl, s_buffer,
+  MAX_EXEC_STR - 4)))
+    {
+      print_str("ERROR: process_macro: could not assemble print string\n");
+      goto end;
+    }
+
+  g_p_escape_once(s_buffer);
 
   int c = 0;
   s_ptr = build_argv(s_buffer, 4096, &c);
@@ -221,6 +235,8 @@ process_macro(void * arg, char **out)
     }
 
   end:
+
+  g_cleanup(&hdl);
 
   if (NULL != av.buffer)
     {
@@ -461,6 +477,22 @@ ssd_4macro(char *name, unsigned char type, void *arg, __g_eds eds)
   }
 
   return 0;
+}
+
+void *
+ref_to_val_lk_macro(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+
+  PROC_SH_EX(match)
+
+  void *ptr;
+  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
+    {
+      return ptr;
+    }
+
+  return NULL;
 }
 
 int

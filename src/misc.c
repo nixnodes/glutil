@@ -385,7 +385,7 @@ build_data_path(char *file, char *path, char *sd)
 int
 g_print_info(void)
 {
-  print_version_long(NULL, 0);
+  print_version_long(NULL, 0, NULL);
   print_str(MSG_NL);
   print_str(" DATA SRC   BLOCK SIZE(B)   \n"
       "--------------------------\n");
@@ -409,7 +409,7 @@ g_print_info(void)
       print_str("  TYPE         SIZE(B)   \n"
           "-------------------------\n");
       print_str(" off_t            %d\t\n", (sizeof(off_t)));
-      print_str(" uintaa_t         %d\t\n", (sizeof(uintaa_t)));
+      //print_str(" uintaa_t         %d\t\n", (sizeof(uintaa_t)));
       print_str(" uint8_t          %d\t\n", (sizeof(uint8_t)));
       print_str(" uint16_t         %d\t\n", (sizeof(uint16_t)));
       print_str(" uint32_t         %d\t\n", (sizeof(uint32_t)));
@@ -490,7 +490,7 @@ g_bitstr(uint64_t value, uint8_t bits, char *buffer)
 }
 
 int
-print_version_long(void *arg, int m)
+print_version_long(void *arg, int m, void *opt)
 {
   print_str("* %s-%s.%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
   PACKAGE_VERSION, __STR_ARCH);

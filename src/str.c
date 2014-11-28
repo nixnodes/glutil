@@ -620,3 +620,22 @@ g_resolve_esc(char *input, char *output, size_t max_size)
 
   return output;
 }
+
+char *
+g_p_escape_once(char *input)
+{
+  char *ptr = input;
+  int c = 0;
+  while (0x0 != ptr[0])
+    {
+      if (ptr[0] == 0x5C)
+        {
+          memmove(ptr, &ptr[1], strlen(&ptr[1]) + 1);
+          c++;
+        }
+
+      ptr++;
+      c++;
+    }
+  return input;
+}

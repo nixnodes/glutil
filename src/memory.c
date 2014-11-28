@@ -65,11 +65,13 @@ md_g_free(pmda md)
           ptr = ptr_s;
         }
     }
+  free(md->objects);
+  md->objects = NULL;
+
 #ifdef _G_SSYS_THREAD
   pthread_mutex_unlock(&md->mutex);
 #endif
 
-  free(md->objects);
   bzero(md, sizeof(mda));
 
   return 0;
@@ -117,7 +119,7 @@ md_g_free_cb(pmda md, int
   return 0;
 }
 
-uintaa_t
+ssize_t
 md_relink(pmda md)
 {
   off_t off, l = 1;
@@ -147,7 +149,7 @@ md_relink(pmda md)
 
 #include <unistd.h>
 
-uintaa_t
+ssize_t
 md_relink_n(pmda md, off_t base)
 {
   size_t off, l = 1;
@@ -271,7 +273,7 @@ md_alloc(pmda md, int b)
         {
           print_str(
               "WARNING: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
-              (ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count);
+              (ulint64_t) md->objects, (ulint64_t) md->count);
         }
       md->objects = realloc(md->objects, (md->count * sizeof(md_obj)) * 2);
       md->pos = md->objects;
@@ -279,7 +281,7 @@ md_alloc(pmda md, int b)
       bzero(md->pos, md->count * sizeof(md_obj));
 
       md->count *= 2;
-      uintaa_t rlc;
+      ssize_t rlc;
 
       if (md->flags & F_MDA_ARR_DIST)
         {
@@ -294,15 +296,15 @@ md_alloc(pmda md, int b)
         {
           print_str(
               "WARNING: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
-              (ulint64_t) (uintaa_t) md->objects, (ulint64_t) md->count,
-              (ulint64_t) rlc);
+              (ulint64_t) md->objects, (ulint64_t) md->count, (ulint64_t) rlc);
         }
     }
 
   p_md_obj prev = md->pos;
-  uintaa_t pcntr = 0;
+  off_t pcntr = 0;
   while (md->pos->ptr
-      && (pcntr = ((md->pos - md->objects) / sizeof(md_obj))) < md->count)
+      && (pcntr = (off_t) ((md->pos - md->objects) / sizeof(md_obj)))
+          < md->count)
     {
       md->pos++;
     }

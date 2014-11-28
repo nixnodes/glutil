@@ -15,7 +15,9 @@
 #include <l_error.h>
 #include <x_f.h>
 
-
+#ifdef _G_SSYS_THREAD
+#include <thread.h>
+#endif
 
 char *
 g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
@@ -31,7 +33,6 @@ g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
 
   return ptr;
 }
-
 
 void *
 ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
@@ -77,6 +78,10 @@ ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
   pmda s_ret = NULL;
   void *p_ret = NULL;
 
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&ret->mutex);
+#endif
+
   if ((ptr = get_cfg_opt(s_key, ret, &s_ret)))
     {
       switch (flags & F_CFGV_MODES)
@@ -113,7 +118,8 @@ ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
 
         if (c_token < 0 || c_token >= s_ret->count)
           {
-            return NULL;
+            p_ret = NULL;
+            goto finish;
           }
 
         p_md_obj p_ret_tx = &s_ret->objects[c_token];
@@ -127,6 +133,12 @@ ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
         break;
         }
     }
+  finish: ;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&ret->mutex);
+#endif
+
   md_g_free(&s_tk);
   return p_ret;
 }
@@ -153,21 +165,28 @@ load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res)
       md = register_cfg_rf(pmd, file);
     }
 
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&pmd->mutex);
+#endif
+
   if (!md)
     {
-      return 1;
+      r = 1;
+      goto finish;
     }
 
   off_t f_sz = get_file_size(file);
 
   if (!f_sz)
     {
-      return 2;
+      r = 2;
+      goto finish;
     }
 
   if (!(fh = fopen(file, "r")))
     {
-      return 3;
+      r = 3;
+      goto finish;
     }
 
   char *buffer = malloc(LCFG_MAX_LINE_SIZE + 2);
@@ -211,6 +230,12 @@ load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res)
       *res = md;
     }
 
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&pmd->mutex);
+#endif
+
+  finish: ;
+
   return r;
 }
 
@@ -219,8 +244,15 @@ free_cfg(pmda md)
 {
   g_setjmp(0, "free_cfg", NULL, NULL);
 
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
   if (!md || !md->objects)
     {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
       return;
     }
 
@@ -237,15 +269,25 @@ free_cfg(pmda md)
       ptr = ptr->next;
     }
 
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+
   md_g_free(md);
 }
 
 p_md_obj
 get_cfg_opt(char *key, pmda md, pmda *ret)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
+  p_md_obj p_ret = NULL;
+
   if (!md->count)
     {
-      return NULL;
+      goto finish;
     }
 
   p_md_obj ptr = md_first(md);
@@ -265,46 +307,72 @@ get_cfg_opt(char *key, pmda md, pmda *ret)
                 {
                   *ret = &pce->data;
                 }
-              return (p_md_obj) r_ptr->next;
+              p_ret = (p_md_obj) r_ptr->next;
+              goto finish;
             }
           else
             {
-              return NULL;
+              goto finish;
             }
         }
       ptr = ptr->next;
     }
 
-  return NULL;
-}
+  finish: ;
 
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+
+  return p_ret;
+}
 
 pmda
 search_cfg_rf(pmda md, char * file)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
   p_md_obj ptr = md_first(md);
   p_cfg_r ptr_c;
   size_t fn_len = strlen(file);
+
+  pmda pmd_ret = NULL;
+
   while (ptr)
     {
       ptr_c = (p_cfg_r) ptr->ptr;
       if (ptr_c && !strncmp(ptr_c->file, file, fn_len))
         {
-          return &ptr_c->cfg;
+          pmd_ret = &ptr_c->cfg;
+          goto finish;
         }
       ptr = ptr->next;
     }
-  return NULL;
+
+  finish: ;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+
+  return pmd_ret;
 }
 
 pmda
 register_cfg_rf(pmda md, char *file)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
+  pmda pmd_ret = NULL;
+
   if (!md->count)
     {
       if (md_init(md, 128))
         {
-          return NULL;
+          goto finish;
         }
     }
 
@@ -312,29 +380,45 @@ register_cfg_rf(pmda md, char *file)
 
   if (pmd)
     {
-      return pmd;
+      pmd_ret = pmd;
+      goto finish;
     }
 
   size_t fn_len = strlen(file);
 
   if (fn_len >= PATH_MAX)
     {
-      return NULL;
+      goto finish;
     }
   g_setjmp(0, "register_cfg_rf-2", NULL, NULL);
   p_cfg_r ptr_c = md_alloc(md, sizeof(cfg_r));
 
   strncpy(ptr_c->file, file, fn_len);
-  md_init(&ptr_c->cfg, 256);
+  md_init(&ptr_c->cfg, 1024);
 
-  return &ptr_c->cfg;
+  pmd_ret = &ptr_c->cfg;
+
+  finish: ;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+
+  return pmd_ret;
 }
 
 int
 free_cfg_rf(pmda md)
 {
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+
   if (!md || !md->count)
     {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
       return 0;
     }
 
@@ -346,6 +430,10 @@ free_cfg_rf(pmda md)
       free_cfg(&ptr_c->cfg);
       ptr = ptr->next;
     }
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
 
   return md_g_free(md);
 }

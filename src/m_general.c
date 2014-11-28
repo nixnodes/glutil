@@ -169,7 +169,7 @@ g_bm_proc(void *d_ptr, __g_handle hdl, pmda match_rr)
         }
       else if (_gm->flags & F_GM_TYPES_STR)
         {
-          r = do_match(hdl, d_ptr, _gm);
+          r = do_string_match(hdl, d_ptr, _gm);
         }
       else
         {
@@ -290,27 +290,12 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 }
 
 int
-do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
+do_string_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 {
   char *mstr;
 
-  if (_gm->pmstr_cb)
-    {
-      mstr = _gm->pmstr_cb(d_ptr, _gm->field, hdl->mv1_b, MAX_VAR_LEN,
-          &_gm->dtr);
-    }
-  else
-    {
-      mstr = (char*) (d_ptr + hdl->jm_offset);
-    }
-
-  /*if (!mstr)
-   {
-   print_str("ERROR: could not get match string\n");
-   gfl |= F_OPT_KILL_GLOBAL;
-   ofl |= F_BM_TERM;
-   return 0;
-   }*/
+  mstr = (char*) _gm->pmstr_cb(d_ptr, _gm->field, hdl->mv1_b, MAX_VAR_LEN,
+      &_gm->dtr);
 
   int r = 0;
 
@@ -346,7 +331,7 @@ do_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 }
 
 int
-opt_g_operator_or(void *arg, int m)
+opt_g_operator_or(void *arg, int m, void *opt)
 {
   __g_match pgm = (__g_match) _match_rr_l.ptr;
   if (!pgm)
@@ -365,7 +350,7 @@ opt_g_operator_or(void *arg, int m)
 }
 
 int
-opt_g_operator_and(void *arg, int m)
+opt_g_operator_and(void *arg, int m, void *opt)
 {
   __g_match pgm = (__g_match) _match_rr_l.ptr;
   if (!pgm)
@@ -384,7 +369,7 @@ opt_g_operator_and(void *arg, int m)
 }
 
 int
-opt_g_m_raise_level(void *arg, int m)
+opt_g_m_raise_level(void *arg, int m, void *opt)
 {
   __g_match pgm = g_global_register_match();
 
@@ -414,7 +399,7 @@ opt_g_m_raise_level(void *arg, int m)
 }
 
 int
-opt_g_m_lower_level(void *arg, int m)
+opt_g_m_lower_level(void *arg, int m, void *opt)
 {
 
   if (NULL == _match_clvl->lref_ptr)

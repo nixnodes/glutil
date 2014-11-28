@@ -5,6 +5,11 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.5:
+ *
+ *   - % Changed how field is passed to string matching parameters
+ *   -  
+ *
  * v2.4:
  *
  *   - + 'user' and 'group' fields, see under FILESYSTEM in DATA_STRUCTURES

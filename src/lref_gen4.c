@@ -22,7 +22,7 @@ dt_set_gen4(__g_handle hdl)
 {
   hdl->flags |= F_GH_ISGENERIC4;
   hdl->block_sz = G4_SZ;
-  hdl->d_memb = 10;
+  hdl->d_memb = 1;
   hdl->g_proc0 = gcb_gen4;
   hdl->g_proc1_lookup = ref_to_val_lk_gen4;
   hdl->g_proc2 = ref_to_val_ptr_gen4;

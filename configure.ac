@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.4.17], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.5.0], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 
 AM_INIT_AUTOMAKE([subdir-objects silent-rules]) 
@@ -65,15 +65,19 @@ fi
 
 if [ test "$glutil_enable_net" = "yes" ]; then
  	if [ test "$glutil_enable_sbin" = "no" ]; then
+ 		AC_CHECK_LIB([ssl], [SSL_library_init], [], [AC_MSG_FAILURE([could not find ssl libs])])
+ 		AC_CHECK_HEADER([openssl/ssl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (openssl/ssl.h)])])
+ 		AC_CHECK_HEADER([openssl/err.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (openssl/err.h)])])
+ 		AC_CHECK_LIB([crypto], [CRYPTO_set_id_callback], [], [AC_MSG_FAILURE([could not find libcrypto])])
 		AC_DEFINE([_G_SSYS_NET], [1], [//])
-		AC_DEFINE([_G_SSYS_THREAD], [1], [//])
-		LDFLAGS="${LDFLAGS} -lpthread -lssl -lcrypto"
+		AC_DEFINE([_G_SSYS_THREAD], [1], [//])				
+		AC_CHECK_LIB([pthread], [pthread_create], [], [AC_MSG_FAILURE([could not find libpthread])])
+		AC_CHECK_HEADER([pthread.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (pthread.h)])])
+		AC_DEFINE([_G_SSYS_CRYPTO], [1], [//])
 	else
 		glutil_enable_net="no"
 	fi
 fi
-
-
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
 	AS_IF([test "$prefix" = "NONE"], 

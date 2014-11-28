@@ -32,7 +32,8 @@ int
 rtv_q(void *query, char *output, size_t max_size);
 
 char*
-l_mppd_shell_ex(char *input, char *output, size_t max_size, void **l_nr, char l, char r, uint32_t flags);
+l_mppd_shell_ex(char *input, char *output, size_t max_size, void **l_nr, char l,
+    char r, uint32_t flags);
 
 #define F_MPPD_SHX_TZERO        (a32 << 1)
 
@@ -51,5 +52,8 @@ char m_b[MAX_SHARG_SZ]; \
         ((__d_drt_h) mppd)->varg_l = (char*)l_next_ref; \
     }\
 };
+
+char *
+g_extract_vfield(char *input, char *output, size_t max_size, size_t offset);
 
 #endif /* LREF_H_ */

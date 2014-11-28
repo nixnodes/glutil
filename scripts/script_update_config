@@ -1,0 +1,18 @@
+CURL_FLAGS="--silent --max-time 30"
+CURL=/usr/bin/curl
+BASE_URL="https://raw.githubusercontent.com/nixnodes/glutil/master"
+BASE_SEARCHDIR=
+
+# <script name> <script path, relative to ${BASE_URL}> <permission mask to set>
+SOURCES=(
+	"common scripts/common 644"
+ 	"killslow scripts/killslow.sh 755"
+ 	"imdb scripts/imdb_get.sh 755"
+ 	"tvrage scripts/tvrage_get.sh 755"
+ 	"game scripts/gb_get.sh 755"
+ 	"mk-test scripts/mk_test.sh 755"
+ 	"imdb-sort scripts/sort_imdb.sh 755"
+ 	"clean-site scripts/site_clean.sh 755"
+ 	"check-incomplete scripts/check_incomplete.sh 755"
+ 	"macros scripts/misc/macros.glutil 755"
+)

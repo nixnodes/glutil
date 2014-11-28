@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+
+char *l_av_st[L_AV_MAX] =
+  { 0 };
 
 static char *
 dt_legacy_gg_int(char *match, char *output, size_t max_size)
@@ -97,7 +101,7 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     {
       if (self_get_path(output))
         {
-          strcp_s(output, max_size, "UNKNOWN");
+          output[0x0] = 0;
         }
     }
   else if (!strncmp(match, "glroot", 6))
@@ -246,6 +250,7 @@ dt_rval_generic_curtime(void *arg, char *match, char *output, size_t max_size,
 char *
 dt_rval_q(void *arg, char *match, char *output, size_t max_size, void *mppd)
 {
+
   while (match[0] != 0x3A && match[0])
     {
       match++;
@@ -441,12 +446,71 @@ dt_rval_generic_pspec4(void *arg, char *match, char *output, size_t max_size,
   return "";
 }
 
+static char *
+dt_rval_generic_lav(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  char *ptr = l_av_st[((__d_drt_h ) mppd)->v_ui0];
+
+  if (NULL != ptr)
+    {
+      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
+          l_av_st[((__d_drt_h ) mppd)->v_ui0]);
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
+  return output;
+}
+
+static void *
+rt_af_gen_lav(void *arg, char *match, char *output, size_t max_size, void *mppd)
+{
+  while (is_ascii_numeric(match[0]) && 0 != match[0])
+    {
+      match++;
+    }
+
+  if (match[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_gen_lav: invalid 'arg' variable name: '%s'\n",
+          match);
+      return NULL;
+    }
+
+  errno = 0;
+  uint32_t lav_idx = (uint32_t) strtoul(match, NULL, 10);
+
+  if (errno == EINVAL || errno == ERANGE)
+    {
+      print_str("ERROR: rt_af_gen_lav: could not get index: '%s'\n", match);
+      return NULL;
+    }
+
+  uint32_t max_index = sizeof(l_av_st) / sizeof(void*);
+
+  if (lav_idx > max_index)
+    {
+      print_str("ERROR: rt_af_gen_lav: index out of range: %u, max: %u\n",
+          lav_idx, max_index);
+      return NULL;
+    }
+
+  __d_drt_h _mppd = (__d_drt_h) mppd;
+
+  _mppd->v_ui0 = lav_idx;
+
+  return as_ref_to_val_lk(match, dt_rval_generic_lav, (__d_drt_h ) mppd, "%s");
+}
+
 #define MSG_GENERIC_BS         0x3A
 
 void *
 ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+
   if (!strncmp(match, "nukestr", 7))
     {
       return as_ref_to_val_lk(match, dt_rval_generic_nukestr, (__d_drt_h ) mppd,
@@ -614,6 +678,10 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_generic_pspec4, (__d_drt_h ) mppd,
           "%s");
+    }
+  else if (!strncmp(match, "arg", 3))
+    {
+      return rt_af_gen_lav(arg, match, output, max_size, (__d_drt_h ) mppd);
     }
   else if (match[0] == 0x3F)
     {

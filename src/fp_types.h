@@ -12,6 +12,7 @@
 #include <sys/shm.h>
 
 #include <memory_t.h>
+#include <stdint.h>
 
 
 #define MAX_VAR_LEN                             4096 * 8

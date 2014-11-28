@@ -178,7 +178,7 @@ g_init_execv_bare(__execv exec_args, __g_handle hdl, char *i_exec_str)
 }
 
 int
-opt_execv_stdin(void *arg, int m)
+opt_execv_stdin(void *arg, int m, void *opt)
 {
   char *b_in, *fn_in;
   FILE *fh_in;
@@ -188,14 +188,14 @@ opt_execv_stdin(void *arg, int m)
   exec_str = calloc(MAX_EXEC_STR, 1);
   if (read_file(fn_in, exec_str, MAX_EXEC_STR, 0, fh_in))
     {
-      return opt_execv(exec_str, 3);
+      return opt_execv(exec_str, 3, opt);
     }
 
   return 6426;
 }
 
 int
-opt_execv(void *arg, int m)
+opt_execv(void *arg, int m, void *opt)
 {
   int c = 0;
 

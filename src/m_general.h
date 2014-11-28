@@ -53,14 +53,14 @@ typedef int
 (*pt_g_bmatch)(void *, __g_handle, pmda md);
 
 int
-opt_g_operator_or(void *arg, int m);
+opt_g_operator_or(void *arg, int m, void *opt);
 int
-opt_g_operator_and(void *arg, int m);
+opt_g_operator_and(void *arg, int m, void *opt);
 
 int
-opt_g_m_raise_level(void *arg, int m);
+opt_g_m_raise_level(void *arg, int m, void *opt);
 int
-opt_g_m_lower_level(void *arg, int m);
+opt_g_m_lower_level(void *arg, int m, void *opt);
 
 typedef struct ___g_lom
 {
@@ -123,7 +123,7 @@ typedef struct ___last_match
 __g_match
 g_global_register_match(void);
 int
-do_match(__g_handle hdl, void *d_ptr, __g_match _gm);
+do_string_match(__g_handle hdl, void *d_ptr, __g_match _gm);
 
 _l_match _match_rr_l;
 

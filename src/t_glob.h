@@ -40,12 +40,10 @@ typedef unsigned long long int uint64_t;
 typedef unsigned long long int ulint64_t;
 
 #if __x86_64__ || __ppc64__
-#define uintaa_t uint64_t
 #define ENV_64
 #define __STR_ARCH      "x86_64"
 #define __AA_SPFH       "%.16X"
 #else
-#define uintaa_t uint32_t
 #define ENV_32
 #define __STR_ARCH      "i686"
 #define __AA_SPFH       "%.8X"

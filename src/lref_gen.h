@@ -59,4 +59,8 @@ __g_proc_rv dt_rval_generic_nukestr, dt_rval_generic_procid,
     dt_rval_generic_spec1, dt_rval_generic_glconf, dt_rval_generic_logfile,
     dt_rval_gg_int, dt_rval_gg_float;
 
+#define L_AV_MAX        256
+
+char *l_av_st[L_AV_MAX];
+
 #endif /* LREF_GEN_H_ */

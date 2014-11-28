@@ -1,11 +1,12 @@
-#include "glutil.h"
 
+#include <t_glob.h>
 #include <thread.h>
 
-#include <pthread.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <pthread.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
 
