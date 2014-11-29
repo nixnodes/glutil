@@ -1,4 +1,4 @@
-#@REVISION:54
+#@REVISION:55
 #
 ## NOTE: Requires glutil 2.5 or higher
 #
@@ -259,3 +259,5 @@
 #@MACRO:clean-deadlinks-rmbasedir|Deletes dead symlinks [-arg1=<rootpath>] [-arg2=prefix]:/bin/glutil -x "{arg1}" -lom "depth>0" -R -lom "mode=10" -l: "(?X:(isread):(?P:rlink#{arg2}%s))" -match "0" --silent -exec `rm -f "\{path\}"; rmdir "\{?d:path\}"`
 
 #@MACRO:clean-path|Deletes oldest files, exceeding <limit> GBytes [-arg1=<limit> -arg2=<path>]:glutil  -x {arg2} -lom "depth>0" -v --sort desc,mtime -lom "mode=8" -lom "u64glob0+=size" -lom "(u64glob0) > ({arg1}*(1024^3))" -execv "rm -f \{path\}"
+
+#@MACRO:script-update-sh|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{glroot}/bin/scripts";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
