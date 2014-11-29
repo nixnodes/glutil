@@ -1,6 +1,6 @@
-#@REVISION:1
+#@REVISION:2
 
 INPUT_SOURCES=(
-	"config scripts/config 644 1" 	
- 	"tvrage scripts/tvrage_get.sh 755 0" 	 	
+	"base/config scripts/config 644 1" 	
+ 	"tvrage/tvrage scripts/tvrage_get.sh 755 0" 	 	
 )

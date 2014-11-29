@@ -1,12 +1,12 @@
-#@REVISION:6
+#@REVISION:7
 
 INPUT_SOURCES=(
-	"taskd-config scripts/taskd/taskd_config 644 1"
-	"taskd-server-config scripts/taskd/taskd_server_config 644 1"
- 	"taskd-mod-nuke-0 scripts/taskd/modules/nuke 644 4" 	
- 	"taskd-mod-nuke scripts/taskd/modules/12nuke 644 0" 
- 	"taskd-mod-tvrage scripts/taskd/modules/14tvrage 644 0" 
- 	"taskd-mod-imdb scripts/taskd/modules/16imdb 644 0"
- 	"taskd scripts/taskd/taskd.sh 755 0"
- 	"taskc scripts/taskd/taskc.sh 755 0"
+	"taskd/config scripts/taskd/taskd_config 644 1"
+	"taskd/server-config scripts/taskd/taskd_server_config 644 1"
+ 	"taskd/mod-nuke-0 scripts/taskd/modules/nuke 644 4" 	
+ 	"taskd/mod-nuke scripts/taskd/modules/12nuke 644 0" 
+ 	"taskd/mod-tvrage scripts/taskd/modules/14tvrage 644 0" 
+ 	"taskd/mod-imdb scripts/taskd/modules/16imdb 644 0"
+ 	"taskd/taskd scripts/taskd/taskd.sh 755 0"
+ 	"taskd/taskc scripts/taskd/taskc.sh 755 0"
 )

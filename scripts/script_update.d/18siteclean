@@ -1,6 +1,6 @@
-#@REVISION:1
+#@REVISION:2
 
 INPUT_SOURCES=(	 	
- 	"clean-site scripts/site_clean.sh 755 0"
- 	"clean-site-config scripts/site_clean_config 644 1"	
+ 	"siteclean/siteclean scripts/site_clean.sh 755 0"
+ 	"siteclean/config scripts/site_clean_config 644 1"	
 )
