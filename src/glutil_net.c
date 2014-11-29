@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <malloc.h>
 
 _net_opt net_opts =
   { .max_sock = 512, .thread_l = 1, .thread_r = 32, .st_p0 = NULL,
@@ -84,6 +85,13 @@ net_deploy(void)
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
   int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+#ifdef M_ARENA_TEST
+  mallopt(M_ARENA_TEST, 1);
+#endif
+#ifdef M_ARENA_MAX
+  mallopt(M_ARENA_MAX, 1);
+#endif
 
   if (s != 0)
     {

@@ -874,6 +874,8 @@ net_worker(void *args)
 
   po_thrd thrd = (po_thrd) args;
 
+  char buffer0[1024];
+
   mutex_lock(&thrd->mutex);
 
   thrd->buffer0 = malloc(THREAD_DEFAULT_BUFFER0_SIZE);
@@ -1057,7 +1059,7 @@ net_worker(void *args)
                 pso->oper_mode == SOCKET_OPMODE_RECIEVER ?
                     "rx/tx data" : "socket operation", pso->sock, pso->status,
                 errno,
-                errno ? strerror_r(errno, thrd->buffer0, 1024) : "");
+                errno ? strerror_r(errno, (char*) buffer0, 1024) : "");
 
             mutex_lock(&pso->mutex);
 
@@ -1636,4 +1638,3 @@ net_ssend(__sock_o pso, void *data, size_t length)
 
   return 0;
 }
-
