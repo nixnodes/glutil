@@ -26,9 +26,6 @@
 ## specified input.
 ## Communicates with other processes via 'taskc.sh' using TCP/IP
 #
-## 
-## 
-#
 ## This is meant to run outside the chrooted environment.
 #
 #########################################################################
