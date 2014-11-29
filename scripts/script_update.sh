@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:8
+#@REVISION:9
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
@@ -190,6 +190,14 @@ script_process_source()
 			}
 			
 			chmod ${perm_mask} "${GLROOT}/${BASE_SEARCHDIR}/${path}"
+						
+			[[ ${opt} -eq 2 ]] && { 
+				. "${GLROOT}/${BASE_SEARCHDIR}/${path}" || {
+					echo "ERROR: ${in_source}: failed loading source"
+					return 1
+				}
+				script_inject_sources INPUT_SOURCES[@]
+			}
 		}
 	done
 	
@@ -225,7 +233,7 @@ fi
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	. "${in_source}" || {
 		echo "ERROR: ${in_source}: failed loading source"
-		exit 1
+		return 1
 	}
 	script_inject_sources INPUT_SOURCES[@]
 done
