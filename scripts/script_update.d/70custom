@@ -1,11 +1,3 @@
-INPUT_SOURCES=(
-	"config scripts/config 644 1"
-	"killslow scripts/killslow.sh 755 0"
-	"killslow-config scripts/killslow_config 644 1"
- 	"imdb scripts/imdb_get.sh 755 0"
- 	"tvrage scripts/tvrage_get.sh 755 0" 	
- 	"imdb-sort scripts/sort_imdb.sh 755 0"
- 	"clean-site scripts/site_clean.sh 755 0"
- 	"clean-site-config scripts/site_clean_config 644 1"
+INPUT_SOURCES=(	 	
  	"check-incomplete scripts/check_incomplete.sh 755 0" 	
 )

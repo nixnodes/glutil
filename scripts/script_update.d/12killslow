@@ -1,0 +1,6 @@
+#@REVISION:1
+
+INPUT_SOURCES=(	
+	"killslow scripts/killslow.sh 755 0"
+	"killslow-config scripts/killslow_config 644 1" 	
+)

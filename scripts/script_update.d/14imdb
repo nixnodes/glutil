@@ -1,0 +1,7 @@
+#@REVISION:1
+
+INPUT_SOURCES=(
+	"config scripts/config 644 1"
+ 	"imdb scripts/imdb_get.sh 755 0" 	
+ 	"imdb-sort scripts/sort_imdb.sh 755 0"
+)
