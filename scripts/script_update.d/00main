@@ -1,0 +1,6 @@
+INPUT_SOURCES=(
+	"script-update-config scripts/script_update_config 644 1"
+	"common scripts/common 644 0"
+ 	"mk-test scripts/mk_test.sh 755 0" 	
+ 	"macros scripts/misc/macros.glutil 755 0"
+)
