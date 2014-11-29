@@ -221,15 +221,11 @@
 #
 ## iMDB log - total count statistics
 #
-## Dependencies: bc
-#
 #@MACRO:imdb-record-totalstats|iMDB log - total count statistics, dependencies\: bc:{exe} --preexec `bc --help > /dev/null || ( echo "bc not found, please install it"; exit 1 )` -a  -lom "u64glob3 += runtime && u64glob2 += votes" --postexec `echo -e "IMDB: \{q:imdb@file\}: Total votes/runtime: \{u64glob2\} / $(echo 'scale=2; \{u64glob3\} / 60' | bc -l)hrs"` --silent
 #
 ## <imdb-stats>
 #
 ## iMDB log - full stats
-#
-## Dependencies: bc
 #
 #@MACRO:imdb-record-stats|iMDB log - full stats, dependencies\: bc:{exe} -noop --preexec `{exe} -m imdb-print-info; {exe} -m imdb-record-avgstats; {exe} -m imdb-record-totalstats`
 #
