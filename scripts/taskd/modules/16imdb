@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:1
+#@REVISION:2
 
 mod_imdb_logupdate()
 {
@@ -14,9 +14,9 @@ mod_imdb_logupdate()
 		
 	try_lock_r 14 taskd "glob_imdb" 15 "ERROR: mod_imdb_logupdate: could not obtain lock"
 		
-	if ${GLUTIL} -m tvrage-e -arg 1 "${2}" --tvlog "${MOD_IMDB_LOG}"; then
+	if ${GLUTIL} -m imdb-e -arg 1 "${2}" --tvlog "${MOD_IMDB_LOG}"; then
 		[ ${1} -eq 1 ] && {			
-        	${GLUTIL} -q tvrage --tvlog "${MOD_IMDB_LOG}" -vvvv --shmem --shmdestroy --loadq 
+        	${GLUTIL} -q imdb --tvlog "${MOD_IMDB_LOG}" -vvvv --shmem --shmdestroy --loadq 
 		}
         return 0
 	fi
