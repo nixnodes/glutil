@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:12
+#@REVISION:13
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
@@ -117,6 +117,7 @@ script_process_source()
 			[ -d "${GLROOT}/${BASE_SEARCHDIR}" ] &&
 				touch "${GLROOT}/${BASE_SEARCHDIR}/${path}"
 			[ ${VERBOSE} -gt 0 ] && echo "NOTICE: ${path}: updates disabled"
+			continue
 		elif [[ ${opt} -eq 1 ]]; then
 			[ -f "${GLROOT}${BASE_SEARCHDIR}/${path}" ] && {
 				[ ${VERBOSE} -gt 0 ] &&  echo "WARNING: ${path}: configuration file already exists"
