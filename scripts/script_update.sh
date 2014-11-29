@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:5
-#@MACRO:script-update-self|..:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
+#@REVISION:6
+#@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
 ## Requires: - glutil-2.5 or above
@@ -64,6 +64,19 @@ script_join_verstring()
 	echo "`script_get_version "${1}"`.`script_get_revision "${1}"`"
 }
 
+script_register_update()
+{
+	SOURCES+=("${1}")
+}
+
+script_inject_sources()
+{
+	declare -a input_ar=("${!1}")
+	for item in "${input_ar[@]}"; do
+		script_register_update "${item}"
+	done
+}
+
 [ -f "${BASE_PATH}/script_update_config" ] && . ${BASE_PATH}/script_update_config || {
 	echo "ERROR: "${BASE_PATH}/script_update_config": missing configuration file"
 	exit 1
@@ -79,92 +92,141 @@ script_join_verstring()
 	exit 1
 }
 
+script_process_source()
+{
+	spc_ret=0
+	declare -a input_source_ar=("${!1}")
+	for item in "${input_source_ar[@]}"; do
+		name=`echo "${item}" | cut -d' ' -f1`
+		
+		[ -z "${name}" ] && {
+			echo "ERROR: empty source definition in config"
+			exit 2
+		}
+		
+		path=`echo "${item}" | cut -d' ' -f2`
+		
+		[ -z "${path}" ] && {
+			echo "WARNING: missing script path: ${name}"
+			continue
+		}
+		
+		opt=`echo "${item}" | cut -d' ' -f4`
+			
+		[[ ${opt} -eq 1 ]] && { 
+			[ -f "${GLROOT}${BASE_SEARCHDIR}/${path}" ] && {
+				[ ${VERBOSE} -gt 0 ] &&  echo "WARNING: ${path}: configuration file already exists"
+				continue
+			}
+		}
+		
+		echo "${name}" | egrep -q "^${2}$" && {
+			${CURL} ${CURL_FLAGS} "${BASE_URL}/${path}" > /tmp/glutil.script_update.$$.tmp || {
+				echo "ERROR: ${CURL}: could not fetch: '${BASE_URL}/${path}'"
+				spc_ret=$[spc_ret+1]
+				continue
+			}
+			
+			[ -f /tmp/glutil.script_update.$$.tmp ] || {
+				echo "ERROR: ${path}: missing temp file ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
+				spc_ret=$[spc_ret+1]
+				continue
+			}
+			
+			b_size=`stat -c %s /tmp/glutil.script_update.$$.tmp`
+			
+			[ ${b_size} -eq 0 ] && {
+				echo "ERROR: ${path}: recieved no data ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
+				spc_ret=$[spc_ret+1]
+				continue
+			}
+			
+			[ ${b_size} -lt 50 ] && {
+				echo "ERROR: ${path}: recieved invalid data ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
+				spc_ret=$[spc_ret+1]
+				continue
+			}
+			
+			TARGET_DIR=`dirname "${GLROOT}/${BASE_SEARCHDIR}/${path}"`
+			[ -d "${TARGET_DIR}" ] || {
+				mkdir -p "${TARGET_DIR}" || {
+					echo "ERROR: could not create '${GLROOT}/${BASE_SEARCHDIR}/${path}'"
+					spc_ret=$[spc_ret+1]
+					continue
+				}
+			}
+			
+			if [ -f "${GLROOT}/${BASE_SEARCHDIR}/${path}" ]; then 
+				mode="UPDATE"
+				current_ver=`script_get_version "${GLROOT}/${BASE_SEARCHDIR}/${path}"``script_get_revision "${GLROOT}/${BASE_SEARCHDIR}/${path}"`
+				upgrade_ver=`script_get_version /tmp/glutil.script_update.$$.tmp``script_get_revision /tmp/glutil.script_update.$$.tmp`
+				
+				if [ ${upgrade_ver} -lt ${current_ver} ]; then
+					echo "WARNING: ${path}: current version is newer than remote (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` > `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
+					continue
+				fi
+				
+				if [ ${upgrade_ver} -eq ${current_ver} ]; then
+					[ ${VERBOSE} -gt 0 ] && echo "WARNING: ${path}: already installed (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` = `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
+					continue
+				fi
+				
+				echo "${mode}: ${path}: (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` -> `script_join_verstring /tmp/glutil.script_update.$$.tmp`)"
+			else
+				mode="INSTALL"
+				echo "${mode}: ${path}: (`script_join_verstring /tmp/glutil.script_update.$$.tmp`)"
+			fi
+					
+			cat /tmp/glutil.script_update.$$.tmp > "${GLROOT}${BASE_SEARCHDIR}/${path}" || {
+				spc_ret=$[spc_ret+1]
+				echo "ERROR: ${path}: update failed ( /tmp/glutil.script_update.$$.tmp )"
+				continue
+			}
+			
+			perm_mask=`echo "${item}" | cut -d' ' -f3`
+		
+			[ -z "${perm_mask}" ] && {		
+				perm_mask=755
+			}
+			
+			chmod ${perm_mask} "${GLROOT}/${BASE_SEARCHDIR}/${path}"
+		}
+	done
+	
+	return ${spc_ret}
+}
+
+SOURCES=()
+
+INIT_SOURCES=(
+	"init/00main scripts/script_update.d/00main 644 0"
+ 	"init/70custom scripts/script_update.d/70custom 755 1" 	 	
+)
+
+trap "rm -f /tmp/glutil.script_update.$$.tmp" EXIT
+
+[ -d "${BASE_PATH}/script_update.d" ] || {
+	script_process_source INIT_SOURCES[@] ".*" || {
+		echo "ERROR: could not initialize '${BASE_PATH}/script_update.d'"
+		exit 1
+	}
+	
+	mkdir -p "${BASE_PATH}/script_update.d"
+}
+
 if [ "${1}" = all ]; then
 	match=".*"
 else
 	match="${1}"
 fi
 
-trap "rm -f /tmp/glutil.script_update.$$.tmp" 2 15 9 6 EXIT
-
-for item in "${SOURCES[@]}"; do
-	name=`echo "${item}" | cut -d' ' -f1`
-	
-	[ -z "${name}" ] && {
-		echo "ERROR: empty source definition in config"
-		exit 2
+for in_source in "${BASE_PATH}/script_update.d"/*; do
+	. "${in_source}" || {
+		echo "ERROR: ${in_source}: failed loading source"
+		exit 1
 	}
-	
-	path=`echo "${item}" | cut -d' ' -f2`
-	
-	[ -z "${path}" ] && {
-		echo "WARNING: missing script path: ${name}"
-		continue
-	}
-	
-
-	echo "${name}" | egrep -q "^${match}$" && {
-		${CURL} ${CURL_FLAGS} "${BASE_URL}/${path}" > /tmp/glutil.script_update.$$.tmp || {
-			echo "ERROR: ${CURL}: could not fetch: '${BASE_URL}/${path}'"
-			continue
-		}
-		
-		[ -f /tmp/glutil.script_update.$$.tmp ] || {
-			echo "ERROR: ${path}: missing temp file ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
-			continue
-		}
-		
-		b_size=`stat -c %s /tmp/glutil.script_update.$$.tmp`
-		
-		[ ${b_size} -eq 0 ] && {
-			echo "ERROR: ${path}: recieved no data ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
-			continue
-		}
-		
-		[ ${b_size} -lt 50 ] && {
-			echo "ERROR: ${path}: recieved invalid data ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
-			continue
-		}
-		
-		TARGET_DIR=`dirname "${GLROOT}/${BASE_SEARCHDIR}/${path}"`
-		[ -d "${TARGET_DIR}" ] || {
-			mkdir -p "${TARGET_DIR}" || {
-				echo "ERROR: could not create '${GLROOT}/${BASE_SEARCHDIR}/${path}'"
-				continue
-			}
-		}
-		
-		if [ -f "${GLROOT}/${BASE_SEARCHDIR}/${path}" ]; then 
-			mode="UPDATE"
-			current_ver=`script_get_version "${GLROOT}/${BASE_SEARCHDIR}/${path}"``script_get_revision "${GLROOT}/${BASE_SEARCHDIR}/${path}"`
-			upgrade_ver=`script_get_version /tmp/glutil.script_update.$$.tmp``script_get_revision /tmp/glutil.script_update.$$.tmp`
-			
-			if [ ${upgrade_ver} -lt ${current_ver} ]; then
-				echo "WARNING: ${path}: current version is newer than remote (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` > `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
-				continue
-			fi
-			
-			if [ ${upgrade_ver} -eq ${current_ver} ]; then
-				[ ${VERBOSE} -gt 0 ] && echo "WARNING: ${path}: already installed (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` = `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
-				continue
-			fi
-			
-			echo "${mode}: ${path}: (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` -> `script_join_verstring /tmp/glutil.script_update.$$.tmp`)"
-		else
-			mode="INSTALL"
-			echo "${mode}: ${path}: (`script_join_verstring /tmp/glutil.script_update.$$.tmp`)"
-		fi
-		cat /tmp/glutil.script_update.$$.tmp > "${GLROOT}${BASE_SEARCHDIR}/${path}" || {
-			echo "ERROR: ${path}: update failed!"
-			continue
-		}
-		
-		perm_mask=`echo "${item}" | cut -d' ' -f3`
-	
-		[ -z "${perm_mask}" ] && {		
-			perm_mask=755
-		}
-		
-		chmod ${perm_mask} "${GLROOT}/${BASE_SEARCHDIR}/${path}"
-	}
+	script_inject_sources INPUT_SOURCES[@]
 done
+
+script_process_source SOURCES[@] "${match}"
+
