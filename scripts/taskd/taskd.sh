@@ -95,7 +95,7 @@ for mod in "${BASE_PATH}/${MODULES_PATH}"/*; do
 done
 
 [ -z ${MODULES[${MODE}]} ] && {
-	echo "ERROR: unknown mode ${MODE}"
+	echo "ERROR: unrecognized query ${MODE}"
 	exit 1
 }
 
