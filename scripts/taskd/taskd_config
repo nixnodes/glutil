@@ -10,3 +10,4 @@ MOD_NUKE_MULTIPLIER=3
 ### [ mod_tvrage ] ###
 
 MOD_TVRAGE_LOG="${GLROOT}/ftp-data/glutil/db/tvrage"
+MOD_IMDB_LOG="${GLROOT}/ftp-data/glutil/db/imdb"
