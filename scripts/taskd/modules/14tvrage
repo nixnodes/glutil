@@ -1,0 +1,26 @@
+#@VERSION:0
+#@REVISION:1
+
+mod_tvrage()
+{
+	[ -z "${2}" ] && {
+		echo "ERROR: mod_nuke: missing search query"
+		return 1
+	}
+		
+	[ -z "${MOD_TVRAGE_LOG}" ] && {
+		MOD_TVRAGE_LOG="${GLROOT}/ftp-data/glutil/db/tvrage"		
+	}
+	
+	try_lock_r 14 taskd "glob_tvlog" 15 "ERROR: mod_nuke: could not obtain lock"
+	
+	if ${GLUTIL} -m tvrage-e -arg 1 "${2}" --tvlog "${MOD_TVRAGE_LOG}"; then
+		[ ${1} -eq 1 ] && 
+        	${GLUTIL} -q tvrage --tvlog "${MOD_TVRAGE_LOG}" -vvvv --shmem --shmdestroy --loadq 
+        return 0
+	fi	
+	
+	return 1
+}
+
+register_module 14 mod_tvrage

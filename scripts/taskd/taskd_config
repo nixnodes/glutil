@@ -6,3 +6,7 @@ MODULES_PATH=modules
 
 MOD_NUKE_USER=glftpd
 MOD_NUKE_MULTIPLIER=3
+
+### [ mod_tvrage ] ###
+
+MOD_TVRAGE_LOG="${GLROOT}/ftp-data/glutil/db/tvrage"
