@@ -1,0 +1,5 @@
+#@REVISION:1
+
+INPUT_SOURCES=(	
+ 	"gamebomb/gamebomb scripts/gb_get.sh 755 0" 	 	
+)
