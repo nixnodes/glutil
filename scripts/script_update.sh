@@ -290,8 +290,6 @@ fi
 
 [ -n "${3}" ] && match="${3}" || match=".*"
 
-echo - $add_filt
-
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	INPUT_SOURCES=()
 	. "${in_source}" || {
