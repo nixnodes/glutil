@@ -18,7 +18,7 @@
 #########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:1
+#@REVISION:2
 #@MACRO:taskd|taskd:{exe} -vvvv -listen "mode=1|log=ge2|" {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_ADDR} {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_PORT} ( -l: "(?X:(isread):(?Q:(\{?d:spec1\}/taskd_server_config)))" -match "1" -l: "ge8" -regex "^......" -l: "(?S:(ge8))" -regexi "^{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):SHA1_PW}$" ) -execv `{spec1} {glroot} {exe} {procid} \{u1\} \{u2\} \{ge1\} \{ge2\} \{ge3\} \{ge4\}` --glroot "{glroot}"
 #
 ## Offers functionality to processes that would otherwise require higher priviledges.
@@ -89,7 +89,7 @@ check_illegal_string "${8}"
 register_module 1 version_get
 
 for mod in "${BASE_PATH}/${MODULES_PATH}"/*; do
-	. ${mod} || {
+	. "${mod}" || {
 		echo "ERROR: ${mod}: module load failed"
 	}
 done
