@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:21
+#@REVISION:22
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} {glroot} "{arg1}" "{arg2}"`
 #
@@ -202,7 +202,7 @@ script_process_source()
 			fi
 			
 			if [ ${upgrade_ver} -eq ${current_ver} ]; then
-				[ ${VERBOSE} -gt 0 ] && echo "WARNING: ${name}: ${path}: already installed (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` = `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
+				[ ${VERBOSE} -gt 1 ] && echo "WARNING: ${name}: ${path}: already installed (`script_join_verstring "${GLROOT}/${BASE_SEARCHDIR}/${path}"` = `script_join_verstring /tmp/glutil.script_update.$$.tmp`), not updating.."
 				continue
 			fi
 			
