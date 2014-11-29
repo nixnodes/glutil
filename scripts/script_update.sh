@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:16
+#@REVISION:17
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
@@ -92,6 +92,8 @@ script_inject_sources()
 	exit 1
 }
 
+GLOB_FILTER=""
+
 script_process_source()
 {
 	spc_ret=0
@@ -103,6 +105,14 @@ script_process_source()
 			echo "ERROR: empty source definition in config"
 			exit 2
 		}
+		
+		[ -n "${GLOB_FILTER}" ] && {
+			echo "${name}" | egrep -q "^${GLOB_FILTER}$" && {
+				continue
+			}
+		}
+		
+		add_filt="${add_filt}|${name}"
 		
 		path=`echo "${item}" | cut -d' ' -f2`
 		
@@ -119,8 +129,9 @@ script_process_source()
 			[ ${VERBOSE} -gt 0 ] && echo "NOTICE: ${path}: updates disabled"
 			continue
 		elif [[ ${opt} -eq 4 ]]; then
-			rm -f "${GLROOT}/${BASE_SEARCHDIR}/${path}"
-			echo "WARNING: deleted ${GLROOT}/${BASE_SEARCHDIR}/${path}"
+			[ -f "${GLROOT}/${BASE_SEARCHDIR}/${path}" ] && 
+				rm -f "${GLROOT}/${BASE_SEARCHDIR}/${path}" &&
+				echo "WARNING: ${path}: deleted ${GLROOT}/${BASE_SEARCHDIR}/${path}"
 			continue
 		elif [[ ${opt} -eq 1 ]]; then
 			[ -f "${GLROOT}${BASE_SEARCHDIR}/${path}" ] && {
@@ -200,7 +211,7 @@ script_process_source()
 			
 			chmod ${perm_mask} "${GLROOT}/${BASE_SEARCHDIR}/${path}"
 			
-			opt_a=`echo "${item}" | cut -d' ' -f5`
+			opt_a=`echo "${item}" | cut -d' ' -f5`			
 			
 			[[ ${opt_a} -eq 1 ]] && { 
 				INPUT_SOURCES=()
@@ -208,8 +219,9 @@ script_process_source()
 					echo "ERROR: ${in_source}: failed loading source"
 					return 1
 				}
-				[ ${VERBOSE} -gt 0 ] && echo "NOTICE: ${path}: processing sources"
-				[ -n "${INPUT_SOURCES}" ] && script_process_source INPUT_SOURCES[@] "${match}"
+				
+				[ -n "${INPUT_SOURCES}" ] && [ ${VERBOSE} -gt 0 ] && 
+					echo "NOTICE: ${path}: processing sources" && script_process_source INPUT_SOURCES[@] "${2}"
 			}
 		}
 	done
@@ -220,10 +232,12 @@ script_process_source()
 SOURCES=()
 
 INIT_SOURCES=(
-	"init/00main scripts/script_update.d/00main 644 0"	
+	"init/00main scripts/script_update.d/00main 644 0 1"	
 )
 
 trap "rm -f /tmp/glutil.script_update.$$.tmp" EXIT
+
+add_filt=""
 
 if [ -d "${BASE_PATH}/script_update.d" ]; then
 	script_process_source INIT_SOURCES[@] ".*"
@@ -242,6 +256,10 @@ else
 	match="${1}"
 fi
 
+GLOB_FILTER=`echo "${add_filt}" | sed -r 's/(\|$)|(^\|)//g'`
+
+echo ${GLOB_FILTER}
+
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	INPUT_SOURCES=()
 	. "${in_source}" || {
@@ -251,7 +269,7 @@ for in_source in "${BASE_PATH}/script_update.d"/*; do
 	[ -n "${INPUT_SOURCES}" ] && script_inject_sources INPUT_SOURCES[@]
 done
 
-[ ${VERBOSE} -gt 0 ] && echo "NOTICE: ${path}: processing main sources"
+[ ${VERBOSE} -gt 0 ] && echo "NOTICE: processing main sources"
 
 script_process_source SOURCES[@] "${match}"
 
