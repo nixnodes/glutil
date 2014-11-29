@@ -1,4 +1,3 @@
-
 #include <t_glob.h>
 #include <thread.h>
 
@@ -160,7 +159,7 @@ int
 spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,
     uint16_t oper_mode)
 {
-  int i, r;
+  int i, r = 0;
   for (i = num; i; i--)
     {
       if ((r = thread_create(call, id, thread_register, role, oper_mode)))
