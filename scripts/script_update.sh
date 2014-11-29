@@ -258,8 +258,6 @@ fi
 
 GLOB_FILTER=`echo "${add_filt}" | sed -r 's/(\|$)|(^\|)//g'`
 
-echo ${GLOB_FILTER}
-
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	INPUT_SOURCES=()
 	. "${in_source}" || {
