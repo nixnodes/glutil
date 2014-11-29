@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+# OBSOLETE, USE TASKD
 #  Copyright (C) 2013 NixNodes
 #
 #  This program is free software: you can redistribute it and/or modify
