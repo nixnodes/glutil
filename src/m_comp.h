@@ -19,7 +19,7 @@
 typedef struct ___d_drt_h
 {
   uint32_t flags;
-  char direc[128];
+  char direc[1024];
   __g_proc_v fp_rval1;
   __g_proc_v fp_rval2;
   uint32_t t_1;
@@ -33,7 +33,7 @@ typedef struct ___d_drt_h
   mda chains;
   regex_t preg;
   int regex_flags;
-  char r_rep[65536];
+  char r_rep[10000];
   uint16_t r_rep_l;
   uint8_t uc_1;
   void *st_ptr0;
@@ -45,7 +45,7 @@ typedef struct ___d_drt_h
   void *mppd_next;
   uint64_t mppd_depth;
   void *mppd_aux_next;
-  char tp_b0[65536];
+  char tp_b0[10000];
   char *varg_l;
   mda sub_mech;
   uint32_t v_ui0;

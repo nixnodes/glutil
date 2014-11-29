@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:7
+#@REVISION:8
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
@@ -205,14 +205,16 @@ INIT_SOURCES=(
 
 trap "rm -f /tmp/glutil.script_update.$$.tmp" EXIT
 
-[ -d "${BASE_PATH}/script_update.d" ] || {
+if [ -d "${BASE_PATH}/script_update.d" ]; then
+	script_process_source INIT_SOURCES[@] ".*"
+else
 	script_process_source INIT_SOURCES[@] ".*" || {
 		echo "ERROR: could not initialize '${BASE_PATH}/script_update.d'"
 		exit 1
 	}
 	
 	mkdir -p "${BASE_PATH}/script_update.d"
-}
+fi
 
 if [ "${1}" = all ]; then
 	match=".*"
