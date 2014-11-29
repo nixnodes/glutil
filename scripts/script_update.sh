@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:17
+#@REVISION:18
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
@@ -92,7 +92,6 @@ script_inject_sources()
 	exit 1
 }
 
-GLOB_FILTER=""
 
 script_process_source()
 {
@@ -106,8 +105,8 @@ script_process_source()
 			exit 2
 		}
 		
-		[ -n "${GLOB_FILTER}" ] && {
-			echo "${name}" | egrep -q "^${GLOB_FILTER}$" && {
+		[ -n "${add_filt}" ] && {
+			echo "${name}" | egrep -q "^${add_filt}$" && {
 				continue
 			}
 		}
@@ -131,7 +130,7 @@ script_process_source()
 		elif [[ ${opt} -eq 4 ]]; then
 			[ -f "${GLROOT}/${BASE_SEARCHDIR}/${path}" ] && 
 				rm -f "${GLROOT}/${BASE_SEARCHDIR}/${path}" &&
-				echo "WARNING: ${path}: deleted ${GLROOT}/${BASE_SEARCHDIR}/${path}"
+				echo "WARNING: ${name}: ${path}: deleted ${GLROOT}/${BASE_SEARCHDIR}/${path}"
 			continue
 		elif [[ ${opt} -eq 1 ]]; then
 			[ -f "${GLROOT}${BASE_SEARCHDIR}/${path}" ] && {
@@ -217,7 +216,7 @@ script_process_source()
 				INPUT_SOURCES=()
 				. "${GLROOT}/${BASE_SEARCHDIR}/${path}" || {
 					echo "ERROR: ${in_source}: failed loading source"
-					return 1
+					exit 1
 				}
 				
 				[ -n "${INPUT_SOURCES}" ] && [ ${VERBOSE} -gt 0 ] && 
@@ -225,6 +224,8 @@ script_process_source()
 			}
 		}
 	done
+	
+	add_filt=`echo "${add_filt}" | sed -r 's/(\|$)|(^\|)//g'`
 	
 	return ${spc_ret}
 }
@@ -256,7 +257,7 @@ else
 	match="${1}"
 fi
 
-GLOB_FILTER=`echo "${add_filt}" | sed -r 's/(\|$)|(^\|)//g'`
+
 
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	INPUT_SOURCES=()
