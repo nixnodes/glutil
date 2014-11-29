@@ -1,4 +1,4 @@
-#@REVISION:5
+#@REVISION:6
 
 INPUT_SOURCES=(	
 	"script-update-config scripts/script_update_config 644 1"
@@ -6,5 +6,5 @@ INPUT_SOURCES=(
  	"mk-test scripts/mk_test.sh 755 0" 	
  	"macros scripts/misc/macros.glutil 755 0"
  	"updates/10taskd scripts/script_update.d/10taskd 644 0 1"
-	"updates/70custom scripts/script_update.d/70custom 644 1 1" 	 
+	"updates/70custom scripts/script_update.d/70custom 644 2 1" 	 
 )
