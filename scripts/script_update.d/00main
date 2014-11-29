@@ -1,8 +1,9 @@
-#@REVISION:8
+#@REVISION:9
 
 INPUT_SOURCES=(	
 	"base/script-update-config scripts/script_update_config 644 1"
 	"base/common scripts/common 644 0"
+	"base/config scripts/config 644 1" 
  	"base/mk-test scripts/mk_test.sh 755 0" 	
  	"base/macros scripts/misc/macros.glutil 755 0"
  	"updates/10taskd scripts/script_update.d/10taskd 644 0 1"
