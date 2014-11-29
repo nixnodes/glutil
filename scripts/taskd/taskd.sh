@@ -18,8 +18,8 @@
 #########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:4
-#@MACRO:taskd|taskd:{exe} -vvvv -listen "mode=1|log=ge2|" {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_ADDR} {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_PORT} ( -l: "(?X:(isread):(?Q:(\{?d:spec1\}/taskd_server_config)))" -match "1" -l: "ge8" -regex "^......" -l: "(?S:(ge8))" -regexi "^{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):SHA1_PW}$" ) -execv `{spec1} {glroot} {exe} {procid} \{u1\} \{u2\} \{ge1\} \{ge2\} \{ge3\} \{ge4\}` --glroot "{glroot}"
+#@REVISION:5
+#@MACRO:taskd|taskd:{exe} -vvvv -netctl "threads_recv={?x:(?Q:(\{?d:spec1\}/taskd_server_config)):NET_THREADS}" -listen "mode=1|log=ge2" {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_ADDR} {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_PORT} ( -l: "(?X:(isread):(?Q:(\{?d:spec1\}/taskd_server_config)))" -match "1" -l: "ge8" -regex "^......" -l: "(?S:(ge8))" -regexi "^{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):SHA1_PW}$" ) -execv `{spec1} {glroot} {exe} {procid} \{u1\} \{u2\} \{ge1\} \{ge2\} \{ge3\} \{ge4\}` --glroot "{glroot}"
 #
 ## Offers functionality to processes that would otherwise require higher priviledges.
 ## The tasks it does are constricted and injection checks performed against user-
