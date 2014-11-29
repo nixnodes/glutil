@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:9
+#@REVISION:10
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} "{arg1}" {glroot}`
 #
@@ -107,8 +107,8 @@ script_process_source()
 		path=`echo "${item}" | cut -d' ' -f2`
 		
 		[ -z "${path}" ] && {
-			echo "WARNING: missing script path: ${name}"
-			continue
+			echo "ERROR: bad configuration, missing script path: ${name}"
+			exit 2
 		}
 		
 		opt=`echo "${item}" | cut -d' ' -f4`
@@ -123,13 +123,13 @@ script_process_source()
 		echo "${name}" | egrep -q "^${2}$" && {
 			${CURL} ${CURL_FLAGS} "${BASE_URL}/${path}" > /tmp/glutil.script_update.$$.tmp || {
 				echo "ERROR: ${CURL}: could not fetch: '${BASE_URL}/${path}'"
-				spc_ret=$[spc_ret+1]
+				spc_ret=2
 				continue
 			}
 			
 			[ -f /tmp/glutil.script_update.$$.tmp ] || {
 				echo "ERROR: ${path}: missing temp file ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
-				spc_ret=$[spc_ret+1]
+				spc_ret=2
 				continue
 			}
 			
@@ -137,13 +137,13 @@ script_process_source()
 			
 			[ ${b_size} -eq 0 ] && {
 				echo "ERROR: ${path}: recieved no data ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
-				spc_ret=$[spc_ret+1]
+				spc_ret=2
 				continue
 			}
 			
 			[ ${b_size} -lt 50 ] && {
 				echo "ERROR: ${path}: recieved invalid data ( ${BASE_URL}/${path} -> /tmp/glutil.script_update.$$.tmp )"
-				spc_ret=$[spc_ret+1]
+				spc_ret=2
 				continue
 			}
 			
@@ -178,7 +178,7 @@ script_process_source()
 			fi
 					
 			cat /tmp/glutil.script_update.$$.tmp > "${GLROOT}${BASE_SEARCHDIR}/${path}" || {
-				spc_ret=$[spc_ret+1]
+				spc_ret=2
 				echo "ERROR: ${path}: update failed ( /tmp/glutil.script_update.$$.tmp )"
 				continue
 			}
@@ -196,7 +196,7 @@ script_process_source()
 					echo "ERROR: ${in_source}: failed loading source"
 					return 1
 				}
-				script_inject_sources INPUT_SOURCES[@]
+				script_process_source INPUT_SOURCES[@] "${match}"
 			}
 		}
 	done
@@ -233,7 +233,7 @@ fi
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	. "${in_source}" || {
 		echo "ERROR: ${in_source}: failed loading source"
-		return 1
+		exit 1
 	}
 	script_inject_sources INPUT_SOURCES[@]
 done
