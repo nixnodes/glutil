@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:19
+#@REVISION:20
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts:{exe} -noop --preexec `{spec1} {glroot} "{arg1}" "{arg2}"`
 #
@@ -95,6 +95,8 @@ script_inject_sources()
 
 script_process_source()
 {
+	add_filt=`echo "${add_filt}" | sed -r 's/(\|$)|(^\|)//g'`
+	
 	spc_ret=0
 	declare -a input_source_ar=("${!1}")
 	for item in "${input_source_ar[@]}"; do
@@ -144,13 +146,15 @@ script_process_source()
 		}		
 		
 		[ -n "${add_filt}" ] && {
-			echo "${name}" | egrep -q "^${add_filt}$" && {
+			echo "${name}" | egrep -q "^(${add_filt})$" && {
 				[ ${VERBOSE} -gt 2 ] && echo "NOTICE: ${name}: ${path}: already processed"
 				continue
 			}
 		}
 		
 		add_filt="${add_filt}|${name}"
+		
+		[ ${VERBOSE} -gt 4 ] && echo "NOTICE: ${name}: ${path}: processing.."
 		
 		${CURL} ${CURL_FLAGS} "${BASE_URL}/${path}" > /tmp/glutil.script_update.$$.tmp || {
 			echo "ERROR: ${name}: ${CURL}: could not fetch: '${BASE_URL}/${path}'"
@@ -247,9 +251,7 @@ script_process_source()
 		}
 		
 	done
-	
-	add_filt=`echo "${add_filt}" | sed -r 's/(\|$)|(^\|)//g'`
-	
+		
 	return ${spc_ret}
 }
 
@@ -287,6 +289,8 @@ else
 fi
 
 [ -n "${3}" ] && match="${3}" || match=".*"
+
+echo - $add_filt
 
 for in_source in "${BASE_PATH}/script_update.d"/*; do
 	INPUT_SOURCES=()
