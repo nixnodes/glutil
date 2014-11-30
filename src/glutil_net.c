@@ -146,7 +146,7 @@ net_deploy(void)
 
   while (!(gfl & F_OPT_KILL_GLOBAL))
     {
-      sleep(120);
+      sleep((unsigned int) - 1);
     }
 
   if (gfl & F_OPT_VERBOSE3)
