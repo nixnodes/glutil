@@ -1661,5 +1661,7 @@ net_ssend(__sock_o pso, void *data, size_t length)
       return 1;
     }
 
+  pthread_mutex_unlock(&pso->mutex);
+
   return 0;
 }
