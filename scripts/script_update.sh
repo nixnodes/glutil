@@ -174,7 +174,7 @@ script_process_source()
 			continue
 		elif [[ ${opt} -eq 1 ]]; then
 			[ -f "${GLROOT}${BASE_SEARCHDIR}/${path}" ] && {
-				[ ${VERBOSE} -gt 0 ] &&  echo "WARNING: ${name}: ${path}: configuration file already exists"
+				[ ${VERBOSE} -gt 1 ] &&  echo "WARNING: ${name}: ${path}: configuration file already exists"
 				continue
 			}
 		elif [[ ${opt} -eq 6 ]]; then			
