@@ -1165,7 +1165,6 @@ net_worker(void *args)
               int32_t thread_inactive = (int32_t) (time(NULL) - thrd->timers.t1);
              /*print_str("%d - throttling pooling interval.. %u - %d - %u\n", (int) _tid,
                   pooling_timeout, thread_inactive);*/
-
               pooling_timeout += ((pooling_timeout/SOCKET_POOLING_FREQUENCY_MIN) * (thread_inactive*8));
             }
         }
