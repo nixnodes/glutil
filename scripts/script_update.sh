@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:26
+#@REVISION:27
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts <-arg 1 <install|update>> [ -arg 2 <regex filter> ]:{exe} -noop --preexec `{spec1} {glroot} "{arg1}" "{arg2}"`
 #
@@ -37,6 +37,10 @@ GLROOT="${1}"
 
 script_get_version()
 {
+	[ -f "${1}" ] || {
+		echo 0
+		return 0
+	}
 	g_vers=`cat "${1}" | egrep "^#@VERSION" | sed -r 's/(^#@VERSION:)//g'`
 	
 	[ -z "${g_vers}" ] && {
@@ -48,6 +52,10 @@ script_get_version()
 
 script_get_revision()
 {
+	[ -f "${1}" ] || {
+		echo 0
+		return 0
+	}
 	g_rev=`cat "${1}" | egrep "^#@REVISION" | sed -r 's/(^#@REVISION:)//g'`
 	
 	[ -z "${g_rev}" ] && {
@@ -183,7 +191,7 @@ script_process_source()
 			current_ver=`script_get_version "${GLROOT}/${BASE_SEARCHDIR}/${path}"``script_get_revision "${GLROOT}/${BASE_SEARCHDIR}/${path}"`
 			
 			if [ ${current_ver} -lt ${req_version} ]; then
-				echo "NOTICE: ${name}: updating for dependency ( ${current_ver} < ${req_version} )"
+				[ ${VERBOSE} -gt 3 ] && echo "NOTICE: ${name}: updating for dependency ( ${current_ver} < ${req_version} )"
 	
 				force=1
 				
@@ -202,7 +210,7 @@ script_process_source()
 					continue
 				}
 				
-				[ ${VERBOSE} -gt 0 ] && echo "NOTICE ${name}: ${path}: installing for dependencies ( ${current_ver} >= ${req_version} )"
+				[ ${VERBOSE} -gt 0 ] && echo "NOTICE ${name}: ${path}: installing for dependencies ( ${upgrade_ver} >= ${req_version} )"
 			else
 				[ ${VERBOSE} -gt 0 ] && echo "NOTICE ${name}: ${path}: dependencies met ( ${current_ver} >= ${req_version} )"
 				continue			
