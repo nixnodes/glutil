@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:3
+#@REVISION:4
 
 mod_imdb_logupdate()
 {
@@ -11,13 +11,17 @@ mod_imdb_logupdate()
 	[ -z "${MOD_IMDB_LOG}" ] && {
 		MOD_IMDB_LOG="${GLROOT}/ftp-data/glutil/db/imdb"		
 	}
+	
+	if [ ${1} -eq 1 ]; then	
+		mod_imdb_lookup_flags=1
+	else 
+		mod_imdb_lookup_flags=0
+	fi
 		
 	try_lock_r 14 taskd "glob_imdb" 15 "ERROR: mod_imdb_logupdate: could not obtain lock"
 		
-	if ${GLUTIL} -m imdb-e -arg 1 "${2}" --imdblog "${MOD_IMDB_LOG}"; then
-		[ ${1} -eq 1 ] && {			
-        	${GLUTIL} -q imdb --imdblog "${MOD_IMDB_LOG}" -vvvv --shmem --shmdestroy --loadq 
-		}
+	
+	if ${GLUTIL} -m imdb-e -arg 1 "${2}" -arg 3 "2${mod_imdb_lookup_flags}" --imdblog "${MOD_IMDB_LOG}"; then		
         return 0
 	fi
 	

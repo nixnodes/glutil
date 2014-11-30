@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 
 mod_tvrage_logupdate()
 {
@@ -11,12 +11,19 @@ mod_tvrage_logupdate()
 	[ -z "${MOD_TVRAGE_LOG}" ] && {
 		MOD_TVRAGE_LOG="${GLROOT}/ftp-data/glutil/db/tvrage"		
 	}
-		
+	
+	if [ ${1} -eq 1 ]; then	
+		mod_tvrage_lookup_flags=1
+	else 
+		mod_tvrage_lookup_flags=0
+	fi
+	
 	try_lock_r 16 taskd "glob_tvlog" 15 "ERROR: mod_tvrage_logupdate: could not obtain lock"
 		
-	if ${GLUTIL} -m tvrage-e -arg 1 "${2}" --tvlog "${MOD_TVRAGE_LOG}"; then
+	if ${GLUTIL} -m tvrage-e -arg 1 "${2}" -arg 3 "2${mod_tvrage_lookup_flags}" --tvlog "${MOD_TVRAGE_LOG}"; then
 		[ ${1} -eq 1 ] && {			
-        	${GLUTIL} -q tvrage --tvlog "${MOD_TVRAGE_LOG}" -vvvv --shmem --shmdestroy --loadq 
+        	${GLUTIL} -q tvrage --tvlog "${MOD_TVRAGE_LOG}" -vvvv --shmem --shmdestroy --loadq --silent || 
+        		return 1
         }
         return 0
 	fi
