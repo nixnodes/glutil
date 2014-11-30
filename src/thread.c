@@ -49,6 +49,7 @@ thread_create(void *call, int id, pmda thrd_r, uint16_t role,
   object->id = id;
   object->role = role;
   object->oper_mode = oper_mode;
+  object->host_ctx = thrd_r;
   md_init_le(&object->in_objects, 512);
   md_init_le(&object->proc_objects, 4096);
   object->in_objects.flags |= F_MDA_REFPTR;

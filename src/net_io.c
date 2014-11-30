@@ -804,7 +804,7 @@ net_proc_sendq(__sock_o pso)
               net_send_sock_term_sig(pso);
               goto end;
               case 2:
-              goto end;
+              break;
             }
 
         }
@@ -878,8 +878,10 @@ net_worker(void *args)
 
   mutex_lock(&thrd->mutex);
 
-  thrd->buffer0 = malloc(THREAD_DEFAULT_BUFFER0_SIZE);
-  thrd->buffer0_size = THREAD_DEFAULT_BUFFER0_SIZE;
+  thrd->timers.t1 = time(NULL);
+
+  //thrd->buffer0 = malloc(THREAD_DEFAULT_BUFFER0_SIZE);
+  //thrd->buffer0_size = THREAD_DEFAULT_BUFFER0_SIZE;
 
   pthread_t _pt = thrd->pt;
   int _tid = syscall(SYS_gettid);
@@ -1030,25 +1032,35 @@ net_worker(void *args)
 
           errno = 0;
 
-          pthread_mutex_unlock(&pso->mutex);
+          //pthread_mutex_unlock(&pso->mutex);
 
           switch ((r = pso->rcv_cb(pso, pso->host_ctx, &_net_thrd_r,
               pso->buffer0)))
             {
           case 2:
-            if (!pso->counters.b_read)
+            //mutex_lock(&pso->mutex);
+            /*if (!pso->counters.b_read)
+             {
+             mutex_lock(&pso->sendq.mutex);
+             if (!pso->sendq.offset)
+             {
+             pthread_mutex_unlock(&pso->sendq.mutex);
+             //pthread_mutex_unlock(&pso->mutex);
+             goto e_end;
+             }
+             pthread_mutex_unlock(&pso->sendq.mutex);
+             }*/
+
+            if (pso->counters.b_read)
               {
-                mutex_lock(&pso->mutex);
-                mutex_lock(&pso->sendq.mutex);
-                if (!pso->sendq.offset)
-                  {
-                    pthread_mutex_unlock(&pso->sendq.mutex);
-                    pthread_mutex_unlock(&pso->mutex);
-                    goto e_end;
-                  }
-                pthread_mutex_unlock(&pso->sendq.mutex);
-                pthread_mutex_unlock(&pso->mutex);
+                break;
               }
+            else
+              {
+                goto send_q;
+              }
+
+            //pthread_mutex_unlock(&pso->mutex);
             break;
           case 0:
             int_state |= F_WORKER_INT_STATE_ACT;
@@ -1061,7 +1073,7 @@ net_worker(void *args)
                 errno,
                 errno ? strerror_r(errno, (char*) buffer0, 1024) : "");
 
-            mutex_lock(&pso->mutex);
+            //mutex_lock(&pso->mutex);
 
             pso->flags |= F_OPSOCK_TERM;
 
@@ -1070,7 +1082,7 @@ net_worker(void *args)
                 goto e_end;
               }
 
-            pthread_mutex_unlock(&pso->mutex);
+            //pthread_mutex_unlock(&pso->mutex);
 
             break;
             }
@@ -1085,7 +1097,7 @@ net_worker(void *args)
               case -2:
                 break;
               default:
-                mutex_lock(&pso->mutex);
+                // mutex_lock(&pso->mutex);
 
                 print_str(
                     "ERROR: data processor failed with status %d, socket: [%d]\n",
@@ -1093,18 +1105,20 @@ net_worker(void *args)
 
                 pso->flags |= F_OPSOCK_TERM;
 
-                pthread_mutex_unlock(&pso->mutex);
+                //pthread_mutex_unlock(&pso->mutex);
 
                 break;
                 }
             }
 
-          mutex_lock(&pso->sendq.mutex);
-
           if (pso->unit_size == pso->counters.b_read)
             {
               pso->counters.b_read = 0;
             }
+
+          send_q: ;
+
+          mutex_lock(&pso->sendq.mutex);
 
           if (pso->sendq.offset > 0)
             {
@@ -1120,7 +1134,7 @@ net_worker(void *args)
 
           e_end: ;
 
-          mutex_lock(&pso->mutex);
+          //mutex_lock(&pso->mutex);
 
           if (pso->flags & F_OPSOCK_ST_HOOKED)
             {
@@ -1142,21 +1156,30 @@ net_worker(void *args)
         {
           int_state ^= F_WORKER_INT_STATE_ACT;
           pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
+          thrd->timers.t1 = time(NULL);
         }
       else
         {
           if (pooling_timeout < SOCKET_POOLING_FREQUENCY_MAX)
             {
-              pooling_timeout += pooling_timeout / 100;
+              int32_t thread_inactive = (int32_t) (time(NULL) - thrd->timers.t1);
+             /*print_str("%d - throttling pooling interval.. %u - %d - %u\n", (int) _tid,
+                  pooling_timeout, thread_inactive);*/
+
+              pooling_timeout += ((pooling_timeout/SOCKET_POOLING_FREQUENCY_MIN) * (thread_inactive*8));
             }
         }
 
       usleep(pooling_timeout);
+
+      //print_str("%d - pooling socket..\n", (int) _tid);
     }
 
-  mutex_lock(&_net_thrd_r.mutex);
+  pmda thread_host_ctx = thrd->host_ctx;
 
-  p_md_obj ptr_thread = search_thrd_id(&_net_thrd_r, &_pt);
+  mutex_lock(&thread_host_ctx->mutex);
+
+  p_md_obj ptr_thread = search_thrd_id(thread_host_ctx, &_pt);
 
   if (NULL == ptr_thread)
     {
@@ -1169,7 +1192,7 @@ net_worker(void *args)
       md_unlink_le(&_net_thrd_r, ptr_thread);
     }
 
-  pthread_mutex_unlock(&_net_thrd_r.mutex);
+  pthread_mutex_unlock(&thread_host_ctx->mutex);
 
   return 0;
 }
@@ -1616,6 +1639,8 @@ int
 net_ssend(__sock_o pso, void *data, size_t length)
 {
   int ret;
+
+  mutex_lock(&pso->mutex);
 
   if ((ret = send(pso->sock, data, length, MSG_NOSIGNAL)) == -1)
     {

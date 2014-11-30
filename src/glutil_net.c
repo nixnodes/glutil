@@ -153,12 +153,14 @@ net_deploy(void)
     {
       print_str("NOTICE: sending F_OPSOCK_TERM to all sockets\n");
     }
+
   net_nw_ssig_term_r(&_sock_r);
 
   if (gfl & F_OPT_VERBOSE3)
     {
       print_str("NOTICE: sending F_THRD_TERM to all worker threads\n");
     }
+
   thread_broadcast_kill(&_net_thrd_r);
 
   if (gfl & F_OPT_VERBOSE)

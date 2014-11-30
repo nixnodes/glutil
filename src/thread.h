@@ -52,6 +52,7 @@ typedef struct object_thrd
   void *buffer0;
   size_t buffer0_size;
   _thread_tm timers;
+  pmda host_ctx;
   pthread_mutex_t mutex;
 } o_thrd, *po_thrd;
 
