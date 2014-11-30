@@ -120,9 +120,7 @@ pce_proc(char *path, char *dir)
   s_b_p = g_zerom(s_b_p, 0x2F);
   //g_zerom_r(s_b_p, 0x2F);
 
-  cl_dir = dir;
-  cl_dir_b = dir;
-  spec_p1 = dir;
+  cl_dir = cl_dir_b = spec_p1 = dir;
 
   if (pce_g_skip_proc())
     {
