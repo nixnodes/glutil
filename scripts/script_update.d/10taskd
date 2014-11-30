@@ -1,4 +1,4 @@
-#@REVISION:8
+#@REVISION:9
 
 INPUT_SOURCES=(
 	"taskd/config scripts/taskd/taskd_config 644 1"
@@ -12,5 +12,5 @@ INPUT_SOURCES=(
 )
 
 INPUT_DEPENDENCIES=(
-	"base/common scripts/common 644 0"
+	"base/common scripts/common 644 6 0 02"
 )
