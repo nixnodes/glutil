@@ -1,6 +1,10 @@
-#@REVISION:4
+#@REVISION:5
 
 INPUT_SOURCES=(
  	"imdb/imdb scripts/imdb_get.sh 755 0" 	
  	"imdb/sort scripts/sort_imdb.sh 755 0"
+)
+
+INPUT_DEPENDENCIES=(
+	"base/common scripts/common 644 0"
 )

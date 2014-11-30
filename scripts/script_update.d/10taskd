@@ -1,4 +1,4 @@
-#@REVISION:7
+#@REVISION:8
 
 INPUT_SOURCES=(
 	"taskd/config scripts/taskd/taskd_config 644 1"
@@ -9,4 +9,8 @@ INPUT_SOURCES=(
  	"taskd/mod-imdb scripts/taskd/modules/16imdb 644 0"
  	"taskd/taskd scripts/taskd/taskd.sh 755 0"
  	"taskd/taskc scripts/taskd/taskc.sh 755 0"
+)
+
+INPUT_DEPENDENCIES=(
+	"base/common scripts/common 644 0"
 )
