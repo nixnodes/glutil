@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 
 mod_nuke_proc_failed()
 {
@@ -29,14 +29,14 @@ mod_nuke()
 	case ${1} in
 		1) # nuke	
 			try_lock_r 12 taskd "glob_nuker" 15 "${mod_nuke_msg_lockfail}"
-			${GLUTIL} -d \( -l: "?p:${2}" -regex "\/" and -name "*/${2}" \) or \( \! -l: "?p:${2}" -regex "\/" and -l: basedir -name "${2}" \) -execv "${GLROOT}/bin/nuker -N ${MOD_NUKE_USER} -r /etc/glftpd.conf -n {dir} ${MOD_NUKE_MULTIPLIER} ${mod_nuke_reason} " --silent || {
+			${GLUTIL} -d \( -l: "?p:${2}" -regex "\/" and -name "${2}" \) or \( \! -l: "?p:${2}" -regex "\/" and -l: basedir -name "${2}" \) -execv "{GLROOT}/bin/nuker -N ${MOD_NUKE_USER} -r /etc/glftpd.conf -n {dir} ${MOD_NUKE_MULTIPLIER} ${mod_nuke_reason} " --silent || {
 				mod_nuke_proc_failed ${?} "${2}"
 				return $?
 			}
 		;;
 		2) # unnuke
 			try_lock_r 12 taskd "glob_nuker" 15 "${mod_nuke_msg_lockfail}"
-			${GLUTIL} -d \( -l: "?p:${2}" -regex "\/" and -name "*/${2}" \) or \( \! -l: "?p:${2}" -regex "\/" and -l: basedir -name "${2}" \) -execv "${GLROOT}/bin/nuker -N ${MOD_NUKE_USER} -r /etc/glftpd.conf -u {dir} ${mod_nuke_reason}" --silent || {
+			${GLUTIL} -d \( -l: "?p:${2}" -regex "\/" and -name "${2}" \) or \( \! -l: "?p:${2}" -regex "\/" and -l: basedir -name "${2}" \) -execv "{GLROOT}/bin/nuker -N ${MOD_NUKE_USER} -r /etc/glftpd.conf -u {dir} ${mod_nuke_reason}" --silent || {
 				mod_nuke_proc_failed ${?} "${2}"
 				return $?
 			}
