@@ -1,0 +1,14 @@
+#@REVISION:1
+
+INPUT_SOURCES=(
+ 	"taskd/mod/nuke-0 scripts/taskd/modules/nuke 644 4" 	
+ 	"taskd/mod/nuke scripts/taskd/modules/12nuke 644 0" 
+ 	"taskd/mod/tvrage scripts/taskd/modules/14tvrage 644 0" 
+ 	"taskd/mod/imdb scripts/taskd/modules/16imdb 644 0" 
+)
+
+INPUT_DEPENDENCIES=(
+	"base/common scripts/common 644 6 0 02"
+	"tvrage/tvrage scripts/tvrage_get.sh 755 6 0 338"
+	"imdb/imdb scripts/imdb_get.sh 755 6 0 246" 
+)
