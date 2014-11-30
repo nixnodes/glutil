@@ -1164,8 +1164,8 @@ net_worker(void *args)
             {
               int32_t thread_inactive = (int32_t) (time(NULL) - thrd->timers.t1);
               /*print_str("%d - throttling pooling interval.. %u - %d - %u\n",
-                  (int) _tid, pooling_timeout, thread_inactive);*/
-              pooling_timeout = (pooling_timeout * (thread_inactive/4))
+               (int) _tid, pooling_timeout, thread_inactive);*/
+              pooling_timeout = (pooling_timeout * (thread_inactive / 4))
                   + SOCKET_POOLING_FREQUENCY_MIN;
             }
         }
@@ -1210,13 +1210,13 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   if ((fd = accept(spso->sock, (struct sockaddr *) &a, &sin_size)) == -1)
     {
-      spso->status = -1;
-      pthread_mutex_unlock(&spso->mutex);
-      pthread_mutex_unlock(&base->mutex);
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
+      if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
         {
+          pthread_mutex_unlock(&spso->mutex);
           return 2;
         }
+      spso->status = -1;
+      pthread_mutex_unlock(&spso->mutex);
       return 1;
     }
 
@@ -1227,7 +1227,6 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       close(fd);
       spso->status = -2;
       pthread_mutex_unlock(&spso->mutex);
-      pthread_mutex_unlock(&base->mutex);
       return 1;
     }
 
@@ -1394,16 +1393,9 @@ net_recv(__sock_o pso, pmda base, pmda threadr, void *data)
   ssize_t rcvd = recv(pso->sock, ((uint8_t*) data + pso->counters.b_read),
       rcv_limit, 0);
 
-  if (0 == rcvd)
-    {
-      pso->timers.last_act = time(NULL);
-      pso->flags |= F_OPSOCK_TERM | F_OPSOCK_TS_DISCONNECTED;
-      goto fin;
-    }
-
   if (rcvd == -1)
     {
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
+      if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
         {
           pthread_mutex_unlock(&pso->mutex);
           return 2;
@@ -1414,6 +1406,12 @@ net_recv(__sock_o pso, pmda base, pmda threadr, void *data)
       pso->flags |= F_OPSOCK_TERM;
       pthread_mutex_unlock(&pso->mutex);
       return 1;
+    }
+  else if (0 == rcvd)
+    {
+      pso->timers.last_act = time(NULL);
+      pso->flags |= F_OPSOCK_TERM | F_OPSOCK_TS_DISCONNECTED;
+      goto fin;
     }
 
   pso->timers.last_act = time(NULL);
@@ -1644,7 +1642,7 @@ net_ssend(__sock_o pso, void *data, size_t length)
 
   if ((ret = send(pso->sock, data, length, MSG_NOSIGNAL)) == -1)
     {
-      if ((errno == EAGAIN || errno == EWOULDBLOCK))
+      if ((errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
         {
           pthread_mutex_unlock(&pso->mutex);
           return 2;
@@ -1653,8 +1651,7 @@ net_ssend(__sock_o pso, void *data, size_t length)
       pthread_mutex_unlock(&pso->mutex);
       return 1;
     }
-
-  if (ret != length)
+  else if (ret != length)
     {
       pso->status = 11;
       pthread_mutex_unlock(&pso->mutex);
