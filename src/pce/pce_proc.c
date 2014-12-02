@@ -771,7 +771,10 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
                   setsid();
                   int pid2 = fork();
                   if (pid2 < 0)
-                    print_str("ERROR: can't fork after releasing\n");
+                    {
+                      print_str("ERROR: can't fork after releasing\n");
+                      exit(1);
+                    }
                   else if (pid2 > 0)
                     exit(0);
                   else
@@ -1097,6 +1100,12 @@ pce_pfe_r(void)
 {
   if (fd_log)
     {
+      fclose(fd_log);
+      if (NULL == (fd_log = fopen(pce_logfile, "a")))
+        {
+          print_str("ERROR: count not re-open log after fork: %s\n",
+          pce_logfile);
+        }
       dup2(fileno(fd_log), STDOUT_FILENO);
       dup2(fileno(fd_log), STDERR_FILENO);
     }
