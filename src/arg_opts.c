@@ -1191,7 +1191,7 @@ g_opt_lav(void *arg, int m, void *opt)
 int
 opt_g_arg1(void *arg, int m, void *opt)
 {
-  g_cpg(arg, MACRO_ARG1, m, 4095);
+  g_cpg(arg, MACRO_ARG1, m, sizeof(MACRO_ARG1) - 1);
   l_av_st[1] = (char*) MACRO_ARG1;
   gfl |= F_OPT_HAS_M_ARG1;
   return 0;
@@ -1200,8 +1200,8 @@ opt_g_arg1(void *arg, int m, void *opt)
 int
 opt_g_arg2(void *arg, int m, void *opt)
 {
-  g_cpg(arg, MACRO_ARG2, m, 4095);
-  l_av_st[2] = (char*) MACRO_ARG1;
+  g_cpg(arg, MACRO_ARG2, m, sizeof(MACRO_ARG2) - 1);
+  l_av_st[2] = (char*) MACRO_ARG2;
   gfl |= F_OPT_HAS_M_ARG2;
   return 0;
 }
@@ -1209,8 +1209,8 @@ opt_g_arg2(void *arg, int m, void *opt)
 int
 opt_g_arg3(void *arg, int m, void *opt)
 {
-  g_cpg(arg, MACRO_ARG3, m, 4095);
-  l_av_st[3] = (char*) MACRO_ARG1;
+  g_cpg(arg, MACRO_ARG3, m, sizeof(MACRO_ARG3) - 1);
+  l_av_st[3] = (char*) MACRO_ARG3;
   gfl |= F_OPT_HAS_M_ARG3;
   return 0;
 }

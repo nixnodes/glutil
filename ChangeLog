@@ -10,6 +10,8 @@
  *   - % Changed how field is passed to string matching parameters
  *   - ~ '?d' was modifying data storage area
  *   - % Mounting /proc no longer required (read NEWS)
+ *   2.5.2:
+ *   - ~ Fixed broken legacy macro argument passing (-arg1, -arg2, ..)
  *
  * v2.4:
  *
