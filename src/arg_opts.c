@@ -1907,7 +1907,7 @@ net_opt_parse(pmda md, void *arg)
 
   __sock_ca ca = (__sock_ca) arg;
 
-  if (!strncmp("ssl", left, 3))
+  if (!strncmp("ssl\0", left, 4))
     {
       ca->flags |= F_OPSOCK_SSL;
       return 0;
@@ -2002,6 +2002,7 @@ opt_queue_connection(void *arg, uint32_t flags)
   if (0 != g_parse_opts(opt, net_opt_parse, (void*) ca, P_OPT_DL_O,
   P_OPT_DL_V))
     {
+      md_unlink(&_boot_pca, _boot_pca.pos);
       return 24140;
     }
 
@@ -2009,6 +2010,7 @@ opt_queue_connection(void *arg, uint32_t flags)
     {
       print_str("ERROR: opt_queue_connection: [%s:%s] missing 'log' option\n",
           host, port);
+      md_unlink(&_boot_pca, _boot_pca.pos);
       return 24141;
     }
 
