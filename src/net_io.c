@@ -190,10 +190,6 @@ ssl_show_certs(SSL* ssl)
       free(line);
       X509_free(cert);
     }
-  else
-    {
-      print_str("WARNING: No certificates\n");
-    }
 }
 
 int
@@ -481,7 +477,15 @@ net_open_connection(char *addr, char *port, __sock_ca args)
       pso->limits.sock_timeout = SOCK_SSL_CONNECT_TIMEOUT;
       pso->rcv_cb = (_p_s_cb) net_connect_ssl;
       pso->rcv_cb_t = (_p_s_cb) net_recv_ssl;
-      pso->send0 = (_p_ssend) NULL;
+      if (args->flags & F_OPSOCK_INIT_SENDQ)
+        {
+          pso->send0 = (_p_ssend) net_ssend_ssl;
+        }
+      else
+        {
+          pso->send0 = (_p_ssend) net_ssend_ssl_b;
+        }
+      //pso->send0 = (_p_ssend) net_ssend_ssl;
     }
   else
     {
@@ -1066,10 +1070,12 @@ net_worker(void *args)
             int_state |= F_WORKER_INT_STATE_ACT;
             break;
           default:
-            print_str("ERROR: %s: socket:[%d] status:[%d] errno:[%d] %s\n",
+            print_str(
+                "ERROR: %s: socket:[%d] code:[%d] status:[%d] errno:[%d] %s\n",
                 pso->oper_mode == SOCKET_OPMODE_LISTENER ? "rx/tx accept" :
                 pso->oper_mode == SOCKET_OPMODE_RECIEVER ?
-                    "rx/tx data" : "socket operation", pso->sock, pso->status,
+                    "rx/tx data" : "socket operation", pso->sock, r,
+                pso->status,
                 errno,
                 errno ? strerror_r(errno, (char*) buffer0, 1024) : "");
 
@@ -1309,7 +1315,14 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       pso->flags |= F_OPSOCK_ST_SSL_ACCEPT;
       pso->rcv_cb = (_p_s_cb) net_accept_ssl;
       pso->rcv_cb_t = spso->rcv0;
-      pso->send0 = (_p_ssend) NULL;
+      if (pso->flags & F_OPSOCK_INIT_SENDQ)
+        {
+          pso->send0 = (_p_ssend) net_ssend_ssl;
+        }
+      else
+        {
+          pso->send0 = (_p_ssend) net_ssend_ssl_b;
+        }
     }
   else
     {
@@ -1356,11 +1369,11 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       spso->rc1((void*) pso);
     }
 
-  if (!(pso->flags & F_OPSOCK_SSL))
-    {
-      pso->flags |= F_OPSOCK_ACT;
+  //if (!(pso->flags & F_OPSOCK_SSL))
+  // {
+  pso->flags |= F_OPSOCK_ACT;
 
-    }
+  // }
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -1478,21 +1491,28 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
           return 2;
         }
 
+      int ret;
+
       pso->flags |= F_OPSOCK_TERM;
 
       if (rcvd == 0)
         {
           pso->flags |= F_OPSOCK_TS_DISCONNECTED;
-          if (!pso->counters.b_read)
+          if (pso->counters.b_read)
             {
               pthread_mutex_unlock(&pso->mutex);
               return 2;
             }
+          ret = 0;
+        }
+      else
+        {
+          ret = 1;
         }
 
       pthread_mutex_unlock(&pso->mutex);
 
-      return 1;
+      return ret;
 
     }
 
@@ -1631,6 +1651,57 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
   pthread_mutex_unlock(&pso->mutex);
 
   return ret;
+}
+
+int
+net_ssend_ssl(__sock_o pso, void *data, size_t length)
+{
+  if (!length)
+    {
+      return -2;
+    }
+
+  mutex_lock(&pso->mutex);
+
+  int ret;
+
+  if ((ret = SSL_write(pso->ssl, data, length)) < 1)
+    {
+      pso->s_errno = SSL_get_error(pso->ssl, ret);
+      if (pso->s_errno == SSL_ERROR_WANT_READ
+          || pso->s_errno == SSL_ERROR_WANT_WRITE)
+        {
+          pthread_mutex_unlock(&pso->mutex);
+          return 2;
+        }
+
+      pso->status = ret;
+
+      ERR_print_errors_fp(stderr);
+
+      if ((pso->s_errno == SSL_ERROR_WANT_CONNECT
+          || pso->s_errno == SSL_ERROR_WANT_ACCEPT
+          || pso->s_errno == SSL_ERROR_WANT_X509_LOOKUP))
+        {
+          pthread_mutex_unlock(&pso->mutex);
+          return 2;
+        }
+
+      pso->flags |= F_OPSOCK_TERM;
+
+      if (ret == 0)
+        {
+          pso->flags |= F_OPSOCK_TS_DISCONNECTED;
+        }
+
+      pthread_mutex_unlock(&pso->mutex);
+
+      return 1;
+    }
+
+  pthread_mutex_unlock(&pso->mutex);
+
+  return 0;
 }
 
 int

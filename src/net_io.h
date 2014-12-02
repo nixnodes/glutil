@@ -189,6 +189,8 @@ net_ssend_b(__sock_o pso, void *data, size_t length);
 int
 net_ssend_ssl_b(__sock_o pso, void *data, size_t length);
 int
+net_ssend_ssl(__sock_o pso, void *data, size_t length);
+int
 net_ssend(__sock_o pso, void *data, size_t length);
 int
 net_link_sockets(__sock_o pso1, __sock_o pso2);
