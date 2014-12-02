@@ -322,7 +322,7 @@ g_omfp_raw(void * hdl, void *ptr, char *sbuffer)
 void
 g_omfp_ocomp(void * hdl, void *ptr, char *sbuffer)
 {
-  ((__g_handle ) hdl)->g_proc3(ptr, NULL);
+  ((__g_handle ) hdl)->g_proc3(ptr, (void*) sbuffer);
 }
 
 void
@@ -330,14 +330,15 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
 {
   char *s_ptr;
   if (!(s_ptr = g_exech_build_string(ptr, ((__g_handle ) hdl)->act_mech,
-      (__g_handle) hdl, b_glob, MAX_EXEC_STR - 4)))
+      (__g_handle) hdl, (char*)((__g_handle ) hdl)->v_b0, ((__g_handle ) hdl)->v_b0_sz)))
     {
       print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
       gfl |= F_OPT_KILL_GLOBAL;
       return;
     }
 
-  ((__g_handle) hdl)->w_d(fd_out, b_glob, strlen(b_glob), (void*)sbuffer);
+  ((__g_handle) hdl)->w_d(fd_out, (char*)((__g_handle ) hdl)->v_b0,
+  strlen((char*)((__g_handle ) hdl)->v_b0), (void*)sbuffer);
 
 }
 

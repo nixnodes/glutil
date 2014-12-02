@@ -138,6 +138,8 @@ typedef struct g_handle
   const char *h_errstr_gz;
   int pfd_out[2];
   char strerr_b[1024];
+  void *v_b0;
+  size_t v_b0_sz;
 } _g_handle, *__g_handle;
 
 #define G_HDL_ERRNO_DL_READ        1

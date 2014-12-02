@@ -481,6 +481,12 @@ g_proc_mr(__g_handle hdl)
 
   hdl->t_rw = 1;
 
+  if ( NULL == hdl->v_b0 )
+    {
+      hdl->v_b0 = (void*) b_glob;
+      hdl->v_b0_sz = sizeof(b_glob) - 4;
+    }
+
   return 0;
 }
 

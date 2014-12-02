@@ -146,7 +146,7 @@ net_deploy(void)
 
   while (!(gfl & F_OPT_KILL_GLOBAL))
     {
-      sleep((unsigned int) - 1);
+      sleep((unsigned int) -1);
     }
 
   if (gfl & F_OPT_VERBOSE3)
@@ -263,7 +263,15 @@ net_gl_socket_destroy(__sock_o pso)
 
   mutex_lock(&pso->mutex);
 
-  int r = g_cleanup((__g_handle ) pso->va_p0);
+  __g_handle hdl = (__g_handle ) pso->va_p0;
+
+  int r = g_cleanup(hdl);
+
+  if ( NULL != hdl->v_b0)
+    {
+      free(hdl);
+    }
+
   free(pso->va_p0);
   pso->va_p0 = NULL;
 
@@ -328,6 +336,9 @@ net_gl_socket_init0(__sock_o pso)
 
     hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
     snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
+
+    hdl->v_b0 = calloc(MAX_PRINT_OUT, 1);
+    hdl->v_b0_sz = MAX_PRINT_OUT - 4;
 
     if ((r = g_proc_mr(hdl)))
       {
