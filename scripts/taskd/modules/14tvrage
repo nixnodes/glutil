@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:4
+#@REVISION:5
 
 mod_tvrage_logupdate()
 {
@@ -20,13 +20,9 @@ mod_tvrage_logupdate()
 		mod_tvrage_lookup_flags=2
 	fi
 	
-	try_lock_r 16 taskd "glob_tvlog" 15 "ERROR: mod_tvrage_logupdate: could not obtain lock"
+	#try_lock_r 16 taskd "glob_tvlog" 120 "ERROR: mod_tvrage_logupdate: could not obtain lock"
 		
-	if ${GLUTIL} -m tvrage-e -arg 1 "${2}" -arg 3 "${mod_tvrage_lookup_flags}" --tvlog "${MOD_TVRAGE_LOG}"; then
-		[ ${1} -eq 1 ] && {			
-        	${GLUTIL} -q tvrage --tvlog "${MOD_TVRAGE_LOG}" -vvvv --shmem --shmdestroy --loadq --silent || 
-        		return 1
-        }
+	if ${GLUTIL} -m tvrage-e -arg 1 "${2}" -arg 3 "${mod_tvrage_lookup_flags}" --tvlog "${MOD_TVRAGE_LOG}"; then		
         return 0
 	fi
 	

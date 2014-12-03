@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:5
+#@REVISION:6
 
 mod_imdb_logupdate()
 {
@@ -20,9 +20,8 @@ mod_imdb_logupdate()
 		mod_imdb_lookup_flags=2
 	fi
 		
-	try_lock_r 14 taskd "glob_imdb" 15 "ERROR: mod_imdb_logupdate: could not obtain lock"
-		
-	
+	#try_lock_r 14 taskd "glob_imdb" 120 "ERROR: mod_imdb_logupdate: could not obtain lock"
+			
 	if ${GLUTIL} -m imdb-e -arg 1 "${2}" -arg 3 "${mod_imdb_lookup_flags}" --imdblog "${MOD_IMDB_LOG}"; then		
         return 0
 	fi
