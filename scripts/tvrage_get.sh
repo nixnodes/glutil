@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:38
+#@REVISION:39
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' {arg3}` {arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 1`
@@ -170,8 +170,6 @@ echo "${10}" | grep -q "2" && {
 	OUT_PRINT=0
 	op_id=1
 }
-
-try_lock_r 12 tvr_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 
 IS_COMP=`${2} --preexec "echo -n {?q:tvrage@comp}" -noop --tvlog="${3}${LAPPEND}"`
 
@@ -361,7 +359,10 @@ ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
 
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
-	trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
+	trap "rm /tmp/glutil.img.$$.tmp" EXIT
+	
+	try_lock_r 12 tvr_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
+	
 	if [ $TVRAGE_DATABASE_TYPE -eq 0 ]; then
 		GLR_E=`echo $4 | sed 's/\//\\\\\//g'`	
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" `  

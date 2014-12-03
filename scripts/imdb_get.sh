@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:46
+#@REVISION:47
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --lom "mode=4" --silent --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -144,8 +144,6 @@ echo "${10}" | grep -q "2" && {
 	OUT_PRINT=0
 	op_id=1
 }
-
-try_lock_r 12 imdb_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 
 IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" -noop  --imdblog="${3}${LAPPEND}"`
 
@@ -390,7 +388,9 @@ else
 fi
 
 if [ $UPDATE_IMDBLOG -eq 1 ]; then
-        trap "rm /tmp/glutil.img.$$.tmp; exit 2" 2 15 9 6
+        trap "rm /tmp/glutil.img.$$.tmp" EXIT
+        try_lock_r 12 imdb_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
+        
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
