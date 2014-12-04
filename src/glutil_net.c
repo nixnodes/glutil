@@ -265,12 +265,12 @@ net_gl_socket_destroy(__sock_o pso)
 
   __g_handle hdl = (__g_handle ) pso->va_p0;
 
-  int r = g_cleanup(hdl);
-
   if ( NULL != hdl->v_b0)
     {
-      free(hdl);
+      free(hdl->v_b0);
     }
+
+  int r = g_cleanup(hdl);
 
   free(pso->va_p0);
   pso->va_p0 = NULL;
