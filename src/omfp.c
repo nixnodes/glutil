@@ -268,10 +268,10 @@ g_omfp_q_nssys(int fd, char *buffer, size_t size, void *arg)
   __sock_o pso = (__sock_o) arg;
 
   int ret;
-  if ((ret = net_push_to_sendq(pso, buffer, size, 0)) == -1)
+  if ((ret = net_send_direct(pso, (const void*) buffer, size)) == -1)
     {
       printf(
-          "ERROR: g_omfp_q_nssys: net_push_to_sendq failed, socket: [%d], code: [%d]\n",
+          "ERROR: g_omfp_q_nssys: net_send_direct failed, socket: [%d], code: [%d]\n",
           pso->sock, ret);
     }
 }
@@ -285,10 +285,10 @@ g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg)
   buffer[size+1] = 0x0;
 
   int ret;
-  if ((ret = net_push_to_sendq(pso, buffer, size + 1, 0)) == -1)
+  if ((ret = net_send_direct(pso, (const void*) buffer, size + 1)) == -1)
     {
       printf(
-          "ERROR: g_omfp_q_nssys: net_push_to_sendq failed, socket: [%d], code: [%d]\n",
+          "ERROR: g_omfp_q_nssys: net_send_direct failed, socket: [%d], code: [%d]\n",
           pso->sock, ret);
     }
 }

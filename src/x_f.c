@@ -567,9 +567,11 @@ load_guid_info(pmda md, char *path)
       p_gu_n gu = md_alloc(md, sizeof(gu_n));
 
       strcp_s(gu->name, sizeof(gu->name), (char *) ptr->ptr);
+
+      errno = 0;
       gu->id = (uint32_t) strtoul(ptr[2].ptr, NULL, 10);
 
-      if ( errno == ERANGE)
+      if ( errno == ERANGE || errno == EINVAL)
         {
           return 3;
         }

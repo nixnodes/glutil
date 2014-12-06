@@ -201,6 +201,8 @@ int
 net_push_to_sendq(__sock_o pso, void *data, size_t size, uint16_t flags);
 int
 net_sendq_broadcast(pmda base, __sock_o source, void *data, size_t size);
+int
+net_send_direct(__sock_o pso, const void *data, size_t size);
 
 #endif
 

@@ -779,6 +779,23 @@ net_sendq_broadcast(pmda base, __sock_o source, void *data, size_t size)
   return ret;
 }
 
+int
+net_send_direct(__sock_o pso, const void *data, size_t size)
+{
+  int ret;
+  if (0 != (ret = pso->send0(pso, data, size)))
+    {
+      print_str(
+          "ERROR: [%d] [%d %d]: net_send_direct: send data failed, payload size: %zd\n",
+          pso->sock, ret, pso->s_errno, size);
+      net_send_sock_term_sig(pso);
+      return -1;
+    }
+
+  return 0;
+
+}
+
 static void *
 net_proc_sendq_destroy_item(__sock_sqp psqp, __sock_o pso, p_md_obj ptr)
 {
@@ -1611,7 +1628,7 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 
   int ret = 0;
 
-  while ((send(pso->sock, data, length, MSG_NOSIGNAL)) == -1)
+  while ((send(pso->sock, data, length, MSG_WAITALL | MSG_NOSIGNAL)) == -1)
     {
       if (!(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
         {
@@ -1738,7 +1755,7 @@ net_ssend(__sock_o pso, void *data, size_t length)
 
   mutex_lock(&pso->mutex);
 
-  if ((ret = send(pso->sock, data, length, MSG_NOSIGNAL)) == -1)
+  if ((ret = send(pso->sock, data, length, MSG_WAITALL | MSG_NOSIGNAL)) == -1)
     {
       if ((errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
         {

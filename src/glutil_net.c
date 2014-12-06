@@ -192,10 +192,10 @@ net_proc_piped_q(__sock_o pso, __g_handle hdl)
 
   while ((r_sz = read(hdl->pfd_out[0], buffer, sizeof(buffer))) > 0)
     {
-      if (net_push_to_sendq(pso, buffer, r_sz, 0) == -1)
+      if (net_send_direct(pso, (const void*) buffer, (size_t) r_sz) == -1)
         {
           printf(
-              "ERROR: net_proc_piped_q: net_push_to_sendq failed, socket: [%d]\n",
+              "ERROR: net_proc_piped_q: net_send_direct failed, socket: [%d]\n",
               pso->sock);
         }
     }
