@@ -62,4 +62,7 @@ char *NUKESTR_d[255];
 
 char rs_o[MAX_REGSUB_OUT_LEN];
 
+char G_USER[128];
+char G_GROUP[128];
+
 #endif /* L_SB_H_ */

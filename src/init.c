@@ -185,3 +185,7 @@ __dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,
 int
 (*__pf_eof)(void *p);
 
+char G_USER[128] =
+  { 0 };
+char G_GROUP[128] =
+  { 0 };

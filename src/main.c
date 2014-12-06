@@ -45,6 +45,92 @@
 int
 (*print_str)(const char * volatile buf, ...);
 
+static int
+g_setxid(void)
+{
+  char e_buffer[1024];
+  if (gfl0 & F_OPT_SETGID)
+    {
+      mda guid_stor =
+        { 0 };
+
+      md_init(&guid_stor, 32);
+
+      int r;
+      if ((r = load_guid_info(&guid_stor, DEFPATH_GROUP)))
+        {
+          if (r == 1)
+            {
+              fprintf(stderr, MSG_GEN_NOFACC, "", DEFPATH_GROUP);
+            }
+          return 1;
+        }
+
+      p_gu_n pgn = search_xuid_name(&guid_stor, G_GROUP);
+      if (pgn == NULL)
+        {
+          if (r == 1)
+            {
+              fprintf(stderr, "ERROR: group '%s' not found\n", G_GROUP);
+            }
+          return 1;
+        }
+
+      if (setgid(pgn->id) == -1)
+        {
+          fprintf(stderr, "ERROR: g_setxid: setgid failed: %s\n",
+              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+          return 1;
+        }
+
+      if (gfl & F_OPT_VERBOSE)
+        {
+          print_str("NOTICE: setgid: %s, gid: %u\n", pgn->name, pgn->id);
+        }
+    }
+
+  if (gfl0 & F_OPT_SETUID)
+    {
+      mda uuid_stor =
+        { 0 };
+
+      md_init(&uuid_stor, 32);
+
+      int r;
+      if ((r = load_guid_info(&uuid_stor, DEFPATH_PASSWD)))
+        {
+          if (r == 1)
+            {
+              fprintf(stderr, MSG_GEN_NOFACC, "", DEFPATH_PASSWD);
+            }
+          return 1;
+        }
+
+      p_gu_n pgn = search_xuid_name(&uuid_stor, G_USER);
+      if (pgn == NULL)
+        {
+          if (r == 1)
+            {
+              fprintf(stderr, "ERROR: user '%s' not found\n", G_USER);
+            }
+          return 1;
+        }
+
+      if (setuid(pgn->id) == -1)
+        {
+          fprintf(stderr, "ERROR: g_setxid: setuid failed: %s\n",
+              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+          return 1;
+        }
+      if (gfl & F_OPT_VERBOSE)
+        {
+          print_str("NOTICE: setuid: %s, uid: %u\n", pgn->name, pgn->id);
+        }
+
+    }
+  return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -70,6 +156,12 @@ main(int argc, char *argv[])
     {
       print_str(MSG_INIT_CMDLINE_ERROR, r);
       EXITVAL = 2;
+      g_shutdown(NULL);
+    }
+
+  if (1 == g_setxid())
+    {
+      EXITVAL = 1;
       g_shutdown(NULL);
     }
 

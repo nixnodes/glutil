@@ -849,6 +849,38 @@ opt_dirlog_sect_fl(void *arg, int m, void *opt)
   return 0;
 }
 
+static int
+g_opt_setuid(void *arg, int m, void *opt)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 32512;
+    }
+
+  snprintf(G_USER, sizeof(G_USER), "%s", buffer);
+
+  gfl0 |= F_OPT_SETUID;
+  return 0;
+}
+
+static int
+g_opt_setgid(void *arg, int m, void *opt)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (NULL == buffer)
+    {
+      return 32513;
+    }
+
+  snprintf(G_GROUP, sizeof(G_GROUP), "%s", buffer);
+
+  gfl0 |= F_OPT_SETGID;
+  return 0;
+}
+
 int
 print_version(void *arg, int m, void *opt)
 {
@@ -2099,6 +2131,8 @@ _gg_opt gg_prio_f_ref[] =
     { .id = 0x0082, .on = "--help", .ac = 0, .op = print_help },
     { .id = 0x0083, .on = "--version", .ac = 0, .op = print_version },
     { .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
+    { .id = 0x9871, .on = "--user", .ac = 1, .op = g_opt_setuid },
+    { .id = 0x9872, .on = "--group", .ac = 1, .op = g_opt_setgid },
 #ifndef _MAKE_SBIN
         { .id = 0x9981, .on = "-arg", .ac = 2, .op = g_opt_lav },
         { .id = 0x0005, .on = "-arg1", .ac = 1, .op = opt_g_arg1 },
@@ -2140,6 +2174,8 @@ _gg_opt gg_f_ref[] =
         { .id = 0x3104, .on = "-listen", .ac = 3, .op = opt_listen },
         { .id = 0x3105, .on = "-netctl", .ac = 1, .op = opt_netctl },
 #endif
+        { .id = 0x9871, .on = "--user", .ac = 1, .op = g_opt_setuid },
+        { .id = 0x9872, .on = "--group", .ac = 1, .op = g_opt_setgid },
         { .id = 0x0001, .on = "-noop", .ac = 0, .op = g_opt_mode_noop },
         { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
         { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },

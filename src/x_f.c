@@ -604,6 +604,28 @@ search_xuid_id(pmda md, uint32_t id)
   return NULL;
 }
 
+p_gu_n
+search_xuid_name(pmda md, char *name)
+{
+  p_md_obj ptr = md_first(md);
+  size_t name_l = strlen(name);
+
+  while (ptr)
+    {
+      p_gu_n gu = (p_gu_n) ptr->ptr;
+
+      size_t p_name_l = strlen(gu->name);
+      if (name_l == p_name_l && !strncmp(gu->name, name, p_name_l))
+        {
+          return gu;
+        }
+
+      ptr = ptr->next;
+    }
+
+  return NULL;
+}
+
 #ifdef HAVE_ZLIB_H
 int
 g_is_file_compressed(char *file)

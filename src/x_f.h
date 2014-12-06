@@ -75,6 +75,8 @@ int
 load_guid_info(pmda md, char *path);
 p_gu_n
 search_xuid_id(pmda md, uint32_t id);
+p_gu_n
+search_xuid_name(pmda md, char *name);
 
 #ifdef HAVE_ZLIB_H
 int
