@@ -1,0 +1,8 @@
+GLUTIL=/bin/glutil
+SOCAT=/usr/bin/socat
+NC=/bin/nc
+CONNECT_IP=127.0.0.1
+CONNECT_PORT=4411
+PASS=test1234
+SSL=1
+SSL_VERIFY=0
