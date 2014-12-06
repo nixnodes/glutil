@@ -4,4 +4,4 @@ LISTEN_ADDR 	0.0.0.0
 LISTEN_PORT 	4411
 
 NET_THREADS		1
-#NET_OPTIONS		"sslcert=server.cert|sslkey=server.key"
+#NET_OPTIONS		sslcert=server.cert|sslkey=server.key
