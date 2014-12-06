@@ -172,7 +172,8 @@ main(int argc, char *argv[])
   case PRIO_UPD_MODE_MACRO:
     ;
     uint64_t gfl_s = (gfl
-        & (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF | F_OPT_DAEMONIZE));
+        & (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF | F_OPT_DAEMONIZE
+            | (F_OPT_SETUID | F_OPT_SETGID)));
     char **ptr;
     ptr = process_macro(prio_argv_off, NULL);
     if (NULL != ptr)
