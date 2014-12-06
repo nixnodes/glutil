@@ -479,7 +479,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
       pso->rcv_cb_t = (_p_s_cb) net_recv_ssl;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
         {
-          pso->send0 = (_p_ssend) net_ssend_ssl;
+          pso->send0 = (_p_ssend) net_ssend_ssl_b;
         }
       else
         {
@@ -493,7 +493,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
       pso->rcv_cb = (_p_s_cb) net_recv;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
         {
-          pso->send0 = (_p_ssend) net_ssend;
+          pso->send0 = (_p_ssend) net_ssend_b;
         }
       else
         {
@@ -763,7 +763,7 @@ net_sendq_broadcast(pmda base, __sock_o source, void *data, size_t size)
         {
           if ((ret += net_push_to_sendq(pso, data, size, 0)) == -1)
             {
-              printf ("ERROR: net_sendq_broadcast: net_push_to_sendq failed, socket:[%d]\n", pso->sock);
+              print_str ("ERROR: net_sendq_broadcast: net_push_to_sendq failed, socket:[%d]\n", pso->sock);
               net_send_sock_term_sig(pso);
             }
         }
@@ -803,11 +803,12 @@ net_proc_sendq(__sock_o pso)
               ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
               continue;
               case 1:
-              printf ("ERROR: [%d]: net_proc_sendq: send data failed, payload size: %zd\n", pso->sock, psqp->size);
+              print_str ("ERROR: [%d] [%d]: net_proc_sendq: send data failed, payload size: %zd\n", pso->sock, pso->s_errno, psqp->size);
               ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
               net_send_sock_term_sig(pso);
               goto end;
               case 2:
+
               break;
             }
 
@@ -1317,7 +1318,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       pso->rcv_cb_t = spso->rcv0;
       if (pso->flags & F_OPSOCK_INIT_SENDQ)
         {
-          pso->send0 = (_p_ssend) net_ssend_ssl;
+          pso->send0 = (_p_ssend) net_ssend_ssl_b;
         }
       else
         {
@@ -1331,7 +1332,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
       if (pso->flags & F_OPSOCK_INIT_SENDQ)
         {
-          pso->send0 = (_p_ssend) net_ssend;
+          pso->send0 = (_p_ssend) net_ssend_b;
         }
       else
         {
@@ -1608,12 +1609,17 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 {
   mutex_lock(&pso->mutex);
 
-  int ret;
+  int ret = 0;
 
-  while ((ret = send(pso->sock, data, length, MSG_NOSIGNAL)) == -1)
+  while ((send(pso->sock, data, length, MSG_NOSIGNAL)) == -1)
     {
-      if (!(errno == EAGAIN || errno == EWOULDBLOCK))
+      if (!(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
         {
+          char e_buffer[1024];
+          print_str("ERROR: net_ssend_b: send failed: %s\n",
+              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+          pso->s_errno = errno;
+          ret = 1;
           break;
         }
       usleep(1000);
@@ -1638,11 +1644,32 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
 
   while ((ret = SSL_write(pso->ssl, data, length)) < 1)
     {
-      int ssl_err = SSL_get_error(pso->ssl, ret);
+      pso->s_errno = SSL_get_error(pso->ssl, ret);
 
-      if (!(ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE))
+      if (!(pso->s_errno == SSL_ERROR_WANT_READ
+          || pso->s_errno == SSL_ERROR_WANT_WRITE))
         {
-          break;
+          pso->status = ret;
+
+          ERR_print_errors_fp(stderr);
+
+          if (!(pso->s_errno == SSL_ERROR_WANT_CONNECT
+              || pso->s_errno == SSL_ERROR_WANT_ACCEPT
+              || pso->s_errno == SSL_ERROR_WANT_X509_LOOKUP))
+            {
+              pso->flags |= F_OPSOCK_TERM;
+
+              if (ret == 0)
+                {
+                  if (pso->s_errno == (SSL_ERROR_ZERO_RETURN))
+                    {
+                      pso->flags |= F_OPSOCK_TS_DISCONNECTED;
+                    }
+                }
+
+              pthread_mutex_unlock(&pso->mutex);
+              return 1;
+            }
         }
 
       usleep(1000);
@@ -1650,7 +1677,7 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
 
   pthread_mutex_unlock(&pso->mutex);
 
-  return ret;
+  return 0;
 }
 
 int
@@ -1719,6 +1746,7 @@ net_ssend(__sock_o pso, void *data, size_t length)
           return 2;
         }
       pso->status = -1;
+      pso->s_errno = errno;
       pthread_mutex_unlock(&pso->mutex);
       return 1;
     }
