@@ -1276,6 +1276,7 @@ rebuild_data_file(char *file, __g_handle hdl)
   if (determine_temp_path(file, hdl->s_buffer, PATH_MAX))
     {
       print_str("ERROR: %s: unable to get a writable temp. path\n", file);
+      return 1;
     }
 
   snprintf(buffer, PATH_MAX - 1, "%s.bk", file);

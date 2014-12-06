@@ -100,7 +100,7 @@ rebuild_dirlog(void)
         }
     }
 
-  int r = 1;
+  int r;
 
   data_backup_records(DIRLOG);
   g_act_1.flags |= F_GH_NO_BACKUP;
@@ -113,16 +113,8 @@ rebuild_dirlog(void)
               "WARNING: %s: requested read mode access but file not there\n",
               DIRLOG);
         }
-    }
-  else if ((r = g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1)))
-    {
-      print_str("ERROR: [%d] could not open dirlog, mode '%s', flags %u\n", r,
-          g_act_1.mode, flags);
-      return errno;
-    }
 
-  if (r)
-    {
+      snprintf(g_act_1.file, sizeof(g_act_1.file), "%s", DIRLOG);
       if (determine_datatype(&g_act_1, DIRLOG))
         {
           print_str("ERROR: %s: determine_datatype failed\n", DIRLOG);
@@ -133,6 +125,12 @@ rebuild_dirlog(void)
           print_str("ERROR: %s: g_proc_mr failed\n", DIRLOG);
           return 32;
         }
+    }
+  else if ((r = g_fopen(DIRLOG, g_act_1.mode, flags, &g_act_1)))
+    {
+      print_str("ERROR: [%d] could not open dirlog, mode '%s', flags %u\n", r,
+          g_act_1.mode, flags);
+      return errno;
     }
 
   mda dirchain =
@@ -623,8 +621,8 @@ release_generate_block(char *name, ear *iarg)
 
   if ((gfl & F_OPT_SFV) && (!(gfl & F_OPT_NOWRITE) || (gfl & F_OPT_FORCEWSFV)))
     {
-      if ((r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL, tp_default))
-          < 0)
+      if ((r = enum_dir(name, delete_file, (void*) "\\.sfv(\\.tmp|)$", 0, NULL,
+          tp_default)) < 0)
         {
           print_str(
               "ERROR: release_generate_block->enum_dir->delete_file (clean SFV): %s: [%d] %s\n",
