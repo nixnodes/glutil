@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:39
+#@REVISION:40
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' {arg3}` {arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 1`
@@ -359,7 +359,7 @@ ENDYEAR=`echo "$ZZ_ED" | rev | cut -d "/" -f1 | rev`
 
 
 if [ $UPDATE_TVLOG -eq 1 ]; then
-	trap "rm /tmp/glutil.img.$$.tmp" EXIT
+	trap "rm -f /tmp/glutil.img.$$.tmp" EXIT
 	
 	try_lock_r 12 tvr_lk "`echo "${3}${LAPPEND}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 	
@@ -384,7 +384,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	
 	echo -en "dir $DIR_E\ntime `date +%s`\nshowid $SHOWID\nclass $CLASS\nname $NAME\nstatus $STATUS\ncountry $COUNTRY\nseasons $SEASONS\nairtime $AIRTIME\nairday $AIRDAY\nruntime $RUNTIME\nlink $LINK\nstarted $STARTED\nended $ENDED\ngenre $GENRES\nstartyear $STARTYEAR\nendyear $ENDYEAR\nnetwork $NETWORK\n\n" > /tmp/glutil.img.$$.tmp
 	$2 --tvlog="$3$LAPPEND" -z tvrage --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to tvlog [$3$LAPPEND]"
-	rm /tmp/glutil.img.$$.tmp
+	rm -f /tmp/glutil.img.$$.tmp
 	[ ${TVLOG_SORT} -gt 0 ] && ${2} -e tvrage --tvlog="$3$LAPPEND" --nobackup --nostats --silent --sort num,asc,started
 	echo "${10}" | grep -q "1" || [ ${TVLOG_SHARED_MEM} -gt 0 ] && ${2} -q tvrage --tvlog="$3$LAPPEND" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
 fi
