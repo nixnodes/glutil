@@ -18,7 +18,7 @@
 #########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:9
+#@REVISION:10
 #
 #@MACRO:taskc-installch:{exe} -noop --preexec `! updatedb -e "{glroot}" -o /tmp/glutil.mlocate.$$.db && echo "updatedb failed" && exit 1 ; li="/bin/nc /bin/socat"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.$$.db "$lli" | head -1) && l=$(ldd "$lf" | awk '\{print $3\}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "{glroot}$f" ] || if cp --preserve=all "$f" "{glroot}$f"; then echo "$lf: {glroot}$f"; fi; done; [ -f "{glroot}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "{glroot}/bin/$(basename "$lf")"; then echo "{glroot}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.$$.db`
 #
@@ -66,7 +66,7 @@ out_GE4="${6}"
 
 if [ ${SSL} -eq 1 ]; then 
 	echo -e "u1 ${out_U1}\nu2 ${out_U2}\nge8 ${PASS}\n${b_proc}\n" | 
-		${GLUTIL} -z ge2 --raw | ${SOCAT} stdio "openssl-connect:${CONNECT_IP}:${CONNECT_PORT},verify=${SSL_VERIFY}"
+		${GLUTIL} -z ge2 --raw | ${SOCAT} -t 120 stdio "openssl-connect:${CONNECT_IP}:${CONNECT_PORT},verify=${SSL_VERIFY}"
 else
 	echo -e "u1 ${out_U1}\nu2 ${out_U2}\nge8 ${PASS}\n${b_proc}\n" | 
 		${GLUTIL} -z ge2 --raw | ${NC} ${CONNECT_IP} ${CONNECT_PORT}
