@@ -783,7 +783,7 @@ int
 net_send_direct(__sock_o pso, const void *data, size_t size)
 {
   int ret;
-  if (0 != (ret = pso->send0(pso, data, size)))
+  if (0 != (ret = pso->send0(pso, (void*) data, size)))
     {
       print_str(
           "ERROR: [%d] [%d %d]: net_send_direct: send data failed, payload size: %zd\n",
