@@ -1853,6 +1853,8 @@ n_proc_intval(char *left, char *right, int *outval, int min, int max)
   return 0;
 }
 
+#define MSG_NETCTL_OPT_NEEDTHRD         "ERROR: netctl_opt_parse: '%s': thread count must be above 0\n"
+
 static int
 netctl_opt_parse(pmda md, void *arg)
 {
@@ -1892,6 +1894,14 @@ netctl_opt_parse(pmda md, void *arg)
         {
           return 1;
         }
+
+      if (0 == i_val)
+        {
+          print_str(
+          MSG_NETCTL_OPT_NEEDTHRD, left);
+          return 1;
+        }
+
       net_opts.thread_l = (uint16_t) i_val;
     }
   else if (!strncmp(left, "threads_recv", 12))
@@ -1901,6 +1911,14 @@ netctl_opt_parse(pmda md, void *arg)
         {
           return 1;
         }
+
+      if (0 == i_val)
+        {
+          print_str(
+          MSG_NETCTL_OPT_NEEDTHRD, left);
+          return 1;
+        }
+
       net_opts.thread_r = (uint16_t) i_val;
     }
   else

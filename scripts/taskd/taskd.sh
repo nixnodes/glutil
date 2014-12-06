@@ -18,7 +18,7 @@
 #########################################################################
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:12
+#@REVISION:13
 #@MACRO:taskd-sha1gen|Generate SHA1 password:{exe} -noop --preexec `[ -z "{?Q:(\{arg1\})}" ] && echo "Missing input" && exit 2;  echo {?S:(?Q:(\{arg1\}))}`
 #@MACRO:taskd|taskd:{exe} -vvvv --user "{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):RUN_USER}" --group "{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):RUN_GROUP}" -netctl "threads_recv={?x:(?Q:(\{?d:spec1\}/taskd_server_config)):NET_THREADS}" -listen "mode=1|log=ge2|{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):NET_OPTIONS}" {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_ADDR} {?x:(?Q:(\{?d:spec1\}/taskd_server_config)):LISTEN_PORT} ( -l: "(?X:(isread):(?Q:(\{?d:spec1\}/taskd_server_config)))" -match "1" -l: "ge8" -regex "^......" -l: "(?S:(ge8))" -regexi "^{?x:(?Q:(\{?d:spec1\}/taskd_server_config)):SHA1_PW}$" ) -execv `{spec1} {glroot} {exe} {procid} \{u1\} \{u2\} \{ge1\} \{ge2\} \{ge3\} \{ge4\}` --glroot "{glroot}"
 #
@@ -85,7 +85,7 @@ check_illegal_string "${8}"
 
 register_module 1 version_get
 
-for mod in "${BASE_PATH}/${MODULES_PATH}"/*; do
+for mod in "${BASE_PATH}/${MODULES_PATH}"/${4}*; do
 	. "${mod}" || {
 		echo "ERROR: ${mod}: module load failed"
 	}

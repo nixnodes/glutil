@@ -75,6 +75,13 @@ net_deploy(void)
       return -1;
     }
 
+#ifdef M_ARENA_TEST
+  mallopt(M_ARENA_TEST, 1);
+#endif
+#ifdef M_ARENA_MAX
+  mallopt(M_ARENA_MAX, 1);
+#endif
+
   md_init_le(&_sock_r, (int) net_opts.max_sock);
   md_init_le(&_net_thrd_r, (int) net_opts.max_worker_threads);
 
@@ -85,13 +92,6 @@ net_deploy(void)
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
   int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
-
-#ifdef M_ARENA_TEST
-  mallopt(M_ARENA_TEST, 1);
-#endif
-#ifdef M_ARENA_MAX
-  mallopt(M_ARENA_MAX, 1);
-#endif
 
   if (s != 0)
     {
