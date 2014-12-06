@@ -270,34 +270,34 @@ md_alloc(pmda md, int b)
         }
 
       /*if (gfl & F_OPT_VERBOSE5)
-        {
-          print_str(
-              "WARNING: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
-              (ulint64_t) md->objects, (ulint64_t) md->count);
-        }*/
+       {
+       print_str(
+       "WARNING: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
+       (ulint64_t) md->objects, (ulint64_t) md->count);
+       }*/
       md->objects = realloc(md->objects, (md->count * sizeof(md_obj)) * 2);
       md->pos = md->objects;
       md->pos += md->count;
       bzero(md->pos, md->count * sizeof(md_obj));
 
       md->count *= 2;
-      ssize_t rlc;
+      //ssize_t rlc;
 
       if (md->flags & F_MDA_ARR_DIST)
         {
-          rlc = md_relink_n(md, 100);
+          md_relink_n(md, 100);
         }
       else
         {
-          rlc = md_relink(md);
+          md_relink(md);
         }
       flags |= MDA_MDALLOC_RE;
       /*if (gfl & F_OPT_VERBOSE5)
-        {
-          print_str(
-              "WARNING: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
-              (ulint64_t) md->objects, (ulint64_t) md->count, (ulint64_t) rlc);
-        }*/
+       {
+       print_str(
+       "WARNING: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
+       (ulint64_t) md->objects, (ulint64_t) md->count, (ulint64_t) rlc);
+       }*/
     }
 
   p_md_obj prev = md->pos;
