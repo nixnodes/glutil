@@ -87,6 +87,8 @@ g_setxid(void)
         {
           print_str("NOTICE: setgid: %s, gid: %u\n", pgn->name, pgn->id);
         }
+
+      gfl0 ^= F_OPT_SETGID;
     }
 
   if (gfl0 & F_OPT_SETUID)
@@ -126,6 +128,8 @@ g_setxid(void)
         {
           print_str("NOTICE: setuid: %s, uid: %u\n", pgn->name, pgn->id);
         }
+
+      gfl0 ^= F_OPT_SETUID;
 
     }
   return 0;
@@ -172,8 +176,7 @@ main(int argc, char *argv[])
   case PRIO_UPD_MODE_MACRO:
     ;
     uint64_t gfl_s = (gfl
-        & (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF | F_OPT_DAEMONIZE
-            | (F_OPT_SETUID | F_OPT_SETGID)));
+        & (F_OPT_WBUFFER | F_OPT_PS_LOGGING | F_OPT_NOGLCONF | F_OPT_DAEMONIZE));
     char **ptr;
     ptr = process_macro(prio_argv_off, NULL);
     if (NULL != ptr)
@@ -287,6 +290,12 @@ g_init(int argc, char **argv, char **l_arg)
     }
 
   enable_logging();
+
+  if (1 == g_setxid())
+    {
+      EXITVAL = 1;
+      return EXITVAL;
+    }
 
   if (ofl & F_ESREDIRFAILED)
     {
