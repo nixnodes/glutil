@@ -139,7 +139,7 @@ char *hpd_up =
     "  <expr1> or <expr2>    True when either of <expr1>, <expr2> is true.\n"
     "  <expr1> and <expr2>   True if both <expr1> and <expr2> are true.\n"
     "  -prune: [..] <expr>   Do not descend into directory when <expr> is false. Applies only when traversing filesystem.\n"
-    "  -l: <field>           Forces the next string match (-regex, -name, ..) to perform lookup on <field>"
+    "  -l: <field>           Forces the next string match (-regex, -name, ..) to perform lookup on <field>\n"
     "\n Hooks:\n"
     "  -exec <command [{field}..{field}..]>\n"
     "                        While parsing data structure/filesystem, execute shell command for each record\n"
