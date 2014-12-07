@@ -856,12 +856,16 @@ g_opt_setuid(void *arg, int m, void *opt)
 
   if (NULL == buffer)
     {
-      return 0;
+      return 21241;
     }
 
-  snprintf(G_USER, sizeof(G_USER), "%s", buffer);
+  if (buffer[0] != 0x0)
+    {
+      snprintf(G_USER, sizeof(G_USER), "%s", buffer);
 
-  gfl0 |= F_OPT_SETUID;
+      gfl0 |= F_OPT_SETUID;
+    }
+
   return 0;
 }
 
@@ -872,12 +876,16 @@ g_opt_setgid(void *arg, int m, void *opt)
 
   if (NULL == buffer)
     {
-      return 0;
+      return 41242;
     }
 
-  snprintf(G_GROUP, sizeof(G_GROUP), "%s", buffer);
+  if (buffer[0] != 0x0)
+    {
+      snprintf(G_GROUP, sizeof(G_GROUP), "%s", buffer);
 
-  gfl0 |= F_OPT_SETGID;
+      gfl0 |= F_OPT_SETGID;
+    }
+
   return 0;
 }
 

@@ -172,12 +172,6 @@ main(int argc, char *argv[])
       g_shutdown(NULL);
     }
 
-  if (1 == g_setxid())
-    {
-      EXITVAL = 1;
-      g_shutdown(NULL);
-    }
-
   enable_logging();
 
   switch (updmode)
