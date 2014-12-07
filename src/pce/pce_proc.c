@@ -370,6 +370,11 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
         {
           return -1;
         }
+      else if ( 1 == ptr->ui32_1 )
+        {
+          EXITVAL = 0;
+          return -1;
+        }
 
     }
   else
@@ -435,6 +440,11 @@ pce_match_build(void *_hdl, void *_ptr, void *arg)
 
       if (EXITVAL)
         {
+          return -1;
+        }
+      else if ( 1 == ptr->ui32_1 )
+        {
+          EXITVAL = 0;
           return -1;
         }
     }
@@ -691,6 +701,12 @@ pce_pcl_stat(int r, __d_sconf ptr)
     {
       print_str("NOTICE: chain link passed [%d][%d] (%s)\n", ptr->type,
           ptr->i32, ptr->match);
+
+      if (1 == ptr->ui32_1)
+        {
+          print_str(
+              "NOTICE: breaking chain with success at this point (always option used)\n");
+        }
     }
 }
 
