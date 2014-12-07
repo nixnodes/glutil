@@ -704,7 +704,8 @@ pce_pcl_stat(int r, __d_sconf ptr)
 
       if (1 == ptr->ui32_1)
         {
-          print_str("NOTICE: breaking chain with success at this point\n");
+          print_str(
+              "NOTICE: breaking chain with success at this point\n");
         }
     }
 }
@@ -832,10 +833,6 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
                   p_log->file, r);
             }
 
-          t_h.buffer.pos = NULL;
-
-          g_cleanup(&t_h);
-
           print_str("NOTICE: %s: retrying lookup\n", p_log->file);
 
           g_cleanup(p_log);
@@ -858,6 +855,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
           //nres = 0;
 
           goto retry;
+
+          g_close(&t_h);
         }
 
       p_log->flags |= F_GH_LOCKED;
