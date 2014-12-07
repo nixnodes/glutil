@@ -17,12 +17,16 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:6
+#@REVISION:7
 #
-GLUTIL=/bin/glutil
+GLUTIL=/bin/glutil-chroot
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
 #
 BASEDIR=`dirname "${0}"`
+
+[ -f "${BASEDIR}/imdb_update_dl_config" ] && { 
+	. "${BASEDIR}/imdb_update_dl_config"
+}
 
 GLROOT="${1}"
 
@@ -30,7 +34,7 @@ IMDB_LOG="${GLROOT}${IMDB_LOG}"
 
 [ -f "${BASEDIR}/common" ] || { 
 	echo "ERROR: ${BASEDIR}/common missing"
-	exit 1 
+	exit 2 
 }
 
 . "${BASEDIR}/common"

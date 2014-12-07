@@ -1,0 +1,2 @@
+GLUTIL=/bin/glutil-chroot
+IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
