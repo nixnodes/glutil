@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:41
+#@REVISION:42
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' 3` {arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 1`
@@ -72,7 +72,7 @@ UPDATE_TVLOG=1
 ##  relative path
 ## Set to 1, tvlog directory path fields are set to exact 
 ##  query that was made
-## Existing records are always overwritten, except if DENY_IMDBID_DUPE=1
+## Existing records are always overwritten, except if DENY_TVID_DUPE=1
 TVRAGE_DATABASE_TYPE=1
 #
 ## If set to 1, do not import records with same
@@ -238,7 +238,7 @@ if [ $7 -eq 2 ]; then
 		exit 1
 	}
 	SHOWID=${8}
-	if [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
+	if [ ${TVRAGE_DATABASE_TYPE} -eq 1 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 		cad $2 "-lom" "showid=${8}" "$3"	
 	fi
 	
@@ -294,7 +294,7 @@ if [ -z "$SHOWID" ]; then
 	exit 1
 fi
 
-if ! [ $7 -eq 2 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
+if ! [ $7 -eq 2 ] && [ ${TVRAGE_DATABASE_TYPE} -eq 1 ] && [ $UPDATE_TVLOG -eq 1 ] && [ $DENY_TVID_DUPE -eq 1 ]; then
 	cad $2 "-lom" "showid=${SHOWID}" "$3"	
 fi
 
