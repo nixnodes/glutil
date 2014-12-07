@@ -1478,11 +1478,93 @@ rt_af_sf(void *arg, char *match, char *output, size_t max_size, __d_drt_h mppd)
 
   if (NULL == ptr || ptr[0] == 0x0)
     {
-      print_str("ERROR: rt_af_sf: could not resolve key: %s\n", match);
+      print_str("ERROR: rt_af_sf: could not resolve key: %s\n",
+          ((__d_drt_h ) mppd->mppd_next)->varg_l);
       return NULL;
     }
 
   return as_ref_to_val_lk(match, dt_rval_spec_sf, mppd, "%s");
+}
+
+static char *
+dt_rval_so_isascii(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1(arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+      _mppd->mppd_next);
+
+  while (0 != p_b0[0])
+    {
+      if (!(p_b0[0] > 0 && p_b0[0] < 0x80))
+        {
+          output[0] = 0x30;
+          output[1] = 0x0;
+          return output;
+        }
+      p_b0++;
+    }
+  output[0] = 0x31;
+  output[1] = 0x0;
+
+  return output;
+}
+
+static void*
+rt_af_strops_go(void *input, char *match, __d_drt_h mppd)
+{
+  if (!strncmp(input, "ascii", 5))
+    {
+      return as_ref_to_val_lk(match, dt_rval_so_isascii, mppd, "%s");
+    }
+  else
+    {
+      print_str("ERROR: rt_af_strops_go: invalid option: '%s'\n", input);
+    }
+
+  return NULL;
+}
+
+static void*
+rt_af_strops(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+
+  mppd->mppd_next = l_mppd_create_copy(mppd);
+
+  mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
+      mppd->mppd_next);
+
+  if (NULL == mppd->fp_rval1)
+    {
+      print_str("ERROR: rt_af_strops: could not resolve: '%s'\n", match);
+      return NULL;
+    }
+
+  if (NULL == ((__d_drt_h ) mppd->mppd_next)->varg_l
+      || ((__d_drt_h ) mppd->mppd_next)->varg_l[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_strops: could not resolve field argument: '%s'\n",
+          match);
+      return NULL;
+    }
+
+  void *l_next_ref;
+
+  char *ptr = l_mppd_shell_ex(((__d_drt_h ) mppd->mppd_next)->varg_l,
+      mppd->r_rep, sizeof(mppd->r_rep), &l_next_ref,
+      LMS_EX_L,
+      LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == ptr || ptr[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_strops: could not resolve option: %s\n",
+          ((__d_drt_h ) mppd->mppd_next)->varg_l);
+      return NULL;
+    }
+
+  return rt_af_strops_go(ptr, match, mppd);
+
 }
 
 void *
@@ -1560,6 +1642,10 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
       case 0x78:
         ;
         return rt_af_sf(arg, match, output, max_size, mppd);
+        break;
+      case 0x73:
+        ;
+        return rt_af_strops(arg, match, output, max_size, mppd);
         break;
 #ifdef _G_SSYS_CRYPTO
       case 0x53:
