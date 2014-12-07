@@ -705,7 +705,7 @@ pce_pcl_stat(int r, __d_sconf ptr)
       if (1 == ptr->ui32_1)
         {
           print_str(
-              "NOTICE: breaking chain with success at this point (always option used)\n");
+              "NOTICE: breaking chain with success at this point\n");
         }
     }
 }
