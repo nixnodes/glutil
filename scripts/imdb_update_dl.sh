@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (C) 2013 NixNodes
+#  Copyright (C) 2014 NixNodes
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:1
+#@REVISION:2
 #
 GLUTIL=/bin/glutil
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
