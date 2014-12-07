@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:9
-#@MACRO:tvrage-sort|tvrage sort:{exe} --silent -q tvrage --sort asc,time --tvlog "{?q:tvrage@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{startyear\} \{country\} \{airtime\} \{airday\} \{seasons\} \{class\} \{runtime\} \{network\} \{status\} \{(?L:endyear>=startyear:(?m:(endyear-startyear)):(?p:0))\}`
+#@REVISION:10
+#@MACRO:tvrage-sort|Build sorted links based on TVRage data:{exe} --silent -q tvrage --sort asc,time --tvlog "{?q:tvrage@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{startyear\} \{country\} \{airtime\} \{airday\} \{seasons\} \{class\} \{runtime\} \{network\} \{status\} \{(?L:endyear>=startyear:(?m:(endyear-startyear)):(?p:0))\}`
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
