@@ -129,7 +129,9 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
           g_act_1.buffer.r_pos = md_first(&g_act_1.buffer);
         }
 
-      proc_match = g_bmatch_dummy;
+      //proc_match = g_bmatch_dummy;
+
+      md_g_free_cb(&g_act_1._match_rr, g_cl_mrr);
     }
 
   g_do_ppprint(&g_act_1, F_GH_PRE_PRINT, &g_act_1.pre_print_mech,
