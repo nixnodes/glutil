@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:7
+#@REVISION:8
 #
 GLUTIL=/bin/glutil-chroot
 TVRAGE_LOG=/ftp-data/glutil/db/tvrage.dlog
@@ -50,13 +50,14 @@ I_AIRTIME="${8}"
 I_AIRDAY="${9}"
 I_RUNTIME="${10}"
 I_STARTED="${11}"
-I_STARTYEAR="${12}"
-I_ENDYEAR="${13}"
-I_SEASONS="${14}"
-I_CLASS="${15}"
-I_GENRE="${16}"
-I_NETWORK="${17}"
-I_STATUS="${18}"
+I_ENDED="${12}"
+I_STARTYEAR="${13}"
+I_ENDYEAR="${14}"
+I_SEASONS="${15}"
+I_CLASS="${16}"
+I_GENRE="${17}"
+I_NETWORK="${18}"
+I_STATUS="${19}"
 
 [ -z "${I_DIR}" ] && exit 1
 
@@ -75,7 +76,7 @@ else
 	f_create=1
 fi
 
-echo -e "dir ${I_DIR}\ntime ${I_TIME}\nshowid ${I_SHOWID}\nname ${I_NAME}\nlink ${I_LINK}\ncountry ${I_COUNTRY}\nairtime ${I_AIRTIME}\nairday ${I_AIRDAY}\nruntime ${I_RUNTIME}\nstarted ${I_STARTED}\nstartyear ${I_STARTYEAR}\nendyear ${I_ENDYEAR}\nseasons ${I_SEASONS}\nclass ${I_CLASS}\ngenre ${I_GENRE}\nnetwork ${I_NETWORK}\nstatus ${I_STATUS}\n" |
+echo -e "dir ${I_DIR}\ntime ${I_TIME}\nshowid ${I_SHOWID}\nname ${I_NAME}\nlink ${I_LINK}\ncountry ${I_COUNTRY}\nairtime ${I_AIRTIME}\nairday ${I_AIRDAY}\nruntime ${I_RUNTIME}\nstarted ${I_STARTED}\nended ${I_ENDED}\nstartyear ${I_STARTYEAR}\nendyear ${I_ENDYEAR}\nseasons ${I_SEASONS}\nclass ${I_CLASS}\ngenre ${I_GENRE}\nnetwork ${I_NETWORK}\nstatus ${I_STATUS}\n" |
 	${GLUTIL} -z tvrage --tvlog "${TVRAGE_LOG}" || {
 		echo "ERROR: could not write ${TVRAGE_LOG}"
 		exit 2
