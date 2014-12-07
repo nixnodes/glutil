@@ -1,7 +1,9 @@
-#@REVISION:5
+#@REVISION:6
 
 INPUT_SOURCES=(	
- 	"tvrage/tvrage scripts/tvrage_get.sh 755 0" 	 	
+ 	"tvrage/tvrage scripts/tvrage_get.sh 755 0" 	
+ 	"tvrage/updatedl scripts/tvrage_update_dl.sh 755 0"
+ 	"tvrage/updatedl/config scripts/tvrage_update_dl_config 644 1"  	
 )
 
 INPUT_DEPENDENCIES=(

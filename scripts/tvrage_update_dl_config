@@ -1,0 +1,2 @@
+GLUTIL=/bin/glutil-chroot
+TVRAGE_LOG=/ftp-data/glutil/db/tvrage.dlog
