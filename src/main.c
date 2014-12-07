@@ -60,10 +60,7 @@ g_setxid(void)
       int r;
       if ((r = load_guid_info(&guid_stor, DEFPATH_GROUP)))
         {
-          if (r == 1)
-            {
-              print_str(MSG_GEN_NOFACC, "", DEFPATH_GROUP);
-            }
+          print_str(MSG_GEN_NOFACC, "", DEFPATH_GROUP);
           md_g_free(&guid_stor);
           return 1;
         }
@@ -71,10 +68,7 @@ g_setxid(void)
       p_gu_n pgn = search_xuid_name(&guid_stor, G_GROUP);
       if (pgn == NULL)
         {
-          if (r == 1)
-            {
-              print_str("ERROR: group '%s' not found\n", G_GROUP);
-            }
+          print_str("ERROR: group '%s' not found\n", G_GROUP);
           md_g_free(&guid_stor);
           return 1;
         }
@@ -106,10 +100,7 @@ g_setxid(void)
       int r;
       if ((r = load_guid_info(&uuid_stor, DEFPATH_PASSWD)))
         {
-          if (r == 1)
-            {
-              print_str( MSG_GEN_NOFACC, "", DEFPATH_PASSWD);
-            }
+          print_str( MSG_GEN_NOFACC, "", DEFPATH_PASSWD);
           md_g_free(&uuid_stor);
           return 1;
         }
@@ -117,10 +108,7 @@ g_setxid(void)
       p_gu_n pgn = search_xuid_name(&uuid_stor, G_USER);
       if (pgn == NULL)
         {
-          if (r == 1)
-            {
-              print_str("ERROR: user '%s' not found\n", G_USER);
-            }
+          print_str("ERROR: user '%s' not found\n", G_USER);
           md_g_free(&uuid_stor);
           return 1;
         }
