@@ -1591,7 +1591,7 @@ rtv_q(void *query, char *output, size_t max_size)
   md_init(&md_s, 2);
   p_md_obj ptr;
 
-  if (split_string(query, 0x40, &md_s) != 2)
+  if (split_string_l(query, 0x40, &md_s, 2) != 2)
     {
       output[0] = 0x0;
       return 0;

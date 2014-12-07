@@ -260,6 +260,7 @@ dt_rval_q(void *arg, char *match, char *output, size_t max_size, void *mppd)
 
   if (!match[0])
     {
+      output[0] = 0x0;
       return output;
     }
 
