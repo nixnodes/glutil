@@ -18,7 +18,7 @@
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
 #@REVISION:6
-#@MACRO:imdb-sort|imdb sort:{exe} --silent -q imdb --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
+#@MACRO:tvrage-sort|tvrage sort:{exe} --silent -q tvrage --tvlog "{?q:tvrage@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{startyear\} \{country\} \{airtime\} \{airday\} \{seasons\} \{class\} \{runtime\} \{network\} \{status\} \{?m:(endyear-startyear)\}`
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
@@ -48,11 +48,17 @@ R_ARG=${2}
 R_GLROOT="${3}"
 R_SITEROOT="${4}"
 R_GENRE="${6}"
-R_YEAR="${7}"
-R_ACTORS="${8}"
-R_DIRECTOR="${9}"
-R_RATING="${10}"
-R_SCORE="${11}"
+R_STARTYEAR="${7}"
+R_COUNTRY="${8}"
+R_AIRTIME="${9}"
+R_AIRDAY="${10}"
+R_SEASONS="${11}"
+R_CLASS="${12}"
+R_RUNTIME="${13}"
+R_NETWORK="${14}"
+R_STATUS="${15}"
+RS_YEARRUN="${16}"
+
 
 [ "${R_ARG}" = "mute" ] && OUT_PRINT=0
 
@@ -87,13 +93,17 @@ C_GLROOT=`echo "${R_GLROOT}" | sed -r 's/\//\\\\\//g'`
 
 CR_PATH=`echo "${R_PATH}" | sed -r "s/^${C_GLROOT}//"`
 
-
 [ -n "${R_GENRE}" ] && proc_sort Genre "${R_GENRE}"
-[ -n "${R_YEAR}" ] && proc_sort Year ${R_YEAR}
-[ -n "${R_ACTORS}" ] && proc_sort Actor "${R_ACTORS}"
-[ -n "${R_DIRECTOR}" ] && proc_sort Director "${R_DIRECTOR}"
-[ -n "${R_RATING}" ] && proc_sort Rating "${R_RATING}"
-[ -n "${R_SCORE}" ] && proc_sort Score "${R_SCORE}"
+[ -n "${R_STARTYEAR}" ] && proc_sort Startyear ${R_STARTYEAR}
+[ -n "${R_COUNTRY}" ] && proc_sort Country "${R_COUNTRY}"
+[ -n "${R_AIRTIME}" ] && proc_sort Airtime "${R_AIRTIME}"
+[ -n "${R_AIRDAY}" ] && proc_sort Airday "${R_AIRDAY}"
+[ -n "${R_SEASONS}" ] && proc_sort Seasons "${R_SEASONS}"
+[ -n "${R_CLASS}" ] && proc_sort Classification "${R_CLASS}"
+[ -n "${R_RUNTIME}" ] && proc_sort Runtime "${R_RUNTIME}"
+[ -n "${R_NETWORK}" ] && proc_sort Network "${R_NETWORK}"
+[ -n "${R_STATUS}" ] && proc_sort Status "${R_STATUS}"
+[ -n "${RS_YEARRUN}" ] && proc_sort Years-on-air "${RS_YEARRUN}"
 
 chmod -Rf 777 "${BASE_DIR}" &> /dev/null
 
