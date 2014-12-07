@@ -856,7 +856,7 @@ g_opt_setuid(void *arg, int m, void *opt)
 
   if (NULL == buffer)
     {
-      return 32512;
+      return 0;
     }
 
   snprintf(G_USER, sizeof(G_USER), "%s", buffer);
@@ -872,7 +872,7 @@ g_opt_setgid(void *arg, int m, void *opt)
 
   if (NULL == buffer)
     {
-      return 32513;
+      return 0;
     }
 
   snprintf(G_GROUP, sizeof(G_GROUP), "%s", buffer);
