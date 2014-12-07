@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:3
+#@REVISION:4
 #
 GLUTIL=/bin/glutil
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
@@ -53,7 +53,7 @@ I_PLOT="${15}"
 
 [ -z "${I_DIR}" ] && exit 1
 
-[ -f "${IMDB_LOG}" ] && {
+if [ -f "${IMDB_LOG}" ]; then
 	try_lock_r 12 imdb_lk "`echo "${IMDB_LOG}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 	
 	if ! ${GLUTIL} -e imdb --imdblog "${IMDB_LOG}" --nofq -l: dir ! -match "${I_DIR}" --rev; then	
@@ -64,12 +64,18 @@ I_PLOT="${15}"
 		echo "ERROR: old record still exists:  ${I_DIR}, ${IMDB_LOG}"
 		exit 2	
 	fi
-}
+else
+	f_create=1
+fi
 
 echo -e "dir ${I_DIR}\ntime ${I_TIME}\nimdbid ${I_IMDBID}\nscore ${I_SCORE}\nvotes ${I_VOTES}\ngenre ${I_GENRE}\nrated ${I_RATED}\ntitle ${I_TITLE}\ndirector ${I_DIRECTOR}\nactors ${I_ACTORS}\nreleased ${I_RELEASED}\nruntime ${I_RUNTIME}\nyear ${I_YEAR}\nplot ${I_PLOT}\n" |
 	${GLUTIL} -z imdb --imdblog "${IMDB_LOG}" || {
 		echo "ERROR: could not write ${IMDB_LOG}"
 		exit 2
 	}
+	
+[ -n "${f_create}" ] && {
+	chmod 666 "${IMDB_LOG}"
+}
 	
 exit 0
