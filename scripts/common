@@ -1,5 +1,5 @@
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 
 # PRIVATE
 _lock()             { flock -$1 ${2}; }
@@ -48,8 +48,8 @@ mk_lockdir()
 {
 	[ -d "${LOCK_BASEPATH}/lock-${1}" ] || {
 		mkdir -p "${LOCK_BASEPATH}/${1}"
-		chmod 777 "${LOCK_BASEPATH}"
-		chmod 777 "${LOCK_BASEPATH}/${1}"		
+		chmod -f 777 "${LOCK_BASEPATH}"
+		chmod -f 777 "${LOCK_BASEPATH}/${1}"		
 	}
 }
 

@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:5
+#@REVISION:6
 #
 GLUTIL=/bin/glutil
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
@@ -56,7 +56,7 @@ I_PLOT="${15}"
 if [ -f "${IMDB_LOG}" ]; then
 	try_lock_r 12 imdb_lk "`echo "${IMDB_LOG}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
 	
-	if ! ${GLUTIL} -e imdb -ff --imdblog "${IMDB_LOG}" --nofq -l: dir ! -match "${I_DIR}" --rev; then	
+	if ! ${GLUTIL} -e imdb -ff --silent --imdblog "${IMDB_LOG}" --nofq -l: dir ! -match "${I_DIR}" --rev; then	
 		echo "ERROR: -e failed:  ${I_DIR}, ${IMDB_LOG}"
 	fi
 	
