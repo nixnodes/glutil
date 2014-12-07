@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 #
 GLUTIL=/bin/glutil
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
@@ -62,14 +62,14 @@ I_PLOT="${15}"
 	
 	if ${GLUTIL} -q imdb --imdblog "${IMDB_LOG}" -l: dir -match "${I_DIR}" --rev --silent; then
 		echo "ERROR: old record still exists:  ${I_DIR}, ${IMDB_LOG}"
-		exit 1	
+		exit 2	
 	fi
 }
 
 echo -e "dir ${I_DIR}\ntime ${I_TIME}\nimdbid ${I_IMDBID}\nscore ${I_SCORE}\nvotes ${I_VOTES}\ngenre ${I_GENRE}\nrated ${I_RATED}\ntitle ${I_TITLE}\ndirector ${I_DIRECTOR}\nactors ${I_ACTORS}\nreleased ${I_RELEASED}\nruntime ${I_RUNTIME}\nyear ${I_YEAR}\nplot ${I_PLOT}\n" |
 	${GLUTIL} -z imdb --imdblog "${IMDB_LOG}" || {
 		echo "ERROR: could not write ${IMDB_LOG}"
-		exit 1
+		exit 2
 	}
 	
 exit 0
