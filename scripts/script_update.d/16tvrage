@@ -1,4 +1,4 @@
-#@REVISION:8
+#@REVISION:9
 
 INPUT_SOURCES=(	
  	"tvrage/tvrage scripts/tvrage_get.sh 755 0"
@@ -9,5 +9,5 @@ INPUT_SOURCES=(
 
 INPUT_DEPENDENCIES=(
 	"base/common scripts/common 644 6 0 02"
-	"base/sort_common scripts/sort_common 644 6 0 02"
+	"base/sort_common scripts/sort_common 644 6 0 03"
 )
