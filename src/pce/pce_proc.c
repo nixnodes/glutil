@@ -170,7 +170,7 @@ pce_proc(char *path, char *dir)
   off_t nres;
 
   char b_sp2[4096];
-  snprintf(b_sp2, 4096, "%s/%s", path, dir);
+  snprintf(b_sp2, sizeof(b_sp2), "%s/%s", path, dir);
   spec_p2 = (char*) b_sp2;
   spec_p3 = path;
 
