@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:9
-#@MACRO:imdb-sort|Build sorted links based on iMDB data:{exe} --silent -q imdb --sort desc,time --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
+#@REVISION:10
+#@MACRO:imdb-sort|Build sorted links based on iMDB data:{exe} --silent -q imdb --sort asc,time --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
