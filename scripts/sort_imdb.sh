@@ -17,8 +17,8 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:6
-#@MACRO:imdb-sort|imdb sort:{exe} --silent -q imdb --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
+#@REVISION:7
+#@MACRO:imdb-sort|imdb sort:{exe} --silent -q imdb --sort asc,time --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
 #
 ##
 BASE_DIR=/glftpd/site/_sorted
