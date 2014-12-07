@@ -1,12 +1,12 @@
 #@VERSION:0
-#@REVISION:2
+#@REVISION:3
 #
 #[mode] [val]
 proc_sort() {
 	s_IFS=${IFS}
 	IFS=","	
 	for i in ${2}; do
-		O_VAL=`echo "${i}" | sed -r 's/^[ ]+//' | sed -r 's/[ ]+$//' | sed -r 's/[^a-zA-Z0-9 .\_\-]/_/g'`
+		O_VAL=`echo "${i}" | sed -r 's/^[ ]+//' | sed -r 's/[ ]+$//' | sed -r 's/[^a-zA-Z0-9\.\_\-]/_/g'`
 		[ -z "${O_VAL}" ] && continue
 		C_PATH="${DT_PATH}/${1}/${O_VAL}"
 		! [ -d "${C_PATH}" ] && {
