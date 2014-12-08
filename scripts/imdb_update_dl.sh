@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:7
+#@REVISION:8
 #
 GLUTIL=/bin/glutil-chroot
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
@@ -34,7 +34,7 @@ IMDB_LOG="${GLROOT}${IMDB_LOG}"
 
 [ -f "${BASEDIR}/common" ] || { 
 	echo "ERROR: ${BASEDIR}/common missing"
-	exit 2 
+	exit 1
 }
 
 . "${BASEDIR}/common"
@@ -57,16 +57,18 @@ I_PLOT="${15}"
 
 [ -z "${I_DIR}" ] && exit 1
 
-if [ -f "${IMDB_LOG}" ]; then
-	try_lock_r 12 imdb_lk "`echo "${IMDB_LOG}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
+try_lock_r 12 imdb_lk "`echo "${IMDB_LOG}" | md5sum | cut -d' ' -f1`" 120 "ERROR: could not obtain lock"
+
+if [ -f "${IMDB_LOG}" ]; then	
 	
 	if ! ${GLUTIL} -e imdb -ff --silent --imdblog "${IMDB_LOG}" --nofq -l: dir ! -match "${I_DIR}" --rev; then	
 		echo "ERROR: -e failed:  ${I_DIR}, ${IMDB_LOG}"
+		exit 1
 	fi
 	
 	if ${GLUTIL} -q imdb --imdblog "${IMDB_LOG}" -l: dir -match "${I_DIR}" --rev --silent; then
 		echo "ERROR: old record still exists:  ${I_DIR}, ${IMDB_LOG}"
-		exit 2	
+		exit 1
 	fi
 else
 	f_create=1
@@ -75,11 +77,13 @@ fi
 echo -e "dir ${I_DIR}\ntime ${I_TIME}\nimdbid ${I_IMDBID}\nscore ${I_SCORE}\nvotes ${I_VOTES}\ngenre ${I_GENRE}\nrated ${I_RATED}\ntitle ${I_TITLE}\ndirector ${I_DIRECTOR}\nactors ${I_ACTORS}\nreleased ${I_RELEASED}\nruntime ${I_RUNTIME}\nyear ${I_YEAR}\nplot ${I_PLOT}\n" |
 	${GLUTIL} -z imdb --imdblog "${IMDB_LOG}" || {
 		echo "ERROR: could not write ${IMDB_LOG}"
-		exit 2
+		exit 1
 	}
 	
 [ -n "${f_create}" ] && {
 	chmod 666 "${IMDB_LOG}"
+	touch "${IMDB_LOG}.bk"
+	chmod -f 666 "${IMDB_LOG}.bk"
 }
 	
 exit 0
