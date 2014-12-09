@@ -39,6 +39,9 @@
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
+#ifdef _G_SSYS_THREAD
+#include <pthread.h>
+#endif
 
 #include <lref.h>
 
@@ -137,6 +140,10 @@ main(int argc, char *argv[])
 {
   char **p_argv = _p_argv = (char**) argv;
   int r;
+
+#ifdef _G_SSYS_THREAD
+  mutex_init(&mutex_glob00, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+#endif
 
   print_str = g_print_str;
   __pf_eof = g_feof;

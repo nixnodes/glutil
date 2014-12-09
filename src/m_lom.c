@@ -20,6 +20,10 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef _G_SSYS_THREAD
+#include <pthread.h>
+#include <thread.h>
+#endif
 
 static void
 set_lom_vp(__g_lom lom)
@@ -192,8 +196,14 @@ g_load_lom(__g_handle hdl)
     {
       print_str("ERROR: %s: [%d] LOM specified, but none was loaded\n",
           hdl->file, rt);
+#ifdef _G_SSYS_THREAD
+      mutex_lock(&mutex_glob00);
+#endif
       gfl |= F_OPT_KILL_GLOBAL;
       EXITVAL = 1;
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&mutex_glob00);
+#endif
 
     }
 

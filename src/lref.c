@@ -431,7 +431,13 @@ dt_rval_spec_print_format_int(void *arg, char *match, char *output,
           _mppd_next->tp_b0, sizeof(_mppd_next->tp_b0))))
     {
       print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
+#ifdef _G_SSYS_THREAD
+      mutex_lock(&mutex_glob00);
+#endif
       gfl |= F_OPT_KILL_GLOBAL;
+#ifdef _G_SSYS_THREAD
+              pthread_mutex_unlock(&mutex_glob00);
+#endif
       output[0] = 0x0;
       return output;
     }

@@ -264,10 +264,11 @@ net_destroy_connection(__sock_o so)
                 }
               so->s_errno = ssl_err;
               so->status = ret;
+              ERR_print_errors_fp(stderr);
               print_str(
                   "ERROR: socket: [%d] SSL_shutdown - code:[%d] sslerr:[%d]\n",
                   so->sock, ret, ssl_err);
-              ERR_print_errors_fp(stderr);
+
             }
 
           SSL_free(so->ssl);

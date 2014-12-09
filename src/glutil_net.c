@@ -235,6 +235,12 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
               "ERROR: net_baseline_gl_data_in: %s: [%d] matching record failed\n",
               pso->st_p0, r);
         }
+      else if (hdl->flags & F_GH_SPEC_SQ01)
+        {
+          pso->flags |= F_OPSOCK_TERM;
+          hdl->flags ^= F_GH_SPEC_SQ01;
+          goto end;
+        }
 
       goto l_end;
     }
@@ -254,6 +260,8 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
       net_proc_piped_q(pso, hdl);
     }
 
+  end: ;
+
   pthread_mutex_unlock(&pso->mutex);
 
   return 0;
@@ -269,9 +277,9 @@ net_gl_socket_destroy(__sock_o pso)
   __g_handle hdl = (__g_handle ) pso->va_p0;
 
   /*if ( NULL != hdl->v_b0)
-    {
-      free(hdl->v_b0);
-    }/*/
+   {
+   free(hdl->v_b0);
+   }/*/
 
   int r = g_cleanup(hdl);
 

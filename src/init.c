@@ -189,3 +189,12 @@ char G_USER[128] =
   { 0 };
 char G_GROUP[128] =
   { 0 };
+
+#ifdef _G_SSYS_THREAD
+
+#include <pthread.h>
+
+pthread_mutex_t mutex_glob00 =
+  {
+    { 0 } };
+#endif

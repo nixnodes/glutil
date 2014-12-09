@@ -63,7 +63,9 @@
 #define F_GH_EXECRD_HAS_PIPE            (a64 << 51)
 #define F_GH_PRINT                      (a64 << 52)
 
+
 #define F_GH_TFD_PROCED                 (a64 << 55)
+#define F_GH_SPEC_SQ01                  (a64 << 56)
 
 #define F_GH_STATUS_FLAGS               (F_GH_TFD_PROCED)
 

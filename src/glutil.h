@@ -115,6 +115,13 @@ uint32_t g_omfp_sto, g_omfp_suto;
 
 uint32_t xref_flags;
 
+#ifdef _G_SSYS_THREAD
+
+#include <pthread.h>
+
+pthread_mutex_t mutex_glob00;
+#endif
+
 int
 g_print_str(const char * volatile buf, ...);
 

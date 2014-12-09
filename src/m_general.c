@@ -16,6 +16,10 @@
 #include <arg_opts.h>
 
 #include <fnmatch.h>
+#ifdef _G_SSYS_THREAD
+#include <pthread.h>
+#include <thread.h>
+#endif
 
 void
 g_ipcbm(void *phdl, pmda md, int *r_p, void *ptr)
@@ -244,9 +248,19 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
       if (hdl->max_results && md->rescnt >= hdl->max_results)
         {
 #ifdef _MAKE_SBIN
+#ifdef _G_SSYS_THREAD
+          mutex_lock(&mutex_glob00);
+#endif
           ofl |= F_BM_TERM;
           gfl |= F_OPT_KILL_GLOBAL;
+#ifdef _G_SSYS_THREAD
+          pthread_mutex_unlock(&mutex_glob00);
 #endif
+#endif
+          if (!(hdl->flags & F_GH_SPEC_SQ01))
+            {
+              hdl->flags |= F_GH_SPEC_SQ01;
+            }
           return 1;
         }
       if (hdl->max_hits && md->hitcnt >= hdl->max_hits)
@@ -271,7 +285,13 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
           if (0 != r_stat)
             {
               r_p = 0;
+#ifdef _G_SSYS_THREAD
+              mutex_lock(&mutex_glob00);
+#endif
               EXITVAL = r_stat;
+#ifdef _G_SSYS_THREAD
+              pthread_mutex_unlock(&mutex_glob00);
+#endif
             }
         }
     }
