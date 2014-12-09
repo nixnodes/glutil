@@ -247,24 +247,28 @@ g_do_ppprint(__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc)
     }
 }
 
-void
+int
 g_omfp_write(int fd, char *buffer, size_t max_size, void *arg)
 {
-  write(fd_out, buffer, max_size);
+  return write(fd_out, buffer, max_size);
 }
 
-void
+int
 g_omfp_write_nl(int fd, char *buffer, size_t max_size, void *arg)
 {
-  write(fd_out, buffer, max_size);
-  write(fd_out, "\n", 1);
+  if (-1 == write(fd_out, buffer, max_size))
+    {
+      return -1;
+    }
+
+  return write(fd_out, "\n", 1);
 }
 
 #ifdef _G_SSYS_NET
 
 #include <net_io.h>
 
-void
+int
 g_omfp_q_nssys(int fd, char *buffer, size_t size, void *arg)
 {
   __sock_o pso = (__sock_o) arg;
@@ -276,9 +280,11 @@ g_omfp_q_nssys(int fd, char *buffer, size_t size, void *arg)
           "ERROR: g_omfp_q_nssys: net_send_direct failed, socket: [%d], code: [%d]\n",
           pso->sock, ret);
     }
+
+  return ret;
 }
 
-void
+int
 g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg)
 {
   __sock_o pso = (__sock_o) arg;
@@ -293,6 +299,8 @@ g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg)
           "ERROR: g_omfp_q_nssys: net_send_direct failed, socket: [%d], code: [%d]\n",
           pso->sock, ret);
     }
+
+  return ret;
 }
 
 #endif
@@ -327,6 +335,8 @@ g_omfp_ocomp(void * hdl, void *ptr, char *sbuffer)
   ((__g_handle ) hdl)->g_proc3(ptr, (void*) sbuffer);
 }
 
+#include <errno.h>
+
 void
 g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
 {
@@ -335,12 +345,21 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
       (__g_handle) hdl, (char*)((__g_handle ) hdl)->v_b0, ((__g_handle ) hdl)->v_b0_sz)))
     {
       print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
-      gfl |= F_OPT_KILL_GLOBAL;
+      //gfl |= F_OPT_KILL_GLOBAL;
       return;
     }
 
-  ((__g_handle) hdl)->w_d(fd_out, (char*)((__g_handle ) hdl)->v_b0,
+  int ret = ((__g_handle) hdl)->w_d(fd_out, (char*)((__g_handle ) hdl)->v_b0,
   strlen((char*)((__g_handle ) hdl)->v_b0), (void*)sbuffer);
+
+  if (ret == -1)
+    {
+      char e_buffer[1024];
+      print_str("ERROR: g_omfp_eassemble: write failed: %s\n",
+          strerror_r(errno, e_buffer, sizeof(e_buffer)));
+      //gfl |= F_OPT_KILL_GLOBAL;
+      return;
+    }
 
 }
 

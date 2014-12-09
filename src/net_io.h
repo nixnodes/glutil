@@ -29,12 +29,12 @@
 
 #define F_MODE_GHS                      (a32 << 1)
 
-#define SOCK_RECVB_SZ                   131072
+#define SOCK_RECVB_SZ                   8192
 #define SOCK_DEFAULT_IDLE_TIMEOUT       60
 #define SOCK_SSL_ACCEPT_TIMEOUT         60
 #define SOCK_SSL_CONNECT_TIMEOUT        60
 
-#define SOCKET_POOLING_FREQUENCY_MAX    750000
+#define SOCKET_POOLING_FREQUENCY_MAX    250000
 #define SOCKET_POOLING_FREQUENCY_MIN    1000
 #define SOCKET_POOLING_FREQUENCY_HIRES  1
 
@@ -99,7 +99,7 @@ typedef struct ___sock_o
   _p_ssend send0;
   _t_stocb pcheck_r;
   struct addrinfo *res;
-  void *parent;
+  void *parent, *cc;
   pmda host_ctx;
   ssize_t unit_size;
   _sock_c counters;
@@ -115,7 +115,7 @@ typedef struct ___sock_o
   void *ptr0;
   pthread_mutex_t mutex;
   void *va_p0;
-  void *st_p0;
+  void *st_p0, *st_p1;
 } _sock_o, *__sock_o;
 
 typedef int

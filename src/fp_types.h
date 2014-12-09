@@ -35,7 +35,7 @@ typedef int
 _d_is_am(char in_c);
 typedef int
 (*__d_is_am)(uint8_t in_c);
-typedef void
+typedef int
 (*__d_is_wb)(int, char*, size_t, void*);
 
 /* specific types */

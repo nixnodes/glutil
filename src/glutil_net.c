@@ -91,6 +91,8 @@ net_deploy(void)
 
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
+  //sigaddset(&set, SIGUSR1);
+
   int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
   if (s != 0)
@@ -174,6 +176,7 @@ net_deploy(void)
     }
 
   md_g_free(&_net_thrd_r);
+  md_g_free(&_sock_r);
 
   if (gfl & F_OPT_VERBOSE)
     {
@@ -214,7 +217,7 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock(&pso->mutex);
 
-  if (pso->counters.b_read < pso->unit_size)
+  if ((pso->counters.b_read < pso->unit_size) || (pso->flags & F_OPSOCK_TERM))
     {
       pthread_mutex_unlock(&pso->mutex);
       return 0;
@@ -265,15 +268,18 @@ net_gl_socket_destroy(__sock_o pso)
 
   __g_handle hdl = (__g_handle ) pso->va_p0;
 
-  if ( NULL != hdl->v_b0)
+  /*if ( NULL != hdl->v_b0)
     {
       free(hdl->v_b0);
-    }
+    }/*/
 
   int r = g_cleanup(hdl);
 
-  free(pso->va_p0);
-  pso->va_p0 = NULL;
+  if (NULL != pso->va_p0)
+    {
+      free(pso->va_p0);
+      pso->va_p0 = NULL;
+    }
 
   if (gfl & F_OPT_VERBOSE3)
     {
@@ -294,6 +300,11 @@ net_gl_socket_init0(__sock_o pso)
     ;
 
     if (pso->parent == NULL)
+      {
+        break;
+      }
+
+    if ((pso->flags & F_OPSOCK_TERM))
       {
         break;
       }
@@ -337,7 +348,7 @@ net_gl_socket_init0(__sock_o pso)
     hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
     snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
 
-    hdl->v_b0 = calloc(MAX_PRINT_OUT, 1);
+    hdl->v_b0 = pso->st_p1;
     hdl->v_b0_sz = MAX_PRINT_OUT - 4;
 
     if ((r = g_proc_mr(hdl)))

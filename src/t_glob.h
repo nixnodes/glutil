@@ -71,7 +71,7 @@ typedef unsigned long long int ulint64_t;
 
 #define CRC_FILE_READ_BUFFER_SIZE       64512
 
-#define MAX_EXEC_STR                    262144 * 4
+#define MAX_EXEC_STR                    262144
 #define PIPE_READ_MAX                   0x2000
 #define MAX_DATAIN_F                    (V_MB*32)
 #define MAX_PRINT_OUT                   262144

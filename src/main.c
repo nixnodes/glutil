@@ -216,6 +216,7 @@ g_throw_arerr(int r)
 int
 g_init(int argc, char **argv, char **l_arg)
 {
+
   g_setjmp(0, "g_init", NULL, NULL);
   int r = 0;
 

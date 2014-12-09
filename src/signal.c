@@ -46,6 +46,8 @@ setup_sighandlers(void)
   r += sigaction(SIGQUIT, &sa, NULL);
   r += sigaction(SIGABRT, &sa, NULL);
   r += sigaction(SIGTERM, &sa, NULL);
+  r += sigaction(SIGUSR1, &sa, NULL);
+  r += sigaction(SIGUSR2, &sa, NULL);
   r += sigaction(SIGCHLD, &sa_c, NULL);
   r += sigaction(SIGSEGV, &sa_e, NULL);
   r += sigaction(SIGILL, &sa_e, NULL);
@@ -64,8 +66,7 @@ child_sig_handler(int signal, siginfo_t * si, void *p)
   switch (si->si_code)
     {
   case CLD_KILLED:
-    fprintf(stderr,
-        "NOTICE: child process caught SIGINT\n");
+    fprintf(stderr, "NOTICE: child process caught SIGINT\n");
     break;
   case CLD_EXITED:
     break;
@@ -97,11 +98,13 @@ sig_handler(int signal)
     else
       {
 #ifdef _G_SSYS_NET
-        //fprintf(stderr, "NOTICE: caught SIGINT, signaling global kill..\n");
+        fprintf(stderr, "NOTICE: caught SIGINT, signaling global kill..\n");
 #endif
         gfl |= F_OPT_KILL_GLOBAL;
       }
 
+    break;
+  case SIGUSR1:
     break;
   default:
     //usleep(SIG_BREAK_TIMEOUT_NS);

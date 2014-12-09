@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 mda _net_thrd_r =
   { 0 };
@@ -114,6 +115,7 @@ thread_broadcast_kill(pmda thread_r)
       po_thrd pthrd = (po_thrd) ptr->ptr;
       mutex_lock(&pthrd->mutex);
       pthrd->flags |= F_THRD_TERM;
+      pthread_kill(pthrd->pt, SIGUSR1);
       pthread_mutex_unlock(&pthrd->mutex);
       c++;
       ptr = ptr->next;
@@ -224,7 +226,7 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
 
   int r;
 
-  if (!sel_thread)
+  if (NULL == sel_thread)
     {
       pthread_mutex_unlock(&threadr->mutex);
       return 1;
@@ -232,13 +234,16 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
 
   mutex_lock(&sel_thread->in_objects.mutex);
 
-  if (!md_alloc_le(&sel_thread->in_objects, 0, 0, (void*) object))
+  if (NULL == md_alloc_le(&sel_thread->in_objects, 0, 0, (void*) object))
     {
       r = 2;
     }
   else
     {
       r = 0;
+
+      pthread_kill(sel_thread->pt, SIGUSR1);
+
     }
 
   pthread_mutex_unlock(&sel_thread->in_objects.mutex);

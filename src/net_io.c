@@ -52,6 +52,10 @@ ssl_init(void)
 {
   int i;
 
+  CRYPTO_malloc_debug_init()
+  ;
+  CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
   /* static locks area */
   mutex_buf = malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
   if (mutex_buf == NULL)
@@ -136,6 +140,13 @@ ssl_init_ctx_server(__sock_o pso)
     { /* create new context from method */
       return NULL;
     }
+
+  SSL_CTX_set_options(pso->ctx,
+      SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_TLSv1);
+  SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_CLIENT_ONCE | SSL_VERIFY_PEER, NULL);
+  SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
+  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER);
+
   return pso->ctx;
 }
 
@@ -210,7 +221,7 @@ bind_socket(int fd, struct addrinfo *aip)
       return 101;
     }
 
-  if (listen(fd, SOMAXCONN - (SOMAXCONN / 2)))
+  if (listen(fd, 15))
     {
       return 102;
     }
@@ -260,6 +271,9 @@ net_destroy_connection(__sock_o so)
             }
 
           SSL_free(so->ssl);
+
+          ERR_remove_state(0);
+          ERR_clear_error();
         }
 
       if (!(so->flags & F_OPSOCK_TS_DISCONNECTED))
@@ -612,8 +626,8 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
     {
       if (!ssl_init_ctx_server(pso))
         {
-          net_open_listening_socket_cleanup(args->socket_register, aip, fd);
           ERR_print_errors_fp(stderr);
+          net_open_listening_socket_cleanup(args->socket_register, aip, fd);
           return 11;
         }
 
@@ -902,8 +916,8 @@ net_worker(void *args)
 
   thrd->timers.t1 = time(NULL);
 
-  //thrd->buffer0 = malloc(THREAD_DEFAULT_BUFFER0_SIZE);
-  //thrd->buffer0_size = THREAD_DEFAULT_BUFFER0_SIZE;
+  thrd->buffer0 = malloc(MAX_PRINT_OUT);
+  thrd->buffer0_size = MAX_PRINT_OUT;
 
   pthread_t _pt = thrd->pt;
   int _tid = syscall(SYS_gettid);
@@ -963,6 +977,7 @@ net_worker(void *args)
               pthread_mutex_unlock(&t_pso->mutex);
               goto io_loend;
             }
+          t_pso->st_p1 = thrd->buffer0;
           pthread_mutex_unlock(&t_pso->mutex);
 
           if (!md_alloc_le(&thrd->proc_objects, 0, 0, iobj_ptr->ptr))
@@ -1060,18 +1075,6 @@ net_worker(void *args)
               pso->buffer0)))
             {
           case 2:
-            //mutex_lock(&pso->mutex);
-            /*if (!pso->counters.b_read)
-             {
-             mutex_lock(&pso->sendq.mutex);
-             if (!pso->sendq.offset)
-             {
-             pthread_mutex_unlock(&pso->sendq.mutex);
-             //pthread_mutex_unlock(&pso->mutex);
-             goto e_end;
-             }
-             pthread_mutex_unlock(&pso->sendq.mutex);
-             }*/
 
             if (pso->counters.b_read)
               {
@@ -1082,7 +1085,6 @@ net_worker(void *args)
                 goto send_q;
               }
 
-            //pthread_mutex_unlock(&pso->mutex);
             break;
           case 0:
             int_state |= F_WORKER_INT_STATE_ACT;
@@ -1097,16 +1099,12 @@ net_worker(void *args)
                 errno,
                 errno ? strerror_r(errno, (char*) buffer0, 1024) : "");
 
-            //mutex_lock(&pso->mutex);
-
             pso->flags |= F_OPSOCK_TERM;
 
             if (!pso->counters.b_read)
               {
                 goto e_end;
               }
-
-            //pthread_mutex_unlock(&pso->mutex);
 
             break;
             }
@@ -1121,15 +1119,12 @@ net_worker(void *args)
               case -2:
                 break;
               default:
-                // mutex_lock(&pso->mutex);
 
                 print_str(
                     "ERROR: data processor failed with status %d, socket: [%d]\n",
                     r, pso->sock);
 
                 pso->flags |= F_OPSOCK_TERM;
-
-                //pthread_mutex_unlock(&pso->mutex);
 
                 break;
                 }
@@ -1192,6 +1187,23 @@ net_worker(void *args)
               pooling_timeout = (pooling_timeout * (thread_inactive / 4))
                   + SOCKET_POOLING_FREQUENCY_MIN;
             }
+          else
+            {
+              mutex_lock(&thrd->proc_objects.mutex);
+              if (0 == thrd->proc_objects.offset)
+                {
+                  pthread_mutex_unlock(&thrd->proc_objects.mutex);
+
+                  /*print_str("NOTICE: [%d]: putting worker to sleep [%hu]\n",
+                   _tid, thrd->oper_mode);*/
+
+                  sleep(360);
+                }
+              else
+                {
+                  pthread_mutex_unlock(&thrd->proc_objects.mutex);
+                }
+            }
         }
 
       usleep(pooling_timeout);
@@ -1219,6 +1231,165 @@ net_worker(void *args)
   pthread_mutex_unlock(&thread_host_ctx->mutex);
 
   return 0;
+}
+
+static int
+net_assign_sock(pmda base, pmda threadr, __sock_o pso, __sock_o spso)
+{
+  int r;
+
+  if ((r = push_object_to_thread(pso, threadr, (dt_score_ptp) net_get_score)))
+    {
+      print_str(
+          "ERROR: push_object_to_thread failed, code %d, sock %d (accept)\n", r,
+          pso->sock);
+      mutex_lock(&spso->mutex);
+      spso->status = 6;
+      spso->s_errno = 0;
+      pthread_mutex_unlock(&spso->mutex);
+      net_destroy_connection(pso);
+      mutex_lock(&base->mutex);
+      md_unlink_le(base, base->pos);
+      pthread_mutex_unlock(&base->mutex);
+      return 1;
+    }
+
+  mutex_lock(&pso->mutex);
+
+  if (spso->rc1)
+    {
+      spso->rc1((void*) pso);
+    }
+
+  //if (!(pso->flags & F_OPSOCK_SSL))
+  // {
+  pso->flags |= F_OPSOCK_ACT;
+
+  // }
+
+  pthread_mutex_unlock(&pso->mutex);
+
+  return 0;
+
+}
+
+static __sock_o
+net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
+{
+  mutex_lock(&base->mutex);
+
+  __sock_o pso;
+
+  if (NULL == (pso = md_alloc_le(base, sizeof(_sock_o), 0, NULL)))
+    {
+      print_str("ERROR: net_accept: out of resources [%llu/%llu]\n",
+          (unsigned long long int) base->offset,
+          (unsigned long long int) base->count);
+      spso->status = 23;
+      close(fd);
+      pthread_mutex_unlock(&base->mutex);
+      return NULL;
+    }
+
+  pso->sock = fd;
+  pso->rcv0 = spso->rcv1;
+  pso->rcv1 = spso->rcv1_t;
+  pso->parent = (void *) spso;
+  pso->st_p0 = spso->st_p0;
+  pso->oper_mode = SOCKET_OPMODE_RECIEVER;
+  pso->flags |= F_OPSOCK_CONNECT
+      | (spso->flags & (F_OPSOCK_SSL | F_OPSOCK_INIT_SENDQ));
+  pso->pcheck_r = (_t_stocb) net_chk_timeout;
+  pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
+  pso->timers.last_act = time(NULL);
+  spso->timers.last_act = time(NULL);
+
+  if (!spso->unit_size)
+    {
+      pso->buffer0 = malloc(SOCK_RECVB_SZ);
+      pso->unit_size = SOCK_RECVB_SZ;
+    }
+  else
+    {
+      pso->unit_size = spso->unit_size;
+      pso->buffer0 = malloc(pso->unit_size);
+    }
+
+  pso->host_ctx = base;
+
+  if (mutex_init(&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
+    {
+      spso->status = 4;
+      shutdown(fd, SHUT_RDWR);
+      close(fd);
+      md_unlink_le(base, base->pos);
+      pthread_mutex_unlock(&base->mutex);
+      return NULL;
+    }
+
+  if (pso->flags & F_OPSOCK_INIT_SENDQ)
+    {
+      md_init_le(&pso->sendq, 8192);
+    }
+
+  p_md_obj pso_ptr = base->pos;
+
+  if ((pso->flags & F_OPSOCK_SSL))
+    {
+      if ((pso->ssl = SSL_new(spso->ctx)) == NULL)
+        {
+          ERR_print_errors_fp(stderr);
+          spso->s_errno = 0;
+          spso->status = 5;
+          shutdown(fd, SHUT_RDWR);
+          close(fd);
+          md_unlink_le(base, pso_ptr);
+          return NULL;
+        }
+
+      SSL_set_fd(pso->ssl, pso->sock);
+      SSL_set_accept_state(pso->ssl);
+      SSL_set_read_ahead(pso->ssl, 1);
+
+      spso->rcv_cb_t = spso->rcv_cb;
+      spso->rcv_cb = (_p_s_cb) net_accept_ssl;
+      spso->flags |= F_OPSOCK_ST_SSL_ACCEPT;
+
+      pso->rcv_cb = spso->rcv0;
+
+      //pso->rcv_cb_t = spso->rcv0;
+      if (pso->flags & F_OPSOCK_INIT_SENDQ)
+        {
+          pso->send0 = (_p_ssend) net_ssend_ssl_b;
+        }
+      else
+        {
+          pso->send0 = (_p_ssend) net_ssend_ssl_b;
+        }
+
+    }
+  else
+    {
+      pso->rcv_cb = spso->rcv0;
+
+      if (pso->flags & F_OPSOCK_INIT_SENDQ)
+        {
+          pso->send0 = (_p_ssend) net_ssend_b;
+        }
+      else
+        {
+          pso->send0 = (_p_ssend) net_ssend_b;
+        }
+    }
+
+  if (spso->rc0)
+    {
+      spso->rc0((void*) pso);
+    }
+
+  pthread_mutex_unlock(&base->mutex);
+
+  return pso;
 }
 
 int
@@ -1254,158 +1425,37 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       return 1;
     }
 
-  pthread_mutex_unlock(&spso->mutex);
-
-  mutex_lock(&base->mutex);
-
   __sock_o pso;
 
-  if (NULL == (pso = md_alloc_le(base, sizeof(_sock_o), 0, NULL)))
+  pso = net_prep_acsock(base, threadr, spso, fd);
+
+  if ( NULL == pso)
     {
-      print_str("ERROR: net_accept: out of resources [%llu/%llu]\n",
-          (unsigned long long int) base->offset,
-          (unsigned long long int) base->count);
-      spso->status = 3;
-      close(fd);
-      pthread_mutex_unlock(&base->mutex);
-      return 0;
-    }
-
-  pso->sock = fd;
-  pso->rcv0 = spso->rcv1;
-  pso->rcv1 = spso->rcv1_t;
-  pso->parent = (void *) spso;
-  pso->st_p0 = spso->st_p0;
-  pso->oper_mode = SOCKET_OPMODE_RECIEVER;
-  pso->flags |= F_OPSOCK_CONNECT
-      | (spso->flags & (F_OPSOCK_SSL | F_OPSOCK_INIT_SENDQ));
-  pso->pcheck_r = (_t_stocb) net_chk_timeout;
-  pso->timers.last_act = time(NULL);
-
-  if (!spso->unit_size)
-    {
-      pso->buffer0 = malloc(SOCK_RECVB_SZ);
-      pso->unit_size = SOCK_RECVB_SZ;
-    }
-  else
-    {
-      pso->unit_size = spso->unit_size;
-      pso->buffer0 = malloc(pso->unit_size);
-    }
-
-  pso->host_ctx = base;
-
-  if (mutex_init(&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
-    {
-      spso->status = 4;
-      shutdown(fd, SHUT_RDWR);
-      close(fd);
-      md_unlink_le(base, base->pos);
-      pthread_mutex_unlock(&base->mutex);
-      return 1;
-    }
-
-  if (pso->flags & F_OPSOCK_INIT_SENDQ)
-    {
-      md_init_le(&pso->sendq, 8192);
-    }
-
-  p_md_obj pso_ptr = base->pos;
-
-  if (pso->flags & F_OPSOCK_SSL)
-    {
-      if ((pso->ssl = SSL_new(spso->ctx)) == NULL)
+      int sp_ret;
+      if (spso->status == 23)
         {
-          spso->s_errno = 0;
-          spso->status = 5;
-          shutdown(fd, SHUT_RDWR);
-          close(fd);
-          md_unlink_le(base, pso_ptr);
-          ERR_print_errors_fp(stderr);
-          return 1;
-        }
-
-      SSL_set_fd(pso->ssl, pso->sock);
-      SSL_set_accept_state(pso->ssl);
-      SSL_set_read_ahead(pso->ssl, 1);
-
-      pso->limits.sock_timeout = SOCK_SSL_ACCEPT_TIMEOUT;
-      pso->flags |= F_OPSOCK_ST_SSL_ACCEPT;
-      pso->rcv_cb = (_p_s_cb) net_accept_ssl;
-      pso->rcv_cb_t = spso->rcv0;
-      if (pso->flags & F_OPSOCK_INIT_SENDQ)
-        {
-          pso->send0 = (_p_ssend) net_ssend_ssl_b;
+          spso->status = 0;
+          sp_ret = 0;
         }
       else
         {
-          pso->send0 = (_p_ssend) net_ssend_ssl_b;
+          spso->status = -3;
+          sp_ret = 1;
         }
-    }
-  else
-    {
-      pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
-      pso->rcv_cb = spso->rcv0;
-
-      if (pso->flags & F_OPSOCK_INIT_SENDQ)
-        {
-          pso->send0 = (_p_ssend) net_ssend_b;
-        }
-      else
-        {
-          pso->send0 = (_p_ssend) net_ssend_b;
-        }
-    }
-
-  if (spso->rc0)
-    {
-      spso->rc0((void*) pso);
-    }
-
-  pthread_mutex_unlock(&base->mutex);
-
-  int r;
-
-  if ((r = push_object_to_thread(pso, threadr, (dt_score_ptp) net_get_score)))
-    {
-      print_str(
-          "ERROR: push_object_to_thread failed, code %d, sock %d (accept)\n", r,
-          pso->sock);
-      mutex_lock(&spso->mutex);
-      spso->status = 6;
-      spso->s_errno = 0;
       pthread_mutex_unlock(&spso->mutex);
-      net_destroy_connection(pso);
-      md_unlink_le(base, pso_ptr);
-      return 1;
+      return sp_ret;
     }
 
-  mutex_lock(&pso->mutex);
+  spso->cc = (void*) pso;
 
-  if (spso->rc1)
+  if (!(spso->flags & F_OPSOCK_SSL))
     {
-      spso->rc1((void*) pso);
+      ret = net_assign_sock(base, threadr, pso, spso);
     }
 
-  //if (!(pso->flags & F_OPSOCK_SSL))
-  // {
-  pso->flags |= F_OPSOCK_ACT;
+  pthread_mutex_unlock(&spso->mutex);
 
-  // }
-
-  pthread_mutex_unlock(&pso->mutex);
-
-  /*if (!(pso->flags & F_OPSOCK_SSL))
-   {
-   printf ("NOTICE: accept: %d, count: %llu ..\n", fd,
-   (unsigned long long int) base->offset);
-   pso->flags |= F_OPSOCK_ACT;
-   }
-
-   pthread_mutex_unlock (&base->mutex);
-   pthread_mutex_unlock (&pso->mutex);*/
-
-  return 0;
+  return ret;
 }
 
 int
@@ -1515,7 +1565,11 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 
       if (rcvd == 0)
         {
-          pso->flags |= F_OPSOCK_TS_DISCONNECTED;
+          if (pso->s_errno == (SSL_ERROR_ZERO_RETURN))
+            {
+              pso->flags |= F_OPSOCK_TS_DISCONNECTED;
+            }
+
           if (pso->counters.b_read)
             {
               pthread_mutex_unlock(&pso->mutex);
@@ -1542,8 +1596,12 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_accept_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
+net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 {
+  mutex_lock(&spso->mutex);
+
+  __sock_o pso = (__sock_o ) spso->cc;
+
   mutex_lock(&pso->mutex);
 
   int ret;
@@ -1555,32 +1613,47 @@ net_accept_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
           pthread_mutex_unlock(&pso->mutex);
+          pthread_mutex_unlock(&spso->mutex);
           return 2;
         }
 
-      pso->s_errno = ssl_err;
-      pso->flags |= F_OPSOCK_TERM;
-      pso->status = ret;
       ERR_print_errors_fp(stderr);
-      pthread_mutex_unlock(&pso->mutex);
-      return 1;
+
+      print_str("ERROR: SSL_accept: %d | [%d] [%d]\n", pso->sock, ret, ssl_err);
+
+      pso->flags |= F_OPSOCK_TERM;
+
     }
 
   pso->timers.last_act = time(NULL);
-  pso->rcv_cb = pso->rcv_cb_t;
+  spso->timers.last_act = time(NULL);
+  //pso->rcv_cb = pso->rcv_cb_t;
+
+  //spso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
   pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
-  pso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
+  spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
 
-  print_str("NOTICE: SSL_accept: %d, count: %llu - %s\n", pso->sock,
-      (unsigned long long int) base->offset, SSL_get_cipher(pso->ssl));
+  BIO_set_buffer_size(pso->ssl->rbio, 32768);
+  BIO_set_buffer_size(pso->ssl->wbio, 32768);
 
-  BIO_set_buffer_size(pso->ssl->rbio, 65536);
+  //ssl_show_certs(pso->ssl);
 
-  ssl_show_certs(pso->ssl);
+  if (!(pso->flags & F_OPSOCK_TERM))
+    {
+      print_str("NOTICE: SSL_accept: %d, %s\n", pso->sock,
+          SSL_get_cipher(pso->ssl));
+    }
+
+  spso->rcv_cb = spso->rcv_cb_t;
+
+  pso->flags |= F_OPSOCK_ACT;
 
   pthread_mutex_unlock(&pso->mutex);
+  pthread_mutex_unlock(&spso->mutex);
 
-  return 0;
+  ret = net_assign_sock(base, threadr, pso, spso);
+
+  return ret;
 }
 
 int

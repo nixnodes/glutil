@@ -282,7 +282,7 @@ g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
 
       if (process_exec_string(e_str, b_glob, MAX_EXEC_STR, callback, buffer))
         {
-          bzero(b_glob, MAX_EXEC_STR + 1);
+          bzero(b_glob, MAX_EXEC_STR);
           return -2;
         }
 
