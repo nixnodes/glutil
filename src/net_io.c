@@ -926,6 +926,8 @@ net_proc_sock_term(po_thrd thrd)
 
 }
 
+#define T_NET_WORKER_SD         (time_t) 15
+
 int
 net_worker(void *args)
 {
@@ -933,6 +935,7 @@ net_worker(void *args)
   int r;
   uint8_t int_state = 0;
   uint32_t pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
+  time_t s_00 = 0, e_00;
 
   po_thrd thrd = (po_thrd) args;
 
@@ -977,6 +980,26 @@ net_worker(void *args)
 
       if (thrd->flags & F_THRD_TERM)
         {
+          if (0 == s_00)
+            {
+              s_00 = time(NULL);
+            }
+          else
+            {
+              e_00 = time(NULL);
+              if ((e_00 - s_00) > T_NET_WORKER_SD)
+                {
+                  print_str(
+                      "WARNING: net_worker: [%d]: sockets still active [%llu / %llu]\n",
+                      _tid,
+                      (unsigned long long int) md_get_off_ts(
+                          &thrd->proc_objects),
+                      (unsigned long long int) md_get_off_ts(
+                          &thrd->in_objects));
+                  pthread_mutex_unlock(&thrd->mutex);
+                  break;
+                }
+            }
           if (net_proc_sock_term(thrd) == 0)
             {
               /*print_str("NOTICE: net_worker: [%d]: thread shutting down..\n",
@@ -1104,7 +1127,7 @@ net_worker(void *args)
 
               int_state |= F_WORKER_INT_STATE_ACT;
 
-              kill(getpid(), SIGUSR2);
+              //kill(getpid(), SIGUSR2);
 
               continue;
             }
@@ -1196,6 +1219,7 @@ net_worker(void *args)
                   print_str("WARNING: sendq: %zd items remain, socket:[%d]\n",
                       pso->sendq.offset, pso->sock);
                 }
+              int_state |= F_WORKER_INT_STATE_ACT;
             }
 
           pthread_mutex_unlock(&pso->sendq.mutex);
@@ -1243,8 +1267,11 @@ net_worker(void *args)
 
                   print_str("NOTICE: [%d]: putting worker to sleep [%hu]\n",
                       _tid, thrd->oper_mode);
-
-                  sleep(360);
+                  ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
+                      &thrd->status);
+                  sleep(-1);
+                  ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
+                      &thrd->status);
                 }
               else
                 {
@@ -1258,7 +1285,11 @@ net_worker(void *args)
       //print_str("%d - pooling socket..\n", (int) _tid);
     }
 
+  print_str("NOTICE: net_worker: [%d]: thread shutting down..\n", _tid);
+
+  mutex_lock(&thrd->mutex);
   pmda thread_host_ctx = thrd->host_ctx;
+  pthread_mutex_unlock(&thrd->mutex);
 
   mutex_lock(&thread_host_ctx->mutex);
 
@@ -1651,6 +1682,8 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
   return 0;
 }
 
+#define T_NET_ACCEPT_SSL        (time_t) 4
+
 int
 net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 {
@@ -1670,6 +1703,22 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
+          if (pso->timers.misc00 == (time_t) 0)
+            {
+              pso->timers.misc00 = time(NULL);
+            }
+          else
+            {
+              pso->timers.misc01 = time(NULL);
+              time_t pt_diff = (pso->timers.misc01 - pso->timers.misc00);
+              if (pt_diff > T_NET_ACCEPT_SSL)
+                {
+                  print_str(
+                      "WARNING: SSL_accept: [%d] timed out after %u seconds\n",
+                      pso->sock, pt_diff);
+                  goto f_term;
+                }
+            }
           pthread_mutex_unlock(&pso->mutex);
           pthread_mutex_unlock(&spso->mutex);
           return 2;
@@ -1677,10 +1726,13 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       print_str("ERROR: SSL_accept: %d | [%d] [%d]\n", pso->sock, ret, ssl_err);
 
+      f_term: ;
+
       pso->flags |= F_OPSOCK_TERM;
 
     }
 
+  pso->timers.misc00 = (time_t) 0;
   pso->timers.last_act = time(NULL);
   spso->timers.last_act = time(NULL);
   //pso->rcv_cb = pso->rcv_cb_t;

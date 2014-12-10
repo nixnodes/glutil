@@ -24,6 +24,8 @@
 
 #define THREAD_DEFAULT_BUFFER0_SIZE     8192
 
+#define F_THRD_STATUS_SUSPENDED         (a32 << 1)
+
 typedef struct gen_worker_arg
 {
   int count;
@@ -46,7 +48,7 @@ typedef struct object_thrd
   pthread_t pt;
   int id;
   int sig;
-  uint32_t flags;
+  uint32_t flags, status;
   mda in_objects, proc_objects;
   uint16_t role, oper_mode;
   void *buffer0;
@@ -85,6 +87,10 @@ typedef float
 dt_score_pt(pmda in, pmda out, void *arg1, void *arg2);
 typedef float
 (*dt_score_ptp)(pmda in, pmda out, void *arg1, void *arg2);
+void
+ts_flag_32(pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
+void
+ts_unflag_32(pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
 
 int
 push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc);

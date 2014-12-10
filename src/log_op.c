@@ -394,6 +394,7 @@ g_proc_mr(__g_handle hdl)
   if (gfl & F_OPT_MODE_RAWDUMP)
     {
       hdl->g_proc4 = g_omfp_raw;
+      hdl->flags |= F_GH_PRINT;
 #ifdef HAVE_ZLIB_H
       if (hdl->flags & F_GH_IO_GZIP)
         {

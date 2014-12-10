@@ -71,7 +71,7 @@ typedef int
 
 typedef struct __sock_timers
 {
-  time_t last_act, last_proc;
+  time_t last_act, last_proc, misc00, misc01;
 } _sock_tm;
 
 typedef struct __sock_timeouts

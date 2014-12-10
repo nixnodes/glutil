@@ -62,7 +62,47 @@ process_ca_requests(pmda md)
   return fail;
 }
 
-#define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 10
+static void
+net_ping_threads(void)
+{
+  mutex_lock(&_net_thrd_r.mutex);
+  p_md_obj ptr = _net_thrd_r.first;
+  while (ptr)
+    {
+      po_thrd thrd = (po_thrd) ptr->ptr;
+      mutex_lock(&thrd->mutex);
+
+      if (thrd->status & F_THRD_STATUS_SUSPENDED)
+        {
+          if (thread_register_count(&thrd->in_objects) > (off_t) 0)
+            {
+              pthread_kill(thrd->pt, SIGUSR1);
+              if (gfl & F_OPT_VERBOSE)
+                {
+                  print_str("NOTICE: waking up worker: %X\n", thrd->pt);
+
+                }
+            }
+          else if (thread_register_count(&thrd->proc_objects) > (off_t) 0)
+            {
+              pthread_kill(thrd->pt, SIGUSR1);
+              if (gfl & F_OPT_VERBOSE)
+                {
+                  print_str("NOTICE: waking up worker: %X\n", thrd->pt);
+
+                }
+            }
+
+        }
+
+      pthread_mutex_unlock(&thrd->mutex);
+
+      ptr = ptr->next;
+    }
+  pthread_mutex_unlock(&_net_thrd_r.mutex);
+}
+
+#define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 25
 
 int
 net_deploy(void)
@@ -85,6 +125,19 @@ net_deploy(void)
 #ifdef M_ARENA_MAX
   mallopt(M_ARENA_MAX, 1);
 #endif
+  sigset_t set;
+
+  sigemptyset(&set);
+  sigaddset(&set, SIGPIPE);
+
+  int sr = pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+  if (sr != 0)
+    {
+      print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", sr);
+      abort();
+      return 1;
+    }
 
   md_init_le(&_sock_r, (int) net_opts.max_sock);
   md_init_le(&_net_thrd_r, (int) net_opts.max_worker_threads);
@@ -142,7 +195,12 @@ net_deploy(void)
           print_str("WARNING: nothing left to process\n");
           break;
         }
-      sleep((unsigned int) -1);
+      else
+        {
+          net_ping_threads();
+        }
+
+      sleep((unsigned int) 30);
     }
 
   if (gfl & F_OPT_VERBOSE3)

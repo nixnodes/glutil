@@ -241,8 +241,10 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
   else
     {
       r = 0;
-
-      pthread_kill(sel_thread->pt, SIGUSR1);
+      if (sel_thread->status & F_THRD_STATUS_SUSPENDED)
+        {
+          pthread_kill(sel_thread->pt, SIGUSR1);
+        }
 
     }
 
@@ -293,3 +295,18 @@ mutex_lock(pthread_mutex_t *mutex)
     }
 }
 
+void
+ts_flag_32(pthread_mutex_t *mutex, uint32_t flags, uint32_t *target)
+{
+  mutex_lock(mutex);
+  *target |= flags;
+  pthread_mutex_unlock(mutex);
+}
+
+void
+ts_unflag_32(pthread_mutex_t *mutex, uint32_t flags, uint32_t *target)
+{
+  mutex_lock(mutex);
+  *target ^= flags;
+  pthread_mutex_unlock(mutex);
+}
