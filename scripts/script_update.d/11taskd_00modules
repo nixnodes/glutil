@@ -1,6 +1,7 @@
-#@REVISION:1
+#@REVISION:2
 
 INPUT_SOURCES=(
+	"taskd/mod scripts/taskd/modules 744 8" 	
  	"taskd/mod/nuke-0 scripts/taskd/modules/nuke 644 4" 	
  	"taskd/mod/nuke scripts/taskd/modules/12nuke 644 0" 
  	"taskd/mod/tvrage scripts/taskd/modules/14tvrage 644 0" 
