@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <signal.h>
 
+#include <pthread.h>
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -72,7 +74,7 @@ ssl_init(void)
   CRYPTO_set_id_callback(ssl_id_function);
 
   SSL_library_init();
-  OpenSSL_add_all_algorithms(); /* load & register all cryptos, etc. */
+  //OpenSSL_add_all_algorithms(); /* load & register all cryptos, etc. */
   SSL_load_error_strings(); /* load all error messages */
   RAND_load_file("/dev/urandom", 4096);
 
@@ -133,18 +135,28 @@ ssl_cleanup(void)
   mutex_buf = NULL;
 }
 
+static void
+ssl_init_setctx(__sock_o pso)
+{
+  SSL_CTX_set_options(pso->ctx,
+      SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_TLSv1|SSL_OP_NO_TICKET);
+  SSL_CTX_set_cipher_list(pso->ctx,
+      "!aNULL:!eNULL:ECDSA:SHA384:DH:RSA:TLSv1.2");
+}
+
 SSL_CTX*
 ssl_init_ctx_server(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(SSLv23_server_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(TLSv1_2_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
 
-  SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
+  ssl_init_setctx(pso);
+
   SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_CLIENT_ONCE | SSL_VERIFY_PEER, NULL);
   //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
-  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER|SSL_SESS_CACHE_CLIENT);
+  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_BOTH);
 
   return pso->ctx;
 }
@@ -152,10 +164,16 @@ ssl_init_ctx_server(__sock_o pso)
 SSL_CTX*
 ssl_init_ctx_client(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(SSLv23_client_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(TLSv1_2_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
+
+  ssl_init_setctx(pso);
+
+  //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
+  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER);
+
   return pso->ctx;
 }
 
@@ -255,6 +273,9 @@ net_destroy_connection(__sock_o so)
                 }
 
               int ssl_err = SSL_get_error(so->ssl, ret);
+              ERR_print_errors_fp(stderr);
+              ERR_clear_error();
+
               if ((ssl_err == SSL_ERROR_WANT_READ
                   || ssl_err == SSL_ERROR_WANT_WRITE))
                 {
@@ -263,7 +284,7 @@ net_destroy_connection(__sock_o so)
                 }
               so->s_errno = ssl_err;
               so->status = ret;
-              ERR_print_errors_fp(stderr);
+
               print_str(
                   "ERROR: socket: [%d] SSL_shutdown - code:[%d] sslerr:[%d]\n",
                   so->sock, ret, ssl_err);
@@ -462,6 +483,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
         {
           net_open_connection_cleanup(args->socket_register, aip, fd);
           ERR_print_errors_fp(stderr);
+          ERR_clear_error();
           return 11;
         }
 
@@ -469,6 +491,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
         { /* get new SSL state with context */
           net_open_connection_cleanup(args->socket_register, aip, fd);
           ERR_print_errors_fp(stderr);
+          ERR_clear_error();
           return 12;
         }
 
@@ -483,6 +506,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
                   "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s\n",
                   fd, r, args->ssl_cert);
               ERR_print_errors_fp(stderr);
+              ERR_clear_error();
               return 15;
             }
         }
@@ -538,7 +562,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
       args->rc1(pso);
     }
 
-  pso->flags |= F_OPSOCK_ACT;
+  pso->flags |= (F_OPSOCK_ACT | F_OPSOCK_PROC_READY);
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -627,6 +651,7 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
       if (!ssl_init_ctx_server(pso))
         {
           ERR_print_errors_fp(stderr);
+          ERR_clear_error();
           net_open_listening_socket_cleanup(args->socket_register, aip, fd);
           return 11;
         }
@@ -638,6 +663,7 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
               "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s / %s\n",
               fd, r, args->ssl_cert, args->ssl_key);
           ERR_print_errors_fp(stderr);
+          ERR_clear_error();
           return 12;
         }
 
@@ -914,6 +940,22 @@ net_worker(void *args)
 
   mutex_lock(&thrd->mutex);
 
+  sigset_t set;
+
+  sigemptyset(&set);
+  sigaddset(&set, SIGPIPE);
+  sigaddset(&set, SIGINT);
+
+  int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+  if (s != 0)
+    {
+      print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", s);
+      pthread_mutex_unlock(&thrd->mutex);
+      abort();
+      return 1;
+    }
+
   thrd->timers.t1 = time(NULL);
 
   thrd->buffer0 = malloc(MAX_PRINT_OUT);
@@ -1143,7 +1185,7 @@ net_worker(void *args)
 
           mutex_lock(&pso->sendq.mutex);
 
-          if (pso->sendq.offset > 0)
+          if (pso->sendq.offset > 0 && (pso->flags & F_OPSOCK_PROC_READY))
             {
               ssize_t sendq_rem;
               if ((sendq_rem = net_proc_sendq(pso)) != 0)
@@ -1187,7 +1229,7 @@ net_worker(void *args)
               /*print_str("%d - throttling pooling interval.. %u - %d - %u\n",
                (int) _tid, pooling_timeout, thread_inactive);*/
               pooling_timeout = (pooling_timeout * (thread_inactive / 4))
-                  + SOCKET_POOLING_FREQUENCY_MIN;
+                  + pooling_timeout;
             }
           else
             {
@@ -1196,8 +1238,8 @@ net_worker(void *args)
                 {
                   pthread_mutex_unlock(&thrd->proc_objects.mutex);
 
-                  /*print_str("NOTICE: [%d]: putting worker to sleep [%hu]\n",
-                   _tid, thrd->oper_mode);*/
+                  print_str("NOTICE: [%d]: putting worker to sleep [%hu]\n",
+                   _tid, thrd->oper_mode);
 
                   sleep(360);
                 }
@@ -1216,6 +1258,13 @@ net_worker(void *args)
   pmda thread_host_ctx = thrd->host_ctx;
 
   mutex_lock(&thread_host_ctx->mutex);
+
+  mutex_lock(&thrd->mutex);
+  free(thrd->buffer0);
+
+  _pt = thrd->pt;
+
+  pthread_mutex_unlock(&thrd->mutex);
 
   p_md_obj ptr_thread = search_thrd_id(thread_host_ctx, &_pt);
 
@@ -1265,7 +1314,7 @@ net_assign_sock(pmda base, pmda threadr, __sock_o pso, __sock_o spso)
 
   //if (!(pso->flags & F_OPSOCK_SSL))
   // {
-  pso->flags |= F_OPSOCK_ACT;
+  pso->flags |= F_OPSOCK_ACT | F_OPSOCK_PROC_READY;
 
   // }
 
@@ -1341,6 +1390,7 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
       if ((pso->ssl = SSL_new(spso->ctx)) == NULL)
         {
           ERR_print_errors_fp(stderr);
+          ERR_clear_error();
           spso->s_errno = 0;
           spso->status = 5;
           shutdown(fd, SHUT_RDWR);
@@ -1453,6 +1503,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
   if (!(spso->flags & F_OPSOCK_SSL))
     {
       ret = net_assign_sock(base, threadr, pso, spso);
+
     }
 
   pthread_mutex_unlock(&spso->mutex);
@@ -1542,6 +1593,10 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
         }
 
       pso->s_errno = SSL_get_error(pso->ssl, rcvd);
+
+      ERR_print_errors_fp(stderr);
+      ERR_clear_error();
+
       if (pso->s_errno == SSL_ERROR_WANT_READ
           || pso->s_errno == SSL_ERROR_WANT_WRITE)
         {
@@ -1550,8 +1605,6 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
         }
 
       pso->status = rcvd;
-
-      ERR_print_errors_fp(stderr);
 
       if ((pso->s_errno == SSL_ERROR_WANT_CONNECT
           || pso->s_errno == SSL_ERROR_WANT_ACCEPT
@@ -1611,6 +1664,8 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
   if ((ret = SSL_accept(pso->ssl)) != 1)
     {
       int ssl_err = SSL_get_error(pso->ssl, ret);
+      ERR_print_errors_fp(stderr);
+      ERR_clear_error();
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
@@ -1618,8 +1673,6 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
           pthread_mutex_unlock(&spso->mutex);
           return 2;
         }
-
-      ERR_print_errors_fp(stderr);
 
       print_str("ERROR: SSL_accept: %d | [%d] [%d]\n", pso->sock, ret, ssl_err);
 
@@ -1635,8 +1688,8 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
   pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
   spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
 
-  BIO_set_buffer_size(pso->ssl->rbio, 32768);
-  BIO_set_buffer_size(pso->ssl->wbio, 32768);
+  BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 8192);
+  BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 8192);
 
   //ssl_show_certs(pso->ssl);
 
@@ -1648,7 +1701,7 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
   spso->rcv_cb = spso->rcv_cb_t;
 
-  pso->flags |= F_OPSOCK_ACT;
+  //pso->flags |= F_OPSOCK_ACT;
 
   pthread_mutex_unlock(&pso->mutex);
   pthread_mutex_unlock(&spso->mutex);
@@ -1667,6 +1720,8 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
   if ((ret = SSL_connect(pso->ssl)) != 1)
     {
       int ssl_err = SSL_get_error(pso->ssl, ret);
+      ERR_print_errors_fp(stderr);
+      ERR_clear_error();
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
@@ -1677,7 +1732,6 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
       pso->flags |= F_OPSOCK_TERM;
       pso->status = ret;
       pso->s_errno = ssl_err;
-      ERR_print_errors_fp(stderr);
 
       print_str("ERROR: SSL_connect failed socket:[%d] code:[%d] sslerr:[%d]\n",
           pso->sock, ret, ssl_err);
@@ -1690,6 +1744,8 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
   pso->rcv_cb = pso->rcv_cb_t;
   pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
   pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
+
+  pso->flags |= F_OPSOCK_PROC_READY;
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -1737,13 +1793,13 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
   while ((ret = SSL_write(pso->ssl, data, length)) < 1)
     {
       pso->s_errno = SSL_get_error(pso->ssl, ret);
+      ERR_print_errors_fp(stderr);
+      ERR_clear_error();
 
       if (!(pso->s_errno == SSL_ERROR_WANT_READ
           || pso->s_errno == SSL_ERROR_WANT_WRITE))
         {
           pso->status = ret;
-
-          ERR_print_errors_fp(stderr);
 
           if (!(pso->s_errno == SSL_ERROR_WANT_CONNECT
               || pso->s_errno == SSL_ERROR_WANT_ACCEPT
@@ -1790,6 +1846,9 @@ net_ssend_ssl(__sock_o pso, void *data, size_t length)
   if ((ret = SSL_write(pso->ssl, data, length)) < 1)
     {
       pso->s_errno = SSL_get_error(pso->ssl, ret);
+      ERR_print_errors_fp(stderr);
+      ERR_clear_error();
+
       if (pso->s_errno == SSL_ERROR_WANT_READ
           || pso->s_errno == SSL_ERROR_WANT_WRITE)
         {
@@ -1798,8 +1857,6 @@ net_ssend_ssl(__sock_o pso, void *data, size_t length)
         }
 
       pso->status = ret;
-
-      ERR_print_errors_fp(stderr);
 
       if ((pso->s_errno == SSL_ERROR_WANT_CONNECT
           || pso->s_errno == SSL_ERROR_WANT_ACCEPT

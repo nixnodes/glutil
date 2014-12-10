@@ -140,5 +140,9 @@ int
 g_shutdown(void *arg);
 int
 g_init(int argc, char **argv, char **l_arg);
+void
+g_send_gkill(void);
+char
+g_get_gkill(void);
 
 #endif /* GLUTIL_H_ */

@@ -182,6 +182,19 @@ script_process_source()
 				[ ${VERBOSE} -gt 1 ] &&  echo "WARNING: ${name}: ${path}: configuration file already exists"
 				continue
 			}
+		elif [[ ${opt} -eq 8 ]]; then
+			[ -d "${GLROOT}${BASE_SEARCHDIR}/${path}" ] && {
+				[ ${VERBOSE} -gt 1 ] &&  echo "WARNING: ${name}: ${path}: folder already exists"
+				continue
+			}
+			mkdir -p "${GLROOT}${BASE_SEARCHDIR}/${path}"
+			perm_mask=`echo "${item}" | cut -d' ' -f3`
+			
+			[ -z "${perm_mask}" ] && {
+				echo "ERROR: ${name}: ${path}: could not get folder perms"
+			}			
+			
+			chmod ${perm_mask} "${GLROOT}${BASE_SEARCHDIR}/${path}"
 		elif [[ ${opt} -eq 6 ]]; then			
 			req_version=`echo "${item}" | cut -d' ' -f6`
 			[ -z "${req_version}" ] && {

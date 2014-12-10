@@ -18,7 +18,7 @@
 _net_opt net_opts =
   { .max_sock = 512, .thread_l = 1, .thread_r = 32, .st_p0 = NULL,
       .max_worker_threads = 64, .ssl_cert_def = "server.crt", .ssl_key_def =
-          "server.key" };
+          "server.key", .flags = 0 };
 
 mda _sock_r =
   { 0 };
@@ -91,21 +91,6 @@ net_deploy(void)
 
   ssl_init();
 
-  sigset_t set;
-
-  sigemptyset(&set);
-  sigaddset(&set, SIGPIPE);
-  //sigaddset(&set, SIGUSR1);
-
-  int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
-
-  if (s != 0)
-    {
-      print_str("ERROR: pthread_sigmask failed: %d\n", s);
-      abort();
-      return 1;
-    }
-
   int r;
 
   if ((r = spawn_threads(net_opts.thread_l, net_worker, 0, &_net_thrd_r,
@@ -150,7 +135,7 @@ net_deploy(void)
           "WARNING: process_ca_requests: not all connection requests were succesfull\n");
     }
 
-  while (!(gfl & F_OPT_KILL_GLOBAL))
+  while (g_get_gkill())
     {
       sleep((unsigned int) -1);
     }
@@ -259,8 +244,7 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   l_end_at: ;
 
-  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
-      && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
+  if ((hdl->flags & (F_GH_EXECRD_PIPE_OUT | F_GH_EXECRD_HAS_PIPE)))
     {
       net_proc_piped_q(pso, hdl);
     }
@@ -283,6 +267,11 @@ net_gl_socket_destroy(__sock_o pso)
    {
    free(hdl->v_b0);
    }/*/
+
+  if (hdl->flags & F_GH_SPEC_SQ02)
+    {
+      kill(_m_tid, SIGINT);
+    }
 
   int r = g_cleanup(hdl);
 
@@ -359,13 +348,18 @@ net_gl_socket_init0(__sock_o pso)
     hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
     snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
 
+    mutex_lock(&mutex_glob00);
     if ((r = g_proc_mr(hdl)))
       {
+        pthread_mutex_unlock(&mutex_glob00);
         print_str("ERROR: [%d] net_gl_socket_init0: g_proc_mr failed [%d]\n",
             pso->sock, r);
         pso->flags |= F_OPSOCK_TERM;
         return 2;
       }
+    pthread_mutex_unlock(&mutex_glob00);
+
+    hdl->v_b0_sz = MAX_PRINT_OUT - 4;
 
     int _tid = syscall(SYS_gettid);
 
@@ -395,6 +389,34 @@ net_gl_socket_init1(__sock_o pso)
         break;
       }
 
+    break;
+    }
+
+  return 0;
+}
+
+int
+net_gl_socket_connect_init1(__sock_o pso)
+{
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_RECIEVER:
+    ;
+
+    break;
+    }
+
+  return 0;
+}
+
+int
+net_gl_socket_init1_dc_on_ac(__sock_o pso)
+{
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_LISTENER:
+    ;
+    pso->flags |= F_OPSOCK_TERM;
     break;
     }
 

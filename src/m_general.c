@@ -303,8 +303,14 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   if (((gfl & F_OPT_MATCHQ) && 0 == r_p) || ((gfl & F_OPT_IMATCHQ) && r_p))
     {
+#ifdef _G_SSYS_THREAD
+      mutex_lock(&mutex_glob00);
+#endif
       ofl |= F_BM_TERM;
       gfl |= F_OPT_KILL_GLOBAL;
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&mutex_glob00);
+#endif
     }
 
   return !(r_p);

@@ -66,6 +66,7 @@
 
 #define F_GH_TFD_PROCED                 (a64 << 55)
 #define F_GH_SPEC_SQ01                  (a64 << 56)
+#define F_GH_SPEC_SQ02                  (a64 << 57)
 
 #define F_GH_STATUS_FLAGS               (F_GH_TFD_PROCED)
 

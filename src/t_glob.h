@@ -76,7 +76,6 @@ typedef unsigned long long int ulint64_t;
 #define MAX_DATAIN_F                    (V_MB*32)
 #define MAX_PRINT_OUT                   262144
 
-
 #define DEFPATH_LOGS                    "/logs"
 #define DEFPATH_USERS                   "/users"
 #define DEFPATH_GROUPS                  "/groups"

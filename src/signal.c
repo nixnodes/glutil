@@ -16,6 +16,10 @@
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
+#ifdef _G_SSYS_THREAD
+#include <pthread.h>
+#include <thread.h>
+#endif
 
 int
 setup_sighandlers(void)
@@ -27,6 +31,7 @@ setup_sighandlers(void)
       { 0 } }, sa_e =
     {
       { 0 } };
+
   int r = 0;
 
   sa.sa_handler = &sig_handler;
@@ -84,9 +89,11 @@ sig_handler(int signal)
 {
   switch (signal)
     {
+  case SIGUSR1:
+    break;
   case SIGTERM:
     fprintf(stderr, "NOTICE: caught SIGTERM, terminating gracefully\n");
-    gfl |= F_OPT_KILL_GLOBAL;
+    g_send_gkill();
     break;
   case SIGINT:
     ;
@@ -100,11 +107,9 @@ sig_handler(int signal)
 #ifdef _G_SSYS_NET
         fprintf(stderr, "NOTICE: caught SIGINT, signaling global kill..\n");
 #endif
-        gfl |= F_OPT_KILL_GLOBAL;
+        g_send_gkill();
       }
 
-    break;
-  case SIGUSR1:
     break;
   default:
     //usleep(SIG_BREAK_TIMEOUT_NS);

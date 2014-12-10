@@ -1970,6 +1970,11 @@ net_opt_parse(pmda md, void *arg)
       ca->flags |= F_OPSOCK_SSL;
       return 0;
     }
+  else if (!strncmp("f_pkt_quit\0", left, 11))
+    {
+      ca->flags |= F_OPSOCK_SD_FIRST_DC;
+      return 0;
+    }
 
   if (NULL == ptr->next)
     {
@@ -2074,17 +2079,20 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (ca->flags & F_OPSOCK_SSL)
     {
-      if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))
+      if (!(flags & F_OPSOCK_CONNECT))
         {
-          print_str("WARNING: [%s:%s] using default key: %s\n", host, port,
-              net_opts.ssl_key_def);
-          ca->ssl_key = net_opts.ssl_key_def;
-        }
-      if (!(ca->ca_flags & F_CA_HAS_SSL_CERT))
-        {
-          print_str("WARNING: [%s:%s] using default cert: %s\n", host, port,
-              net_opts.ssl_cert_def);
-          ca->ssl_cert = net_opts.ssl_cert_def;
+          if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))
+            {
+              print_str("WARNING: [%s:%s] using default key: %s\n", host, port,
+                  net_opts.ssl_key_def);
+              ca->ssl_key = net_opts.ssl_key_def;
+            }
+          if (!(ca->ca_flags & F_CA_HAS_SSL_CERT))
+            {
+              print_str("WARNING: [%s:%s] using default cert: %s\n", host, port,
+                  net_opts.ssl_cert_def);
+              ca->ssl_cert = net_opts.ssl_cert_def;
+            }
         }
     }
 
@@ -2097,6 +2105,12 @@ opt_queue_connection(void *arg, uint32_t flags)
     ca->rc0 = net_gl_socket_init0;
     //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
+
+    if (flags & F_OPSOCK_CONNECT)
+      {
+        ca->rc1 = net_gl_socket_connect_init1;
+      }
+
     break;
   case OPT_CONNECT_MODE_NULL :
     /*print_str("ERROR: opt_queue_connection: [%s:%s] missing mode\n", host,
@@ -2114,6 +2128,11 @@ opt_queue_connection(void *arg, uint32_t flags)
         port, ca->mode);
     md_unlink(&_boot_pca, _boot_pca.pos);
     return 24168;
+    }
+
+  if (ca->flags & F_OPSOCK_SD_FIRST_DC)
+    {
+      ca->rc1 = net_gl_socket_init1_dc_on_ac;
     }
 
   ca->host = host;

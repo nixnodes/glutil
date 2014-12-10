@@ -193,8 +193,37 @@ char G_GROUP[128] =
 #ifdef _G_SSYS_THREAD
 
 #include <pthread.h>
+#include <thread.h>
 
 pthread_mutex_t mutex_glob00 =
   {
     { 0 } };
 #endif
+
+void
+g_send_gkill(void)
+{
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&mutex_glob00);
+#endif
+  gfl |= F_OPT_KILL_GLOBAL;
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&mutex_glob00);
+#endif
+}
+
+char
+g_get_gkill(void)
+{
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&mutex_glob00);
+#endif
+  if (gfl & F_OPT_KILL_GLOBAL)
+    {
+      return 0;
+    }
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&mutex_glob00);
+#endif
+  return 1;
+}
