@@ -17,6 +17,9 @@
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef _G_SSYS_THREAD
+#include <pthread.h>
+#endif
 
 #include <lref.h>
 #include <xref.h>
