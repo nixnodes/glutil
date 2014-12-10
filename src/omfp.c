@@ -276,7 +276,7 @@ g_omfp_q_nssys(int fd, char *buffer, size_t size, void *arg)
   int ret;
   if ((ret = net_send_direct(pso, (const void*) buffer, size)) == -1)
     {
-      printf(
+      print_str(
           "ERROR: g_omfp_q_nssys: net_send_direct failed, socket: [%d], code: [%d]\n",
           pso->sock, ret);
     }
@@ -295,7 +295,7 @@ g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg)
   int ret;
   if ((ret = net_send_direct(pso, (const void*) buffer, size + 1)) == -1)
     {
-      printf(
+      print_str(
           "ERROR: g_omfp_q_nssys: net_send_direct failed, socket: [%d], code: [%d]\n",
           pso->sock, ret);
     }

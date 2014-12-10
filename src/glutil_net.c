@@ -25,6 +25,8 @@ mda _sock_r =
 mda _boot_pca =
   { 0 };
 
+pid_t _m_tid;
+
 static int
 process_ca_requests(pmda md)
 {
@@ -74,6 +76,8 @@ net_deploy(void)
           net_opts.max_worker_threads);
       return -1;
     }
+
+  _m_tid = getpid();
 
 #ifdef M_ARENA_TEST
   mallopt(M_ARENA_TEST, 1);
@@ -163,8 +167,6 @@ net_deploy(void)
       print_str("NOTICE: sending F_THRD_TERM to all worker threads\n");
     }
 
-  thread_broadcast_kill(&_net_thrd_r);
-
   if (gfl & F_OPT_VERBOSE)
     {
       print_str("NOTICE: waiting for threads to exit..\n");
@@ -172,7 +174,8 @@ net_deploy(void)
 
   while (thread_register_count(&_net_thrd_r) > 0)
     {
-      usleep(10000);
+      thread_broadcast_kill(&_net_thrd_r);
+      sleep(1);
     }
 
   md_g_free(&_net_thrd_r);
@@ -223,6 +226,8 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
       return 0;
     }
 
+  //print_str("NOTICE: got packet [%s]\n", pso->st_p0);
+
   __g_handle hdl = (__g_handle ) pso->va_p0;
 
   int r;
@@ -239,28 +244,26 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
         {
           pso->flags |= F_OPSOCK_TERM;
           hdl->flags ^= F_GH_SPEC_SQ01;
-          goto end;
         }
 
-      goto l_end;
+      goto l_end_at;
+    }
+
+  if (hdl->flags & F_GH_PRINT)
+    {
+      hdl->v_b0 = pso->st_p1;
+      hdl->g_proc4((void*) hdl, data, (void*) pso);
     }
 
   omfp_timeout;
 
-  if (hdl->flags & F_GH_PRINT)
-    {
-      hdl->g_proc4((void*) hdl, data, (void*) pso);
-    }
-
-  l_end: ;
+  l_end_at: ;
 
   if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
       && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
     {
       net_proc_piped_q(pso, hdl);
     }
-
-  end: ;
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -355,9 +358,6 @@ net_gl_socket_init0(__sock_o pso)
 
     hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
     snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
-
-    hdl->v_b0 = pso->st_p1;
-    hdl->v_b0_sz = MAX_PRINT_OUT - 4;
 
     if ((r = g_proc_mr(hdl)))
       {

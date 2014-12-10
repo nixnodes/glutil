@@ -141,11 +141,10 @@ ssl_init_ctx_server(__sock_o pso)
       return NULL;
     }
 
-  SSL_CTX_set_options(pso->ctx,
-      SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_TLSv1);
+  SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
   SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_CLIENT_ONCE | SSL_VERIFY_PEER, NULL);
-  SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
-  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER);
+  //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
+  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER|SSL_SESS_CACHE_CLIENT);
 
   return pso->ctx;
 }
@@ -928,6 +927,10 @@ net_worker(void *args)
   for (;;)
     {
       mutex_lock(&thrd->mutex);
+      thrd->timers.t0 = time(NULL);
+      pthread_mutex_unlock(&thrd->mutex);
+
+      mutex_lock(&thrd->mutex);
 
       if (thrd->flags & F_THRD_TERM)
         {
@@ -1169,8 +1172,6 @@ net_worker(void *args)
         }
 
       loop_end: ;
-
-      thrd->timers.t0 = time(NULL);
 
       if (int_state & F_WORKER_INT_STATE_ACT)
         {
@@ -1755,6 +1756,9 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
                   if (pso->s_errno == (SSL_ERROR_ZERO_RETURN))
                     {
                       pso->flags |= F_OPSOCK_TS_DISCONNECTED;
+                      print_str(
+                          "WARNING: net_ssend_ssl_b: [%d] socket disconnected\n",
+                          pso->sock);
                     }
                 }
 
