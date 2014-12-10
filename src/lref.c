@@ -19,6 +19,7 @@
 #include <unistd.h>
 #ifdef _G_SSYS_THREAD
 #include <pthread.h>
+#include <thread.h>
 #endif
 
 #include <lref.h>
