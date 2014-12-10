@@ -147,7 +147,7 @@ ssl_init_setctx(__sock_o pso)
 SSL_CTX*
 ssl_init_ctx_server(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(TLSv1_2_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(TLSv1_2_server_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
@@ -164,7 +164,7 @@ ssl_init_ctx_server(__sock_o pso)
 SSL_CTX*
 ssl_init_ctx_client(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(TLSv1_2_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(TLSv1_2_client_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
@@ -945,6 +945,7 @@ net_worker(void *args)
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
   sigaddset(&set, SIGINT);
+  sigaddset(&set, SIGUSR2);
 
   int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
@@ -1103,6 +1104,8 @@ net_worker(void *args)
 
               int_state |= F_WORKER_INT_STATE_ACT;
 
+              kill(getpid(), SIGUSR2);
+
               continue;
             }
 
@@ -1239,7 +1242,7 @@ net_worker(void *args)
                   pthread_mutex_unlock(&thrd->proc_objects.mutex);
 
                   print_str("NOTICE: [%d]: putting worker to sleep [%hu]\n",
-                   _tid, thrd->oper_mode);
+                      _tid, thrd->oper_mode);
 
                   sleep(360);
                 }
@@ -1261,9 +1264,7 @@ net_worker(void *args)
 
   mutex_lock(&thrd->mutex);
   free(thrd->buffer0);
-
   _pt = thrd->pt;
-
   pthread_mutex_unlock(&thrd->mutex);
 
   p_md_obj ptr_thread = search_thrd_id(thread_host_ctx, &_pt);

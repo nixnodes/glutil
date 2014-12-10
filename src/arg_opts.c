@@ -1970,7 +1970,7 @@ net_opt_parse(pmda md, void *arg)
       ca->flags |= F_OPSOCK_SSL;
       return 0;
     }
-  else if (!strncmp("f_pkt_quit\0", left, 11))
+  else if (!strncmp("first_sock_quit\0", left, 15))
     {
       ca->flags |= F_OPSOCK_SD_FIRST_DC;
       return 0;

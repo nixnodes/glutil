@@ -62,7 +62,7 @@ process_ca_requests(pmda md)
   return fail;
 }
 
-#define NET_WTHRD_CLEANUP_TIMEOUT               30
+#define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 10
 
 int
 net_deploy(void)
@@ -77,7 +77,7 @@ net_deploy(void)
       return -1;
     }
 
-  _m_tid = getpid();
+  //_m_tid = getpid();
 
 #ifdef M_ARENA_TEST
   mallopt(M_ARENA_TEST, 1);
@@ -137,6 +137,11 @@ net_deploy(void)
 
   while (g_get_gkill())
     {
+      if (thread_register_count(&_sock_r) == 0)
+        {
+          print_str("WARNING: nothing left to process\n");
+          break;
+        }
       sleep((unsigned int) -1);
     }
 
@@ -157,10 +162,19 @@ net_deploy(void)
       print_str("NOTICE: waiting for threads to exit..\n");
     }
 
-  while (thread_register_count(&_net_thrd_r) > 0)
+  time_t s = time(NULL), e;
+  off_t l_count;
+
+  while ((l_count = thread_register_count(&_net_thrd_r)) > 0)
     {
       thread_broadcast_kill(&_net_thrd_r);
       sleep(1);
+      e = time(NULL);
+      if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
+        {
+          print_str("WARNING: %llu worker threads remaining\n", l_count);
+          break;
+        }
     }
 
   md_g_free(&_net_thrd_r);
@@ -191,13 +205,20 @@ net_proc_piped_q(__sock_o pso, __g_handle hdl)
         }
     }
 
-  close(hdl->pfd_out[0]);
-
   if (r_sz == -1)
     {
       print_str("ERROR: net_proc_piped_q: [%d]: pipe read failed [%s]\n",
           pso->sock, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
     }
+
+  if (close(hdl->pfd_out[0]) == -1)
+    {
+      print_str("ERROR: net_proc_piped_q: [%d]: pipe close failed [%s]\n",
+          pso->sock, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+    }
+
+  hdl->flags ^= F_GH_EXECRD_HAS_PIPE;
+
 }
 
 int
@@ -244,7 +265,8 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   l_end_at: ;
 
-  if ((hdl->flags & (F_GH_EXECRD_PIPE_OUT | F_GH_EXECRD_HAS_PIPE)))
+  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
+      && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
     {
       net_proc_piped_q(pso, hdl);
     }
@@ -267,11 +289,6 @@ net_gl_socket_destroy(__sock_o pso)
    {
    free(hdl->v_b0);
    }/*/
-
-  if (hdl->flags & F_GH_SPEC_SQ02)
-    {
-      kill(_m_tid, SIGINT);
-    }
 
   int r = g_cleanup(hdl);
 
@@ -414,9 +431,16 @@ net_gl_socket_init1_dc_on_ac(__sock_o pso)
 {
   switch (pso->oper_mode)
     {
-  case SOCKET_OPMODE_LISTENER:
+  case SOCKET_OPMODE_RECIEVER:
     ;
-    pso->flags |= F_OPSOCK_TERM;
+    if (pso->parent == NULL)
+      {
+        break;
+      }
+    __sock_o spso = pso->parent;
+    spso->flags |= F_OPSOCK_TERM;
+    print_str("NOTICE: [%d]: sending F_OPSOCK_TERM to parent: %d\n", pso->sock,
+        spso->sock);
     break;
     }
 

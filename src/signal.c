@@ -91,6 +91,8 @@ sig_handler(int signal)
     {
   case SIGUSR1:
     break;
+  case SIGUSR2:
+      break;
   case SIGTERM:
     fprintf(stderr, "NOTICE: caught SIGTERM, terminating gracefully\n");
     g_send_gkill();
