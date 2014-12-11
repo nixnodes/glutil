@@ -1040,7 +1040,7 @@ pce_do_str_preproc(char *subject, __d_dgetr dgetr)
         }
       else
         {
-          print_str("NOTICE: preprocessed path string, result: %s", cl_g_sub);
+          print_str("NOTICE: preprocessed path string, result: %s\n", cl_g_sub);
         }
     }
   else
