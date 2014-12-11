@@ -39,11 +39,11 @@ gconf_format_block(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\n",
+  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%s\n",
       data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
-      data->o_imdb_skip_zero_score, data->o_r_clean_icase);
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string);
 
 }
 
@@ -52,11 +52,11 @@ gconf_format_block_batch(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\n",
+  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%s\n",
       data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
-      data->o_imdb_skip_zero_score, data->o_r_clean_icase);
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string);
 
 }
 
@@ -81,11 +81,12 @@ gconf_format_block_exp(void *iarg, char *output)
       "lookup_match_strictness_tvrage %hhd\n"
       "logging %hhd\n"
       "imdb_skip_zero_score %hhd\n"
-      "r_path_clean_icase %hhd\n\n"
+      "r_path_clean_icase %hhd\n"
+      "log_string %s\n\n"
       , data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
-      data->o_imdb_skip_zero_score, data->o_r_clean_icase);
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string);
 
 }
 
@@ -242,7 +243,7 @@ dt_rval_gconf_o_log(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-char *
+static char *
 dt_rval_gconf_o_imdb_skip_zero(void *arg, char *match, char *output,
     size_t max_size, void *mppd)
 {
@@ -250,11 +251,19 @@ dt_rval_gconf_o_imdb_skip_zero(void *arg, char *match, char *output,
   return output;
 }
 
-char *
+static char *
 dt_rval_gconf_o_r_clean_icase(void *arg, char *match, char *output,
     size_t max_size, void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_gconf) arg)->o_r_clean_icase);
+  return output;
+}
+
+static char *
+dt_rval_gconf_o_log_string(void *arg, char *match, char *output,
+    size_t max_size, void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_gconf) arg)->o_log_string);
   return output;
 }
 
@@ -338,6 +347,10 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_o_r_clean_icase , (__d_drt_h) mppd, "%hhd");
     }
+  else if (!strncmp(match, _MC_GCONF_LOGSTR, 10))
+    {
+      return as_ref_to_val_lk(match, dt_rval_gconf_o_log_string , (__d_drt_h) mppd, "%s");
+    }
 
   return NULL;
 }
@@ -357,6 +370,17 @@ gcb_gconf(void *buffer, char *key, char *val)
         }
       memcpy(ptr->r_clean, val,
           v_l >= GCONF_MAX_REG_EXPR ? GCONF_MAX_REG_EXPR - 1 : v_l);
+      return -1;
+    }
+  else if (k_l == 10 && !strncmp(key, _MC_GCONF_LOGSTR, 10))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return -1;
+        }
+      memcpy(ptr->o_log_string, val,
+          v_l >= sizeof(ptr->o_log_string) ?
+              sizeof(ptr->o_log_string) - 1 : v_l);
       return -1;
     }
   else if (k_l == 15 && !strncmp(key, _MC_GCONF_R_POSTPROC, 15))

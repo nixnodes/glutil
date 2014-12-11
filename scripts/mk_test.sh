@@ -88,10 +88,10 @@ imdb_lom_fields=("time score votes year released runtime")
 imdb_lom_values=(1385027223 6.6 47 2008 1 14)
 imdb_values=(- One 1385027223 tt1302196 6.6 47 Short,Comedy 2008 1 14 blabla Joe Hattie WePlot)
 
-gconf_fields=("r_path_clean r_path_postproc r_year_extract r_exclude_user paths use_shared_mem execute_on_lookup_fail path_exec_on_lookup_fail_imdb path_exec_on_lookup_fail_tvrage path_exec_on_match r_skip_basedir r_exclude_user_flags lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase")
+gconf_fields=("r_path_clean r_path_postproc r_year_extract r_exclude_user paths use_shared_mem execute_on_lookup_fail path_exec_on_lookup_fail_imdb path_exec_on_lookup_fail_tvrage path_exec_on_match r_skip_basedir r_exclude_user_flags lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase log_string")
 gconf_lom_fields=("use_shared_mem execute_on_lookup_fail lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase")
 gconf_lom_values=(13 41 -43 1 -4 -54 35)
-gconf_values=(test gdfgfd fdfds newone dfbd   13	41	g43gfg	g43fwefsf f24gg  fsdf2we 4g334gre	-43	1	-4	-54	35)
+gconf_values=(test gdfgfd fdfds newone dfbd   13	41	g43gfg	g43fwefsf f24gg  fsdf2we 4g334gre	-43	1	-4	-54	35 log)
 
 #########################################################################
 

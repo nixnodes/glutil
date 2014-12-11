@@ -32,6 +32,7 @@
 #define _MC_GCONF_STRCTNSI              "lookup_match_strictness_imdb"
 #define _MC_GCONF_STRCTNST              "lookup_match_strictness_tvrage"
 #define _MC_GCONF_LOGGING               "logging"
+#define _MC_GCONF_LOGSTR                "log_string"
 #define _MC_GCONF_IMDB_SKZERO           "imdb_skip_zero_score"
 
 #define GCONF_MAX_REG_EXPR        16384
