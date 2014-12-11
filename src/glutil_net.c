@@ -95,7 +95,6 @@ net_ping_threads(void)
 
                 }
             }
-
         }
       else
         {

@@ -68,22 +68,22 @@ gconf_format_block_exp(void *iarg, char *output)
   return printf("r_path_clean %s\n"
       "r_path_postproc %s\n"
       "r_year_extract %s\n"
-      "r_skip_basedir %s\n"
+      "r_exclude_user %s\n"
       "paths %s\n"
       "use_shared_mem %hhd\n"
       "execute_on_lookup_fail %hhd\n"
       "path_exec_on_lookup_fail_imdb %s\n"
       "path_exec_on_lookup_fail_tvrage %s\n"
       "path_exec_on_match %s\n"
-      "r_exclude_user %s\n"
+      "r_skip_basedir %s\n"
       "r_exclude_user_flags %s\n"
       "lookup_match_strictness_imdb %hhd\n"
       "lookup_match_strictness_tvrage %hhd\n"
       "logging %hhd\n"
       "imdb_skip_zero_score %hhd\n"
       "r_path_clean_icase %hhd\n\n"
-      , data->r_clean, data->r_postproc, data->r_yearm, data->r_skip_basedir, data->r_sects, data->o_use_shared_mem,
-      data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_exclude_user,
+      , data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
+      data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
       data->o_imdb_skip_zero_score, data->o_r_clean_icase);
 
