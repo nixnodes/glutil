@@ -1038,6 +1038,10 @@ pce_do_str_preproc(char *subject, __d_dgetr dgetr)
           print_str("ERROR: could not preprocess string (r_clean)\n");
           return NULL;
         }
+      else
+        {
+          print_str("NOTICE: preprocessed path string, result: %s", cl_g_sub);
+        }
     }
   else
     {

@@ -17,6 +17,7 @@
 #include <regex.h>
 
 #define _MC_GCONF_R_CLEAN               "r_path_clean"
+#define _MC_GCONF_R_CLEAN_ICASE         "r_path_clean_icase"
 #define _MC_GCONF_R_POSTPROC            "r_path_postproc"
 #define _MC_GCONF_R_YEARM               "r_year_extract"
 #define _MC_GCONF_R_SKIPBDIR            "r_skip_basedir"
@@ -68,8 +69,8 @@ typedef struct ___d_gconf
   char e_lookup_fail_imdb[GCONF_MAX_EXEC];
   char e_lookup_fail_tvrage[GCONF_MAX_EXEC];
   char e_match[GCONF_MAX_EXEC];
-  uint8_t o_r_clean_icase;
-  unsigned char ___padding[1024];
+  int8_t o_r_clean_icase;
+  unsigned char ___padding[8192];
 } _d_gconf, *__d_gconf;
 
 #pragma pack(pop)
