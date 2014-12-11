@@ -119,12 +119,13 @@ path_exec_on_lookup_fail_imdb                   /bin/scripts/taskd/taskc.sh 16 2
 ###############################################################
 #
 ## If 'execute_on_lookup_fail' is set to 2, the forked
-## instance executes this command.
+## instance executes this command if  the first query 
+## returned nothing but the second (after executing 
+## 'path_exec_on_lookup_fail' call) suceeded and the
+## rule chain hit a positive match.
 #
 ## This is used to perform a delayed action (nuke/etc..), 
-## after the first query returned nothing but the second 
-## (after executing 'path_exec_on_lookup_fail' call) suceeded
-## and the rule chain hit a positive match.
+## as a result of an asynchronous operation.
 #
 #path_exec_on_match              /bin/scripts/taskd/taskc.sh 12 1 "{pspec2}" "{pspec4}"
 #
