@@ -144,9 +144,11 @@ lookup_match_strictness_tvrage     	 1
 #
 ###############################################################
 #
-## Ignore any rule based on iMDB score when score is zero.
+## Ignore any rule based on iMDB score/votes when the value is 
+## zero.
 #
 imdb_skip_zero_score		      	 1
+imdb_skip_zero_votes		      	 1
 #
 ###############################################################
 #

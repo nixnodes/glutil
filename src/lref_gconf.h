@@ -34,6 +34,7 @@
 #define _MC_GCONF_LOGGING               "logging"
 #define _MC_GCONF_LOGSTR                "log_string"
 #define _MC_GCONF_IMDB_SKZERO           "imdb_skip_zero_score"
+#define _MC_GCONF_IMDB_SKZEROV          "imdb_skip_zero_votes"
 
 #define GCONF_MAX_REG_EXPR        16384
 #define GCONF_MAX_EXEC            4096
@@ -72,7 +73,8 @@ typedef struct ___d_gconf
   char e_match[GCONF_MAX_EXEC];
   int8_t o_r_clean_icase;
   char o_log_string[256];
-  unsigned char ___padding[7936];
+  int8_t o_imdb_skip_zero_votes;
+  unsigned char ___padding[7935];
 } _d_gconf, *__d_gconf;
 
 #pragma pack(pop)

@@ -25,6 +25,7 @@
 #include <exec_t.h>
 #include <exech.h>
 #include <misc.h>
+#include <mc_glob.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -595,12 +596,23 @@ preproc_lom_rc(void *data, __d_sconf ptr)
     {
   case 1:
     ;
-    if (gconf->o_imdb_skip_zero_score > 0 && !strncmp(ptr->field, "score", 5))
+    if (!strncmp(ptr->field, _MC_GLOB_SCORE, sizeof(_MC_GLOB_SCORE))
+        && gconf->o_imdb_skip_zero_score > 0)
       {
         __d_imdb d_imdb = (__d_imdb) data;
         if (d_imdb->rating == (float)0)
           {
-            print_str("WARNING: imdb score is 0, ignoring rule\n", ptr->field);
+            print_str("WARNING: [%d]: imdb score is 0, ignoring rule\n", getpid());
+            return 1;
+          }
+      }
+    else if (!strncmp(ptr->field, _MC_IMDB_VOTES, sizeof(_MC_IMDB_VOTES)) &&
+        gconf->o_imdb_skip_zero_votes > 0)
+      {
+        __d_imdb d_imdb = (__d_imdb) data;
+        if (d_imdb->votes == (uint32_t)0)
+          {
+            print_str("WARNING: [%d]: imdb votes is 0, ignoring rule\n", getpid());
             return 1;
           }
       }

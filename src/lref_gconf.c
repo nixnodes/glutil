@@ -39,11 +39,11 @@ gconf_format_block(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%s\n",
+  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%s\x9%hhd\n",
       data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
-      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string);
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string, data->o_imdb_skip_zero_votes);
 
 }
 
@@ -52,11 +52,11 @@ gconf_format_block_batch(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%s\n",
+  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%s\x9%hhd\n",
       data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
-      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string);
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string, data->o_imdb_skip_zero_votes);
 
 }
 
@@ -82,11 +82,12 @@ gconf_format_block_exp(void *iarg, char *output)
       "logging %hhd\n"
       "imdb_skip_zero_score %hhd\n"
       "r_path_clean_icase %hhd\n"
-      "log_string %s\n\n"
+      "log_string %s\n"
+      "imdb_skip_zero_score %hhd\n\n"
       , data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
       data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
-      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string);
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase, data->o_log_string, data->o_imdb_skip_zero_votes);
 
 }
 
@@ -123,6 +124,11 @@ ref_to_val_ptr_gconf(void *arg, char *match, int *output)
     {
       *output = ~((int) sizeof(data->o_imdb_skip_zero_score));
       return &data->o_imdb_skip_zero_score;
+    }
+  else if (!strncmp(match, _MC_GCONF_IMDB_SKZEROV, 20))
+    {
+      *output = ~((int) sizeof(data->o_imdb_skip_zero_votes));
+      return &data->o_imdb_skip_zero_votes;
     }
   else if (!strncmp(match, _MC_GCONF_R_CLEAN_ICASE, 18))
     {
@@ -244,10 +250,18 @@ dt_rval_gconf_o_log(void *arg, char *match, char *output, size_t max_size,
 }
 
 static char *
-dt_rval_gconf_o_imdb_skip_zero(void *arg, char *match, char *output,
+dt_rval_gconf_o_imdb_skip_zero_score(void *arg, char *match, char *output,
     size_t max_size, void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_gconf) arg)->o_imdb_skip_zero_score);
+  return output;
+}
+
+static char *
+dt_rval_gconf_o_imdb_skip_zero_votes(void *arg, char *match, char *output,
+    size_t max_size, void *mppd)
+{
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_gconf) arg)->o_imdb_skip_zero_votes);
   return output;
 }
 
@@ -341,7 +355,11 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_GCONF_IMDB_SKZERO, 20))
     {
-      return as_ref_to_val_lk(match, dt_rval_gconf_o_imdb_skip_zero , (__d_drt_h) mppd, "%hhd");
+      return as_ref_to_val_lk(match, dt_rval_gconf_o_imdb_skip_zero_score , (__d_drt_h) mppd, "%hhd");
+    }
+  else if (!strncmp(match, _MC_GCONF_IMDB_SKZEROV, 20))
+    {
+      return as_ref_to_val_lk(match, dt_rval_gconf_o_imdb_skip_zero_votes , (__d_drt_h) mppd, "%hhd");
     }
   else if (!strncmp(match, _MC_GCONF_R_CLEAN_ICASE, 18))
     {
@@ -531,6 +549,16 @@ gcb_gconf(void *buffer, char *key, char *val)
           return -1;
         }
       ptr->o_imdb_skip_zero_score = v_ui;
+      return 1;
+    }
+  else if (k_l == 20 && !strncmp(key, _MC_GCONF_IMDB_SKZEROV, 20))
+    {
+      int8_t v_ui = (int8_t) strtol(val, NULL, 10);
+      if ( errno == ERANGE)
+        {
+          return -1;
+        }
+      ptr->o_imdb_skip_zero_votes = v_ui;
       return 1;
     }
   else if (k_l == 18 && !strncmp(key, _MC_GCONF_R_CLEAN_ICASE, 18))
