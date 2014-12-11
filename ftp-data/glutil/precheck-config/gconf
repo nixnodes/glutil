@@ -113,19 +113,20 @@ execute_on_lookup_fail               1
 #
 ## Each log needs to have its own exec string defined:
 #
-path_exec_on_lookup_fail_tvrage      /bin/sh -c "{?rd:exe:-precheck$} -m tvrage-e -vvvv -arg1 '{pspec1}' --glroot / --tvlog {tvragefile}"
-path_exec_on_lookup_fail_imdb        /bin/sh -c "{?rd:exe:-precheck$} -m imdb-e -vvvv -arg1 '{pspec1}' --glroot / --imdblog {imdbfile}"
+path_exec_on_lookup_fail_tvrage                 /bin/scripts/taskd/taskc.sh 14 2 {pspec1}
+path_exec_on_lookup_fail_imdb                   /bin/scripts/taskd/taskc.sh 16 2 {pspec1}
 #
 ###############################################################
 #
-## This is used to perform a delayed action (nuke/etc..), 
-## after the first query returned nothing but the second (after 
-## executing 'path_exec_on_lookup_fail' call) suceeded.
-## If 'execute_on_lookup_fail' is set to 2, only the forked
-## instance executes this command if rule processor hits
-## a match.
+## If 'execute_on_lookup_fail' is set to 2, the forked
+## instance executes this command.
 #
-#path_exec_on_match                   /bin/nuker ..."
+## This is used to perform a delayed action (nuke/etc..), 
+## after the first query returned nothing but the second 
+## (after executing 'path_exec_on_lookup_fail' call) suceeded
+## and the rule chain hit a positive match.
+#
+#path_exec_on_match              /bin/scripts/taskd/taskc.sh 12 1 "{pspec2}" "{pspec4}"
 #
 ###############################################################
 #
@@ -153,10 +154,10 @@ imdb_skip_zero_score		      	 1
 ## from glftpd, the result (substring from the beggining to
 ## the last / in the path string) is matched against this
 ## regex.
-## The matched part of the regex is used to locate the 
+## The matched part is used to locate the correct ruleset.
 ## 
 #
-paths								^(xvid|x264)$
+paths								^(xvid|x264|..)$
 #
 ###############################################################
 #
