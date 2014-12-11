@@ -32,6 +32,13 @@ r_path_clean 				     	([-_\(\)\.\ \+](([1][98][0-9]{2,2}|[2][0][0-9]{2,2})|(S[0
 #
 #####################################################
 #
+## Case-insensitive Input directory regex filter 
+## (r_path_clean) 
+#
+r_path_clean_icase			     	0
+#
+#####################################################
+#
 ## Replace what matches this regex in the input
 ## string with ".*".
 #
@@ -132,6 +139,12 @@ path_exec_on_lookup_fail_imdb        /bin/sh -c "{?rd:exe:-precheck$} -m imdb-e 
 #
 lookup_match_strictness_imdb      	 1
 lookup_match_strictness_tvrage     	 1
+#
+###############################################################
+#
+## Ignore any rule based on iMDB score when score is zero.
+#
+imdb_skip_zero_score		      	 1
 #
 ###############################################################
 #
