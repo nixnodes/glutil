@@ -56,21 +56,21 @@ r_year_extract 				     	[_\-\(\)\.\+\ ]([1][98][0-9]{2,2}|[2][0][0-9]{2,2})([_\
 #
 ## Do not process directories matching this regex.
 #
-r_skip_basedir				     	^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
+r_skip_basedir						^(Sample|Proof|Cover(s|())|Subs|DVD[1-9]{1,2}|CD[1-9]{1,2})$
 #
 #####################################################
 #
 ## Exclude user(s) matching flags. Value is extracted
 ## from $FLAGS env variable. This is a REGEX.
 #
-r_exclude_user_flags                 [1A]
+r_exclude_user_flags				[1A]
 #
 #####################################################
 #
 ## Exclude user(s) matching this REGEX. Value is 
 ## extracted from $USER environment variable.
 #
-r_exclude_user				     	^(user1|user2)$
+r_exclude_user						^(user1|user2)$
 #
 #####################################################
 #
@@ -92,7 +92,7 @@ r_exclude_user				     	^(user1|user2)$
 ## are set to a sufficient value to hold your logs +
 ## some reserve for future growth (man sysctl).
 #
-use_shared_mem                       1
+use_shared_mem						1
 #
 #####################################################
 #
@@ -109,12 +109,12 @@ use_shared_mem                       1
 ## we  wish to  execute a web  lookup  if log doesn't  
 ## contain the info. See also 'path_exec_on_match'.
 #
-execute_on_lookup_fail               1
+execute_on_lookup_fail				1
 #
 ## Each log needs to have its own exec string defined:
 #
-path_exec_on_lookup_fail_tvrage                 /bin/scripts/taskd/taskc.sh 14 2 {pspec1}
-path_exec_on_lookup_fail_imdb                   /bin/scripts/taskd/taskc.sh 16 2 {pspec1}
+path_exec_on_lookup_fail_tvrage		/bin/scripts/taskd/taskc.sh 14 2 {pspec1}
+path_exec_on_lookup_fail_imdb		/bin/scripts/taskd/taskc.sh 16 2 {pspec1}
 #
 ###############################################################
 #
@@ -127,7 +127,7 @@ path_exec_on_lookup_fail_imdb                   /bin/scripts/taskd/taskc.sh 16 2
 ## This is used to perform a delayed action (nuke/etc..), 
 ## as a result of an asynchronous operation.
 #
-#path_exec_on_match              /bin/scripts/taskd/taskc.sh 12 1 "{pspec2}" "{pspec4}"
+#path_exec_on_match					/bin/scripts/taskd/taskc.sh 12 1 "{pspec2}" "{pspec4}"
 #
 ###############################################################
 #
@@ -139,16 +139,16 @@ path_exec_on_lookup_fail_imdb                   /bin/scripts/taskd/taskc.sh 16 2
 ##
 ## Each is log configured separately.
 #
-lookup_match_strictness_imdb      	 1
-lookup_match_strictness_tvrage     	 1
+lookup_match_strictness_imdb		1
+lookup_match_strictness_tvrage		1
 #
 ###############################################################
 #
 ## Ignore any rule based on iMDB score/votes when the value is 
 ## zero.
 #
-imdb_skip_zero_score		      	 1
-imdb_skip_zero_votes		      	 1
+imdb_skip_zero_score				1
+imdb_skip_zero_votes				1
 #
 ###############################################################
 #
