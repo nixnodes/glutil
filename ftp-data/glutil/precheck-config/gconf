@@ -156,7 +156,7 @@ imdb_skip_zero_score		      	 1
 ## The matched part of the regex is used to locate the 
 ## 
 #
-paths                              ^(xvid|x264)$
+paths								^(xvid|x264)$
 #
 ###############################################################
 #
