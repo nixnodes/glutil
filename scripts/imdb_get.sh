@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
-#@REVISION:50
+#@REVISION:51
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --lom "mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -25,6 +25,7 @@
 #@MACRO:imdb-su-f1:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1" -l: dir -regex "\/"
 #@MACRO:imdb-e-id|iMDB lookups based on -arg1 input (imdbID) [-arg1=<imdbid>]:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb; {spec1} {arg1} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} '-' 2 '-' 0" 
 #@MACRO:imdb-e|iMDB lookups based on -arg1 input [-arg1=<query>]:{exe} -noop  --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb; {spec1} '{arg1}' '\{exe\}' '\{imdbfile\}' '\{glroot\}' '\{siterootn\}' '{arg2}' 0 '' '' {arg3}"
+#@MACRO:imdb-purge-dead-paths|..:{exe} -e imdb --imdblog {?q:imdb@file} --nofq -l: "(?X:mode:(?Q:({glroot}\{dir\})))" -match 4 -vvvv
 #
 ## Install script dependencies + libs into glftpd root (requires mlocate)
 #

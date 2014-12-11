@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:43
+#@REVISION:44
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --sort asc,mtime --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' 3` {arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 1`
@@ -25,6 +25,7 @@
 #@MACRO:tvrage-e|Lookup/process using a specific TVRage query (by show name) [-arg1=<showname>]:{exe} -noop --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage; {spec1} '{arg1}' '\{exe\}' '\{tvragefile\}' '\{glroot\}' '\{siterootn\}' '{arg2}' 0 '' '' {arg3}"
 #@MACRO:tvrage-e-id|Lookup/process using a specific TVRage query (by show id) [-arg1=<showid>]:{exe} -noop --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage; {spec1} '-' '\{exe\}' '\{tvragefile\}' '\{glroot\}' '\{siterootn\}' 0 2 '{arg1}'"
 #@MACRO:tvrage-e-full|Retrieve a full show list from TVRage and build/update log based on returned showids:{exe} -noop --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec `{exe} --tvlog={q:tvrage@file} --backup tvrage; for i in $(curl http://services.tvrage.com/feeds/show_list.php | sed -r 's/<show><id>|<\/id><name>.*|<(\/|())shows>|<\?xml.*>//g' | sed -r '/^$/d'); do if echo "$i" | egrep -q '^[0-9]+$'; then {spec1} '-' '\{exe\}' '\{tvragefile\}' '\{glroot\}' '\{siterootn\}' 0 2 "$i"; else echo "ERROR: invalid id: '$i'"; fi; done`
+#@MACRO:tvrage-purge-dead-paths|..:{exe} -e tvrage --tvlog {?q:tvrage@file} --nofq -l: "(?X:mode:(?Q:({glroot}\{dir\})))" -match 4 -vvvv
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
