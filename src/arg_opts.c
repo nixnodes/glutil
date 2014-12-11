@@ -54,22 +54,10 @@ prio_opt_g_pinfo(void *arg, int m, void *opt)
   return 0;
 }
 
+// compatibility (obsolete)
 int
 opt_g_loglvl(void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
-  int lvl = atoi(buffer), i;
-  uint32_t t_LOGLVL = 0;
-
-  for (i = -1; i < lvl; i++)
-    {
-      t_LOGLVL <<= 1;
-      t_LOGLVL |= 0x1;
-    }
-
-  LOGLVL = t_LOGLVL;
-  gfl |= F_OPT_PS_LOGGING;
-
   return 0;
 }
 
@@ -92,7 +80,7 @@ opt_g_stdout_lvl(void *arg, int m, void *opt)
       return r;
     }
 
-  STDOUT_LVL = stdout_lvl;
+  STDLOG_LVL = stdout_lvl;
 
   return 0;
 }

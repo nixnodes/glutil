@@ -19,6 +19,7 @@ print_version_long(void *arg, int m, void *opt);
 int
 print_help(void *arg, int m, void *opt);
 
-
+int
+opt_g_stdout_lvl(void *arg, int m, void *opt);
 
 #endif /* ARG_OPTS_H_ */

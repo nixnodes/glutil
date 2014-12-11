@@ -23,11 +23,16 @@
 
 #define PSTR_MAX        (V_MB/4)
 
-
 int
 g_print_str(const char * volatile buf, ...)
 {
   char d_buffer_2[PSTR_MAX];
+
+  if (!(get_msg_type((char*) buf) & STDLOG_LVL))
+    {
+      return 0;
+    }
+
   va_list al;
   va_start(al, buf);
 
@@ -45,15 +50,11 @@ g_print_str(const char * volatile buf, ...)
         }
     }
 
-  if (!(get_msg_type((char*) buf) & STDOUT_LVL))
-    {
-      return 0;
-    }
-
   char iserr = !(buf[0] == 0x45 && (buf[1] == 0x52 || buf[1] == 0x58));
 
   if ((iserr && (gfl & F_OPT_PS_SILENT)))
     {
+      va_end(al);
       return 0;
     }
 
@@ -91,8 +92,7 @@ g_print_str(const char * volatile buf, ...)
   return 0;
 }
 
-uint32_t LOGLVL = F_MSG_TYPE_EEW;
-uint32_t STDOUT_LVL = F_MSG_TYPE_ANY;
+uint32_t STDLOG_LVL = F_MSG_TYPE_ANY;
 
 uint32_t
 get_msg_type(char *msg)
@@ -131,7 +131,7 @@ get_msg_type(char *msg)
   case 0x49: // I
     if (msg[1] == 0x4E) //N
       {
-        return F_MSG_TYPE_ANY;
+        return F_MSG_TYPE_NOTICE;
       }
     break;
     }
@@ -249,10 +249,10 @@ int
 w_log(char *w, char *ow)
 {
 
-  if (ow && !(get_msg_type(ow) & LOGLVL))
-    {
-      return 1;
-    }
+  /*if (ow && !(get_msg_type(ow) & log_lvl))
+   {
+   return 1;
+   }*/
 
   size_t wc, wll;
 
@@ -260,8 +260,9 @@ w_log(char *w, char *ow)
 
   if ((wc = fwrite(w, 1, wll, fd_log)) != wll)
     {
-      printf("ERROR: %s: writing log failed [%d/%d]\n", LOGFILE, (int) wc,
-          (int) wll);
+      char e_buffer[1024];
+      printf("ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE, (int) wc,
+          (int) wll, strerror_r(errno, e_buffer, 1024));
     }
 
   fflush(fd_log);
@@ -342,6 +343,8 @@ build_data_path(char *file, char *path, char *sd)
 #include <lref_gen3.h>
 #include <lref_gen4.h>
 #include <lref_altlog.h>
+#include <lref_gconf.h>
+#include <lref_sconf.h>
 
 int
 g_print_info(void)
@@ -364,6 +367,8 @@ g_print_info(void)
   print_str(" GE4            %d\t\n", G4_SZ);
   print_str(" ALTLOG         %d\t\n", AL_SZ);
   print_str(" ONLINE(SHR)    %d\t\n", OL_SZ);
+  print_str(" GCONF          %d\t\n", GC_SZ);
+  print_str(" SCONF          %d\t\n", SC_SZ);
   print_str(MSG_NL);
   if (gfl & F_OPT_VERBOSE)
     {

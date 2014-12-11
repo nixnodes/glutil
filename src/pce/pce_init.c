@@ -57,43 +57,43 @@ size_t max_datain_f = MAX_DATAIN_F;
 key_t SHM_IPC = (key_t) shm_ipc;
 
 char GLROOT[PATH_MAX] =
-  { glroot };
+  { glroot};
 char SITEROOT_N[PATH_MAX] =
   { siteroot };
 char SITEROOT[PATH_MAX] =
   { 0 };
 char DIRLOG[PATH_MAX] =
-  { dir_log};
+  { dir_log };
 char NUKELOG[PATH_MAX] =
-  { nuke_log};
+  { nuke_log };
 char DU_FLD[PATH_MAX] =
-  { du_fld};
+  { du_fld };
 char DUPEFILE[PATH_MAX] =
-  { dupe_file};
+  { dupe_file };
 char LASTONLOG[PATH_MAX] =
-  { last_on_log};
+  { last_on_log };
 char ONELINERS[PATH_MAX] =
-  { oneliner_file};
+  { oneliner_file };
 char FTPDATA[PATH_MAX] =
   { ftp_data };
 char IMDBLOG[PATH_MAX] =
-  { imdb_file};
+  { imdb_file };
 char GAMELOG[PATH_MAX] =
-  { game_log};
+  { game_log };
 char TVLOG[PATH_MAX] =
-  { tv_log};
+  { tv_log };
 char GE1LOG[PATH_MAX] =
-  { ge1_log};
+  { ge1_log };
 char GE2LOG[PATH_MAX] =
-  { ge2_log};
+  { ge2_log };
 char GE3LOG[PATH_MAX] =
-  { ge3_log};
+  { ge3_log };
 char GE4LOG[PATH_MAX] =
-  { ge4_log};
+  { ge4_log };
 char SCONFLOG[PATH_MAX] =
   { sconf_log };
 char GCONFLOG[PATH_MAX] =
-  { gconf_log};
+  { gconf_log };
 
 #ifdef GLCONF
 char GLCONF_I[PATH_MAX] =
@@ -157,7 +157,7 @@ int
 main(int argc, char *argv[])
 {
   print_str = pce_log;
-  LOGLVL = LOG_LEVEL;
+  STDLOG_LVL = LOG_LEVEL;
   setup_sighandlers();
 
   //gfl |= F_OPT_PS_SILENT;

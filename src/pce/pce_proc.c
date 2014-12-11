@@ -24,6 +24,7 @@
 #include <lc_oper.h>
 #include <exec_t.h>
 #include <exech.h>
+#include <misc.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -66,7 +67,7 @@ pce_proc(char *path, char *dir)
   if ((r = g_fopen(GCONFLOG, "r", F_DL_FOPEN_BUFFER, &h_gconf)))
     {
       print_str("ERROR: failed opening '%s', code %d\n", GCONFLOG, r);
-      goto aft_end;
+      return 0;
     }
 
   gconf = (__d_gconf) h_gconf.buffer.pos->ptr;
@@ -85,6 +86,22 @@ pce_proc(char *path, char *dir)
           fclose(fd_log);
         }
       fd_log = NULL;
+    }
+
+  if (strlen(gconf->o_log_string) > 0)
+    {
+      uint32_t stdout_lvl;
+
+      if (0 != (r = build_msg_reg(gconf->o_log_string, &stdout_lvl)))
+        {
+          print_str(
+              "ERROR: %s: could not load 'log_string' (build_msg_reg failed): %s\n",
+              GCONFLOG, gconf->o_log_string);
+        }
+      else
+        {
+          STDLOG_LVL = stdout_lvl;
+        }
     }
 
   gfl ^= G_HFLAGS;

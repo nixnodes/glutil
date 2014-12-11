@@ -70,7 +70,8 @@ typedef struct ___d_gconf
   char e_lookup_fail_tvrage[GCONF_MAX_EXEC];
   char e_match[GCONF_MAX_EXEC];
   int8_t o_r_clean_icase;
-  unsigned char ___padding[8192];
+  char o_log_string[256];
+  unsigned char ___padding[7936];
 } _d_gconf, *__d_gconf;
 
 #pragma pack(pop)

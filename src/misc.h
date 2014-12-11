@@ -44,8 +44,7 @@ opt_get_msg_type(char *msg);
 int
 build_msg_reg(char *arg, uint32_t *opt_r);
 
-uint32_t LOGLVL;
-uint32_t STDOUT_LVL;
+uint32_t STDLOG_LVL;
 
 int
 print_version_long(void *arg, int m, void *opt);

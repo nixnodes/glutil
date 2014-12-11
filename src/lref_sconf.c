@@ -85,37 +85,37 @@ ref_to_val_ptr_sconf(void *arg, char *match, int *output)
     }
   else if (!strncmp(match, _MC_SCONF_UINT64, 6))
     {
-      *output = sizeof(data->ui64);
+      *output = (int) sizeof(data->ui64);
       return &data->ui64;
     }
   else if (!strncmp(match, _MC_GE_U1, 2))
     {
-      *output = sizeof(data->ui32_1);
+      *output = (int) sizeof(data->ui32_1);
       return &data->ui32_1;
     }
   else if (!strncmp(match, _MC_GE_U2, 2))
     {
-      *output = sizeof(data->ui32_2);
+      *output = (int) sizeof(data->ui32_2);
       return &data->ui32_2;
     }
   else if (!strncmp(match, _MC_SCONF_INVERTM, 6))
     {
-      *output = sizeof(data->invert);
+      *output = (int) sizeof(data->invert);
       return &data->invert;
     }
   else if (!strncmp(match, _MC_SCONF_TYPE, 4))
     {
-      *output = sizeof(data->type);
+      *output = (int) sizeof(data->type);
       return &data->type;
     }
   else if (!strncmp(match, _MC_SCONF_LCOMP, 5))
     {
-      *output = sizeof(data->type);
+      *output = (int) sizeof(data->type);
       return &data->type;
     }
   else if (!strncmp(match, _MC_SCONF_ICASE, 5))
     {
-      *output = sizeof(data->icase);
+      *output = (int) sizeof(data->icase);
       return &data->icase;
     }
   return NULL;
