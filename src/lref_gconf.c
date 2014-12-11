@@ -39,11 +39,11 @@ gconf_format_block(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\n",
-      data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem,
+  return print_str("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\n",
+      data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
-      data->r_exclude_user, data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage,
-      data->o_logging, data->o_imdb_skip_zero_score, data->o_r_clean_icase);
+      data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase);
 
 }
 
@@ -52,11 +52,11 @@ gconf_format_block_batch(void *iarg, char *output)
 {
   __d_gconf data = (__d_gconf) iarg;
 
-  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\n",
-      data->r_clean, data->r_postproc, data->r_yearm, data->r_sects, data->o_use_shared_mem,
+  return printf("GCONF\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%s\x9%s\x9%s\x9%s\x9%s\x9%hhd\x9%hhd\x9%hhd\x9%hhd\x9%hhd\n",
+      data->r_clean, data->r_postproc, data->r_yearm,data->r_exclude_user , data->r_sects, data->o_use_shared_mem,
       data->o_exec_on_lookup_fail, data->e_lookup_fail_imdb, data->e_lookup_fail_tvrage, data->e_match, data->r_skip_basedir,
-      data->r_exclude_user, data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage,
-      data->o_logging, data->o_imdb_skip_zero_score, data->o_r_clean_icase);
+      data->r_exclude_user_flags, data->o_lookup_strictness_imdb, data->o_lookup_strictness_tvrage, data->o_logging,
+      data->o_imdb_skip_zero_score, data->o_r_clean_icase);
 
 }
 
@@ -95,37 +95,37 @@ ref_to_val_ptr_gconf(void *arg, char *match, int *output)
   __d_gconf data = (__d_gconf) arg;
   if (!strncmp(match, _MC_GCONF_O_SHM, 14))
     {
-      *output = ~((int8_t) sizeof(data->o_use_shared_mem));
+      *output = ~((int) sizeof(data->o_use_shared_mem));
       return &data->o_use_shared_mem;
     }
   else if (!strncmp(match, _MC_GCONF_E_OLF, 22))
     {
-      *output = ~((int8_t) sizeof(data->o_exec_on_lookup_fail));
+      *output = ~((int) sizeof(data->o_exec_on_lookup_fail));
       return &data->o_exec_on_lookup_fail;
     }
   else if (!strncmp(match, _MC_GCONF_STRCTNSI, 28))
     {
-      *output = ~((int8_t) sizeof(data->o_lookup_strictness_imdb));
+      *output = ~((int) sizeof(data->o_lookup_strictness_imdb));
       return &data->o_lookup_strictness_imdb;
     }
   else if (!strncmp(match, _MC_GCONF_STRCTNST, 30))
     {
-      *output = ~((int8_t) sizeof(data->o_lookup_strictness_tvrage));
-      return &data->o_lookup_strictness_imdb;
+      *output = ~((int) sizeof(data->o_lookup_strictness_tvrage));
+      return &data->o_lookup_strictness_tvrage;
     }
   else if (!strncmp(match, _MC_GCONF_LOGGING, 7))
     {
-      *output = ~((int8_t) sizeof(data->o_logging));
+      *output = ~((int) sizeof(data->o_logging));
       return &data->o_logging;
     }
   else if (!strncmp(match, _MC_GCONF_IMDB_SKZERO, 20))
     {
-      *output = ~((int8_t) sizeof(data->o_imdb_skip_zero_score));
+      *output = ~((int) sizeof(data->o_imdb_skip_zero_score));
       return &data->o_imdb_skip_zero_score;
     }
   else if (!strncmp(match, _MC_GCONF_R_CLEAN_ICASE, 18))
     {
-      *output = ~((int8_t) sizeof(data->o_r_clean_icase));
+      *output = ~((int) sizeof(data->o_r_clean_icase));
       return &data->o_r_clean_icase;
     }
 
@@ -270,7 +270,7 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
       return ptr;
     }
 
-  if (!strncmp(match, _MC_GCONF_R_CLEAN, 12))
+  if (!strncmp(match, _MC_GCONF_R_CLEAN, 12) && (l_mppd_gvlen(match) == 12))
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_r_clean, (__d_drt_h) mppd, "%s");
     }
@@ -310,13 +310,13 @@ ref_to_val_lk_gconf(void *arg, char *match, char *output, size_t max_size,
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_sbdir , (__d_drt_h) mppd, "%s");
     }
-  else if (!strncmp(match, _MC_GCONF_EX_U, 14))
-    {
-      return as_ref_to_val_lk(match, dt_rval_gconf_ex_u , (__d_drt_h) mppd, "%s");
-    }
   else if (!strncmp(match, _MC_GCONF_EX_UF, 20))
     {
       return as_ref_to_val_lk(match, dt_rval_gconf_ex_uf , (__d_drt_h) mppd, "%s");
+    }
+  else if (!strncmp(match, _MC_GCONF_EX_U, 14))
+    {
+      return as_ref_to_val_lk(match, dt_rval_gconf_ex_u , (__d_drt_h) mppd, "%s");
     }
   else if (!strncmp(match, _MC_GCONF_STRCTNSI, 28))
     {
@@ -449,16 +449,6 @@ gcb_gconf(void *buffer, char *key, char *val)
           v_l >= GCONF_MAX_REG_EXPR ? GCONF_MAX_REG_EXPR - 1 : v_l);
       return -1;
     }
-  else if (k_l == 14 && !strncmp(key, _MC_GCONF_EX_U, 14))
-    {
-      if (!(v_l = strlen(val)))
-        {
-          return -1;
-        }
-      memcpy(ptr->r_exclude_user, val,
-          v_l >= GCONF_MAX_REG_USR ? GCONF_MAX_REG_USR - 1 : v_l);
-      return -1;
-    }
   else if (k_l == 20 && !strncmp(key, _MC_GCONF_EX_UF, 20))
     {
       if (!(v_l = strlen(val)))
@@ -467,6 +457,16 @@ gcb_gconf(void *buffer, char *key, char *val)
         }
       memcpy(ptr->r_exclude_user_flags, val,
           v_l >= GCONF_MAX_UFLAGS ? GCONF_MAX_UFLAGS - 1 : v_l);
+      return -1;
+    }
+  else if (k_l == 14 && !strncmp(key, _MC_GCONF_EX_U, 14))
+    {
+      if (!(v_l = strlen(val)))
+        {
+          return -1;
+        }
+      memcpy(ptr->r_exclude_user, val,
+          v_l >= GCONF_MAX_REG_USR ? GCONF_MAX_REG_USR - 1 : v_l);
       return -1;
     }
   else if (k_l == 28 && !strncmp(key, _MC_GCONF_STRCTNSI, 28))

@@ -17,7 +17,7 @@
 #
 #########################################################################
 #@VERSION:1
-#@REVISION:3
+#@REVISION:4
 #@MACRO:mk-test:{exe} -noop --preexec `{spec1}`
 #
 ## Simple debugger script
@@ -88,6 +88,11 @@ imdb_lom_fields=("time score votes year released runtime")
 imdb_lom_values=(1385027223 6.6 47 2008 1 14)
 imdb_values=(- One 1385027223 tt1302196 6.6 47 Short,Comedy 2008 1 14 blabla Joe Hattie WePlot)
 
+gconf_fields=("r_path_clean r_path_postproc r_year_extract r_exclude_user paths use_shared_mem execute_on_lookup_fail path_exec_on_lookup_fail_imdb path_exec_on_lookup_fail_tvrage path_exec_on_match r_skip_basedir r_exclude_user_flags lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase")
+gconf_lom_fields=("use_shared_mem execute_on_lookup_fail lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase")
+gconf_lom_values=(13 41 -43 1 -4 -54 35)
+gconf_values=(test gdfgfd fdfds newone dfbd   13	41	g43gfg	g43fwefsf f24gg  fsdf2we 4g334gre	-43	1	-4	-54	35)
+
 #########################################################################
 
 create_packet() {
@@ -134,7 +139,7 @@ create_match_lom() {
 
 get_exec_str() {
 	f=$1[@]; a=("${!f}");
-	echo "${a[@]}" | sed -r 's/[a-z0-9A-Z\-]+/{\0}/g' 
+	echo "${a[@]}" | sed -r 's/[-_a-z0-9A-Z]+/{\0}/g' 
 }
 
 get_exec_vals() {
@@ -160,6 +165,9 @@ launch_test() {
 		lt_ft="ge3log"
 	elif [ "${lt_log}" = "ge4" ]; then
 		lt_ft="ge4log"
+	elif [ "${lt_log}" = "gconf" ]; then
+		lt_ft="gconf"
+
 	else
 		lt_ft=${lt_log}
 	fi
@@ -271,6 +279,7 @@ launch_test ge1 || t_quit ${?}
 launch_test ge2 || t_quit ${?}
 launch_test ge3 || t_quit ${?}
 launch_test ge4 || t_quit ${?}
+launch_test gconf || t_quit ${?}
 
 # End log tests
 

@@ -56,4 +56,7 @@ char m_b[MAX_SHARG_SZ]; \
 char *
 g_extract_vfield(char *input, char *output, size_t max_size, size_t offset);
 
+size_t
+l_mppd_gvlen(char *input);
+
 #endif /* LREF_H_ */

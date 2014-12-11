@@ -25,6 +25,19 @@
 #include <lref.h>
 #include <xref.h>
 
+size_t
+l_mppd_gvlen(char *input)
+{
+  size_t ret = 0;
+  while (input[0] != 0x0 && input[0] != 0x7D)
+    {
+      ret++;
+      input++;
+    }
+
+  return ret;
+}
+
 char *
 g_extract_vfield(char *input, char *output, size_t max_size, size_t offset)
 {
@@ -440,7 +453,7 @@ dt_rval_spec_print_format_int(void *arg, char *match, char *output,
 #endif
       gfl |= F_OPT_KILL_GLOBAL;
 #ifdef _G_SSYS_THREAD
-              pthread_mutex_unlock(&mutex_glob00);
+      pthread_mutex_unlock(&mutex_glob00);
 #endif
       output[0] = 0x0;
       return output;

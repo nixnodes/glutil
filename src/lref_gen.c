@@ -97,13 +97,6 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
     {
       return rtv_q(&match[3], output, max_size);
     }
-  else if (!strncmp(match, "exe", 3))
-    {
-      if (self_get_path(output))
-        {
-          output[0x0] = 0;
-        }
-    }
   else if (!strncmp(match, "glroot", 6))
     {
       strcp_s(output, max_size, GLROOT);
@@ -175,6 +168,13 @@ ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp(match, _MC_GLOB_F32G, 7))
     {
       dt_legacy_gg_float(match, output, max_size);
+    }
+  else if (!strncmp(match, "exe", 3) && strlen(match) == 3)
+    {
+      if (self_get_path(output))
+        {
+          output[0x0] = 0;
+        }
     }
   else
     {
@@ -600,7 +600,7 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
         }
 
     }
-  else if (!strncmp(match, "exe", 3))
+  else if (!strncmp(match, "exe", 3) && (l_mppd_gvlen(match) == 3))
     {
       return as_ref_to_val_lk(match, dt_rval_generic_exe, (__d_drt_h ) mppd,
           "%s");
