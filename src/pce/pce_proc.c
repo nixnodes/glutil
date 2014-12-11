@@ -1019,11 +1019,21 @@ pce_get_year_result(char *subject, char *output, size_t max_size)
 char*
 pce_do_str_preproc(char *subject, __d_dgetr dgetr)
 {
-
   if (gconf->r_clean[0])
     {
+      int cflags;
+
+      if (gconf->o_r_clean_icase > 0)
+        {
+          cflags = REG_ICASE;
+        }
+      else
+        {
+          cflags = 0;
+        }
+
       if (!(cl_g_sub = reg_sub_d(subject, gconf->r_clean,
-      REG_EXTENDED | REG_ICASE, cl_presub)))
+      REG_EXTENDED | cflags, cl_presub)))
         {
           print_str("ERROR: could not preprocess string (r_clean)\n");
           return NULL;

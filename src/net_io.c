@@ -318,14 +318,19 @@ net_destroy_connection(__sock_o so)
         }
     }
 
-  if ((so->flags & F_OPSOCK_SSL) && so->ctx)
+  if ((so->flags & F_OPSOCK_SSL) && NULL != so->ctx)
     {
       SSL_CTX_free(so->ctx);
     }
 
-  if (so->res)
+  if (NULL != so->res)
     {
       freeaddrinfo(so->res);
+    }
+
+  if (NULL != so->c_res)
+    {
+      freeaddrinfo(so->c_res);
     }
 
   if ((ret = close(so->sock)))
@@ -594,9 +599,10 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
 
   errno = 0;
 
-  hints.ai_flags = AI_ALL | AI_ADDRCONFIG;
+  hints.ai_flags = AI_ALL | AI_ADDRCONFIG | AI_PASSIVE;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_family = AF_UNSPEC;
 
   if (getaddrinfo(addr, port, &hints, &aip))
     {
@@ -1159,7 +1165,7 @@ net_worker(void *args)
 
             break;
           case 0:
-            int_state |= F_WORKER_INT_STATE_ACT;
+
             break;
           default:
             print_str(
@@ -1206,6 +1212,8 @@ net_worker(void *args)
             {
               pso->counters.b_read = 0;
             }
+
+          int_state |= F_WORKER_INT_STATE_ACT;
 
           send_q: ;
 
@@ -1386,6 +1394,8 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
   pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
   pso->timers.last_act = time(NULL);
   spso->timers.last_act = time(NULL);
+  pso->res = spso->c_res;
+  spso->c_res = NULL;
 
   if (!spso->unit_size)
     {
@@ -1480,8 +1490,8 @@ int
 net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 {
   int fd;
-  socklen_t sin_size = sizeof(struct sockaddr_in);
-  struct sockaddr_in a;
+  socklen_t sin_size = sizeof(struct sockaddr_storage);
+  struct sockaddr_storage a;
 
   mutex_lock(&spso->mutex);
 
@@ -1508,6 +1518,19 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       pthread_mutex_unlock(&spso->mutex);
       return 1;
     }
+
+  struct addrinfo *p_net_res = malloc(sizeof(struct addrinfo));
+
+  memcpy(p_net_res, spso->res, sizeof(struct addrinfo));
+  p_net_res->ai_addr = malloc(sizeof(struct sockaddr_storage));
+  memcpy(p_net_res->ai_addr, &a, sizeof(struct sockaddr_storage));
+
+  p_net_res->ai_canonname = NULL;
+  p_net_res->ai_next = NULL;
+
+  p_net_res->ai_addrlen = sin_size;
+
+  spso->c_res = p_net_res;
 
   __sock_o pso;
 
@@ -1716,6 +1739,7 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
                   print_str(
                       "WARNING: SSL_accept: [%d] timed out after %u seconds\n",
                       pso->sock, pt_diff);
+                  ret = 2;
                   goto f_term;
                 }
             }

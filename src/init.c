@@ -159,7 +159,7 @@ int64_t glob_si64_stor[MAX_GLOB_STOR_AR_COUNT] =
 float glob_float_stor[MAX_GLOB_STOR_AR_COUNT] =
   { 0 };
 
-uint64_t gfl0 = 0x0, gfl = F_OPT_WBUFFER;
+uint64_t gfl0 = 0, gfl = F_OPT_WBUFFER, status = 0;
 uint32_t ofl = 0;
 
 uint8_t l_sfo = 0;
@@ -218,12 +218,17 @@ g_get_gkill(void)
 #ifdef _G_SSYS_THREAD
   mutex_lock(&mutex_glob00);
 #endif
+  int ret;
   if (gfl & F_OPT_KILL_GLOBAL)
     {
-      return 0;
+      ret = 0;
+    }
+  else
+    {
+      ret = 1;
     }
 #ifdef _G_SSYS_THREAD
   pthread_mutex_unlock(&mutex_glob00);
 #endif
-  return 1;
+  return ret;
 }

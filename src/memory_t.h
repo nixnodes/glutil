@@ -32,8 +32,8 @@
 typedef struct mda_object
 {
   void *ptr;
-  void *next;
-  void *prev;
+  struct mda_object *next;
+  struct mda_object *prev;
 }*p_md_obj, md_obj;
 
 #ifdef _G_SSYS_THREAD

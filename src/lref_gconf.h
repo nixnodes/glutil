@@ -38,7 +38,6 @@
 #define GCONF_MAX_REG_USR         2048
 #define GCONF_MAX_UFLAGS          256
 
-
 __d_format_block gconf_format_block, gconf_format_block_batch,
     gconf_format_block_exp;
 
@@ -69,11 +68,12 @@ typedef struct ___d_gconf
   char e_lookup_fail_imdb[GCONF_MAX_EXEC];
   char e_lookup_fail_tvrage[GCONF_MAX_EXEC];
   char e_match[GCONF_MAX_EXEC];
+  uint8_t o_r_clean_icase;
+  unsigned char ___padding[1024];
 } _d_gconf, *__d_gconf;
 
 #pragma pack(pop)
 
 #define GC_SZ                           sizeof(_d_gconf)
-
 
 #endif /* LREF_GCONF_H_ */

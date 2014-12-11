@@ -14,6 +14,7 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <malloc.h>
+#include <arpa/inet.h>
 
 _net_opt net_opts =
   { .max_sock = 512, .thread_l = 1, .thread_r = 32, .st_p0 = NULL,
@@ -62,6 +63,8 @@ process_ca_requests(pmda md)
   return fail;
 }
 
+#define T_THRD_PROC_TIMEOUT             (time_t) 60
+
 static void
 net_ping_threads(void)
 {
@@ -79,7 +82,7 @@ net_ping_threads(void)
               pthread_kill(thrd->pt, SIGUSR1);
               if (gfl & F_OPT_VERBOSE)
                 {
-                  print_str("NOTICE: waking up worker: %X\n", thrd->pt);
+                  print_str("NOTICE: [%X]: waking up worker\n", thrd->pt);
 
                 }
             }
@@ -88,11 +91,19 @@ net_ping_threads(void)
               pthread_kill(thrd->pt, SIGUSR1);
               if (gfl & F_OPT_VERBOSE)
                 {
-                  print_str("NOTICE: waking up worker: %X\n", thrd->pt);
+                  print_str("NOTICE: [%X]: waking up worker\n", thrd->pt);
 
                 }
             }
 
+        }
+      else
+        {
+          if (thrd->timers.t0
+              > 0&& (time(NULL) - thrd->timers.t0) > T_THRD_PROC_TIMEOUT)
+            {
+              print_str("WARNING: [%X]: thread not responding\n", thrd->pt);
+            }
         }
 
       pthread_mutex_unlock(&thrd->mutex);
@@ -103,6 +114,8 @@ net_ping_threads(void)
 }
 
 #define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 25
+
+#define NET_TMON_SLEEP_DEFAULT                  (unsigned int) 15
 
 int
 net_deploy(void)
@@ -188,6 +201,8 @@ net_deploy(void)
           "WARNING: process_ca_requests: not all connection requests were succesfull\n");
     }
 
+  unsigned int tmon_ld = NET_TMON_SLEEP_DEFAULT;
+
   while (g_get_gkill())
     {
       if (thread_register_count(&_sock_r) == 0)
@@ -199,8 +214,15 @@ net_deploy(void)
         {
           net_ping_threads();
         }
-
-      sleep((unsigned int) 30);
+      sleep(tmon_ld);
+      mutex_lock(&mutex_glob00);
+      if (status & F_STATUS_MSIG00)
+        {
+          status ^= F_STATUS_MSIG00;
+          tmon_ld = NET_TMON_SLEEP_DEFAULT;
+        }
+      pthread_mutex_unlock(&mutex_glob00);
+      tmon_ld *= 2;
     }
 
   if (gfl & F_OPT_VERBOSE3)
@@ -366,6 +388,53 @@ net_gl_socket_destroy(__sock_o pso)
   return r;
 }
 
+uint16_t
+net_get_addrinfo_port(__sock_o pso)
+{
+  void *port_data;
+  switch (pso->res->ai_family)
+    {
+  case AF_INET:
+    ;
+    port_data = &((struct sockaddr_in*) pso->res->ai_addr)->sin_port;
+    break;
+  case AF_INET6:
+    ;
+    port_data = &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_port;
+    break;
+  default:
+    ;
+    return 0;
+    break;
+    }
+
+  return ntohs(*((uint16_t*) port_data));
+}
+
+const char *
+net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len)
+{
+  void *ip_data;
+  switch (pso->res->ai_family)
+    {
+  case AF_INET:
+    ;
+    ip_data = (void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr;
+    break;
+  case AF_INET6:
+    ;
+    ip_data = (void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr;
+    break;
+  default:
+    ;
+    out[0] = 1;
+    return out;
+    }
+
+  return inet_ntop(pso->res->ai_family, ip_data, out, len);
+
+}
+
 int
 net_gl_socket_init0(__sock_o pso)
 {
@@ -384,7 +453,7 @@ net_gl_socket_init0(__sock_o pso)
         break;
       }
 
-    //print_str("NOTICE: accepted %d\n", pso->sock);
+//print_str("NOTICE: accepted %d\n", pso->sock);
 
     if ( NULL == pso->st_p0)
       {
@@ -440,12 +509,19 @@ net_gl_socket_init0(__sock_o pso)
 
     if (gfl & F_OPT_VERBOSE3)
       {
-        print_str("NOTICE: [%d]: [%d] socket interface active [%s]\n", _tid,
-            pso->sock, (char*) pso->st_p0);
+        char ip[128];
+        uint16_t port = net_get_addrinfo_port(pso);
+
+        net_get_addrinfo_ip(pso, (char*) ip, sizeof(ip));
+
+        print_str("NOTICE: [%d]: [%d] socket interface active [%s] [%s:%hu]\n",
+            _tid, pso->sock, (char*) pso->st_p0, ip, port);
       }
 
     pso->unit_size = (ssize_t) hdl->block_sz;
     pso->shutdown_cleanup = (_t_stocb) net_gl_socket_destroy;
+
+    kill(getpid(), SIGUSR2);
 
     break;
     }

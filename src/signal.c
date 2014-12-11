@@ -21,6 +21,19 @@
 #include <thread.h>
 #endif
 
+static void
+sig_handler_default(int signal)
+{
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&mutex_glob00);
+#endif
+  status |= F_STATUS_MSIG00;
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&mutex_glob00);
+#endif
+  return;
+}
+
 int
 setup_sighandlers(void)
 {
@@ -51,8 +64,8 @@ setup_sighandlers(void)
   r += sigaction(SIGQUIT, &sa, NULL);
   r += sigaction(SIGABRT, &sa, NULL);
   r += sigaction(SIGTERM, &sa, NULL);
-  r += sigaction(SIGUSR1, &sa, NULL);
-  r += sigaction(SIGUSR2, &sa, NULL);
+  /*r += sigaction(SIGUSR1, &sa, NULL);
+   r += sigaction(SIGUSR2, &sa, NULL);*/
   r += sigaction(SIGCHLD, &sa_c, NULL);
   r += sigaction(SIGSEGV, &sa_e, NULL);
   r += sigaction(SIGILL, &sa_e, NULL);
@@ -61,6 +74,8 @@ setup_sighandlers(void)
   r += sigaction(SIGTRAP, &sa_e, NULL);
 
   signal(SIGKILL, sig_handler);
+  signal(SIGUSR1, sig_handler_default);
+  signal(SIGUSR2, sig_handler_default);
 
   return r;
 }
@@ -92,7 +107,7 @@ sig_handler(int signal)
   case SIGUSR1:
     break;
   case SIGUSR2:
-      break;
+    break;
   case SIGTERM:
     fprintf(stderr, "NOTICE: caught SIGTERM, terminating gracefully\n");
     g_send_gkill();

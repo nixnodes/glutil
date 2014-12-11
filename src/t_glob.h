@@ -247,7 +247,9 @@ typedef unsigned long long int ulint64_t;
 #define L_STFO_SORT                     0x1
 #define L_STFO_FILTER                   0x2
 
-uint64_t gfl0, gfl;
+#define F_STATUS_MSIG00                (a64 << 1)
+
+uint64_t gfl0, gfl, status;
 uint32_t ofl;
 
 uint8_t l_sfo;

@@ -27,6 +27,11 @@ net_gl_socket_connect_init1(__sock_o pso);
 int
 net_gl_socket_init1_dc_on_ac(__sock_o pso);
 
+const char *
+net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);
+uint16_t
+net_get_addrinfo_port(__sock_o pso);
+
 typedef struct ___net_opt
 {
   uint16_t thread_l, thread_r;

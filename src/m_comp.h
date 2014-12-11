@@ -42,9 +42,9 @@ typedef struct ___d_drt_h
   char *st_p0;
   void *st_p1;
   void *v_p0;
-  void *mppd_next;
+  struct ___d_drt_h *mppd_next;
   uint64_t mppd_depth;
-  void *mppd_aux_next;
+  struct ___d_drt_h *mppd_aux_next;
   char tp_b0[10000];
   char *varg_l;
   mda sub_mech;

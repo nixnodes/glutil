@@ -36,7 +36,7 @@
 #define SOCK_SSL_ACCEPT_TIMEOUT         60
 #define SOCK_SSL_CONNECT_TIMEOUT        60
 
-#define SOCKET_POOLING_FREQUENCY_MAX    250000
+#define SOCKET_POOLING_FREQUENCY_MAX    450000
 #define SOCKET_POOLING_FREQUENCY_MIN    1000
 #define SOCKET_POOLING_FREQUENCY_HIRES  1
 
@@ -92,6 +92,8 @@ typedef struct __sock_sendq_payload
 
 #define SSENDQ_PAYLOAD_SIZE		sizeof(struct __sock_sendq_payload)
 
+#include <netdb.h>
+
 typedef struct ___sock_o
 {
   int sock;
@@ -100,7 +102,7 @@ typedef struct ___sock_o
   _t_stocb rc0, rc1, shutdown_cleanup;
   _p_ssend send0;
   _t_stocb pcheck_r;
-  struct addrinfo *res;
+  struct addrinfo *res, *c_res;
   void *parent, *cc;
   pmda host_ctx;
   ssize_t unit_size;
