@@ -1,4 +1,4 @@
-#@REVISION:58
+#@REVISION:59
 #
 ## NOTE: Requires glutil 2.5 or higher
 #
@@ -101,7 +101,7 @@
 #
 ## <make-imdb-dirlinks>
 #
-#@MACRO:imdb-make-infolinks|Creates symlinks inside respective folders for every imdblog record erasing any existing ones first:{exe} --imdb={?q:imdb@file} -a --silent --exec `rm "\{glroot\}\{dir\}/[ IMDB "*;ln -s "\{dir\}" "\{glroot\}\{dir\}/[ IMDB - \{score\} | \{votes\} votes - \{genres\} ]"` {arg1}
+#@MACRO:imdb-make-infolinks|Creates symlinks inside respective folders for every imdblog record erasing any existing ones first:{exe} --imdblog={?q:imdb@file} -a --silent --exec `rm "{glroot}\{dir\}/[ IMDB "*;ln -s "\{dir\}" "\{glroot\}\{dir\}/[ IMDB - \{score\} | \{votes\} votes - \{genres\} ]"` {arg1}
 #
 # <dirlog-to-ascii> *DEPRECATED - added export option (-E) to glutil, see --help*
 #
