@@ -94,7 +94,7 @@ g_op_t g_arith_add_s64_f, g_arith_rem_s64_f, g_arith_mult_s64_f, g_arith_div_s64
 
 static void *_m_s64_f[];
 
-g_op_t g_arith_dummy;
+g_op_t g_arith_dummy, g_generic_dummy;
 
 g_op_t g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f;
 

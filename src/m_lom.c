@@ -853,7 +853,7 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
         return 34;
         }
 
-      int m_ret2, m_ret;
+      int m_ret2, m_ret = 0;
       if ((m_ret2 = g_process_math_string(hdl, m_field, p_math, &lom->chains,
           &m_ret, NULL, 0, 0)))
         {

@@ -195,7 +195,7 @@ m_get_op_proc(char oper, __g_math math)
 #endif
   else
     {
-      return NULL;
+      return g_generic_dummy;
     }
 }
 
@@ -296,7 +296,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
             }
 
           md_init(object, 8);
-          char *pms_ret;
+          char *pms_ret = "";
 
           ptr++;
 
@@ -474,7 +474,8 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
 
       if ( NULL == math->op_t)
         {
-          return 7;
+          rt = 7;
+          goto end;
         }
 
       /*if (oper == 0x7E)
@@ -1472,6 +1473,11 @@ static void *_m_f_s64[] =
 
   };
 
+void
+g_generic_dummy(void * s, void * d, void *o)
+{
+}
+
 int
 is_ascii_arith_bin_oper(char c)
 {
@@ -1499,3 +1505,4 @@ m_get_def_val(pmda math)
       return ((__g_math ) math->objects->ptr);
     }
 }
+
