@@ -12,8 +12,13 @@
  *   - % Mounting /proc no longer required (read NEWS)
  *   2.5.2:
  *   - ~ Fixed broken legacy macro argument passing (-arg1, -arg2, ..)
+ *   - % Re-open log after fork (before exec), capture stdout (precheck)
  *   2.5.3:
  *   - ~ Dirlog rebuild target path string empty in certain cases
+ *   - ~ ?q: parsing broken
+ *   - ~ dirlog rebuild target path string empty in certain cases
+ *   2.5.5:
+ *   - ! Avoid processing unecessary filters
  *
  * v2.4:
  *

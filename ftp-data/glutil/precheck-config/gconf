@@ -2,10 +2,11 @@
 #
 # Global configuration settings for glutil-precheck.
 #
-# NOTE: After compilation, this data is loaded into shared 
-#       memory by default. Remove PCE_F_OPT_SHAREDMEM from
-#       G_HFLAGS macro in src/pce/pce_config.h to force
-#       glutil-precheck to load from file each time.
+# NOTE: After running precheck_compile.sh, this data is loaded 
+#       into shared memory by default.
+#       Remove PCE_F_OPT_SHAREDMEM from G_HFLAGS macro in
+#       src/pce/pce_config.h to force loading from file each
+#       time glutil-precheck runs.
 #
 #################################################################
 #
