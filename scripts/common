@@ -3,8 +3,8 @@
 
 # PRIVATE
 _lock()             { flock -$1 ${2}; }
-_clear_lock()  { _lock u ${1}; _lock xn ${1}; rm -f "${2}"; }
-_prepare_lock()  { eval "exec ${1}>\"${2}\""; }
+_clear_lock()       { _lock u ${1}; _lock xn ${1}; rm -f "${2}"; }
+_prepare_lock()     { eval "exec ${1}>\"${2}\""; }
 
 # PUBLIC
 exlock_now()        { _lock xn ${1}; }  # obtain an exclusive lock immediately or fail

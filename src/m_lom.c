@@ -295,14 +295,32 @@ g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
 
       if (ptr[0] == 0x28)
         {
-          while (ptr[0] != 0x29 && ptr[0])
+          ptr++;
+          uint32_t lvl = 1;
+          while (ptr[0] && lvl > 0)
             {
+              if (ptr[0] == 0x28)
+                {
+                  lvl++;
+                }
+              else if (ptr[0] == 0x29)
+                {
+                  lvl--;
+                  if (lvl == 0)
+                    {
+                      break;
+                    }
+
+                }
               ptr++;
             }
+
           if (!ptr[0])
             {
               return 11;
             }
+
+          ptr++;
         }
 
       while (is_opr(ptr[0]) && ptr[0] && ptr[0] != 0x20)

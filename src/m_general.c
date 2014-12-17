@@ -143,6 +143,27 @@ g_filter(__g_handle hdl, pmda md)
   return r;
 }
 
+static p_md_obj
+bm_skip_irrelevant(p_md_obj ptr, uint32_t flags)
+{
+  p_md_obj l_ptr = ptr;
+  __g_match _gm;
+
+  while (ptr)
+    {
+      _gm = (__g_match) ptr->ptr;
+      if (!(_gm->flags & flags) || (_gm->flags & F_GM_TFD))
+        {
+          return l_ptr;
+        }
+
+      l_ptr = ptr;
+      ptr = ptr->next;
+    }
+
+  return l_ptr;
+}
+
 static int
 g_bm_proc(void *d_ptr, __g_handle hdl, pmda match_rr)
 {
@@ -162,14 +183,7 @@ g_bm_proc(void *d_ptr, __g_handle hdl, pmda match_rr)
         }
       else if ((_gm->flags & F_GM_ISLOM))
         {
-          if ((g_lom_match(hdl, d_ptr, _gm)) == _gm->match_i_m)
-            {
-              r = 1;
-            }
-          else
-            {
-              r = 0;
-            }
+          r = (g_lom_match(hdl, d_ptr, _gm) == _gm->match_i_m);
         }
       else if (_gm->flags & F_GM_TYPES_STR)
         {
@@ -196,33 +210,33 @@ g_bm_proc(void *d_ptr, __g_handle hdl, pmda match_rr)
 
       if (r_p == 1 && (_gm->flags & F_GM_NOR))
         {
-          ptr = ptr->next;
-          if (ptr)
+          if ( NULL == ptr->next)
             {
-              _p_gm = (__g_match) ptr->ptr;
-              if (_p_gm->flags & F_GM_TFD)
-                {
-                  _p_gm = _gm;
-                  continue;
-                }
-              ptr = ptr->next;
+              break;
             }
-          continue;
+          ptr = bm_skip_irrelevant(ptr, F_GM_NOR);
+          _gm = (__g_match) ptr->ptr;
         }
       else if (r_p == 0 && (_gm->flags & F_GM_NAND))
         {
-          ptr = ptr->next;
-          if (ptr)
+          /*ptr = ptr->next;
+           if (ptr)
+           {
+           _p_gm = (__g_match) ptr->ptr;
+           if (_p_gm->flags & F_GM_TFD)
+           {
+           _p_gm = _gm;
+           continue;
+           }
+           ptr = ptr->next;
+           }
+           continue;*/
+          if ( NULL == ptr->next)
             {
-              _p_gm = (__g_match) ptr->ptr;
-              if (_p_gm->flags & F_GM_TFD)
-                {
-                  _p_gm = _gm;
-                  continue;
-                }
-              ptr = ptr->next;
+              break;
             }
-          continue;
+          ptr = bm_skip_irrelevant(ptr, F_GM_NAND);
+          _gm = (__g_match) ptr->ptr;
         }
 
       l_end:;
@@ -263,7 +277,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
             }
           return 1;
         }
-      if (hdl->max_hits && md->hitcnt >= hdl->max_hits)
+      else if (hdl->max_hits && md->hitcnt >= hdl->max_hits)
         {
           return 0;
         }
@@ -271,7 +285,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
 
   int r_p = g_bm_proc(d_ptr, hdl, &hdl->_match_rr);
 
-  if (hdl->ifrh_l0)
+  if (NULL != hdl->ifrh_l0)
     {
       hdl->ifrh_l0((void*) hdl, md, &r_p, d_ptr);
     }
@@ -296,7 +310,7 @@ g_bmatch(void *d_ptr, __g_handle hdl, pmda md)
         }
     }
 
-  if (hdl->ifrh_l1)
+  if ( NULL != hdl->ifrh_l1)
     {
       hdl->ifrh_l1((void*) hdl, md, &r_p, d_ptr);
     }
