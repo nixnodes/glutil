@@ -1444,8 +1444,8 @@ rt_af_spec_chr(void *arg, char *match, char *output, size_t max_size,
     }
 
   errno = 0;
-  mppd->t_1 = strtoul(c, NULL, 10);
-  if (mppd->t_1 == ULONG_MAX && errno == ERANGE)
+  mppd->t_1 = (uint32_t) strtoul(c, NULL, 10);
+  if (mppd->t_1 == UINT32_MAX && errno == ERANGE)
     {
       return NULL;
     }
@@ -1519,7 +1519,7 @@ dt_rval_so_isascii(void *arg, char *match, char *output, size_t max_size,
 
   while (0 != p_b0[0])
     {
-      if (!(p_b0[0] > 0 && p_b0[0] < 0x80))
+      if (!(p_b0[0] > 0 && p_b0[0] <= 0x79))
         {
           output[0] = 0x30;
           output[1] = 0x0;

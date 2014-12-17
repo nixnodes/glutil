@@ -36,11 +36,7 @@ ie_tl(int code, __emr pemr);
 
 _emr EMR_enum_dir[4];
 
-#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
-int
-#else
 char *
-#endif
 g_strerr_r(int errnum, char *buf, size_t buflen);
 
 #endif /* ERRNO_INT_H_ */
