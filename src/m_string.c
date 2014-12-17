@@ -87,6 +87,7 @@ g_cprg(void *arg, int m, int match_i_m, int fn_flags, int regex_flags,
   if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
     {
       pgm->flags |= F_GM_TFD;
+      ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
     }
 
   __ar_vrp ptr;
@@ -94,11 +95,10 @@ g_cprg(void *arg, int m, int match_i_m, int fn_flags, int regex_flags,
   if ( NULL != (ptr = ar_find(&ar_vref, AR_VRP_OPT_TARGET_LOOKUP)))
     {
       pgm->field = (char*) ptr->arg;
+      ar_remove(&ar_vref, AR_VRP_OPT_TARGET_LOOKUP);
     }
 
-  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
   ar_remove(&ar_vref, AR_VRP_OPT_NEGATE_MATCH);
-  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_LOOKUP);
 
   l_sfo = L_STFO_FILTER;
 
@@ -178,9 +178,8 @@ g_proc_strm(__g_handle hdl, pmda match_rr, int *loaded)
   while (ptr)
     {
       _m_ptr = (__g_match) ptr->ptr;
-      if ( (_m_ptr->flags & F_GM_ISREGEX) || (_m_ptr->flags & F_GM_ISMATCH) || (_m_ptr->flags & F_GM_ISFNAME) )
+      if ( _m_ptr->flags & F_GM_TYPES_STR )
         {
-
           if (NULL != _m_ptr->field)
             {
               if (NULL == hdl->g_proc1_lookup )
@@ -195,9 +194,11 @@ g_proc_strm(__g_handle hdl, pmda match_rr, int *loaded)
                   return 12;
                 }
 
-            } else {
-                _m_ptr->dtr.hdl = hdl;
-                _m_ptr->pmstr_cb = dt_rval_default_generic;
+            }
+          else
+            {
+              _m_ptr->dtr.hdl = hdl;
+              _m_ptr->pmstr_cb = dt_rval_default_generic;
             }
 
           _m_ptr->match = _m_ptr->data;

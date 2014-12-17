@@ -1153,10 +1153,10 @@ opt_g_lom(void *arg, int m, uint32_t flags)
 
   if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_TARGET_FD))
     {
+      ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
       pgm->flags |= F_GM_TFD;
     }
 
-  ar_remove(&ar_vref, AR_VRP_OPT_TARGET_FD);
   ar_remove(&ar_vref, AR_VRP_OPT_NEGATE_MATCH);
 
   return 0;
