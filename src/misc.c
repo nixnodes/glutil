@@ -14,6 +14,7 @@
 #include <xref.h>
 #include <arg_opts.h>
 #include <str.h>
+#include <errno_int.h>
 
 #include <time.h>
 #include <timeh.h>
@@ -262,7 +263,7 @@ w_log(char *w, char *ow)
     {
       char e_buffer[1024];
       printf("ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE, (int) wc,
-          (int) wll, strerror_r(errno, e_buffer, 1024));
+          (int) wll, g_strerr_r(errno, e_buffer, 1024));
     }
 
   fflush(fd_log);

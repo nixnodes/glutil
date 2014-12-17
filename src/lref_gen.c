@@ -448,6 +448,13 @@ dt_rval_generic_pspec4(void *arg, char *match, char *output, size_t max_size,
 }
 
 static char *
+dt_rval_generic_noop(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  return "";
+}
+
+static char *
 dt_rval_generic_lav(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -683,6 +690,11 @@ ref_to_val_lk_generic(void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp(match, "arg", 3))
     {
       return rt_af_gen_lav(arg, match, output, max_size, (__d_drt_h ) mppd);
+    }
+  else if (!strncmp(match, "noop", 4))
+    {
+      return as_ref_to_val_lk(match, dt_rval_generic_noop, (__d_drt_h ) mppd,
+      NULL);
     }
   else if (match[0] == 0x3F)
     {

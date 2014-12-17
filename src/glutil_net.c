@@ -287,13 +287,13 @@ net_proc_piped_q(__sock_o pso, __g_handle hdl)
   if (r_sz == -1)
     {
       print_str("ERROR: net_proc_piped_q: [%d]: pipe read failed [%s]\n",
-          pso->sock, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          pso->sock, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
     }
 
   if (close(hdl->pfd_out[0]) == -1)
     {
       print_str("ERROR: net_proc_piped_q: [%d]: pipe close failed [%s]\n",
-          pso->sock, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          pso->sock, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
     }
 
   hdl->flags ^= F_GH_EXECRD_HAS_PIPE;

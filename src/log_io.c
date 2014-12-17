@@ -929,7 +929,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           if (!(gfl & F_OPT_SHAREDMEM))
             {
               print_str("ERROR: %s: [%s]\n", file,
-                  strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+                  g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
               return 20201;
             }
           else
@@ -1056,7 +1056,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
                       print_str(
                           "WARNING: %s: [IPC: 0x%.8X] [%s] unable to destroy shared memory segment\n",
                           hdl->file, hdl->ipc_key,
-                          strerror_r(errno, hdl->strerr_b,
+                          g_strerr_r(errno, hdl->strerr_b,
                               sizeof(hdl->strerr_b)));
                     }
                   else
@@ -1076,7 +1076,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
               print_str(
                   "ERROR: %s: [IPC: 0x%.8X]: [%s]: could not get shared memory segment information from kernel\n",
                   hdl->file, hdl->ipc_key,
-                  strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+                  g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
               return 20205;
             }
           if ((gfl & F_OPT_VERBOSE2) && hdl->shmid != -1
@@ -1093,7 +1093,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           print_str(
               "ERROR: %s: [IPC: 0x%.8X]: failed loading data into shared memory segment: [%s]: no shared memory segment or data file available to load\n",
               hdl->file, hdl->ipc_key,
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           return 20206;
         }
     }
@@ -1137,7 +1137,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           (hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
           hdl->h_errno, hdl->h_errno_gz ? hdl->h_errstr_gz : "GZNOSYSERR",
           errno ?
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)) :
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)) :
               "NOSYSERR");
 
       return 20209;
@@ -1561,7 +1561,7 @@ rebuild_data_file(char *file, __g_handle hdl)
                 {
                   print_str("ERROR: %s: [%s] renaming temporary file failed!\n",
                       hdl->s_buffer,
-                      strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+                      g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
                   ret = 4;
                 }
               goto end;
@@ -1574,7 +1574,7 @@ rebuild_data_file(char *file, __g_handle hdl)
                 {
                   print_str("ERROR: %s: [%d] [%s] copying temp file failed!\n",
                       hdl->s_buffer, r,
-                      strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+                      g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
                   ret = 21;
                 }
             }
@@ -1588,7 +1588,7 @@ rebuild_data_file(char *file, __g_handle hdl)
           print_str(
               "WARNING: %s: [%s] deleting temporary file failed (remove manually)\n",
               hdl->s_buffer,
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           ret = 5;
         }
 

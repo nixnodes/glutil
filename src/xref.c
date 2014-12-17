@@ -1717,7 +1717,7 @@ g_preproc_dm(char *name, __d_xref p_xref, unsigned char type, __std_rh aa_rh)
           bzero(&p_xref->st, sizeof(struct stat));
           ret = 1;
           print_str("ERROR: '%s': could not stat [%s]\n", name,
-              strerror_r(errno, aa_rh->hdl.strerr_b,
+              g_strerr_r(errno, aa_rh->hdl.strerr_b,
                   sizeof(aa_rh->hdl.strerr_b)));
         }
       else
@@ -1905,7 +1905,7 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
               if (stat(name, &aa_rh->p_xref.st))
                 {
                   print_str("ERROR: %s -> %s [%s]\n", name, b_spl,
-                      strerror_r(errno, aa_rh->hdl.strerr_b, sizeof(aa_rh->hdl.strerr_b)));
+                      g_strerr_r(errno, aa_rh->hdl.strerr_b, sizeof(aa_rh->hdl.strerr_b)));
                   break;
                 }
 
@@ -1924,7 +1924,7 @@ g_process_directory(char *name, unsigned char type, void *arg, __g_eds eds)
               if ( b_spl_l == -1 )
                 {
                   print_str("ERROR: %s: [%s] could not read link\n", name,
-                      strerror_r(errno, aa_rh->hdl.strerr_b, sizeof(aa_rh->hdl.strerr_b)));
+                      g_strerr_r(errno, aa_rh->hdl.strerr_b, sizeof(aa_rh->hdl.strerr_b)));
                 }
             }
 

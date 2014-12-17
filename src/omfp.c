@@ -16,6 +16,7 @@
 #include <glutil.h>
 #include <exech.h>
 #include <misc.h>
+#include <errno_int.h>
 
 #include <setjmp.h>
 
@@ -356,7 +357,7 @@ g_omfp_eassemble(void *hdl, void *ptr, char *sbuffer)
     {
       char e_buffer[1024];
       print_str("ERROR: g_omfp_eassemble: write failed: %s\n",
-          strerror_r(errno, e_buffer, sizeof(e_buffer)));
+          g_strerr_r(errno, e_buffer, sizeof(e_buffer)));
       //gfl |= F_OPT_KILL_GLOBAL;
       return;
     }

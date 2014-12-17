@@ -10,6 +10,8 @@
 #include <errno.h>
 #include <signal.h>
 
+#include <errno_int.h>
+
 mda _net_thrd_r =
   { 0 };
 
@@ -290,7 +292,7 @@ mutex_lock(pthread_mutex_t *mutex)
     ;
     char err_b[1024];
     fprintf(stderr, "ERROR: %d: pthread_mutex_lock: [%d] [%s]\n", getpid(), r,
-        strerror_r(r, (char*) err_b, sizeof(err_b)));
+        g_strerr_r(r, (char*) err_b, sizeof(err_b)));
     abort();
     }
 }

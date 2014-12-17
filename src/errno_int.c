@@ -42,3 +42,22 @@ ie_tl(int code, __emr pemr)
 
   return _E_MSG_DEFAULT;
 }
+
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+int
+#else
+char *
+#endif
+g_strerr_r(int errnum, char *buf, size_t buflen)
+{
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+  int ret = strerror_r(errnum, buf, buflen);
+  if (0 != ret)
+    {
+      snprintf(buf, buflen, "int: strerror_r failure");
+    }
+  return buf;
+#else
+  return strerror_r(errnum, buf, buflen);
+#endif
+}

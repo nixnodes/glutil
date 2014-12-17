@@ -16,6 +16,7 @@
 #include <misc.h>
 #include <str.h>
 #include <x_f.h>
+#include <errno_int.h>
 
 #include <unistd.h>
 #include <errno.h>
@@ -333,7 +334,7 @@ prep_for_exec(__g_handle hdl)
       if (dup2(hdl->pfd_out[1], STDOUT_FILENO) == -1)
         {
           print_str(MSG_PFE_DUP2ERR,
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
         }
 
     }
@@ -342,7 +343,7 @@ prep_for_exec(__g_handle hdl)
       if (dup2(execv_stdout_redir, STDOUT_FILENO) == -1)
         {
           print_str(MSG_PFE_DUP2ERR,
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
         }
     }
 
@@ -363,7 +364,7 @@ l_execv(char *exec, char **argv, __g_handle hdl)
       if (pipe(hdl->pfd_out) == -1)
         {
           print_str("ERROR: l_execv: could not open pipe [%s]\n",
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           return 1;
         }
       hdl->flags |= F_GH_EXECRD_HAS_PIPE;
@@ -372,7 +373,7 @@ l_execv(char *exec, char **argv, __g_handle hdl)
   if ((c_pid = fork()) == (pid_t) -1)
     {
       fprintf(stderr, "ERROR: %s: fork failed [%s]\n", exec,
-          strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
       return 1;
     }
 
@@ -386,7 +387,7 @@ l_execv(char *exec, char **argv, __g_handle hdl)
         {
           execv(exec, argv);
           fprintf(stderr, "ERROR: %s: execv failed to execute [%s]\n", exec,
-              strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           _exit(1);
         }
     }
@@ -403,7 +404,7 @@ l_execv(char *exec, char **argv, __g_handle hdl)
         {
           fprintf(stderr,
               "ERROR: %s: failed waiting for child process to finish [%s]\n",
-              exec, strerror_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              exec, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           return 2;
         }
     }
