@@ -84,7 +84,7 @@ strcp_s(char *dest, size_t max_size, char *source)
 int
 is_ascii_text(char in_c)
 {
-  if ((in_c >= 0x0 && in_c <= 0x7F))
+  if ((in_c >= 0x0 && in_c <= 0x7E))
     {
       return 0;
     }

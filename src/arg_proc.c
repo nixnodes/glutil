@@ -320,7 +320,7 @@ ar_mod_ttl(pmda md, int by)
 }
 
 int
-parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
+parse_args(int argc, char **argv, _gg_opt fref_t[], char ***la, uint32_t flags)
 {
   g_setjmp(0, "parse_args", NULL, NULL);
   int vi, ret, c = 0;
@@ -427,7 +427,7 @@ parse_args(int argc, char **argv, _gg_opt fref_t[], void ***la, uint32_t flags)
 
   if ( NULL != la)
     {
-      *la = (void**) c_argv;
+      *la = (char**) c_argv;
     }
 
   return ret;

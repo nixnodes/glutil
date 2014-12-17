@@ -46,7 +46,7 @@ ie_tl(int code, __emr pemr)
 char *
 g_strerr_r(int errnum, char *buf, size_t buflen)
 {
-#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+#if (_POSIX_VERSION == 200112L || _XOPEN_VERSION >= 600) && __FreeBSD__
   int ret = strerror_r(errnum, buf, buflen);
   if (0 != ret)
     {

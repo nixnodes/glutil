@@ -159,7 +159,7 @@ main(int argc, char *argv[])
   _p_macro_argc = argc;
   char **l_arg = NULL;
 
-  if ((r = parse_args(argc, argv, gg_prio_f_ref, (void***) &l_arg,
+  if ((r = parse_args(argc, argv, gg_prio_f_ref, (char***) &l_arg,
   F_PARSE_ARG_SILENT | F_PARSE_ARG_IGNORE_NOT_FOUND)) > 0)
     {
       print_str(MSG_INIT_CMDLINE_ERROR, r);
