@@ -2292,6 +2292,8 @@ _gg_opt gg_f_ref[] =
         { .id = 0x1001, .on = "-prune:", .ac = 0, .op = opt_g_tfd },
         { .id = 0x0002, .on = "and", .ac = 0, .op = opt_g_operator_and },
         { .id = 0x0003, .on = "or", .ac = 0, .op = opt_g_operator_or },
+        { .id = 0x2002, .on = "-and", .ac = 0, .op = opt_g_operator_and },
+        { .id = 0x2003, .on = "-or", .ac = 0, .op = opt_g_operator_or },
         { .id = 0x0004, .on = "(", .ac = 0, .op = opt_g_m_raise_level },
         { .id = 0x0005, .on = ")", .ac = 0, .op = opt_g_m_lower_level },
         { .id = 0x0070, .on = "-y", .ac = 0, .op = opt_g_flinks },
