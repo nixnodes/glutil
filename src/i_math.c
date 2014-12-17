@@ -347,6 +347,12 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
                     }
 
                   math->op_t = m_get_op_proc(ptr[0], math_c);
+
+                  if ( NULL == math->op_t)
+                    {
+                      return 22;
+                    }
+
                   //math->_m_p = math_c->_m_p;
                 }
 
@@ -465,6 +471,12 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
   if (math->_m_p)
     {
       math->op_t = m_get_op_proc(oper, math);
+
+      if ( NULL == math->op_t)
+        {
+          return 7;
+        }
+
       /*if (oper == 0x7E)
        {
        math->flags |= F_MATH_IS_SQRT;
