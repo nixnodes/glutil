@@ -1,4 +1,4 @@
-#@REVISION:57
+#@REVISION:58
 #
 ## NOTE: Requires glutil 2.5 or higher
 #
@@ -43,9 +43,9 @@
 #
 ## Rebuilds the dirlog based on glutil.folders file
 #
-#@MACRO:dirlog-rebuild|Rebuild directory log based on 'glutil.folders':{exe} -r -v {arg1}
+#@MACRO:dirlog-rebuild|Rebuild directory log based on 'glutil.folders':{exe} -r {arg1}
 #
-#@MACRO:dirlog-rebuild-skipempty|Rebuild directory log based on 'glutil.folders' (skip empty directories):{exe} -r -v ! -lom "size = 0 && files = 0" {arg1}
+#@MACRO:dirlog-rebuild-skipempty|Rebuild directory log based on 'glutil.folders' (skip empty directories):{exe} -r ! -lom "size = 0 && files = 0" {arg1}
 #
 ## <dirlog-full-rebuild>
 #
@@ -53,7 +53,7 @@
 #
 #@MACRO:dirlog-full-rebuild|Rebuild directory log:{exe} -r -v --full {arg1}
 #
-#@MACRO:dirlog-full-rebuild-skipempty|Rebuild directory log (skip empty directories):{exe} -r --full -v ! -lom "size = 0 && files = 0" {arg1}
+#@MACRO:dirlog-full-rebuild-skipempty|Rebuild directory log (skip empty directories):{exe} -r --full ! -lom "size = 0 && files = 0" {arg1}
 #
 ## <dirlog-update>
 #
