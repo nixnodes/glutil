@@ -208,19 +208,19 @@ g_h_deepcp_mrr(void *source, void *dest, void *d_ptr)
 }
 
 static void
-g_determine_output(__g_handle hdl, uint64_t *gfl0, uint64_t f)
+g_determine_output(__g_handle hdl, uint64_t *gfl0, uint64_t f, __d_is_wb *w_d)
 {
   if ((*gfl0 & f))
     {
 #ifdef _G_SSYS_NET
       if (hdl->flags & F_GH_W_NSSYS)
         {
-          hdl->w_d = g_omfp_q_nssys;
+          *w_d = g_omfp_q_nssys;
         }
       else
         {
 #endif
-          hdl->w_d = g_omfp_write;
+          *w_d = g_omfp_write;
 #ifdef _G_SSYS_NET
         }
 #endif
@@ -230,12 +230,12 @@ g_determine_output(__g_handle hdl, uint64_t *gfl0, uint64_t f)
 #ifdef _G_SSYS_NET
       if (hdl->flags & F_GH_W_NSSYS)
         {
-          hdl->w_d = g_omfp_q_nssys_nl;
+          *w_d = g_omfp_q_nssys_nl;
         }
       else
         {
 #endif
-          hdl->w_d = g_omfp_write_nl;
+          *w_d = g_omfp_write_nl;
 #ifdef _G_SSYS_NET
         }
 #endif
@@ -409,7 +409,7 @@ g_proc_mr(__g_handle hdl)
     {
       hdl->g_proc3 = hdl->g_proc3_batch;
     }
-  else if (gfl0 & (F_OPT_PRINT | F_OPT_PRINTF))
+  else if ((gfl0 & F_OPT_PRINT) || (gfl0 & F_OPT_PRINTF))
     {
       if (!hdl->print_mech.offset && _print_ptr)
         {
@@ -421,7 +421,7 @@ g_proc_mr(__g_handle hdl)
 
       hdl->g_proc4 = g_omfp_eassemble;
 
-      g_determine_output(hdl, &gfl0, F_OPT_PRINTF);
+      g_determine_output(hdl, &gfl0, F_OPT_PRINTF, &hdl->w_d);
 
       hdl->act_mech = &hdl->print_mech;
 
@@ -441,9 +441,9 @@ g_proc_mr(__g_handle hdl)
       hdl->g_proc3 = hdl->g_proc3_export;
     }
 
-  if ((gfl0 & F_OPT_PREPOSTPRINTS) || (gfl0 & F_OPT_PREPOSTPRINTFS))
+  if ((gfl0 & (F_OPT_PREPOSTPRINTS)) || (gfl0 & F_OPT_PREPOSTPRINTFS))
     {
-      if ((gfl0 & F_OPT_POSTPRINT) || (gfl0 & F_OPT_POSTPRINTF))
+      if ((gfl0 & (F_OPT_POSTPRINT)) || (gfl0 & F_OPT_POSTPRINTF))
         {
           if (!hdl->post_print_mech.offset && _print_ptr_post)
             {
@@ -457,11 +457,11 @@ g_proc_mr(__g_handle hdl)
 
           hdl->g_proc4_po = g_omfp_eassemble;
 
-          g_determine_output(hdl, &gfl0, F_OPT_POSTPRINTF);
+          g_determine_output(hdl, &gfl0, F_OPT_POSTPRINTF, &hdl->w_d_po);
 
         }
 
-      if ((gfl0 & F_OPT_PREPRINT) || (gfl0 & F_OPT_PREPRINTF))
+      if ((gfl0 & (F_OPT_PREPRINT)) || (gfl0 & F_OPT_PREPRINTF))
         {
           if (!hdl->pre_print_mech.offset && _print_ptr_pre)
             {
@@ -475,14 +475,14 @@ g_proc_mr(__g_handle hdl)
 
           hdl->g_proc4_pr = g_omfp_eassemble;
 
-          g_determine_output(hdl, &gfl0, F_OPT_PREPRINTF);
+          g_determine_output(hdl, &gfl0, F_OPT_PREPRINTF, &hdl->w_d_pr);
 
         }
     }
 
   hdl->t_rw = 1;
 
-  if ( NULL == hdl->v_b0 )
+  if ( NULL == hdl->v_b0)
     {
       hdl->v_b0 = (void*) b_glob;
       hdl->v_b0_sz = sizeof(b_glob) - 4;

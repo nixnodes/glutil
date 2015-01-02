@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>          /* Definition of AT_* constants */
+#include <fcntl.h>
 #include <dirent.h>
 #include <math.h>
 #include <errno.h>
@@ -1559,8 +1559,14 @@ g_dump_gen(char *root)
       return 1;
     }
 
+  __d_is_wb w_d_s = ret.hdl.w_d;
+
+  ret.hdl.w_d = ret.hdl.w_d_pr;
+
   g_do_ppprint(&ret.hdl, F_GH_PRE_PRINT, &ret.hdl.pre_print_mech,
       ret.hdl.g_proc4_pr);
+
+  ret.hdl.w_d = w_d_s;
 
   if (!(ret.flags & F_PD_MATCHTYPES))
     {
@@ -1682,6 +1688,8 @@ g_dump_gen(char *root)
         }
       goto enter;
     }
+
+  ret.hdl.w_d = ret.hdl.w_d_po;
 
   g_do_ppprint(&ret.hdl, F_GH_POST_PRINT, &ret.hdl.post_print_mech,
       ret.hdl.g_proc4_po);

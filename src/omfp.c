@@ -135,6 +135,10 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
       md_g_free_cb(&g_act_1._match_rr, g_cl_mrr);
     }
 
+  __d_is_wb w_d_s = g_act_1.w_d;
+
+  g_act_1.w_d = g_act_1.w_d_pr;
+
   g_do_ppprint(&g_act_1, F_GH_PRE_PRINT, &g_act_1.pre_print_mech,
       g_act_1.g_proc4_pr);
 
@@ -142,6 +146,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
     {
       goto r_end;
     }
+
+  g_act_1.w_d = w_d_s;
 
   void *ptr;
 
@@ -187,6 +193,8 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
       EXITVAL = 2;
       goto r_end;
     }
+
+  g_act_1.w_d = g_act_1.w_d_po;
 
   g_do_ppprint(&g_act_1, F_GH_POST_PRINT, &g_act_1.post_print_mech,
       g_act_1.g_proc4_po);
