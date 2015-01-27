@@ -551,6 +551,10 @@ determine_datatype(__g_handle hdl, char *file)
     {
       pdt_set_gconf(hdl);
     }
+  else if (!strncmp(file, ALTLOG, strlen(ALTLOG)))
+    {
+      pdt_set_altlog(hdl);
+    }
   else if (!strncmp(file, XLOG, strlen(XLOG)))
     {
       pdt_set_x(hdl);

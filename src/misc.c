@@ -415,7 +415,7 @@ g_print_info(void)
       print_str(" DT_LNK           %d\t%s\n", DT_LNK, "symbolic link");
       print_str(" DT_SOCK          %d\t%s\n", DT_SOCK, "UNIX domain socket");
 #ifdef DT_WHT
-      print_str(" DT_WHT           %d\t\n", DT_WHT);
+      print_str(" DT_WHT           %d\t%s\n", DT_WHT, "What?");
 #endif
       print_str(MSG_NL);
     }
