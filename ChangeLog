@@ -19,7 +19,11 @@
  *   2.5.5:
  *   - ! Avoid processing unecessary filters
  *   2.5.6:
- *   - -[post|pre]print[f] overlapping
+ *   - ~ -[post|pre]print[f] overlapping
+ *   2.5.7:
+ *   - + made altlog dumpable via -q 
+ *   2.5.8:
+ *   - ~ --dupelog option was ignored when calling macros
  *
  * v2.4:
  *

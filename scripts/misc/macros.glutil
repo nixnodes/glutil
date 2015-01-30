@@ -229,11 +229,10 @@
 #
 #@MACRO:imdb-record-stats|iMDB log - full stats, dependencies\: bc:{exe} -noop --preexec `{exe} -m imdb-print-info; {exe} -m imdb-record-avgstats; {exe} -m imdb-record-totalstats`
 #
-## <<logname>-edit>
+## <logname>-edit>
 #
 ## These are basically for editing the 
 ##   binary logs by hand
-#
 #
 ## Usage:
 #

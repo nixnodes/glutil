@@ -2187,6 +2187,7 @@ _gg_opt gg_prio_f_ref[] =
         { .id = 0x001E, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
         { .id = 0x001F, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
         { .id = 0x0020, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
+        { .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
         { .id = 0x0021, .on = "--sconf", .ac = 1, .op = opt_sconf },
         { .id = 0x0022, .on = "--gconf", .ac = 1, .op = opt_gconf },
         { .id = 0x0023, .on = "--siteroot", .ac = 1, .op = opt_siteroot },

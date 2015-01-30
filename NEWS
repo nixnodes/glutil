@@ -59,7 +59,7 @@
  * 8/7/2014 (2.3.19_b2)
  
  	Added features which allow automated rebuilds of the dupefile, see
- 	<dupefile-rebuild> and <dupefile-rebuild> macros (macros.glutil).
+ 	<dupefile-rebuild> macro (macros.glutil).
  	
  	Mind that glutil binary must also be updated.
 
@@ -92,11 +92,11 @@
  	
 	  Count up folder files and sizes from all dirlog records:
  	
-		glutil -d --ilom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
+		glutil -d -lom "u64glob10 += size && u64glob11 += files" -postprint "Total size: {u64glob10} bytes, files: {u64glob11}" --silent
  		
 	  Increment by one for each record matched (regex and LOM filters applied):
    	  
-		glutil -d --ilom "u64glob7 += 1" --iregex "a" --ilom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
+		glutil -d -regex "ab" -lom "size != 0 && files != 0" -lom "u64glob7 += 1" -postprint "Results: {u64glob7}"
 		
  	----------------------------------------------------------------------------------------------------------------------
 		
