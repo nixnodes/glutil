@@ -23,7 +23,7 @@
  *   2.5.7:
  *   - + made altlog dumpable via -q 
  *   2.5.8:
- *   - ~ --dupelog option was ignored when calling macros
+ *   - ~ --dupefile option was ignored when calling macros
  *
  * v2.4:
  *
