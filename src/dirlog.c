@@ -712,8 +712,8 @@ release_generate_block(char *name, ear *iarg)
       if (nukelog_find(buffer, 2, &n_buffer) < MAX_uint64_t)
         {
           iarg->dirlog->status = n_buffer.status + 1;
-          strncpy(iarg->dirlog->dirname, n_buffer.dirname,
-              strlen(n_buffer.dirname));
+          strcp_s(iarg->dirlog->dirname, sizeof(iarg->dirlog->dirname),
+              n_buffer.dirname);
         }
       else
         {
@@ -725,7 +725,7 @@ release_generate_block(char *name, ear *iarg)
         }
     }
 
-  strncpy(iarg->dirlog->dirname, buffer, strlen(buffer));
+  strcp_s(iarg->dirlog->dirname, sizeof(iarg->dirlog->dirname), buffer);
 
   return ret;
 }
