@@ -1,4 +1,4 @@
-#@REVISION:61
+#@REVISION:62
 #
 ## NOTE: Requires glutil 2.5 or higher
 #
@@ -248,7 +248,7 @@
 #
 ## Rebuild the dupefile based on filesystem info
 #
-#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{exe} -noop --preexec `\{exe\} --dupefile={?q:dupefile@file} --backup dupefile -vv; rm -f {?q:dupefile@file}; \{exe\} -R -x "\{siteroot\}" -lom "depth>0" -print "file \{basepath\}\{:nl\}user \{user\}\{:nl\}time \{mtime\}\{:nl\}" -lom mode=8 --glroot "{glroot}" | glutil -z dupefile --nobackup -vvvv --stdin --dupefile={?q:dupefile@file}`
+#@MACRO:dupefile-rebuild|Rebuild the dupefile based on filesystem info:{exe} -noop --preexec `\{exe\} --dupefile={?q:dupefile@file} --backup dupefile -vv; rm -f {?q:dupefile@file}; \{exe\} -R -x "\{siteroot\}" -lom "depth>0" -print "file \{basepath\}\{:nl\}user \{user\}\{:nl\}time \{mtime\}\{:nl\}" -lom mode=8 --glroot "{glroot}" | \{exe\} -z dupefile --nobackup -vvvv --stdin --dupefile={?q:dupefile@file}`
 #
 #@MACRO:clean-deadlinks|Deletes dead symlinks [-arg1=<rootpath>] [-arg2=prefix]:{exe} -x "{arg1}" -lom "depth>0" -R -lom "mode=10" -l: "(?X:(isread):(?P:rlink#{arg2}%s))" -match "0" --silent -execv "rm -f \{path\}"
 #@MACRO:clean-deadlinks-rmbasedir|Deletes dead symlinks [-arg1=<rootpath>] [-arg2=prefix]:{exe} -x "{arg1}" -lom "depth>0" -R -lom "mode=10" -l: "(?X:(isread):(?P:rlink#{arg2}%s))" -match "0" --silent -exec `rm -f "\{path\}"; rmdir "\{?d:path\}"`
