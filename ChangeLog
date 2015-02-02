@@ -24,6 +24,8 @@
  *   - + made altlog dumpable via -q 
  *   2.5.8:
  *   - ~ --dupefile option was ignored when calling macros
+ *   2.5.9:
+ *   - ~ potential buffer overflow (dirlog rebuild) 
  *
  * v2.4:
  *
