@@ -1464,9 +1464,18 @@ dt_rval_spec_sf(void *arg, char *match, char *output, size_t max_size,
   char *p_b0 = _mppd->fp_rval1(arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
       _mppd->mppd_next);
 
-  return ref_to_val_get_cfgval(p_b0, _mppd->r_rep,
+  void *cfgv_pret = ref_to_val_get_cfgval(p_b0, _mppd->r_rep,
   NULL,
   F_CFGV_BUILD_FULL_STRING, output, max_size);
+
+  if ( NULL == cfgv_pret)
+    {
+      print_str("WARNING: dt_rval_spec_sf: key '%s' not found in file '%s'\n",
+          _mppd->r_rep, p_b0);
+    }
+
+  return cfgv_pret;
+
 }
 
 static void*

@@ -338,6 +338,11 @@ do_string_match(__g_handle hdl, void *d_ptr, __g_match _gm)
   mstr = (char*) _gm->pmstr_cb(d_ptr, _gm->field, hdl->mv1_b, MAX_VAR_LEN,
       &_gm->dtr);
 
+  if ( NULL == mstr)
+    {
+      return 0;
+    }
+
   int r = 0;
 
   int rr;
