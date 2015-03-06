@@ -300,6 +300,13 @@ Updated: 16/11/2014
 				13ABCDEFGHI
 				..
 				
+	?s   <directive>:<option>
+			Various string based operations.
+			
+			<option> can be one of:
+				ascii - Check if the return value of <directive> is an ASCII string.
+						Returns 1 if true, 0 otherwise.
+				
 	?S   <directive>
 			Compute the SHA-1 message digest of the result from <directive>.
 			

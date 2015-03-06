@@ -1577,10 +1577,16 @@ dt_rval_so_isascii(void *arg, char *match, char *output, size_t max_size,
   char *p_b0 = _mppd->fp_rval1(arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
       _mppd->mppd_next);
 
-  while (0 != p_b0[0])
+  if (0 == p_b0[0])
     {
-      if (!(p_b0[0] > 0 && p_b0[0] <= 0x79))
+      goto _nasc_ex;
+    }
+
+  while (p_b0[0])
+    {
+      if (!(p_b0[0] > 0 && p_b0[0] <= 0x7F))
         {
+          _nasc_ex: ;
           output[0] = 0x30;
           output[1] = 0x0;
           return output;
@@ -1737,7 +1743,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         ;
         return rt_af_sf(arg, match, output, max_size, mppd);
         break;
-      case 0x73:
+      case 0x73: // s
         ;
         return rt_af_strops(arg, match, output, max_size, mppd);
         break;
