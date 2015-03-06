@@ -300,11 +300,62 @@ dt_rval_spec_sha1(void *arg, char *match, char *output, size_t max_size,
   else
     {
       output[0] = 0x0;
-      return output;
     }
   return output;
 }
 #endif
+
+#include <base64.h>
+
+static char *
+dt_rval_spec_base64_encode(void *arg, char *match, char *output,
+    size_t max_size, void *mppd)
+{
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
+      ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
+      ((__d_drt_h ) mppd)->mppd_next);
+
+  if (NULL != p_o)
+    {
+      if (!base64_encode((unsigned char*) p_o, strlen(p_o), output, max_size))
+        {
+          output[0] = 0x0;
+        }
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
+  return output;
+}
+
+static char *
+dt_rval_spec_base64_decode(void *arg, char *match, char *output,
+    size_t max_size, void *mppd)
+{
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
+      ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
+      ((__d_drt_h ) mppd)->mppd_next);
+
+  if (NULL != p_o)
+    {
+      size_t bo_len;
+      if (-1
+          == (bo_len = base64_decode(p_o, (unsigned char*) output, max_size)))
+        {
+          output[0] = 0x0;
+        }
+      else
+        {
+          output[bo_len] = 0x0;
+        }
+    }
+  else
+    {
+      output[0] = 0x0;
+    }
+  return output;
+}
 
 char *
 dt_rval_spec_basedir(void *arg, char *match, char *output, size_t max_size,
@@ -1599,6 +1650,17 @@ rt_af_strops(void *arg, char *match, char *output, size_t max_size,
 
 }
 
+#define DT_RVAL_GENPREPROC  \
+  { \
+    mppd->mppd_next = l_mppd_create_copy(mppd); \
+    mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size, \
+        mppd->mppd_next); \
+    if (NULL == mppd->fp_rval1) \
+      { \
+        return NULL; \
+      } \
+  };
+
 void *
 ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
@@ -1681,21 +1743,33 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         break;
 #ifdef _G_SSYS_CRYPTO
       case 0x53:
-        mppd->mppd_next = l_mppd_create_copy(mppd);
-
-        mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
-            mppd->mppd_next);
-
-        if (NULL == mppd->fp_rval1)
-          {
-            return NULL;
-          }
+        DT_RVAL_GENPREPROC
+        ;
 
         return as_ref_to_val_lk(match, dt_rval_spec_sha1, (__d_drt_h ) mppd,
         NULL);
         break;
 #endif
+      case 0x42:
+        ;
+        DT_RVAL_GENPREPROC
+        ;
+
+        return as_ref_to_val_lk(match, dt_rval_spec_base64_encode,
+            (__d_drt_h ) mppd,
+            NULL);
+        break;
+      case 0x44:
+        ;
+        DT_RVAL_GENPREPROC
+        ;
+
+        return as_ref_to_val_lk(match, dt_rval_spec_base64_decode,
+            (__d_drt_h ) mppd,
+            NULL);
+        break;
         }
+
     }
   return NULL;
 }

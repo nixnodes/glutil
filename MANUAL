@@ -299,7 +299,17 @@ Updated: 16/11/2014
 				..
 				13ABCDEFGHI
 				..
+				
+	?S   <directive>
+			Compute the SHA-1 message digest of the result from <directive>.
 			
+			Binary must be compiled with --enable-networking to use this (OpenSSL cryptographic libs).
+			
+	?B   <directive>
+			Base64 encode result from <directive>.
+	
+	?D   <directive>
+			Base64 decode result from <directive>.
 			
 	Mind that '{' and '}' need to be escaped with '\' whenever used inside the scope
 	of a directive.

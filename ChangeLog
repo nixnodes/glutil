@@ -28,6 +28,8 @@
  *   - ~ potential buffer overflow (dirlog rebuild) 
  *   2.5.10:
  *   - ~ segfault when string matching against non-existant key ('?x' directive)
+ *   2.5.11:
+ *   - + base64 encoding/decoding (?B/?D extended directives, respectively)
  *
  * v2.4:
  *
