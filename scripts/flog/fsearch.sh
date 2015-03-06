@@ -1,6 +1,6 @@
 #!/bin/sh
 #@VERSION:0
-#@REVISION:1
+#@REVISION:2
 #GLUTIL=/bin/glutil-chroot
 SQLITE=/bin/sqlite3
 #
@@ -9,7 +9,7 @@ FILE_LOG_PATH=/ftp-data/glutil/db/filelog.db
 ############################################
 #
 
-echo "${@}" | egrep -q "^[a-zA-Z0-9\%\.\-\_\(\) /\*]+$" || exit 2
+echo "${@}" | egrep -q "^[-._\%\*\(\) a-zA-Z0-9]+$" || exit 2
 
 echo "${@}" | egrep -q "^$" && exit 2
 
