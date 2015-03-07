@@ -301,11 +301,13 @@ Updated: 16/11/2014
 				..
 				
 	?s   <directive>:<option>
-			Various string based operations.
+			Various string based operations. Checks the return value of <directive>
+			based on <option>, returns 1 if true, 0 if false.
 			
 			<option> can be one of:
-				ascii - Check if the return value of <directive> is an ASCII string.
-						Returns 1 if true, 0 otherwise.
+				ascii			- Is an ASCII string?
+				alphanumeric	- Is an alphanumeric ASCII string?
+				numeric			- Is a numeric ASCII string? 		
 				
 	?S   <directive>
 			Compute the SHA-1 message digest of the result from <directive>.
@@ -317,6 +319,8 @@ Updated: 16/11/2014
 	
 	?D   <directive>
 			Base64 decode result from <directive>.
+			
+	
 			
 	Mind that '{' and '}' need to be escaped with '\' whenever used inside the scope
 	of a directive.

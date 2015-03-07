@@ -1593,6 +1593,71 @@ dt_rval_so_isascii(void *arg, char *match, char *output, size_t max_size,
         }
       p_b0++;
     }
+
+  output[0] = 0x31;
+  output[1] = 0x0;
+
+  return output;
+}
+
+static char *
+dt_rval_so_isalphanumeric(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1(arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+      _mppd->mppd_next);
+
+  if (0 == p_b0[0])
+    {
+      goto _nasc_ex;
+    }
+
+  while (p_b0[0])
+    {
+      if (!((p_b0[0] >= 0x61 && p_b0[0] <= 0x7A)
+          || (p_b0[0] >= 0x41 && p_b0[0] <= 0x5A)
+          || (p_b0[0] >= 0x30 && p_b0[0] <= 0x39)))
+        {
+          _nasc_ex: ;
+          output[0] = 0x30;
+          output[1] = 0x0;
+          return output;
+        }
+      p_b0++;
+    }
+
+  output[0] = 0x31;
+  output[1] = 0x0;
+
+  return output;
+}
+
+static char *
+dt_rval_so_isnumeric(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1(arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+      _mppd->mppd_next);
+
+  if (0 == p_b0[0])
+    {
+      goto _nasc_ex;
+    }
+
+  while (p_b0[0])
+    {
+      if (!(p_b0[0] >= 0x30 && p_b0[0] <= 0x39))
+        {
+          _nasc_ex: ;
+          output[0] = 0x30;
+          output[1] = 0x0;
+          return output;
+        }
+      p_b0++;
+    }
+
   output[0] = 0x31;
   output[1] = 0x0;
 
@@ -1605,6 +1670,14 @@ rt_af_strops_go(void *input, char *match, __d_drt_h mppd)
   if (!strncmp(input, "ascii", 5))
     {
       return as_ref_to_val_lk(match, dt_rval_so_isascii, mppd, "%s");
+    }
+  else if (!strncmp(input, "alphanumeric", 12))
+    {
+      return as_ref_to_val_lk(match, dt_rval_so_isalphanumeric, mppd, "%s");
+    }
+  else if (!strncmp(input, "numeric", 7))
+    {
+      return as_ref_to_val_lk(match, dt_rval_so_isnumeric, mppd, "%s");
     }
   else
     {
