@@ -8,8 +8,7 @@ Updated: 16/11/2014
 	
 	This mode loads selected binary log into process memory pages or shared mem segment 
 	(--shmem) and displays the data in either normal (synopsis), --batch (full, tab delimited) 
-	or --raw (binary) formats.
-	
+	or --raw (binary) formats.	
 	
 	--nobuffer turns memory buffering off and directly reads record by record using C native 
 	IO procedures (fread).
@@ -84,11 +83,11 @@ Updated: 16/11/2014
 	
 	For example:
 	
-		-d --regexi dir,"Someshow" or --lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
+		-d -l: dir -regexi "Somefolder" or -lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
 		
 	would produce the same result as:
 	
-		-e dirlog --regexi dir,"Someshow" or --lom "size == 0 || files == 0"
+		-e dirlog -l: dir -regexi "Somefolder" or -lom "size == 0 || files == 0"
 		
 	These examples would filter any dirlog record including 'Smallville' in directory 
 	name (case insentitive) and any directories with size/files zero, writing results 
@@ -100,7 +99,7 @@ Updated: 16/11/2014
 	
 	When in rebuild mode (-e), data must be buffered (either locally or in shared mem 
 	segment) in order to be processed, so data file size is limited with your RAM capacity 
-	(and with --memlimit argument or DB_MAX_SIZE macro in source, 512MB by default).
+	(and with --memlimit argument or DB_MAX_SIZE macro in source, 1024MB by default).
 	However, while parsing (-d, -n, ..), --nobuffer option can be used, turning buffering 
 	off and reading record by record using fget. 
 	Since glutil is set by default to compile with large file offsets, theoretically a 
@@ -135,15 +134,17 @@ Updated: 16/11/2014
 	
 	
 	?c	 <num repeat>:<char>				
-			Character generator. Example use: '{?c:3:\t}' - prints three tab's.
+			Character generator. Example usage: 
+			
+				'{?c:3:\t}' - prints three tab's.
 			
 			Escapes are:
 			
-			\n  New line
-			\t  Horizontal tab
-			\r  Carriage return
-			\s  Space
-			\\  Literal backslash ('\')
+				\n  New line
+				\t  Horizontal tab
+				\r  Carriage return
+				\s  Space
+				\\  Literal backslash ('\')
 			
 	?t	 <field|(<expression>)>#<format>
 			Formats data  returned by  <field>  (if using parenthesis, 
@@ -206,7 +207,7 @@ Updated: 16/11/2014
 			Replace float dots in 'score' field with commas before 
 			printing to stdout:
 			
-				-a lom "score>7.0" -print '{?rs:score:[.]:\,} {?c:1:\t}{title}'
+				-a -lom "score>7.0" -print '{?rs:score:[.]:\,} {?c:1:\t}{title}'
 										
 			Output:				
 				7,7		Some Movie
@@ -219,7 +220,7 @@ Updated: 16/11/2014
 			Remove any (..) tags that may be present in tvrage shownames, before
 			doing a regex query in tvlog for 'Some Show':
 			
-				-h -print '{name}' --regexi '?rd/g:name:([ ]+|())\\(.*\\)([ ]+|()),^Some Show$'
+				-h -print '{name}' -l: '?rd/g:name:\([ ]+|\(\)\)\\(.*\\)\([ ]+|\(\)\)' -regexi '^Some Show$'
 				
 			'Some Show (2004)' is matched as 'Some Show', without having to
 			wipe (2004) out of the database.
@@ -245,9 +246,9 @@ Updated: 16/11/2014
 			using the result of <directive> as the path.			
 			
 			One instance where this could be usefull is when checking for dead links,
-			for example:
+			for example (link needs to be absolute to be valid):
 			
-				-x / -R lom "mode=10" -print "Readable: [ {(?X:(isread):(?P:rlink))} ] {path} -> {rlink}"
+				-x / -R -lom "mode=10" -print "Valid: [ {(?X:(isread):(rlink))} ] {path} -> {rlink}"
 				
 			Output:
 			
@@ -272,32 +273,33 @@ Updated: 16/11/2014
 			and matches the first token to <key>. When matched, the result is everything after <key>, 
 			unless a token is specifically requested:
 			
-				-x /glftpd/ftp-data/users/ -lom "depth=1" -v -print "{path} - {?x:(path):ALLUP}"
+				-x /glftpd/ftp-data/users/ -lom "depth=1" -v -print "{?x:(path):ALLUP}"
 				
 			Output:
 			
-				/glftpd/ftp-data/users/someone - 13 1285419 688 0 0 0 0 0 0 0 0 0 1118 7488426 14483 0 0 0 0 0 0 0 0 0
+				13 1285419 688 0 0 0 0 0 0 0 0 0 1118 7488426 14483 0 0 0 0 0 0 0 0 0
 				
 				
-			Request the third token:			
+			Request the third token of 'ALLUP' line:			
 				
-				-x /glftpd/ftp-data/users/ -lom "depth=1" -v -print "{path} - {?x:(path):ALLUP@3}"
+				-x /glftpd/ftp-data/users/ -lom "depth=1" -v -print "{?x:(path):ALLUP@3}"
 				
 			Output:
 			
-				/glftpd/ftp-data/users/siska - 688
+				688
 				
 	?Q   <format>
 			Allows for nesting of the built-in -print(f) <format>.
 			
-			Example usage (format a path and pass it to '?x'):
+			Example usage (format a path to a userfile, pass it to '?x' to extract user flags):
 			
-				-w -print "{?x:(?Q:(\{glroot\}/ftp-data/users/\{user\})):FLAGS}"
+				-w -print "{user}:  {?x:(?Q:(\{glroot\}/ftp-data/users/\{user\})):FLAGS}"
 				
 			Output:
 			
 				..
-				13ABCDEFGHI
+				someone: 13ABCDEFGHI
+				sometwo: 3A
 				..
 				
 	?s   <directive>:<option>
@@ -327,8 +329,8 @@ Updated: 16/11/2014
 	
 	Char directives:
 	
-	{:t}	Horizontal tab
-	{:n}	New line
+		{:t}	Horizontal tab
+		{:n}	New line
 			
 				
 	If #<format> is defined, it gets passed to the standard C printf(3) family function which outputs 
@@ -348,11 +350,11 @@ Updated: 16/11/2014
 	Extended directives can be used with with -exec[v], -print[f] and string filters 
 	(--[i]regex[i]/--[i]match):
 	
-		-d --match "?tl:time#%d %h,23 Sep" -print "{basedir} was created {?tl:time#%d %h at %H:%M}"
+		-d -l: "(?tl:time#%d %h)" -match "12 Mar" -print '{basedir} was created {(?tl:time#%d %h at %H\\:%M)}'
 		
 		or
 		
-		-d --match "?tl:time#%d %h,23 Sep" -execv "echo {basedir} was created \"{?tl:time#%d %h at %H:%M}\""			
+		-d -l: "(?tl:time#%d %h)" -match "12 Mar" --silent -execv 'echo "{basedir} was created {(?tl:time#%d %h at %H\\:%M)}"'			
 		
 	Prints only records created on 23'rd of September from the dirlog, custom formatted.
 
@@ -367,7 +369,7 @@ Updated: 16/11/2014
 	creation time out of dirlog, passing these three values for each record 
 	to your script:
 	
-	./glutil  -d --silent -exec "/path/to/myscript.sh {dir} {files} {time}"
+	./glutil  -d --silent -execv "/path/to/myscript.sh {dir} {files} {time}"
 	
 	--/* myscript.sh: */-----------------------------------------------
 	
@@ -381,7 +383,7 @@ Updated: 16/11/2014
 	
 	Output:
 	
-	 [x@y bin]$ ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}"
+	 [x@y bin]$ ./glutil -d --silent -execv "./myscript.sh {dir} {files} {time}"
 	 ...
 	 /site/archive/tv-../Sky.Special... 16 1277037362
 	 /site/archive/tv-.../The.Simpsons.Special... 22 1277037472
@@ -392,7 +394,7 @@ Updated: 16/11/2014
 	Now do the same, but apply a regex filter (--regex) to dirnames 
 	to -exec ONLY what is matched and quit after first match (--imatchq):
 	
-	 ./glutil -d --silent -exec "./myscript.sh {dir} {files} {time}" --regex \
+	 ./glutil -d --silent -execv "./myscript.sh {dir} {files} {time}" --regex \
 	 "\/The\.Simpsons" --imatchq
 	
 	Output:
@@ -468,16 +470,16 @@ Updated: 16/11/2014
 	Say we want to do something with releases (in this case just 'echo'), 
 	with a score lower than 5.0, but higher than 0
 	
-	-a --silent --lom="score < 5.0 && score" --execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
+	-a --silent -lom="score < 5.0 && score" --execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
 	
 	Display all titles with score higher than 6.0, sort by score ascending:
 	
-	-a --lom="score > 6.0" --sort num,asc,score --batch | cut -f 3,6
+	-a -lom="score > 6.0" --sort asc,score -print '{score} {:t} {title}'
 	
 	Display all titles with score higher than 7.1 of genre Comedy,
 	sorted by score ascending:
 	
-	-a --lom="score > 7.1" --regexi "genres,Comedy" --sort num,asc,score --batch | cut -f 3,6
+	-a -lom="score > 7.1" -l: genres -regexi "Comedy" --sort asc,score -print '{score} {:t} {title} / {genres}'
 
 
  FOLDERS FILE (filesystem based dirlog rebuild only):
@@ -564,9 +566,9 @@ Updated: 16/11/2014
 	
 	  Count up folder files and sizes from all dirlog records:
 	
-		-d --lom "u64glob10 += size && u64glob11 += files" --postexec "echo 'Total size: {u64glob10} bytes, files: {u64glob11}'" --silent
+		-d -lom "u64glob10 += size && u64glob11 += files" -postprint 'Total size: {u64glob10} bytes, files: {u64glob11}' --silent
 		
 	  Increment by one for each record matched (regex and LOM filters applied):
 	  
-		-d --lom "u64glob7 += 1" --regex "a" --lom "size != 0 && files != 0" --postexec "echo 'Results: {u64glob7}'"
+		-d -lom "u64glob7 += 1" -regex "a" --lom "size > 0 && files > 0" -postprint 'Results: {u64glob7}'
  
