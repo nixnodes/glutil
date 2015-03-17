@@ -5,7 +5,7 @@
  *      Author: reboot
  */
 
-#include <linux/types.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 
