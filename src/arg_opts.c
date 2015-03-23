@@ -1917,6 +1917,16 @@ netctl_opt_parse(pmda md, void *arg)
 
       net_opts.thread_r = (uint16_t) i_val;
     }
+  else if (!strncmp("user", left, 4))
+    {
+      snprintf(net_opts.user, sizeof(net_opts.user), "%s", right);
+      net_opts.flags |= F_NETOPT_HUSER;
+    }
+  else if (!strncmp("group", left, 5))
+    {
+      snprintf(net_opts.group, sizeof(net_opts.group), "%s", right);
+      net_opts.flags |= F_NETOPT_HGROUP;
+    }
   else
     {
       print_str("ERROR: netctl_opt_parse: '%s': unknown option\n", left);
@@ -1982,6 +1992,16 @@ net_opt_parse(pmda md, void *arg)
 
       ca->mode = (uint8_t) i_val;
     }
+  else if (!strncmp("max_sim", left, 7))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+        {
+          return 1;
+        }
+
+      ca->policy.max_sim_ip = (uint32_t) i_val;
+    }
   else if (!strncmp("log", left, 3))
     {
       if (NULL == g_dgetf(right))
@@ -2007,6 +2027,7 @@ net_opt_parse(pmda md, void *arg)
       ca->ca_flags |= F_CA_HAS_SSL_KEY;
       ca->flags |= F_OPSOCK_SSL;
     }
+
   else
     {
       print_str("ERROR: net_opt_parse: '%s': unknown option\n", left);
@@ -2067,6 +2088,7 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (ca->flags & F_OPSOCK_SSL)
     {
+      net_opts.flags |= F_NETOPT_SSLINIT;
       if (!(flags & F_OPSOCK_CONNECT))
         {
           if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))

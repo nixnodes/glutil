@@ -144,5 +144,7 @@ void
 g_send_gkill(void);
 char
 g_get_gkill(void);
+int
+g_setxid(void);
 
 #endif /* GLUTIL_H_ */

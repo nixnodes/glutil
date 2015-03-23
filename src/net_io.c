@@ -54,15 +54,14 @@ ssl_init(void)
 {
   int i;
 
-  CRYPTO_malloc_debug_init()
-  ;
+  //CRYPTO_malloc_debug_init();
   CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
   /* static locks area */
   mutex_buf = malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
   if (mutex_buf == NULL)
     {
-      print_str("ERROR: ssl_init could not allocate mutex memory\n");
+      print_str("ERROR: ssl_init: could not allocate mutex memory\n");
       abort();
     }
   for (i = 0; i < CRYPTO_num_locks(); i++)
@@ -78,35 +77,6 @@ ssl_init(void)
   SSL_load_error_strings(); /* load all error messages */
   RAND_load_file("/dev/urandom", 4096);
 
-}
-
-static int
-net_chk_timeout(__sock_o pso)
-{
-  int r = 0;
-
-  mutex_lock(&pso->mutex);
-
-  if (pso->limits.sock_timeout /* idle timeout (data recieve)*/
-  && (time(NULL) - pso->timers.last_act) >= pso->limits.sock_timeout)
-    {
-      if (pso->flags & F_OPSOCK_ST_SSL_ACCEPT)
-        {
-          print_str("WARNING: SSL_accept timed out [%d]\n", pso->sock);
-        }
-      else
-        {
-          print_str("WARNING: idle timeout occured on socket %d\n", pso->sock);
-        }
-      r = 1;
-      goto end;
-    }
-
-  end: ;
-
-  pthread_mutex_unlock(&pso->mutex);
-
-  return r;
 }
 
 void
@@ -138,23 +108,22 @@ ssl_cleanup(void)
 static void
 ssl_init_setctx(__sock_o pso)
 {
-  SSL_CTX_set_options(pso->ctx,
-      SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_TLSv1|SSL_OP_NO_TICKET);
-  SSL_CTX_set_cipher_list(pso->ctx,
-      "!aNULL:!eNULL:ECDSA:SHA384:DH:RSA:TLSv1.2");
+  SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2);
+
+  SSL_CTX_set_cipher_list(pso->ctx, "-ALL:ALL:-aNULL");
 }
 
 SSL_CTX*
 ssl_init_ctx_server(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(TLSv1_2_server_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(SSLv23_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
 
   ssl_init_setctx(pso);
 
-  SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_CLIENT_ONCE | SSL_VERIFY_PEER, NULL);
+  SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_NONE, NULL);
   //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
   SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_BOTH);
 
@@ -164,7 +133,7 @@ ssl_init_ctx_server(__sock_o pso)
 SSL_CTX*
 ssl_init_ctx_client(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(TLSv1_2_client_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(SSLv23_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
@@ -220,6 +189,36 @@ ssl_show_certs(SSL* ssl)
     }
 }
 
+static int
+net_chk_timeout(__sock_o pso)
+{
+  int r = 0;
+
+  mutex_lock(&pso->mutex);
+
+  if (pso->limits.sock_timeout /* idle timeout (data recieve)*/
+  && (time(NULL) - pso->timers.last_act) >= pso->limits.sock_timeout)
+    {
+      if (pso->flags & F_OPSOCK_ST_SSL_ACCEPT)
+        {
+          print_str("WARNING: SSL_accept timed out [%d]\n", pso->sock);
+        }
+      else
+        {
+          print_str("WARNING: idle timeout occured on socket %d [%u]\n",
+              pso->sock, time(NULL) - pso->timers.last_act);
+        }
+      r = 1;
+      goto end;
+    }
+
+  end: ;
+
+  pthread_mutex_unlock(&pso->mutex);
+
+  return r;
+}
+
 int
 bind_socket(int fd, struct addrinfo *aip)
 {
@@ -238,7 +237,7 @@ bind_socket(int fd, struct addrinfo *aip)
       return 101;
     }
 
-  if (listen(fd, 15))
+  if (listen(fd, 5))
     {
       return 102;
     }
@@ -291,6 +290,7 @@ net_destroy_connection(__sock_o so)
 
             }
 
+          //SSL_certs_clear(so->ssl);
           SSL_free(so->ssl);
 
           ERR_remove_state(0);
@@ -643,6 +643,7 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
   pso->host_ctx = args->socket_register;
   pso->unit_size = args->unit_size;
   pso->st_p0 = args->st_p0;
+  pso->policy = args->policy;
 
   if (mutex_init(&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
     {
@@ -885,6 +886,40 @@ net_proc_sendq(__sock_o pso)
   return off_ret;
 }
 
+int
+net_enum_sockr(pmda base, _p_enumsr_cb p_ensr_cb, void *arg)
+{
+  mutex_lock(&base->mutex);
+
+  int g_ret = 0;
+
+  p_md_obj ptr = base->first;
+
+  while (ptr)
+    {
+      __sock_o pso = (__sock_o) ptr->ptr;
+
+      mutex_lock(&pso->mutex);
+
+      int ret = p_ensr_cb(pso, arg);
+
+      if ( ret > 0 )
+        {
+          g_ret = ret;
+          pthread_mutex_unlock(&pso->mutex);
+          break;
+        }
+
+      pthread_mutex_unlock(&pso->mutex);
+
+      ptr = ptr->next;
+    }
+
+  pthread_mutex_unlock(&base->mutex);
+
+  return g_ret;
+}
+
 void
 net_nw_ssig_term_r(pmda objects)
 {
@@ -967,6 +1002,8 @@ net_worker(void *args)
     }
 
   thrd->timers.t1 = time(NULL);
+  thrd->timers.t0 = time(NULL);
+  thrd->timers.act_f |= (F_TTIME_ACT_T0 | F_TTIME_ACT_T1);
 
   thrd->buffer0 = malloc(MAX_PRINT_OUT);
   thrd->buffer0_size = MAX_PRINT_OUT;
@@ -1772,8 +1809,18 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
   if (!(pso->flags & F_OPSOCK_TERM))
     {
-      print_str("NOTICE: SSL_accept: %d, %s\n", pso->sock,
-          SSL_get_cipher(pso->ssl));
+      int eb;
+
+      SSL_CIPHER_get_bits(SSL_get_current_cipher(pso->ssl), &eb);
+
+      char cd[255];
+
+      SSL_CIPHER_description(SSL_get_current_cipher(pso->ssl), cd, sizeof(cd));
+
+      print_str("NOTICE: SSL_accept: %d, %s (%d) - %s\n", pso->sock,
+          SSL_get_cipher(pso->ssl), eb, SSL_CIPHER_get_version(SSL_get_current_cipher(pso->ssl)));
+
+      fprintf(stderr, "%s", cd);
     }
 
   spso->rcv_cb = spso->rcv_cb_t;

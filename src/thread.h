@@ -38,8 +38,12 @@ typedef struct object_gen_worker
   void *arg;
 } o_gw, *p_ogw;
 
+#define F_TTIME_ACT_T0                  (a8 << 1)
+#define F_TTIME_ACT_T1                  (a8 << 2)
+
 typedef struct __thread_timers
 {
+  char act_f;
   time_t t0, t1, t2;
 } _thread_tm;
 

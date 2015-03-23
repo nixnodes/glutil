@@ -32,6 +32,10 @@ net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);
 uint16_t
 net_get_addrinfo_port(__sock_o pso);
 
+#define F_NETOPT_HUSER                  (a64 << 1)
+#define F_NETOPT_HGROUP                 (a64 << 2)
+#define F_NETOPT_SSLINIT                (a64 << 3)
+
 typedef struct ___net_opt
 {
   uint16_t thread_l, thread_r;
@@ -40,6 +44,8 @@ typedef struct ___net_opt
   uint64_t flags;
   char *st_p0;
   char *ssl_cert_def, *ssl_key_def;
+  char user[64];
+  char group[64];
 } _net_opt, *__net_opt;
 
 _net_opt net_opts;

@@ -94,6 +94,10 @@ typedef struct __sock_sendq_payload
 
 #include <netdb.h>
 
+typedef struct ___sock_policy {
+  uint32_t max_sim_ip;
+} _net_sp, *__net_sp;
+
 typedef struct ___sock_o
 {
   int sock;
@@ -120,7 +124,15 @@ typedef struct ___sock_o
   pthread_mutex_t mutex;
   void *va_p0;
   void *st_p0, *st_p1;
+  _net_sp policy;
 } _sock_o, *__sock_o;
+
+
+typedef struct ___sock_cret
+{
+  __sock_o pso;
+  uint32_t ret;
+} _sock_cret, *__sock_cret;
 
 typedef int
 (*_p_sc_cb)(__sock_o sock_o);
@@ -133,6 +145,12 @@ typedef int
 
 typedef int
 (*__p_s_cb)(__sock_o spso, pmda base, pmda threadr, void *data);
+
+typedef int
+(*_p_enumsr_cb)(__sock_o sock_o, void *arg);
+
+typedef int
+p_enumsr_cb(__sock_o sock_o, void *arg);
 
 /*
  * int
@@ -158,7 +176,9 @@ typedef struct ___sock_create_args
   char b0[4096];
   char b1[PATH_MAX];
   char b2[PATH_MAX];
+
   uint8_t mode;
+  _net_sp policy;
 } _sock_ca, *__sock_ca;
 
 p_sc_cb rc_tst, rc_ghs;
@@ -171,6 +191,9 @@ int
 check_socket_event(__sock_o pso);
 int
 net_worker(void *args);
+
+int
+net_enum_sockr(pmda base, _p_enumsr_cb p_ensr_cb, void *arg);
 
 void
 net_nw_ssig_term_r(pmda objects);

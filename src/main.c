@@ -48,7 +48,7 @@
 int
 (*print_str)(const char * volatile buf, ...);
 
-static int
+int
 g_setxid(void)
 {
   char e_buffer[1024];

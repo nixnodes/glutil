@@ -18,7 +18,7 @@
 
 _net_opt net_opts =
   { .max_sock = 512, .thread_l = 1, .thread_r = 32, .st_p0 = NULL,
-      .max_worker_threads = 64, .ssl_cert_def = "server.crt", .ssl_key_def =
+      .max_worker_threads = 64, .ssl_cert_def = "server.cert", .ssl_key_def =
           "server.key", .flags = 0 };
 
 mda _sock_r =
@@ -77,16 +77,8 @@ net_ping_threads(void)
 
       if (thrd->status & F_THRD_STATUS_SUSPENDED)
         {
-          if (thread_register_count(&thrd->in_objects) > (off_t) 0)
-            {
-              pthread_kill(thrd->pt, SIGUSR1);
-              if (gfl & F_OPT_VERBOSE)
-                {
-                  print_str("NOTICE: [%X]: waking up worker\n", thrd->pt);
-
-                }
-            }
-          else if (thread_register_count(&thrd->proc_objects) > (off_t) 0)
+          if ((thread_register_count(&thrd->in_objects) > (off_t) 0
+              || thread_register_count(&thrd->proc_objects) > (off_t) 0))
             {
               pthread_kill(thrd->pt, SIGUSR1);
               if (gfl & F_OPT_VERBOSE)
@@ -98,8 +90,8 @@ net_ping_threads(void)
         }
       else
         {
-          if (thrd->timers.t0
-              > 0&& (time(NULL) - thrd->timers.t0) > T_THRD_PROC_TIMEOUT)
+          if ((thrd->timers.act_f & F_TTIME_ACT_T0)
+              && (time(NULL) - thrd->timers.t0) > T_THRD_PROC_TIMEOUT)
             {
               print_str("WARNING: [%X]: thread not responding\n", thrd->pt);
             }
@@ -154,7 +146,10 @@ net_deploy(void)
   md_init_le(&_sock_r, (int) net_opts.max_sock);
   md_init_le(&_net_thrd_r, (int) net_opts.max_worker_threads);
 
-  ssl_init();
+  if (net_opts.flags & F_NETOPT_SSLINIT)
+    {
+      ssl_init();
+    }
 
   int r;
 
@@ -199,6 +194,30 @@ net_deploy(void)
       print_str(
           "WARNING: process_ca_requests: not all connection requests were succesfull\n");
     }
+  else
+    {
+      if (gfl & F_OPT_VERBOSE)
+        {
+          print_str("NOTICE: deployed %u socket(s)\n",
+              (uint32_t) _boot_pca.offset);
+        }
+    }
+
+  if (net_opts.flags & (F_NETOPT_HUSER | F_NETOPT_HGROUP))
+    {
+      if (net_opts.flags & F_NETOPT_HUSER)
+        {
+          snprintf(G_USER, sizeof(G_USER), "%s", net_opts.user);
+          gfl0 |= F_OPT_SETUID;
+        }
+      if (net_opts.flags & F_NETOPT_HGROUP)
+        {
+          snprintf(G_GROUP, sizeof(G_GROUP), "%s", net_opts.group);
+          gfl0 |= F_OPT_SETGID;
+        }
+
+      g_setxid();
+    }
 
   unsigned int tmon_ld = NET_TMON_SLEEP_DEFAULT;
 
@@ -220,8 +239,11 @@ net_deploy(void)
           status ^= F_STATUS_MSIG00;
           tmon_ld = NET_TMON_SLEEP_DEFAULT;
         }
+      else
+        {
+          tmon_ld *= 2;
+        }
       pthread_mutex_unlock(&mutex_glob00);
-      tmon_ld *= 2;
     }
 
   if (gfl & F_OPT_VERBOSE3)
@@ -434,6 +456,41 @@ net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len)
 
 }
 
+static int
+net_search_dupip(__sock_o pso, void *arg)
+{
+  __sock_cret parg = (__sock_cret) arg;
+  if (parg->pso->oper_mode == SOCKET_OPMODE_RECIEVER && (parg->pso)->res->ai_family == pso->res->ai_family)
+    {
+      switch (pso->res->ai_family)
+        {
+          case AF_INET:
+          ;
+
+          if (!memcmp(
+                  (const void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr,
+                  (const void*) &((struct sockaddr_in*) (parg->pso)->res->ai_addr)->sin_addr,
+                  sizeof(struct in_addr)))
+            {
+              parg->ret++;
+            }
+          break;
+          case AF_INET6:
+          ;
+          if (!memcmp(
+                  (const void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr,
+                  (const void*) &((struct sockaddr_in6*) (parg->pso)->res->ai_addr)->sin6_addr,
+                  sizeof(struct in6_addr)))
+            {
+              parg->ret++;
+            }
+          break;
+
+        }
+    }
+  return 0;
+}
+
 int
 net_gl_socket_init0(__sock_o pso)
 {
@@ -453,6 +510,33 @@ net_gl_socket_init0(__sock_o pso)
       }
 
 //print_str("NOTICE: accepted %d\n", pso->sock);
+
+    _sock_cret sc_ret =
+      { .pso = pso, .ret = 0 };
+
+    if (((__sock_o ) pso->parent)->policy.max_sim_ip)
+      {
+        int dip_sr;
+        if ((dip_sr = net_enum_sockr(pso->host_ctx, net_search_dupip,
+            (void*) &sc_ret)))
+          {
+            print_str(
+                "ERROR: net_gl_socket_init0: [%d] net_enum_sockr failed: [%d]\n",
+                pso->sock, dip_sr);
+            pso->flags |= F_OPSOCK_TERM;
+            return 2;
+          }
+
+        if (sc_ret.ret > ((__sock_o ) pso->parent)->policy.max_sim_ip)
+          {
+            print_str(
+                "ERROR: net_gl_socket_init0: [%d] max_sim limit reached: [%u/%u]\n",
+                pso->sock, sc_ret.ret,
+                ((__sock_o ) pso->parent)->policy.max_sim_ip);
+            pso->flags |= F_OPSOCK_TERM;
+            return 2;
+          }
+      }
 
     if ( NULL == pso->st_p0)
       {
