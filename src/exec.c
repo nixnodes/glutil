@@ -303,7 +303,7 @@ g_do_exec(void *buffer, void *callback, char *ex_str, void *hdl)
     }
 }
 
-#define MSG_PFE_DUP2ERR         "ERROR: prep_for_exec: dup2 failed [%s]\n"
+#define MSG_PFE_DUP2ERR         "ERROR: prep_for_exec: dup2 failed [%s] (%s)\n"
 
 static int
 prep_for_exec(__g_handle hdl)
@@ -327,14 +327,24 @@ prep_for_exec(__g_handle hdl)
         }
     }
 
+  if (hdl->flags & F_GH_EXECRD_PIPE_IN)
+    {
+      close(hdl->pfd_in[1]);
+      if (dup2(hdl->pfd_in[0], STDIN_FILENO) == -1)
+        {
+          print_str(MSG_PFE_DUP2ERR,
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)), "IN");
+        }
+    }
+
   if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
-
       close(hdl->pfd_out[0]);
+
       if (dup2(hdl->pfd_out[1], STDOUT_FILENO) == -1)
         {
           print_str(MSG_PFE_DUP2ERR,
-              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)), "OUT");
         }
 
     }
@@ -351,6 +361,26 @@ prep_for_exec(__g_handle hdl)
 }
 
 int
+l_waitpid_def(pid_t c_pid, void *arg)
+{
+  __g_handle hdl = (__g_handle) arg;
+
+  int status = -2;
+
+  while (waitpid(c_pid, &status, 0) == (pid_t) -1)
+    {
+      if (errno != EINTR)
+        {
+          fprintf(stderr,
+              "ERROR: [%d]: failed waiting for child process to finish [%s]\n",
+              (uint32_t)c_pid, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          return -1;
+        }
+    }
+  return status;
+}
+
+int
 l_execv(char *exec, char **argv, __g_handle hdl)
 {
   pid_t c_pid;
@@ -358,16 +388,28 @@ l_execv(char *exec, char **argv, __g_handle hdl)
   fflush(stdout);
   fflush(stderr);
 
+  if (hdl->flags & F_GH_EXECRD_PIPE_IN)
+    {
+      if (pipe(hdl->pfd_in) == -1)
+        {
+          print_str("ERROR: l_execv: could not open STDIN pipe [%s]\n",
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          return 1;
+        }
+      hdl->flags |= F_GH_EXECRD_HAS_STDIN_PIPE;
+    }
+
   if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
 
       if (pipe(hdl->pfd_out) == -1)
         {
-          print_str("ERROR: l_execv: could not open pipe [%s]\n",
+          print_str("ERROR: l_execv: could not open STDOUT pipe [%s]\n",
               g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
           return 1;
         }
-      hdl->flags |= F_GH_EXECRD_HAS_PIPE;
+      hdl->flags |= F_GH_EXECRD_HAS_STDOUT_PIPE;
+
     }
 
   if ((c_pid = fork()) == (pid_t) -1)
@@ -392,22 +434,17 @@ l_execv(char *exec, char **argv, __g_handle hdl)
         }
     }
 
+  int status = hdl->execv_wpid_fp(c_pid, (void*) hdl);
+
+  if (hdl->flags & F_GH_EXECRD_PIPE_IN)
+    {
+      close(hdl->pfd_in[0]);
+    }
   if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
     {
       close(hdl->pfd_out[1]);
     }
 
-  int status;
-  while (waitpid(c_pid, &status, 0) == (pid_t) -1)
-    {
-      if (errno != EINTR)
-        {
-          fprintf(stderr,
-              "ERROR: %s: failed waiting for child process to finish [%s]\n",
-              exec, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
-          return 2;
-        }
-    }
 
   return status;
 }

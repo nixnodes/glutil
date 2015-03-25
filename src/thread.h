@@ -77,8 +77,7 @@ p_md_obj
 search_thrd_id(pmda thread_r, pthread_t *pt);
 int
 thread_broadcast_kill(pmda thread_r);
-off_t
-thread_register_count(pmda thread_r);
+
 
 int
 spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,

@@ -25,7 +25,12 @@ net_gl_socket_init1(__sock_o pso);
 int
 net_gl_socket_connect_init1(__sock_o pso);
 int
+net_gl_socket_post_clean(__sock_o pso);
+int
 net_gl_socket_init1_dc_on_ac(__sock_o pso);
+
+int
+net_gl_socket_destroy(__sock_o pso);
 
 const char *
 net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);

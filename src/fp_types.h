@@ -13,7 +13,7 @@
 
 #include <memory_t.h>
 #include <stdint.h>
-
+#include <sys/types.h>
 
 #define MAX_VAR_LEN                             4096 * 8
 
@@ -24,7 +24,8 @@ _d_achar_i(char *);
 typedef int
 (*__d_avoidp_i)(void *);
 typedef int
-*_d_avoidp_i(void *);
+*
+_d_avoidp_i(void *);
 typedef char *
 _d_achar_p(char *);
 typedef int
@@ -37,6 +38,7 @@ typedef int
 (*__d_is_am)(uint8_t in_c);
 typedef int
 (*__d_is_wb)(int, char*, size_t, void*);
+
 
 /* specific types */
 
@@ -76,5 +78,10 @@ typedef int
 (*_d_gcb_pp_hook)(void *, void *hdl);
 typedef int
 (*_d_enuml)(void *hdl, void *ptr, void *buffer);
+
+typedef int
+(*__d_wpid_cb)(pid_t, void*);
+typedef int
+_d_wpid_cb(int, void*);
 
 #endif /* FP_TYPES_H_ */

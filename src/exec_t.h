@@ -32,6 +32,7 @@ process_execv_args_bare(void *data, __g_handle hdl, __execv exec_args);
 
 int
 l_execv(char *exec, char **argv, __g_handle hdl);
+_d_wpid_cb l_waitpid_def;
 
 char *exec_str;
 char **exec_v;

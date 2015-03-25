@@ -488,6 +488,11 @@ g_proc_mr(__g_handle hdl)
       hdl->v_b0_sz = sizeof(b_glob) - 4;
     }
 
+  if (NULL == hdl->execv_wpid_fp)
+    {
+      hdl->execv_wpid_fp = l_waitpid_def;
+    }
+
   return 0;
 }
 

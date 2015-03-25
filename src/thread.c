@@ -128,15 +128,6 @@ thread_broadcast_kill(pmda thread_r)
   return c;
 }
 
-off_t
-thread_register_count(pmda thread_r)
-{
-  mutex_lock(&thread_r->mutex);
-  off_t ret = thread_r->offset;
-  pthread_mutex_unlock(&thread_r->mutex);
-  return ret;
-}
-
 p_md_obj
 search_thrd_id(pmda thread_r, pthread_t *pt)
 {
@@ -243,10 +234,10 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
   else
     {
       r = 0;
-      if (sel_thread->status & F_THRD_STATUS_SUSPENDED)
-        {
+      //if (sel_thread->status & F_THRD_STATUS_SUSPENDED)
+       // {
           pthread_kill(sel_thread->pt, SIGUSR1);
-        }
+       // }
 
     }
 

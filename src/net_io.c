@@ -196,20 +196,15 @@ net_chk_timeout(__sock_o pso)
 
   mutex_lock(&pso->mutex);
 
-  if (pso->limits.sock_timeout /* idle timeout (data recieve)*/
-  && (time(NULL) - pso->timers.last_act) >= pso->limits.sock_timeout)
+  if (pso->policy.idle_timeout /* idle timeout (data recieve)*/
+  && (time(NULL) - pso->timers.last_act) >= pso->policy.idle_timeout)
     {
-      if (pso->flags & F_OPSOCK_ST_SSL_ACCEPT)
-        {
-          print_str("WARNING: SSL_accept timed out [%d]\n", pso->sock);
-        }
-      else
-        {
-          print_str("WARNING: idle timeout occured on socket %d [%u]\n",
-              pso->sock, time(NULL) - pso->timers.last_act);
-        }
+      print_str("WARNING: idle timeout occured on socket %d [%u]\n", pso->sock,
+          time(NULL) - pso->timers.last_act);
+
       r = 1;
       goto end;
+
     }
 
   end: ;
@@ -217,6 +212,45 @@ net_chk_timeout(__sock_o pso)
   pthread_mutex_unlock(&pso->mutex);
 
   return r;
+}
+
+static int
+net_listener_chk_timeout(__sock_o pso)
+{
+  return 0;
+  /*
+   int r = 0;
+
+   mutex_lock(&pso->mutex);
+
+   if (pso->flags & (F_OPSOCK_ST_SSL_ACCEPT))
+   {
+   if (pso->policy.ssl_accept_timeout
+   && (time(NULL) - pso->timers.last_act) >= pso->policy.ssl_accept_timeout)
+   {
+   print_str("WARNING: SSL_accept timed out [%d]\n", pso->sock);
+
+   r = 1;
+   goto end;
+   }
+   }
+   else if (pso->flags & (F_OPSOCK_ST_SSL_ACCEPT))
+   {
+   if (pso->policy.ssl_accept_timeout
+   && (time(NULL) - pso->timers.last_act) >= pso->policy.ssl_accept_timeout)
+   {
+   print_str("WARNING: SSL_connect timed out [%d]\n", pso->sock);
+
+   r = 1;
+   goto end;
+   }
+   }
+
+   end: ;
+
+   pthread_mutex_unlock(&pso->mutex);
+
+   return r;*/
 }
 
 int
@@ -451,10 +485,12 @@ net_open_connection(char *addr, char *port, __sock_ca args)
   pso->sock = fd;
   pso->oper_mode = SOCKET_OPMODE_RECIEVER;
   pso->flags = args->flags;
-  pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
   pso->pcheck_r = (_t_stocb) net_chk_timeout;
   pso->timers.last_act = time(NULL);
   pso->st_p0 = args->st_p0;
+  pso->policy = args->policy;
+  pso->shutdown_cleanup_rc0 = args->ssd_rc0;
+  pso->shutdown_cleanup_rc1 = args->ssd_rc1;
 
   if (!args->unit_size)
     {
@@ -517,7 +553,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
         }
 
       pso->flags |= F_OPSOCK_ST_SSL_CONNECT;
-      pso->limits.sock_timeout = SOCK_SSL_CONNECT_TIMEOUT;
+      //pso->limits.sock_timeout = args->policy.c_timeout;
       pso->rcv_cb = (_p_s_cb) net_connect_ssl;
       pso->rcv_cb_t = (_p_s_cb) net_recv_ssl;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
@@ -532,7 +568,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
     }
   else
     {
-      pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
+      //pso->limits.sock_timeout = args->policy.c_timeout;
       pso->rcv_cb = (_p_s_cb) net_recv;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
         {
@@ -638,12 +674,14 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
   pso->sock = fd;
   pso->oper_mode = SOCKET_OPMODE_LISTENER;
   pso->flags = args->flags;
-  pso->pcheck_r = (_t_stocb) net_chk_timeout;
+  pso->pcheck_r = (_t_stocb) net_listener_chk_timeout;
   pso->rcv_cb = (_p_s_cb) net_accept;
   pso->host_ctx = args->socket_register;
   pso->unit_size = args->unit_size;
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
+  pso->shutdown_cleanup_rc0 = args->ssd_rc0;
+  pso->shutdown_cleanup_rc1 = args->ssd_rc1;
 
   if (mutex_init(&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
     {
@@ -1153,9 +1191,9 @@ net_worker(void *args)
 
               pmda host_ctx = pso->host_ctx;
 
-              if (pso->shutdown_cleanup)
+              if (pso->shutdown_cleanup_rc0)
                 {
-                  pso->shutdown_cleanup(pso);
+                  pso->shutdown_cleanup_rc0(pso);
                 }
 
               ptr = md_unlink_le(&thrd->proc_objects, ptr);
@@ -1168,9 +1206,12 @@ net_worker(void *args)
                   continue;
                 }
 
-              int_state |= F_WORKER_INT_STATE_ACT;
+              if (pso->shutdown_cleanup_rc1)
+                {
+                  pso->shutdown_cleanup_rc1(pso);
+                }
 
-              //kill(getpid(), SIGUSR2);
+              int_state |= F_WORKER_INT_STATE_ACT;
 
               continue;
             }
@@ -1310,7 +1351,7 @@ net_worker(void *args)
                 {
                   pthread_mutex_unlock(&thrd->proc_objects.mutex);
 
-                  print_str("NOTICE: [%d]: putting worker to sleep [%hu]\n",
+                  print_str("DEBUG: [%d]: putting worker to sleep [%hu]\n",
                       _tid, thrd->oper_mode);
                   ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
                       &thrd->status);
@@ -1330,7 +1371,7 @@ net_worker(void *args)
       //print_str("%d - pooling socket..\n", (int) _tid);
     }
 
-  print_str("NOTICE: net_worker: [%d]: thread shutting down..\n", _tid);
+  print_str("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
 
   mutex_lock(&thrd->mutex);
   pmda thread_host_ctx = thrd->host_ctx;
@@ -1428,11 +1469,16 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
   pso->flags |= F_OPSOCK_CONNECT
       | (spso->flags & (F_OPSOCK_SSL | F_OPSOCK_INIT_SENDQ));
   pso->pcheck_r = (_t_stocb) net_chk_timeout;
-  pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
+  pso->policy = spso->policy;
+  //pso->limits.sock_timeout = spso->policy.idle_timeout;
   pso->timers.last_act = time(NULL);
   spso->timers.last_act = time(NULL);
   pso->res = spso->c_res;
   spso->c_res = NULL;
+  pso->shutdown_cleanup_rc0 = spso->shutdown_cleanup_rc0;
+  pso->shutdown_cleanup_rc1 = spso->shutdown_cleanup_rc1;
+  pso->rc0 = spso->rc0;
+  pso->rc1 = spso->rc1;
 
   if (!spso->unit_size)
     {
@@ -1771,7 +1817,7 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
             {
               pso->timers.misc01 = time(NULL);
               time_t pt_diff = (pso->timers.misc01 - pso->timers.misc00);
-              if (pt_diff > T_NET_ACCEPT_SSL)
+              if (pt_diff > pso->policy.ssl_accept_timeout)
                 {
                   print_str(
                       "WARNING: SSL_accept: [%d] timed out after %u seconds\n",
@@ -1798,9 +1844,12 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
   spso->timers.last_act = time(NULL);
   //pso->rcv_cb = pso->rcv_cb_t;
 
-  //spso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
-  pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
-  spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
+  //pso->limits.sock_timeout = spso->policy.idle_timeout;
+
+  if (spso->flags & F_OPSOCK_ST_SSL_ACCEPT)
+    {
+      spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
+    }
 
   BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 8192);
   BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 8192);
@@ -1817,10 +1866,11 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       SSL_CIPHER_description(SSL_get_current_cipher(pso->ssl), cd, sizeof(cd));
 
-      print_str("NOTICE: SSL_accept: %d, %s (%d) - %s\n", pso->sock,
-          SSL_get_cipher(pso->ssl), eb, SSL_CIPHER_get_version(SSL_get_current_cipher(pso->ssl)));
+      print_str("DEBUG: SSL_accept: %d, %s (%d) - %s\n", pso->sock,
+          SSL_get_cipher(pso->ssl), eb,
+          SSL_CIPHER_get_version(SSL_get_current_cipher(pso->ssl)));
 
-      fprintf(stderr, "%s", cd);
+      print_str("D1: SSL_CIPHER_description: %d, %s", pso->sock, cd);
     }
 
   spso->rcv_cb = spso->rcv_cb_t;
@@ -1839,7 +1889,7 @@ int
 net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock(&pso->mutex);
-  int ret;
+  int ret, f_ret = 0;
 
   if ((ret = SSL_connect(pso->ssl)) != 1)
     {
@@ -1849,31 +1899,72 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
+          if (pso->timers.misc00 == (time_t) 0)
+            {
+              pso->timers.misc00 = time(NULL);
+            }
+          else
+            {
+              pso->timers.misc01 = time(NULL);
+              time_t pt_diff = (pso->timers.misc01 - pso->timers.misc00);
+              if (pt_diff > pso->policy.ssl_connect_timeout)
+                {
+                  print_str(
+                      "WARNING: SSL_connect: [%d] timed out after %u seconds\n",
+                      pso->sock, pt_diff);
+                  f_ret = 2;
+                  goto f_term;
+                }
+            }
+
           pthread_mutex_unlock(&pso->mutex);
           return 2;
         }
 
-      pso->flags |= F_OPSOCK_TERM;
       pso->status = ret;
       pso->s_errno = ssl_err;
 
       print_str("ERROR: SSL_connect failed socket:[%d] code:[%d] sslerr:[%d]\n",
           pso->sock, ret, ssl_err);
 
+      f_term: ;
+
+      pso->flags |= F_OPSOCK_TERM;
+
       pthread_mutex_unlock(&pso->mutex);
-      return 1;
+      //return 1;
     }
 
   pso->timers.last_act = time(NULL);
   pso->rcv_cb = pso->rcv_cb_t;
-  pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
-  pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
+  //pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
+  if (pso->flags & F_OPSOCK_ST_SSL_CONNECT)
+    {
+      pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
+    }
+
+  if (!(pso->flags & F_OPSOCK_TERM))
+    {
+      int eb;
+
+      SSL_CIPHER_get_bits(SSL_get_current_cipher(pso->ssl), &eb);
+
+      char cd[255];
+
+      SSL_CIPHER_description(SSL_get_current_cipher(pso->ssl), cd, sizeof(cd));
+
+      print_str("DEBUG: SSL_connect: %d, %s (%d) - %s\n", pso->sock,
+          SSL_get_cipher(pso->ssl), eb,
+          SSL_CIPHER_get_version(SSL_get_current_cipher(pso->ssl)));
+
+      print_str("D1: SSL_CIPHER_description: %d, %s", pso->sock, cd);
+    }
 
   pso->flags |= F_OPSOCK_PROC_READY;
 
   pthread_mutex_unlock(&pso->mutex);
 
-  return 0;
+  return f_ret;
 }
 
 int

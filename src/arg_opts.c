@@ -86,6 +86,46 @@ opt_g_stdout_lvl(void *arg, int m, void *opt)
 }
 
 int
+opt_g_stdout_lvl_n(void *arg, int m, void *opt)
+{
+  char *buffer = g_pg(arg, m);
+
+  if (!buffer)
+    {
+      return 81492;
+    }
+
+  errno = 0;
+
+  uint32_t stdout_lvl = 0;
+
+  int std_lvl = (int) strtol(buffer, NULL, 10);
+
+  if ( errno == EINVAL || errno == ERANGE)
+    {
+      return 81493;
+    }
+
+  if (std_lvl > 32)
+    {
+      return 81494;
+    }
+
+  if (std_lvl)
+    {
+      while (std_lvl--)
+        {
+          stdout_lvl |= 1;
+          stdout_lvl <<= 1;
+        }
+    }
+
+  STDLOG_LVL = stdout_lvl;
+
+  return 0;
+}
+
+int
 opt_g_verbose(void *arg, int m, void *opt)
 {
   gfl |= F_OPT_VERBOSE;
@@ -457,14 +497,14 @@ opt_g_sfv(void *arg, int m, void *opt)
 int
 opt_bo_formatting(void *arg, int m, void *opt)
 {
-  gfl |= F_OPT_FORMAT_BATCH | F_OPT_PS_SILENT;
+  gfl |= F_OPT_FORMAT_BATCH | F_OPT_STDOUT_SILENT;
   return 0;
 }
 
 int
 opt_ex_o_formatting(void *arg, int m, void *opt)
 {
-  gfl |= F_OPT_FORMAT_EXPORT | F_OPT_PS_SILENT;
+  gfl |= F_OPT_FORMAT_EXPORT | F_OPT_STDOUT_SILENT;
   return 0;
 }
 
@@ -616,7 +656,7 @@ opt_rec_upd_records(void *arg, int m, void *opt)
 int
 opt_raw_dump(void *arg, int m, void *opt)
 {
-  gfl |= F_OPT_MODE_RAWDUMP | F_OPT_PS_SILENT | F_OPT_NOWRITE;
+  gfl |= F_OPT_MODE_RAWDUMP | F_OPT_STDOUT_SILENT | F_OPT_NOWRITE;
   gfl0 |= F_OPT_PS_ABSSILENT;
   return 0;
 }
@@ -638,7 +678,7 @@ opt_g_reverse(void *arg, int m, void *opt)
 int
 opt_silent(void *arg, int m, void *opt)
 {
-  gfl |= F_OPT_PS_SILENT;
+  gfl |= F_OPT_STDOUT_SILENT;
   return 0;
 }
 
@@ -1833,13 +1873,13 @@ n_proc_intval(char *left, char *right, int *outval, int min, int max)
 
   if ((errno == EINVAL || errno == ERANGE))
     {
-      print_str("ERROR: net_opt_parse: '%s': invalid value: '%d'\n", left, ret);
+      print_str("ERROR: n_proc_intval: '%s': invalid value: '%d'\n", left, ret);
       return 1;
     }
 
   if (ret < min || ret > max)
     {
-      print_str("ERROR: net_opt_parse: '%s': value out of range: '%d'\n", left,
+      print_str("ERROR: n_proc_intval: '%s': value out of range: '%d'\n", left,
           ret);
       return 1;
     }
@@ -1859,7 +1899,7 @@ netctl_opt_parse(pmda md, void *arg)
 
   if (NULL == ptr->next)
     {
-      print_str("ERROR: net_opt_parse: option '%s' missing value\n", left);
+      print_str("ERROR: netctl_opt_parse: option '%s' missing value\n", left);
       return 1;
     }
 
@@ -1955,6 +1995,13 @@ opt_netctl(void *arg, int m, void *opt)
   return 0;
 }
 
+#define NET_OPT_PARSE_VBMSHOW() { \
+  if (gfl & F_OPT_VERBOSE5) \
+        { \
+          print_str("NOTICE: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
+        } \
+};
+
 static int
 net_opt_parse(pmda md, void *arg)
 {
@@ -2002,6 +2049,36 @@ net_opt_parse(pmda md, void *arg)
 
       ca->policy.max_sim_ip = (uint32_t) i_val;
     }
+  else if (!strncmp("idle_timeout", left, 12))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+        {
+          return 1;
+        }
+
+      ca->policy.idle_timeout = (time_t) i_val;
+    }
+  else if (!strncmp("ssl_accept_timeout", left, 18))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+        {
+          return 1;
+        }
+
+      ca->policy.ssl_accept_timeout = (time_t) i_val;
+    }
+  else if (!strncmp("ssl_connect_timeout", left, 19))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+        {
+          return 1;
+        }
+
+      ca->policy.ssl_connect_timeout = (time_t) i_val;
+    }
   else if (!strncmp("log", left, 3))
     {
       if (NULL == g_dgetf(right))
@@ -2027,12 +2104,13 @@ net_opt_parse(pmda md, void *arg)
       ca->ca_flags |= F_CA_HAS_SSL_KEY;
       ca->flags |= F_OPSOCK_SSL;
     }
-
   else
     {
       print_str("ERROR: net_opt_parse: '%s': unknown option\n", left);
       return 1;
     }
+
+  NET_OPT_PARSE_VBMSHOW();
 
   return 0;
 }
@@ -2071,6 +2149,9 @@ opt_queue_connection(void *arg, uint32_t flags)
       return 24116;
     }
 
+  ca->host = host;
+  ca->port = port;
+
   if (0 != g_parse_opts(opt, net_opt_parse, (void*) ca, P_OPT_DL_O,
   P_OPT_DL_V))
     {
@@ -2078,7 +2159,7 @@ opt_queue_connection(void *arg, uint32_t flags)
       return 24140;
     }
 
-  if (!(ca->ca_flags & F_CA_HAS_LOG))
+  if (ca->mode == 1 && !(ca->ca_flags & F_CA_HAS_LOG))
     {
       print_str("ERROR: opt_queue_connection: [%s:%s] missing 'log' option\n",
           host, port);
@@ -2093,14 +2174,20 @@ opt_queue_connection(void *arg, uint32_t flags)
         {
           if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))
             {
-              print_str("WARNING: [%s:%s] using default key: %s\n", host, port,
-                  net_opts.ssl_key_def);
+              if (gfl & F_OPT_VERBOSE5)
+                {
+                  print_str("NOTICE: [%s:%s] using default key: %s\n", host,
+                      port, net_opts.ssl_key_def);
+                }
               ca->ssl_key = net_opts.ssl_key_def;
             }
           if (!(ca->ca_flags & F_CA_HAS_SSL_CERT))
             {
-              print_str("WARNING: [%s:%s] using default cert: %s\n", host, port,
-                  net_opts.ssl_cert_def);
+              if (gfl & F_OPT_VERBOSE5)
+                {
+                  print_str("NOTICE: [%s:%s] using default cert: %s\n", host,
+                      port, net_opts.ssl_cert_def);
+                }
               ca->ssl_cert = net_opts.ssl_cert_def;
             }
         }
@@ -2116,10 +2203,7 @@ opt_queue_connection(void *arg, uint32_t flags)
     //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
 
-    if (flags & F_OPSOCK_CONNECT)
-      {
-        ca->rc1 = net_gl_socket_connect_init1;
-      }
+    ca->rc1 = net_gl_socket_init1;
 
     break;
   case OPT_CONNECT_MODE_NULL :
@@ -2128,10 +2212,12 @@ opt_queue_connection(void *arg, uint32_t flags)
      md_unlink(&_boot_pca, _boot_pca.pos);
      return 24167;*/
     ca->socket_register = &_sock_r;
-    ca->rc0 = net_gl_socket_init0;
+    //ca->rc0 = net_gl_socket_init0;
     //ca->rc1 = net_gl_socket_init1;
-    ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
-    ca->mode = 1;
+    ca->proc = (_p_sc_cb) net_baseline_prochdr;
+
+    md_init_le(&pc_a, 1024);
+
     break;
   default:
     print_str("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n", host,
@@ -2145,10 +2231,34 @@ opt_queue_connection(void *arg, uint32_t flags)
       ca->rc1 = net_gl_socket_init1_dc_on_ac;
     }
 
-  ca->host = host;
-  ca->port = port;
+  ca->policy.mode = ca->mode;
   ca->flags |= flags | F_OPSOCK_INIT_SENDQ;
   ca->thread_register = &_net_thrd_r;
+  ca->ssd_rc0 = (_t_stocb) net_gl_socket_destroy;
+  ca->ssd_rc1 = (_t_stocb) net_gl_socket_post_clean;
+
+  if (!ca->policy.ssl_accept_timeout)
+    {
+      ca->policy.ssl_accept_timeout = 5;
+    }
+  if (!ca->policy.accept_timeout)
+    {
+      ca->policy.accept_timeout = 15;
+    }
+
+  if (!ca->policy.ssl_connect_timeout)
+    {
+      ca->policy.ssl_connect_timeout = 5;
+    }
+  if (!ca->policy.connect_timeout)
+    {
+      ca->policy.connect_timeout = 15;
+    }
+
+  if (!ca->policy.idle_timeout)
+    {
+      ca->policy.idle_timeout = 180;
+    }
 
   ca->st_p0 = (char*) ca->b0;
 
@@ -2373,6 +2483,7 @@ _gg_opt gg_f_ref[] =
         { .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
         { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
         { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
+        { .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
         { .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
         { .id = 0x5513, .on = "--depth", .ac = 0, .op = opt_xref_depth },
 #ifndef _MAKE_SBIN

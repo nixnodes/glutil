@@ -128,7 +128,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_DAEMONIZE                 (a64 << 19)
 #define F_OPT_LOOP                      (a64 << 20)
 #define F_OPT_LOOPEXEC                  (a64 << 21)
-#define F_OPT_PS_SILENT                 (a64 << 22)
+#define F_OPT_STDOUT_SILENT             (a64 << 22)
 #define F_OPT_PS_TIME                   (a64 << 23)
 #define F_OPT_PS_LOGGING                (a64 << 24)
 #define F_OPT_TERM_ENUM                 (a64 << 25)

@@ -60,13 +60,14 @@
 #define F_GH_NO_ACCU                    (a64 << 48)
 #define F_GH_W_NSSYS                    (a64 << 49)
 #define F_GH_EXECRD_PIPE_OUT            (a64 << 50)
-#define F_GH_EXECRD_HAS_PIPE            (a64 << 51)
+#define F_GH_EXECRD_HAS_STDOUT_PIPE     (a64 << 51)
 #define F_GH_PRINT                      (a64 << 52)
-
-
+#define F_GH_EXECRD_PIPE_IN             (a64 << 53)
+#define F_GH_EXECRD_HAS_STDIN_PIPE      (a64 << 54)
 #define F_GH_TFD_PROCED                 (a64 << 55)
 #define F_GH_SPEC_SQ01                  (a64 << 56)
 #define F_GH_SPEC_SQ02                  (a64 << 57)
+#define F_GH_HAS_LEXEC_WPID_CB          (a64 << 58)
 
 #define F_GH_STATUS_FLAGS               (F_GH_TFD_PROCED)
 
@@ -139,10 +140,14 @@ typedef struct g_handle
   int h_errno;
   int h_errno_gz;
   const char *h_errstr_gz;
-  int pfd_out[2];
+  int pfd_in[2], pfd_out[2];
   char strerr_b[1024];
   void *v_b0;
   size_t v_b0_sz;
+  __d_wpid_cb execv_wpid_fp;
+#ifdef _G_SSYS_NET
+  void *pso_ref;
+#endif
 } _g_handle, *__g_handle;
 
 #define G_HDL_ERRNO_DL_READ        1

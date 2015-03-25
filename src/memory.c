@@ -746,3 +746,12 @@ md_get_off_ts(pmda md)
   return ret;
 }
 #endif
+
+off_t
+register_count(pmda thread_r)
+{
+  mutex_lock(&thread_r->mutex);
+  off_t ret = thread_r->offset;
+  pthread_mutex_unlock(&thread_r->mutex);
+  return ret;
+}

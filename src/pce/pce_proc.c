@@ -59,7 +59,8 @@ pce_proc(char *path, char *dir)
       print_str("ERROR: insufficient arguments from ftpd\n");
       return 0;
     }
-  gfl |= G_HFLAGS | F_OPT_PS_SILENT | F_OPT_VERBMAX;
+  STDLOG_LVL = 0;
+  gfl |= G_HFLAGS | F_OPT_VERBMAX;
   //char *subject_b = strdup(subject);
   int r;
 

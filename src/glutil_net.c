@@ -57,6 +57,7 @@ process_ca_requests(pmda md)
             }
           break;
         }
+
       ptr = ptr->next;
     }
 
@@ -77,8 +78,8 @@ net_ping_threads(void)
 
       if (thrd->status & F_THRD_STATUS_SUSPENDED)
         {
-          if ((thread_register_count(&thrd->in_objects) > (off_t) 0
-              || thread_register_count(&thrd->proc_objects) > (off_t) 0))
+          if ((register_count(&thrd->in_objects) > (off_t) 0
+              || register_count(&thrd->proc_objects) > (off_t) 0))
             {
               pthread_kill(thrd->pt, SIGUSR1);
               if (gfl & F_OPT_VERBOSE)
@@ -148,6 +149,7 @@ net_deploy(void)
 
   if (net_opts.flags & F_NETOPT_SSLINIT)
     {
+      print_str("DEBUG: intitalizing SSL/TLS subsystem..\n");
       ssl_init();
     }
 
@@ -166,7 +168,7 @@ net_deploy(void)
       if (gfl & F_OPT_VERBOSE)
         {
           print_str(
-              "NOTICE: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
+              "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
               net_opts.thread_l);
         }
     }
@@ -184,7 +186,7 @@ net_deploy(void)
       if (gfl & F_OPT_VERBOSE)
         {
           print_str(
-              "NOTICE: deployed %hu socket worker threads [SOCKET_OPMODE_RECIEVER]\n",
+              "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_RECIEVER]\n",
               net_opts.thread_r);
         }
     }
@@ -223,7 +225,7 @@ net_deploy(void)
 
   while (g_get_gkill())
     {
-      if (thread_register_count(&_sock_r) == 0)
+      if (register_count(&_sock_r) == 0)
         {
           print_str("WARNING: nothing left to process\n");
           break;
@@ -239,34 +241,39 @@ net_deploy(void)
           status ^= F_STATUS_MSIG00;
           tmon_ld = NET_TMON_SLEEP_DEFAULT;
         }
-      else
-        {
-          tmon_ld *= 2;
-        }
+      /* else
+       {
+       if (tmon_ld < 15)
+       {
+       tmon_ld *= 2;
+       }
+       }*/
       pthread_mutex_unlock(&mutex_glob00);
     }
 
-  if (gfl & F_OPT_VERBOSE3)
+  if (register_count(&_sock_r))
     {
-      print_str("NOTICE: sending F_OPSOCK_TERM to all sockets\n");
+      if (gfl & F_OPT_VERBOSE3)
+        {
+          print_str("DEBUG: sending F_OPSOCK_TERM to all sockets\n");
+        }
+      net_nw_ssig_term_r(&_sock_r);
     }
 
-  net_nw_ssig_term_r(&_sock_r);
-
   if (gfl & F_OPT_VERBOSE3)
     {
-      print_str("NOTICE: sending F_THRD_TERM to all worker threads\n");
+      print_str("DEBUG: sending F_THRD_TERM to all worker threads\n");
     }
 
   if (gfl & F_OPT_VERBOSE)
     {
-      print_str("NOTICE: waiting for threads to exit..\n");
+      print_str("DEBUG: waiting for threads to exit..\n");
     }
 
   time_t s = time(NULL), e;
   off_t l_count;
 
-  while ((l_count = thread_register_count(&_net_thrd_r)) > 0)
+  while ((l_count = register_count(&_net_thrd_r)) > 0)
     {
       thread_broadcast_kill(&_net_thrd_r);
       sleep(1);
@@ -280,6 +287,7 @@ net_deploy(void)
 
   md_g_free(&_net_thrd_r);
   md_g_free(&_sock_r);
+  md_g_free(&pc_a);
 
   if (gfl & F_OPT_VERBOSE)
     {
@@ -289,6 +297,8 @@ net_deploy(void)
   return 0;
 }
 
+#include <fcntl.h>
+
 static void
 net_proc_piped_q(__sock_o pso, __g_handle hdl)
 {
@@ -296,11 +306,13 @@ net_proc_piped_q(__sock_o pso, __g_handle hdl)
 
   ssize_t r_sz;
 
+  mutex_lock(&pso->mutex);
+
   while ((r_sz = read(hdl->pfd_out[0], buffer, sizeof(buffer))) > 0)
     {
       if (net_send_direct(pso, (const void*) buffer, (size_t) r_sz) == -1)
         {
-          printf(
+          print_str(
               "ERROR: net_proc_piped_q: net_send_direct failed, socket: [%d]\n",
               pso->sock);
         }
@@ -308,17 +320,17 @@ net_proc_piped_q(__sock_o pso, __g_handle hdl)
 
   if (r_sz == -1)
     {
-      print_str("ERROR: net_proc_piped_q: [%d]: pipe read failed [%s]\n",
-          pso->sock, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+      if ( errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+          print_str(
+              "ERROR: net_proc_piped_q: [%d]: pipe read failed [%d] [%s]\n",
+              pso->sock, errno,
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+          pso->flags |= F_OPSOCK_TERM;
+        }
     }
 
-  if (close(hdl->pfd_out[0]) == -1)
-    {
-      print_str("ERROR: net_proc_piped_q: [%d]: pipe close failed [%s]\n",
-          pso->sock, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
-    }
-
-  hdl->flags ^= F_GH_EXECRD_HAS_PIPE;
+  pthread_mutex_unlock(&pso->mutex);
 
 }
 
@@ -367,9 +379,16 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
   l_end_at: ;
 
   if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
-      && (hdl->flags & F_GH_EXECRD_HAS_PIPE))
+      && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
     {
-      net_proc_piped_q(pso, hdl);
+      if (close(hdl->pfd_out[0]) == -1)
+        {
+          print_str("ERROR: net_proc_piped_q: [%d]: pipe close failed [%s]\n",
+              pso->sock,
+              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+        }
+
+      hdl->flags ^= F_GH_EXECRD_HAS_STDOUT_PIPE;
     }
 
   pthread_mutex_unlock(&pso->mutex);
@@ -377,31 +396,30 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
   return 0;
 }
 
-static int
+int
 net_gl_socket_destroy(__sock_o pso)
 {
-  int _tid = syscall(SYS_gettid);
 
   mutex_lock(&pso->mutex);
 
-  __g_handle hdl = (__g_handle ) pso->va_p0;
-
-  /*if ( NULL != hdl->v_b0)
-   {
-   free(hdl->v_b0);
-   }/*/
-
-  int r = g_cleanup(hdl);
+  int r;
 
   if (NULL != pso->va_p0)
     {
+      r = g_cleanup((__g_handle ) pso->va_p0);
       free(pso->va_p0);
       pso->va_p0 = NULL;
+    }
+  else
+    {
+      r = 0;
     }
 
   if (gfl & F_OPT_VERBOSE3)
     {
-      print_str("NOTICE: [%d] socket closed: [%d]\n", (int) _tid, pso->sock);
+      int _tid = syscall(SYS_gettid);
+      print_str("NOTICE: [%d] [%d] socket closed: [%d]\n", getpid(), (int) _tid,
+          pso->sock);
     }
 
   pthread_mutex_unlock(&pso->mutex);
@@ -491,15 +509,57 @@ net_search_dupip(__sock_o pso, void *arg)
   return 0;
 }
 
+#include <sys/wait.h>
+
+static int
+l_waitpid_and_pipe(pid_t c_pid, void *arg)
+{
+  __g_handle hdl = (__g_handle) arg;
+
+  fcntl(hdl->pfd_out[0], F_SETFL, O_NONBLOCK);
+
+  int status = -2, wp_ret;
+
+  while ((wp_ret=waitpid(c_pid, &status, WNOHANG) == (pid_t) 0))
+    {
+      if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
+          && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
+        {
+          net_proc_piped_q((__sock_o)hdl->pso_ref, hdl);
+        }
+      if ( ((__sock_o)hdl->pso_ref)->flags & F_OPSOCK_TERM )
+        {
+          break;
+        }
+      usleep(10000);
+    }
+
+  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
+      && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
+    {
+      net_proc_piped_q((__sock_o)hdl->pso_ref, hdl);
+    }
+
+  if (wp_ret == -1)
+    {
+      fprintf(stderr,
+          "ERROR: [%d]: failed waiting for child process to finish [%s]\n",
+          (uint32_t)c_pid, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+      return -1;
+    }
+
+  return status;
+}
+
 int
 net_gl_socket_init0(__sock_o pso)
 {
+
   switch (pso->oper_mode)
     {
   case SOCKET_OPMODE_RECIEVER:
     ;
-
-    if (pso->parent == NULL)
+    if (!(pso->flags & F_OPSOCK_CONNECT))
       {
         break;
       }
@@ -514,7 +574,7 @@ net_gl_socket_init0(__sock_o pso)
     _sock_cret sc_ret =
       { .pso = pso, .ret = 0 };
 
-    if (((__sock_o ) pso->parent)->policy.max_sim_ip)
+    if (pso->policy.max_sim_ip)
       {
         int dip_sr;
         if ((dip_sr = net_enum_sockr(pso->host_ctx, net_search_dupip,
@@ -527,12 +587,11 @@ net_gl_socket_init0(__sock_o pso)
             return 2;
           }
 
-        if (sc_ret.ret > ((__sock_o ) pso->parent)->policy.max_sim_ip)
+        if (sc_ret.ret > pso->policy.max_sim_ip)
           {
             print_str(
                 "ERROR: net_gl_socket_init0: [%d] max_sim limit reached: [%u/%u]\n",
-                pso->sock, sc_ret.ret,
-                ((__sock_o ) pso->parent)->policy.max_sim_ip);
+                pso->sock, sc_ret.ret, pso->policy.max_sim_ip);
             pso->flags |= F_OPSOCK_TERM;
             return 2;
           }
@@ -572,6 +631,7 @@ net_gl_socket_init0(__sock_o pso)
 
     int r;
 
+    hdl->execv_wpid_fp = l_waitpid_and_pipe;
     hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
     snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
 
@@ -587,22 +647,9 @@ net_gl_socket_init0(__sock_o pso)
     pthread_mutex_unlock(&mutex_glob00);
 
     hdl->v_b0_sz = MAX_PRINT_OUT - 4;
-
-    int _tid = syscall(SYS_gettid);
-
-    if (gfl & F_OPT_VERBOSE3)
-      {
-        char ip[128];
-        uint16_t port = net_get_addrinfo_port(pso);
-
-        net_get_addrinfo_ip(pso, (char*) ip, sizeof(ip));
-
-        print_str("NOTICE: [%d]: [%d] socket interface active [%s] [%s:%hu]\n",
-            _tid, pso->sock, (char*) pso->st_p0, ip, port);
-      }
+    hdl->pso_ref = (void*) pso;
 
     pso->unit_size = (ssize_t) hdl->block_sz;
-    pso->shutdown_cleanup = (_t_stocb) net_gl_socket_destroy;
 
     kill(getpid(), SIGUSR2);
 
@@ -618,11 +665,34 @@ net_gl_socket_init1(__sock_o pso)
     {
   case SOCKET_OPMODE_RECIEVER:
     ;
-    if (pso->parent == NULL)
+    if (gfl & F_OPT_VERBOSE3)
       {
-        break;
+        int _tid = syscall(SYS_gettid);
+
+        char ip[128];
+        uint16_t port = net_get_addrinfo_port(pso);
+
+        net_get_addrinfo_ip(pso, (char*) ip, sizeof(ip));
+
+        print_str("NOTICE: [%d]: [%d] data socket active [%s] [%s:%hu]\n", _tid,
+            pso->sock, (char*) pso->st_p0, ip, port);
       }
 
+    break;
+  case SOCKET_OPMODE_LISTENER:
+    ;
+    if (gfl & F_OPT_VERBOSE3)
+      {
+        int _tid = syscall(SYS_gettid);
+
+        char ip[128];
+        uint16_t port = net_get_addrinfo_port(pso);
+
+        net_get_addrinfo_ip(pso, (char*) ip, sizeof(ip));
+
+        print_str("NOTICE: [%d]: [%d] listener socket active [%s] [%s:%hu]\n",
+            _tid, pso->sock, (char*) pso->st_p0, ip, port);
+      }
     break;
     }
 
@@ -639,6 +709,14 @@ net_gl_socket_connect_init1(__sock_o pso)
 
     break;
     }
+
+  return 0;
+}
+
+int
+net_gl_socket_post_clean(__sock_o pso)
+{
+  kill(getpid(), SIGUSR2);
 
   return 0;
 }

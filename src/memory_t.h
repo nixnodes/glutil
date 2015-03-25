@@ -96,6 +96,9 @@ md_unlink_le(pmda md, p_md_obj md_o);
 int
 md_init_le(pmda md, int nm);
 
+off_t
+register_count(pmda thread_r);
+
 #ifdef _G_SSYS_THREAD
 off_t
 md_get_off_ts(pmda md);

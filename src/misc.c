@@ -29,7 +29,9 @@ g_print_str(const char * volatile buf, ...)
 {
   char d_buffer_2[PSTR_MAX];
 
-  if (!(get_msg_type((char*) buf) & STDLOG_LVL))
+  uint32_t stdlog_level = get_msg_type((char*) buf);
+
+  if (!(stdlog_level & STDLOG_LVL))
     {
       return 0;
     }
@@ -51,9 +53,9 @@ g_print_str(const char * volatile buf, ...)
         }
     }
 
-  char iserr = !(buf[0] == 0x45 && (buf[1] == 0x52 || buf[1] == 0x58));
+  char iserr = stdlog_level & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR);
 
-  if ((iserr && (gfl & F_OPT_PS_SILENT)))
+  if ((!iserr && (gfl & F_OPT_STDOUT_SILENT)))
     {
       va_end(al);
       return 0;
@@ -64,7 +66,7 @@ g_print_str(const char * volatile buf, ...)
 
   if (gfl & F_OPT_PS_TIME)
     {
-      if (!iserr)
+      if (iserr)
         {
           vfprintf(stderr, d_buffer_2, al);
         }
@@ -76,7 +78,7 @@ g_print_str(const char * volatile buf, ...)
     }
   else
     {
-      if (!iserr)
+      if (iserr)
         {
           vfprintf(stderr, buf, al);
         }
@@ -93,7 +95,7 @@ g_print_str(const char * volatile buf, ...)
   return 0;
 }
 
-uint32_t STDLOG_LVL = F_MSG_TYPE_ANY;
+uint32_t STDLOG_LVL = F_MSG_TYPE_NORMAL;
 
 uint32_t
 get_msg_type(char *msg)
@@ -132,12 +134,23 @@ get_msg_type(char *msg)
   case 0x49: // I
     if (msg[1] == 0x4E) //N
       {
-        return F_MSG_TYPE_NOTICE;
+        return F_MSG_TYPE_INFO;
       }
     break;
+  case 0x44: // D
+    switch (msg[1])
+      {
+    case 0x31: //1
+      ;
+      return F_MSG_TYPE_DEBUG1;
+    case 0x32: //2
+      ;
+      return F_MSG_TYPE_DEBUG2;
+      }
+    return F_MSG_TYPE_DEBUG0;
     }
 
-  return F_MSG_TYPE_NORMAL;
+  return F_MSG_TYPE_OTHER;
 }
 
 int
@@ -232,7 +245,11 @@ opt_get_msg_type(char *msg)
     }
   if (!strncmp(msg, "other", 5))
     {
-      return F_MSG_TYPE_NORMAL;
+      return F_MSG_TYPE_OTHER;
+    }
+  if (!strncmp(msg, "debug", 5))
+    {
+      return F_MSG_TYPE_DEBUG0;
     }
   if (!strncmp(msg, "all", 3))
     {
