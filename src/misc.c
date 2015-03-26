@@ -138,8 +138,12 @@ get_msg_type(char *msg)
       }
     break;
   case 0x44: // D
+
     switch (msg[1])
       {
+    case 0: //1
+      ;
+      return F_MSG_TYPE_DEBUG0;
     case 0x31: //1
       ;
       return F_MSG_TYPE_DEBUG1;
@@ -149,8 +153,17 @@ get_msg_type(char *msg)
     case 0x33: //3
       ;
       return F_MSG_TYPE_DEBUG3;
+    case 0x34: //4
+      ;
+      return F_MSG_TYPE_DEBUG4;
+    case 0x35: //5
+      ;
+      return F_MSG_TYPE_DEBUG5;
+    case 0x36: //6
+      ;
+      return F_MSG_TYPE_DEBUG6;
       }
-    return F_MSG_TYPE_DEBUG0;
+    return F_MSG_TYPE_OTHER;
     }
 
   return F_MSG_TYPE_OTHER;
@@ -263,6 +276,15 @@ opt_get_msg_type(char *msg)
       case 0x33: //3
         ;
         return F_MSG_TYPE_DEBUG3;
+      case 0x34: //4
+        ;
+        return F_MSG_TYPE_DEBUG4;
+      case 0x35: //5
+        ;
+        return F_MSG_TYPE_DEBUG5;
+      case 0x36: //6
+        ;
+        return F_MSG_TYPE_DEBUG6;
       case 0x61: //a
         ;
         return F_MSG_TYPE_DEBUG;
@@ -502,7 +524,7 @@ g_bitstr(uint64_t value, uint8_t bits, char *buffer)
 int
 print_version_long(void *arg, int m, void *opt)
 {
-  print_str("* %s-%s.%s - glFTPd binary logs tool *\n", PACKAGE_NAME,
+  print_str("* %s-%s.%s - glFTPd general purpose utility *\n", PACKAGE_NAME,
   PACKAGE_VERSION, __STR_ARCH);
   return 0;
 }

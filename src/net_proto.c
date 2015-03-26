@@ -16,6 +16,20 @@
 mda pc_a =
   { 0 };
 
+int
+net_baseline_socket_init0(__sock_o pso)
+{
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_RECIEVER:
+    ;
+    pso->unit_size = BP_HEADER_SIZE;
+    break;
+    }
+
+  return 0;
+}
+
 static void
 net_baseline_respond_protocol_version(__sock_o pso)
 {
@@ -81,7 +95,8 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
 
   if (NULL == protf)
     {
-      print_str("ERROR: net_baseline_prochdr: invalid protocol code %d, socket:[%d]\n",
+      print_str(
+          "ERROR: net_baseline_prochdr: invalid protocol code %d, socket:[%d]\n",
           bph->prot_code, pso->sock);
       pthread_mutex_unlock(&pso->mutex);
       return -11;
@@ -89,21 +104,25 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
 
   if (!bph->content_length)
     {
-      print_str("ERROR: net_baseline_prochdr: protocol %d: empty packet, socket:[%d]\n",
+      print_str(
+          "ERROR: net_baseline_prochdr: protocol %d: empty packet, socket:[%d]\n",
           bph->prot_code, pso->sock);
       return -12;
     }
 
-  pso->unit_size += bph->content_length;
+  //printf("%d - %d\n", (int) bph->content_length, (int) pso->unit_size);
 
+  pso->unit_size += (bph->content_length - BP_HEADER_SIZE);
   if (pso->unit_size > SOCK_RECVB_SZ)
     {
+      print_str(
+          "ERROR: net_baseline_prochdr: protocol %d: packet too large, socket:[%d]\n",
+          bph->prot_code, pso->sock);
       pthread_mutex_unlock(&pso->mutex);
       return -13;
     }
 
   pso->rcv1 = protf;
-
 
   end: ;
 

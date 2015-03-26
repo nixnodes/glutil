@@ -32,7 +32,7 @@
 
 #define F_MODE_GHS                      (a32 << 1)
 
-#define SOCK_RECVB_SZ                   8192
+#define SOCK_RECVB_SZ                   8192 * 2
 #define SOCK_DEFAULT_IDLE_TIMEOUT       60
 #define SOCK_SSL_ACCEPT_TIMEOUT         60
 #define SOCK_SSL_CONNECT_TIMEOUT        60
@@ -126,9 +126,10 @@ typedef struct ___sock_o
   mda sendq;
   void *ptr0;
   pthread_mutex_t mutex;
-  void *va_p0;
+  void *va_p0, *va_p1;
   void *st_p0, *st_p1;
   _net_sp policy;
+  void *sock_ca;
 } _sock_o, *__sock_o;
 
 
@@ -166,6 +167,7 @@ p_enumsr_cb(__sock_o sock_o, void *arg);
 #define F_CA_HAS_LOG               (a32 << 1)
 #define F_CA_HAS_SSL_CERT          (a32 << 2)
 #define F_CA_HAS_SSL_KEY           (a32 << 3)
+#define F_CA_MISC00                (a32 << 10)
 
 typedef struct ___sock_create_args
 {
@@ -181,7 +183,7 @@ typedef struct ___sock_create_args
   char b0[4096];
   char b1[PATH_MAX];
   char b2[PATH_MAX];
-
+  char b3[PATH_MAX];
   uint8_t mode;
   _net_sp policy;
 

@@ -106,7 +106,7 @@ net_ping_threads(void)
   pthread_mutex_unlock(&_net_thrd_r.mutex);
 }
 
-#define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 25
+#define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 30
 
 #define NET_TMON_SLEEP_DEFAULT                  (unsigned int) 15
 
@@ -199,7 +199,7 @@ net_deploy(void)
     }
   else
     {
-      if (gfl & F_OPT_VERBOSE)
+      if (gfl & F_OPT_VERBOSE2)
         {
           print_str("NOTICE: deployed %u socket(s)\n",
               (uint32_t) _boot_pca.offset);
@@ -277,7 +277,7 @@ net_deploy(void)
   while ((l_count = register_count(&_net_thrd_r)) > 0)
     {
       thread_broadcast_kill(&_net_thrd_r);
-      sleep(1);
+      sleep(10);
       e = time(NULL);
       if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
         {
@@ -289,7 +289,8 @@ net_deploy(void)
 
   md_g_free(&_net_thrd_r);
   md_g_free(&_sock_r);
-  md_g_free(&pc_a);
+  free(pc_a.objects);
+  md_g_free(&_boot_pca);
 
   print_str("INFO: server shutting down..\n");
 

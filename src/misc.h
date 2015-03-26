@@ -27,6 +27,9 @@
 #define F_MSG_TYPE_DEBUG1               (a32 << 10)
 #define F_MSG_TYPE_DEBUG2               (a32 << 11)
 #define F_MSG_TYPE_DEBUG3               (a32 << 12)
+#define F_MSG_TYPE_DEBUG4               (a32 << 13)
+#define F_MSG_TYPE_DEBUG5               (a32 << 14)
+#define F_MSG_TYPE_DEBUG6               (a32 << 15)
 
 #define F_MSG_TYPE_EEW                  (F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING|F_MSG_TYPE_MACRO)
 #define F_MSG_TYPE_NORMAL               (F_MSG_TYPE_EEW|F_MSG_TYPE_NOTICE|F_MSG_TYPE_OTHER|F_MSG_TYPE_STATS)

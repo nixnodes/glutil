@@ -400,6 +400,11 @@ net_destroy_connection(__sock_o so)
       free(so->buffer0);
     }
 
+  if ( NULL != so->va_p1)
+    {
+      free(so->va_p1);
+    }
+
   md_g_free(&so->sendq);
 
   so->flags |= F_OPSOCK_DISCARDED;
@@ -509,6 +514,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
   pso->policy = args->policy;
   pso->shutdown_cleanup_rc0 = args->ssd_rc0;
   pso->shutdown_cleanup_rc1 = args->ssd_rc1;
+  pso->sock_ca = (void*) args;
 
   if (!args->unit_size)
     {
@@ -701,6 +707,8 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
   pso->shutdown_cleanup_rc0 = args->ssd_rc0;
   pso->shutdown_cleanup_rc1 = args->ssd_rc1;
 
+  pso->sock_ca = (void*) args;
+
   if (mutex_init(&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
     {
       net_open_listening_socket_cleanup(args->socket_register, aip, fd);
@@ -833,6 +841,8 @@ net_push_to_sendq(__sock_o pso, void *data, size_t size, uint16_t flags)
 
   ptr->size = size;
 
+  print_str("D5: net_push_to_sendq: [%d]: suceeded\n", pso->sock);
+
   pthread_mutex_unlock(&pso->sendq.mutex);
 
   return 0;
@@ -911,6 +921,8 @@ net_proc_sendq(__sock_o pso)
 {
   p_md_obj ptr = pso->sendq.first;
 
+  ssize_t off = (ssize_t) pso->sendq.offset;
+
   while (ptr)
     {
       __sock_sqp psqp = (__sock_sqp) ptr->ptr;
@@ -937,7 +949,9 @@ net_proc_sendq(__sock_o pso)
     }
 
   end: ;
-  ssize_t off_ret = pso->sendq.offset;
+  ssize_t off_ret = (ssize_t) pso->sendq.offset;
+
+  print_str("D5: net_proc_sendq: [%d]: OK: %zu\n", pso->sock, off - off_ret);
 
   return off_ret;
 }
@@ -1318,6 +1332,9 @@ net_worker(void *args)
                 }
             }
 
+          /*print_str("D3: net_worker: [%d]: %llu / %llu\n", pso->sock,
+           pso->counters.b_read, pso->unit_size);*/
+
           if (pso->unit_size == pso->counters.b_read)
             {
               pso->counters.b_read = 0;
@@ -1379,7 +1396,7 @@ net_worker(void *args)
               int32_t thread_inactive = (int32_t) (time(NULL) - thrd->timers.t1);
               /*print_str("%d - throttling pooling interval.. %u - %d - %u\n",
                (int) _tid, pooling_timeout, thread_inactive);*/
-              pooling_timeout = (pooling_timeout * (thread_inactive / 4))
+              pooling_timeout = (pooling_timeout * (thread_inactive / 32))
                   + pooling_timeout;
             }
           else
@@ -1434,6 +1451,8 @@ net_worker(void *args)
     }
 
   pthread_mutex_unlock(&thread_host_ctx->mutex);
+
+  kill(getpid(), SIGUSR2);
 
   return 0;
 }
@@ -1515,6 +1534,7 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
   pso->shutdown_cleanup_rc1 = spso->shutdown_cleanup_rc1;
   pso->rc0 = spso->rc0;
   pso->rc1 = spso->rc1;
+  pso->sock_ca = spso->sock_ca;
 
   if (!spso->unit_size)
     {

@@ -69,6 +69,9 @@ net_proto_reset_to_baseline (__sock_o pso);
 void
 net_proto_na24_copy (_np_netaddr24 *src, _np_netaddr24 *dst);
 
+int
+net_baseline_socket_init0(__sock_o pso);
+
 #endif /* NET_PROTO_H_ */
 
 #endif

@@ -1998,7 +1998,7 @@ opt_netctl(void *arg, int m, void *opt)
 #define NET_OPT_PARSE_VBMSHOW() { \
   if (gfl & F_OPT_VERBOSE5) \
         { \
-          print_str("NOTICE: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
+          print_str("DEBUG: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
         } \
 };
 
@@ -2104,6 +2104,11 @@ net_opt_parse(pmda md, void *arg)
       ca->ca_flags |= F_CA_HAS_SSL_KEY;
       ca->flags |= F_OPSOCK_SSL;
     }
+  else if (!strncmp("fs_stat", left, 4))
+    {
+      snprintf(ca->b3, sizeof(ca->b3), "%s", right);
+      ca->ca_flags |= F_CA_MISC00;
+    }
   else
     {
       print_str("ERROR: net_opt_parse: '%s': unknown option\n", left);
@@ -2117,6 +2122,8 @@ net_opt_parse(pmda md, void *arg)
 
 #define OPT_CONNECT_MODE_NULL            (uint8_t)0
 #define OPT_CONNECT_MODE_SERV            (uint8_t)1
+
+#include <net_fs.h>
 
 static int
 opt_queue_connection(void *arg, uint32_t flags)
@@ -2215,8 +2222,16 @@ opt_queue_connection(void *arg, uint32_t flags)
     //ca->rc0 = net_gl_socket_init0;
     //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_prochdr;
+    ca->rc0 = net_baseline_socket_init0;
 
-    md_init_le(&pc_a, 1024);
+    md_init_le(&pc_a, 512);
+
+    pc_a.objects[PROT_CODE_FS].ptr = (void*) net_baseline_fsproto;
+
+    if (ca->ca_flags & F_CA_MISC00)
+      {
+        ca->rc1 = net_fs_socket_init1_rqstat;
+      }
 
     break;
   default:
