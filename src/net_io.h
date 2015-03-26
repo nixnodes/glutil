@@ -25,6 +25,7 @@
 #define F_OPSOCK_INIT_SENDQ             (a32 << 12)
 #define F_OPSOCK_PROC_READY             (a32 << 13)
 #define F_OPSOCK_SD_FIRST_DC            (a32 << 14)
+#define F_OPSOCK_HALT_RECV              (a32 << 15)
 
 #define F_OPSOCK_CREAT_MODE             (F_OPSOCK_CONNECT|F_OPSOCK_LISTEN)
 #define F_OPSOCK_STATES                 (F_OPSOCK_ST_SSL_ACCEPT|F_OPSOCK_ST_SSL_CONNECT)
@@ -81,7 +82,7 @@ typedef struct __sock_timeouts
 
 typedef struct __sock_counters
 {
-  ssize_t b_read, t_read;
+  ssize_t b_read, t_read, session_read, session_write, total_write;
 } _sock_c;
 
 typedef struct __sock_sendq_payload

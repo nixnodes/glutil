@@ -434,6 +434,28 @@ g_clean_print_mech(pmda print_mech)
 }
 
 int
+g_handle_pipe_cleanup(__g_handle hdl)
+{
+  /*if (hdl->flags & F_GH_EXECRD_PIPE_IN)
+    {
+      hdl->flags ^= F_GH_EXECRD_PIPE_IN;
+    }
+  if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
+    {
+      hdl->flags ^= F_GH_EXECRD_PIPE_OUT;
+    }*/
+
+  if (hdl->flags & F_GH_EXECRD_HAS_STD_PIPE)
+    {
+      close(hdl->pipe.pfd_out[0]);
+      close(hdl->pipe.pfd_out[1]);
+      hdl->flags ^= F_GH_EXECRD_HAS_STD_PIPE;
+    }
+
+  return 0;
+}
+
+int
 g_cleanup(__g_handle hdl)
 {
   int r = 0;
@@ -447,6 +469,8 @@ g_cleanup(__g_handle hdl)
   g_clean_print_mech(&hdl->print_mech);
   g_clean_print_mech(&hdl->pre_print_mech);
   g_clean_print_mech(&hdl->post_print_mech);
+
+  g_handle_pipe_cleanup(hdl);
 
   p_md_obj ptr;
 

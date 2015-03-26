@@ -60,10 +60,10 @@
 #define F_GH_NO_ACCU                    (a64 << 48)
 #define F_GH_W_NSSYS                    (a64 << 49)
 #define F_GH_EXECRD_PIPE_OUT            (a64 << 50)
-#define F_GH_EXECRD_HAS_STDOUT_PIPE     (a64 << 51)
+#define F_GH_EXECRD_HAS_STD_PIPE     (a64 << 51)
 #define F_GH_PRINT                      (a64 << 52)
 #define F_GH_EXECRD_PIPE_IN             (a64 << 53)
-#define F_GH_EXECRD_HAS_STDIN_PIPE      (a64 << 54)
+#define F_GH_EXECRD_WAS_PIPED           (a64 << 54)
 #define F_GH_TFD_PROCED                 (a64 << 55)
 #define F_GH_SPEC_SQ01                  (a64 << 56)
 #define F_GH_SPEC_SQ02                  (a64 << 57)
@@ -76,6 +76,7 @@
 
 #define F_GH_ISSHM                      (F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP                       (F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
+
 
 typedef int
 (*__d_exec)(void *buffer, void *callback, char *ex_str, void *hdl);
@@ -92,6 +93,17 @@ typedef struct ___execv
 
 #include <zlib.h>
 
+#define F_ST_PIPEO_OUT                  (a32 << 1)
+#define F_ST_PIPEO_IN                   (a32 << 2)
+
+typedef struct ___pipe_object
+{
+  uint32_t status;
+  pid_t child;
+  ssize_t data_in, data_out;
+  int pfd_in[2], pfd_out[2];
+} _pipe_obj, *__pipe_obj;
+
 typedef struct g_handle
 {
   FILE *fh;
@@ -102,7 +114,7 @@ typedef struct g_handle
   off_t offset, bw, br, total_sz;
   off_t rw, t_rw;
   uint32_t block_sz;
-  uint64_t flags;
+  uint64_t flags, status;
   mda buffer, w_buffer;
   mda _match_rr;
   mda _accumulator;
@@ -140,7 +152,7 @@ typedef struct g_handle
   int h_errno;
   int h_errno_gz;
   const char *h_errstr_gz;
-  int pfd_in[2], pfd_out[2];
+  _pipe_obj pipe;
   char strerr_b[1024];
   void *v_b0;
   size_t v_b0_sz;

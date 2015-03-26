@@ -34,7 +34,8 @@ net_baseline_respond_protocol_version(__sock_o pso)
     }
   else
     {
-      print_str("DEBUG: net_baseline_respond_protocol_version: net_send_direct ok\n");
+      print_str(
+          "DEBUG: net_baseline_respond_protocol_version: net_send_direct ok\n");
     }
 
   //pso->flags |= F_OPSOCK_TERM;
@@ -78,9 +79,9 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
 
   _p_s_cb protf = (_p_s_cb) pc_a.objects[bph->prot_code].ptr;
 
-  if (!protf)
+  if (NULL == protf)
     {
-      print_str("ERROR: invalid protocol code %d, socket:[%d]\n",
+      print_str("ERROR: net_baseline_prochdr: invalid protocol code %d, socket:[%d]\n",
           bph->prot_code, pso->sock);
       pthread_mutex_unlock(&pso->mutex);
       return -11;
@@ -88,7 +89,7 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
 
   if (!bph->content_length)
     {
-      print_str("ERROR: protocol %d: empty packet, socket:[%d]\n",
+      print_str("ERROR: net_baseline_prochdr: protocol %d: empty packet, socket:[%d]\n",
           bph->prot_code, pso->sock);
       return -12;
     }
@@ -102,6 +103,7 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
     }
 
   pso->rcv1 = protf;
+
 
   end: ;
 

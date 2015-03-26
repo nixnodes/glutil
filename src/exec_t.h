@@ -34,6 +34,9 @@ int
 l_execv(char *exec, char **argv, __g_handle hdl);
 _d_wpid_cb l_waitpid_def;
 
+void
+l_post_exec_cleanup(__g_handle hdl);
+
 char *exec_str;
 char **exec_v;
 int exec_vc;

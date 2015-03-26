@@ -46,9 +46,9 @@ typedef struct __net_proto_160_bit_sha
 typedef struct ___baseline_proto_header
 {
   uint8_t prot_code;
-  uint8_t ttl;
-  _netaddr_sha160 dt_address_src;
-  _netaddr_sha160 dt_address_dst;
+  //uint8_t ttl;
+  //_netaddr_sha160 dt_address_src;
+  //_netaddr_sha160 dt_address_dst;
   uint32_t content_length;
 } _bp_header, *__bp_header;
 

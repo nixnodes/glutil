@@ -54,7 +54,8 @@ ssl_init(void)
 {
   int i;
 
-  //CRYPTO_malloc_debug_init();
+  CRYPTO_malloc_debug_init()
+  ;
   CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
   /* static locks area */
@@ -111,6 +112,8 @@ ssl_init_setctx(__sock_o pso)
   SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2);
 
   SSL_CTX_set_cipher_list(pso->ctx, "-ALL:ALL:-aNULL");
+
+  //SSL_CTX_set_mode(pso->ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
 }
 
 SSL_CTX*
@@ -124,6 +127,7 @@ ssl_init_ctx_server(__sock_o pso)
   ssl_init_setctx(pso);
 
   SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_NONE, NULL);
+
   //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
   SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_BOTH);
 
@@ -296,6 +300,7 @@ net_destroy_connection(__sock_o so)
     {
       if ((so->flags & F_OPSOCK_SSL) && so->ssl)
         {
+          errno = 0;
           if (!(so->flags & F_OPSOCK_TS_DISCONNECTED)
               && (ret = SSL_shutdown(so->ssl)) < 1)
             {
@@ -318,9 +323,22 @@ net_destroy_connection(__sock_o so)
               so->s_errno = ssl_err;
               so->status = ret;
 
-              print_str(
-                  "ERROR: socket: [%d] SSL_shutdown - code:[%d] sslerr:[%d]\n",
-                  so->sock, ret, ssl_err);
+              if (ssl_err == 5 && so->status == -1)
+                {
+                  char err_buffer[1024];
+                  print_str(
+                      "ERROR: SSL_shutdown: socket: [%d] [SSL_ERROR_SYSCALL]: code:[%d] [%d] [%s]\n",
+                      so->sock, so->status, errno,
+                      errno ?
+                          strerror_r(errno, err_buffer, sizeof(err_buffer)) :
+                          "-");
+                }
+              else
+                {
+                  print_str(
+                      "ERROR: socket: [%d] SSL_shutdown - code:[%d] sslerr:[%d]\n",
+                      so->sock, so->status, ssl_err);
+                }
 
             }
 
@@ -937,18 +955,18 @@ net_enum_sockr(pmda base, _p_enumsr_cb p_ensr_cb, void *arg)
     {
       __sock_o pso = (__sock_o) ptr->ptr;
 
-      mutex_lock(&pso->mutex);
+      //mutex_lock(&pso->mutex);
 
       int ret = p_ensr_cb(pso, arg);
 
       if ( ret > 0 )
         {
           g_ret = ret;
-          pthread_mutex_unlock(&pso->mutex);
+          //pthread_mutex_unlock(&pso->mutex);
           break;
         }
 
-      pthread_mutex_unlock(&pso->mutex);
+      //pthread_mutex_unlock(&pso->mutex);
 
       ptr = ptr->next;
     }
@@ -1101,12 +1119,11 @@ net_worker(void *args)
         }
       else
         {
-          /*
-           print_str(
-           "NOTICE: [%d]: push %llu items onto worker thread stack, %llu exist in chain\n",
-           _tid, (unsigned long long int) thrd->in_objects.offset,
-           (unsigned long long int) thrd->proc_objects.offset);
-           */
+          print_str(
+              "D3: [%d]: push %llu items onto worker thread stack, %llu exist in chain\n",
+              _tid, (unsigned long long int) thrd->in_objects.offset,
+              (unsigned long long int) thrd->proc_objects.offset);
+
         }
 
       mutex_lock(&thrd->proc_objects.mutex);
@@ -1123,7 +1140,7 @@ net_worker(void *args)
           mutex_lock(&t_pso->mutex);
           if (!(t_pso->flags & F_OPSOCK_ACT))
             {
-              print_str("NOTICE: [%d]: not importing %d, still active\n",
+              print_str("D3: [%d]: not importing %d, still active\n",
                   (int) _tid, t_pso->sock);
               pthread_mutex_unlock(&t_pso->mutex);
               goto io_loend;
@@ -1225,7 +1242,13 @@ net_worker(void *args)
 
           errno = 0;
 
-          //pthread_mutex_unlock(&pso->mutex);
+          if ((pso->flags & F_OPSOCK_HALT_RECV))
+            {
+              pthread_mutex_unlock(&pso->mutex);
+              goto process_data;
+            }
+
+          pthread_mutex_unlock(&pso->mutex);
 
           switch ((r = pso->rcv_cb(pso, pso->host_ctx, &_net_thrd_r,
               pso->buffer0)))
@@ -1255,7 +1278,9 @@ net_worker(void *args)
                 errno,
                 errno ? strerror_r(errno, (char*) buffer0, 1024) : "");
 
+            mutex_lock(&pso->mutex);
             pso->flags |= F_OPSOCK_TERM;
+            pthread_mutex_unlock(&pso->mutex);
 
             if (!pso->counters.b_read)
               {
@@ -1264,6 +1289,8 @@ net_worker(void *args)
 
             break;
             }
+
+          process_data: ;
 
           if (NULL != pso->rcv1)
             {
@@ -1274,13 +1301,18 @@ net_worker(void *args)
                 break;
               case -2:
                 break;
+              case -3:
+                goto int_st;
+              case -4:
+                goto e_end;
               default:
-
                 print_str(
                     "ERROR: data processor failed with status %d, socket: [%d]\n",
                     r, pso->sock);
 
+                mutex_lock(&pso->mutex);
                 pso->flags |= F_OPSOCK_TERM;
+                pthread_mutex_unlock(&pso->mutex);
 
                 break;
                 }
@@ -1291,9 +1323,13 @@ net_worker(void *args)
               pso->counters.b_read = 0;
             }
 
+          int_st: ;
+
           int_state |= F_WORKER_INT_STATE_ACT;
 
           send_q: ;
+
+          mutex_lock(&pso->mutex);
 
           mutex_lock(&pso->sendq.mutex);
 
@@ -1310,9 +1346,11 @@ net_worker(void *args)
 
           pthread_mutex_unlock(&pso->sendq.mutex);
 
+          pthread_mutex_unlock(&pso->mutex);
+
           e_end: ;
 
-          //mutex_lock(&pso->mutex);
+          mutex_lock(&pso->mutex);
 
           if (pso->flags & F_OPSOCK_ST_HOOKED)
             {
@@ -1351,8 +1389,8 @@ net_worker(void *args)
                 {
                   pthread_mutex_unlock(&thrd->proc_objects.mutex);
 
-                  print_str("DEBUG: [%d]: putting worker to sleep [%hu]\n",
-                      _tid, thrd->oper_mode);
+                  print_str("D2: [%d]: putting worker to sleep [%hu]\n", _tid,
+                      thrd->oper_mode);
                   ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
                       &thrd->status);
                   sleep(-1);
@@ -1373,9 +1411,7 @@ net_worker(void *args)
 
   print_str("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
 
-  mutex_lock(&thrd->mutex);
   pmda thread_host_ctx = thrd->host_ctx;
-  pthread_mutex_unlock(&thrd->mutex);
 
   mutex_lock(&thread_host_ctx->mutex);
 
@@ -1844,15 +1880,15 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
   spso->timers.last_act = time(NULL);
   //pso->rcv_cb = pso->rcv_cb_t;
 
+  BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 128);
+  BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 128);
+
   //pso->limits.sock_timeout = spso->policy.idle_timeout;
 
   if (spso->flags & F_OPSOCK_ST_SSL_ACCEPT)
     {
       spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
     }
-
-  BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 8192);
-  BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 8192);
 
   //ssl_show_certs(pso->ssl);
 
@@ -1870,7 +1906,7 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
           SSL_get_cipher(pso->ssl), eb,
           SSL_CIPHER_get_version(SSL_get_current_cipher(pso->ssl)));
 
-      print_str("D1: SSL_CIPHER_description: %d, %s", pso->sock, cd);
+      print_str("D2: SSL_CIPHER_description: %d, %s", pso->sock, cd);
     }
 
   spso->rcv_cb = spso->rcv_cb_t;
@@ -1970,11 +2006,24 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 int
 net_ssend_b(__sock_o pso, void *data, size_t length)
 {
+  if (0 == length)
+    {
+      print_str("ERROR: net_ssend_b: zero length input\n");
+      abort();
+    }
+
   mutex_lock(&pso->mutex);
 
   int ret = 0;
+  ssize_t s_ret;
+  uint32_t i = 1;
 
-  while ((send(pso->sock, data, length, MSG_WAITALL | MSG_NOSIGNAL)) == -1)
+  unsigned char *in_data = (unsigned char*) data;
+
+  nssb_start: ;
+
+  while ((s_ret = send(pso->sock, in_data, length, MSG_WAITALL | MSG_NOSIGNAL))
+      == -1)
     {
       if (!(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
         {
@@ -1985,7 +2034,35 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
           ret = 1;
           break;
         }
-      usleep(1000);
+      else
+        {
+          char err_buf[1024];
+          print_str("D3: net_ssend_b: [%d] [%d]: %s\n", pso->sock, errno,
+              strerror_r(errno, err_buf, 1024));
+        }
+      usleep(100000);
+    }
+
+  if (!ret)
+    {
+      pso->counters.session_write = (ssize_t) s_ret;
+      pso->counters.total_write += (ssize_t) s_ret;
+
+      if (s_ret < (ssize_t) length)
+        {
+          print_str(
+              "D2: net_ssend_b: [%d] partial send occured: %zu / %zu [%u]\n",
+              pso->sock, s_ret, length, i);
+
+          in_data = (in_data + s_ret);
+          length = (length - s_ret);
+          i++;
+
+          goto nssb_start;
+
+          //pso->flags |= F_OPSOCK_TERM;
+          //ret = 1;
+        }
     }
 
   pthread_mutex_unlock(&pso->mutex);
@@ -1996,20 +2073,24 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 int
 net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
 {
-  if (!length)
+  if (0 == length)
     {
-      return -2;
+      print_str("ERROR: net_ssend_ssl_b: zero length input\n");
+      abort();
     }
 
   mutex_lock(&pso->mutex);
 
-  int ret;
+  int ret, f_ret;
 
   while ((ret = SSL_write(pso->ssl, data, length)) < 1)
     {
       pso->s_errno = SSL_get_error(pso->ssl, ret);
       ERR_print_errors_fp(stderr);
       ERR_clear_error();
+
+      print_str("D3: net_ssend_ssl_b: SSL_write not satisfied: [%d] [%d]\n",
+          ret, pso->s_errno);
 
       if (!(pso->s_errno == SSL_ERROR_WANT_READ
           || pso->s_errno == SSL_ERROR_WANT_WRITE))
@@ -2031,6 +2112,12 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
                           "WARNING: net_ssend_ssl_b: [%d] socket disconnected\n",
                           pso->sock);
                     }
+                  else
+                    {
+                      print_str(
+                          "DEBUG: net_ssend_ssl_b: [%d] SSL_write returned 0\n",
+                          pso->sock);
+                    }
                 }
 
               pthread_mutex_unlock(&pso->mutex);
@@ -2038,12 +2125,28 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
             }
         }
 
-      usleep(1000);
+      usleep(25000);
     }
+
+  if (ret > 0 && ret < length)
+    {
+      print_str(
+          "ERROR: net_ssend_ssl_b: [%d] partial SSL_write occured on socket\n",
+          pso->sock);
+      pso->flags |= F_OPSOCK_TERM;
+      f_ret = 1;
+    }
+  else
+    {
+      f_ret = 0;
+    }
+
+  pso->counters.session_write = (ssize_t) ret;
+  pso->counters.total_write += (ssize_t) ret;
 
   pthread_mutex_unlock(&pso->mutex);
 
-  return 0;
+  return f_ret;
 }
 
 int
@@ -2091,6 +2194,14 @@ net_ssend_ssl(__sock_o pso, void *data, size_t length)
       pthread_mutex_unlock(&pso->mutex);
 
       return 1;
+    }
+
+  if (ret > 0 && ret < length)
+    {
+      print_str(
+          "ERROR: net_ssend_ssl: [%d] partial SSL_write occured on socket\n",
+          pso->sock);
+      pso->flags |= F_OPSOCK_TERM;
     }
 
   pthread_mutex_unlock(&pso->mutex);

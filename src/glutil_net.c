@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <malloc.h>
 #include <arpa/inet.h>
 
@@ -84,7 +85,7 @@ net_ping_threads(void)
               pthread_kill(thrd->pt, SIGUSR1);
               if (gfl & F_OPT_VERBOSE)
                 {
-                  print_str("NOTICE: [%X]: waking up worker\n", thrd->pt);
+                  print_str("DEBUG: [%X]: waking up worker\n", thrd->pt);
 
                 }
             }
@@ -94,7 +95,7 @@ net_ping_threads(void)
           if ((thrd->timers.act_f & F_TTIME_ACT_T0)
               && (time(NULL) - thrd->timers.t0) > T_THRD_PROC_TIMEOUT)
             {
-              print_str("WARNING: [%X]: thread not responding\n", thrd->pt);
+              print_str("D2: [%X]: thread not responding\n", thrd->pt);
             }
         }
 
@@ -267,7 +268,7 @@ net_deploy(void)
 
   if (gfl & F_OPT_VERBOSE)
     {
-      print_str("DEBUG: waiting for threads to exit..\n");
+      print_str("D2: waiting for threads to exit..\n");
     }
 
   time_t s = time(NULL), e;
@@ -280,7 +281,8 @@ net_deploy(void)
       e = time(NULL);
       if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
         {
-          print_str("WARNING: %llu worker threads remaining\n", l_count);
+          print_str("WARNING: %llu worker threads remaining\n",
+              (uint64_t) l_count);
           break;
         }
     }
@@ -289,33 +291,43 @@ net_deploy(void)
   md_g_free(&_sock_r);
   md_g_free(&pc_a);
 
-  if (gfl & F_OPT_VERBOSE)
-    {
-      print_str("NOTICE: server shutting down..\n");
-    }
+  print_str("INFO: server shutting down..\n");
 
   return 0;
 }
 
 #include <fcntl.h>
 
-static void
+static int
 net_proc_piped_q(__sock_o pso, __g_handle hdl)
 {
-  uint8_t buffer[8192];
+  unsigned char buffer[32768];
 
   ssize_t r_sz;
 
-  mutex_lock(&pso->mutex);
+  //mutex_lock(&pso->mutex);
 
-  while ((r_sz = read(hdl->pfd_out[0], buffer, sizeof(buffer))) > 0)
+  while ((r_sz = read(hdl->pipe.pfd_out[0], (void*) buffer, 32768)) > 0)
     {
-      if (net_send_direct(pso, (const void*) buffer, (size_t) r_sz) == -1)
+      if (net_send_direct(pso, (void*) buffer, (size_t) r_sz))
         {
-          print_str(
-              "ERROR: net_proc_piped_q: net_send_direct failed, socket: [%d]\n",
-              pso->sock);
+          pso->flags |= F_OPSOCK_TERM;
+          return 1;
         }
+      else
+        {
+          /*if (r_sz != pso->counters.session_write)
+           {
+           print_str(
+           "ERROR: net_proc_piped_q: [%d]: failed sending complete data block\n",
+           pso->sock);
+           pso->flags |= F_OPSOCK_TERM;
+           return 1;
+           }*/
+
+          hdl->pipe.data_in += r_sz;
+        }
+
     }
 
   if (r_sz == -1)
@@ -326,11 +338,18 @@ net_proc_piped_q(__sock_o pso, __g_handle hdl)
               "ERROR: net_proc_piped_q: [%d]: pipe read failed [%d] [%s]\n",
               pso->sock, errno,
               g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
-          pso->flags |= F_OPSOCK_TERM;
+          //pso->flags |= F_OPSOCK_TERM;
+          return 2;
         }
     }
+  else if (r_sz == 0)
+    {
+      print_str("D1: net_proc_piped_q: [%d]: pipe read EOF [%d]\n", pso->sock,
+          hdl->pipe.child);
+    }
 
-  pthread_mutex_unlock(&pso->mutex);
+  return 0;
+  //pthread_mutex_unlock(&pso->mutex);
 
 }
 
@@ -348,6 +367,8 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
   //print_str("NOTICE: got packet [%s]\n", pso->st_p0);
 
   __g_handle hdl = (__g_handle ) pso->va_p0;
+
+  pthread_mutex_unlock(&pso->mutex);
 
   int r;
 
@@ -378,22 +399,88 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   l_end_at: ;
 
-  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
-      && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
-    {
-      if (close(hdl->pfd_out[0]) == -1)
-        {
-          print_str("ERROR: net_proc_piped_q: [%d]: pipe close failed [%s]\n",
-              pso->sock,
-              g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
-        }
+  /*if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
+   && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
+   {
+   if (close(hdl->pipe.pfd_out[0]) == -1)
+   {
+   print_str(
+   "ERROR: net_baseline_gl_data_in: [%d]: pipe close failed [%s]\n",
+   pso->sock,
+   g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+   }
 
-      hdl->flags ^= F_GH_EXECRD_HAS_STDOUT_PIPE;
+   hdl->flags ^= F_GH_EXECRD_HAS_STDOUT_PIPE;
+   }*/
+
+  //pthread_mutex_unlock(&pso->mutex);
+  return 0;
+}
+
+static void
+net_baseline_pipedata_cleanup(__sock_o pso, __g_handle hdl)
+{
+  if (pso->flags & F_OPSOCK_HALT_RECV)
+    {
+      pso->flags ^= F_OPSOCK_HALT_RECV;
+    }
+  pso->rcv1 = (_p_s_cb) net_baseline_gl_data_in;
+  g_handle_pipe_cleanup(hdl);
+}
+
+int
+net_baseline_pipe_data(__sock_o pso, pmda base, pmda threadr, void *data)
+{
+  mutex_lock(&pso->mutex);
+
+  if ((pso->flags & F_OPSOCK_TERM))
+    {
+      pthread_mutex_unlock(&pso->mutex);
+      return -3;
+    }
+
+  //print_str("NOTICE: got packet [%s]\n", pso->st_p0);
+
+  __g_handle hdl = (__g_handle ) pso->va_p0;
+
+  int exit_status;
+
+  int wp_ret;
+
+  if ((wp_ret = waitpid(hdl->pipe.child, &exit_status, WNOHANG)) == -1)
+    {
+      print_str(
+          "ERROR: [%d]: failed waiting for child process to finish [%s]\n",
+          (uint32_t) hdl->pipe.child,
+          g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
+    }
+
+  int nppq = net_proc_piped_q((__sock_o ) hdl->pso_ref, hdl);
+
+  if ((wp_ret == 0 || wp_ret == -1) && (nppq))
+    {
+      print_str(
+          "ERROR: [%d]: net_proc_piped_q failed, sending SIGKILL to child\n",
+          (uint32_t) hdl->pipe.child);
+      kill(hdl->pipe.child, SIGKILL);
+    }
+
+  if (wp_ret > 0 || wp_ret == -1)
+    {
+      //net_baseline_pipedata_cleanup(pso, hdl);
+      /*int i = 10;
+       while (i--) {
+       net_proc_piped_q((__sock_o ) hdl->pso_ref, hdl);
+       sleep (1);
+       }*/
+
+      net_baseline_pipedata_cleanup(pso, hdl);
+
     }
 
   pthread_mutex_unlock(&pso->mutex);
 
-  return 0;
+  return -3;
 }
 
 int
@@ -406,6 +493,19 @@ net_gl_socket_destroy(__sock_o pso)
 
   if (NULL != pso->va_p0)
     {
+      __g_handle hdl = (__g_handle) pso->va_p0;
+
+      if ( (hdl->flags & F_GH_EXECRD_WAS_PIPED))
+        {
+          if (gfl & F_OPT_VERBOSE4)
+            {
+              print_str(
+                  "D2: net_baseline_pipe_data: PIPE: %llu b -> SOCK: %llu b\n",
+                  ((unsigned long long int) hdl->pipe.data_in),
+                  pso->counters.total_write);
+            }
+        }
+
       r = g_cleanup((__g_handle ) pso->va_p0);
       free(pso->va_p0);
       pso->va_p0 = NULL;
@@ -418,8 +518,7 @@ net_gl_socket_destroy(__sock_o pso)
   if (gfl & F_OPT_VERBOSE3)
     {
       int _tid = syscall(SYS_gettid);
-      print_str("NOTICE: [%d] [%d] socket closed: [%d]\n", getpid(), (int) _tid,
-          pso->sock);
+      print_str("NOTICE: [%d] socket closed: [%d]\n", (int) _tid, pso->sock);
     }
 
   pthread_mutex_unlock(&pso->mutex);
@@ -509,44 +608,33 @@ net_search_dupip(__sock_o pso, void *arg)
   return 0;
 }
 
-#include <sys/wait.h>
-
 static int
-l_waitpid_and_pipe(pid_t c_pid, void *arg)
+net_l_wp_setup_pipe(pid_t c_pid, void *arg)
 {
   __g_handle hdl = (__g_handle) arg;
 
-  fcntl(hdl->pfd_out[0], F_SETFL, O_NONBLOCK);
+  __sock_o pso = (__sock_o)hdl->pso_ref;
 
-  int status = -2, wp_ret;
+  fcntl(hdl->pipe.pfd_out[0], F_SETFL, O_NONBLOCK);
 
-  while ((wp_ret=waitpid(c_pid, &status, WNOHANG) == (pid_t) 0))
-    {
-      if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
-          && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
-        {
-          net_proc_piped_q((__sock_o)hdl->pso_ref, hdl);
-        }
-      if ( ((__sock_o)hdl->pso_ref)->flags & F_OPSOCK_TERM )
-        {
-          break;
-        }
-      usleep(10000);
-    }
+  mutex_lock(&pso->mutex);
 
-  if ((hdl->flags & F_GH_EXECRD_PIPE_OUT)
-      && (hdl->flags & F_GH_EXECRD_HAS_STDOUT_PIPE))
-    {
-      net_proc_piped_q((__sock_o)hdl->pso_ref, hdl);
-    }
+  pso->rcv1 = (_p_s_cb) net_baseline_pipe_data;
+  hdl->pipe.child = c_pid;
+  pso->flags |= F_OPSOCK_HALT_RECV;
 
-  if (wp_ret == -1)
-    {
-      fprintf(stderr,
-          "ERROR: [%d]: failed waiting for child process to finish [%s]\n",
-          (uint32_t)c_pid, g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
-      return -1;
-    }
+  hdl->flags |= F_GH_EXECRD_WAS_PIPED;
+
+  /*int cur_fl = fcntl(pso->sock, F_GETFL);
+
+   if ( cur_fl & O_NONBLOCK) {
+   cur_fl ^= O_NONBLOCK;
+   cur_fl |= O_SYNC;
+   }
+   ;
+   fcntl(pso->sock, F_SETFL, cur_fl);*/
+
+  pthread_mutex_unlock(&pso->mutex);
 
   return status;
 }
@@ -631,7 +719,7 @@ net_gl_socket_init0(__sock_o pso)
 
     int r;
 
-    hdl->execv_wpid_fp = l_waitpid_and_pipe;
+    hdl->execv_wpid_fp = net_l_wp_setup_pipe;
     hdl->flags |= (F_GH_W_NSSYS | F_GH_EXECRD_PIPE_OUT);
     snprintf(hdl->file, sizeof(hdl->file), "%s", (char*) pso->st_p0);
 
@@ -711,6 +799,30 @@ net_gl_socket_connect_init1(__sock_o pso)
     }
 
   return 0;
+}
+
+int
+net_gl_socket_pre_clean(__sock_o pso)
+{
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_RECIEVER:
+    ;
+    __g_handle hdl = (__g_handle) pso->va_p0;
+
+    if ( NULL != hdl && (hdl->flags & F_GH_EXECRD_WAS_PIPED))
+      {
+        if (gfl & F_OPT_VERBOSE4)
+          {
+            print_str("DEBUG: net_baseline_pipe_data: PIPE: %llu b -> SOCK: %llu b\n",
+                ((unsigned long long int) hdl->pipe.data_in),
+                pso->counters.total_write);
+          }
+      }
+    break;
+  }
+
+return 0;
 }
 
 int

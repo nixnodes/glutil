@@ -75,6 +75,8 @@ g_cl_mrr(void *ptr);
 int
 g_buffer_into_memory(char *file, __g_handle hdl);
 int
+g_handle_pipe_cleanup(__g_handle hdl);
+int
 g_cleanup(__g_handle hdl);
 int
 g_clean_print_mech(pmda print_mech);

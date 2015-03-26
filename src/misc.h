@@ -18,16 +18,19 @@
 #define F_MSG_TYPE_EXCEPTION            (a32 << 1)
 #define F_MSG_TYPE_ERROR                (a32 << 2)
 #define F_MSG_TYPE_WARNING              (a32 << 3)
-#define F_MSG_TYPE_NOTICE               (a32 << 4)
-#define F_MSG_TYPE_INFO                 (a32 << 5)
-#define F_MSG_TYPE_STATS                (a32 << 6)
-#define F_MSG_TYPE_OTHER                (a32 << 7)
-#define F_MSG_TYPE_DEBUG0               (a32 << 8)
-#define F_MSG_TYPE_DEBUG1               (a32 << 9)
-#define F_MSG_TYPE_DEBUG2               (a32 << 10)
+#define F_MSG_TYPE_MACRO                (a32 << 4)
+#define F_MSG_TYPE_NOTICE               (a32 << 5)
+#define F_MSG_TYPE_INFO                 (a32 << 6)
+#define F_MSG_TYPE_STATS                (a32 << 7)
+#define F_MSG_TYPE_OTHER                (a32 << 8)
+#define F_MSG_TYPE_DEBUG0               (a32 << 9)
+#define F_MSG_TYPE_DEBUG1               (a32 << 10)
+#define F_MSG_TYPE_DEBUG2               (a32 << 11)
+#define F_MSG_TYPE_DEBUG3               (a32 << 12)
 
-#define F_MSG_TYPE_EEW                  (F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING)
+#define F_MSG_TYPE_EEW                  (F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING|F_MSG_TYPE_MACRO)
 #define F_MSG_TYPE_NORMAL               (F_MSG_TYPE_EEW|F_MSG_TYPE_NOTICE|F_MSG_TYPE_OTHER|F_MSG_TYPE_STATS)
+#define F_MSG_TYPE_DEBUG                (F_MSG_TYPE_DEBUG0|F_MSG_TYPE_DEBUG1|F_MSG_TYPE_DEBUG2|F_MSG_TYPE_DEBUG3)
 
 void
 enable_logging(void);

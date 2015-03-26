@@ -122,7 +122,7 @@ get_msg_type(char *msg)
   case 0x4D: // M
     if (msg[1] == 0x41) //A
       {
-        return F_MSG_TYPE_NOTICE;
+        return F_MSG_TYPE_MACRO;
       }
     break;
   case 0x53: // S
@@ -146,6 +146,9 @@ get_msg_type(char *msg)
     case 0x32: //2
       ;
       return F_MSG_TYPE_DEBUG2;
+    case 0x33: //3
+      ;
+      return F_MSG_TYPE_DEBUG3;
       }
     return F_MSG_TYPE_DEBUG0;
     }
@@ -237,7 +240,7 @@ opt_get_msg_type(char *msg)
     }
   if (!strncmp(msg, "macro", 5))
     {
-      return F_MSG_TYPE_NOTICE;
+      return F_MSG_TYPE_MACRO;
     }
   if (!strncmp(msg, "stats", 5))
     {
@@ -249,6 +252,21 @@ opt_get_msg_type(char *msg)
     }
   if (!strncmp(msg, "debug", 5))
     {
+      switch (msg[5])
+        {
+      case 0x31: //1
+        ;
+        return F_MSG_TYPE_DEBUG1;
+      case 0x32: //2
+        ;
+        return F_MSG_TYPE_DEBUG2;
+      case 0x33: //3
+        ;
+        return F_MSG_TYPE_DEBUG3;
+      case 0x61: //a
+        ;
+        return F_MSG_TYPE_DEBUG;
+        }
       return F_MSG_TYPE_DEBUG0;
     }
   if (!strncmp(msg, "all", 3))
@@ -258,6 +276,14 @@ opt_get_msg_type(char *msg)
   if (!strncmp(msg, "any", 3))
     {
       return F_MSG_TYPE_ANY;
+    }
+  if (!strncmp(msg, "normal", 6))
+    {
+      return F_MSG_TYPE_NORMAL;
+    }
+  if (!strncmp(msg, "important", 9))
+    {
+      return F_MSG_TYPE_EEW;
     }
 
   return 0;

@@ -27,6 +27,8 @@ net_gl_socket_connect_init1(__sock_o pso);
 int
 net_gl_socket_post_clean(__sock_o pso);
 int
+net_gl_socket_pre_clean(__sock_o pso);
+int
 net_gl_socket_init1_dc_on_ac(__sock_o pso);
 
 int
