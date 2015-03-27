@@ -750,8 +750,12 @@ md_get_off_ts(pmda md)
 off_t
 register_count(pmda thread_r)
 {
+#ifdef _G_SSYS_THREAD
   mutex_lock(&thread_r->mutex);
+#endif
   off_t ret = thread_r->offset;
+#ifdef _G_SSYS_THREAD
   pthread_mutex_unlock(&thread_r->mutex);
+#endif
   return ret;
 }
