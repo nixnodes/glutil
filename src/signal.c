@@ -21,19 +21,6 @@
 #include <thread.h>
 #endif
 
-static void
-sig_handler_default(int signal)
-{
-#ifdef _G_SSYS_THREAD
-  mutex_lock(&mutex_glob00);
-#endif
-  status |= F_STATUS_MSIG00;
-#ifdef _G_SSYS_THREAD
-  pthread_mutex_unlock(&mutex_glob00);
-#endif
-  return;
-}
-
 void
 sig_handler_null(int signal)
 {

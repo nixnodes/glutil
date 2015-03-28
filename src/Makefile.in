@@ -125,8 +125,8 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c arg_opts.c init.c \
 	lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c \
 	lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c \
 	lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c \
-	dirlog.c thread.c net_io.c net_proto.c net_fs.c glutil_net.c \
-	g_crypto.c
+	dirlog.c thread.c net_io.c net_proto.c net_gfs.c net_fs.c \
+	glutil_net.c g_crypto.c
 @ENABLE_NET_SUBSYS_FALSE@am__objects_1 = signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	arg_opts.$(OBJEXT) init.$(OBJEXT) \
@@ -170,7 +170,8 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c arg_opts.c init.c \
 @ENABLE_NET_SUBSYS_TRUE@	time.$(OBJEXT) misc.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	net_io.$(OBJEXT) net_proto.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	net_fs.$(OBJEXT) glutil_net.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	net_gfs.$(OBJEXT) net_fs.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	glutil_net.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	g_crypto.$(OBJEXT) log_io.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	cfgv.$(OBJEXT) m_general.$(OBJEXT) \
@@ -209,8 +210,8 @@ am__glutil_chroot_SOURCES_DIST = signal.c g_help.c memory.c arg_opts.c \
 	lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c \
 	lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c \
 	lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c \
-	dirlog.c thread.c net_io.c net_proto.c net_fs.c glutil_net.c \
-	g_crypto.c
+	dirlog.c thread.c net_io.c net_proto.c net_gfs.c net_fs.c \
+	glutil_net.c g_crypto.c
 am_glutil_chroot_OBJECTS = $(am__objects_1)
 glutil_chroot_OBJECTS = $(am_glutil_chroot_OBJECTS)
 glutil_chroot_DEPENDENCIES =
@@ -221,8 +222,8 @@ am__glutil_precheck_SOURCES_DIST = pce/pce_signal.c g_help.c memory.c \
 	arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c \
 	lref_online.c lref_imdb.c lref_tvrage.c lref_game.c \
 	lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c \
-	pce/pce_misc.c thread.c net_io.c net_proto.c net_fs.c \
-	g_crypto.c
+	pce/pce_misc.c thread.c net_io.c net_proto.c net_gfs.c \
+	net_fs.c g_crypto.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @ENABLE_NET_SUBSYS_FALSE@am__objects_2 = pce/pce_signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
@@ -257,16 +258,16 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ENABLE_NET_SUBSYS_TRUE@	time.$(OBJEXT) misc.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	net_io.$(OBJEXT) net_proto.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	net_fs.$(OBJEXT) g_crypto.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	log_io.$(OBJEXT) log_shm.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	m_general.$(OBJEXT) sort.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	m_string.$(OBJEXT) lref_glob.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	m_lom.$(OBJEXT) i_math.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	arg_proc.$(OBJEXT) exech.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	exec.$(OBJEXT) base64.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	xref.$(OBJEXT) lref.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	lref_gen.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	net_gfs.$(OBJEXT) net_fs.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	g_crypto.$(OBJEXT) log_io.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	cfgv.$(OBJEXT) m_general.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	sort.$(OBJEXT) m_string.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	i_math.$(OBJEXT) arg_proc.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	exech.$(OBJEXT) exec.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	base64.$(OBJEXT) xref.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	lref.$(OBJEXT) lref_gen.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lref_online.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lref_imdb.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lref_tvrage.$(OBJEXT) \
@@ -285,8 +286,8 @@ am__glutil_precheck_nonchroot_SOURCES_DIST = pce/pce_signal.c g_help.c \
 	i_math.c arg_proc.c exech.c exec.c base64.c xref.c lref.c \
 	lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c \
 	lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c \
-	pce/pce_misc.c thread.c net_io.c net_proto.c net_fs.c \
-	g_crypto.c
+	pce/pce_misc.c thread.c net_io.c net_proto.c net_gfs.c \
+	net_fs.c g_crypto.c
 am_glutil_precheck_nonchroot_OBJECTS = $(am__objects_2)
 glutil_precheck_nonchroot_OBJECTS =  \
 	$(am_glutil_precheck_nonchroot_OBJECTS)
@@ -447,9 +448,9 @@ top_srcdir = @top_srcdir@
 @ENABLE_SEARCHBIN_FALSE@GLUTIL_APP = glutil
 @ENABLE_SEARCHBIN_TRUE@GLUTIL_APP = gfind
 @ENABLE_NET_SUBSYS_FALSE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
-@ENABLE_NET_SUBSYS_TRUE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c net_fs.c glutil_net.c g_crypto.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
+@ENABLE_NET_SUBSYS_TRUE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c net_gfs.c net_fs.c glutil_net.c g_crypto.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
 @ENABLE_NET_SUBSYS_FALSE@GLUTIL_PRECHECK_SRC = pce/pce_signal.c g_help.c memory.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
-@ENABLE_NET_SUBSYS_TRUE@GLUTIL_PRECHECK_SRC = pce/pce_signal.c g_help.c memory.c thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c net_fs.c g_crypto.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+@ENABLE_NET_SUBSYS_TRUE@GLUTIL_PRECHECK_SRC = pce/pce_signal.c g_help.c memory.c thread.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c net_io.c net_proto.c net_gfs.c net_fs.c g_crypto.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_gen.c lref_online.c lref_imdb.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 glutil_SOURCES = $(GLUTIL_DEFAULTSRC)
 glutil_chroot_SOURCES = $(GLUTIL_DEFAULTSRC)
 glutil_precheck_SOURCES = $(GLUTIL_PRECHECK_SRC)
@@ -623,6 +624,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net_fs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net_gfs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net_io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/net_proto.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omfp.Po@am__quote@

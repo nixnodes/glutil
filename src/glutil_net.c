@@ -96,6 +96,7 @@ net_ping_threads(void)
           if ((thrd->timers.act_f & F_TTIME_ACT_T0)
               && (time(NULL) - thrd->timers.t0) > T_THRD_PROC_TIMEOUT)
             {
+              pthread_kill(thrd->pt, SIGUSR1);
               print_str("D2: [%X]: thread not responding\n", thrd->pt);
             }
         }
@@ -111,10 +112,10 @@ static void
 net_def_sig_handler(int signal)
 {
 
-  if (!(gfl & F_OPT_KILL_GLOBAL) && register_count(&_sock_r) == 0
-  )
+  if (!(gfl & F_OPT_KILL_GLOBAL) && register_count(&_sock_r) == 0)
     {
-      print_str("WARNING: net_def_sig_handler: [%d]: nothing left to process\n", syscall(SYS_gettid));
+      print_str("WARNING: net_def_sig_handler: [%d]: nothing left to process\n",
+          syscall(SYS_gettid));
       gfl |= F_OPT_KILL_GLOBAL;
 
     }
@@ -903,3 +904,16 @@ net_gl_socket_init1_dc_on_ac(__sock_o pso)
   return 0;
 }
 
+/*
+ static void
+ sig_handler_default(int signal)
+ {
+ #ifdef _G_SSYS_THREAD
+ mutex_lock(&mutex_glob00);
+ #endif
+ status |= F_STATUS_MSIG00;
+ #ifdef _G_SSYS_THREAD
+ pthread_mutex_unlock(&mutex_glob00);
+ #endif
+ return;
+ }*/

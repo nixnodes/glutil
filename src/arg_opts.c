@@ -2234,7 +2234,7 @@ opt_queue_connection(void *arg, uint32_t flags)
       return 24112;
     }
 
-  md_init_le(&_boot_pca, 64);
+  md_init_le(&_boot_pca, 8192);
 
   __sock_ca ca;
 
