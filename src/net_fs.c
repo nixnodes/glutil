@@ -606,6 +606,7 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
         }
       print_str("D4: [%d]: send: %llu/%llu     \r", pso->sock, psts->data_out,
           psts->hstat.size);
+      pso->timers.last_act = time(NULL);
     }
   else if (in_read == -1)
     {
