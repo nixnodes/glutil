@@ -1440,10 +1440,12 @@ net_worker(void *args)
 
       loop_end: ;
 
+      usleep(250);
+
       if (int_state & ST_NET_WORKER_ACT)
         {
           int_state ^= ST_NET_WORKER_ACT;
-          continue;
+          //continue;
         }
 
       time_t thread_inactive = (time(NULL) - thrd->timers.t1);
@@ -1462,7 +1464,6 @@ net_worker(void *args)
           ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
         }
 
-      //usleep(10);
 
       //print_str("%d - pooling socket.. %d     \n", (int) _tid, pooling_timeout);
     }
