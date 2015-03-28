@@ -37,7 +37,7 @@
 #define SOCK_SSL_ACCEPT_TIMEOUT         60
 #define SOCK_SSL_CONNECT_TIMEOUT        60
 
-#define SOCKET_POOLING_FREQUENCY_MAX    250000
+#define SOCKET_POOLING_FREQUENCY_MAX    50000
 #define SOCKET_POOLING_FREQUENCY_MIN    1
 #define SOCKET_POOLING_FREQUENCY_HIRES  1
 
@@ -210,6 +210,8 @@ int
 check_socket_event(__sock_o pso);
 int
 net_worker(void *args);
+void
+net_worker_dispatcher(int signal);
 
 int
 net_enum_sockr(pmda base, _p_enumsr_cb p_ensr_cb, void *arg);

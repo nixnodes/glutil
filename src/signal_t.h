@@ -14,6 +14,8 @@
 
 #include <signal.h>
 
+void
+sig_handler_null(int signal);
 int
 setup_sighandlers(void);
 void

@@ -34,6 +34,12 @@ sig_handler_default(int signal)
   return;
 }
 
+void
+sig_handler_null(int signal)
+{
+  return;
+}
+
 int
 setup_sighandlers(void)
 {
@@ -47,10 +53,10 @@ setup_sighandlers(void)
 
   int r = 0;
 
-  sa.sa_handler = &sig_handler;
+  sa.sa_handler = sig_handler;
   sa.sa_flags = SA_RESTART;
 
-  sa_c.sa_sigaction = &child_sig_handler;
+  sa_c.sa_sigaction = child_sig_handler;
   sa_c.sa_flags = SA_RESTART | SA_SIGINFO;
 
   sa_e.sa_sigaction = sighdl_error;
@@ -64,6 +70,7 @@ setup_sighandlers(void)
   r += sigaction(SIGQUIT, &sa, NULL);
   r += sigaction(SIGABRT, &sa, NULL);
   r += sigaction(SIGTERM, &sa, NULL);
+  //r += sigaction(SIGIO, &sa, NULL);
   /*r += sigaction(SIGUSR1, &sa, NULL);
    r += sigaction(SIGUSR2, &sa, NULL);*/
   r += sigaction(SIGCHLD, &sa_c, NULL);
@@ -74,8 +81,7 @@ setup_sighandlers(void)
   r += sigaction(SIGTRAP, &sa_e, NULL);
 
   signal(SIGKILL, sig_handler);
-  signal(SIGUSR1, sig_handler_default);
-  signal(SIGUSR2, sig_handler_default);
+
 
   return r;
 }

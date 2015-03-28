@@ -141,7 +141,7 @@ get_msg_type(char *msg)
 
     switch (msg[1])
       {
-    case 0: //1
+    case 0x30: //0
       ;
       return F_MSG_TYPE_DEBUG0;
     case 0x31: //1
@@ -163,7 +163,7 @@ get_msg_type(char *msg)
       ;
       return F_MSG_TYPE_DEBUG6;
       }
-    return F_MSG_TYPE_OTHER;
+    return F_MSG_TYPE_DEBUG;
     }
 
   return F_MSG_TYPE_OTHER;

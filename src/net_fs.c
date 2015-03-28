@@ -442,7 +442,7 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
       psts->hstat.file_size = psts->hstat.size - psts->hstat.file_offset;
     }
 
-  psts->handle = open(st_path, O_RDONLY | O_NONBLOCK);
+  psts->handle = open(st_path, O_RDONLY);
   if (psts->handle == -1)
     {
       print_str(
@@ -594,7 +594,9 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
       blk_sz = (size_t) pso->unit_size;
     }
 
-  if ((in_read = read(psts->handle, pso->buffer0, blk_sz)) > 0)
+  in_read = read(psts->handle, pso->buffer0, blk_sz);
+
+  if ((in_read) > 0)
     {
       psts->data_out += (uint64_t) in_read;
       if (net_send_direct(pso, pso->buffer0, in_read))
@@ -604,6 +606,27 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
         }
       print_str("D4: [%d]: send: %llu/%llu     \r", pso->sock, psts->data_out,
           psts->hstat.size);
+    }
+  else if (in_read == -1)
+    {
+      char err_buf[1024];
+      print_str(
+          "ERROR: net_baseline_fsproto_send: [%d]: [%d]: read failed: [%d] [%s]\n",
+          pso->sock, psts->handle, errno,
+          strerror_r(errno, err_buf, sizeof(err_buf)));
+    }
+  else if (in_read < blk_sz)
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_send: [%d]: [%d]: partial read occured\n",
+          pso->sock, psts->handle);
+      if (pso->flags & F_OPSOCK_HALT_RECV)
+        {
+          pso->flags ^= F_OPSOCK_HALT_RECV;
+        }
+      pso->flags = F_OPSOCK_TERM;
+      net_proto_reset_to_baseline(pso);
+      goto finish;
     }
 
   if (psts->data_out == psts->hstat.file_size)
@@ -627,6 +650,8 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
         }
       net_proto_reset_to_baseline(pso);
     }
+
+  finish: ;
 
   pthread_mutex_unlock(&pso->mutex);
 

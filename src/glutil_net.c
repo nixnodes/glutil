@@ -7,6 +7,7 @@
 #include <log_io.h>
 #include <omfp.h>
 #include <m_general.h>
+#include <signal_t.h>
 
 #include <pthread.h>
 #include <errno.h>
@@ -106,9 +107,57 @@ net_ping_threads(void)
   pthread_mutex_unlock(&_net_thrd_r.mutex);
 }
 
+
+static void
+net_def_sig_handler(int signal)
+{
+
+
+
+
+  if (register_count(&_sock_r) == 0)
+    {
+      print_str("WARNING: nothing left to process\n");
+      gfl |= F_OPT_KILL_GLOBAL;
+
+    }
+  else
+    {
+      //print_str("D6: net_def_sig_handler: pinging threads..\n");
+      net_ping_threads();
+
+    }
+
+
+  /*pthread_t pt = pthread_self();
+
+   p_md_obj ptr = search_thrd_id(&_net_thrd_r, &pt);
+
+   if ( NULL == ptr)
+   {
+   return;
+   }
+
+   po_thrd thrd = (po_thrd) ptr->ptr;
+
+   if ( NULL == thrd)
+   {
+   return;
+   }
+
+   thrd->timers.t1 = time(NULL);
+
+   kill(SIGUSR2, getpid());*/
+
+  /*print_str("DEBUG: net_sigio_handler: [%d]: signal %s recieved\n",
+   syscall(SYS_gettid), signal == SIGIO ? "SIGIO" : "SIGURG");*/
+
+  return;
+}
+
 #define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 30
 
-#define NET_TMON_SLEEP_DEFAULT                  (unsigned int) 15
+#define NET_TMON_SLEEP_DEFAULT                  (unsigned int) 30
 
 int
 net_deploy(void)
@@ -131,6 +180,10 @@ net_deploy(void)
 #ifdef M_ARENA_MAX
   mallopt(M_ARENA_MAX, 1);
 #endif
+
+  signal(SIGUSR1, sig_handler_null);
+  signal(SIGUSR2, net_def_sig_handler);
+
   sigset_t set;
 
   sigemptyset(&set);
@@ -153,6 +206,9 @@ net_deploy(void)
       print_str("DEBUG: initializing TLS/SSL subsystem..\n");
       ssl_init();
     }
+
+  signal(SIGURG, net_def_sig_handler);
+  signal(SIGIO, net_def_sig_handler);
 
   int r;
 
@@ -225,26 +281,19 @@ net_deploy(void)
       g_setxid();
     }
 
-  unsigned int tmon_ld = NET_TMON_SLEEP_DEFAULT;
+  //unsigned int tmon_ld = NET_TMON_SLEEP_DEFAULT;
 
   while (g_get_gkill())
     {
-      if (register_count(&_sock_r) == 0)
-        {
-          print_str("WARNING: nothing left to process\n");
-          break;
-        }
-      else
-        {
-          net_ping_threads();
-        }
-      sleep(tmon_ld);
-      mutex_lock(&mutex_glob00);
-      if (status & F_STATUS_MSIG00)
-        {
-          status ^= F_STATUS_MSIG00;
-          tmon_ld = NET_TMON_SLEEP_DEFAULT;
-        }
+
+      sleep(-1);
+
+      /*mutex_lock(&mutex_glob00);
+       if (status & F_STATUS_MSIG00)
+       {
+       status ^= F_STATUS_MSIG00;
+       tmon_ld = NET_TMON_SLEEP_DEFAULT;
+       }*/
       /* else
        {
        if (tmon_ld < 15)
@@ -252,7 +301,7 @@ net_deploy(void)
        tmon_ld *= 2;
        }
        }*/
-      pthread_mutex_unlock(&mutex_glob00);
+      //pthread_mutex_unlock(&mutex_glob00);
     }
 
   if (register_count(&_sock_r))
@@ -280,7 +329,7 @@ net_deploy(void)
   while ((l_count = register_count(&_net_thrd_r)) > 0)
     {
       thread_broadcast_kill(&_net_thrd_r);
-      sleep(10);
+      sleep(1);
       e = time(NULL);
       if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
         {

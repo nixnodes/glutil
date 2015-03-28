@@ -132,7 +132,7 @@ p_md_obj
 search_thrd_id(pmda thread_r, pthread_t *pt)
 {
   mutex_lock(&thread_r->mutex);
-  p_md_obj ptr = _net_thrd_r.first;
+  p_md_obj ptr = thread_r->first;
 
   while (ptr)
     {
@@ -238,6 +238,7 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
       //if (sel_thread->status & F_THRD_STATUS_SUSPENDED)
       // {
       pthread_kill(sel_thread->pt, SIGUSR1);
+
       // }
 
     }

@@ -268,16 +268,22 @@ bind_socket(int fd, struct addrinfo *aip)
       return 100;
     }
 
-  fcntl(fd, F_SETFL, O_NONBLOCK);
+  int ret;
+
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+    {
+      close(fd);
+      return 101;;
+    }
 
   if (bind(fd, aip->ai_addr, aip->ai_addrlen) == -1)
     {
-      return 101;
+      return 111;
     }
 
   if (listen(fd, 5))
     {
-      return 102;
+      return 122;
     }
 
   return 0;
@@ -298,8 +304,21 @@ net_destroy_connection(__sock_o so)
 
   if (so->flags & F_OPSOCK_CONNECT)
     {
+      /*char b;
+       while (recv(so->sock, &b, 1, 0))
+       {
+       }*/
+
       if ((so->flags & F_OPSOCK_SSL) && so->ssl)
         {
+          if (SSL_get_shutdown(so->ssl) & SSL_RECEIVED_SHUTDOWN)
+            {
+              print_str(
+                  "DEBUG: net_destroy_connection: [%d]: SSL_RECEIVED_SHUTDOWN is set, skipping shutdown\n",
+                  so->sock);
+              goto ssl_cleanup;
+            }
+
           errno = 0;
           if (!(so->flags & F_OPSOCK_TS_DISCONNECTED)
               && (ret = SSL_shutdown(so->ssl)) < 1)
@@ -325,13 +344,9 @@ net_destroy_connection(__sock_o so)
 
               if (ssl_err == 5 && so->status == -1)
                 {
-                  char err_buffer[1024];
                   print_str(
-                      "ERROR: SSL_shutdown: socket: [%d] [SSL_ERROR_SYSCALL]: code:[%d] [%d] [%s]\n",
-                      so->sock, so->status, errno,
-                      errno ?
-                          strerror_r(errno, err_buffer, sizeof(err_buffer)) :
-                          "-");
+                      "D6: SSL_shutdown: socket: [%d] [SSL_ERROR_SYSCALL]: code:[%d] [%s]\n",
+                      so->sock, so->status, "-");
                 }
               else
                 {
@@ -341,6 +356,8 @@ net_destroy_connection(__sock_o so)
                 }
 
             }
+
+          ssl_cleanup: ;
 
           //SSL_certs_clear(so->ssl);
           SSL_free(so->ssl);
@@ -354,11 +371,21 @@ net_destroy_connection(__sock_o so)
           if ((ret = shutdown(so->sock, SHUT_RDWR)) == -1)
             {
               char err_buffer[1024];
-              print_str(
+              if ( errno == ENOTCONN)
+                {
+                  print_str(
 
-              "ERROR: socket: [%d] shutdown - code:[%d] errno:[%d] %s\n",
-                  so->sock, ret, errno,
-                  strerror_r(errno, err_buffer, sizeof(err_buffer)));
+                  "D5: socket: [%d] shutdown: code:[%d] errno:[%d] %s\n",
+                      so->sock, ret, errno,
+                      strerror_r(errno, err_buffer, sizeof(err_buffer)));
+                }
+              else
+                {
+                  print_str(
+                      "ERROR: socket: [%d] shutdown: code:[%d] errno:[%d] %s\n",
+                      so->sock, ret, errno, strerror_r(
+                      errno, err_buffer, sizeof(err_buffer)));
+                }
             }
           else
             {
@@ -493,7 +520,13 @@ net_open_connection(char *addr, char *port, __sock_ca args)
       return -3;
     }
 
-  fcntl(fd, F_SETFL, O_NONBLOCK);
+  int ret;
+
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+    {
+      close(fd);
+      return -4;
+    }
 
   mutex_lock(&args->socket_register->mutex);
 
@@ -1030,15 +1063,21 @@ net_proc_sock_term(po_thrd thrd)
 
 }
 
+#include <sys/ioctl.h>
+
+#include <signal_t.h>
+
 #define T_NET_WORKER_SD         (time_t) 15
+
+#define ST_NET_WORKER_ACT       ((uint8_t)1 << 1)
 
 int
 net_worker(void *args)
 {
   p_md_obj ptr;
   int r;
-  uint8_t int_state = 0;
-  uint32_t pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
+  uint8_t int_state = ST_NET_WORKER_ACT;
+
   time_t s_00 = 0, e_00;
 
   po_thrd thrd = (po_thrd) args;
@@ -1053,6 +1092,8 @@ net_worker(void *args)
   sigaddset(&set, SIGPIPE);
   sigaddset(&set, SIGINT);
   sigaddset(&set, SIGUSR2);
+  sigaddset(&set, SIGIO);
+  sigaddset(&set, SIGURG);
 
   int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
@@ -1153,6 +1194,19 @@ net_worker(void *args)
               goto io_loend;
             }
           t_pso->st_p1 = thrd->buffer0;
+
+          pid_t tpid = (pid_t) getpid();
+
+          if (ioctl(t_pso->sock, SIOCSPGRP, &tpid) == -1)
+            {
+              char err_buf[1024];
+              print_str(
+                  "ERROR: net_worker: [%d]: SIOCSPGRP (SIOCSPGRP) failed [%d] [%s]\n",
+                  t_pso->sock, errno,
+                  strerror_r(errno, err_buf, sizeof(err_buf)));
+              t_pso->flags |= F_OPSOCK_TERM;
+            }
+
           pthread_mutex_unlock(&t_pso->mutex);
 
           if (!md_alloc_le(&thrd->proc_objects, 0, 0, iobj_ptr->ptr))
@@ -1160,7 +1214,9 @@ net_worker(void *args)
               break;
             }
 
-          int_state |= F_WORKER_INT_STATE_ACT;
+          thrd->timers.t1 = time(NULL);
+          int_state |= ST_NET_WORKER_ACT;
+
           md_unlink_le(&thrd->in_objects, iobj_ptr);
 
           io_loend: ;
@@ -1188,7 +1244,7 @@ net_worker(void *args)
 
           if (NULL == pso)
             {
-              print_str("ERROR: proc_objects empty member\n");
+              print_str("ERROR: net_worker: empty socket data reference\n");
               abort();
             }
 
@@ -1238,7 +1294,10 @@ net_worker(void *args)
 
               md_g_free_l(&pso->shutdown_rc1);
 
-              int_state |= F_WORKER_INT_STATE_ACT;
+              kill(SIGUSR2, getpid());
+
+              thrd->timers.t1 = time(NULL);
+              int_state |= ST_NET_WORKER_ACT;
 
               continue;
             }
@@ -1338,7 +1397,8 @@ net_worker(void *args)
 
           int_st: ;
 
-          int_state |= F_WORKER_INT_STATE_ACT;
+          thrd->timers.t1 = time(NULL);
+          int_state |= ST_NET_WORKER_ACT;
 
           send_q: ;
 
@@ -1354,7 +1414,8 @@ net_worker(void *args)
                   print_str("WARNING: sendq: %zd items remain, socket:[%d]\n",
                       pso->sendq.offset, pso->sock);
                 }
-              int_state |= F_WORKER_INT_STATE_ACT;
+              thrd->timers.t1 = time(NULL);
+              int_state |= ST_NET_WORKER_ACT;
             }
 
           pthread_mutex_unlock(&pso->sendq.mutex);
@@ -1379,51 +1440,29 @@ net_worker(void *args)
 
       loop_end: ;
 
-      if (int_state & F_WORKER_INT_STATE_ACT)
+      if (int_state & ST_NET_WORKER_ACT)
         {
-          int_state ^= F_WORKER_INT_STATE_ACT;
-          pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
+          int_state ^= ST_NET_WORKER_ACT;
+          continue;
+        }
+
+      time_t thread_inactive = (time(NULL) - thrd->timers.t1);
+
+      if (thread_inactive > 1)
+        {
+          //mutex_lock(&thrd->proc_objects.mutex);
+
+          //pthread_mutex_unlock(&thrd->proc_objects.mutex);
+
+          print_str("D2: [%d]: putting worker to sleep [%hu] \n", _tid,
+              thrd->oper_mode);
+          ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
+          sleep(-1);
           thrd->timers.t1 = time(NULL);
-
-        }
-      else
-        {
-
-          if (pooling_timeout < SOCKET_POOLING_FREQUENCY_MAX)
-            {
-              int32_t thread_inactive = (int32_t) (time(NULL) - thrd->timers.t1);
-              /*print_str("%d - throttling pooling interval.. %u - %d - %u\n",
-               (int) _tid, pooling_timeout, thread_inactive);*/
-              pooling_timeout = 1 + (pooling_timeout * (thread_inactive / 6))
-                  + pooling_timeout;
-
-            }
-          else
-            {
-              mutex_lock(&thrd->proc_objects.mutex);
-              if (0 == thrd->proc_objects.offset)
-                {
-                  pthread_mutex_unlock(&thrd->proc_objects.mutex);
-
-                  print_str("D2: [%d]: putting worker to sleep [%hu]\n", _tid,
-                      thrd->oper_mode);
-                  ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
-                      &thrd->status);
-                  sleep(-1);
-                  ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
-                      &thrd->status);
-                  pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
-                }
-              else
-                {
-                  pthread_mutex_unlock(&thrd->proc_objects.mutex);
-                }
-            }
+          ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
         }
 
-      usleep(pooling_timeout);
-
-      //print_str("%d - pooling socket.. %d\n", (int) _tid, pooling_timeout);
+      //print_str("%d - pooling socket.. %d     \n", (int) _tid, pooling_timeout);
     }
 
   print_str("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
@@ -1645,13 +1684,15 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
     {
       close(fd);
       spso->status = -2;
       pthread_mutex_unlock(&spso->mutex);
       return 1;
     }
+
+  //fcntl(fd, F_SETOWN, getpid());
 
   struct addrinfo *p_net_res = malloc(sizeof(struct addrinfo));
 
@@ -2303,3 +2344,4 @@ net_push_rc(pmda rc, _t_stocb call, uint32_t flags)
 
   return 0;
 }
+

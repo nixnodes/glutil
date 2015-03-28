@@ -1942,11 +1942,11 @@ netctl_opt_parse(pmda md, void *arg)
         }
 
       /*if (0 == i_val)
-        {
-          print_str(
-          MSG_NETCTL_OPT_NEEDTHRD, left);
-          return 1;
-        }*/
+       {
+       print_str(
+       MSG_NETCTL_OPT_NEEDTHRD, left);
+       return 1;
+       }*/
 
       net_opts.thread_l = (uint16_t) i_val;
     }
@@ -1976,6 +1976,57 @@ netctl_opt_parse(pmda md, void *arg)
     {
       snprintf(net_opts.group, sizeof(net_opts.group), "%s", right);
       net_opts.flags |= F_NETOPT_HGROUP;
+    }
+  else if (!strncmp("uid", left, 4))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+        {
+          return 1;
+        }
+
+      if (setuid((uid_t) i_val) == -1)
+        {
+          char e_buffer[1024];
+          print_str("ERROR: setuid failed: %s\n",
+              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+
+          return 1;
+        }
+
+      print_str("DEBUG: setuid: %d\n", i_val);
+
+    }
+  else if (!strncmp("gid", left, 5))
+    {
+      int i_val;
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+        {
+          return 1;
+        }
+
+      if (setgid((uid_t) i_val) == -1)
+        {
+          char e_buffer[1024];
+          print_str("ERROR: setgid failed: %s\n",
+              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+
+          return 1;
+        }
+
+      print_str("DEBUG: setgid: %d\n", i_val);
+    }
+  else if (!strncmp("chroot", left, 5))
+    {
+      snprintf(net_opts.chroot, sizeof(net_opts.chroot), "%s", right);
+      net_opts.flags |= F_NETOPT_CHROOT;
+      if (chroot(net_opts.chroot) == -1)
+        {
+          char err_buf[1024];
+          print_str("ERROR: netctl_opt_parse: '%s': chroot failed: [%d] [%s]\n",
+              left, errno, strerror_r(errno, err_buf, sizeof(err_buf)));
+          return 1;
+        }
     }
   else
     {
@@ -2236,12 +2287,10 @@ opt_queue_connection(void *arg, uint32_t flags)
         }
     }
 
-
   md_init_le(&ca->init_rc0, 8);
   md_init_le(&ca->init_rc1, 8);
   md_init_le(&ca->shutdown_rc0, 8);
   md_init_le(&ca->shutdown_rc1, 8);
-
 
   switch (ca->mode)
     {
