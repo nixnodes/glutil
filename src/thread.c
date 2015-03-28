@@ -155,6 +155,7 @@ int
 spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,
     uint16_t oper_mode)
 {
+
   int i, r = 2;
   for (i = num; i; i--)
     {
@@ -235,9 +236,9 @@ push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc)
     {
       r = 0;
       //if (sel_thread->status & F_THRD_STATUS_SUSPENDED)
-       // {
-          pthread_kill(sel_thread->pt, SIGUSR1);
-       // }
+      // {
+      pthread_kill(sel_thread->pt, SIGUSR1);
+      // }
 
     }
 

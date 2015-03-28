@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-
 #define F_MDA_REFPTR                    (a32 << 1)
 #define F_MDA_FREE                      (a32 << 2)
 #define F_MDA_REUSE                     (a32 << 3)
@@ -52,12 +51,23 @@ typedef struct mda_header
 #endif
 } mda, *pmda;
 
+#pragma pack(push, 4)
+
+typedef struct ___nn_2x64
+{
+  uint64_t u00, u01;
+} _nn_2x64, *__nn_2x64;
+
+#pragma pack(pop)
+
 int
 md_init(pmda md, int nm);
 p_md_obj
 md_first(pmda md);
 int
 md_g_free(pmda md);
+int
+md_g_free_l(pmda md);
 int
 md_g_free_cb(pmda md, int
 (*cb)(void *));
@@ -81,6 +91,9 @@ int
 md_copy(pmda source, pmda dest, size_t block_sz, int
 (*cb)(void *source, void *dest, void *ptr));
 int
+md_copy_le(pmda source, pmda dest, size_t block_sz, int
+(*cb)(void *source, void *dest, void *ptr));
+int
 is_memregion_null(void *addr, size_t size);
 int
 md_md_to_array(pmda source, void **dest);
@@ -90,7 +103,7 @@ md_array_to_md(void ** source, pmda dest);
 #define F_MDALLOC_NOLINK                (a32 << 1)
 
 void *
-md_alloc_le (pmda md, size_t b, uint32_t flags, void *refptr);
+md_alloc_le(pmda md, size_t b, uint32_t flags, void *refptr);
 void *
 md_unlink_le(pmda md, p_md_obj md_o);
 int

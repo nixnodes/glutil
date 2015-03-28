@@ -185,7 +185,7 @@ build_msg_reg(char *arg, uint32_t *opt_r)
       goto end;
     }
 
-  *opt_r = 0x0;
+  //*opt_r = 0x0;
 
   p_md_obj ptr = md_first(&sp_s);
 
@@ -211,10 +211,7 @@ build_msg_reg(char *arg, uint32_t *opt_r)
 
       if (l_f & 0x1)
         {
-          if (*opt_r & o_r)
-            {
-              *opt_r ^= o_r;
-            }
+          *opt_r ^= (*opt_r & o_r);
         }
       else
         {
@@ -255,6 +252,10 @@ opt_get_msg_type(char *msg)
     {
       return F_MSG_TYPE_MACRO;
     }
+  if (!strncmp(msg, "info", 4))
+    {
+      return F_MSG_TYPE_INFO;
+    }
   if (!strncmp(msg, "stats", 5))
     {
       return F_MSG_TYPE_STATS;
@@ -267,6 +268,9 @@ opt_get_msg_type(char *msg)
     {
       switch (msg[5])
         {
+      case 0x30: //0
+        ;
+        return F_MSG_TYPE_DEBUG0;
       case 0x31: //1
         ;
         return F_MSG_TYPE_DEBUG1;
@@ -285,11 +289,9 @@ opt_get_msg_type(char *msg)
       case 0x36: //6
         ;
         return F_MSG_TYPE_DEBUG6;
-      case 0x61: //a
-        ;
-        return F_MSG_TYPE_DEBUG;
+
         }
-      return F_MSG_TYPE_DEBUG0;
+      return F_MSG_TYPE_DEBUG;
     }
   if (!strncmp(msg, "all", 3))
     {

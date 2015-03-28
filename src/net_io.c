@@ -400,12 +400,15 @@ net_destroy_connection(__sock_o so)
       free(so->buffer0);
     }
 
-  if ( NULL != so->va_p1)
-    {
-      free(so->va_p1);
-    }
+  /*if ( NULL != so->va_p1)
+   {
+   free(so->va_p1);
+   }*/
 
   md_g_free(&so->sendq);
+
+  md_g_free_l(&so->init_rc0);
+  md_g_free_l(&so->init_rc1);
 
   so->flags |= F_OPSOCK_DISCARDED;
 
@@ -512,18 +515,20 @@ net_open_connection(char *addr, char *port, __sock_ca args)
   pso->timers.last_act = time(NULL);
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
-  pso->shutdown_cleanup_rc0 = args->ssd_rc0;
-  pso->shutdown_cleanup_rc1 = args->ssd_rc1;
   pso->sock_ca = (void*) args;
+  md_copy_le(&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o), NULL);
+
+  pso->buffer0 = malloc(SOCK_RECVB_SZ);
 
   if (!args->unit_size)
     {
-      pso->buffer0 = malloc(SOCK_RECVB_SZ);
       pso->unit_size = SOCK_RECVB_SZ;
     }
   else
     {
-      pso->buffer0 = malloc(args->unit_size);
       pso->unit_size = args->unit_size;
     }
 
@@ -592,6 +597,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
     }
   else
     {
+      pso->flags |= (F_OPSOCK_PROC_READY);
       //pso->limits.sock_timeout = args->policy.c_timeout;
       pso->rcv_cb = (_p_s_cb) net_recv;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
@@ -606,10 +612,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
 
   pso->rcv1 = (_p_s_cb) args->proc;
 
-  if (args->rc0)
-    {
-      args->rc0(pso);
-    }
+  net_pop_rc(pso, &pso->init_rc0);
 
   if ((r = push_object_to_thread(pso, args->thread_register,
       (dt_score_ptp) net_get_score)))
@@ -622,12 +625,9 @@ net_open_connection(char *addr, char *port, __sock_ca args)
 
   mutex_lock(&pso->mutex);
 
-  if (args->rc1)
-    {
-      args->rc1(pso);
-    }
+  net_pop_rc(pso, &pso->init_rc1);
 
-  pso->flags |= (F_OPSOCK_ACT | F_OPSOCK_PROC_READY);
+  pso->flags |= (F_OPSOCK_ACT);
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -704,9 +704,10 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
   pso->unit_size = args->unit_size;
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
-  pso->shutdown_cleanup_rc0 = args->ssd_rc0;
-  pso->shutdown_cleanup_rc1 = args->ssd_rc1;
-
+  md_copy_le(&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o), NULL);
   pso->sock_ca = (void*) args;
 
   if (mutex_init(&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
@@ -749,11 +750,7 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
 
   mutex_lock(&pso->mutex);
 
-  if (args->rc0)
-    {
-      args->rc0(pso);
-      pso->rc0 = (_t_stocb) args->rc0;
-    }
+  net_pop_rc(pso, &pso->init_rc0);
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -768,11 +765,7 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
 
   mutex_lock(&pso->mutex);
 
-  if (args->rc1)
-    {
-      args->rc1(pso);
-      pso->rc1 = (_t_stocb) args->rc1;
-    }
+  net_pop_rc(pso, &pso->init_rc1);
 
   pso->flags |= F_OPSOCK_ACT;
 
@@ -1222,10 +1215,14 @@ net_worker(void *args)
 
               pmda host_ctx = pso->host_ctx;
 
-              if (pso->shutdown_cleanup_rc0)
-                {
-                  pso->shutdown_cleanup_rc0(pso);
-                }
+              /*if (pso->shutdown_cleanup_rc0)
+               {
+               pso->shutdown_cleanup_rc0(pso);
+               }*/
+
+              net_pop_rc(pso, &pso->shutdown_rc0);
+
+              md_g_free_l(&pso->shutdown_rc0);
 
               ptr = md_unlink_le(&thrd->proc_objects, ptr);
 
@@ -1237,10 +1234,9 @@ net_worker(void *args)
                   continue;
                 }
 
-              if (pso->shutdown_cleanup_rc1)
-                {
-                  pso->shutdown_cleanup_rc1(pso);
-                }
+              net_pop_rc(pso, &pso->shutdown_rc1);
+
+              md_g_free_l(&pso->shutdown_rc1);
 
               int_state |= F_WORKER_INT_STATE_ACT;
 
@@ -1388,16 +1384,19 @@ net_worker(void *args)
           int_state ^= F_WORKER_INT_STATE_ACT;
           pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
           thrd->timers.t1 = time(NULL);
+
         }
       else
         {
+
           if (pooling_timeout < SOCKET_POOLING_FREQUENCY_MAX)
             {
               int32_t thread_inactive = (int32_t) (time(NULL) - thrd->timers.t1);
               /*print_str("%d - throttling pooling interval.. %u - %d - %u\n",
                (int) _tid, pooling_timeout, thread_inactive);*/
-              pooling_timeout = (pooling_timeout * (thread_inactive / 32))
+              pooling_timeout = 1 + (pooling_timeout * (thread_inactive / 6))
                   + pooling_timeout;
+
             }
           else
             {
@@ -1413,6 +1412,7 @@ net_worker(void *args)
                   sleep(-1);
                   ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED,
                       &thrd->status);
+                  pooling_timeout = SOCKET_POOLING_FREQUENCY_MIN;
                 }
               else
                 {
@@ -1423,7 +1423,7 @@ net_worker(void *args)
 
       usleep(pooling_timeout);
 
-      //print_str("%d - pooling socket..\n", (int) _tid);
+      //print_str("%d - pooling socket.. %d\n", (int) _tid, pooling_timeout);
     }
 
   print_str("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
@@ -1480,10 +1480,7 @@ net_assign_sock(pmda base, pmda threadr, __sock_o pso, __sock_o spso)
 
   mutex_lock(&pso->mutex);
 
-  if (spso->rc1)
-    {
-      spso->rc1((void*) pso);
-    }
+  net_pop_rc(pso, &pso->init_rc1);
 
   //if (!(pso->flags & F_OPSOCK_SSL))
   // {
@@ -1530,21 +1527,22 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
   spso->timers.last_act = time(NULL);
   pso->res = spso->c_res;
   spso->c_res = NULL;
-  pso->shutdown_cleanup_rc0 = spso->shutdown_cleanup_rc0;
-  pso->shutdown_cleanup_rc1 = spso->shutdown_cleanup_rc1;
-  pso->rc0 = spso->rc0;
-  pso->rc1 = spso->rc1;
   pso->sock_ca = spso->sock_ca;
+
+  md_copy_le(&spso->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&spso->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&spso->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o), NULL);
+  md_copy_le(&spso->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o), NULL);
+
+  pso->buffer0 = malloc(SOCK_RECVB_SZ);
 
   if (!spso->unit_size)
     {
-      pso->buffer0 = malloc(SOCK_RECVB_SZ);
       pso->unit_size = SOCK_RECVB_SZ;
     }
   else
     {
       pso->unit_size = spso->unit_size;
-      pso->buffer0 = malloc(pso->unit_size);
     }
 
   pso->host_ctx = base;
@@ -1615,10 +1613,7 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
         }
     }
 
-  if (spso->rc0)
-    {
-      spso->rc0((void*) pso);
-    }
+  net_pop_rc(pso, &pso->init_rc0);
 
   pthread_mutex_unlock(&base->mutex);
 
@@ -1900,8 +1895,8 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
   spso->timers.last_act = time(NULL);
   //pso->rcv_cb = pso->rcv_cb_t;
 
-  BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 128);
-  BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 128);
+  BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 16384);
+  BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 16384);
 
   //pso->limits.sock_timeout = spso->policy.idle_timeout;
 
@@ -1994,10 +1989,9 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
   pso->timers.last_act = time(NULL);
   pso->rcv_cb = pso->rcv_cb_t;
   //pso->limits.sock_timeout = SOCK_DEFAULT_IDLE_TIMEOUT;
-  if (pso->flags & F_OPSOCK_ST_SSL_CONNECT)
-    {
-      pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
-    }
+
+  BIO_set_buffer_size(SSL_get_rbio(pso->ssl), 16384);
+  BIO_set_buffer_size(SSL_get_wbio(pso->ssl), 16384);
 
   if (!(pso->flags & F_OPSOCK_TERM))
     {
@@ -2017,6 +2011,11 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
     }
 
   pso->flags |= F_OPSOCK_PROC_READY;
+
+  if (pso->flags & F_OPSOCK_ST_SSL_CONNECT)
+    {
+      pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
+    }
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -2256,6 +2255,51 @@ net_ssend(__sock_o pso, void *data, size_t length)
     }
 
   pthread_mutex_unlock(&pso->mutex);
+
+  return 0;
+}
+
+int
+net_pop_rc(__sock_o pso, pmda rc)
+{
+  if ( NULL == rc->first)
+    {
+      return 1;
+    }
+
+  p_md_obj ptr = rc->pos;
+
+  while (ptr)
+    {
+      __proc_ic_o pic = (__proc_ic_o) ptr->ptr;
+
+      pic->call(pso);
+
+      ptr = ptr->prev;
+    }
+
+  return 0;
+}
+
+int
+net_push_rc(pmda rc, _t_stocb call, uint32_t flags)
+{
+  __proc_ic_o pic = md_alloc_le(rc, sizeof(_proc_ic_o), 0, NULL);
+
+  if ( NULL == pic)
+    {
+      print_str("ERROR: net_push_rc: could not allocate memory\n");
+      return 1;
+    }
+
+  if ( NULL == call)
+    {
+      print_str("ERROR: net_push_rc: null call pointer\n");
+      return 1;
+    }
+
+  pic->call = call;
+  pic->flags = flags;
 
   return 0;
 }

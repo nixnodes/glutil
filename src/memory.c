@@ -78,6 +78,47 @@ md_g_free(pmda md)
 }
 
 int
+md_g_free_l(pmda md)
+{
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&md->mutex);
+#endif
+  if (!md || !md->objects)
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&md->mutex);
+#endif
+      return 1;
+    }
+
+  if (!(md->flags & F_MDA_REFPTR))
+    {
+      p_md_obj ptr = md->first, ptr_s;
+      while (ptr)
+        {
+          ptr_s = ptr->next;
+          if (ptr->ptr)
+            {
+              free(ptr->ptr);
+              ptr->ptr = NULL;
+            }
+          ptr = ptr_s;
+        }
+    }
+
+  free(md->objects);
+  md->objects = NULL;
+
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&md->mutex);
+#endif
+
+  bzero(md, sizeof(mda));
+
+  return 0;
+}
+
+int
 md_g_free_cb(pmda md, int
 (*cb)(void *))
 {
@@ -508,6 +549,63 @@ md_copy(pmda source, pmda dest, size_t block_sz, int
   if (ret)
     {
       md_g_free(dest);
+    }
+
+  if (source->offset != dest->offset)
+    {
+#ifdef _G_SSYS_THREAD
+      pthread_mutex_unlock(&source->mutex);
+#endif
+      return 3;
+    }
+#ifdef _G_SSYS_THREAD
+  pthread_mutex_unlock(&source->mutex);
+#endif
+  return 0;
+}
+
+int
+md_copy_le(pmda source, pmda dest, size_t block_sz, int
+(*cb)(void *source, void *dest, void *ptr))
+{
+  if (!source || !dest)
+    {
+      return 1;
+    }
+
+  if (dest->count)
+    {
+      return 2;
+    }
+#ifdef _G_SSYS_THREAD
+  mutex_lock(&source->mutex);
+#endif
+
+  int ret = 0;
+  p_md_obj ptr = source->first;
+  void *d_ptr;
+
+  md_init_le(dest, source->count);
+
+  while (ptr)
+    {
+      d_ptr = md_alloc_le(dest, block_sz, 0, NULL);
+      if (!d_ptr)
+        {
+          ret = 10;
+          break;
+        }
+      memcpy(d_ptr, ptr->ptr, block_sz);
+      if (NULL != cb)
+        {
+          cb((void*) ptr->ptr, (void*) dest, (void*) d_ptr);
+        }
+      ptr = ptr->next;
+    }
+
+  if (ret)
+    {
+      md_g_free_l(dest);
     }
 
   if (source->offset != dest->offset)

@@ -45,33 +45,53 @@ typedef struct ___fs_stat_header
 {
   int32_t m_tim;
   uint64_t size;
+  uint64_t file_offset, file_size;
 } _fs_hstat, *__fs_hstat;
 
 #pragma pack(pop)
 
 #define F_FS_STSOCK_XFER_R              ((uint64_t)1 << 1)
-#define F_FS_STSOCK_FASSOC              ((uint64_t)1 << 2)
+#define F_FS_STSOCK_XFER_W              ((uint64_t)1 << 2)
+#define F_FS_STSOCK_FASSOC              ((uint64_t)1 << 3)
 
 #define FS_STSS_XFER_R_WSTAT            1
 #define FS_STSS_XFER_R_WDATA            2
+#define FS_STSS_XFER_RECV               3
+#define FS_STSS_XFER_SEND               4
+
+typedef int
+(*_nfs_ncb)(__sock_o pso, __fs_rh_enc packet, void *arg);
+typedef int
+nfs_ncb(__sock_o pso, __fs_rh_enc packet, void *arg);
 
 typedef struct ___fs_state_sock
 {
   uint64_t state;
   uint16_t stage;
   _fs_hstat hstat;
-  uint64_t file_offset, file_size;
+  int handle;
+  _nfs_ncb notify_cb;
+  uint64_t data_in, data_out;
   char data0[PATH_MAX], data1[PATH_MAX];
 } _fs_sts, *__fs_sts;
 
+#define BASELINE_FS_TCODE_XFER       "XFER"
+
+nfs_ncb net_baseline_fsproto_xfer_stat_ok, net_baseline_fsproto_xfer_in_ok,
+    net_baseline_fsproto_default;
+
 int
 net_baseline_fsproto(__sock_o pso, pmda base, pmda threadr, void *data);
+int
+net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data);
+int
+net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data);
 __fs_rh_enc
 net_fs_compile_filereq(int code, char *path, void *arg);
 __fs_rh_enc
 net_fs_compile_hstat(__fs_hstat data, void *arg);
 
 int
-net_fs_socket_init1_rqstat(__sock_o pso);
+net_fs_socket_init1_req_xfer(__sock_o pso);
 
 #endif /* SRC_NET_FS_H_ */

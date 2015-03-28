@@ -32,13 +32,13 @@
 
 #define F_MODE_GHS                      (a32 << 1)
 
-#define SOCK_RECVB_SZ                   8192 * 2
+#define SOCK_RECVB_SZ                   32768 + 256
 #define SOCK_DEFAULT_IDLE_TIMEOUT       60
 #define SOCK_SSL_ACCEPT_TIMEOUT         60
 #define SOCK_SSL_CONNECT_TIMEOUT        60
 
 #define SOCKET_POOLING_FREQUENCY_MAX    250000
-#define SOCKET_POOLING_FREQUENCY_MIN    1000
+#define SOCKET_POOLING_FREQUENCY_MIN    1
 #define SOCKET_POOLING_FREQUENCY_HIRES  1
 
 #define SOCKET_SSL_MAX_READ_RETRY       1000
@@ -95,9 +95,17 @@ typedef struct __sock_sendq_payload
 
 #include <netdb.h>
 
-typedef struct ___sock_policy {
+typedef struct ___proc_ic_o
+{
+  _t_stocb call;
+  uint32_t flags;
+} _proc_ic_o, *__proc_ic_o;
+
+typedef struct ___sock_policy
+{
   uint32_t max_sim_ip;
-  time_t idle_timeout, connect_timeout, accept_timeout, ssl_accept_timeout, ssl_connect_timeout;
+  time_t idle_timeout, connect_timeout, accept_timeout, ssl_accept_timeout,
+      ssl_connect_timeout;
   uint8_t mode;
 } _net_sp, *__net_sp;
 
@@ -107,6 +115,8 @@ typedef struct ___sock_o
   uint32_t flags, opmode;
   _p_s_cb rcv_cb, rcv_cb_t, rcv0, rcv1, rcv1_t;
   _t_stocb rc0, rc1, shutdown_cleanup_rc0, shutdown_cleanup_rc1;
+  mda init_rc0, init_rc1;
+  mda shutdown_rc0, shutdown_rc1;
   _p_ssend send0;
   _t_stocb pcheck_r;
   struct addrinfo *res, *c_res;
@@ -131,7 +141,6 @@ typedef struct ___sock_o
   _net_sp policy;
   void *sock_ca;
 } _sock_o, *__sock_o;
-
 
 typedef struct ___sock_cret
 {
@@ -168,13 +177,13 @@ p_enumsr_cb(__sock_o sock_o, void *arg);
 #define F_CA_HAS_SSL_CERT          (a32 << 2)
 #define F_CA_HAS_SSL_KEY           (a32 << 3)
 #define F_CA_MISC00                (a32 << 10)
+#define F_CA_MISC01                (a32 << 11)
 
 typedef struct ___sock_create_args
 {
   char *host, *port;
   uint32_t flags, ca_flags;
-  _p_sc_cb rc0, rc1, proc;
-  _t_stocb ssd_rc0, ssd_rc1;
+  _p_sc_cb proc;
   pmda socket_register, thread_register;
   char *ssl_cert;
   char *ssl_key;
@@ -186,10 +195,12 @@ typedef struct ___sock_create_args
   char b3[PATH_MAX];
   uint8_t mode;
   _net_sp policy;
-
+  mda init_rc0, init_rc1;
+  mda shutdown_rc0, shutdown_rc1;
+  _nn_2x64 opt0;
 } _sock_ca, *__sock_ca;
 
-p_sc_cb rc_tst, rc_ghs;
+p_sc_cb rc_tst, rc_ghs, net_fs_socket_destroy_rc0;
 
 int
 net_connect_socket(int fd, struct addrinfo *aip);
@@ -238,6 +249,10 @@ int
 net_sendq_broadcast(pmda base, __sock_o source, void *data, size_t size);
 int
 net_send_direct(__sock_o pso, const void *data, size_t size);
+int
+net_pop_rc(__sock_o pso, pmda rc);
+int
+net_push_rc(pmda rc, _t_stocb call, uint32_t flags);
 
 #endif
 

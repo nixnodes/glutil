@@ -8,10 +8,13 @@
 #include "net_fs.h"
 
 #include <net_io.h>
+#include <string.h>
 
 #include <errno.h>
+#include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static void
 net_fs_initialize_sts(__sock_o pso)
@@ -23,7 +26,7 @@ net_fs_initialize_sts(__sock_o pso)
 }
 
 int
-net_fs_socket_init1_rqstat(__sock_o pso)
+net_fs_socket_init1_req_xfer(__sock_o pso)
 {
   mutex_lock(&pso->mutex);
   switch (pso->oper_mode)
@@ -36,7 +39,7 @@ net_fs_socket_init1_rqstat(__sock_o pso)
       {
         if ( gfl & F_OPT_VERBOSE3)
           {
-            print_str("DEBUG: net_fs_socket_init1_rqstat: [%d]: sending stat request\n", pso->sock);
+            print_str("DEBUG: net_fs_socket_init1_req_xfer: [%d]: sending xfer request\n", pso->sock);
           }
 
         net_fs_initialize_sts(pso);
@@ -46,12 +49,16 @@ net_fs_socket_init1_rqstat(__sock_o pso)
 
         psts->state |= F_FS_STSOCK_FASSOC|F_FS_STSOCK_XFER_R;
         psts->stage = FS_STSS_XFER_R_WSTAT;
+        psts->notify_cb = net_baseline_fsproto_xfer_stat_ok;
+
+        psts->hstat.file_offset = ca->opt0.u00;
+        psts->hstat.file_size = ca->opt0.u01;
 
         __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_STAT, psts->data0, NULL);
 
         if ( NULL == packet)
           {
-            print_str("ERROR: net_fs_socket_init1_rqstat: [%d]: could not create stat request\n", pso->sock);
+            print_str("ERROR: net_fs_socket_init1_req_xfer: [%d]: could not create xfer request\n", pso->sock);
             pso->flags |= F_OPSOCK_TERM;
             break;
           }
@@ -59,7 +66,7 @@ net_fs_socket_init1_rqstat(__sock_o pso)
         int r;
         if ( (r=net_push_to_sendq(pso, (void*) packet, packet->head.content_length, 0)) )
           {
-            print_str("ERROR: net_fs_socket_init1_rqstat: [%d]: net_push_to_sendq failed: [%d]\n", pso->sock, r);
+            print_str("ERROR: net_fs_socket_init1_req_xfer: [%d]: net_push_to_sendq failed: [%d]\n", pso->sock, r);
             pso->flags |= F_OPSOCK_TERM;
           }
 
@@ -94,6 +101,146 @@ net_baseline_fsproto_gstat(char *file, __fs_hstat data)
   return 0;
 }
 
+int
+net_baseline_fsproto_xfer_stat_ok(__sock_o pso, __fs_rh_enc pkt, void *arg)
+{
+  __fs_sts psts = (__fs_sts ) pso->va_p1;
+  __fs_hstat phst = (__fs_hstat ) arg;
+
+  if (!(psts->state & F_FS_STSOCK_XFER_R))
+    {
+      return 1;
+    }
+
+  if (psts->stage != FS_STSS_XFER_R_WSTAT)
+    {
+      return 1;
+    }
+
+  __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_SEND, psts->data0,
+  NULL);
+
+  if (NULL == packet)
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_proc_notify: [%d]: net_fs_compile_filereq failed\n",
+          pso->sock);
+      net_send_sock_term_sig(pso);
+      return 1;
+    }
+
+  packet->body.size = phst->size;
+
+  if (psts->hstat.file_offset >= phst->size)
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_xfer_stat_ok: [%d] invalid seek position requested: %llu / %llu\n",
+          pso->sock, psts->hstat.file_offset, phst->size);
+      net_send_sock_term_sig(pso);
+      free(packet);
+      return 1;
+    }
+
+  if (psts->hstat.file_offset > 0)
+    {
+      packet->body.offset = psts->hstat.file_offset;
+    }
+  else
+    {
+      packet->body.offset = 0;
+    }
+
+  if (psts->hstat.file_size > 0)
+    {
+      packet->body.size = psts->hstat.file_size;
+    }
+  else
+    {
+      packet->body.size = phst->size;
+      psts->hstat.file_size = phst->size;
+    }
+
+  //packet->body.offset = 1;
+
+  print_str("DEBUG: [%d]: sending file request [%llu] [%llu] -[%llu] \n",
+      pso->sock, packet->body.offset, packet->body.size, psts->hstat.file_size);
+
+  if (!net_send_direct(pso, (const void*) packet,
+      (size_t) packet->head.content_length))
+    {
+      psts->stage = FS_STSS_XFER_R_WDATA;
+      psts->notify_cb = net_baseline_fsproto_xfer_in_ok;
+    }
+  else
+    {
+      psts->notify_cb = net_baseline_fsproto_default;
+    }
+
+  free(packet);
+
+  return 0;
+}
+
+int
+net_baseline_fsproto_xfer_in_ok(__sock_o pso, __fs_rh_enc packet, void *arg)
+{
+  __fs_sts psts = (__fs_sts ) pso->va_p1;
+
+  if (!((psts->state & F_FS_STSOCK_XFER_R)
+      && (psts->stage == FS_STSS_XFER_R_WDATA)))
+    {
+      return 1;
+    }
+
+  if (packet->body.status_flags & F_RQH_OP_OK)
+    {
+      print_str("DEBUG: [%d]: data stream confirmed inbound\n", pso->sock);
+      //psts->notify_cb = net_baseline_fsproto_xfer_in_ok;
+      pso->rcv1 = (_p_s_cb) net_baseline_fsproto_recv;
+
+      pso->unit_size = 131072;
+      free(pso->buffer0);
+      pso->buffer0 = calloc(1, pso->unit_size);
+
+      if (psts->hstat.file_size < (uint64_t) pso->unit_size)
+        {
+          pso->unit_size = (ssize_t) psts->hstat.file_size;
+        }
+      pso->counters.b_read = 0;
+
+      psts->notify_cb = net_baseline_fsproto_default;
+
+      return -3;
+    }
+  else
+    {
+      /*if ( packet->body.status_flags & F_RQH_OP_FAILED)
+       {
+
+       }*/
+      char *message = (char*) ((void*) packet + sizeof(_fs_rh_enc));
+
+      char err_buf[1024];
+      print_str(
+          "ERROR: [%d]: remote host denied the transfer: [%d] [%s]: [%s]\n",
+          pso->sock, packet->body.err_code,
+          packet->body.err_code ?
+              strerror_r(packet->body.err_code, err_buf, sizeof(err_buf)) : "",
+          message);
+    }
+
+  return 0;
+}
+
+int
+net_baseline_fsproto_default(__sock_o pso, __fs_rh_enc packet, void *arg)
+{
+  char *message = (char*) ((void*) packet + sizeof(_fs_rh_enc));
+  print_str("NOTICE: [%d]: notify: '%s'\n", pso->sock, message);
+
+  return 0;
+}
+
 static int
 net_baseline_fsproto_proc_notify(__sock_o pso, __fs_rh_enc packet)
 {
@@ -117,70 +264,26 @@ net_baseline_fsproto_proc_notify(__sock_o pso, __fs_rh_enc packet)
       {
         __fs_hstat phst = (__fs_hstat) ((void*) packet + sizeof(_fs_rh_enc));
 
-        print_str("NOTICE: [%d]: remote 'stat' suceeded: [%llub] [%d]\n",
+        print_str("DEBUG: [%d]: remote 'stat' suceeded: [%llu] [%d]\n",
         pso->sock, phst->size, (int)phst->m_tim);
+
+        if ( NULL != psts->notify_cb )
+          {
+            return psts->notify_cb(pso, packet, (void*)phst);
+          }
 
         //pso->flags |= F_OPSOCK_TERM;
 
-        if (( psts->state & F_FS_STSOCK_XFER_R))
-          {
-            if (psts->stage == FS_STSS_XFER_R_WSTAT)
-              {
-                __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_SEND, psts->data0, NULL);
-
-                if (NULL == packet)
-                  {
-                    print_str("ERROR: net_baseline_fsproto_proc_notify: [%d]: net_fs_compile_filereq failed\n",
-                    pso->sock);
-                    net_send_sock_term_sig(pso);
-                  }
-                else
-                  {
-
-                    psts->stage = FS_STSS_XFER_R_WDATA;
-
-                    packet->body.size = phst->size;
-                    //packet->body.offset = 1;
-
-                    print_str("DEBUG: [%d]: sending file request [%llu]\n",pso->sock, phst->size);
-
-                    net_send_direct(pso, (const void*) packet,
-                    (size_t) packet->head.content_length);
-
-                    free(packet);
-                  }
-              }
-          }
-
-        psts->state |= F_FS_STSOCK_FASSOC|F_FS_STSOCK_XFER_R;
+        //psts->state |= F_FS_STSOCK_FASSOC;
 
       }
 
     break;
     default:;
 
-    if (( psts->state & F_FS_STSOCK_XFER_R) && (psts->stage == FS_STSS_XFER_R_WDATA))
+    if ( NULL != psts->notify_cb)
       {
-        if ( packet->body.status_flags & F_RQH_OP_OK)
-          {
-            print_str("DEBUG: [%d]: data stream confirmed inbound\n", pso->sock);
-          }
-        else
-          {
-            /*if ( packet->body.status_flags & F_RQH_OP_FAILED)
-             {
-
-             }*/
-            char err_buf[1024];
-            print_str("ERROR: [%d]: remote host denied the transfer: [%d] [%s]\n", pso->sock,
-            packet->body.err_code, packet->body.err_code ?
-            strerror_r(packet->body.err_code, err_buf, sizeof(err_buf)) : "");
-          }
-      }
-    else
-      {
-        char *message = (char*) ((void*)packet + sizeof(_fs_rh_enc));
-        print_str("NOTICE: [%d]: notify: '%s'\n", pso->sock, message);
+        return psts->notify_cb(pso, packet, NULL);
       }
 
     break;
@@ -226,6 +329,63 @@ net_baseline_fsproto_proc_stat(__sock_o pso, void *data)
 }
 
 static int
+net_fs_clean_handles(__sock_o pso)
+{
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_RECIEVER:
+    ;
+    __fs_sts psts = (__fs_sts ) pso->va_p1;
+
+    if ( NULL == psts)
+      {
+        break;
+      }
+
+    if (close(psts->handle) == -1)
+      {
+        char err_buf[1024];
+        print_str(
+            "ERROR: net_fs_clean_handles: [%d]: could not close file descriptor [%d] [%s]\n",
+            pso->sock, errno, strerror_r(errno, err_buf, sizeof(err_buf)));
+
+        return 1;
+      }
+    else
+      {
+        print_str("D4: net_fs_clean_handles: [%d]: closed file descriptor\n",
+            pso->sock);
+      }
+
+    break;
+    }
+
+  return 0;
+}
+
+static int
+net_baseline_fsproto_xfer_conf(__sock_o pso, __fs_rh_enc packet, void *arg)
+{
+  char *message = (char*) ((void*) packet + sizeof(_fs_rh_enc));
+
+  if (packet->body.status_flags & F_RQH_OP_OK)
+    {
+      print_str(
+          "NOTICE: net_baseline_fsproto_xfer_conf: [%d]: peer reports transfer ok: '%s'\n",
+          pso->sock, message);
+      pso->flags = F_OPSOCK_TERM;
+    }
+  else
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_xfer_conf: [%d]: peer reports transfer failed: '%s'\n",
+          pso->sock, message);
+    }
+
+  return 0;
+}
+
+static int
 net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
 {
   __fs_rh_enc packet, input = (__fs_rh_enc ) data;
@@ -237,12 +397,15 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
   net_fs_initialize_sts(pso);
   __fs_sts psts = (__fs_sts ) pso->va_p1;
 
-  packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY, "test", NULL);
+  packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY, BASELINE_FS_TCODE_XFER,
+  NULL);
 
   if ( NULL == packet)
     {
       return 1;
     }
+
+  int ret = 0;
 
   if (psts->state & F_FS_STSOCK_FASSOC)
     {
@@ -255,18 +418,81 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
         {
           packet->body.status_flags |= F_RQH_OP_FAILED;
           packet->body.err_code = errno;
+          ret = 2;
           goto end;
         }
     }
 
-  psts->file_offset = input->body.offset;
-  psts->file_size = input->body.size;
+  psts->hstat.file_offset = input->body.offset;
+  psts->hstat.file_size = input->body.size;
+
+  if (psts->hstat.file_size + psts->hstat.file_offset > psts->hstat.size)
+    {
+      print_str("ERROR: [%d]: out of range file request: %s | [%llu] [%llu]\n",
+          pso->sock, st_path, psts->hstat.file_offset, psts->hstat.file_size);
+      packet->body.status_flags |= F_RQH_OP_FAILED;
+      packet->body.err_code = ESPIPE;
+      ret = 2;
+      //pso->flags = F_OPSOCK_TERM;
+      goto end;
+    }
+
+  if (psts->hstat.file_size == 0)
+    {
+      psts->hstat.file_size = psts->hstat.size - psts->hstat.file_offset;
+    }
+
+  psts->handle = open(st_path, O_RDONLY | O_NONBLOCK);
+  if (psts->handle == -1)
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_proc_sdata: [%d]: unable to open '%s' for reading\n",
+          pso->sock, st_path);
+      packet->body.status_flags |= F_RQH_OP_FAILED;
+      packet->body.err_code = errno;
+      //pso->flags = F_OPSOCK_TERM;
+      ret = 2;
+      goto end;
+    }
+
+  net_push_rc(&pso->shutdown_rc0, (_t_stocb) net_fs_clean_handles, 0);
+
+  if (psts->hstat.file_offset > 0)
+    {
+      if (lseek(psts->handle, psts->hstat.file_offset, SEEK_SET) == -1)
+        {
+          print_str(
+              "ERROR: net_baseline_fsproto_proc_sdata: [%d]: seek @[%llu] failed\n",
+              pso->sock, psts->hstat.file_offset);
+          packet->body.status_flags |= F_RQH_OP_FAILED;
+          packet->body.err_code = errno;
+          //pso->flags = F_OPSOCK_TERM;
+          ret = 2;
+          goto end;
+        }
+    }
 
   packet->body.status_flags |= F_RQH_OP_OK;
 
+  pso->rcv1 = (_p_s_cb) net_baseline_fsproto_send;
+  pso->flags |= F_OPSOCK_HALT_RECV;
+  pso->unit_size = 131072;
+  free(pso->buffer0);
+  pso->buffer0 = calloc(1, pso->unit_size);
+
+  /*if (psts->hstat.file_size < (uint64_t) pso->unit_size)
+   {
+   pso->unit_size = (ssize_t) psts->hstat.file_size;
+
+   }*/
+
+  pso->counters.b_read = 0;
+
+  psts->notify_cb = net_baseline_fsproto_xfer_conf;
+
   print_str(
-      "DEBUG: net_baseline_fsproto_proc_sdata: [%d]: request recieved for '%s' , [%llu] [%llu]\n",
-      pso->sock, st_path, psts->file_offset, psts->file_size);
+      "DEBUG: net_baseline_fsproto_proc_sdata: [%d]: ack request for '%s' , [%llu] [%llu]\n",
+      pso->sock, st_path, psts->hstat.file_offset, psts->hstat.file_size);
 
   end: ;
 
@@ -275,7 +501,7 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
 
   free(packet);
 
-  return 0;
+  return ret;
 }
 
 int
@@ -299,12 +525,26 @@ net_baseline_fsproto(__sock_o pso, pmda base, pmda threadr, void *data)
     break;
   case CODE_FS_RESP_NOTIFY:
     ;
-    net_baseline_fsproto_proc_notify(pso, input);
-    goto fin;
+    if (net_baseline_fsproto_proc_notify(pso, data) == -3)
+      {
+        goto fin_2;
+      }
+    else
+      {
+
+        goto fin;
+      }
   case CODE_FS_RQH_SEND:
     ;
-    net_baseline_fsproto_proc_sdata(pso, data);
-    goto fin;
+    if (net_baseline_fsproto_proc_sdata(pso, data))
+      {
+        goto fin;
+      }
+    else
+      {
+
+        goto fin_2;
+      }
   default:
     print_str("ERROR: net_baseline_fsproto: unknown header code\n");
     goto fin;
@@ -322,6 +562,160 @@ net_baseline_fsproto(__sock_o pso, pmda base, pmda threadr, void *data)
 
   net_proto_reset_to_baseline(pso);
 
+  fin_2: ;
+
+  pthread_mutex_unlock(&pso->mutex);
+
+  return 0;
+}
+
+int
+net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
+{
+  mutex_lock(&pso->mutex);
+
+  //unsigned char block[131072];
+
+  size_t in_read, blk_sz;
+
+  __fs_sts psts = (__fs_sts ) pso->va_p1;
+
+  if (psts->hstat.file_size < (uint64_t) pso->unit_size)
+    {
+      blk_sz = (size_t) psts->hstat.file_size;
+    }
+  else if ((uint64_t) psts->hstat.file_size - psts->data_out
+      < (uint64_t) pso->unit_size)
+    {
+      blk_sz = (size_t) (psts->hstat.file_size - psts->data_out);
+    }
+  else
+    {
+      blk_sz = (size_t) pso->unit_size;
+    }
+
+  if ((in_read = read(psts->handle, pso->buffer0, blk_sz)) > 0)
+    {
+      psts->data_out += (uint64_t) in_read;
+      if (net_send_direct(pso, pso->buffer0, in_read))
+        {
+          pthread_mutex_unlock(&pso->mutex);
+          return 1;
+        }
+      print_str("D4: [%d]: send: %llu/%llu     \r", pso->sock, psts->data_out,
+          psts->hstat.size);
+    }
+
+  if (psts->data_out == psts->hstat.file_size)
+    {
+      print_str("DEBUG: net_baseline_fsproto_send: [%d]: all data sent\n",
+          pso->sock);
+
+      if (pso->flags & F_OPSOCK_HALT_RECV)
+        {
+          pso->flags ^= F_OPSOCK_HALT_RECV;
+        }
+      net_proto_reset_to_baseline(pso);
+    }
+  else if (psts->data_out > psts->hstat.file_size)
+    {
+      print_str("ERROR: net_baseline_fsproto_send: [%d]: too much data sent\n",
+          pso->sock);
+      if (pso->flags & F_OPSOCK_HALT_RECV)
+        {
+          pso->flags ^= F_OPSOCK_HALT_RECV;
+        }
+      net_proto_reset_to_baseline(pso);
+    }
+
+  pthread_mutex_unlock(&pso->mutex);
+
+  return 0;
+}
+
+static int
+net_baseline_fsproto_recv_validate(__sock_o pso, uint8_t status_flags,
+    char *msg)
+{
+  __fs_rh_enc packet;
+
+  packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY, msg,
+  NULL);
+
+  if ( NULL == packet)
+    {
+      return 1;
+    }
+
+  packet->body.status_flags |= status_flags;
+
+  net_send_direct(pso, (const void*) packet,
+      (size_t) packet->head.content_length);
+
+  return 0;
+}
+
+int
+net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
+{
+  mutex_lock(&pso->mutex);
+
+  if (pso->counters.b_read < pso->unit_size)
+    {
+      pthread_mutex_unlock(&pso->mutex);
+      return -2;
+    }
+
+  //size_t in_read, blk_sz;
+
+  __fs_sts psts = (__fs_sts ) pso->va_p1;
+
+  psts->data_in += (uint64_t) pso->counters.b_read;
+
+  print_str("D4: [%d]: recv: %llu/%llu bytes\r", pso->sock, psts->data_in,
+      psts->hstat.file_size);
+
+  if (psts->data_in == psts->hstat.file_size)
+    {
+      print_str("D4: net_baseline_fsproto_recv: recieved %llu bytes\n",
+          psts->data_in);
+      //pso->flags |= F_OPSOCK_TERM;
+      if (net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK, "XFER OK"))
+        {
+          print_str(
+              "ERROR: net_baseline_fsproto_recv: [%d] net_baseline_fsproto_recv_validate failed\n",
+              pso->sock);
+        }
+    }
+  else if (psts->data_in > psts->hstat.file_size)
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_recv: got too much data: %llu bytes\n",
+          psts->data_in);
+      net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK, "XFER FAILED");
+      net_proto_reset_to_baseline(pso);
+    }
+  else if (((uint64_t) psts->hstat.file_size - psts->data_in)
+      < (uint64_t) pso->unit_size)
+    {
+      pso->unit_size = (uint64_t) psts->hstat.file_size - psts->data_in;
+      print_str("D4: net_baseline_fsproto_recv: scaling unit size to %lld\n",
+          pso->unit_size);
+
+    }
+
+  pso->counters.b_read = 0;
+
+  /* }
+   else if (pso->counters.b_read > pso->unit_size)
+   {
+   print_str(
+   "ERROR: net_baseline_fsproto_recv: got too much data: %d bytes\n",
+   pso->counters.b_read);
+   net_proto_reset_to_baseline(pso);
+   pso->flags |= F_OPSOCK_TERM;
+   }*/
+
   pthread_mutex_unlock(&pso->mutex);
 
   return 0;
@@ -330,6 +724,7 @@ net_baseline_fsproto(__sock_o pso, pmda base, pmda threadr, void *data)
 __fs_rh_enc
 net_fs_compile_filereq(int code, char *path, void *arg)
 {
+
   size_t p_len = strlen(path);
 
   if (0 == p_len)
@@ -345,11 +740,12 @@ net_fs_compile_filereq(int code, char *path, void *arg)
     }
 
   size_t req_len = sizeof(_fs_rh_enc) + p_len + 1;
-  __fs_rh_enc request = calloc(1, req_len);
+  __fs_rh_enc request = calloc(1, req_len + 16);
 
   request->head.prot_code = PROT_CODE_FS;
   request->head.content_length = (uint32_t) req_len;
   request->body.code = code;
+
   request->body.ex_len = p_len;
 
   strncpy((char*) (((void*) request) + sizeof(_fs_rh_enc)), path, p_len);
@@ -370,7 +766,7 @@ net_fs_compile_hstat(__fs_hstat data, void *arg)
 {
 
   size_t req_len = sizeof(_fs_rh_enc) + sizeof(_fs_hstat);
-  __fs_rh_enc request = calloc(1, req_len);
+  __fs_rh_enc request = calloc(1, req_len + 16);
 
   request->head.prot_code = PROT_CODE_FS;
   request->head.content_length = (uint32_t) req_len;
@@ -383,4 +779,26 @@ net_fs_compile_hstat(__fs_hstat data, void *arg)
   *ptr = *data;
 
   return request;
+}
+
+#include <unistd.h>
+#include <sys/syscall.h>
+
+int
+net_fs_socket_destroy_rc0(__sock_o pso)
+{
+  mutex_lock(&pso->mutex);
+
+  if ( NULL != pso->va_p1)
+    {
+      free(pso->va_p1);
+      pso->va_p1 = NULL;
+    }
+
+  int _tid = syscall(SYS_gettid);
+  print_str("INFO: [%d] socket closed: [%d]\n", (int) _tid, pso->sock);
+
+  pthread_mutex_unlock(&pso->mutex);
+
+  return 0;
 }

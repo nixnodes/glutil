@@ -18,8 +18,8 @@
 #include <arpa/inet.h>
 
 _net_opt net_opts =
-  { .max_sock = 512, .thread_l = 1, .thread_r = 32, .st_p0 = NULL,
-      .max_worker_threads = 64, .ssl_cert_def = "server.cert", .ssl_key_def =
+  { .max_sock = 512, .thread_l = 1, .thread_r = 4, .st_p0 = NULL,
+      .max_worker_threads = 128, .ssl_cert_def = "server.cert", .ssl_key_def =
           "server.key", .flags = 0 };
 
 mda _sock_r =
@@ -150,27 +150,30 @@ net_deploy(void)
 
   if (net_opts.flags & F_NETOPT_SSLINIT)
     {
-      print_str("DEBUG: intitalizing SSL/TLS subsystem..\n");
+      print_str("DEBUG: initializing TLS/SSL subsystem..\n");
       ssl_init();
     }
 
   int r;
 
-  if ((r = spawn_threads(net_opts.thread_l, net_worker, 0, &_net_thrd_r,
-  THREAD_ROLE_NET_WORKER,
-  SOCKET_OPMODE_LISTENER)))
+  if (net_opts.thread_l)
     {
-      print_str("ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n",
-          r);
-      return 2;
-    }
-  else
-    {
-      if (gfl & F_OPT_VERBOSE)
+      if ((r = spawn_threads(net_opts.thread_l, net_worker, 0, &_net_thrd_r,
+      THREAD_ROLE_NET_WORKER,
+      SOCKET_OPMODE_LISTENER)))
         {
           print_str(
-              "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
-              net_opts.thread_l);
+              "ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n", r);
+          return 2;
+        }
+      else
+        {
+          if (gfl & F_OPT_VERBOSE)
+            {
+              print_str(
+                  "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
+                  net_opts.thread_l);
+            }
         }
     }
 

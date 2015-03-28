@@ -71,7 +71,7 @@ opt_g_stdout_lvl(void *arg, int m, void *opt)
       return 81192;
     }
 
-  uint32_t stdout_lvl;
+  uint32_t stdout_lvl = STDLOG_LVL;
 
   int r;
 
@@ -1866,25 +1866,35 @@ opt_g_swapmode(void *arg, int m, void *opt)
 #include <glutil_net.h>
 
 static int
-n_proc_intval(char *left, char *right, int *outval, int min, int max)
+n_proc_intval(char *left, char *right, int *outval, int64_t min, int64_t max,
+    int64_t *out64)
 {
   errno = 0;
-  int ret = (int) strtol(right, NULL, 10);
+
+  if (out64)
+    {
+      *out64 = (int64_t) strtoll(right, NULL, 10);
+      if (*out64 < min || *out64 > max)
+        {
+          print_str("ERROR: n_proc_intval: '%s': value out of range\n", left);
+          return 1;
+        }
+    }
+  else
+    {
+      *outval = (int) strtol(right, NULL, 10);
+      if (*outval < min || *outval > max)
+        {
+          print_str("ERROR: n_proc_intval: '%s': value out of range\n", left);
+          return 1;
+        }
+    }
 
   if ((errno == EINVAL || errno == ERANGE))
     {
-      print_str("ERROR: n_proc_intval: '%s': invalid value: '%d'\n", left, ret);
+      print_str("ERROR: n_proc_intval: '%s': invalid value\n", left);
       return 1;
     }
-
-  if (ret < min || ret > max)
-    {
-      print_str("ERROR: n_proc_intval: '%s': value out of range: '%d'\n", left,
-          ret);
-      return 1;
-    }
-
-  *outval = ret;
 
   return 0;
 }
@@ -1908,7 +1918,7 @@ netctl_opt_parse(pmda md, void *arg)
   if (!strncmp(left, "thread_max", 10))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
         {
           return 1;
         }
@@ -1917,7 +1927,7 @@ netctl_opt_parse(pmda md, void *arg)
   else if (!strncmp(left, "sock_max", 8))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
         {
           return 1;
         }
@@ -1926,24 +1936,24 @@ netctl_opt_parse(pmda md, void *arg)
   else if (!strncmp(left, "threads_listen", 14))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
         {
           return 1;
         }
 
-      if (0 == i_val)
+      /*if (0 == i_val)
         {
           print_str(
           MSG_NETCTL_OPT_NEEDTHRD, left);
           return 1;
-        }
+        }*/
 
       net_opts.thread_l = (uint16_t) i_val;
     }
   else if (!strncmp(left, "threads_recv", 12))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX))
+      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
         {
           return 1;
         }
@@ -2032,7 +2042,7 @@ net_opt_parse(pmda md, void *arg)
   if (!strncmp("mode", left, 4))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX, NULL))
         {
           return 1;
         }
@@ -2042,7 +2052,7 @@ net_opt_parse(pmda md, void *arg)
   else if (!strncmp("max_sim", left, 7))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
         {
           return 1;
         }
@@ -2052,7 +2062,7 @@ net_opt_parse(pmda md, void *arg)
   else if (!strncmp("idle_timeout", left, 12))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
         {
           return 1;
         }
@@ -2062,7 +2072,7 @@ net_opt_parse(pmda md, void *arg)
   else if (!strncmp("ssl_accept_timeout", left, 18))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
         {
           return 1;
         }
@@ -2072,7 +2082,7 @@ net_opt_parse(pmda md, void *arg)
   else if (!strncmp("ssl_connect_timeout", left, 19))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX))
+      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
         {
           return 1;
         }
@@ -2090,6 +2100,27 @@ net_opt_parse(pmda md, void *arg)
       snprintf(ca->b0, sizeof(ca->b0), "%s", right);
       ca->ca_flags |= F_CA_HAS_LOG;
     }
+  else if (!strncmp("fs_offset", left, 5))
+    {
+      int64_t i_val;
+      if (n_proc_intval(left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
+        {
+          return 1;
+        }
+
+      print_str("%lld\n", i_val);
+      ca->opt0.u00 = (uint64_t) i_val;
+    }
+  else if (!strncmp("fs_size", left, 5))
+    {
+      int64_t i_val;
+      if (n_proc_intval(left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
+        {
+          return 1;
+        }
+
+      ca->opt0.u01 = (uint64_t) i_val;
+    }
   else if (!strncmp("sslcert", left, 7))
     {
       snprintf(ca->b1, sizeof(ca->b1), "%s", right);
@@ -2104,7 +2135,12 @@ net_opt_parse(pmda md, void *arg)
       ca->ca_flags |= F_CA_HAS_SSL_KEY;
       ca->flags |= F_OPSOCK_SSL;
     }
-  else if (!strncmp("fs_stat", left, 4))
+  else if (!strncmp("fs_stat", left, 5))
+    {
+      snprintf(ca->b3, sizeof(ca->b3), "%s", right);
+      ca->ca_flags |= F_CA_MISC01;
+    }
+  else if (!strncmp("fs_recv", left, 5))
     {
       snprintf(ca->b3, sizeof(ca->b3), "%s", right);
       ca->ca_flags |= F_CA_MISC00;
@@ -2147,11 +2183,11 @@ opt_queue_connection(void *arg, uint32_t flags)
       return 24112;
     }
 
-  md_init(&_boot_pca, 64);
+  md_init_le(&_boot_pca, 64);
 
   __sock_ca ca;
 
-  if (NULL == (ca = md_alloc(&_boot_pca, sizeof(_sock_ca))))
+  if (NULL == (ca = md_alloc_le(&_boot_pca, sizeof(_sock_ca), 0, NULL)))
     {
       return 24116;
     }
@@ -2162,7 +2198,7 @@ opt_queue_connection(void *arg, uint32_t flags)
   if (0 != g_parse_opts(opt, net_opt_parse, (void*) ca, P_OPT_DL_O,
   P_OPT_DL_V))
     {
-      md_unlink(&_boot_pca, _boot_pca.pos);
+      md_unlink_le(&_boot_pca, _boot_pca.pos);
       return 24140;
     }
 
@@ -2170,7 +2206,7 @@ opt_queue_connection(void *arg, uint32_t flags)
     {
       print_str("ERROR: opt_queue_connection: [%s:%s] missing 'log' option\n",
           host, port);
-      md_unlink(&_boot_pca, _boot_pca.pos);
+      md_unlink_le(&_boot_pca, _boot_pca.pos);
       return 24141;
     }
 
@@ -2200,17 +2236,25 @@ opt_queue_connection(void *arg, uint32_t flags)
         }
     }
 
-  errno = 0;
+
+  md_init_le(&ca->init_rc0, 8);
+  md_init_le(&ca->init_rc1, 8);
+  md_init_le(&ca->shutdown_rc0, 8);
+  md_init_le(&ca->shutdown_rc1, 8);
+
 
   switch (ca->mode)
     {
   case OPT_CONNECT_MODE_SERV :
     ca->socket_register = &_sock_r;
-    ca->rc0 = net_gl_socket_init0;
+
     //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
 
-    ca->rc1 = net_gl_socket_init1;
+    net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
+    net_push_rc(&ca->init_rc0, (_t_stocb) net_gl_socket_init0, 0);
+
+    net_push_rc(&ca->shutdown_rc0, (_t_stocb) net_gl_socket_destroy, 0);
 
     break;
   case OPT_CONNECT_MODE_NULL :
@@ -2222,7 +2266,8 @@ opt_queue_connection(void *arg, uint32_t flags)
     //ca->rc0 = net_gl_socket_init0;
     //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_prochdr;
-    ca->rc0 = net_baseline_socket_init0;
+
+    net_push_rc(&ca->init_rc0, (_t_stocb) net_baseline_socket_init0, 0);
 
     md_init_le(&pc_a, 512);
 
@@ -2230,27 +2275,34 @@ opt_queue_connection(void *arg, uint32_t flags)
 
     if (ca->ca_flags & F_CA_MISC00)
       {
-        ca->rc1 = net_fs_socket_init1_rqstat;
+        net_push_rc(&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer, 0);
+        //ca->opt0.u00 = 1234;
+        //ca->opt0.u01 = 0;
       }
 
+    net_push_rc(&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_rc0, 0);
     break;
   default:
     print_str("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n", host,
         port, ca->mode);
-    md_unlink(&_boot_pca, _boot_pca.pos);
+    md_g_free(&ca->init_rc0);
+    md_g_free(&ca->init_rc1);
+    md_g_free(&ca->shutdown_rc0);
+    md_g_free(&ca->shutdown_rc1);
+    md_unlink_le(&_boot_pca, _boot_pca.pos);
     return 24168;
     }
 
   if (ca->flags & F_OPSOCK_SD_FIRST_DC)
     {
-      ca->rc1 = net_gl_socket_init1_dc_on_ac;
+      net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1_dc_on_ac, 0);
     }
 
   ca->policy.mode = ca->mode;
   ca->flags |= flags | F_OPSOCK_INIT_SENDQ;
   ca->thread_register = &_net_thrd_r;
-  ca->ssd_rc0 = (_t_stocb) net_gl_socket_destroy;
-  ca->ssd_rc1 = (_t_stocb) net_gl_socket_post_clean;
+
+  net_push_rc(&ca->shutdown_rc1, (_t_stocb) net_gl_socket_post_clean, 0);
 
   if (!ca->policy.ssl_accept_timeout)
     {
