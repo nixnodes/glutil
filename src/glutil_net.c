@@ -125,7 +125,7 @@ net_def_sig_handler(int signal)
     {
       //print_str("D6: net_def_sig_handler: pinging threads..\n");
       net_ping_threads();
-
+      //sleep(1000);
     }
 
 

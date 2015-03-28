@@ -1462,6 +1462,8 @@ net_worker(void *args)
           ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
         }
 
+      //usleep(10);
+
       //print_str("%d - pooling socket.. %d     \n", (int) _tid, pooling_timeout);
     }
 
