@@ -1440,7 +1440,7 @@ net_worker(void *args)
 
       loop_end: ;
 
-      usleep(250);
+      usleep(100);
 
       if (int_state & ST_NET_WORKER_ACT)
         {
@@ -1456,7 +1456,7 @@ net_worker(void *args)
 
           //pthread_mutex_unlock(&thrd->proc_objects.mutex);
 
-          print_str("D2: [%d]: putting worker to sleep [%hu] \n", _tid,
+          print_str("D6: [%d]: putting worker to sleep [%hu] \n", _tid,
               thrd->oper_mode);
           ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
           sleep(-1);

@@ -86,7 +86,7 @@ net_ping_threads(void)
               pthread_kill(thrd->pt, SIGUSR1);
               if (gfl & F_OPT_VERBOSE)
                 {
-                  print_str("DEBUG: [%X]: waking up worker\n", thrd->pt);
+                  print_str("D6: [%X]: waking up worker\n", thrd->pt);
 
                 }
             }
@@ -107,17 +107,14 @@ net_ping_threads(void)
   pthread_mutex_unlock(&_net_thrd_r.mutex);
 }
 
-
 static void
 net_def_sig_handler(int signal)
 {
 
-
-
-
-  if (register_count(&_sock_r) == 0)
+  if (!(gfl & F_OPT_KILL_GLOBAL) && register_count(&_sock_r) == 0
+  )
     {
-      print_str("WARNING: nothing left to process\n");
+      print_str("WARNING: net_def_sig_handler: [%d]: nothing left to process\n", syscall(SYS_gettid));
       gfl |= F_OPT_KILL_GLOBAL;
 
     }
@@ -127,7 +124,6 @@ net_def_sig_handler(int signal)
       net_ping_threads();
       //sleep(1000);
     }
-
 
   /*pthread_t pt = pthread_self();
 
