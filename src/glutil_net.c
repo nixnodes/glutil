@@ -284,7 +284,7 @@ net_deploy(void)
     {
 
       sleep(60);
-      kill(SIGUSR2, getpid());
+      net_ping_threads();
 
       /*mutex_lock(&mutex_glob00);
        if (status & F_STATUS_MSIG00)
