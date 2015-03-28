@@ -283,7 +283,8 @@ net_deploy(void)
   while (g_get_gkill())
     {
 
-      sleep(-1);
+      sleep(60);
+      kill(SIGUSR2, getpid());
 
       /*mutex_lock(&mutex_glob00);
        if (status & F_STATUS_MSIG00)
