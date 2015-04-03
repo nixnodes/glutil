@@ -513,7 +513,16 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
                     print_str( MSG_PS_UWSFV, iarg->buffer);
                   }
               }
-            goto end;
+            if (g_act_1.flags & F_GH_TFD_PROCED)
+              {
+                g_act_1.flags ^= F_GH_TFD_PROCED;
+                goto end_skproc;
+              }
+            else
+              {
+                goto end;
+              }
+
           }
 
         if ((gfl & F_OPT_SFV) && (iarg->flags & F_EARG_SFV)
@@ -571,6 +580,8 @@ proc_section(char *name, unsigned char type, void *arg, __g_eds eds)
           {
             proc_sect_edec(name, proc_section, iarg, eds);
           }
+
+        end_skproc: ;
       }
     else
       {

@@ -24,6 +24,8 @@
 
 #define PSTR_MAX        (V_MB/4)
 
+uint32_t STDLOG_LVL = F_MSG_TYPE_NORMAL;
+
 int
 g_print_str(const char * volatile buf, ...)
 {
@@ -95,8 +97,6 @@ g_print_str(const char * volatile buf, ...)
   return 0;
 }
 
-uint32_t STDLOG_LVL = F_MSG_TYPE_NORMAL;
-
 uint32_t
 get_msg_type(char *msg)
 {
@@ -162,8 +162,11 @@ get_msg_type(char *msg)
     case 0x36: //6
       ;
       return F_MSG_TYPE_DEBUG6;
+    case 0x45: //6
+      ;
+      return F_MSG_TYPE_DEBUG;
       }
-    return F_MSG_TYPE_DEBUG;
+    break;
     }
 
   return F_MSG_TYPE_OTHER;
