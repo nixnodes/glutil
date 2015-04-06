@@ -53,6 +53,10 @@ g_setjmp(uint32_t flags, char *type, void *callback, void *arg)
 
   return;
 }
+#ifdef _G_SSYS_THREAD
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
 
 #define MSG_DEF_UNKN1   "(unknown)"
 
@@ -118,7 +122,16 @@ sighdl_error(int sig, siginfo_t* siginfo, void* context)
       s_ptr3 = ", resuming execution..";
     }
 
-  fprintf(stderr, "EXCEPTION: %s: [%s] [%s] [%s]%s%s\n", s_ptr1, g_sigjmp.type,
+
+  fprintf(stderr, "EXCEPTION: "
+#ifdef _G_SSYS_THREAD
+      "[%ld] "
+#endif
+      "%s: [%s] [%s] [%s]%s%s\n",
+#ifdef _G_SSYS_THREAD
+      syscall(SYS_gettid),
+#endif
+      s_ptr1, g_sigjmp.type,
       s_ptr2, strerror(siginfo->si_errno), buffer1, s_ptr3);
 
   //usleep(450000);

@@ -44,11 +44,6 @@ thread_create(void *call, int id, pmda thrd_r, uint16_t role,
       goto end;
     }
 
-  if ((r = pthread_create(&object->pt, NULL, call, (void *) object)))
-    {
-      goto end;
-    }
-
   object->id = id;
   object->role = role;
   object->oper_mode = oper_mode;
@@ -59,6 +54,11 @@ thread_create(void *call, int id, pmda thrd_r, uint16_t role,
   object->proc_objects.flags |= F_MDA_REFPTR;
 
   r = mutex_init(&object->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+
+  if ((r = pthread_create(&object->pt, NULL, call, (void *) object)))
+    {
+      goto end;
+    }
 
   end:
 

@@ -114,8 +114,9 @@ net_def_sig_handler(int signal)
 
   if (!(gfl & F_OPT_KILL_GLOBAL) && register_count(&_sock_r) == 0)
     {
-      print_str("WARNING: net_def_sig_handler: [%d]: nothing left to process\n",
-          syscall(SYS_gettid));
+      print_str(
+          "WARNING: net_def_sig_handler: [%d]: nothing left to process [%d]\n",
+          syscall(SYS_gettid), signal);
       gfl |= F_OPT_KILL_GLOBAL;
 
     }
@@ -185,6 +186,7 @@ net_deploy(void)
 
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
+  //sigaddset(&set, SIGUSR1);
 
   int sr = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
@@ -204,8 +206,8 @@ net_deploy(void)
       ssl_init();
     }
 
-  signal(SIGURG, net_def_sig_handler);
-  signal(SIGIO, net_def_sig_handler);
+  signal(SIGURG, sig_handler_null);
+  signal(SIGIO, sig_handler_null);
 
   int r;
 
@@ -248,10 +250,21 @@ net_deploy(void)
         }
     }
 
-  if (process_ca_requests(&_boot_pca))
+  int fail;
+
+  if ((fail = process_ca_requests(&_boot_pca)))
     {
-      print_str(
-          "WARNING: process_ca_requests: not all connection requests were succesfull\n");
+      if ((off_t) fail == _boot_pca.offset)
+        {
+          print_str(
+              "WARNING: process_ca_requests: no connection requests succeeded\n");
+          goto _t_kill;
+        }
+      else
+        {
+          print_str(
+              "WARNING: process_ca_requests: not all connection requests were succesfull\n");
+        }
     }
   else
     {
@@ -278,13 +291,18 @@ net_deploy(void)
       g_setxid();
     }
 
-  //unsigned int tmon_ld = NET_TMON_SLEEP_DEFAULT;
+  unsigned int tmon_ld = 15;
 
   while (g_get_gkill())
     {
-
-      sleep(60);
+      /*mutex_lock(&mutex_glob00);
+      if (gfl & F_OPT_KILL_GLOBAL)
+        {
+          tmon_ld = 1;
+        }
+      pthread_mutex_unlock(&mutex_glob00);*/
       net_ping_threads();
+      sleep(tmon_ld);
 
       /*mutex_lock(&mutex_glob00);
        if (status & F_STATUS_MSIG00)
@@ -310,6 +328,8 @@ net_deploy(void)
         }
       net_nw_ssig_term_r(&_sock_r);
     }
+
+  _t_kill: ;
 
   if (gfl & F_OPT_VERBOSE3)
     {

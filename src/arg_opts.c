@@ -2292,6 +2292,8 @@ opt_queue_connection(void *arg, uint32_t flags)
   md_init_le(&ca->shutdown_rc0, 8);
   md_init_le(&ca->shutdown_rc1, 8);
 
+  //net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
+
   switch (ca->mode)
     {
   case OPT_CONNECT_MODE_SERV :
@@ -2325,6 +2327,7 @@ opt_queue_connection(void *arg, uint32_t flags)
     if (ca->ca_flags & F_CA_MISC00)
       {
         net_push_rc(&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer, 0);
+
         //ca->opt0.u00 = 1234;
         //ca->opt0.u01 = 0;
       }

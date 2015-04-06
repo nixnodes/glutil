@@ -522,7 +522,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
     {
       close(fd);
       return -4;
@@ -1088,12 +1088,17 @@ net_worker(void *args)
 
   sigset_t set;
 
+  /*sigemptyset(&set);
+  sigaddset(&set, SIGUSR1);
+
+  pthread_sigmask(SIG_UNBLOCK, &set, NULL);*/
+
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
   sigaddset(&set, SIGINT);
   sigaddset(&set, SIGUSR2);
-  sigaddset(&set, SIGIO);
-  sigaddset(&set, SIGURG);
+  //sigaddset(&set, SIGIO);
+  //sigaddset(&set, SIGURG);
 
   int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
@@ -1121,9 +1126,6 @@ net_worker(void *args)
     {
       mutex_lock(&thrd->mutex);
       thrd->timers.t0 = time(NULL);
-      pthread_mutex_unlock(&thrd->mutex);
-
-      mutex_lock(&thrd->mutex);
 
       if (thrd->flags & F_THRD_TERM)
         {
@@ -1156,13 +1158,13 @@ net_worker(void *args)
             }
         }
 
-      pthread_mutex_unlock(&thrd->mutex);
 
       mutex_lock(&thrd->in_objects.mutex);
 
       if (0 == thrd->in_objects.offset)
         {
           pthread_mutex_unlock(&thrd->in_objects.mutex);
+          pthread_mutex_unlock(&thrd->mutex);
           goto begin_proc;
         }
       else
@@ -1229,10 +1231,12 @@ net_worker(void *args)
       if (!thrd->proc_objects.offset)
         {
           pthread_mutex_unlock(&thrd->proc_objects.mutex);
+          pthread_mutex_unlock(&thrd->mutex);
           goto loop_end;
         }
 
       pthread_mutex_unlock(&thrd->proc_objects.mutex);
+      pthread_mutex_unlock(&thrd->mutex);
 
       begin_proc: ;
 
@@ -1280,6 +1284,8 @@ net_worker(void *args)
 
               md_g_free_l(&pso->shutdown_rc0);
 
+              mda p_rc1 = pso->shutdown_rc1;
+
               ptr = md_unlink_le(&thrd->proc_objects, ptr);
 
               if (unregister_connection(host_ctx, pso))
@@ -1287,14 +1293,14 @@ net_worker(void *args)
                   print_str(
                       "ERROR: could not find socket entry in register: %d (report this)\n",
                       pso->sock);
-                  continue;
+                  abort();
                 }
 
-              net_pop_rc(pso, &pso->shutdown_rc1);
+              net_pop_rc(pso, &p_rc1);
 
-              md_g_free_l(&pso->shutdown_rc1);
+              md_g_free_l(&p_rc1);
 
-              kill(SIGUSR2, getpid());
+              //kill(SIGUSR2, getpid());
 
               thrd->timers.t1 = time(NULL);
               int_state |= ST_NET_WORKER_ACT;
@@ -1475,8 +1481,9 @@ net_worker(void *args)
   mutex_lock(&thread_host_ctx->mutex);
 
   mutex_lock(&thrd->mutex);
+
   free(thrd->buffer0);
-  _pt = thrd->pt;
+
   pthread_mutex_unlock(&thrd->mutex);
 
   p_md_obj ptr_thread = search_thrd_id(thread_host_ctx, &_pt);
@@ -1489,7 +1496,9 @@ net_worker(void *args)
     }
   else
     {
-      md_unlink_le(&_net_thrd_r, ptr_thread);
+      //thread_host_ctx->flags |= F_MDA_REFPTR;
+      md_unlink_le(thread_host_ctx, ptr_thread);
+      //thread_host_ctx->offset--;
     }
 
   pthread_mutex_unlock(&thread_host_ctx->mutex);
@@ -1687,7 +1696,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
     {
       close(fd);
       spso->status = -2;
