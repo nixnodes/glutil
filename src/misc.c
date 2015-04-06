@@ -162,7 +162,7 @@ get_msg_type(char *msg)
     case 0x36: //6
       ;
       return F_MSG_TYPE_DEBUG6;
-    case 0x45: //6
+    case 0x45: //E
       ;
       return F_MSG_TYPE_DEBUG;
       }

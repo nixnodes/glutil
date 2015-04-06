@@ -2161,7 +2161,7 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
       ERR_print_errors_fp(stderr);
       ERR_clear_error();
 
-      print_str("D3: net_ssend_ssl_b: SSL_write not satisfied: [%d] [%d]\n",
+      print_str("D6: net_ssend_ssl_b: SSL_write not satisfied: [%d] [%d]\n",
           ret, pso->s_errno);
 
       if (!(pso->s_errno == SSL_ERROR_WANT_READ
