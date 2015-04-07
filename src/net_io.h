@@ -107,6 +107,7 @@ typedef struct ___sock_policy
   time_t idle_timeout, connect_timeout, accept_timeout, ssl_accept_timeout,
       ssl_connect_timeout;
   uint8_t mode;
+  int ssl_verify;
 } _net_sp, *__net_sp;
 
 #include <g_crypto.h>

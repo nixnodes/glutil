@@ -35,6 +35,7 @@ process_ca_requests(pmda md)
 {
   p_md_obj ptr = md->first;
   int ret, fail = 0;
+  char buf_err[1024];
 
   while (ptr)
     {
@@ -46,7 +47,7 @@ process_ca_requests(pmda md)
           if ((ret = net_open_connection (pca->host, pca->port, pca)))
             {
               print_str ("ERROR: net_open_connection: host: %s port: %s, status:[%d] %s\n",
-                  pca->host, pca->port, ret, ret < 0 ? strerror(errno) : "");
+                  pca->host, pca->port, ret, ret < 0 ? strerror_r(errno, buf_err, 1024) : "");
               fail++;
             }
           break;
@@ -54,7 +55,7 @@ process_ca_requests(pmda md)
           if ((ret = net_open_listening_socket (pca->host, pca->port, pca)))
             {
               print_str ("ERROR: net_open_listening_socket: host: %s port: %s, status:[%d] %s\n",
-                  pca->host, pca->port, ret, ret < 0 ? strerror(errno) : "");
+                  pca->host, pca->port, ret, ret < 0 ? strerror_r(errno, buf_err, 1024) : "");
               fail++;
             }
           break;

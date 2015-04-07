@@ -74,7 +74,7 @@ ssl_init(void)
   CRYPTO_set_id_callback(ssl_id_function);
 
   SSL_library_init();
-  //OpenSSL_add_all_algorithms(); /* load & register all cryptos, etc. */
+  OpenSSL_add_all_algorithms(); /* load & register all cryptos, etc. */
   SSL_load_error_strings(); /* load all error messages */
   RAND_load_file("/dev/urandom", 4096);
 
@@ -109,9 +109,11 @@ ssl_cleanup(void)
 static void
 ssl_init_setctx(__sock_o pso)
 {
-  SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2);
+  SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
-  SSL_CTX_set_cipher_list(pso->ctx, "-ALL:ALL:-aNULL");
+  SSL_CTX_set_cipher_list(pso->ctx, "-ALL:ALL:-ADH:-aNULL");
+
+  SSL_CTX_set_verify(pso->ctx, pso->policy.ssl_verify, NULL);
 
   //SSL_CTX_set_mode(pso->ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
 }
@@ -119,17 +121,15 @@ ssl_init_setctx(__sock_o pso)
 SSL_CTX*
 ssl_init_ctx_server(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(SSLv23_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(SSLv23_server_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
 
   ssl_init_setctx(pso);
 
-  SSL_CTX_set_verify(pso->ctx, SSL_VERIFY_NONE, NULL);
-
   //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
-  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_BOTH);
+  //SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_BOTH);
 
   return pso->ctx;
 }
@@ -137,7 +137,7 @@ ssl_init_ctx_server(__sock_o pso)
 SSL_CTX*
 ssl_init_ctx_client(__sock_o pso)
 {
-  if ((pso->ctx = SSL_CTX_new(SSLv23_method())) == NULL)
+  if ((pso->ctx = SSL_CTX_new(SSLv23_client_method())) == NULL)
     { /* create new context from method */
       return NULL;
     }
@@ -145,14 +145,43 @@ ssl_init_ctx_client(__sock_o pso)
   ssl_init_setctx(pso);
 
   //SSL_CTX_sess_set_cache_size(pso->ctx, 1024);
-  SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER);
+  //SSL_CTX_set_session_cache_mode(pso->ctx, SSL_SESS_CACHE_SERVER);
 
   return pso->ctx;
 }
 
 int
-ssl_load_certs(SSL_CTX* ctx, char* cert_file, char* key_file)
+ssl_load_client_certs(SSL* ssl, char* cert_file, char* key_file)
 {
+  /* set the local certificate from CertFile */
+  if (SSL_use_certificate_file(ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
+    {
+      return 1;
+    }
+  /* set the private key from KeyFile (may be the same as CertFile) */
+  if (SSL_use_PrivateKey_file(ssl, key_file, SSL_FILETYPE_PEM) <= 0)
+    {
+      return 2;
+    }
+  /* verify private key */
+  if (!SSL_check_private_key(ssl))
+    {
+      print_str("ERROR: private key does not match the public certificate\n");
+      return 3;
+    }
+
+  return 0;
+}
+
+int
+ssl_load_server_certs(SSL_CTX* ctx, char* cert_file, char* key_file)
+{
+  if (SSL_CTX_load_verify_locations(ctx, cert_file, key_file) != 1)
+    ERR_print_errors_fp(stderr);
+
+  if (SSL_CTX_set_default_verify_paths(ctx) != 1)
+    ERR_print_errors_fp(stderr);
+
   /* set the local certificate from CertFile */
   if (SSL_CTX_use_certificate_file(ctx, cert_file, SSL_FILETYPE_PEM) <= 0)
     {
@@ -173,8 +202,8 @@ ssl_load_certs(SSL_CTX* ctx, char* cert_file, char* key_file)
   return 0;
 }
 
-void
-ssl_show_certs(SSL* ssl)
+static void
+ssl_show_client_certs(__sock_o pso, SSL* ssl)
 {
   X509 *cert;
   char *line;
@@ -190,6 +219,11 @@ ssl_show_certs(SSL* ssl)
       print_str("NOTICE: Issuer: %s\n", line);
       free(line);
       X509_free(cert);
+    }
+  else
+    {
+      print_str("DEBUG: ssl_show_client_certs: [%d]: no client certs\n",
+          pso->sock);
     }
 }
 
@@ -598,21 +632,22 @@ net_open_connection(char *addr, char *port, __sock_ca args)
           return 12;
         }
 
-      SSL_set_fd(pso->ssl, pso->sock);
-
       if (args->ssl_cert && args->ssl_key)
         {
-          if ((r = ssl_load_certs(pso->ctx, args->ssl_cert, args->ssl_key)))
+          if ((r = ssl_load_client_certs(pso->ssl, args->ssl_cert,
+              args->ssl_key)))
             {
               net_open_connection_cleanup(args->socket_register, aip, fd);
+              ERR_print_errors_fp(stderr);
+              ERR_clear_error();
               print_str(
                   "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s\n",
                   fd, r, args->ssl_cert);
-              ERR_print_errors_fp(stderr);
-              ERR_clear_error();
               return 15;
             }
         }
+
+      SSL_set_fd(pso->ssl, pso->sock);
 
       pso->flags |= F_OPSOCK_ST_SSL_CONNECT;
       //pso->limits.sock_timeout = args->policy.c_timeout;
@@ -761,7 +796,7 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
           return 11;
         }
 
-      if ((r = ssl_load_certs(pso->ctx, args->ssl_cert, args->ssl_key)))
+      if ((r = ssl_load_server_certs(pso->ctx, args->ssl_cert, args->ssl_key)))
         {
           net_open_listening_socket_cleanup(args->socket_register, aip, fd);
           print_str(
@@ -1089,9 +1124,9 @@ net_worker(void *args)
   sigset_t set;
 
   /*sigemptyset(&set);
-  sigaddset(&set, SIGUSR1);
+   sigaddset(&set, SIGUSR1);
 
-  pthread_sigmask(SIG_UNBLOCK, &set, NULL);*/
+   pthread_sigmask(SIG_UNBLOCK, &set, NULL);*/
 
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
@@ -1157,7 +1192,6 @@ net_worker(void *args)
               break;
             }
         }
-
 
       mutex_lock(&thrd->in_objects.mutex);
 
@@ -1469,7 +1503,6 @@ net_worker(void *args)
           thrd->timers.t1 = time(NULL);
           ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
         }
-
 
       //print_str("%d - pooling socket.. %d     \n", (int) _tid, pooling_timeout);
     }
@@ -1958,7 +1991,7 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
       spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
     }
 
-  //ssl_show_certs(pso->ssl);
+  ssl_show_client_certs(pso, pso->ssl);
 
   if (!(pso->flags & F_OPSOCK_TERM))
     {

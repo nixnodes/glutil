@@ -2056,11 +2056,44 @@ opt_netctl(void *arg, int m, void *opt)
   return 0;
 }
 
+static int
+opt_ssl_verify(pmda md, void *arg)
+{
+  __sock_ca ca = (__sock_ca) arg;
+
+  p_md_obj ptr = md->objects;
+  char *val = (char*) ptr->ptr;
+
+  if (!strncmp("none", val, 4))
+    {
+      ca->policy.ssl_verify |= SSL_VERIFY_NONE;
+    }
+  else if (!strncmp("peer", val, 4))
+    {
+      ca->policy.ssl_verify |= SSL_VERIFY_PEER;
+    }
+  else if (!strncmp("fail", val, 4))
+    {
+      ca->policy.ssl_verify |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+    }
+  else if (!strncmp("client", val, 5))
+    {
+      ca->policy.ssl_verify |= SSL_VERIFY_CLIENT_ONCE;
+    }
+  else
+    {
+      print_str("ERROR: net_opt_parse->opt_ssl_verify: '%s': unknown option\n",
+          val);
+      return 1;
+    }
+
+  print_str("DEBUG: net_opt_parse->opt_ssl_verify->[%s:%s]->%s\n", ca->host, ca->port, val);
+
+  return 0;
+}
+
 #define NET_OPT_PARSE_VBMSHOW() { \
-  if (gfl & F_OPT_VERBOSE5) \
-        { \
-          print_str("DEBUG: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
-        } \
+     print_str("DEBUG: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
 };
 
 static int
@@ -2196,13 +2229,23 @@ net_opt_parse(pmda md, void *arg)
       snprintf(ca->b3, sizeof(ca->b3), "%s", right);
       ca->ca_flags |= F_CA_MISC00;
     }
+  else if (!strncmp("ssl_verify", left, 10))
+    {
+      if (0 != g_parse_opts(right, opt_ssl_verify, (void*) ca, 0x2C,
+      P_OPT_DL_V))
+        {
+          return 1;
+        }
+
+    }
   else
     {
       print_str("ERROR: net_opt_parse: '%s': unknown option\n", left);
       return 1;
     }
 
-  NET_OPT_PARSE_VBMSHOW();
+  NET_OPT_PARSE_VBMSHOW()
+  ;
 
   return 0;
 }
