@@ -588,8 +588,6 @@ net_open_connection(char *addr, char *port, __sock_ca args)
   md_copy_le(&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le(&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o), NULL);
 
-  pso->buffer0 = malloc(SOCK_RECVB_SZ);
-
   if (!args->unit_size)
     {
       pso->unit_size = SOCK_RECVB_SZ;
@@ -598,6 +596,9 @@ net_open_connection(char *addr, char *port, __sock_ca args)
     {
       pso->unit_size = args->unit_size;
     }
+
+  pso->buffer0 = malloc(pso->unit_size);
+  pso->buffer0_len = pso->unit_size;
 
   pso->host_ctx = args->socket_register;
 
@@ -1526,6 +1527,7 @@ net_worker(void *args)
       print_str(
           "ERROR: net_worker: [%d]: thread already unregistered on exit (search_thrd_id failed)\n",
           (int) _tid);
+      abort();
     }
   else
     {
@@ -1618,8 +1620,6 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
   md_copy_le(&spso->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le(&spso->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o), NULL);
 
-  pso->buffer0 = malloc(SOCK_RECVB_SZ);
-
   if (!spso->unit_size)
     {
       pso->unit_size = SOCK_RECVB_SZ;
@@ -1628,6 +1628,9 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
     {
       pso->unit_size = spso->unit_size;
     }
+
+  pso->buffer0 = malloc(pso->unit_size);
+  pso->buffer0_len = SOCK_RECVB_SZ;
 
   pso->host_ctx = base;
 

@@ -27,7 +27,6 @@
 
 typedef struct ___fs_request_header
 {
-  _net_auth_key key;
   uint8_t code, status_flags;
   uint8_t m00_8, m01_8;
   int32_t err_code;
@@ -53,16 +52,26 @@ typedef struct ___fs_stat_header
 #define F_FS_STSOCK_XFER_R              ((uint64_t)1 << 1)
 #define F_FS_STSOCK_XFER_W              ((uint64_t)1 << 2)
 #define F_FS_STSOCK_FASSOC              ((uint64_t)1 << 3)
+#define F_FS_STSOCK_XFER_FIN            ((uint64_t)1 << 4)
 
 #define FS_STSS_XFER_R_WSTAT            1
 #define FS_STSS_XFER_R_WDATA            2
 #define FS_STSS_XFER_RECV               3
 #define FS_STSS_XFER_SEND               4
+#define FS_STSS_XFER_R_WSHA             5
 
 typedef int
 (*_nfs_ncb)(__sock_o pso, __fs_rh_enc packet, void *arg);
 typedef int
 nfs_ncb(__sock_o pso, __fs_rh_enc packet, void *arg);
+
+#include <g_crypto.h>
+
+typedef struct ___sha_v
+{
+  SHA_CTX context;
+  _pid_sha1 value;
+} _sha_v, *__sha_v;
 
 typedef struct ___fs_state_sock
 {
@@ -73,6 +82,7 @@ typedef struct ___fs_state_sock
   _nfs_ncb notify_cb;
   uint64_t data_in, data_out;
   char data0[PATH_MAX], data1[PATH_MAX];
+  _sha_v sha_00;
 } _fs_sts, *__fs_sts;
 
 #define BASELINE_FS_TCODE_XFER       "XFER"

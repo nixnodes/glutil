@@ -118,9 +118,8 @@ net_baseline_fsproto_xfer_stat_ok(__sock_o pso, __fs_rh_enc pkt, void *arg)
       return 1;
     }
 
-  __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_SEND,
-       psts->data0,
-      NULL);
+  __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_SEND, psts->data0,
+  NULL);
 
   if (NULL == packet)
     {
@@ -202,9 +201,10 @@ net_baseline_fsproto_xfer_in_ok(__sock_o pso, __fs_rh_enc packet, void *arg)
       pso->rcv1 = (_p_s_cb) net_baseline_fsproto_recv;
       pso->unit_size = 131072;
       free(pso->buffer0);
-      pso->buffer0 = calloc(1, pso->unit_size);
+      pso->buffer0 = malloc(pso->unit_size);
+      pso->buffer0_len = pso->unit_size;
 
-      if (!SHA1_Init(&pso->sha_00.context))
+      if (!SHA1_Init(&psts->sha_00.context))
         {
           print_str(
               "ERROR: net_baseline_fsproto_xfer_in_ok: [%d]: SHA1_Init failed\n",
@@ -383,7 +383,6 @@ net_baseline_fsproto_xfer_conf(__sock_o pso, __fs_rh_enc packet, void *arg)
       print_str(
           "NOTICE: net_baseline_fsproto_xfer_conf: [%d]: peer reports transfer ok: '%s'\n",
           pso->sock, message);
-      pso->flags = F_OPSOCK_TERM;
     }
   else
     {
@@ -392,7 +391,90 @@ net_baseline_fsproto_xfer_conf(__sock_o pso, __fs_rh_enc packet, void *arg)
           pso->sock, message);
     }
 
+  //pso->flags = F_OPSOCK_TERM;
+
   return 0;
+}
+
+static int
+net_baseline_fsproto_recv_validate(__sock_o pso, uint8_t status_flags,
+    char *msg)
+{
+  __fs_rh_enc packet;
+
+  packet = net_fs_compile_breq(CODE_FS_RESP_NOTIFY, (unsigned char*) msg,
+      strlen(msg) + 1,
+      NULL);
+
+  if ( NULL == packet)
+    {
+      return 1;
+    }
+
+  packet->body.status_flags |= status_flags;
+
+  net_send_direct(pso, (const void*) packet,
+      (size_t) packet->head.content_length);
+
+  return 0;
+}
+
+static int
+net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
+{
+  int ret = 0;
+
+  __fs_sts psts = (__fs_sts ) pso->va_p1;
+
+  if (packet->body.ex_len != sizeof(_pid_sha1))
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_xfer_validate: [%d]: invalid SHA-1 (invalid length)\n",
+          pso->sock);
+      ret = 1;
+      goto end;
+    }
+
+  __pid_sha1 sha1 = (__pid_sha1) ((void*) packet + sizeof(_fs_rh_enc));
+
+  uint8_t status_flags = 0;
+  char *message;
+
+  if (!memcmp((void*) sha1->data, (void*) &psts->sha_00.value,
+      sizeof(_pid_sha1)))
+    {
+      print_str(
+          "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA checksum OK\n",
+          pso->sock);
+      print_str("NOTICE: %s: [%d]: transfer successfull\n", psts->data0,
+          pso->sock);
+      status_flags |= F_RQH_OP_OK;
+      message = "SHA1 OK";
+      psts->state |= F_FS_STSOCK_XFER_FIN;
+    }
+  else
+    {
+      print_str(
+          "WARNING: net_baseline_fsproto_xfer_validate: [%d]: SHA checksum BAD\n",
+          pso->sock);
+      status_flags |= F_RQH_OP_FAILED;
+      message = "SHA1 BAD";
+    }
+
+  if (net_baseline_fsproto_recv_validate(pso, status_flags, message))
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_xfer_validate: [%d] net_baseline_fsproto_recv_validate failed\n",
+          pso->sock);
+    }
+
+  end: ;
+
+  pso->flags = F_OPSOCK_TERM;
+
+  psts->notify_cb = net_baseline_fsproto_default;
+
+  return ret;
 }
 
 static int
@@ -408,8 +490,8 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
   __fs_sts psts = (__fs_sts ) pso->va_p1;
 
   packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY,
-       BASELINE_FS_TCODE_XFER,
-      NULL);
+  BASELINE_FS_TCODE_XFER,
+  NULL);
 
   if ( NULL == packet)
     {
@@ -483,22 +565,24 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
         }
     }
 
+  if (!SHA1_Init(&psts->sha_00.context))
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_proc_sdata: [%d]: SHA1_Init failed\n",
+          pso->sock);
+      packet->body.status_flags |= F_RQH_OP_FAILED;
+      ret = 2;
+      goto end;
+    }
+
   packet->body.status_flags |= F_RQH_OP_OK;
 
   pso->rcv1 = (_p_s_cb) net_baseline_fsproto_send;
   pso->flags |= F_OPSOCK_HALT_RECV;
   pso->unit_size = 131072;
   free(pso->buffer0);
-  pso->buffer0 = calloc(1, pso->unit_size);
-
-  if (!SHA1_Init(&pso->sha_00.context))
-    {
-      print_str(
-          "ERROR: net_baseline_fsproto_proc_sdata: [%d]: SHA1_Init failed\n",
-          pso->sock);
-      ret = 2;
-      goto end;
-    }
+  pso->buffer0 = malloc(pso->unit_size);
+  pso->buffer0_len = pso->unit_size;
 
   /*if (psts->hstat.file_size < (uint64_t) pso->unit_size)
    {
@@ -614,17 +698,19 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
       blk_sz = (size_t) pso->unit_size;
     }
 
+  int ret = 0;
+
   in_read = read(psts->handle, pso->buffer0, blk_sz);
 
   if ((in_read) > 0)
     {
-      SHA1_Update(&pso->sha_00.context, pso->buffer0, blk_sz);
+      SHA1_Update(&psts->sha_00.context, pso->buffer0, blk_sz);
 
       psts->data_out += (uint64_t) in_read;
       if (net_send_direct(pso, pso->buffer0, in_read))
         {
-          pthread_mutex_unlock(&pso->mutex);
-          return 1;
+          ret = 1;
+          goto _finish;
         }
       print_str("D4: [%d]: send: %llu/%llu     \r", pso->sock, psts->data_out,
           psts->hstat.size);
@@ -637,76 +723,73 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
           "ERROR: net_baseline_fsproto_send: [%d]: [%d]: read failed: [%d] [%s]\n",
           pso->sock, psts->handle, errno,
           strerror_r(errno, err_buf, sizeof(err_buf)));
+      ret = 1;
+      goto _finish;
     }
   else if (in_read < blk_sz)
     {
       print_str(
-          "ERROR: net_baseline_fsproto_send: [%d]: [%d]: partial read occured\n",
+          "ERROR: net_baseline_fsproto_send: [%d]: [%d]: partial read occured on file handle\n",
           pso->sock, psts->handle);
-      if (pso->flags & F_OPSOCK_HALT_RECV)
-        {
-          pso->flags ^= F_OPSOCK_HALT_RECV;
-        }
-      pso->flags |= F_OPSOCK_TERM;
-      net_proto_reset_to_baseline(pso);
-      goto finish;
+      ret = 1;
+      goto _finish;
     }
 
   if (psts->data_out == psts->hstat.file_size)
     {
-
       if (pso->flags & F_OPSOCK_HALT_RECV)
         {
           pso->flags ^= F_OPSOCK_HALT_RECV;
         }
+
       net_proto_reset_to_baseline(pso);
 
-      if (!SHA1_Final((unsigned char*) pso->sha_00.value.data,
-          &pso->sha_00.context))
+      if (!SHA1_Final((unsigned char*) psts->sha_00.value.data,
+          &psts->sha_00.context))
         {
           print_str(
               "ERROR: net_baseline_fsproto_send: [%d]: [%d]: SHA1_Final failed\n",
               pso->sock, psts->handle);
+          ret = 1;
+          goto _finish;
         }
+
+      __fs_rh_enc packet;
+
+      packet = net_fs_compile_breq(CODE_FS_RESP_NOTIFY,
+          (unsigned char*) &psts->sha_00.value, sizeof(_pid_sha1),
+          NULL);
+
+      if ( NULL == packet)
+        {
+          print_str(
+              "ERROR: net_baseline_fsproto_send: [%d]: [%d]: net_fs_compile_breq failed\n",
+              pso->sock, psts->handle);
+          ret = 1;
+          goto _finish;
+        }
+
+      net_send_direct(pso, (const void*) packet,
+          (size_t) packet->head.content_length);
+
       char buffer[128];
       print_str("DEBUG: net_baseline_fsproto_send: [%d]: all data sent [%s]\n",
-          pso->sock, crypto_sha1_to_ascii(&pso->sha_00.value, buffer));
+          pso->sock, crypto_sha1_to_ascii(&psts->sha_00.value, buffer));
 
     }
   else if (psts->data_out > psts->hstat.file_size)
     {
-      print_str("ERROR: net_baseline_fsproto_send: [%d]: too much data sent\n",
+      print_str(
+          "ERROR: net_baseline_fsproto_send: [%d]: too much data sent (report this)\n",
           pso->sock);
       abort();
     }
 
-  finish: ;
+  _finish: ;
 
   pthread_mutex_unlock(&pso->mutex);
 
-  return 0;
-}
-
-static int
-net_baseline_fsproto_recv_validate(__sock_o pso, uint8_t status_flags,
-    char *msg)
-{
-  __fs_rh_enc packet;
-
-  packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY, msg,
-  NULL);
-
-  if ( NULL == packet)
-    {
-      return 1;
-    }
-
-  packet->body.status_flags |= status_flags;
-
-  net_send_direct(pso, (const void*) packet,
-      (size_t) packet->head.content_length);
-
-  return 0;
+  return ret;
 }
 
 int
@@ -726,7 +809,7 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
 
   psts->data_in += (uint64_t) pso->counters.b_read;
 
-  SHA1_Update(&pso->sha_00.context, pso->buffer0,
+  SHA1_Update(&psts->sha_00.context, pso->buffer0,
       (size_t) pso->counters.b_read);
 
   print_str("D4: [%d]: recv: %llu/%llu bytes\r", pso->sock, psts->data_in,
@@ -734,37 +817,36 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
 
   if (psts->data_in == psts->hstat.file_size)
     {
-      if (!SHA1_Final((unsigned char*) pso->sha_00.value.data,
-          &pso->sha_00.context))
+      net_proto_reset_to_baseline(pso);
+      psts->notify_cb = net_baseline_fsproto_xfer_validate;
+      psts->stage = FS_STSS_XFER_R_WSHA;
+
+      if (!SHA1_Final((unsigned char*) psts->sha_00.value.data,
+          &psts->sha_00.context))
         {
           print_str(
               "ERROR: net_baseline_fsproto_recv: [%d]: [%d]: SHA1_Final failed\n",
               pso->sock, psts->handle);
+
+          net_baseline_fsproto_recv_validate(pso, F_RQH_OP_FAILED,
+              "XFER FAILED");
           pthread_mutex_unlock(&pso->mutex);
           return 1;
         }
       char buffer[128];
 
       print_str("D4: net_baseline_fsproto_recv: recieved %llu bytes [%s]\n",
-          psts->data_in, crypto_sha1_to_ascii(&pso->sha_00.value, buffer));
+          psts->data_in, crypto_sha1_to_ascii(&psts->sha_00.value, buffer));
       //pso->flags |= F_OPSOCK_TERM;
-      if (net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK,
-           "XFER OK"))
-        {
-          print_str(
-              "ERROR: net_baseline_fsproto_recv: [%d] net_baseline_fsproto_recv_validate failed\n",
-              pso->sock);
-        }
-
     }
   else if (psts->data_in > psts->hstat.file_size)
     {
       print_str(
           "ERROR: net_baseline_fsproto_recv: got too much data: %llu bytes\n",
           psts->data_in);
-      net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK,
-           "XFER FAILED");
+
       net_proto_reset_to_baseline(pso);
+      net_baseline_fsproto_recv_validate(pso, F_RQH_OP_FAILED, "XFER FAILED");
     }
   else if (((uint64_t) psts->hstat.file_size - psts->data_in)
       < (uint64_t) pso->unit_size)
@@ -772,7 +854,6 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
       pso->unit_size = (uint64_t) psts->hstat.file_size - psts->data_in;
       print_str("D4: net_baseline_fsproto_recv: scaling unit size to %lld\n",
           pso->unit_size);
-
     }
 
   pso->counters.b_read = 0;
@@ -795,18 +876,22 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
 __fs_rh_enc
 net_fs_compile_breq(int code, unsigned char *data, size_t p_len, void *arg)
 {
+  if (p_len > USHRT_MAX)
+    {
+      print_str("ERROR: net_fs_compile_breq: additional header data too big\n");
+      return NULL;
+    }
 
-  size_t req_len = sizeof(_fs_rh_enc) + p_len + 1;
+  size_t req_len = sizeof(_fs_rh_enc) + p_len;
   __fs_rh_enc request = calloc(1, req_len + 16);
 
   request->head.prot_code = PROT_CODE_FS;
   request->head.content_length = (uint32_t) req_len;
   request->body.code = code;
 
-  request->body.ex_len = p_len;
+  request->body.ex_len = (uint32_t) p_len;
 
-  strncpy((char*) (((void*) request) + sizeof(_fs_rh_enc)), (char*) data,
-      p_len);
+  memcpy((void*) (((void*) request) + sizeof(_fs_rh_enc)), (void*) data, p_len);
 
   return request;
 }
@@ -836,7 +921,7 @@ net_fs_compile_filereq(int code, char *data, void *arg)
   request->head.content_length = (uint32_t) req_len;
   request->body.code = code;
 
-  request->body.ex_len = p_len;
+  request->body.ex_len = (uint32_t) p_len;
 
   strncpy((char*) (((void*) request) + sizeof(_fs_rh_enc)), (char*) data,
       p_len);

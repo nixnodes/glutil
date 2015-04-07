@@ -110,14 +110,6 @@ typedef struct ___sock_policy
   int ssl_verify;
 } _net_sp, *__net_sp;
 
-#include <g_crypto.h>
-
-typedef struct ___sha_v
-{
-  SHA_CTX context;
-  _pid_sha1 value;
-} _sha_v, *__sha_v;
-
 typedef struct ___sock_o
 {
   int sock;
@@ -142,6 +134,7 @@ typedef struct ___sock_o
   _sock_tm timers;
   _sock_to limits;
   void *buffer0;
+  size_t buffer0_len;
   mda sendq;
   void *ptr0;
   pthread_mutex_t mutex;
@@ -149,7 +142,6 @@ typedef struct ___sock_o
   void *st_p0, *st_p1;
   _net_sp policy;
   void *sock_ca;
-  _sha_v sha_00;
 } _sock_o, *__sock_o;
 
 typedef struct ___sock_cret

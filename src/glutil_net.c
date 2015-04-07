@@ -19,7 +19,7 @@
 #include <arpa/inet.h>
 
 _net_opt net_opts =
-  { .max_sock = 512, .thread_l = 1, .thread_r = 4, .st_p0 = NULL,
+  { .max_sock = 512, .thread_l = 1, .thread_r = 2, .st_p0 = NULL,
       .max_worker_threads = 128, .ssl_cert_def = "server.cert", .ssl_key_def =
           "server.key", .flags = 0 };
 
@@ -292,7 +292,7 @@ net_deploy(void)
       g_setxid();
     }
 
-  unsigned int tmon_ld = 15;
+  //unsigned int tmon_ld = 15;
 
   while (g_get_gkill())
     {
@@ -303,7 +303,7 @@ net_deploy(void)
         }
       pthread_mutex_unlock(&mutex_glob00);*/
       net_ping_threads();
-      sleep(tmon_ld);
+      sleep(-1);
 
       /*mutex_lock(&mutex_glob00);
        if (status & F_STATUS_MSIG00)

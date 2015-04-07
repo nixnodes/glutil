@@ -102,7 +102,7 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
       return -11;
     }
 
-  if (!bph->content_length)
+  if (0 == bph->content_length)
     {
       print_str(
           "ERROR: net_baseline_prochdr: protocol %d: empty packet, socket:[%d]\n",
@@ -113,10 +113,11 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
   //printf("%d - %d\n", (int) bph->content_length, (int) pso->unit_size);
 
   pso->unit_size += (bph->content_length - BP_HEADER_SIZE);
-  if (pso->unit_size > SOCK_RECVB_SZ)
+
+  if (pso->unit_size > pso->buffer0_len)
     {
       print_str(
-          "ERROR: net_baseline_prochdr: protocol %d: packet too large, socket:[%d]\n",
+          "ERROR: net_baseline_prochdr: protocol %d: packet too large, socket: [%d]\n",
           bph->prot_code, pso->sock);
       pthread_mutex_unlock(&pso->mutex);
       return -13;

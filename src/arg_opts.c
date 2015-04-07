@@ -2192,7 +2192,6 @@ net_opt_parse(pmda md, void *arg)
           return 1;
         }
 
-      print_str("%lld\n", i_val);
       ca->opt0.u00 = (uint64_t) i_val;
     }
   else if (!strncmp("fs_size", left, 5))
@@ -2236,7 +2235,6 @@ net_opt_parse(pmda md, void *arg)
         {
           return 1;
         }
-
     }
   else
     {
