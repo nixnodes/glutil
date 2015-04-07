@@ -12,10 +12,14 @@
 
 #include <openssl/sha.h>
 
+#pragma pack(push, 4)
+
 typedef struct ___pid_sha1
 {
   unsigned char data[SHA_DIGEST_LENGTH];
 } _pid_sha1, *__pid_sha1;
+
+#pragma pack(pop)
 
 __pid_sha1
 crypto_calc_sha1(unsigned char*input, size_t size, __pid_sha1 psha1_out);

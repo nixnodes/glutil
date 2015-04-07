@@ -87,7 +87,9 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data);
 int
 net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data);
 __fs_rh_enc
-net_fs_compile_filereq(int code, char *path, void *arg);
+net_fs_compile_filereq(int code, char *data, void *arg);
+__fs_rh_enc
+net_fs_compile_breq(int code, unsigned char *data, size_t p_len, void *arg);
 __fs_rh_enc
 net_fs_compile_hstat(__fs_hstat data, void *arg);
 

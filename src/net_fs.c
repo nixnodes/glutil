@@ -118,8 +118,9 @@ net_baseline_fsproto_xfer_stat_ok(__sock_o pso, __fs_rh_enc pkt, void *arg)
       return 1;
     }
 
-  __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_SEND, psts->data0,
-  NULL);
+  __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_SEND,
+       psts->data0,
+      NULL);
 
   if (NULL == packet)
     {
@@ -197,11 +198,19 @@ net_baseline_fsproto_xfer_in_ok(__sock_o pso, __fs_rh_enc packet, void *arg)
     {
       print_str("DEBUG: [%d]: data stream confirmed inbound\n", pso->sock);
       //psts->notify_cb = net_baseline_fsproto_xfer_in_ok;
-      pso->rcv1 = (_p_s_cb) net_baseline_fsproto_recv;
 
+      pso->rcv1 = (_p_s_cb) net_baseline_fsproto_recv;
       pso->unit_size = 131072;
       free(pso->buffer0);
       pso->buffer0 = calloc(1, pso->unit_size);
+
+      if (!SHA1_Init(&pso->sha_00.context))
+        {
+          print_str(
+              "ERROR: net_baseline_fsproto_xfer_in_ok: [%d]: SHA1_Init failed\n",
+              pso->sock);
+          return 1;
+        }
 
       if (psts->hstat.file_size < (uint64_t) pso->unit_size)
         {
@@ -398,8 +407,9 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
   net_fs_initialize_sts(pso);
   __fs_sts psts = (__fs_sts ) pso->va_p1;
 
-  packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY, BASELINE_FS_TCODE_XFER,
-  NULL);
+  packet = net_fs_compile_filereq(CODE_FS_RESP_NOTIFY,
+       BASELINE_FS_TCODE_XFER,
+      NULL);
 
   if ( NULL == packet)
     {
@@ -481,7 +491,14 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
   free(pso->buffer0);
   pso->buffer0 = calloc(1, pso->unit_size);
 
-  SHA1_Init(&pso->sha_00.context);
+  if (!SHA1_Init(&pso->sha_00.context))
+    {
+      print_str(
+          "ERROR: net_baseline_fsproto_proc_sdata: [%d]: SHA1_Init failed\n",
+          pso->sock);
+      ret = 2;
+      goto end;
+    }
 
   /*if (psts->hstat.file_size < (uint64_t) pso->unit_size)
    {
@@ -709,27 +726,44 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
 
   psts->data_in += (uint64_t) pso->counters.b_read;
 
+  SHA1_Update(&pso->sha_00.context, pso->buffer0,
+      (size_t) pso->counters.b_read);
+
   print_str("D4: [%d]: recv: %llu/%llu bytes\r", pso->sock, psts->data_in,
       psts->hstat.file_size);
 
   if (psts->data_in == psts->hstat.file_size)
     {
-      print_str("D4: net_baseline_fsproto_recv: recieved %llu bytes\n",
-          psts->data_in);
+      if (!SHA1_Final((unsigned char*) pso->sha_00.value.data,
+          &pso->sha_00.context))
+        {
+          print_str(
+              "ERROR: net_baseline_fsproto_recv: [%d]: [%d]: SHA1_Final failed\n",
+              pso->sock, psts->handle);
+          pthread_mutex_unlock(&pso->mutex);
+          return 1;
+        }
+      char buffer[128];
+
+      print_str("D4: net_baseline_fsproto_recv: recieved %llu bytes [%s]\n",
+          psts->data_in, crypto_sha1_to_ascii(&pso->sha_00.value, buffer));
       //pso->flags |= F_OPSOCK_TERM;
-      if (net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK, "XFER OK"))
+      if (net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK,
+           "XFER OK"))
         {
           print_str(
               "ERROR: net_baseline_fsproto_recv: [%d] net_baseline_fsproto_recv_validate failed\n",
               pso->sock);
         }
+
     }
   else if (psts->data_in > psts->hstat.file_size)
     {
       print_str(
           "ERROR: net_baseline_fsproto_recv: got too much data: %llu bytes\n",
           psts->data_in);
-      net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK, "XFER FAILED");
+      net_baseline_fsproto_recv_validate(pso, F_RQH_OP_OK,
+           "XFER FAILED");
       net_proto_reset_to_baseline(pso);
     }
   else if (((uint64_t) psts->hstat.file_size - psts->data_in)
@@ -759,10 +793,29 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 __fs_rh_enc
-net_fs_compile_filereq(int code, char *path, void *arg)
+net_fs_compile_breq(int code, unsigned char *data, size_t p_len, void *arg)
 {
 
-  size_t p_len = strlen(path);
+  size_t req_len = sizeof(_fs_rh_enc) + p_len + 1;
+  __fs_rh_enc request = calloc(1, req_len + 16);
+
+  request->head.prot_code = PROT_CODE_FS;
+  request->head.content_length = (uint32_t) req_len;
+  request->body.code = code;
+
+  request->body.ex_len = p_len;
+
+  strncpy((char*) (((void*) request) + sizeof(_fs_rh_enc)), (char*) data,
+      p_len);
+
+  return request;
+}
+
+__fs_rh_enc
+net_fs_compile_filereq(int code, char *data, void *arg)
+{
+
+  size_t p_len = strlen((char*) data);
 
   if (0 == p_len)
     {
@@ -785,7 +838,8 @@ net_fs_compile_filereq(int code, char *path, void *arg)
 
   request->body.ex_len = p_len;
 
-  strncpy((char*) (((void*) request) + sizeof(_fs_rh_enc)), path, p_len);
+  strncpy((char*) (((void*) request) + sizeof(_fs_rh_enc)), (char*) data,
+      p_len);
 
   /*switch (code)
    {
