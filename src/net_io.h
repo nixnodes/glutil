@@ -109,6 +109,14 @@ typedef struct ___sock_policy
   uint8_t mode;
 } _net_sp, *__net_sp;
 
+#include <g_crypto.h>
+
+typedef struct ___sha_v
+{
+  SHA_CTX context;
+  _pid_sha1 value;
+} _sha_v, *__sha_v;
+
 typedef struct ___sock_o
 {
   int sock;
@@ -140,6 +148,7 @@ typedef struct ___sock_o
   void *st_p0, *st_p1;
   _net_sp policy;
   void *sock_ca;
+  _sha_v sha_00;
 } _sock_o, *__sock_o;
 
 typedef struct ___sock_cret

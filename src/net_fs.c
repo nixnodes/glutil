@@ -9,6 +9,7 @@
 
 #include <net_io.h>
 #include <string.h>
+#include <g_crypto.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -480,6 +481,8 @@ net_baseline_fsproto_proc_sdata(__sock_o pso, void *data)
   free(pso->buffer0);
   pso->buffer0 = calloc(1, pso->unit_size);
 
+  SHA1_Init(&pso->sha_00.context);
+
   /*if (psts->hstat.file_size < (uint64_t) pso->unit_size)
    {
    pso->unit_size = (ssize_t) psts->hstat.file_size;
@@ -598,6 +601,8 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
 
   if ((in_read) > 0)
     {
+      SHA1_Update(&pso->sha_00.context, pso->buffer0, blk_sz);
+
       psts->data_out += (uint64_t) in_read;
       if (net_send_direct(pso, pso->buffer0, in_read))
         {
@@ -625,31 +630,37 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
         {
           pso->flags ^= F_OPSOCK_HALT_RECV;
         }
-      pso->flags = F_OPSOCK_TERM;
+      pso->flags |= F_OPSOCK_TERM;
       net_proto_reset_to_baseline(pso);
       goto finish;
     }
 
   if (psts->data_out == psts->hstat.file_size)
     {
-      print_str("DEBUG: net_baseline_fsproto_send: [%d]: all data sent\n",
-          pso->sock);
 
       if (pso->flags & F_OPSOCK_HALT_RECV)
         {
           pso->flags ^= F_OPSOCK_HALT_RECV;
         }
       net_proto_reset_to_baseline(pso);
+
+      if (!SHA1_Final((unsigned char*) pso->sha_00.value.data,
+          &pso->sha_00.context))
+        {
+          print_str(
+              "ERROR: net_baseline_fsproto_send: [%d]: [%d]: SHA1_Final failed\n",
+              pso->sock, psts->handle);
+        }
+      char buffer[128];
+      print_str("DEBUG: net_baseline_fsproto_send: [%d]: all data sent [%s]\n",
+          pso->sock, crypto_sha1_to_ascii(&pso->sha_00.value, buffer));
+
     }
   else if (psts->data_out > psts->hstat.file_size)
     {
       print_str("ERROR: net_baseline_fsproto_send: [%d]: too much data sent\n",
           pso->sock);
-      if (pso->flags & F_OPSOCK_HALT_RECV)
-        {
-          pso->flags ^= F_OPSOCK_HALT_RECV;
-        }
-      net_proto_reset_to_baseline(pso);
+      abort();
     }
 
   finish: ;
