@@ -1296,7 +1296,7 @@ net_worker(void *args)
                   abort();
                 }
 
-              net_pop_rc(pso, &p_rc1);
+              net_pop_rc(NULL, &p_rc1);
 
               md_g_free_l(&p_rc1);
 
