@@ -439,10 +439,10 @@ net_destroy_connection(__sock_o so)
 
           ssl_cleanup: ;
 
-          if (so->flags & F_OPSOCK_SSL_KEYCERT_L)
+          /*if (so->flags & F_OPSOCK_SSL_KEYCERT_L)
             {
               SSL_certs_clear(so->ssl);
-            }
+            }*/
 
           SSL_free(so->ssl);
 
