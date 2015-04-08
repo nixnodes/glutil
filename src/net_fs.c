@@ -1028,10 +1028,15 @@ net_fs_socket_destroy_rc0(__sock_o pso)
       pso->va_p1 = NULL;
     }
 
+
   pid_t _tid = (pid_t) syscall(SYS_gettid);
   print_str("INFO: [%d] socket closed: [%d]\n", _tid, pso->sock);
 
   pthread_mutex_unlock(&pso->mutex);
+
+  if (pso->oper_mode == SOCKET_OPMODE_LISTENER) {
+      abort();
+  }
 
   return 0;
 }

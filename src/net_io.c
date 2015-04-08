@@ -1868,7 +1868,6 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       return 1;
     }
 
-  //fcntl(fd, F_SETOWN, getpid());
 
   struct addrinfo *p_net_res = malloc(sizeof(struct addrinfo));
 
