@@ -2418,7 +2418,7 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (!ca->policy.idle_timeout)
     {
-      ca->policy.idle_timeout = 10;
+      ca->policy.idle_timeout = 15;
     }
 
   if (!ca->policy.close_timeout)
