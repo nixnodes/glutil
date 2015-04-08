@@ -1795,40 +1795,40 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
     {
       if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
         {
-          if (!(spso->timers.flags & F_ST_MISC00_ACT))
-            {
-              spso->timers.flags |= F_ST_MISC00_ACT;
-              spso->timers.misc00 = time(NULL);
-            }
-          else
-            {
-              spso->timers.misc01 = time(NULL);
-              time_t pt_diff = (spso->timers.misc01 - spso->timers.misc00);
-              if (pt_diff > spso->policy.accept_timeout)
-                {
-                  print_str(
-                      "WARNING: net_accept: [%d] accept timed out after %u seconds\n",
-                      spso->sock, pt_diff);
-                  spso->status = -1;
-                  goto f_term;
-                }
-            }
+          /*if (!(spso->timers.flags & F_ST_MISC00_ACT))
+           {
+           spso->timers.flags |= F_ST_MISC00_ACT;
+           spso->timers.misc00 = time(NULL);
+           }
+           else
+           {
+           spso->timers.misc01 = time(NULL);
+           time_t pt_diff = (spso->timers.misc01 - spso->timers.misc00);
+           if (pt_diff > spso->policy.accept_timeout)
+           {
+           print_str(
+           "WARNING: net_accept: [%d] accept timed out after %u seconds\n",
+           spso->sock, pt_diff);
+           spso->status = -7;
+           goto f_term;
+           }
+           }*/
 
           pthread_mutex_unlock(&spso->mutex);
           return 2;
         }
       spso->status = -1;
 
-      f_term: ;
+      //f_term: ;
 
       pthread_mutex_unlock(&spso->mutex);
       return 1;
     }
 
-  if (spso->timers.flags & F_ST_MISC00_ACT)
-    {
-      spso->timers.flags ^= F_ST_MISC00_ACT;
-    }
+  /*if (spso->timers.flags & F_ST_MISC00_ACT)
+   {
+   spso->timers.flags ^= F_ST_MISC00_ACT;
+   }*/
 
   int ret;
 
