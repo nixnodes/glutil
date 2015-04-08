@@ -296,11 +296,7 @@ opt_get_msg_type(char *msg)
         }
       return F_MSG_TYPE_DEBUG;
     }
-  if (!strncmp(msg, "all", 3))
-    {
-      return F_MSG_TYPE_ANY;
-    }
-  if (!strncmp(msg, "any", 3))
+  if (!strncmp(msg, "all", 3) || !strncmp(msg, "any", 3))
     {
       return F_MSG_TYPE_ANY;
     }

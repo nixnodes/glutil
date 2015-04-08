@@ -464,7 +464,6 @@ net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data)
 
   if (hdl->flags & F_GH_PRINT)
     {
-      hdl->v_b0 = pso->st_p1;
       hdl->g_proc4((void*) hdl, data, (void*) pso);
     }
 
@@ -807,6 +806,7 @@ net_gl_socket_init0(__sock_o pso)
       }
     pthread_mutex_unlock(&mutex_glob00);
 
+    hdl->v_b0 = pso->st_p1;
     hdl->v_b0_sz = MAX_PRINT_OUT - 4;
     hdl->pso_ref = (void*) pso;
 

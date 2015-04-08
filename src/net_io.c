@@ -849,9 +849,7 @@ void
 net_send_sock_term_sig(__sock_o pso)
 {
   mutex_lock(&pso->mutex);
-
   pso->flags |= F_OPSOCK_TERM;
-
   pthread_mutex_unlock(&pso->mutex);
 }
 
@@ -1111,7 +1109,7 @@ int
 net_worker(void *args)
 {
   p_md_obj ptr;
-  int r;
+  int r, s;
   uint8_t int_state = ST_NET_WORKER_ACT;
 
   time_t s_00 = 0, e_00;
@@ -1129,7 +1127,13 @@ net_worker(void *args)
   sigaddset(&set, SIGIO);
   sigaddset(&set, SIGUSR1);
 
-  pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+  s = pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+
+  if (s != 0)
+    {
+      print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", s);
+      abort();
+    }
 
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
@@ -1138,7 +1142,7 @@ net_worker(void *args)
   //sigaddset(&set, SIGIO);
   //sigaddset(&set, SIGURG);
 
-  int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+  s = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
   if (s != 0)
     {
@@ -1155,6 +1159,9 @@ net_worker(void *args)
 
   pthread_t _pt = thrd->pt;
   int _tid = syscall(SYS_gettid);
+
+  print_str("DEBUG: net_worker: [%d]: thread coming online [%d]\n", _tid,
+      thrd->oper_mode);
 
   pthread_mutex_unlock(&thrd->mutex);
 
@@ -1225,11 +1232,13 @@ net_worker(void *args)
           mutex_lock(&t_pso->mutex);
           if (!(t_pso->flags & F_OPSOCK_ACT))
             {
-              print_str("D3: [%d]: not importing %d, still active\n",
+              print_str(
+                  "D3: net_worker: [%d]: not importing %d, still processing\n",
                   (int) _tid, t_pso->sock);
               pthread_mutex_unlock(&t_pso->mutex);
               goto io_loend;
             }
+
           t_pso->st_p1 = thrd->buffer0;
 
           pid_t tpid = (pid_t) _tid;
@@ -1306,14 +1315,9 @@ net_worker(void *args)
                   abort();
                 }
 
-              pthread_mutex_unlock(&pso->mutex);
-
               pmda host_ctx = pso->host_ctx;
 
-              /*if (pso->shutdown_cleanup_rc0)
-               {
-               pso->shutdown_cleanup_rc0(pso);
-               }*/
+              pthread_mutex_unlock(&pso->mutex);
 
               net_pop_rc(pso, &pso->shutdown_rc0);
 
@@ -1503,6 +1507,8 @@ net_worker(void *args)
           sleep(-1);
           thrd->timers.t1 = time(NULL);
           ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
+          print_str("D6: [%d]: waking up worker [%hu] \n", _tid,
+              thrd->oper_mode);
         }
 
       //print_str("%d - pooling socket.. %d     \n", (int) _tid, pooling_timeout);
@@ -1803,8 +1809,7 @@ net_recv(__sock_o pso, pmda base, pmda threadr, void *data)
       return 0;
     }
 
-  ssize_t rcvd = recv(pso->sock, ((uint8_t*) data + pso->counters.b_read),
-      rcv_limit, 0);
+  ssize_t rcvd = recv(pso->sock, (data + pso->counters.b_read), rcv_limit, 0);
 
   if (rcvd == -1)
     {

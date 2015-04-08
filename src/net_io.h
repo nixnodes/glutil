@@ -139,7 +139,8 @@ typedef struct ___sock_o
   void *ptr0;
   pthread_mutex_t mutex;
   void *va_p0, *va_p1;
-  void *st_p0, *st_p1;
+  void *st_p0;
+  void *st_p1; // thread-specific buffer
   _net_sp policy;
   void *sock_ca;
 } _sock_o, *__sock_o;

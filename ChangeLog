@@ -31,6 +31,10 @@
  *   2.5.11:
  *   - + base64 encoding/decoding (?B/?D extended directives, respectively)
  *   - + ?s extended directive (see MANUAL)
+ *   2.5.12:
+ *   - ~ Fix BSD-incompatible include
+ *   - + Implemented --stdlvl <0-32>, added more options to --stdlog
+ *   - % Made -prune: <expr> operator work when rebuilding dirlog (-r)
  *
  * v2.4:
  *

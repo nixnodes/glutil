@@ -454,7 +454,7 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
       sizeof(_pid_sha1)))
     {
       print_str(
-          "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA checksum OK\n",
+          "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum OK\n",
           pso->sock);
       print_str("INFO: %s: [%d]: transfer successfull\n", psts->data0,
           pso->sock);
@@ -465,7 +465,7 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
   else
     {
       print_str(
-          "WARNING: net_baseline_fsproto_xfer_validate: [%d]: SHA checksum BAD\n",
+          "WARNING: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum BAD\n",
           pso->sock);
       status_flags |= F_RQH_OP_FAILED;
       message = "SHA1 BAD";
