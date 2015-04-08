@@ -2064,8 +2064,9 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
-          print_str("D6: net_accept_ssl: SSL_accept not satisfied: [%d] [%d]\n",
-              ret, ssl_err);
+          print_str(
+              "D6: net_accept_ssl: [%d]: SSL_accept not satisfied: [%d] [%d]\n",
+              pso->sock, ret, ssl_err);
 
           if (!(pso->timers.flags & F_ST_MISC00_ACT))
             {
@@ -2168,8 +2169,8 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
           print_str(
-              "D6: net_connect_ssl: SSL_connect not satisfied: [%d] [%d]\n",
-              ret, ssl_err);
+              "D6: net_connect_ssl: [%d]: SSL_connect not satisfied: [%d] [%d]\n",
+              pso->sock, ret, ssl_err);
 
           if (!(pso->timers.flags & F_ST_MISC00_ACT))
             {
@@ -2367,8 +2368,9 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
       ERR_print_errors_fp(stderr);
       ERR_clear_error();
 
-      print_str("D6: net_ssend_ssl_b: SSL_write not satisfied: [%d] [%d]\n",
-          ret, pso->s_errno);
+      print_str(
+          "D6: net_ssend_ssl_b: [%d]: SSL_write not satisfied: [%d] [%d]\n",
+          pso->sock, ret, pso->s_errno);
 
       if (!(pso->s_errno == SSL_ERROR_WANT_READ
           || pso->s_errno == SSL_ERROR_WANT_WRITE))
