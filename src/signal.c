@@ -33,7 +33,8 @@ sig_handler_null(int signal)
 void
 sig_handler_test(int signal)
 {
-  print_str("recv on: %d\n", syscall(SYS_gettid));
+  printf("recv on: %d :             %d     \n", (int)syscall(SYS_gettid), signal);
+  usleep(10000);
   return;
 }
 

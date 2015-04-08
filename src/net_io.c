@@ -304,7 +304,7 @@ bind_socket(int fd, struct addrinfo *aip)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
     {
       close(fd);
       return 101;;
@@ -556,7 +556,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
     {
       close(fd);
       return -4;
@@ -1123,7 +1123,7 @@ net_worker(void *args)
   sigset_t set;
 
   sigemptyset(&set);
-  sigaddset(&set, SIGURG);
+  //sigaddset(&set, SIGURG);
   sigaddset(&set, SIGIO);
   sigaddset(&set, SIGUSR1);
 
@@ -1140,7 +1140,7 @@ net_worker(void *args)
   sigaddset(&set, SIGINT);
   sigaddset(&set, SIGUSR2);
   //sigaddset(&set, SIGIO);
-  //sigaddset(&set, SIGURG);
+  sigaddset(&set, SIGURG);
 
   s = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
@@ -1241,13 +1241,28 @@ net_worker(void *args)
 
           t_pso->st_p1 = thrd->buffer0;
 
-          pid_t tpid = (pid_t) _tid;
+          int tpid = (int) _tid, async = 1;
 
           if (ioctl(t_pso->sock, SIOCSPGRP, &tpid) == -1)
             {
               char err_buf[1024];
               print_str(
                   "ERROR: net_worker: [%d]: ioctl (SIOCSPGRP) failed [%d] [%s]\n",
+                  t_pso->sock, errno,
+                  strerror_r(errno, err_buf, sizeof(err_buf)));
+              t_pso->flags |= F_OPSOCK_TERM;
+            }
+          else
+            {
+              print_str("D6: net_worker: [%d]: set SIOCSPGRP for [%d]\n", _tid,
+                  t_pso->sock);
+            }
+
+          if (ioctl(t_pso->sock, FIOASYNC, &async) == -1)
+            {
+              char err_buf[1024];
+              print_str(
+                  "ERROR: net_worker: [%d]: ioctl (FIOASYNC) failed [%d] [%s]\n",
                   t_pso->sock, errno,
                   strerror_r(errno, err_buf, sizeof(err_buf)));
               t_pso->flags |= F_OPSOCK_TERM;
@@ -1497,10 +1512,6 @@ net_worker(void *args)
 
       if (thread_inactive > 1)
         {
-          //mutex_lock(&thrd->proc_objects.mutex);
-
-          //pthread_mutex_unlock(&thrd->proc_objects.mutex);
-
           print_str("D6: [%d]: putting worker to sleep [%hu] \n", _tid,
               thrd->oper_mode);
           ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
@@ -1739,7 +1750,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
     {
       close(fd);
       spso->status = -2;
