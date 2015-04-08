@@ -27,6 +27,16 @@ sig_handler_null(int signal)
   return;
 }
 
+#include <unistd.h>
+#include <sys/syscall.h>
+
+void
+sig_handler_test(int signal)
+{
+  printf("test : %d\n", syscall(SYS_gettid));
+  return;
+}
+
 int
 setup_sighandlers(void)
 {

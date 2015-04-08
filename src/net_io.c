@@ -556,7 +556,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
     {
       close(fd);
       return -4;
@@ -1124,10 +1124,12 @@ net_worker(void *args)
 
   sigset_t set;
 
-  /*sigemptyset(&set);
-   sigaddset(&set, SIGUSR1);
+  sigemptyset(&set);
+  sigaddset(&set, SIGURG);
+  sigaddset(&set, SIGIO);
+  sigaddset(&set, SIGUSR1);
 
-   pthread_sigmask(SIG_UNBLOCK, &set, NULL);*/
+  pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
@@ -1141,9 +1143,7 @@ net_worker(void *args)
   if (s != 0)
     {
       print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", s);
-      pthread_mutex_unlock(&thrd->mutex);
       abort();
-      return 1;
     }
 
   thrd->timers.t1 = time(NULL);
@@ -1232,13 +1232,13 @@ net_worker(void *args)
             }
           t_pso->st_p1 = thrd->buffer0;
 
-          pid_t tpid = (pid_t) getpid();
+          pid_t tpid = (pid_t) _tid;
 
           if (ioctl(t_pso->sock, SIOCSPGRP, &tpid) == -1)
             {
               char err_buf[1024];
               print_str(
-                  "ERROR: net_worker: [%d]: SIOCSPGRP (SIOCSPGRP) failed [%d] [%s]\n",
+                  "ERROR: net_worker: [%d]: ioctl (SIOCSPGRP) failed [%d] [%s]\n",
                   t_pso->sock, errno,
                   strerror_r(errno, err_buf, sizeof(err_buf)));
               t_pso->flags |= F_OPSOCK_TERM;
@@ -1486,7 +1486,7 @@ net_worker(void *args)
       if (int_state & ST_NET_WORKER_ACT)
         {
           int_state ^= ST_NET_WORKER_ACT;
-          //continue;
+          continue;
         }
 
       time_t thread_inactive = (time(NULL) - thrd->timers.t1);
@@ -1589,7 +1589,7 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
 
   if (NULL == (pso = md_alloc_le(base, sizeof(_sock_o), 0, NULL)))
     {
-      print_str("ERROR: net_accept: out of resources [%llu/%llu]\n",
+      print_str("ERROR: net_prep_acsock: out of resources [%llu/%llu]\n",
           (unsigned long long int) base->offset,
           (unsigned long long int) base->count);
       spso->status = 23;
@@ -1662,6 +1662,7 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
           shutdown(fd, SHUT_RDWR);
           close(fd);
           md_unlink_le(base, pso_ptr);
+          pthread_mutex_unlock(&base->mutex);
           return NULL;
         }
 
@@ -1732,7 +1733,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   int ret;
 
-  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK)) == -1)
+  if ((ret = fcntl(fd, F_SETFL, O_NONBLOCK | O_ASYNC)) == -1)
     {
       close(fd);
       spso->status = -2;

@@ -182,12 +182,16 @@ net_deploy(void)
 
   signal(SIGUSR1, sig_handler_null);
   signal(SIGUSR2, net_def_sig_handler);
+  signal(SIGURG, sig_handler_null);
+  signal(SIGIO, sig_handler_null);
 
   sigset_t set;
 
   sigemptyset(&set);
   sigaddset(&set, SIGPIPE);
-  //sigaddset(&set, SIGUSR1);
+  sigaddset(&set, SIGURG);
+  sigaddset(&set, SIGIO);
+  sigaddset(&set, SIGUSR1);
 
   int sr = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
@@ -206,9 +210,6 @@ net_deploy(void)
       print_str("DEBUG: initializing TLS/SSL subsystem..\n");
       ssl_init();
     }
-
-  signal(SIGURG, sig_handler_null);
-  signal(SIGIO, sig_handler_null);
 
   int r;
 
@@ -297,11 +298,11 @@ net_deploy(void)
   while (g_get_gkill())
     {
       /*mutex_lock(&mutex_glob00);
-      if (gfl & F_OPT_KILL_GLOBAL)
-        {
-          tmon_ld = 1;
-        }
-      pthread_mutex_unlock(&mutex_glob00);*/
+       if (gfl & F_OPT_KILL_GLOBAL)
+       {
+       tmon_ld = 1;
+       }
+       pthread_mutex_unlock(&mutex_glob00);*/
       net_ping_threads();
       sleep(-1);
 

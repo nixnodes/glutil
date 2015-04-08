@@ -40,10 +40,16 @@ typedef struct __fs_req_h_encaps
   _fs_req_h body;
 } _fs_rh_enc, *__fs_rh_enc;
 
+typedef struct ___fs_tmstat_header
+{
+  int32_t sec, nsec;
+} _fs_tms, *__fs_tms;
+
 typedef struct ___fs_stat_header
 {
-  int32_t m_tim;
   uint64_t size;
+  uint32_t uid, gid;
+  _fs_tms mtime, ctime, atime;
   uint64_t file_offset, file_size;
 } _fs_hstat, *__fs_hstat;
 

@@ -16,6 +16,8 @@
 
 void
 sig_handler_null(int signal);
+void
+sig_handler_test(int signal);
 int
 setup_sighandlers(void);
 void

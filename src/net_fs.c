@@ -96,8 +96,18 @@ net_baseline_fsproto_gstat(char *file, __fs_hstat data)
       return 1;
     }
 
-  data->m_tim = (int32_t) st.st_mtim.tv_sec;
   data->size = (uint64_t) st.st_size;
+  data->uid = (uint32_t) st.st_uid;
+  data->gid = (uint32_t) st.st_gid;
+
+  data->atime.sec = (int32_t) st.st_atim.tv_sec;
+  data->atime.nsec = (int32_t) st.st_atim.tv_nsec;
+
+  data->ctime.sec = (int32_t) st.st_ctim.tv_sec;
+  data->ctime.nsec = (int32_t) st.st_ctim.tv_nsec;
+
+  data->mtime.sec = (int32_t) st.st_mtim.tv_sec;
+  data->mtime.nsec = (int32_t) st.st_mtim.tv_nsec;
 
   return 0;
 }
@@ -163,8 +173,8 @@ net_baseline_fsproto_xfer_stat_ok(__sock_o pso, __fs_rh_enc pkt, void *arg)
 
   //packet->body.offset = 1;
 
-  print_str("DEBUG: [%d]: sending file request [%llu] [%llu] -[%llu] \n",
-      pso->sock, packet->body.offset, packet->body.size, psts->hstat.file_size);
+  print_str("DEBUG: [%d]: sending file request: %s: [%llu] [%llu]\n", pso->sock,
+      psts->data0, packet->body.offset, packet->body.size);
 
   if (!net_send_direct(pso, (const void*) packet,
       (size_t) packet->head.content_length))
@@ -246,7 +256,7 @@ int
 net_baseline_fsproto_default(__sock_o pso, __fs_rh_enc packet, void *arg)
 {
   char *message = (char*) ((void*) packet + sizeof(_fs_rh_enc));
-  print_str("NOTICE: [%d]: notify: '%s'\n", pso->sock, message);
+  print_str("NOTICE: [%d]: '%s'\n", pso->sock, message);
 
   return 0;
 }
@@ -274,8 +284,8 @@ net_baseline_fsproto_proc_notify(__sock_o pso, __fs_rh_enc packet)
       {
         __fs_hstat phst = (__fs_hstat) ((void*) packet + sizeof(_fs_rh_enc));
 
-        print_str("DEBUG: [%d]: remote 'stat' suceeded: [%llu] [%d]\n",
-        pso->sock, phst->size, (int)phst->m_tim);
+        print_str("DEBUG: [%d]: remote 'stat' suceeded: %s: [%llu] [%d]\n",
+        pso->sock, psts->data0, phst->size, (int)phst->mtime.sec);
 
         if ( NULL != psts->notify_cb )
           {
@@ -446,7 +456,7 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
       print_str(
           "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA checksum OK\n",
           pso->sock);
-      print_str("NOTICE: %s: [%d]: transfer successfull\n", psts->data0,
+      print_str("INFO: %s: [%d]: transfer successfull\n", psts->data0,
           pso->sock);
       status_flags |= F_RQH_OP_OK;
       message = "SHA1 OK";
