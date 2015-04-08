@@ -8,7 +8,7 @@
 #ifndef SIGNAL_T_H_
 #define SIGNAL_T_H_
 
-#define SIG_BREAK_TIMEOUT_NS (useconds_t)1000000.0
+#define SIG_BREAK_TIMEOUT_NS    (useconds_t)1000000.0
 
 #include <glutil.h>
 

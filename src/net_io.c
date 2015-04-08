@@ -1138,11 +1138,11 @@ net_proc_sock_hmemb(po_thrd thrd)
 
 #include <sys/ioctl.h>
 
-#include <signal_t.h>
 
-#define T_NET_WORKER_SD         (time_t) 45
+#define T_NET_WORKER_SD                 (time_t) 45
+#define I_NET_WORKER_IDLE_ALERT         (time_t) 30
 
-#define ST_NET_WORKER_ACT       ((uint8_t)1 << 1)
+#define ST_NET_WORKER_ACT               ((uint8_t)1 << 1)
 
 int
 net_worker(void *args)
@@ -1501,9 +1501,6 @@ net_worker(void *args)
                 }
             }
 
-          /*print_str("D3: net_worker: [%d]: %llu / %llu\n", pso->sock,
-           pso->counters.b_read, pso->unit_size);*/
-
           if (pso->unit_size == pso->counters.b_read)
             {
               pso->counters.b_read = 0;
@@ -1575,11 +1572,11 @@ net_worker(void *args)
           if (thrd->oper_mode == SOCKET_OPMODE_RECIEVER
               && net_proc_sock_hmemb(thrd))
             {
-              t_interval = 5;
+              t_interval = I_NET_WORKER_IDLE_ALERT;
             }
           else
             {
-              t_interval = -1;
+              t_interval = UINT_MAX;
             }
 
           pthread_mutex_unlock(&thrd->mutex);
