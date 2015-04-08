@@ -26,6 +26,7 @@
 #define F_OPSOCK_PROC_READY             (a32 << 13)
 #define F_OPSOCK_SD_FIRST_DC            (a32 << 14)
 #define F_OPSOCK_HALT_RECV              (a32 << 15)
+#define F_OPSOCK_SKIP_SSL_SD            (a32 << 16)
 
 #define F_OPSOCK_CREAT_MODE             (F_OPSOCK_CONNECT|F_OPSOCK_LISTEN)
 #define F_OPSOCK_STATES                 (F_OPSOCK_ST_SSL_ACCEPT|F_OPSOCK_ST_SSL_CONNECT)
@@ -70,9 +71,13 @@ typedef int
 typedef int
 (*_p_ssend)(void*, void *, size_t length);
 
+#define F_ST_MISC00_ACT         ((uint32_t)1 << 1)
+#define F_ST_MISC02_ACT         ((uint32_t)1 << 3)
+
 typedef struct __sock_timers
 {
-  time_t last_act, last_proc, misc00, misc01;
+  time_t last_act, last_proc, misc00, misc01, misc02, misc03;
+  uint32_t flags;
 } _sock_tm;
 
 typedef struct __sock_timeouts
@@ -104,8 +109,8 @@ typedef struct ___proc_ic_o
 typedef struct ___sock_policy
 {
   uint32_t max_sim_ip;
-  time_t idle_timeout, connect_timeout, accept_timeout, ssl_accept_timeout,
-      ssl_connect_timeout;
+  time_t idle_timeout, connect_timeout, accept_timeout, close_timeout, ssl_accept_timeout,
+      ssl_connect_timeout, send_timeout;
   uint8_t mode;
   int ssl_verify;
 } _net_sp, *__net_sp;

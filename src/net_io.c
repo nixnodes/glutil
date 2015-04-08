@@ -239,13 +239,16 @@ net_chk_timeout(__sock_o pso)
     {
       print_str("WARNING: idle timeout occured on socket %d [%u]\n", pso->sock,
           time(NULL) - pso->timers.last_act);
-
+      if (pso->flags & F_OPSOCK_SSL)
+        {
+          pso->flags |= F_OPSOCK_SKIP_SSL_SD;
+        }
       r = 1;
-      goto end;
+      //goto end;
 
     }
 
-  end: ;
+  //end: ;
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -323,6 +326,28 @@ bind_socket(int fd, struct addrinfo *aip)
   return 0;
 }
 
+static void
+net_destroy_tnsat(__sock_o pso)
+{
+  if (!(pso->timers.flags & F_ST_MISC02_ACT))
+    {
+      pso->timers.flags |= F_ST_MISC02_ACT;
+      pso->timers.misc02 = time(NULL);
+    }
+  else
+    {
+      pso->timers.misc03 = time(NULL);
+      time_t pt_diff = (pso->timers.misc03 - pso->timers.misc02);
+      if (pt_diff > pso->policy.close_timeout)
+        {
+          print_str(
+              "WARNING: net_destroy_tnsat: [%d] shutdown timed out after %u seconds\n",
+              pso->sock, pt_diff);
+          pso->flags |= F_OPSOCK_SKIP_SSL_SD;
+        }
+    }
+}
+
 int
 net_destroy_connection(__sock_o so)
 {
@@ -352,6 +377,13 @@ net_destroy_connection(__sock_o so)
                   so->sock);
               goto ssl_cleanup;
             }
+          else if (so->flags & F_OPSOCK_SKIP_SSL_SD)
+            {
+              print_str(
+                  "DEBUG: net_destroy_connection: [%d]: F_OPSOCK_SKIP_SSL_SD is set, skipping shutdown\n",
+                  so->sock);
+              goto ssl_cleanup;
+            }
 
           errno = 0;
           if (!(so->flags & F_OPSOCK_TS_DISCONNECTED)
@@ -359,6 +391,10 @@ net_destroy_connection(__sock_o so)
             {
               if (0 == ret)
                 {
+                  /*print_str(
+                   "D5: net_destroy_connection: [%d]: SSL_shutdown not yet finished\n",
+                   so->sock);*/
+                  net_destroy_tnsat(so);
                   pthread_mutex_unlock(&so->mutex);
                   return 2;
                 }
@@ -370,6 +406,10 @@ net_destroy_connection(__sock_o so)
               if ((ssl_err == SSL_ERROR_WANT_READ
                   || ssl_err == SSL_ERROR_WANT_WRITE))
                 {
+                  /*print_str(
+                   "D5: net_destroy_connection: [%d]: SSL_shutdown needs action %d to complete\n",
+                   so->sock, ssl_err);*/
+                  net_destroy_tnsat(so);
                   pthread_mutex_unlock(&so->mutex);
                   return 2;
                 }
@@ -408,8 +448,7 @@ net_destroy_connection(__sock_o so)
               if ( errno == ENOTCONN)
                 {
                   print_str(
-
-                  "D5: socket: [%d] shutdown: code:[%d] errno:[%d] %s\n",
+                      "D5: socket: [%d] shutdown: code:[%d] errno:[%d] %s\n",
                       so->sock, ret, errno,
                       strerror_r(errno, err_buffer, sizeof(err_buffer)));
                 }
@@ -1122,8 +1161,24 @@ net_worker(void *args)
 
   sigset_t set;
 
+  sigfillset(&set);
+  /*sigaddset(&set, SIGPIPE);
+   sigaddset(&set, SIGINT);
+   sigaddset(&set, SIGUSR2);
+   sigaddset(&set, SIGIO);
+   sigaddset(&set, SIGURG);*/
+
+  s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+  if (s != 0)
+    {
+      print_str("ERROR: net_worker: pthread_sigmask (SIG_BLOCK) failed: %d\n",
+          s);
+      abort();
+    }
+
   sigemptyset(&set);
-  //sigaddset(&set, SIGURG);
+  sigaddset(&set, SIGURG);
   sigaddset(&set, SIGIO);
   sigaddset(&set, SIGUSR1);
 
@@ -1131,22 +1186,8 @@ net_worker(void *args)
 
   if (s != 0)
     {
-      print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", s);
-      abort();
-    }
-
-  sigemptyset(&set);
-  sigaddset(&set, SIGPIPE);
-  sigaddset(&set, SIGINT);
-  sigaddset(&set, SIGUSR2);
-  //sigaddset(&set, SIGIO);
-  sigaddset(&set, SIGURG);
-
-  s = pthread_sigmask(SIG_BLOCK, &set, NULL);
-
-  if (s != 0)
-    {
-      print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", s);
+      print_str("ERROR: net_worker: pthread_sigmask (SIG_UNBLOCK) failed: %d\n",
+          s);
       abort();
     }
 
@@ -1158,7 +1199,7 @@ net_worker(void *args)
   thrd->buffer0_size = MAX_PRINT_OUT;
 
   pthread_t _pt = thrd->pt;
-  int _tid = syscall(SYS_gettid);
+  pid_t _tid = (pid_t) syscall(SYS_gettid);
 
   print_str("DEBUG: net_worker: [%d]: thread coming online [%d]\n", _tid,
       thrd->oper_mode);
@@ -1241,22 +1282,9 @@ net_worker(void *args)
 
           t_pso->st_p1 = thrd->buffer0;
 
-          int tpid = (int) _tid, async = 1;
+          struct f_owner_ex fown_ex;
 
-          if (ioctl(t_pso->sock, SIOCSPGRP, &tpid) == -1)
-            {
-              char err_buf[1024];
-              print_str(
-                  "ERROR: net_worker: [%d]: ioctl (SIOCSPGRP) failed [%d] [%s]\n",
-                  t_pso->sock, errno,
-                  strerror_r(errno, err_buf, sizeof(err_buf)));
-              t_pso->flags |= F_OPSOCK_TERM;
-            }
-          else
-            {
-              print_str("D6: net_worker: [%d]: set SIOCSPGRP for [%d]\n", _tid,
-                  t_pso->sock);
-            }
+          pid_t async = 1;
 
           if (ioctl(t_pso->sock, FIOASYNC, &async) == -1)
             {
@@ -1268,10 +1296,31 @@ net_worker(void *args)
               t_pso->flags |= F_OPSOCK_TERM;
             }
 
+          fown_ex.pid = _tid;
+          fown_ex.type = F_OWNER_TID;
+
+          if (fcntl(t_pso->sock, F_SETOWN_EX, &fown_ex) == -1)
+            {
+              char err_buf[1024];
+              print_str(
+                  "ERROR: net_worker: [%d]: fcntl (F_SETOWN_EX) failed [%d] [%s]\n",
+                  t_pso->sock, errno,
+                  strerror_r(errno, err_buf, sizeof(err_buf)));
+              t_pso->flags |= F_OPSOCK_TERM;
+            }
+          else
+            {
+              print_str("D4: net_worker: [%d]: fcntl set F_SETOWN_EX on [%d]\n",
+                  _tid, t_pso->sock);
+            }
+
           pthread_mutex_unlock(&t_pso->mutex);
 
-          if (!md_alloc_le(&thrd->proc_objects, 0, 0, iobj_ptr->ptr))
+          if (NULL == md_alloc_le(&thrd->proc_objects, 0, 0, iobj_ptr->ptr))
             {
+              print_str(
+                  "ERROR: net_worker: [%d]: could not allocate socket to thread %d (out of memory)\n",
+                  t_pso->sock, _tid);
               break;
             }
 
@@ -1319,6 +1368,9 @@ net_worker(void *args)
 
               if (2 == (r = net_destroy_connection(pso)))
                 {
+                  thrd->timers.t1 = time(NULL);
+                  int_state |= ST_NET_WORKER_ACT;
+
                   goto l_end;
                 }
 
@@ -1364,6 +1416,8 @@ net_worker(void *args)
 
           if ((r = pso->pcheck_r(pso)))
             {
+              thrd->timers.t1 = time(NULL);
+              int_state |= ST_NET_WORKER_ACT;
               pso->flags |= F_OPSOCK_TERM;
             }
 
@@ -1383,8 +1437,8 @@ net_worker(void *args)
               pso->buffer0)))
             {
           case 2:
-
-            if (pso->counters.b_read)
+            ;
+            if (pso->counters.b_read > 0)
               {
                 break;
               }
@@ -1395,7 +1449,7 @@ net_worker(void *args)
 
             break;
           case 0:
-
+            ;
             break;
           default:
             print_str(
@@ -1502,6 +1556,8 @@ net_worker(void *args)
 
       usleep(100);
 
+      //print_str("%d - pooling socket..   \n", (int) _tid);
+
       if (int_state & ST_NET_WORKER_ACT)
         {
           int_state ^= ST_NET_WORKER_ACT;
@@ -1522,7 +1578,6 @@ net_worker(void *args)
               thrd->oper_mode);
         }
 
-      //print_str("%d - pooling socket.. %d     \n", (int) _tid, pooling_timeout);
     }
 
   print_str("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
@@ -1740,12 +1795,39 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
     {
       if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
         {
+          if (!(spso->timers.flags & F_ST_MISC00_ACT))
+            {
+              spso->timers.flags |= F_ST_MISC00_ACT;
+              spso->timers.misc00 = time(NULL);
+            }
+          else
+            {
+              spso->timers.misc01 = time(NULL);
+              time_t pt_diff = (spso->timers.misc01 - spso->timers.misc00);
+              if (pt_diff > spso->policy.accept_timeout)
+                {
+                  print_str(
+                      "WARNING: net_accept: [%d] accept timed out after %u seconds\n",
+                      spso->sock, pt_diff);
+                  spso->status = -7;
+                  goto f_term;
+                }
+            }
+
           pthread_mutex_unlock(&spso->mutex);
           return 2;
         }
       spso->status = -1;
+
+      f_term: ;
+
       pthread_mutex_unlock(&spso->mutex);
       return 1;
+    }
+
+  if (spso->timers.flags & F_ST_MISC00_ACT)
+    {
+      spso->timers.flags ^= F_ST_MISC00_ACT;
     }
 
   int ret;
@@ -1966,8 +2048,9 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
-          if (pso->timers.misc00 == (time_t) 0)
+          if (!(spso->timers.flags & F_ST_MISC00_ACT))
             {
+              spso->timers.flags |= F_ST_MISC00_ACT;
               pso->timers.misc00 = time(NULL);
             }
           else
@@ -1988,12 +2071,18 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
           return 2;
         }
 
-      print_str("ERROR: SSL_accept: %d | [%d] [%d]\n", pso->sock, ret, ssl_err);
+      print_str("ERROR: SSL_accept: socket:[%d] code:[%d] sslerr:[%d]\n",
+          pso->sock, ret, ssl_err);
 
       f_term: ;
 
       pso->flags |= F_OPSOCK_TERM;
 
+    }
+
+  if (spso->timers.flags & F_ST_MISC00_ACT)
+    {
+      spso->timers.flags ^= F_ST_MISC00_ACT;
     }
 
   pso->timers.misc00 = (time_t) 0;
@@ -2046,6 +2135,7 @@ int
 net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock(&pso->mutex);
+
   int ret, f_ret = 0;
 
   if ((ret = SSL_connect(pso->ssl)) != 1)
@@ -2056,8 +2146,9 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
-          if (pso->timers.misc00 == (time_t) 0)
+          if (!(pso->timers.flags & F_ST_MISC00_ACT))
             {
+              pso->timers.flags |= F_ST_MISC00_ACT;
               pso->timers.misc00 = time(NULL);
             }
           else
@@ -2081,15 +2172,20 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
       pso->status = ret;
       pso->s_errno = ssl_err;
 
-      print_str("ERROR: SSL_connect failed socket:[%d] code:[%d] sslerr:[%d]\n",
+      print_str("ERROR: SSL_connect: socket:[%d] code:[%d] sslerr:[%d]\n",
           pso->sock, ret, ssl_err);
 
       f_term: ;
 
       pso->flags |= F_OPSOCK_TERM;
 
-      pthread_mutex_unlock(&pso->mutex);
+      //pthread_mutex_unlock(&pso->mutex);
       //return 1;
+    }
+
+  if (pso->timers.flags & F_ST_MISC00_ACT)
+    {
+      pso->timers.flags ^= F_ST_MISC00_ACT;
     }
 
   pso->timers.last_act = time(NULL);
@@ -2133,7 +2229,7 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 {
   if (0 == length)
     {
-      print_str("ERROR: net_ssend_b: zero length input\n");
+      print_str("ERROR: net_ssend_b: [%d]: zero length input\n", pso->sock);
       abort();
     }
 
@@ -2145,7 +2241,11 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 
   unsigned char *in_data = (unsigned char*) data;
 
+  time_t t00, t01;
+
   nssb_start: ;
+
+  t00 = time(NULL);
 
   while ((s_ret = send(pso->sock, in_data, length, MSG_WAITALL | MSG_NOSIGNAL))
       == -1)
@@ -2165,6 +2265,19 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
           print_str("D3: net_ssend_b: [%d] [%d]: %s\n", pso->sock, errno,
               strerror_r(errno, err_buf, 1024));
         }
+
+      t01 = time(NULL);
+      time_t pt_diff = (t01 - t00);
+
+      if (pt_diff > pso->policy.send_timeout)
+        {
+          print_str(
+              "WARNING: net_ssend_ssl_b: [%d] SSL_write timed out after %u seconds\n",
+              pso->sock, pt_diff);
+          pthread_mutex_unlock(&pso->mutex);
+          return 1;
+        }
+
       usleep(100000);
     }
 
@@ -2185,8 +2298,6 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 
           goto nssb_start;
 
-          //pso->flags |= F_OPSOCK_TERM;
-          //ret = 1;
         }
     }
 
@@ -2200,13 +2311,15 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
 {
   if (0 == length)
     {
-      print_str("ERROR: net_ssend_ssl_b: zero length input\n");
+      print_str("ERROR: net_ssend_ssl_b: [%d]: zero length input\n", pso->sock);
       abort();
     }
 
   mutex_lock(&pso->mutex);
 
   int ret, f_ret;
+
+  time_t t00 = time(NULL), t01;
 
   while ((ret = SSL_write(pso->ssl, data, length)) < 1)
     {
@@ -2248,6 +2361,18 @@ net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
               pthread_mutex_unlock(&pso->mutex);
               return 1;
             }
+        }
+
+      t01 = time(NULL);
+      time_t pt_diff = (t01 - t00);
+
+      if (pt_diff > pso->policy.send_timeout)
+        {
+          print_str(
+              "WARNING: net_ssend_ssl_b: [%d] SSL_write timed out after %u seconds\n",
+              pso->sock, pt_diff);
+          pthread_mutex_unlock(&pso->mutex);
+          return 1;
         }
 
       usleep(25000);

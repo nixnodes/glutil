@@ -809,7 +809,8 @@ int
 opt_g_d_fnamei(void *arg, int m, void *opt)
 {
 #if defined FNM_CASEFOLD
-  return g_cprg(arg, m, fname_determine_negated(), FNM_CASEFOLD, 0, F_GM_ISFNAME, opt);
+  return g_cprg(arg, m, fname_determine_negated(), FNM_CASEFOLD, 0,
+  F_GM_ISFNAME, opt);
 #else
   return 9910;
 #endif
@@ -2417,7 +2418,17 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (!ca->policy.idle_timeout)
     {
-      ca->policy.idle_timeout = 180;
+      ca->policy.idle_timeout = 10;
+    }
+
+  if (!ca->policy.close_timeout)
+    {
+      ca->policy.close_timeout = 10;
+    }
+
+  if (!ca->policy.send_timeout)
+    {
+      ca->policy.send_timeout = 10;
     }
 
   ca->st_p0 = (char*) ca->b0;

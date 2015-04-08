@@ -180,24 +180,21 @@ net_deploy(void)
   mallopt(M_ARENA_MAX, 1);
 #endif
 
-  struct sigaction sa_wthrd =
-    {
-      { 0 } }, sa_mthrd =
-    {
-      { 0 } };
+  struct sigaction sa_wthrd, sa_mthrd;
 
   sa_wthrd.sa_handler = sig_handler_null;
-  sa_wthrd.sa_flags = SA_RESTART ;
+  sa_wthrd.sa_flags = SA_RESTART;
 
   sigfillset(&sa_wthrd.sa_mask);
   //sigaddset(&sa_wthrd.sa_mask, SIGIO);
   //sigaddset(&sa_wthrd.sa_mask, SIGUSR1);
 
   sigaction(SIGIO, &sa_wthrd, NULL);
+  sigaction(SIGURG, &sa_wthrd, NULL);
   sigaction(SIGUSR1, &sa_wthrd, NULL);
 
   sa_mthrd.sa_handler = net_def_sig_handler;
-  sa_mthrd.sa_flags = SA_RESTART ;
+  sa_mthrd.sa_flags = SA_RESTART;
 
   sigfillset(&sa_mthrd.sa_mask);
   //sigaddset(&sa_mthrd.sa_mask, SIGUSR2);
