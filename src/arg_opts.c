@@ -2503,6 +2503,8 @@ _gg_opt gg_prio_f_ref[] =
         { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
         { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
         { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
+        { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
+        { .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
 #endif
         { 0x0 } };
 
