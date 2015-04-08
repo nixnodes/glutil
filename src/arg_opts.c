@@ -2423,7 +2423,7 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (!ca->policy.close_timeout)
     {
-      ca->policy.close_timeout = 10;
+      ca->policy.close_timeout = 15;
     }
 
   if (!ca->policy.send_timeout)
