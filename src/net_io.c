@@ -1138,7 +1138,6 @@ net_proc_sock_hmemb(po_thrd thrd)
 
 #include <sys/ioctl.h>
 
-
 #define T_NET_WORKER_SD                 (time_t) 45
 #define I_NET_WORKER_IDLE_ALERT         (time_t) 30
 
@@ -1451,6 +1450,9 @@ net_worker(void *args)
           case 0:
             ;
             break;
+          case -3:
+            goto int_st;
+            break;
           default:
             print_str(
                 "ERROR: %s: socket:[%d] code:[%d] status:[%d] errno:[%d] %s\n",
@@ -1587,7 +1589,7 @@ net_worker(void *args)
           sleep(t_interval);
           thrd->timers.t1 = time(NULL);
           ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
-          print_str("D6: [%d]: waking up worker [%hu] \n", _tid,
+          print_str("D6: [%d]: thread waking up [%hu]\n", _tid,
               thrd->oper_mode);
         }
 
@@ -1894,7 +1896,6 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
   if (!(spso->flags & F_OPSOCK_SSL))
     {
       ret = net_assign_sock(base, threadr, pso, spso);
-
     }
 
   pthread_mutex_unlock(&spso->mutex);
@@ -2017,10 +2018,12 @@ net_recv_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 
           if (pso->counters.b_read)
             {
-              pthread_mutex_unlock(&pso->mutex);
-              return 2;
+              ret = 2;
             }
-          ret = 0;
+          else
+            {
+              ret = 0;
+            }
         }
       else
         {
@@ -2061,6 +2064,9 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
+          print_str("D6: net_accept_ssl: SSL_accept not satisfied: [%d] [%d]\n",
+              ret, ssl_err);
+
           if (!(pso->timers.flags & F_ST_MISC00_ACT))
             {
               pso->timers.flags |= F_ST_MISC00_ACT;
@@ -2075,13 +2081,15 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
                   print_str(
                       "WARNING: SSL_accept: [%d] timed out after %u seconds\n",
                       pso->sock, pt_diff);
-                  ret = 2;
+                  ret = 0;
                   goto f_term;
                 }
+              usleep(1000);
             }
+
           pthread_mutex_unlock(&pso->mutex);
           pthread_mutex_unlock(&spso->mutex);
-          return 2;
+          return -3;
         }
 
       print_str("ERROR: SSL_accept: socket:[%d] code:[%d] sslerr:[%d]\n",
@@ -2089,7 +2097,7 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       f_term: ;
 
-      pso->flags |= F_OPSOCK_TERM;
+      pso->flags |= F_OPSOCK_TERM | F_OPSOCK_SKIP_SSL_SD;
 
     }
 
@@ -2113,8 +2121,6 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
       spso->flags ^= F_OPSOCK_ST_SSL_ACCEPT;
     }
 
-  ssl_show_client_certs(pso, pso->ssl);
-
   if (!(pso->flags & F_OPSOCK_TERM))
     {
       int eb;
@@ -2130,6 +2136,8 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
           SSL_CIPHER_get_version(SSL_get_current_cipher(pso->ssl)));
 
       print_str("D2: SSL_CIPHER_description: %d, %s", pso->sock, cd);
+
+      ssl_show_client_certs(pso, pso->ssl);
     }
 
   spso->rcv_cb = spso->rcv_cb_t;
@@ -2159,6 +2167,10 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
+          print_str(
+              "D6: net_connect_ssl: SSL_connect not satisfied: [%d] [%d]\n",
+              ret, ssl_err);
+
           if (!(pso->timers.flags & F_ST_MISC00_ACT))
             {
               pso->timers.flags |= F_ST_MISC00_ACT;
@@ -2176,10 +2188,12 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
                   f_ret = 2;
                   goto f_term;
                 }
+
+              usleep(1000);
             }
 
           pthread_mutex_unlock(&pso->mutex);
-          return 2;
+          return -3;
         }
 
       pso->status = ret;

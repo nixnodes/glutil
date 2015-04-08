@@ -2400,17 +2400,18 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   if (!ca->policy.ssl_accept_timeout)
     {
-      ca->policy.ssl_accept_timeout = 5;
+      ca->policy.ssl_accept_timeout = 15;
     }
   if (!ca->policy.accept_timeout)
     {
-      ca->policy.accept_timeout = 15;
+      ca->policy.accept_timeout = 10;
     }
 
   if (!ca->policy.ssl_connect_timeout)
     {
-      ca->policy.ssl_connect_timeout = 5;
+      ca->policy.ssl_connect_timeout = 15;
     }
+
   if (!ca->policy.connect_timeout)
     {
       ca->policy.connect_timeout = 15;
