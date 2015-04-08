@@ -1020,7 +1020,7 @@ net_proc_sendq(__sock_o pso)
 {
   p_md_obj ptr = pso->sendq.first;
 
-  ssize_t off = (ssize_t) pso->sendq.offset;
+  off_t ok = 0;
 
   while (ptr)
     {
@@ -1030,15 +1030,16 @@ net_proc_sendq(__sock_o pso)
           int ret;
           switch ((ret = pso->send0(pso, psqp->data, psqp->size)))
             {
-              case 0:
+              case 0:;
               ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
+              ok++;
               continue;
-              case 1:
+              case 1:;
               print_str ("ERROR: [%d] [%d]: net_proc_sendq: send data failed, payload size: %zd\n", pso->sock, pso->s_errno, psqp->size);
-              ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
+              //ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
               net_send_sock_term_sig(pso);
               goto end;
-              case 2:
+              case 2:;
 
               break;
             }
@@ -1047,12 +1048,11 @@ net_proc_sendq(__sock_o pso)
       ptr = ptr->next;
     }
 
+  print_str("D5: net_proc_sendq: [%d]: OK: %llu\n", pso->sock, (uint64_t) ok);
+
   end: ;
-  ssize_t off_ret = (ssize_t) pso->sendq.offset;
 
-  print_str("D5: net_proc_sendq: [%d]: OK: %zu\n", pso->sock, off - off_ret);
-
-  return off_ret;
+  return (ssize_t) pso->sendq.offset;
 }
 
 int
@@ -2204,7 +2204,7 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 
       f_term: ;
 
-      pso->flags |= F_OPSOCK_TERM;
+      pso->flags |= F_OPSOCK_TERM | F_OPSOCK_SKIP_SSL_SD;
 
       //pthread_mutex_unlock(&pso->mutex);
       //return 1;
@@ -2254,13 +2254,19 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
 int
 net_ssend_b(__sock_o pso, void *data, size_t length)
 {
+  mutex_lock(&pso->mutex);
+
   if (0 == length)
     {
       print_str("ERROR: net_ssend_b: [%d]: zero length input\n", pso->sock);
       abort();
     }
 
-  mutex_lock(&pso->mutex);
+  if (pso->flags & F_OPSOCK_TERM)
+    {
+      pthread_mutex_unlock(&pso->mutex);
+      return 1;
+    }
 
   int ret = 0;
   ssize_t s_ret;
@@ -2305,7 +2311,7 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
           return 1;
         }
 
-      usleep(100000);
+      usleep(25000);
     }
 
   if (!ret)
@@ -2336,13 +2342,20 @@ net_ssend_b(__sock_o pso, void *data, size_t length)
 int
 net_ssend_ssl_b(__sock_o pso, void *data, size_t length)
 {
+
+  mutex_lock(&pso->mutex);
+
   if (0 == length)
     {
       print_str("ERROR: net_ssend_ssl_b: [%d]: zero length input\n", pso->sock);
       abort();
     }
 
-  mutex_lock(&pso->mutex);
+  if (pso->flags & F_OPSOCK_TERM)
+    {
+      pthread_mutex_unlock(&pso->mutex);
+      return 1;
+    }
 
   int ret, f_ret;
 
