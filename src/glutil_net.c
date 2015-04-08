@@ -112,14 +112,14 @@ net_ping_threads(void)
 static void
 net_def_sig_handler(int signal)
 {
-
   if (!(gfl & F_OPT_KILL_GLOBAL) && register_count(&_sock_r) == 0)
     {
       print_str(
-          "WARNING: net_def_sig_handler: [%d]: nothing left to process [%d]\n",
+          "NOTICE: net_def_sig_handler: [%ld]: nothing left to process [%d]\n",
           syscall(SYS_gettid), signal);
+      mutex_lock(&mutex_glob00);
       gfl |= F_OPT_KILL_GLOBAL;
-
+      pthread_mutex_unlock(&mutex_glob00);
     }
   else
     {
@@ -128,30 +128,52 @@ net_def_sig_handler(int signal)
       //sleep(1000);
     }
 
-  /*pthread_t pt = pthread_self();
-
-   p_md_obj ptr = search_thrd_id(&_net_thrd_r, &pt);
-
-   if ( NULL == ptr)
-   {
-   return;
-   }
-
-   po_thrd thrd = (po_thrd) ptr->ptr;
-
-   if ( NULL == thrd)
-   {
-   return;
-   }
-
-   thrd->timers.t1 = time(NULL);
-
-   kill(SIGUSR2, getpid());*/
-
-  /*print_str("DEBUG: net_sigio_handler: [%d]: signal %s recieved\n",
-   syscall(SYS_gettid), signal == SIGIO ? "SIGIO" : "SIGURG");*/
-
   return;
+}
+
+static int
+net_deploy_wait_for_all_threads(pmda thread_reg)
+{
+  int l_res, ret;
+
+  while ((ret = g_get_gkill()))
+    {
+      mutex_lock(&thread_reg->mutex);
+
+      p_md_obj ptr = thread_reg->first;
+
+      l_res = 1;
+
+      while (ptr)
+        {
+          po_thrd thrd = (po_thrd) ptr->ptr;
+
+          mutex_lock(&thrd->mutex);
+
+          if (!(thrd->status & F_THRD_STATUS_INITIALIZED))
+            {
+              l_res = 0;
+              pthread_mutex_unlock(&thrd->mutex);
+              break;
+            }
+
+          pthread_mutex_unlock(&thrd->mutex);
+
+          ptr = ptr->next;
+        }
+
+      pthread_mutex_unlock(&thread_reg->mutex);
+
+      if (l_res)
+        {
+          break;
+        }
+
+      usleep(25000);
+
+    }
+
+  return ret;
 }
 
 #define NET_WTHRD_CLEANUP_TIMEOUT               (time_t) 30
@@ -213,9 +235,8 @@ net_deploy(void)
 
   if (sr != 0)
     {
-      print_str("ERROR: net_worker: pthread_sigmask failed: %d\n", sr);
+      print_str("ERROR: net_deploy: pthread_sigmask failed: %d\n", sr);
       abort();
-      return 1;
     }
 
   md_init_le(&_sock_r, (int) net_opts.max_sock);
@@ -229,25 +250,19 @@ net_deploy(void)
 
   int r;
 
-  if (net_opts.thread_l)
+  if ((r = spawn_threads(net_opts.thread_l, net_worker, 0, &_net_thrd_r,
+  THREAD_ROLE_NET_WORKER,
+  SOCKET_OPMODE_LISTENER)))
     {
-      if ((r = spawn_threads(net_opts.thread_l, net_worker, 0, &_net_thrd_r,
-      THREAD_ROLE_NET_WORKER,
-      SOCKET_OPMODE_LISTENER)))
-        {
-          print_str(
-              "ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n", r);
-          return 2;
-        }
-      else
-        {
-          if (gfl & F_OPT_VERBOSE)
-            {
-              print_str(
-                  "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
-                  net_opts.thread_l);
-            }
-        }
+      print_str("ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n",
+          r);
+      return 2;
+    }
+  else
+    {
+      print_str(
+          "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_LISTENER]\n",
+          net_opts.thread_l);
     }
 
   if ((r = spawn_threads(net_opts.thread_r, net_worker, 0, &_net_thrd_r,
@@ -260,12 +275,20 @@ net_deploy(void)
     }
   else
     {
-      if (gfl & F_OPT_VERBOSE)
-        {
-          print_str(
-              "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_RECIEVER]\n",
-              net_opts.thread_r);
-        }
+      print_str(
+          "DEBUG: deployed %hu socket worker threads [SOCKET_OPMODE_RECIEVER]\n",
+          net_opts.thread_r);
+    }
+
+  print_str("DEBUG: waiting for workers to initialize..\n");
+
+  if (net_deploy_wait_for_all_threads(&_net_thrd_r))
+    {
+      print_str("D5: all workers online\n");
+    }
+  else
+    {
+      goto _t_kill;
     }
 
   int fail;
@@ -286,11 +309,9 @@ net_deploy(void)
     }
   else
     {
-      if (gfl & F_OPT_VERBOSE2)
-        {
-          print_str("NOTICE: deployed %u socket(s)\n",
-              (uint32_t) _boot_pca.offset);
-        }
+      print_str("DEBUG: deployed %llu socket(s)\n",
+          (uint64_t) _boot_pca.offset);
+
     }
 
   if (net_opts.flags & (F_NETOPT_HUSER | F_NETOPT_HGROUP))
@@ -313,51 +334,21 @@ net_deploy(void)
 
   while (g_get_gkill())
     {
-      /*mutex_lock(&mutex_glob00);
-       if (gfl & F_OPT_KILL_GLOBAL)
-       {
-       tmon_ld = 1;
-       }
-       pthread_mutex_unlock(&mutex_glob00);*/
       //net_ping_threads();
       sleep(-1);
-
-      /*mutex_lock(&mutex_glob00);
-       if (status & F_STATUS_MSIG00)
-       {
-       status ^= F_STATUS_MSIG00;
-       tmon_ld = NET_TMON_SLEEP_DEFAULT;
-       }*/
-      /* else
-       {
-       if (tmon_ld < 15)
-       {
-       tmon_ld *= 2;
-       }
-       }*/
-      //pthread_mutex_unlock(&mutex_glob00);
     }
 
   if (register_count(&_sock_r))
     {
-      if (gfl & F_OPT_VERBOSE3)
-        {
-          print_str("DEBUG: sending F_OPSOCK_TERM to all sockets\n");
-        }
+      print_str("DEBUG: sending F_OPSOCK_TERM to all sockets\n");
       net_nw_ssig_term_r(&_sock_r);
     }
 
   _t_kill: ;
 
-  if (gfl & F_OPT_VERBOSE3)
-    {
-      print_str("DEBUG: sending F_THRD_TERM to all worker threads\n");
-    }
+  print_str("DEBUG: sending F_THRD_TERM to all worker threads\n");
 
-  if (gfl & F_OPT_VERBOSE)
-    {
-      print_str("D2: waiting for threads to exit..\n");
-    }
+  print_str("DEBUG: waiting for threads to exit..\n");
 
   time_t s = time(NULL), e;
   off_t l_count;
@@ -365,7 +356,7 @@ net_deploy(void)
   while ((l_count = register_count(&_net_thrd_r)) > 0)
     {
       thread_broadcast_kill(&_net_thrd_r);
-      sleep(1);
+      usleep(50000);
       e = time(NULL);
       if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
         {
@@ -662,41 +653,6 @@ net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len)
 }
 
 static int
-net_search_dupip(__sock_o pso, void *arg)
-{
-  __sock_cret parg = (__sock_cret) arg;
-  if (parg->pso->oper_mode == SOCKET_OPMODE_RECIEVER && (parg->pso)->res->ai_family == pso->res->ai_family)
-    {
-      switch (pso->res->ai_family)
-        {
-          case AF_INET:
-          ;
-
-          if (!memcmp(
-                  (const void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr,
-                  (const void*) &((struct sockaddr_in*) (parg->pso)->res->ai_addr)->sin_addr,
-                  sizeof(struct in_addr)))
-            {
-              parg->ret++;
-            }
-          break;
-          case AF_INET6:
-          ;
-          if (!memcmp(
-                  (const void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr,
-                  (const void*) &((struct sockaddr_in6*) (parg->pso)->res->ai_addr)->sin6_addr,
-                  sizeof(struct in6_addr)))
-            {
-              parg->ret++;
-            }
-          break;
-
-        }
-    }
-  return 0;
-}
-
-static int
 net_l_wp_setup_pipe(pid_t c_pid, void *arg)
 {
   __g_handle hdl = (__g_handle) arg;
@@ -746,32 +702,6 @@ net_gl_socket_init0(__sock_o pso)
       }
 
 //print_str("NOTICE: accepted %d\n", pso->sock);
-
-    _sock_cret sc_ret =
-      { .pso = pso, .ret = 0 };
-
-    if (pso->policy.max_sim_ip)
-      {
-        int dip_sr;
-        if ((dip_sr = net_enum_sockr(pso->host_ctx, net_search_dupip,
-            (void*) &sc_ret)))
-          {
-            print_str(
-                "ERROR: net_gl_socket_init0: [%d] net_enum_sockr failed: [%d]\n",
-                pso->sock, dip_sr);
-            pso->flags |= F_OPSOCK_TERM;
-            return 2;
-          }
-
-        if (sc_ret.ret > pso->policy.max_sim_ip)
-          {
-            print_str(
-                "ERROR: net_gl_socket_init0: [%d] max_sim limit reached: [%u/%u]\n",
-                pso->sock, sc_ret.ret, pso->policy.max_sim_ip);
-            pso->flags |= F_OPSOCK_TERM;
-            return 2;
-          }
-      }
 
     if ( NULL == pso->st_p0)
       {

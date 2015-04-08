@@ -2329,12 +2329,13 @@ opt_queue_connection(void *arg, uint32_t flags)
         }
     }
 
-  md_init_le(&ca->init_rc0, 8);
-  md_init_le(&ca->init_rc1, 8);
-  md_init_le(&ca->shutdown_rc0, 8);
-  md_init_le(&ca->shutdown_rc1, 8);
+  md_init_le(&ca->init_rc0, 16);
+  md_init_le(&ca->init_rc1, 16);
+  md_init_le(&ca->shutdown_rc0, 16);
+  md_init_le(&ca->shutdown_rc1, 16);
 
   //net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
+  net_push_rc(&ca->shutdown_rc1, (_t_stocb) net_gl_socket_post_clean, 0);
 
   switch (ca->mode)
     {
@@ -2362,16 +2363,13 @@ opt_queue_connection(void *arg, uint32_t flags)
 
     net_push_rc(&ca->init_rc0, (_t_stocb) net_baseline_socket_init0, 0);
 
-    md_init_le(&pc_a, 512);
+    md_init_le(&pc_a, 256);
 
     pc_a.objects[PROT_CODE_FS].ptr = (void*) net_baseline_fsproto;
 
     if (ca->ca_flags & F_CA_MISC00)
       {
         net_push_rc(&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer, 0);
-
-        //ca->opt0.u00 = 1234;
-        //ca->opt0.u01 = 0;
       }
 
     net_push_rc(&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_rc0, 0);
@@ -2396,40 +2394,43 @@ opt_queue_connection(void *arg, uint32_t flags)
   ca->flags |= flags | F_OPSOCK_INIT_SENDQ;
   ca->thread_register = &_net_thrd_r;
 
-  net_push_rc(&ca->shutdown_rc1, (_t_stocb) net_gl_socket_post_clean, 0);
+  //net_socket_init_enforce_policy
+
+  net_push_rc(&ca->init_rc0, (_t_stocb) net_socket_init_enforce_policy, 0);
 
   if (!ca->policy.ssl_accept_timeout)
     {
-      ca->policy.ssl_accept_timeout = 15;
+      ca->policy.ssl_accept_timeout = 30;
     }
+
   if (!ca->policy.accept_timeout)
     {
-      ca->policy.accept_timeout = 10;
+      ca->policy.accept_timeout = 30;
     }
 
   if (!ca->policy.ssl_connect_timeout)
     {
-      ca->policy.ssl_connect_timeout = 15;
+      ca->policy.ssl_connect_timeout = 30;
     }
 
   if (!ca->policy.connect_timeout)
     {
-      ca->policy.connect_timeout = 15;
+      ca->policy.connect_timeout = 30;
     }
 
   if (!ca->policy.idle_timeout)
     {
-      ca->policy.idle_timeout = 25;
+      ca->policy.idle_timeout = 180;
     }
 
   if (!ca->policy.close_timeout)
     {
-      ca->policy.close_timeout = 25;
+      ca->policy.close_timeout = 30;
     }
 
   if (!ca->policy.send_timeout)
     {
-      ca->policy.send_timeout = 10;
+      ca->policy.send_timeout = 30;
     }
 
   ca->st_p0 = (char*) ca->b0;

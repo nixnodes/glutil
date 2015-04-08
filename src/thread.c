@@ -155,16 +155,15 @@ int
 spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,
     uint16_t oper_mode)
 {
-
-  int i, r = 2;
-  for (i = num; i; i--)
+  int r;
+  while (num--)
     {
       if ((r = thread_create(call, id, thread_register, role, oper_mode)))
         {
-          break;
+          return r;
         }
     }
-  return r;
+  return 0;
 }
 
 int

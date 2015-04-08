@@ -60,11 +60,14 @@ typedef struct ___fs_stat_header
 #define F_FS_STSOCK_FASSOC              ((uint64_t)1 << 3)
 #define F_FS_STSOCK_XFER_FIN            ((uint64_t)1 << 4)
 
+#define F_FS_STSOCK_HANDLE_OPEN         ((uint64_t)1 << 32)
+
 #define FS_STSS_XFER_R_WSTAT            1
 #define FS_STSS_XFER_R_WDATA            2
 #define FS_STSS_XFER_RECV               3
 #define FS_STSS_XFER_SEND               4
 #define FS_STSS_XFER_R_WSHA             5
+
 
 typedef int
 (*_nfs_ncb)(__sock_o pso, __fs_rh_enc packet, void *arg);
@@ -83,6 +86,7 @@ typedef struct ___fs_state_sock
 {
   uint64_t state;
   uint16_t stage;
+
   _fs_hstat hstat;
   int handle;
   _nfs_ncb notify_cb;
@@ -95,6 +99,8 @@ typedef struct ___fs_state_sock
 
 nfs_ncb net_baseline_fsproto_xfer_stat_ok, net_baseline_fsproto_xfer_in_ok,
     net_baseline_fsproto_default;
+
+p_sc_cb net_fs_socket_destroy_rc0, net_fs_clean_handles;
 
 int
 net_baseline_fsproto(__sock_o pso, pmda base, pmda threadr, void *data);

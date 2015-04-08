@@ -27,6 +27,7 @@
 #define F_OPSOCK_SD_FIRST_DC            (a32 << 14)
 #define F_OPSOCK_HALT_RECV              (a32 << 15)
 #define F_OPSOCK_SKIP_SSL_SD            (a32 << 16)
+#define F_OPSOCK_SSL_KEYCERT_L          (a32 << 17)
 
 #define F_OPSOCK_CREAT_MODE             (F_OPSOCK_CONNECT|F_OPSOCK_LISTEN)
 #define F_OPSOCK_STATES                 (F_OPSOCK_ST_SSL_ACCEPT|F_OPSOCK_ST_SSL_CONNECT)
@@ -208,7 +209,8 @@ typedef struct ___sock_create_args
   _nn_2x64 opt0;
 } _sock_ca, *__sock_ca;
 
-p_sc_cb rc_tst, rc_ghs, net_fs_socket_destroy_rc0;
+p_sc_cb rc_tst, rc_ghs, net_socket_init_enforce_policy;
+
 
 int
 net_connect_socket(int fd, struct addrinfo *aip);
@@ -263,6 +265,7 @@ int
 net_pop_rc(__sock_o pso, pmda rc);
 int
 net_push_rc(pmda rc, _t_stocb call, uint32_t flags);
+
 
 #endif
 

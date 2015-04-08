@@ -373,21 +373,27 @@ net_destroy_connection(__sock_o so)
           if (SSL_get_shutdown(so->ssl) & SSL_RECEIVED_SHUTDOWN)
             {
               print_str(
-                  "DEBUG: net_destroy_connection: [%d]: SSL_RECEIVED_SHUTDOWN is set, skipping shutdown\n",
+                  "DEBUG: net_destroy_connection: [%d]: SSL_RECEIVED_SHUTDOWN is set, skipping SSL_shutdown\n",
                   so->sock);
               goto ssl_cleanup;
             }
           else if (so->flags & F_OPSOCK_SKIP_SSL_SD)
             {
               print_str(
-                  "DEBUG: net_destroy_connection: [%d]: F_OPSOCK_SKIP_SSL_SD is set, skipping shutdown\n",
+                  "DEBUG: net_destroy_connection: [%d]: F_OPSOCK_SKIP_SSL_SD is set, skipping SSL_shutdown\n",
+                  so->sock);
+              goto ssl_cleanup;
+            }
+          else if (so->flags & F_OPSOCK_TS_DISCONNECTED)
+            {
+              print_str(
+                  "DEBUG: net_destroy_connection: [%d]: F_OPSOCK_TS_DISCONNECTED is set, skipping SSL_shutdown\n",
                   so->sock);
               goto ssl_cleanup;
             }
 
           errno = 0;
-          if (!(so->flags & F_OPSOCK_TS_DISCONNECTED)
-              && (ret = SSL_shutdown(so->ssl)) < 1)
+          if ((ret = SSL_shutdown(so->ssl)) < 1)
             {
               if (0 == ret)
                 {
@@ -433,7 +439,11 @@ net_destroy_connection(__sock_o so)
 
           ssl_cleanup: ;
 
-          //SSL_certs_clear(so->ssl);
+          if (so->flags & F_OPSOCK_SSL_KEYCERT_L)
+            {
+              SSL_certs_clear(so->ssl);
+            }
+
           SSL_free(so->ssl);
 
           ERR_remove_state(0);
@@ -491,7 +501,6 @@ net_destroy_connection(__sock_o so)
       print_str(
           "ERROR: [%d] unable to close socket - code:[%d] errno:[%d] %s\n",
           so->sock, ret, errno, strerror_r(errno, err_buffer, 1024));
-      pthread_mutex_unlock(&so->mutex);
       ret = 1;
     }
 
@@ -685,12 +694,13 @@ net_open_connection(char *addr, char *port, __sock_ca args)
                   fd, r, args->ssl_cert);
               return 15;
             }
+          pso->flags |= F_OPSOCK_SSL_KEYCERT_L;
         }
 
       SSL_set_fd(pso->ssl, pso->sock);
 
-      pso->flags |= F_OPSOCK_ST_SSL_CONNECT;
-      //pso->limits.sock_timeout = args->policy.c_timeout;
+      //pso->flags |= F_OPSOCK_ST_SSL_CONNECT;
+
       pso->rcv_cb = (_p_s_cb) net_connect_ssl;
       pso->rcv_cb_t = (_p_s_cb) net_recv_ssl;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
@@ -705,8 +715,6 @@ net_open_connection(char *addr, char *port, __sock_ca args)
     }
   else
     {
-      pso->flags |= (F_OPSOCK_PROC_READY);
-      //pso->limits.sock_timeout = args->policy.c_timeout;
       pso->rcv_cb = (_p_s_cb) net_recv;
       if (args->flags & F_OPSOCK_INIT_SENDQ)
         {
@@ -716,6 +724,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
         {
           pso->send0 = (_p_ssend) net_ssend_b;
         }
+      pso->flags |= F_OPSOCK_PROC_READY;
     }
 
   pso->rcv1 = (_p_s_cb) args->proc;
@@ -735,7 +744,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
 
   net_pop_rc(pso, &pso->init_rc1);
 
-  pso->flags |= (F_OPSOCK_ACT);
+  pso->flags |= F_OPSOCK_ACT;
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -846,6 +855,8 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
           ERR_clear_error();
           return 12;
         }
+
+      pso->flags |= F_OPSOCK_SSL_KEYCERT_L;
 
       pso->rcv0 = (_p_s_cb) net_recv_ssl;
     }
@@ -1199,6 +1210,8 @@ net_worker(void *args)
 
   pthread_t _pt = thrd->pt;
   pid_t _tid = (pid_t) syscall(SYS_gettid);
+
+  thrd->status |= F_THRD_STATUS_INITIALIZED;
 
   print_str("DEBUG: net_worker: [%d]: thread coming online [%d]\n", _tid,
       thrd->oper_mode);
@@ -2240,12 +2253,12 @@ net_connect_ssl(__sock_o pso, pmda base, pmda threadr, void *data)
       print_str("D1: SSL_CIPHER_description: %d, %s", pso->sock, cd);
     }
 
-  pso->flags |= F_OPSOCK_PROC_READY;
+  /*if (pso->flags & F_OPSOCK_ST_SSL_CONNECT)
+   {
+   pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
+   }*/
 
-  if (pso->flags & F_OPSOCK_ST_SSL_CONNECT)
-    {
-      pso->flags ^= F_OPSOCK_ST_SSL_CONNECT;
-    }
+  pso->flags |= F_OPSOCK_PROC_READY;
 
   pthread_mutex_unlock(&pso->mutex);
 
@@ -2573,6 +2586,80 @@ net_push_rc(pmda rc, _t_stocb call, uint32_t flags)
 
   pic->call = call;
   pic->flags = flags;
+
+  return 0;
+}
+
+static int
+net_search_dupip(__sock_o pso, void *arg)
+{
+  __sock_cret parg = (__sock_cret) arg;
+  if (parg->pso->oper_mode == SOCKET_OPMODE_RECIEVER && (parg->pso)->res->ai_family == pso->res->ai_family)
+    {
+      switch (pso->res->ai_family)
+        {
+          case AF_INET:
+          ;
+
+          if (!memcmp(
+                  (const void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr,
+                  (const void*) &((struct sockaddr_in*) (parg->pso)->res->ai_addr)->sin_addr,
+                  sizeof(struct in_addr)))
+            {
+              parg->ret++;
+            }
+          break;
+          case AF_INET6:
+          ;
+          if (!memcmp(
+                  (const void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr,
+                  (const void*) &((struct sockaddr_in6*) (parg->pso)->res->ai_addr)->sin6_addr,
+                  sizeof(struct in6_addr)))
+            {
+              parg->ret++;
+            }
+          break;
+
+        }
+    }
+  return 0;
+}
+
+int
+net_socket_init_enforce_policy(__sock_o pso)
+{
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_RECIEVER:
+    ;
+
+    if (pso->policy.max_sim_ip)
+      {
+        _sock_cret sc_ret =
+          { .pso = pso, .ret = 0 };
+
+        int dip_sr;
+        if ((dip_sr = net_enum_sockr(pso->host_ctx, net_search_dupip,
+            (void*) &sc_ret)))
+          {
+            print_str(
+                "ERROR: net_socket_init_enforce_policy: [%d] net_enum_sockr failed: [%d]\n",
+                pso->sock, dip_sr);
+            pso->flags |= F_OPSOCK_TERM | F_OPSOCK_SKIP_SSL_SD;
+            return 2;
+          }
+
+        if (sc_ret.ret > pso->policy.max_sim_ip)
+          {
+            print_str(
+                "WARNING: net_socket_init_enforce_policy: [%d] max_sim limit reached: [%u/%u]\n",
+                pso->sock, sc_ret.ret, pso->policy.max_sim_ip);
+            pso->flags |= F_OPSOCK_TERM | F_OPSOCK_SKIP_SSL_SD;
+            return 2;
+          }
+      }
+    break;
+    }
 
   return 0;
 }

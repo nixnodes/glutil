@@ -17,14 +17,15 @@
 
 #include <pthread.h>
 
-#define F_THRD_TERM                     (a32 << 1)
+#define F_THRD_TERM                     ((uint32_t)1 << 1)
 
 #define THREAD_MAX	                50
 #define	MAX_OBJ_GEN_WORKER_ARG	        256
 
 #define THREAD_DEFAULT_BUFFER0_SIZE     8192
 
-#define F_THRD_STATUS_SUSPENDED         (a32 << 1)
+#define F_THRD_STATUS_SUSPENDED         ((uint32_t)1 << 1)
+#define F_THRD_STATUS_INITIALIZED       ((uint32_t)1 << 2)
 
 typedef struct gen_worker_arg
 {
