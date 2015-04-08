@@ -39,26 +39,36 @@ process_ca_requests(pmda md)
 
   while (ptr)
     {
+
+      if (!g_get_gkill())
+        {
+          break;
+        }
+
       __sock_ca pca = (__sock_ca) ptr->ptr;
 
       switch (pca->flags & F_OPSOCK_CREAT_MODE)
         {
-          case F_OPSOCK_CONNECT:
-          if ((ret = net_open_connection (pca->host, pca->port, pca)))
-            {
-              print_str ("ERROR: net_open_connection: host: %s port: %s, status:[%d] %s\n",
-                  pca->host, pca->port, ret, ret < 0 ? strerror_r(errno, buf_err, 1024) : "");
-              fail++;
-            }
-          break;
-          case F_OPSOCK_LISTEN:
-          if ((ret = net_open_listening_socket (pca->host, pca->port, pca)))
-            {
-              print_str ("ERROR: net_open_listening_socket: host: %s port: %s, status:[%d] %s\n",
-                  pca->host, pca->port, ret, ret < 0 ? strerror_r(errno, buf_err, 1024) : "");
-              fail++;
-            }
-          break;
+      case F_OPSOCK_CONNECT:
+        if ((ret = net_open_connection(pca->host, pca->port, pca)))
+          {
+            print_str(
+                "ERROR: net_open_connection: host: %s port: %s, status:[%d] %s\n",
+                pca->host, pca->port, ret,
+                ret < 0 ? strerror_r(errno, buf_err, 1024) : "");
+            fail++;
+          }
+        break;
+      case F_OPSOCK_LISTEN:
+        if ((ret = net_open_listening_socket(pca->host, pca->port, pca)))
+          {
+            print_str(
+                "ERROR: net_open_listening_socket: host: %s port: %s, status:[%d] %s\n",
+                pca->host, pca->port, ret,
+                ret < 0 ? strerror_r(errno, buf_err, 1024) : "");
+            fail++;
+          }
+        break;
         }
 
       ptr = ptr->next;
