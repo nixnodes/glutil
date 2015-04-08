@@ -440,9 +440,9 @@ net_destroy_connection(__sock_o so)
           ssl_cleanup: ;
 
           /*if (so->flags & F_OPSOCK_SSL_KEYCERT_L)
-            {
-              SSL_certs_clear(so->ssl);
-            }*/
+           {
+           SSL_certs_clear(so->ssl);
+           }*/
 
           SSL_free(so->ssl);
 
@@ -1850,7 +1850,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       //f_term: ;
 
       pthread_mutex_unlock(&spso->mutex);
-      return 1;
+      return 0;
     }
 
   /*if (spso->timers.flags & F_ST_MISC00_ACT)
@@ -1865,9 +1865,8 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
       close(fd);
       spso->status = -2;
       pthread_mutex_unlock(&spso->mutex);
-      return 1;
+      return 0;
     }
-
 
   struct addrinfo *p_net_res = malloc(sizeof(struct addrinfo));
 
@@ -1888,19 +1887,17 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   if ( NULL == pso)
     {
-      int sp_ret;
-      if (spso->status == 23)
-        {
-          spso->status = 0;
-          sp_ret = 0;
-        }
-      else
-        {
-          spso->status = -3;
-          sp_ret = 1;
-        }
+      /*
+       if (spso->status == 23)
+       {
+       spso->status = 0;
+       }
+       else
+       {
+       spso->status = -3;
+       }*/
       pthread_mutex_unlock(&spso->mutex);
-      return sp_ret;
+      return 0;
     }
 
   spso->cc = (void*) pso;
@@ -1912,7 +1909,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
 
   pthread_mutex_unlock(&spso->mutex);
 
-  return ret;
+  return 0;
 }
 
 int

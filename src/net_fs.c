@@ -1034,9 +1034,9 @@ net_fs_socket_destroy_rc0(__sock_o pso)
 
   pthread_mutex_unlock(&pso->mutex);
 
-  if (pso->oper_mode == SOCKET_OPMODE_LISTENER) {
+  /*if (pso->oper_mode == SOCKET_OPMODE_LISTENER) {
       abort();
-  }
+  }*/
 
   return 0;
 }
