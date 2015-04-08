@@ -1118,7 +1118,7 @@ net_nw_ssig_term_r(pmda objects)
 #define NET_SOCKWAIT_TO         ((time_t)30)
 
 static int
-net_proc_sock_term(po_thrd thrd)
+net_proc_sock_hmemb(po_thrd thrd)
 {
 
   off_t num_active = 0;
@@ -1140,7 +1140,7 @@ net_proc_sock_term(po_thrd thrd)
 
 #include <signal_t.h>
 
-#define T_NET_WORKER_SD         (time_t) 15
+#define T_NET_WORKER_SD         (time_t) 45
 
 #define ST_NET_WORKER_ACT       ((uint8_t)1 << 1)
 
@@ -1233,7 +1233,7 @@ net_worker(void *args)
                   break;
                 }
             }
-          if (net_proc_sock_term(thrd) == 0)
+          if (net_proc_sock_hmemb(thrd) == 0)
             {
               /*print_str("NOTICE: net_worker: [%d]: thread shutting down..\n",
                _tid);*/
@@ -1568,10 +1568,26 @@ net_worker(void *args)
 
       if (thread_inactive > 1)
         {
-          print_str("D6: [%d]: putting worker to sleep [%hu] \n", _tid,
-              thrd->oper_mode);
+          unsigned int t_interval;
+
+          mutex_lock(&thrd->mutex);
+
+          if (thrd->oper_mode == SOCKET_OPMODE_RECIEVER
+              && net_proc_sock_hmemb(thrd))
+            {
+              t_interval = 5;
+            }
+          else
+            {
+              t_interval = -1;
+            }
+
+          pthread_mutex_unlock(&thrd->mutex);
+
+          print_str("D6: [%d]: putting worker to sleep [%hu] [%u]\n", _tid,
+              thrd->oper_mode, t_interval);
           ts_flag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
-          sleep(-1);
+          sleep(t_interval);
           thrd->timers.t1 = time(NULL);
           ts_unflag_32(&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
           print_str("D6: [%d]: waking up worker [%hu] \n", _tid,
