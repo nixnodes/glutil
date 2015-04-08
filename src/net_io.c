@@ -1809,7 +1809,7 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
                   print_str(
                       "WARNING: net_accept: [%d] accept timed out after %u seconds\n",
                       spso->sock, pt_diff);
-                  spso->status = -7;
+                  spso->status = -1;
                   goto f_term;
                 }
             }
@@ -2048,9 +2048,9 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
       if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE)
         {
-          if (!(spso->timers.flags & F_ST_MISC00_ACT))
+          if (!(pso->timers.flags & F_ST_MISC00_ACT))
             {
-              spso->timers.flags |= F_ST_MISC00_ACT;
+              pso->timers.flags |= F_ST_MISC00_ACT;
               pso->timers.misc00 = time(NULL);
             }
           else
@@ -2080,9 +2080,9 @@ net_accept_ssl(__sock_o spso, pmda base, pmda threadr, void *data)
 
     }
 
-  if (spso->timers.flags & F_ST_MISC00_ACT)
+  if (pso->timers.flags & F_ST_MISC00_ACT)
     {
-      spso->timers.flags ^= F_ST_MISC00_ACT;
+      pso->timers.flags ^= F_ST_MISC00_ACT;
     }
 
   pso->timers.misc00 = (time_t) 0;
