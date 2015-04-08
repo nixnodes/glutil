@@ -1847,6 +1847,10 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
         }
       spso->status = -1;
 
+      char err_buf[1024];
+      print_str("ERROR: net_accept: [%d]: accept: [%d]: [%s]\n", spso->sock,
+      errno, strerror_r(errno, err_buf, sizeof(err_buf)));
+
       //f_term: ;
 
       pthread_mutex_unlock(&spso->mutex);
@@ -1864,6 +1868,13 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
     {
       close(fd);
       spso->status = -2;
+
+      char err_buf[1024];
+      print_str(
+          "ERROR: net_accept: [%d]: fcntl F_SETFL(O_NONBLOCK): [%d]: [%s]\n",
+          spso->sock,
+          errno, strerror_r(errno, err_buf, sizeof(err_buf)));
+
       pthread_mutex_unlock(&spso->mutex);
       return 0;
     }
@@ -1896,6 +1907,9 @@ net_accept(__sock_o spso, pmda base, pmda threadr, void *data)
        {
        spso->status = -3;
        }*/
+      print_str("ERROR: net_accept: [%d]: net_prep_acsock failed: [%d]\n",
+          spso->sock, spso->status);
+
       pthread_mutex_unlock(&spso->mutex);
       return 0;
     }
