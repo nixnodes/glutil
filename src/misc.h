@@ -59,4 +59,8 @@ uint32_t STDLOG_LVL;
 
 int
 print_version_long(void *arg, int m, void *opt);
+
+int
+(*print_str)(const char * volatile buf, ...);
+
 #endif /* MISC_H_ */

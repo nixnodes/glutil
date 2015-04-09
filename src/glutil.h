@@ -17,14 +17,15 @@
 #define OL_SZ                           sizeof(struct oneliner)
 #define ON_SZ                           sizeof(struct ONLINE)
 
-#include <g_conf.h>
-
-#include <t_glob.h>
-#include <l_sb.h>
-#include <im_hdr.h>
-
 #include <stdint.h>
 #include <inttypes.h>
+
+
+#include "g_conf.h"
+#include "t_glob.h"
+#include "l_sb.h"
+#include "im_hdr.h"
+#include "misc.h"
 
 #define DEFF_DIRLOG                     "dirlog"
 #define DEFF_NUKELOG                    "nukelog"

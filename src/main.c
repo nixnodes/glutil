@@ -46,7 +46,7 @@
 #include <lref.h>
 
 int
-(*print_str)(const char * volatile buf, ...);
+(*print_str)(const char * volatile buf, ...) = NULL;
 
 int
 g_setxid(void)

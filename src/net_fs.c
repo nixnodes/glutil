@@ -7,15 +7,16 @@
 
 #include "net_fs.h"
 
-#include <net_io.h>
 #include <string.h>
-#include <g_crypto.h>
-
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#include "misc.h"
+#include "net_io.h"
+#include "g_crypto.h"
 
 static void
 net_fs_initialize_sts(__sock_o pso)
@@ -47,10 +48,8 @@ net_fs_socket_init1_req_xfer(__sock_o pso)
 
     if ( ca->ca_flags & F_CA_MISC00)
       {
-        if ( gfl & F_OPT_VERBOSE3)
-          {
-            print_str("DEBUG: net_fs_socket_init1_req_xfer: [%d]: sending xfer request\n", pso->sock);
-          }
+
+        print_str("DEBUG: net_fs_socket_init1_req_xfer: [%d]: sending xfer request\n", pso->sock);
 
         net_fs_initialize_sts(pso);
         __fs_sts psts = (__fs_sts ) pso->va_p1;
@@ -453,7 +452,7 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
   if (packet->body.ex_len != sizeof(_pid_sha1))
     {
       print_str(
-          "ERROR: net_baseline_fsproto_xfer_validate: [%d]: invalid SHA-1 (invalid length)\n",
+          "ERROR: net_baseline_fsproto_xfer_validate: [%d]: invalid SHA-1 (length)\n",
           pso->sock);
       ret = 1;
       goto end;
@@ -464,12 +463,15 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
   uint8_t status_flags = 0;
   char *message;
 
+  char sha1_ascii[100];
+
   if (!memcmp((void*) sha1->data, (void*) &psts->sha_00.value,
       sizeof(_pid_sha1)))
     {
+
       print_str(
-          "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum OK\n",
-          pso->sock);
+          "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum OK [%s]\n",
+          pso->sock, crypto_sha1_to_ascii(sha1, sha1_ascii));
       print_str("INFO: %s: [%d]: transfer successfull\n", psts->data0,
           pso->sock);
       status_flags |= F_RQH_OP_OK;
@@ -479,8 +481,8 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
   else
     {
       print_str(
-          "WARNING: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum BAD\n",
-          pso->sock);
+          "WARNING: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum BAD [%s]\n",
+          pso->sock, crypto_sha1_to_ascii(sha1, sha1_ascii));
       status_flags |= F_RQH_OP_FAILED;
       message = "SHA1 BAD";
     }
@@ -1028,15 +1030,14 @@ net_fs_socket_destroy_rc0(__sock_o pso)
       pso->va_p1 = NULL;
     }
 
-
   pid_t _tid = (pid_t) syscall(SYS_gettid);
   print_str("INFO: [%d] socket closed: [%d]\n", _tid, pso->sock);
 
   pthread_mutex_unlock(&pso->mutex);
 
   /*if (pso->oper_mode == SOCKET_OPMODE_LISTENER) {
-      abort();
-  }*/
+   abort();
+   }*/
 
   return 0;
 }

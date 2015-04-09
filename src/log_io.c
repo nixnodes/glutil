@@ -617,7 +617,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
     {
       if (NULL == (fh = fopen(file, "rb")))
         {
-          hdl->h_errno = G_HDL_ERRNO_DL_FOPEN;
+          hdl->hd_errno = G_HDL_ERRNO_DL_FOPEN;
           return 0;
         }
     }
@@ -630,7 +630,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 
   if ((gz_fh = gzdopen(dup(fileno(fh)), "rb")) == NULL)
     {
-      hdl->h_errno = G_HDL_ERRNO_DL_FOPEN_GZ;
+      hdl->hd_errno = G_HDL_ERRNO_DL_FOPEN_GZ;
       return 0;
     }
 
@@ -667,7 +667,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
 
               if (NULL == n_data)
                 {
-                  hdl->h_errno = G_HDL_ERRNO_ALLOC;
+                  hdl->hd_errno = G_HDL_ERRNO_ALLOC;
                   return 0;
                 }
 
@@ -712,7 +712,7 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
     {
       int gz_errnum = 0;
       hdl->h_errstr_gz = gzerror(gz_fh, &gz_errnum);
-      hdl->h_errno = G_HDL_ERRNO_DL_READ;
+      hdl->hd_errno = G_HDL_ERRNO_DL_READ;
       hdl->h_errno_gz = gz_errnum;
 
     }
@@ -720,13 +720,13 @@ g_load_data_md(void *output, size_t max, char *file, __g_handle hdl)
     {
       if (ferror(fh))
         {
-          hdl->h_errno = G_HDL_ERRNO_DL_READ;
+          hdl->hd_errno = G_HDL_ERRNO_DL_READ;
         }
     }
 #else
   if (ferror(fh))
     {
-      hdl->h_errno = G_HDL_ERRNO_DL_READ;
+      hdl->hd_errno = G_HDL_ERRNO_DL_READ;
     }
 #endif
 
@@ -866,7 +866,7 @@ load_data_md(pmda md, char *file, __g_handle hdl)
               return 20110;
             }
 
-          if (0 != hdl->h_errno)
+          if (0 != hdl->hd_errno)
             {
               return 20111;
             }
@@ -916,7 +916,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
       return 0;
     }
 
-  hdl->h_errno = 0;
+  hdl->hd_errno = 0;
 
   if ((gfl0 & F_OPT_STDIN) || file[0] == 0x2D)
     {
@@ -1159,7 +1159,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
           (ulint64_t) (hdl->total_sz / hdl->block_sz), hdl->total_sz,
           hdl->block_sz,
           (hdl->flags & F_GH_SHM) ? " [shared memory segment]" : "", r,
-          hdl->h_errno, hdl->h_errno_gz ? hdl->h_errstr_gz : "GZNOSYSERR",
+          hdl->hd_errno, hdl->h_errno_gz ? hdl->h_errstr_gz : "GZNOSYSERR",
           errno ?
               g_strerr_r(errno, hdl->strerr_b, sizeof(hdl->strerr_b)) :
               "NOSYSERR");

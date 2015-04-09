@@ -9,30 +9,29 @@
 #ifndef NET_IO_H_
 #define NET_IO_H_
 
-#include <glutil.h>
 
-#define F_OPSOCK_CONNECT                (a32 << 1)
-#define F_OPSOCK_LISTEN                 (a32 << 2)
-#define F_OPSOCK_TERM                   (a32 << 3)
-#define F_OPSOCK_DISCARDED              (a32 << 4)
-#define F_OPSOCK_SSL                    (a32 << 5)
-#define F_OPSOCK_ACT                    (a32 << 6)
-#define F_OPSOCK_ST_SSL_ACCEPT          (a32 << 7)
-#define F_OPSOCK_ST_SSL_CONNECT         (a32 << 8)
-#define F_OPSOCK_ST_CLEANUP_READY       (a32 << 9)
-#define F_OPSOCK_TS_DISCONNECTED        (a32 << 10)
-#define F_OPSOCK_ST_HOOKED              (a32 << 11)
-#define F_OPSOCK_INIT_SENDQ             (a32 << 12)
-#define F_OPSOCK_PROC_READY             (a32 << 13)
-#define F_OPSOCK_SD_FIRST_DC            (a32 << 14)
-#define F_OPSOCK_HALT_RECV              (a32 << 15)
-#define F_OPSOCK_SKIP_SSL_SD            (a32 << 16)
-#define F_OPSOCK_SSL_KEYCERT_L          (a32 << 17)
+#define F_OPSOCK_CONNECT                ((uint32_t)1 << 1)
+#define F_OPSOCK_LISTEN                 ((uint32_t)1 << 2)
+#define F_OPSOCK_TERM                   ((uint32_t)1 << 3)
+#define F_OPSOCK_DISCARDED              ((uint32_t)1 << 4)
+#define F_OPSOCK_SSL                    ((uint32_t)1 << 5)
+#define F_OPSOCK_ACT                    ((uint32_t)1 << 6)
+#define F_OPSOCK_ST_SSL_ACCEPT          ((uint32_t)1 << 7)
+#define F_OPSOCK_ST_SSL_CONNECT         ((uint32_t)1 << 8)
+#define F_OPSOCK_ST_CLEANUP_READY       ((uint32_t)1 << 9)
+#define F_OPSOCK_TS_DISCONNECTED        ((uint32_t)1 << 10)
+#define F_OPSOCK_ST_HOOKED              ((uint32_t)1 << 11)
+#define F_OPSOCK_INIT_SENDQ             ((uint32_t)1 << 12)
+#define F_OPSOCK_PROC_READY             ((uint32_t)1 << 13)
+#define F_OPSOCK_SD_FIRST_DC            ((uint32_t)1 << 14)
+#define F_OPSOCK_HALT_RECV              ((uint32_t)1 << 15)
+#define F_OPSOCK_SKIP_SSL_SD            ((uint32_t)1 << 16)
+#define F_OPSOCK_SSL_KEYCERT_L          ((uint32_t)1 << 17)
 
 #define F_OPSOCK_CREAT_MODE             (F_OPSOCK_CONNECT|F_OPSOCK_LISTEN)
 #define F_OPSOCK_STATES                 (F_OPSOCK_ST_SSL_ACCEPT|F_OPSOCK_ST_SSL_CONNECT)
 
-#define F_MODE_GHS                      (a32 << 1)
+#define F_MODE_GHS                      ((uint32_t)1 << 1)
 
 #define SOCK_RECVB_SZ                   32768 + 256
 #define SOCK_DEFAULT_IDLE_TIMEOUT       60
@@ -51,16 +50,17 @@
 #define SOCKET_OPMODE_LISTENER          0x1
 #define SOCKET_OPMODE_RECIEVER          0x2
 
-#define F_WORKER_INT_STATE_ACT          (a8 << 1)
-#define F_WORKER_INT_STATE_ACT_HIRES    (a8 << 2)
+#define F_WORKER_INT_STATE_ACT          ((uint8_t)1 << 1)
+#define F_WORKER_INT_STATE_ACT_HIRES    ((uint8_t)1 << 2)
 
-#define NET_PUSH_SENDQ_ASSUME_PTR	(a16 << 1)
+#define NET_PUSH_SENDQ_ASSUME_PTR	((uint16_t)1 << 1)
 
 #include <memory_t.h>
 #include <thread.h>
 
 #include <pthread.h>
 
+#include <limits.h>
 #include <sys/types.h>
 #include <stdint.h>
 #include <openssl/ssl.h>
@@ -182,11 +182,11 @@ p_enumsr_cb(__sock_o sock_o, void *arg);
  char *ssl_key)
  * */
 
-#define F_CA_HAS_LOG               (a32 << 1)
-#define F_CA_HAS_SSL_CERT          (a32 << 2)
-#define F_CA_HAS_SSL_KEY           (a32 << 3)
-#define F_CA_MISC00                (a32 << 10)
-#define F_CA_MISC01                (a32 << 11)
+#define F_CA_HAS_LOG               ((uint32_t)1 << 1)
+#define F_CA_HAS_SSL_CERT          ((uint32_t)1 << 2)
+#define F_CA_HAS_SSL_KEY           ((uint32_t)1 << 3)
+#define F_CA_MISC00                ((uint32_t)1 << 10)
+#define F_CA_MISC01                ((uint32_t)1 << 11)
 
 typedef struct ___sock_create_args
 {
@@ -231,6 +231,8 @@ net_nw_ssig_term_r(pmda objects);
 
 void
 ssl_init(void);
+void
+ssl_cleanup(void);
 
 p_s_cb net_recv, net_recv_ssl, net_accept_ssl, net_accept, net_connect_ssl;
 

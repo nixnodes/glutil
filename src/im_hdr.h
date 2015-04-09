@@ -149,7 +149,7 @@ typedef struct g_handle
   int shmatflags;
   mda guid_stor;
   mda uuid_stor;
-  int h_errno;
+  int hd_errno;
   int h_errno_gz;
   const char *h_errstr_gz;
   _pipe_obj pipe;

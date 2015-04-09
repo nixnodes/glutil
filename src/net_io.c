@@ -5,8 +5,7 @@
  *      Author: reboot
  */
 
-#include <net_io.h>
-#include <thread.h>
+#include "net_io.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -16,17 +15,22 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
-
 #include <pthread.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/x509.h>
+
+#include "thread.h"
+#include "misc.h"
+
 
 static pthread_mutex_t *mutex_buf = NULL;
 
@@ -56,6 +60,7 @@ ssl_init(void)
 
   CRYPTO_malloc_debug_init()
   ;
+
   CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
   /* static locks area */
@@ -104,6 +109,14 @@ ssl_cleanup(void)
 
   free(mutex_buf);
   mutex_buf = NULL;
+
+  FIPS_mode_set(0);
+
+  EVP_cleanup();
+  CRYPTO_cleanup_all_ex_data();
+  ERR_remove_state(0);
+  ERR_free_strings();
+
 }
 
 static void
@@ -210,23 +223,25 @@ static void
 ssl_show_client_certs(__sock_o pso, SSL* ssl)
 {
   X509 *cert;
-  char *line;
 
   cert = SSL_get_peer_certificate(ssl); /* Get certificates (if available) */
   if (cert != NULL)
     {
-      print_str("NOTICE: Peer certificates:\n");
-      line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-      print_str("NOTICE: Subject: %s\n", line);
-      free(line);
-      line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-      print_str("NOTICE: Issuer: %s\n", line);
-      free(line);
+      char ssl_cb[1024];
+      char *line;
+
+      //print_str("NOTICE: Peer certificates:\n");
+      line = X509_NAME_oneline(X509_get_subject_name(cert), ssl_cb,
+          sizeof(ssl_cb));
+      print_str("NOTICE: [%d]: subject: %s\n", pso->sock, line);
+      line = X509_NAME_oneline(X509_get_issuer_name(cert), ssl_cb,
+          sizeof(ssl_cb));
+      print_str("NOTICE: [%d]: issuer: %s\n", pso->sock, line);
       X509_free(cert);
     }
   else
     {
-      print_str("DEBUG: ssl_show_client_certs: [%d]: no client certs\n",
+      print_str("D4: ssl_show_client_certs: [%d]: no client certs\n",
           pso->sock);
     }
 }
@@ -1400,11 +1415,11 @@ net_worker(void *args)
 
               pmda host_ctx = pso->host_ctx;
 
-              pthread_mutex_unlock(&pso->mutex);
-
               net_pop_rc(pso, &pso->shutdown_rc0);
-
               md_g_free_l(&pso->shutdown_rc0);
+
+              pthread_mutex_unlock(&pso->mutex);
+              mutex_lock(&host_ctx->mutex);
 
               mda p_rc1 = pso->shutdown_rc1;
 
@@ -1417,6 +1432,8 @@ net_worker(void *args)
                       pso->sock);
                   abort();
                 }
+
+              pthread_mutex_unlock(&host_ctx->mutex);
 
               net_pop_rc(NULL, &p_rc1);
 
@@ -1462,7 +1479,6 @@ net_worker(void *args)
               {
                 goto send_q;
               }
-
             break;
           case 0:
             ;
@@ -1641,6 +1657,8 @@ net_worker(void *args)
     }
 
   pthread_mutex_unlock(&thread_host_ctx->mutex);
+
+  ERR_remove_state(0);
 
   kill(getpid(), SIGUSR2);
 

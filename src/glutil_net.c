@@ -39,7 +39,6 @@ process_ca_requests(pmda md)
 
   while (ptr)
     {
-
       if (!g_get_gkill())
         {
           break;
@@ -190,6 +189,8 @@ net_deploy_wait_for_all_threads(pmda thread_reg)
 
 #define NET_TMON_SLEEP_DEFAULT                  (unsigned int) 30
 
+#define F_ND_SSL_INIT                           ((uint32_t)1 << 1)
+
 int
 net_deploy(void)
 {
@@ -243,6 +244,8 @@ net_deploy(void)
 
   int sr = pthread_sigmask(SIG_BLOCK, &set, NULL);
 
+  uint32_t in_f = 0;
+
   if (sr != 0)
     {
       print_str("ERROR: net_deploy: pthread_sigmask failed: %d\n", sr);
@@ -256,6 +259,7 @@ net_deploy(void)
     {
       print_str("DEBUG: initializing TLS/SSL subsystem..\n");
       ssl_init();
+      in_f |= F_ND_SSL_INIT;
     }
 
   int r;
@@ -366,7 +370,6 @@ net_deploy(void)
   while ((l_count = register_count(&_net_thrd_r)) > 0)
     {
       thread_broadcast_kill(&_net_thrd_r);
-      usleep(50000);
       e = time(NULL);
       if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
         {
@@ -374,12 +377,19 @@ net_deploy(void)
               (uint64_t) l_count);
           break;
         }
+      sleep(1);
     }
 
-  md_g_free(&_net_thrd_r);
-  md_g_free(&_sock_r);
+  md_g_free_l(&_net_thrd_r);
+  md_g_free_l(&_sock_r);
   free(pc_a.objects);
-  md_g_free(&_boot_pca);
+  md_g_free_l(&_boot_pca);
+
+  if (in_f & F_ND_SSL_INIT)
+    {
+      print_str("DEBUG: releasing TLS/SSL resources..\n");
+      ssl_cleanup();
+    }
 
   print_str("INFO: server shutting down..\n");
 

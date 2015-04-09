@@ -9,10 +9,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <openssl/sha.h>
 
 __pid_sha1
 crypto_calc_sha1(unsigned char*input, size_t size, __pid_sha1 psha1_out)

@@ -258,9 +258,6 @@ uint8_t l_sfo;
 uint8_t comp_level;
 #endif
 
-int
-(*print_str)(const char * volatile buf, ...);
-
 typedef struct ___si_argv0
 {
   int ret;

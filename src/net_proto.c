@@ -8,10 +8,12 @@
 
 #include "net_proto.h"
 
-#include <memory_t.h>
-#include <net_io.h>
-
 #include <stdio.h>
+
+#include "memory_t.h"
+#include "net_io.h"
+#include "misc.h"
+
 
 mda pc_a =
   { 0 };
@@ -96,8 +98,8 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
   if (NULL == protf)
     {
       print_str(
-          "ERROR: net_baseline_prochdr: invalid protocol code %d, socket:[%d]\n",
-          bph->prot_code, pso->sock);
+          "ERROR: net_baseline_prochdr: [%d]: invalid protocol code: %hhu\n",
+          pso->sock, bph->prot_code);
       pthread_mutex_unlock(&pso->mutex);
       return -11;
     }
@@ -105,23 +107,23 @@ net_baseline_prochdr(__sock_o pso, pmda base, pmda threadr, void *data)
   if (0 == bph->content_length)
     {
       print_str(
-          "ERROR: net_baseline_prochdr: protocol %d: empty packet, socket:[%d]\n",
-          bph->prot_code, pso->sock);
+          "ERROR: net_baseline_prochdr: [%d]: protocol %hhu empty packet\n",
+          pso->sock, bph->prot_code);
       return -12;
     }
 
   //printf("%d - %d\n", (int) bph->content_length, (int) pso->unit_size);
 
-  pso->unit_size += (bph->content_length - BP_HEADER_SIZE);
-
-  if (pso->unit_size > pso->buffer0_len)
+  if (bph->content_length > pso->buffer0_len)
     {
       print_str(
-          "ERROR: net_baseline_prochdr: protocol %d: packet too large, socket: [%d]\n",
-          bph->prot_code, pso->sock);
+          "ERROR: net_baseline_prochdr: [%d]: protocol %d: packet too large\n",
+          pso->sock, bph->prot_code);
       pthread_mutex_unlock(&pso->mutex);
       return -13;
     }
+
+  pso->unit_size = bph->content_length;
 
   pso->rcv1 = protf;
 

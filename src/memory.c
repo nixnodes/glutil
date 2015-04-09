@@ -5,10 +5,11 @@
  *      Author: reboot
  */
 
-#include <glutil.h>
-#include <memory_t.h>
+#include "memory_t.h"
 
-#include <thread.h>
+#include "misc.h"
+
+#include "thread.h"
 
 int
 md_init(pmda md, int nm)
@@ -818,6 +819,7 @@ md_unlink_le(pmda md, p_md_obj md_o)
           md->pos = md->objects;
         }
     }
+
   if (!(md->flags & F_MDA_REFPTR) && md_o->ptr)
     {
       free(md_o->ptr);
