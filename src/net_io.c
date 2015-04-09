@@ -177,10 +177,14 @@ int
 ssl_load_server_certs(SSL_CTX* ctx, char* cert_file, char* key_file)
 {
   if (SSL_CTX_load_verify_locations(ctx, cert_file, key_file) != 1)
-    ERR_print_errors_fp(stderr);
+    {
+      return 1;
+    }
 
   if (SSL_CTX_set_default_verify_paths(ctx) != 1)
-    ERR_print_errors_fp(stderr);
+    {
+      return 1;
+    }
 
   /* set the local certificate from CertFile */
   if (SSL_CTX_use_certificate_file(ctx, cert_file, SSL_FILETYPE_PEM) <= 0)
@@ -847,12 +851,12 @@ net_open_listening_socket(char *addr, char *port, __sock_ca args)
 
       if ((r = ssl_load_server_certs(pso->ctx, args->ssl_cert, args->ssl_key)))
         {
+          ERR_print_errors_fp(stderr);
+          ERR_clear_error();
           net_open_listening_socket_cleanup(args->socket_register, aip, fd);
           print_str(
               "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s / %s\n",
               fd, r, args->ssl_cert, args->ssl_key);
-          ERR_print_errors_fp(stderr);
-          ERR_clear_error();
           return 12;
         }
 
