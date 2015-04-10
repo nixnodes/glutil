@@ -65,6 +65,7 @@
 #include <stdint.h>
 #include <openssl/ssl.h>
 
+
 typedef int
 (*_p_s_cb)(void *, void *, void *, void *);
 typedef int
@@ -267,6 +268,10 @@ int
 net_pop_rc(__sock_o pso, pmda rc);
 int
 net_push_rc(pmda rc, _t_stocb call, uint32_t flags);
+const char *
+net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);
+uint16_t
+net_get_addrinfo_port(__sock_o pso);
 
 
 #endif

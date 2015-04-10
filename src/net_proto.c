@@ -14,7 +14,6 @@
 #include "net_io.h"
 #include "misc.h"
 
-
 mda pc_a =
   { 0 };
 
@@ -26,6 +25,28 @@ net_baseline_socket_init0(__sock_o pso)
   case SOCKET_OPMODE_RECIEVER:
     ;
     pso->unit_size = BP_HEADER_SIZE;
+    break;
+    }
+
+  return 0;
+}
+
+int
+net_baseline_socket_init1(__sock_o pso)
+{
+  char ip[128];
+  uint16_t port = net_get_addrinfo_port(pso);
+  net_get_addrinfo_ip(pso, (char*) ip, sizeof(ip));
+
+  switch (pso->oper_mode)
+    {
+  case SOCKET_OPMODE_RECIEVER:
+    ;
+    print_str("INFO: [%d] connected to %s:%hu\n", pso->sock, ip, port);
+    break;
+  case SOCKET_OPMODE_LISTENER:
+    ;
+    print_str("INFO: [%d]: listening on %s:%hu\n", pso->sock, ip, port);
     break;
     }
 

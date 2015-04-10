@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <limits.h>
@@ -30,7 +31,6 @@
 
 #include "thread.h"
 #include "misc.h"
-
 
 static pthread_mutex_t *mutex_buf = NULL;
 
@@ -311,6 +311,53 @@ net_listener_chk_timeout(__sock_o pso)
    pthread_mutex_unlock(&pso->mutex);
 
    return r;*/
+}
+
+uint16_t
+net_get_addrinfo_port(__sock_o pso)
+{
+  void *port_data;
+  switch (pso->res->ai_family)
+    {
+  case AF_INET:
+    ;
+    port_data = &((struct sockaddr_in*) pso->res->ai_addr)->sin_port;
+    break;
+  case AF_INET6:
+    ;
+    port_data = &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_port;
+    break;
+  default:
+    ;
+    return 0;
+    break;
+    }
+
+  return ntohs(*((uint16_t*) port_data));
+}
+
+const char *
+net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len)
+{
+  void *ip_data;
+  switch (pso->res->ai_family)
+    {
+  case AF_INET:
+    ;
+    ip_data = (void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr;
+    break;
+  case AF_INET6:
+    ;
+    ip_data = (void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr;
+    break;
+  default:
+    ;
+    out[0] = 1;
+    return out;
+    }
+
+  return inet_ntop(pso->res->ai_family, ip_data, out, len);
+
 }
 
 int

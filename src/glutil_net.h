@@ -34,10 +34,6 @@ net_gl_socket_init1_dc_on_ac(__sock_o pso);
 int
 net_gl_socket_destroy(__sock_o pso);
 
-const char *
-net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);
-uint16_t
-net_get_addrinfo_port(__sock_o pso);
 
 #define F_NETOPT_HUSER                  (a64 << 1)
 #define F_NETOPT_HGROUP                 (a64 << 2)

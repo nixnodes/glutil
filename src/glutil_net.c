@@ -16,7 +16,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <malloc.h>
-#include <arpa/inet.h>
 
 _net_opt net_opts =
   { .max_sock = 512, .thread_l = 1, .thread_r = 2, .st_p0 = NULL,
@@ -625,52 +624,6 @@ net_gl_socket_destroy(__sock_o pso)
   return r;
 }
 
-uint16_t
-net_get_addrinfo_port(__sock_o pso)
-{
-  void *port_data;
-  switch (pso->res->ai_family)
-    {
-  case AF_INET:
-    ;
-    port_data = &((struct sockaddr_in*) pso->res->ai_addr)->sin_port;
-    break;
-  case AF_INET6:
-    ;
-    port_data = &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_port;
-    break;
-  default:
-    ;
-    return 0;
-    break;
-    }
-
-  return ntohs(*((uint16_t*) port_data));
-}
-
-const char *
-net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len)
-{
-  void *ip_data;
-  switch (pso->res->ai_family)
-    {
-  case AF_INET:
-    ;
-    ip_data = (void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr;
-    break;
-  case AF_INET6:
-    ;
-    ip_data = (void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr;
-    break;
-  default:
-    ;
-    out[0] = 1;
-    return out;
-    }
-
-  return inet_ntop(pso->res->ai_family, ip_data, out, len);
-
-}
 
 static int
 net_l_wp_setup_pipe(pid_t c_pid, void *arg)

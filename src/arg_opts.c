@@ -2361,6 +2361,7 @@ opt_queue_connection(void *arg, uint32_t flags)
     //ca->rc1 = net_gl_socket_init1;
     ca->proc = (_p_sc_cb) net_baseline_prochdr;
 
+    net_push_rc(&ca->init_rc0, (_t_stocb) net_baseline_socket_init1, 0);
     net_push_rc(&ca->init_rc0, (_t_stocb) net_baseline_socket_init0, 0);
 
     md_init_le(&pc_a, 256);
