@@ -42,7 +42,14 @@ net_baseline_socket_init1(__sock_o pso)
     {
   case SOCKET_OPMODE_RECIEVER:
     ;
-    print_str("INFO: [%d] connected to %s:%hu\n", pso->sock, ip, port);
+    if (pso->flags & F_OPSOCK_CONNECT)
+      {
+        print_str("INFO: [%d] connected to host %s:%hu\n", pso->sock, ip, port);
+      }
+    else
+      {
+        print_str("INFO: [%d] client connected from %s:%hu\n", pso->sock, ip, port);
+      }
     break;
   case SOCKET_OPMODE_LISTENER:
     ;
