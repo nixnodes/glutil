@@ -1773,7 +1773,7 @@ net_prep_acsock(pmda base, pmda threadr, __sock_o spso, int fd)
   pso->parent = (void *) spso;
   pso->st_p0 = spso->st_p0;
   pso->oper_mode = SOCKET_OPMODE_RECIEVER;
-  pso->flags |= F_OPSOCK_CONNECT
+  pso->flags |= F_OPSOCK_CONNECT | F_OPSOCK_IN
       | (spso->flags & (F_OPSOCK_SSL | F_OPSOCK_INIT_SENDQ));
   pso->pcheck_r = (_t_stocb) net_chk_timeout;
   pso->policy = spso->policy;

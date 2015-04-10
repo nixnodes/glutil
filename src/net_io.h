@@ -9,7 +9,6 @@
 #ifndef NET_IO_H_
 #define NET_IO_H_
 
-
 #define F_OPSOCK_CONNECT                ((uint32_t)1 << 1)
 #define F_OPSOCK_LISTEN                 ((uint32_t)1 << 2)
 #define F_OPSOCK_TERM                   ((uint32_t)1 << 3)
@@ -27,6 +26,7 @@
 #define F_OPSOCK_HALT_RECV              ((uint32_t)1 << 15)
 #define F_OPSOCK_SKIP_SSL_SD            ((uint32_t)1 << 16)
 #define F_OPSOCK_SSL_KEYCERT_L          ((uint32_t)1 << 17)
+#define F_OPSOCK_IN                     ((uint32_t)1 << 18)
 
 #define F_OPSOCK_CREAT_MODE             (F_OPSOCK_CONNECT|F_OPSOCK_LISTEN)
 #define F_OPSOCK_STATES                 (F_OPSOCK_ST_SSL_ACCEPT|F_OPSOCK_ST_SSL_CONNECT)
@@ -64,7 +64,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <openssl/ssl.h>
-
 
 typedef int
 (*_p_s_cb)(void *, void *, void *, void *);
@@ -111,8 +110,8 @@ typedef struct ___proc_ic_o
 typedef struct ___sock_policy
 {
   uint32_t max_sim_ip;
-  time_t idle_timeout, connect_timeout, accept_timeout, close_timeout, ssl_accept_timeout,
-      ssl_connect_timeout, send_timeout;
+  time_t idle_timeout, connect_timeout, accept_timeout, close_timeout,
+      ssl_accept_timeout, ssl_connect_timeout, send_timeout;
   uint8_t mode;
   int ssl_verify;
 } _net_sp, *__net_sp;
@@ -212,7 +211,6 @@ typedef struct ___sock_create_args
 
 p_sc_cb rc_tst, rc_ghs, net_socket_init_enforce_policy;
 
-
 int
 net_connect_socket(int fd, struct addrinfo *aip);
 int
@@ -272,7 +270,6 @@ const char *
 net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);
 uint16_t
 net_get_addrinfo_port(__sock_o pso);
-
 
 #endif
 
