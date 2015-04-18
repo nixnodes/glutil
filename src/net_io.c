@@ -1271,8 +1271,8 @@ net_worker(void *args)
   thrd->timers.t0 = time(NULL);
   thrd->timers.act_f |= (F_TTIME_ACT_T0 | F_TTIME_ACT_T1);
 
-  thrd->buffer0 = malloc(MAX_PRINT_OUT);
-  thrd->buffer0_size = MAX_PRINT_OUT;
+  thrd->buffer0 = malloc(262144);
+  thrd->buffer0_size = 262144;
 
   pthread_t _pt = thrd->pt;
   pid_t _tid = (pid_t) syscall(SYS_gettid);

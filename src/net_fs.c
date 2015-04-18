@@ -18,7 +18,7 @@
 #include "net_io.h"
 #include "g_crypto.h"
 
-static void
+void
 net_fs_initialize_sts(__sock_o pso)
 {
   if ( NULL == pso->va_p1)
@@ -496,7 +496,12 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
 
   end: ;
 
-  pso->flags = F_OPSOCK_TERM;
+  if ( NULL != psts->xfin)
+    {
+      psts->xfin(pso);
+    }
+
+  //pso->flags = F_OPSOCK_TERM;
 
   psts->notify_cb = net_baseline_fsproto_default;
 

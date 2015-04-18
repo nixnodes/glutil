@@ -14,19 +14,19 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define F_MDA_REFPTR                    (a32 << 1)
-#define F_MDA_FREE                      (a32 << 2)
-#define F_MDA_REUSE                     (a32 << 3)
-#define F_MDA_WAS_REUSED                (a32 << 4)
-#define F_MDA_EOF                       (a32 << 5)
-#define F_MDA_FIRST_REUSED              (a32 << 6)
-#define F_MDA_ARR_DIST                  (a32 << 7)
-#define F_MDA_NO_REALLOC                (a32 << 8)
+#define F_MDA_REFPTR                    ((uint32_t)1 << 1)
+#define F_MDA_FREE                      ((uint32_t)1 << 2)
+#define F_MDA_REUSE                     ((uint32_t)1 << 3)
+#define F_MDA_WAS_REUSED                ((uint32_t)1 << 4)
+#define F_MDA_EOF                       ((uint32_t)1 << 5)
+#define F_MDA_FIRST_REUSED              ((uint32_t)1 << 6)
+#define F_MDA_ARR_DIST                  ((uint32_t)1 << 7)
+#define F_MDA_NO_REALLOC                ((uint32_t)1 << 8)
 
-#define F_MDA_ST_MISC00                 (a32 << 30)
-#define F_MDA_ST_MISC01                 (a32 << 31)
+#define F_MDA_ST_MISC00                 ((uint32_t)1 << 30)
+#define F_MDA_ST_MISC01                 ((uint32_t)1 << 31)
 
-#define MDA_MDALLOC_RE                  (a32 << 1)
+#define MDA_MDALLOC_RE                  ((uint32_t)1 << 1)
 
 typedef struct mda_object
 {
@@ -100,7 +100,7 @@ md_md_to_array(pmda source, void **dest);
 int
 md_array_to_md(void ** source, pmda dest);
 
-#define F_MDALLOC_NOLINK                (a32 << 1)
+#define F_MDALLOC_NOLINK                ((uint32_t)1 << 1)
 
 void *
 md_alloc_le(pmda md, size_t b, uint32_t flags, void *refptr);

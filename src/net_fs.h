@@ -82,17 +82,19 @@ typedef struct ___sha_v
   _pid_sha1 value;
 } _sha_v, *__sha_v;
 
+#include <net_io.h>
+
 typedef struct ___fs_state_sock
 {
   uint64_t state;
   uint16_t stage;
-
   _fs_hstat hstat;
   int handle;
   _nfs_ncb notify_cb;
   uint64_t data_in, data_out;
   char data0[PATH_MAX], data1[PATH_MAX];
   _sha_v sha_00;
+  _t_stocb xfin;
 } _fs_sts, *__fs_sts;
 
 #define BASELINE_FS_TCODE_XFER       "XFER"
@@ -115,6 +117,8 @@ net_fs_compile_breq(int code, unsigned char *data, size_t p_len, void *arg);
 __fs_rh_enc
 net_fs_compile_hstat(__fs_hstat data, void *arg);
 
+void
+net_fs_initialize_sts(__sock_o pso);
 int
 net_fs_socket_init1_req_xfer(__sock_o pso);
 

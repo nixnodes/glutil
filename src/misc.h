@@ -8,28 +8,27 @@
 #ifndef MISC_H_
 #define MISC_H_
 
-#include <glutil.h>
 
 #include <fp_types.h>
 
 #include <unistd.h>
 
 #define F_MSG_TYPE_ANY                  MAX_uint32_t
-#define F_MSG_TYPE_EXCEPTION            (a32 << 1)
-#define F_MSG_TYPE_ERROR                (a32 << 2)
-#define F_MSG_TYPE_WARNING              (a32 << 3)
-#define F_MSG_TYPE_MACRO                (a32 << 4)
-#define F_MSG_TYPE_NOTICE               (a32 << 5)
-#define F_MSG_TYPE_INFO                 (a32 << 6)
-#define F_MSG_TYPE_STATS                (a32 << 7)
-#define F_MSG_TYPE_OTHER                (a32 << 8)
-#define F_MSG_TYPE_DEBUG0               (a32 << 9)
-#define F_MSG_TYPE_DEBUG1               (a32 << 10)
-#define F_MSG_TYPE_DEBUG2               (a32 << 11)
-#define F_MSG_TYPE_DEBUG3               (a32 << 12)
-#define F_MSG_TYPE_DEBUG4               (a32 << 13)
-#define F_MSG_TYPE_DEBUG5               (a32 << 14)
-#define F_MSG_TYPE_DEBUG6               (a32 << 15)
+#define F_MSG_TYPE_EXCEPTION            ((uint32_t)1 << 1)
+#define F_MSG_TYPE_ERROR                ((uint32_t)1 << 2)
+#define F_MSG_TYPE_WARNING              ((uint32_t)1 << 3)
+#define F_MSG_TYPE_MACRO                ((uint32_t)1 << 4)
+#define F_MSG_TYPE_NOTICE               ((uint32_t)1 << 5)
+#define F_MSG_TYPE_INFO                 ((uint32_t)1 << 6)
+#define F_MSG_TYPE_STATS                ((uint32_t)1 << 7)
+#define F_MSG_TYPE_OTHER                ((uint32_t)1 << 8)
+#define F_MSG_TYPE_DEBUG0               ((uint32_t)1 << 9)
+#define F_MSG_TYPE_DEBUG1               ((uint32_t)1 << 10)
+#define F_MSG_TYPE_DEBUG2               ((uint32_t)1 << 11)
+#define F_MSG_TYPE_DEBUG3               ((uint32_t)1 << 12)
+#define F_MSG_TYPE_DEBUG4               ((uint32_t)1 << 13)
+#define F_MSG_TYPE_DEBUG5               ((uint32_t)1 << 14)
+#define F_MSG_TYPE_DEBUG6               ((uint32_t)1 << 15)
 
 #define F_MSG_TYPE_EEW                  (F_MSG_TYPE_EXCEPTION|F_MSG_TYPE_ERROR|F_MSG_TYPE_WARNING|F_MSG_TYPE_MACRO)
 #define F_MSG_TYPE_NORMAL               (F_MSG_TYPE_EEW|F_MSG_TYPE_NOTICE|F_MSG_TYPE_OTHER|F_MSG_TYPE_STATS|F_MSG_TYPE_INFO|F_MSG_TYPE_MACRO)

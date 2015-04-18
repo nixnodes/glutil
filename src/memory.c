@@ -7,6 +7,9 @@
 
 #include "memory_t.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "misc.h"
 
 #include "thread.h"
