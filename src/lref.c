@@ -285,8 +285,19 @@ dt_rval_spec_sha1(void *arg, char *match, char *output, size_t max_size,
 
   if (NULL != p_o)
     {
-      _pid_sha1 out, *o_ptr = crypto_calc_sha1((unsigned char*) p_o,
-          strlen(p_o), &out);
+      __d_drt_h mppd_next = ((__d_drt_h ) mppd)->mppd_next;
+      size_t r_len;
+      if (!mppd_next->ret_len)
+        {
+          r_len = strlen(p_o);
+        }
+      else
+        {
+          r_len = mppd_next->ret_len;
+        }
+
+      _pid_sha1 out, *o_ptr = crypto_calc_sha1((unsigned char*) p_o, r_len,
+          &out);
       if (NULL != o_ptr)
         {
           return crypto_sha1_to_ascii(o_ptr, output);

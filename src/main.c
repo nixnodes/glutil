@@ -235,6 +235,8 @@ g_init(int argc, char **argv, char **l_arg)
 
 #ifdef _MAKE_SBIN
 
+  flags_udcfg |= F_PD_RECURSIVE;
+
   if ( argc < 2 )
     {
       //g_throw_arerr(-1);
@@ -269,7 +271,6 @@ g_init(int argc, char **argv, char **l_arg)
   if ( r == 0 )
     {
       updmode = UPD_MODE_DUMP_GEN;
-      flags_udcfg |= F_PD_RECURSIVE;
       gfl |= F_OPT_VERBOSE;
     }
 #else

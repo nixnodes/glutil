@@ -49,6 +49,7 @@ typedef struct ___d_drt_h
   char *varg_l;
   mda sub_mech;
   uint32_t v_ui0;
+  uint64_t ret_len;
 } _d_drt_h, *__d_drt_h;
 
 

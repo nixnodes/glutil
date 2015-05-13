@@ -754,6 +754,56 @@ dt_rval_x_depth(void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_x_data(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  FILE *fp = fopen(((__d_xref) arg)->name, "rb");
+
+  if ( NULL == fp )
+    {
+      char err_buf[1024];
+      print_str("ERROR: dt_rval_x_data: error opening file '%s': %s\n", ((__d_xref) arg)->name,
+      strerror_r(errno, err_buf, sizeof(err_buf)));
+    }
+
+  size_t read, r;
+
+  for (read = 0; !feof(fp) && !ferror(fp) && read < max_size;)
+    {
+      if ((r = fread(&((unsigned char*) output)[read], 1, max_size - read, fp))
+      < 1)
+        {
+          break;
+        }
+      read += r;
+    }
+
+  if ( ferror(fp) )
+    {
+      char err_buf[1024];
+      print_str("ERROR: dt_rval_x_data: while reading file '%s': %s\n", ((__d_xref) arg)->name,
+      strerror_r(errno, err_buf, sizeof(err_buf)));
+    }
+
+  if ( !feof(fp) && read == max_size)
+    {
+      print_str("ERROR: dt_rval_x_data: data size exceeded available buffer space\n");
+      memset(output, 0x0, max_size);
+    }
+
+  if ( fclose(fp) )
+    {
+      char err_buf[1024];
+      print_str("ERROR: dt_rval_x_data: failed closing file descriptor '%s': %s\n", ((__d_xref) arg)->name,
+      strerror_r(errno, err_buf, sizeof(err_buf)));
+    }
+
+  ((__d_drt_h ) mppd)->ret_len = (uint64_t)read;
+
+  return output;
+}
+
+char *
 dt_rval_x_rlink(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -1345,6 +1395,10 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
         }
       return as_ref_to_val_lk(match, dt_rval_x_depth ,(__d_drt_h)mppd, "%llu");
     }
+  else if (!strncmp(match, _MC_X_DATA, 4))
+    {
+      return as_ref_to_val_lk(match, dt_rval_x_data ,(__d_drt_h)mppd, "%s");
+    }
   else if (!strncmp(match, _MC_X_RLINK, 5))
     {
       if (arg)
@@ -1389,6 +1443,10 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
       ((__d_drt_h ) mppd)->vp_off2 = (size_t)((__d_xref) NULL)->name;
       ((__d_drt_h ) mppd)->match = match+2;
       return dt_rval_c;
+    }
+  else
+    {
+      print_str("ERROR: ref_to_val_lk_x: invalid option: '%s'\n", match);
     }
 
   return NULL;

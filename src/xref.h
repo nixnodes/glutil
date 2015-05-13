@@ -39,6 +39,7 @@
 #define _MC_X_DIRPATH           "dirpath"
 #define _MC_X_PATH              "path"
 #define _MC_X_DEPTH             "depth"
+#define _MC_X_DATA              "data"
 #define _MC_X_UID               "uid"
 #define _MC_X_GID               "gid"
 #define _MC_X_ST_MODE           "stmode"

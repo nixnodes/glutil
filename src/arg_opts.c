@@ -338,10 +338,7 @@ opt_g_recursive(void *arg, int m, void *opt)
 int
 opt_g_rec_off(void *arg, int m, void *opt)
 {
-  if (flags_udcfg & F_PD_RECURSIVE)
-    {
-      flags_udcfg ^= F_PD_RECURSIVE;
-    }
+  flags_udcfg ^= (flags_udcfg & F_PD_RECURSIVE);
   return 0;
 }
 
@@ -595,6 +592,7 @@ opt_g_ftime(void *arg, int m, void *opt)
   return 0;
 }
 
+#ifndef _MAKE_SBIN
 static int
 g_opt_shmflg(void *arg, int m, void *opt)
 {
@@ -616,13 +614,16 @@ g_opt_shmflg(void *arg, int m, void *opt)
 
   return 0;
 }
+#endif
 
+#ifndef _MAKE_SBIN
 static int
 g_opt_shmro(void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_SHMRO;
   return 0;
 }
+#endif
 
 int
 opt_g_matchq(void *arg, int m, void *opt)
@@ -1197,6 +1198,7 @@ g_opt_mroot(void *arg, int m, void *opt)
   return 0;
 }
 
+#ifndef _MAKE_SBIN
 static int
 g_opt_lav(void *arg, int m, void *opt)
 {
@@ -1256,6 +1258,7 @@ g_opt_lav(void *arg, int m, void *opt)
 
   return 0;
 }
+#endif
 
 int
 opt_g_arg1(void *arg, int m, void *opt)

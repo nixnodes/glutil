@@ -37,7 +37,7 @@
   - Unpack and compile:
 
       git clone https://github.com/nixnodes/glutil.git      
-      cp /glroot/bin/sources/glconf.h src/
+      cp /glroot/bin/sources/glconf.h glutil/src/
       ./configure --prefix=/glroot
       make
       
