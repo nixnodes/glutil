@@ -63,7 +63,7 @@ g_get_glob_ptr(__g_handle hdl, char *field, int *output)
   if (!strncmp(field, _MC_GLOB_CURTIME, 7))
     {
       *output = -33;
-      memset((void*) &glob_curtime, 0x0, sizeof(int64_t));
+      memset((void*) &glob_curtime, 0x0, sizeof(glob_curtime));
       return (void*) &glob_curtime;
     }
   else

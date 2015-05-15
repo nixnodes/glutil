@@ -725,6 +725,7 @@ char *
 dt_rval_x_user(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+
   dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, ((__d_xref) arg)->st.st_uid)
   return output;
 }
@@ -1418,7 +1419,11 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
             }
           return NULL;
         }
-      ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
 
       return as_ref_to_val_lk(match, dt_rval_x_user ,(__d_drt_h)mppd, "%s");
     }
@@ -1434,7 +1439,10 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
           return NULL;
         }
 
-      ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
 
       return as_ref_to_val_lk(match, dt_rval_x_group ,(__d_drt_h)mppd, "%s");
     }

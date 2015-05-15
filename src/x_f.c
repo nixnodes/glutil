@@ -539,6 +539,7 @@ load_guid_info(pmda md, char *path)
       return 1;
     }
 
+
   errno = 0;
 
   char buffer[PGF_MAX_LINE_SIZE + 1];
@@ -653,6 +654,7 @@ r_preload_guid_data(pmda md, char *path)
     {
       return 0;
     }
+
   char buffer[PATH_MAX];
   snprintf(buffer, PATH_MAX, "%s%s", GLROOT, path);
   md_init(md, 16);
