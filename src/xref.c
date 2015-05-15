@@ -376,7 +376,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
         }
       else
         {
-          char buffer[13];
+          char buffer[32];
           snprintf(output, max_size, "%s",
               g_bitstr(
                   (uint64_t) st.st_mode

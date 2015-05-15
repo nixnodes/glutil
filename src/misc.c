@@ -510,11 +510,11 @@ g_memcomp(const void *p1, const void *p2, off_t size)
 char *
 g_bitstr(uint64_t value, uint8_t bits, char *buffer)
 {
-  int16_t i = (int64_t) bits - 1, p;
+  uint8_t i = (uint8_t) bits, p;
 
   buffer[i] = 0x0;
 
-  for (p = 0; p < bits; i--, p++)
+  for (p = 0, i--; p < bits; i--, p++)
     {
       buffer[i] = 0x30 + (value >> p & 1);
     }

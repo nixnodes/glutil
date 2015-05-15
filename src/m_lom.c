@@ -45,39 +45,21 @@ set_lom_vp(__g_lom lom)
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 {
-  p_md_obj ptr = _gm->lom.objects;
+  p_md_obj ptr = _gm->lom.first;
   __g_lom lom, p_lom = NULL;
 
-  int r_p = 1, i = 0;
+  int r_p = 1;
 
   while (ptr)
     {
       lom = (__g_lom) ptr->ptr;
-      //lom->result = 0;
-      i++;
-      lom->g_lom_vp(d_ptr, (void*)lom);
 
-      if (!ptr->next && !p_lom && lom->result)
-        {
-          return !lom->result;
-        }
+      lom->g_lom_vp(d_ptr, (void*)lom);
 
       if ( p_lom && p_lom->g_oper_ptr )
         {
-          if (!(r_p = p_lom->g_oper_ptr(r_p, lom->result)))
-            {
-              if ( !ptr->next)
-                {
-                  return 1;
-                }
-            }
-          else
-            {
-              if (!ptr->next)
-                {
-                  return !r_p;
-                }
-            }
+          r_p = p_lom->g_oper_ptr(r_p, lom->result);
+
         }
       else
         {
@@ -88,7 +70,7 @@ g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm)
       ptr = ptr->next;
     }
 
-  return 1;
+  return !r_p;
 }
 
 int
@@ -850,6 +832,8 @@ g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
         p_math = &lom->math_r;
         break;
       default:
+        ;
+        free(m_field);
         return 34;
         }
 
@@ -930,7 +914,6 @@ g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off)
   case -32:
     LOM_ALIGN(flags, g_tf_ptr_left, g_tf_ptr_right, g_tf_ptr, g_lom_var_float,
         F_LOM_FLOAT, *vb)
-
     break;
   case -2:
     LOM_ALIGN(flags, g_ts_ptr_left, g_ts_ptr_right, g_ts8_ptr, g_lom_var_int,

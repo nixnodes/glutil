@@ -1199,18 +1199,11 @@ net_proc_sock_hmemb(po_thrd thrd)
 {
 
   off_t num_active = 0;
+
   num_active += md_get_off_ts(&thrd->proc_objects);
   num_active += md_get_off_ts(&thrd->in_objects);
 
-  if (num_active == 0)
-    {
-      return 0;
-    }
-  else
-    {
-      return 1;
-    }
-
+  return (int) num_active;
 }
 
 #include <sys/ioctl.h>
