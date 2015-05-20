@@ -590,6 +590,11 @@ d_gen_dump(char *arg)
       return 2;
     }
 
+  if (!strncmp(datafile, "stdin", 5))
+    {
+      gfl0 |= F_OPT_STDIN;
+    }
+
   return g_print_stats(datafile, 0, 0);
 }
 

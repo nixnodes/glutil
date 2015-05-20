@@ -78,7 +78,7 @@ g_print_stats(char *file, uint32_t flags, size_t block_sz)
 
   if (gfl & F_OPT_SORT)
     {
-      if ((gfl & F_OPT_NOBUFFER))
+      if (gfl & F_OPT_NOBUFFER)
         {
           print_str("ERROR: %s: unable to sort with buffering disabled\n",
               g_act_1.file);

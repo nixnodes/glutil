@@ -918,7 +918,7 @@ g_buffer_into_memory(char *file, __g_handle hdl)
 
   hdl->hd_errno = 0;
 
-  if ((gfl0 & F_OPT_STDIN) || file[0] == 0x2D)
+  if ((gfl0 & F_OPT_STDIN) || (file[0] == 0x2D && file[1] == 0x0))
     {
       hdl->flags |= F_GH_FROMSTDIN;
     }

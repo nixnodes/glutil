@@ -133,7 +133,7 @@
 /* filesystem shadow log */
 
 #ifndef x_log
-#define x_log "-"
+#define x_log "stdin"
 #endif
 
 /* see MANUAL */
