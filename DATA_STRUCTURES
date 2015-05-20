@@ -159,7 +159,7 @@ FLAGS:
    stats      S     What did the user do ?
 
 
-; ONLINER
+; ONELINER
    
    user       S     The user that added the oneliner
    group      S     The primary group of the user who added the oneliner
