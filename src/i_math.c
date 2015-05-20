@@ -35,34 +35,7 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
 
   uint8_t v_b[8];
 
-  if (math->flags & F_MATH_NITEM)
-    {
-      uint8_t v_b[8] =
-        { 0 };
-      g_math_res(d_ptr, (pmda) math->next, v_b);
-      c_ptr = v_b;
-    }
-  else
-    {
-      if ((math->flags & F_MATH_VAR_KNOWN))
-        {
-          c_ptr = &math->vstor;
-        }
-      else
-        {
-          if (math->flags & F_MATH_HAS_CT)
-            {
-              int32_t *ct = (int32_t *) math->_glob_p;
-              *ct = (int32_t) time(NULL);
-            }
-
-          bzero((void*) v_b, 8);
-          memcpy((void*) v_b,
-              (math->flags & F_MATH_IS_GLOB) ?
-                  math->_glob_p : d_ptr + math->l_off, math->vb);
-          c_ptr = (void*) v_b;
-        }
-    }
+  M_PROC_ONE()
 
   memcpy(res, c_ptr, math->vb);
 
@@ -70,33 +43,7 @@ g_math_res(void *d_ptr, pmda mdm, void *res)
     {
       math = (__g_math ) ptr->ptr;
 
-      if (math->flags & F_MATH_NITEM)
-        {
-          uint8_t v_b[8] =
-            { 0 };
-          g_math_res(d_ptr, (pmda) math->next, v_b);
-          c_ptr = v_b;
-        }
-      else
-        {
-          if ((math->flags & F_MATH_VAR_KNOWN))
-            {
-              c_ptr = math->vstor;
-            }
-          else
-            {
-              if (math->flags & F_MATH_HAS_CT)
-                {
-                  int32_t *ct = (int32_t *) math->_glob_p;
-                  *ct = (int32_t) time(NULL);
-                }
-              bzero((void*) v_b, 8);
-              memcpy((void*) v_b,
-                  (math->flags & F_MATH_IS_GLOB) ?
-                      math->_glob_p : d_ptr + math->l_off, math->vb);
-              c_ptr = (void*) v_b;
-            }
-        }
+      M_PROC_ONE()
 
       p_math->op_t(res, c_ptr, res);
 
@@ -248,8 +195,21 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
     int *ret, void **p_ret, uint32_t flags, uint32_t int_flags)
 {
   g_setjmp(0, "g_process_math_string", NULL, NULL);
-  char *ptr = string, *left, oper = 0x0;
+  char *ptr, *left, oper = 0x0;
   size_t i;
+
+  size_t sin_len = strlen(string);
+
+  if (sin_len == 0)
+    {
+      return 0;
+    }
+
+  char *string_p = ptr = malloc(sin_len);
+
+  g_del_char(string, string_p, 0x20);
+
+  int f_ret = 0;
 
   while (ptr[0])
     {
@@ -260,7 +220,8 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
             {
               if (!(int_flags & F_PROC_MATH_STR_INB))
                 {
-                  return 0;
+                  f_ret = 0;
+                  goto f_end;
                 }
               else
                 {
@@ -292,7 +253,8 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
           if (NULL == object)
             {
-              return -1;
+              f_ret = -1;
+              goto f_end;
             }
 
           md_init(object, 8);
@@ -308,7 +270,8 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
                   "ERROR: g_process_math_string (F_PROC_MATH_STR_INB): FAILED: [%d]: %s\n",
                   r, pms_ret);
               md_g_free(object);
-              return r;
+              f_ret = r;
+              goto f_end;
             }
           else
             {
@@ -318,12 +281,14 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
               if (NULL == math)
                 {
-                  return 16;
+                  f_ret = 16;
+                  goto f_end;
                 }
 
               if (NULL == math_c)
                 {
-                  return 17;
+                  f_ret = 17;
+                  goto f_end;
                 }
 
               math->next = object;
@@ -343,14 +308,16 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
                 {
                   if (NULL == math_c->_m_p)
                     {
-                      return 21;
+                      f_ret = 21;
+                      goto f_end;
                     }
 
                   math->op_t = m_get_op_proc(ptr[0], math_c);
 
                   if ( NULL == math->op_t)
                     {
-                      return 22;
+                      f_ret = 22;
+                      goto f_end;
                     }
 
                   //math->_m_p = math_c->_m_p;
@@ -391,7 +358,8 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
       if (!i)
         {
-          return 1;
+          f_ret = 1;
+          goto f_end;
         }
 
       if (ptr[0] && ptr[0] != 0x23 && ptr[0] != 0x7D && ptr[0] != 0x29
@@ -399,14 +367,16 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
         {
           if (is_ascii_arith_bin_oper(ptr[0]))
             {
-              return 23;
+              f_ret = 23;
+              goto f_end;
             }
 
           if (ptr[0] == 0x3C || ptr[0] == 0x3E)
             {
               if (ptr[0] != ptr[1])
                 {
-                  return 2;
+                  f_ret = 2;
+                  goto f_end;
                 }
               ptr++;
             }
@@ -423,7 +393,8 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
       if (*ret)
         {
-          return 6;
+          f_ret = 6;
+          goto f_end;
         }
 
       if (oper == 0x7E && (ptr[0] == 0x7D || ptr[0] == 0x29))
@@ -431,13 +402,18 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
           *ret = g_build_math_packet(hdl, left, oper, mdm, NULL, flags);
           if (*ret)
             {
-              return 6;
+              f_ret = 6;
+              goto f_end;
             }
         }
 
     }
 
-  return 0;
+  f_end: ;
+
+  free(string_p);
+
+  return f_ret;
 }
 
 int

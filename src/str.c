@@ -683,3 +683,18 @@ g_p_escape_once(char *input, char *match)
     }
   return input;
 }
+
+void
+g_del_char(char *input, char *output, char match)
+{
+  while (input[0])
+    {
+      if (input[0] != match)
+        {
+          output[0] = input[0];
+          output++;
+        }
+      input++;
+    }
+  output[0] = 0x0;
+}

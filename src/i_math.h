@@ -65,7 +65,8 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
 void*
 g_get_math_m_p(__g_math math, __g_math p_math);
 int
-g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags, __g_math p_math);
+g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags,
+    __g_math p_math);
 
 typedef void
 g_op_t(void *s, void *d, void *o);
@@ -76,9 +77,10 @@ g_op_t g_arith_add_u64, g_arith_rem_u64, g_arith_mult_u64, g_arith_div_u64,
 
 static void *_m_u64[];
 
-g_op_t g_arith_add_u64_f, g_arith_rem_u64_f, g_arith_mult_u64_f, g_arith_div_u64_f,
-    g_arith_mod_u64_f, g_arith_bin_and_u64_f, g_arith_bin_or_u64_f,
-    g_arith_bin_xor_u64_f, g_arith_bin_lshift_u64_f, g_arith_bin_rshift_u64_f;
+g_op_t g_arith_add_u64_f, g_arith_rem_u64_f, g_arith_mult_u64_f,
+    g_arith_div_u64_f, g_arith_mod_u64_f, g_arith_bin_and_u64_f,
+    g_arith_bin_or_u64_f, g_arith_bin_xor_u64_f, g_arith_bin_lshift_u64_f,
+    g_arith_bin_rshift_u64_f;
 
 static void *_m_u64_f[];
 
@@ -88,9 +90,10 @@ g_op_t g_arith_add_s64, g_arith_rem_s64, g_arith_mult_s64, g_arith_div_s64,
 
 static void *_m_s64[];
 
-g_op_t g_arith_add_s64_f, g_arith_rem_s64_f, g_arith_mult_s64_f, g_arith_div_s64_f,
-    g_arith_mod_s64_f, g_arith_bin_and_s64_f, g_arith_bin_or_s64_f,
-    g_arith_bin_xor_s64_f, g_arith_bin_lshift_s64_f, g_arith_bin_rshift_s64_f;
+g_op_t g_arith_add_s64_f, g_arith_rem_s64_f, g_arith_mult_s64_f,
+    g_arith_div_s64_f, g_arith_mod_s64_f, g_arith_bin_and_s64_f,
+    g_arith_bin_or_s64_f, g_arith_bin_xor_s64_f, g_arith_bin_lshift_s64_f,
+    g_arith_bin_rshift_s64_f;
 
 static void *_m_s64_f[];
 
@@ -100,11 +103,13 @@ g_op_t g_arith_add_f, g_arith_rem_f, g_arith_mult_f, g_arith_div_f;
 
 static void *_m_f[];
 
-g_op_t g_arith_add_f_u64, g_arith_rem_f_u64, g_arith_mult_f_u64, g_arith_div_f_u64;
+g_op_t g_arith_add_f_u64, g_arith_rem_f_u64, g_arith_mult_f_u64,
+    g_arith_div_f_u64;
 
 static void *_m_f_u64[];
 
-g_op_t g_arith_add_f_s64, g_arith_rem_f_s64, g_arith_mult_f_s64, g_arith_div_f_s64;
+g_op_t g_arith_add_f_s64, g_arith_rem_f_s64, g_arith_mult_f_s64,
+    g_arith_div_f_s64;
 
 static void *_m_f_s64[];
 
@@ -112,5 +117,35 @@ int
 is_ascii_arith_bin_oper(char c);
 __g_math
 m_get_def_val(pmda math);
+
+#define M_PROC_ONE() { \
+  if (math->flags & F_MATH_NITEM) \
+    {  \
+      uint8_t v_b[8] = \
+        { 0 };\
+      g_math_res(d_ptr, (pmda) math->next, v_b); \
+      c_ptr = v_b; \
+    } \
+  else \
+    { \
+      if ((math->flags & F_MATH_VAR_KNOWN)) \
+        { \
+          c_ptr = math->vstor; \
+        } \
+      else \
+        { \
+          if (math->flags & F_MATH_HAS_CT) \
+            { \
+              int32_t *ct = (int32_t *) math->_glob_p; \
+              *ct = (int32_t) time(NULL); \
+            } \
+          bzero((void*) v_b, 8); \
+          memcpy((void*) v_b, \
+              (math->flags & F_MATH_IS_GLOB) ? \
+                  math->_glob_p : d_ptr + math->l_off, math->vb); \
+          c_ptr = (void*) v_b; \
+        } \
+    } \
+};
 
 #endif /* I_MATH_H_ */
