@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.6], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.6.1], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 
 AM_INIT_AUTOMAKE([subdir-objects silent-rules]) 
@@ -27,11 +27,11 @@ AC_ARG_ENABLE(chroot,
 glutil_chroot="$enableval", glutil_chroot="no")
 
 AC_ARG_ENABLE(chroot-ownbin,
-[  --enable-chroot-ownbin		Build glutil for chrooted environment as a separate binary [default=no]],
+[  --enable-chroot-ownbin	Build glutil for chrooted environment as a separate binary [default=no]],
 glutil_chroot_ownbin="$enableval", glutil_chroot_ownbin="no")
 
 AC_ARG_ENABLE(gzip,
-[  --enable-gzip		Enable gzip compression support [default=no]],
+[  --enable-gzip			Enable gzip compression support [default=no]],
 glutil_enable_gzip="yes", glutil_enable_gzip="no" )
 
 AC_ARG_ENABLE(gfind,
@@ -42,12 +42,16 @@ AC_ARG_ENABLE(networking,
 [  --enable-networking		Enable network subsystem (MT engine) [default=no]],
 glutil_enable_net="yes", glutil_enable_net="no" )
 
+AC_ARG_ENABLE(crypto,
+[  --enable-crypto		Enable OpenSSL cryptography functions [default=no]],
+glutil_enable_crypto="yes", glutil_enable_crypto="no" )
+
 AC_ARG_ENABLE(precheck,
-[  --enable-precheck	  build glutil-precheck [default=no]],
+[  --enable-precheck		Build glutil-precheck [default=no]],
 glutil_precheck="$enableval", glutil_precheck="no")
 
 AC_ARG_ENABLE(precheck-nonchroot,
-[  --enable-precheck-nonchrot	  build glutil-precheck for non-chrooted environment [default=no]],
+[  --enable-precheck-nonchrot	Build glutil-precheck for non-chrooted environment [default=no]],
 glutil_precheck_nonchroot="$enableval", glutil_precheck_nonchroot="no")
 
 if [ test "$glutil_precheck_nonchroot" = "yes" ]; then	
@@ -67,16 +71,20 @@ if [ test "$glutil_enable_net" = "yes" ]; then
  	if [ test "$glutil_enable_sbin" = "no" ]; then
  		AC_CHECK_LIB([ssl], [SSL_library_init], [], [AC_MSG_FAILURE([could not find ssl libs])])
  		AC_CHECK_HEADER([openssl/ssl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (openssl/ssl.h)])])
- 		AC_CHECK_HEADER([openssl/err.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (openssl/err.h)])])
- 		AC_CHECK_LIB([crypto], [CRYPTO_set_id_callback], [], [AC_MSG_FAILURE([could not find libcrypto])])
+ 		AC_CHECK_HEADER([openssl/err.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (openssl/err.h)])]) 		
 		AC_DEFINE([_G_SSYS_NET], [1], [//])
 		AC_DEFINE([_G_SSYS_THREAD], [1], [//])				
 		AC_CHECK_LIB([pthread], [pthread_create], [], [AC_MSG_FAILURE([could not find libpthread])])
 		AC_CHECK_HEADER([pthread.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (pthread.h)])])
-		AC_DEFINE([_G_SSYS_CRYPTO], [1], [//])
+		glutil_enable_crypto="yes"
 	else
 		glutil_enable_net="no"
 	fi
+fi
+
+if [ test "$glutil_enable_crypto" = "yes" ]; then
+	AC_CHECK_LIB([crypto], [CRYPTO_set_id_callback], [], [AC_MSG_FAILURE([could not find libcrypto])])
+	AC_DEFINE([_G_SSYS_CRYPTO], [1], [//])
 fi
 
 if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; then
@@ -112,6 +120,7 @@ AM_CONDITIONAL(ENABLE_PRECHECK_NONCHROOT, test "$glutil_precheck_nonchroot" = "y
 AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 AM_CONDITIONAL(ENABLE_SEARCHBIN, test "$glutil_enable_sbin" = "yes")
 AM_CONDITIONAL(ENABLE_NET_SUBSYS, test "$glutil_enable_net" = "yes")
+AM_CONDITIONAL(ENABLE_CRYPTO, test "$glutil_enable_crypto" = "yes")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 

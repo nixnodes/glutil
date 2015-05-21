@@ -275,7 +275,9 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
 
 #include "g_crypto.h"
 #include <openssl/sha.h>
+#include <openssl/md4.h>
 #include <openssl/md5.h>
+#include <openssl/ripemd.h>
 
 #define DTR_PROTO_CSUM(type, call) { \
   char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match, \
@@ -325,6 +327,13 @@ dt_rval_spec_sha224(void *arg, char *match, char *output, size_t max_size,
 }
 
 static char *
+dt_rval_spec_sha256(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_sha256, SHA256)
+}
+
+static char *
 dt_rval_spec_sha384(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
@@ -339,10 +348,24 @@ dt_rval_spec_sha512(void *arg, char *match, char *output, size_t max_size,
 }
 
 static char *
+dt_rval_spec_md4(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_md4, MD4)
+}
+
+static char *
 dt_rval_spec_md5(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   DTR_PROTO_CSUM(_pid_md5, MD5)
+}
+
+static char *
+dt_rval_spec_ripemd160(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_rmd160, RIPEMD160)
 }
 
 #endif
@@ -1845,7 +1868,7 @@ rt_af_strops(void *arg, char *match, char *output, size_t max_size,
 
 }
 
-#define DT_RVAL_GENPREPROC  \
+#define DT_RVAL_GENPREPROC()  \
   { \
     mppd->mppd_next = l_mppd_create_copy(mppd); \
     mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size, \
@@ -1902,15 +1925,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         break;
       case 0x6C:
         ;
-        mppd->mppd_next = l_mppd_create_copy(mppd);
-
-        mppd->fp_rval1 = mppd->hdl->g_proc1_lookup(arg, match, output, max_size,
-            mppd->mppd_next);
-
-        if (NULL == mppd->fp_rval1)
-          {
-            return NULL;
-          }
+        DT_RVAL_GENPREPROC()
         return as_ref_to_val_lk(match, dt_rval_spec_slen, (__d_drt_h ) mppd,
         NULL);
         break;
@@ -1938,14 +1953,25 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         break;
 #ifdef _G_SSYS_CRYPTO
       case 0x53:
-        DT_RVAL_GENPREPROC
-        ;
+        DT_RVAL_GENPREPROC()
         switch (id[1])
           {
         case 0x32:
           ;
-          return as_ref_to_val_lk(match, dt_rval_spec_sha224, (__d_drt_h ) mppd,
-          NULL);
+          switch (id[2])
+            {
+          case 0x32:
+            ;
+            return as_ref_to_val_lk(match, dt_rval_spec_sha224,
+                (__d_drt_h ) mppd,
+                NULL);
+            break;
+          case 0x35:
+            return as_ref_to_val_lk(match, dt_rval_spec_sha256,
+                (__d_drt_h ) mppd,
+                NULL);
+            break;
+            }
           break;
         case 0x33:
           ;
@@ -1965,27 +1991,38 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
           }
         break;
       case 0x4D:
-        DT_RVAL_GENPREPROC
-        ;
-
-        return as_ref_to_val_lk(match, dt_rval_spec_md5, (__d_drt_h ) mppd,
-        NULL);
+        DT_RVAL_GENPREPROC()
+        switch (id[1])
+          {
+        case 0x34:
+          ;
+          return as_ref_to_val_lk(match, dt_rval_spec_md4, (__d_drt_h ) mppd,
+          NULL);
+          break;
+        case 0x35:
+          ;
+          return as_ref_to_val_lk(match, dt_rval_spec_md5, (__d_drt_h ) mppd,
+          NULL);
+          break;
+          }
+        break;
+      case 0x52:
+        DT_RVAL_GENPREPROC()
+        return as_ref_to_val_lk(match, dt_rval_spec_ripemd160,
+            (__d_drt_h ) mppd,
+            NULL);
         break;
 #endif
       case 0x42:
         ;
-        DT_RVAL_GENPREPROC
-        ;
-
+        DT_RVAL_GENPREPROC()
         return as_ref_to_val_lk(match, dt_rval_spec_base64_encode,
             (__d_drt_h ) mppd,
             NULL);
         break;
       case 0x44:
         ;
-        DT_RVAL_GENPREPROC
-        ;
-
+        DT_RVAL_GENPREPROC()
         return as_ref_to_val_lk(match, dt_rval_spec_base64_decode,
             (__d_drt_h ) mppd,
             NULL);
@@ -1993,6 +2030,7 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
         }
 
     }
+
   return NULL;
 }
 

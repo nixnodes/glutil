@@ -11,6 +11,9 @@
  *   - % Expanded base64 encode/decode maximum input data size to 4GB
  *   - + SHA224, SHA384, SHA512 and MD5 checksumming extended directives
  *   - % Clean spaces from math strings before processing
+ *   2.6.1:
+ *   - + SHA256, MD4, RIPEMD160 hash functions (extended directives)
+ *   - + --enable-crypto option (autotools configure)
  *
  * v2.5:
  *
