@@ -5,6 +5,13 @@
  *  % = Change/update
  *  ! = Performance optimization
  *
+ * v2.6:
+ * 
+ *   - ~ Fixed several minor bugs
+ *   - % Expanded base64 encode/decode maximum input data size to 4GB
+ *   - + SHA224, SHA384, SHA512 and MD5 checksumming extended directives
+ *   - % Clean spaces from math strings before processing
+ *
  * v2.5:
  *
  *   - % Changed how field is passed to string matching parameters
