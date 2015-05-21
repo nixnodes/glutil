@@ -82,5 +82,7 @@ char *
 g_p_escape_once(char *input, char *match);
 void
 g_del_char(char *input, char *output, char match);
+char *
+bb_to_ascii(unsigned char *block, size_t len, char *out);
 
 #endif /* STR_H_ */

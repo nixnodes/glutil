@@ -103,6 +103,7 @@ FLAGS:
    crc32      I     CRC32 of file (hexadecimal)
    dec-crc32  S     (OBSOLETE) CRC32 of file (decimal)
    depth      I     Current directory tree depth  
+   data       E     Raw data contained in 'path' (must not be a directory)
    c:<key>    S     Retrieve line starting with <key>, followed by a space or tab (meant for glftpd config files)
   
 

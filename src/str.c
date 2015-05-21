@@ -698,3 +698,18 @@ g_del_char(char *input, char *output, char match)
     }
   output[0] = 0x0;
 }
+
+char *
+bb_to_ascii(unsigned char *block, size_t len, char *out)
+{
+
+  int i;
+  char *o_out = out;
+  for (i = 0; i < len; i++)
+    {
+      snprintf(out, 3, "%.2hhx", block[i]);
+      out += 2;
+    }
+
+  return o_out;
+}

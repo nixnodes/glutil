@@ -273,47 +273,78 @@ dt_rval_spec_slen(void *arg, char *match, char *output, size_t max_size,
 
 #ifdef _G_SSYS_CRYPTO
 
-#include <g_crypto.h>
+#include "g_crypto.h"
+#include <openssl/sha.h>
+#include <openssl/md5.h>
+
+#define DTR_PROTO_CSUM(type, call) { \
+  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match, \
+      ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0), \
+      ((__d_drt_h ) mppd)->mppd_next); \
+  if (NULL != p_o) \
+    { \
+      __d_drt_h mppd_next = ((__d_drt_h ) mppd)->mppd_next; \
+      size_t r_len; \
+      if (0 == mppd_next->ret0) \
+        { \
+          r_len = strlen(p_o); \
+        } \
+      else \
+        { \
+          r_len = (size_t) mppd_next->ret0; \
+        } \
+      type out, *o_ptr = (type*) call((unsigned char*) p_o, r_len,(unsigned char*) &out ); \
+      if (NULL != o_ptr) \
+        { \
+          return bb_to_ascii(o_ptr->data, sizeof(o_ptr->data), output); \
+        } \
+      else \
+        { \
+          output[0] = 0x0; \
+        } \
+    } \
+  else \
+    { \
+      output[0] = 0x0; \
+    } \
+  return output; \
+};
 
 static char *
 dt_rval_spec_sha1(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
-  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
-      ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
-      ((__d_drt_h ) mppd)->mppd_next);
-
-  if (NULL != p_o)
-    {
-      __d_drt_h mppd_next = ((__d_drt_h ) mppd)->mppd_next;
-      size_t r_len;
-      if (!mppd_next->ret0)
-        {
-          r_len = strlen(p_o);
-        }
-      else
-        {
-          r_len = mppd_next->ret0;
-        }
-
-      _pid_sha1 out, *o_ptr = crypto_calc_sha1((unsigned char*) p_o, r_len,
-          &out);
-      if (NULL != o_ptr)
-        {
-          return crypto_sha1_to_ascii(o_ptr, output);
-        }
-      else
-        {
-          output[0] = 0x0;
-          return output;
-        }
-    }
-  else
-    {
-      output[0] = 0x0;
-    }
-  return output;
+  DTR_PROTO_CSUM(_pid_sha1, SHA1)
 }
+
+static char *
+dt_rval_spec_sha224(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_sha224, SHA224)
+}
+
+static char *
+dt_rval_spec_sha384(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_sha384, SHA384)
+}
+
+static char *
+dt_rval_spec_sha512(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_sha512, SHA512)
+}
+
+static char *
+dt_rval_spec_md5(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  DTR_PROTO_CSUM(_pid_md5, MD5)
+}
+
 #endif
 
 #include <base64.h>
@@ -582,7 +613,8 @@ dt_rval_spec_print_format_int(void *arg, char *match, char *output,
       == (s_ptr = g_exech_build_string(arg, &_mppd->sub_mech, _mppd->hdl,
           _mppd_next->tp_b0, sizeof(_mppd_next->tp_b0))))
     {
-      print_str("ERROR: dt_rval_spec_print_format_int: could not assemble print string\n");
+      print_str(
+          "ERROR: dt_rval_spec_print_format_int: could not assemble print string\n");
 #ifdef _G_SSYS_THREAD
       mutex_lock(&mutex_glob00);
 #endif
@@ -1908,8 +1940,35 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
       case 0x53:
         DT_RVAL_GENPREPROC
         ;
+        switch (id[1])
+          {
+        case 0x32:
+          ;
+          return as_ref_to_val_lk(match, dt_rval_spec_sha224, (__d_drt_h ) mppd,
+          NULL);
+          break;
+        case 0x33:
+          ;
+          return as_ref_to_val_lk(match, dt_rval_spec_sha384, (__d_drt_h ) mppd,
+          NULL);
+          break;
+        case 0x35:
+          ;
+          return as_ref_to_val_lk(match, dt_rval_spec_sha512, (__d_drt_h ) mppd,
+          NULL);
+          break;
+        default:
+          ;
+          return as_ref_to_val_lk(match, dt_rval_spec_sha1, (__d_drt_h ) mppd,
+          NULL);
+          break;
+          }
+        break;
+      case 0x4D:
+        DT_RVAL_GENPREPROC
+        ;
 
-        return as_ref_to_val_lk(match, dt_rval_spec_sha1, (__d_drt_h ) mppd,
+        return as_ref_to_val_lk(match, dt_rval_spec_md5, (__d_drt_h ) mppd,
         NULL);
         break;
 #endif

@@ -316,6 +316,18 @@ Updated: 16/11/2014
 			
 			Binary must be compiled with --enable-networking to use this (OpenSSL cryptographic libs).
 			
+	?S2  <directive>
+			Compute the SHA-224 message digest of the result from <directive>.
+			
+	?S3  <directive>
+			Compute the SHA-384 message digest of the result from <directive>.
+			
+	?S5  <directive>
+			Compute the SHA-512 message digest of the result from <directive>.
+			
+	?M   <directive>
+			Compute the MD5 message digest of the result from <directive>.			
+			
 	?B   <directive>
 			Base64 encode result from <directive>.
 	

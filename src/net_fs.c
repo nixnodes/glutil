@@ -17,6 +17,7 @@
 #include "misc.h"
 #include "net_io.h"
 #include "g_crypto.h"
+#include "str.h"
 
 void
 net_fs_initialize_sts(__sock_o pso)
@@ -471,7 +472,7 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
 
       print_str(
           "D2: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum OK [%s]\n",
-          pso->sock, crypto_sha1_to_ascii(sha1, sha1_ascii));
+          pso->sock, bb_to_ascii(sha1->data, sizeof(sha1->data), sha1_ascii));
       print_str("INFO: %s: [%d]: transfer successfull\n", psts->data0,
           pso->sock);
       status_flags |= F_RQH_OP_OK;
@@ -482,7 +483,7 @@ net_baseline_fsproto_xfer_validate(__sock_o pso, __fs_rh_enc packet, void *arg)
     {
       print_str(
           "WARNING: net_baseline_fsproto_xfer_validate: [%d]: SHA-1 checksum BAD [%s]\n",
-          pso->sock, crypto_sha1_to_ascii(sha1, sha1_ascii));
+          pso->sock, bb_to_ascii(sha1->data, sizeof(sha1->data), sha1_ascii));
       status_flags |= F_RQH_OP_FAILED;
       message = "SHA1 BAD";
     }
@@ -834,7 +835,9 @@ net_baseline_fsproto_send(__sock_o pso, pmda base, pmda threadr, void *data)
 
       char buffer[128];
       print_str("DEBUG: net_baseline_fsproto_send: [%d]: all data sent [%s]\n",
-          pso->sock, crypto_sha1_to_ascii(&psts->sha_00.value, buffer));
+          pso->sock,
+          bb_to_ascii(psts->sha_00.value.data, sizeof(psts->sha_00.value.data),
+              buffer));
 
       //memset(psts, 0x0, sizeof(_fs_sts));
     }
@@ -899,7 +902,8 @@ net_baseline_fsproto_recv(__sock_o pso, pmda base, pmda threadr, void *data)
       print_str(
           "D4: net_baseline_fsproto_recv: [%d]: recieved %llu bytes [%s]\n",
           pso->sock, psts->data_in,
-          crypto_sha1_to_ascii(&psts->sha_00.value, buffer));
+          bb_to_ascii(psts->sha_00.value.data, sizeof(psts->sha_00.value.data),
+              buffer));
       //pso->flags |= F_OPSOCK_TERM;
     }
   else if (psts->data_in > psts->hstat.file_size)
