@@ -428,6 +428,8 @@ dt_rval_spec_base64_decode(void *arg, char *match, char *output,
             }
           else
             {
+              output = _mppd->v_p1;
+              output[bo_len] = 0x0;
               return _mppd->v_p1;
             }
         }
@@ -580,7 +582,7 @@ dt_rval_spec_print_format_int(void *arg, char *match, char *output,
       == (s_ptr = g_exech_build_string(arg, &_mppd->sub_mech, _mppd->hdl,
           _mppd_next->tp_b0, sizeof(_mppd_next->tp_b0))))
     {
-      print_str("ERROR: g_omfp_eassemble: could not assemble print string\n");
+      print_str("ERROR: dt_rval_spec_print_format_int: could not assemble print string\n");
 #ifdef _G_SSYS_THREAD
       mutex_lock(&mutex_glob00);
 #endif
