@@ -325,6 +325,7 @@ Updated: 16/11/2014
 		?S5     - SHA-512
 		?M4     - MD4
 		?M5     - MD5
+		?R      - RIPEMD160
 			
 	?B    <directive>
 			Base64 encode result from <directive>.
