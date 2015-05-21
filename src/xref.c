@@ -754,54 +754,89 @@ dt_rval_x_depth(void *arg, char *match, char *output, size_t max_size,
   return output;
 }
 
-char *
+void *
 dt_rval_x_data(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+
+  _mppd->ret0 = 0;
+
+  size_t file_size = (size_t) ((__d_xref) arg)->st.st_size;
+
+  if (0 == file_size)
+    {
+      print_str("WARNING: dt_rval_x_data: '%s': zero-byte file\n", ((__d_xref) arg)->name);
+      output[0] = 0x0;
+      return (void*) output;
+    }
+
+  if (((__d_xref) arg)->st.st_mode & S_IFDIR)
+    {
+      print_str("WARNING: dt_rval_x_data: '%s': is a directory\n", ((__d_xref) arg)->name);
+      output[0] = 0x0;
+      return (void*) output;
+    }
+
+  if ( NULL != _mppd->v_p1)
+    {
+      free(_mppd->v_p1);
+    }
+
+  _mppd->v_p1 = malloc(file_size);
+
   FILE *fp = fopen(((__d_xref) arg)->name, "rb");
 
-  if ( NULL == fp )
+  if ( NULL == fp)
     {
       char err_buf[1024];
-      print_str("ERROR: dt_rval_x_data: error opening file '%s': %s\n", ((__d_xref) arg)->name,
+      print_str("ERROR: dt_rval_x_data: error opening file '%s': %s\n",
+          ((__d_xref) arg)->name,
       strerror_r(errno, err_buf, sizeof(err_buf)));
+      output[0] = 0x0;
+      return (void*) output;
     }
 
   size_t read, r;
 
-  for (read = 0; !feof(fp) && !ferror(fp) && read < max_size;)
+  for (read = 0; !feof(fp) && !ferror(fp) && read < file_size;)
     {
-      if ((r = fread(&((unsigned char*) output)[read], 1, max_size - read, fp))
-      < 1)
+      if ((r = fread(&((unsigned char*) _mppd->v_p1)[read], 1, file_size - read,
+          fp)) < 1)
         {
           break;
         }
       read += r;
     }
 
-  if ( ferror(fp) )
+  if (ferror(fp))
     {
       char err_buf[1024];
-      print_str("ERROR: dt_rval_x_data: while reading file '%s': %s\n", ((__d_xref) arg)->name,
+      print_str("ERROR: dt_rval_x_data: while reading file '%s': %s\n",
+          ((__d_xref) arg)->name,
+      strerror_r(errno, err_buf, sizeof(err_buf)));
+      read = 0;
+    }
+
+  /*if (!feof(fp) && read == max_size)
+   {
+   print_str(
+   "ERROR: dt_rval_x_data: data size exceeded available buffer space\n");
+   memset(output, 0x0, max_size);
+   }*/
+
+  if (fclose(fp))
+    {
+      char err_buf[1024];
+      print_str(
+          "ERROR: dt_rval_x_data: failed closing file descriptor '%s': %s\n",
+          ((__d_xref) arg)->name,
       strerror_r(errno, err_buf, sizeof(err_buf)));
     }
 
-  if ( !feof(fp) && read == max_size)
-    {
-      print_str("ERROR: dt_rval_x_data: data size exceeded available buffer space\n");
-      memset(output, 0x0, max_size);
-    }
+  _mppd->ret0 = (uint64_t) read;
 
-  if ( fclose(fp) )
-    {
-      char err_buf[1024];
-      print_str("ERROR: dt_rval_x_data: failed closing file descriptor '%s': %s\n", ((__d_xref) arg)->name,
-      strerror_r(errno, err_buf, sizeof(err_buf)));
-    }
-
-  ((__d_drt_h ) mppd)->ret_len = (uint64_t)read;
-
-  return output;
+  return _mppd->v_p1;
 }
 
 char *
@@ -1398,6 +1433,10 @@ ref_to_val_lk_x(void *arg, char *match, char *output, size_t max_size,
     }
   else if (!strncmp(match, _MC_X_DATA, 4))
     {
+      if (arg)
+        {
+          ((__d_xref) arg)->flags |= F_XRF_DO_STAT;
+        }
       return as_ref_to_val_lk(match, dt_rval_x_data ,(__d_drt_h)mppd, "%s");
     }
   else if (!strncmp(match, _MC_X_RLINK, 5))

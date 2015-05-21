@@ -385,6 +385,11 @@ clean_drt(__d_drt_h mppd)
       free(mppd->v_p0);
     }
 
+  if ( NULL != mppd->v_p1)
+    {
+      free(mppd->v_p1);
+    }
+
   if (NULL != mppd->st_p0)
     {
       free(mppd->st_p0);
@@ -437,13 +442,13 @@ int
 g_handle_pipe_cleanup(__g_handle hdl)
 {
   /*if (hdl->flags & F_GH_EXECRD_PIPE_IN)
-    {
-      hdl->flags ^= F_GH_EXECRD_PIPE_IN;
-    }
-  if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
-    {
-      hdl->flags ^= F_GH_EXECRD_PIPE_OUT;
-    }*/
+   {
+   hdl->flags ^= F_GH_EXECRD_PIPE_IN;
+   }
+   if (hdl->flags & F_GH_EXECRD_PIPE_OUT)
+   {
+   hdl->flags ^= F_GH_EXECRD_PIPE_OUT;
+   }*/
 
   if (hdl->flags & F_GH_EXECRD_HAS_STD_PIPE)
     {

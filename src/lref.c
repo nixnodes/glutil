@@ -287,13 +287,13 @@ dt_rval_spec_sha1(void *arg, char *match, char *output, size_t max_size,
     {
       __d_drt_h mppd_next = ((__d_drt_h ) mppd)->mppd_next;
       size_t r_len;
-      if (!mppd_next->ret_len)
+      if (!mppd_next->ret0)
         {
           r_len = strlen(p_o);
         }
       else
         {
-          r_len = mppd_next->ret_len;
+          r_len = mppd_next->ret0;
         }
 
       _pid_sha1 out, *o_ptr = crypto_calc_sha1((unsigned char*) p_o, r_len,
@@ -322,15 +322,57 @@ static char *
 dt_rval_spec_base64_encode(void *arg, char *match, char *output,
     size_t max_size, void *mppd)
 {
-  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
-      ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
+  unsigned char *p_o = (unsigned char *) ((__d_drt_h ) mppd)->fp_rval1(arg,
+      match, ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
       ((__d_drt_h ) mppd)->mppd_next);
+
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
 
   if (NULL != p_o)
     {
-      if (!base64_encode((unsigned char*) p_o, strlen(p_o), output, max_size))
+      uint64_t src_len;
+
+      if (0 == _mppd->mppd_next->ret0)
+        {
+          src_len = strlen((char*) p_o);
+        }
+      else
+        {
+          src_len = _mppd->mppd_next->ret0;
+        }
+
+      if (0 == src_len)
         {
           output[0] = 0x0;
+        }
+      else
+        {
+          if ( NULL != _mppd->v_p1)
+            {
+              free(_mppd->v_p1);
+            }
+
+          /*uint64_t cp_size = ((src_len
+           + ((src_len % 3) ? (3 - (src_len % 3)) : 0)) / 3) * 4;
+           uint64_t nl_size = ((cp_size) / 72) * 2;
+           uint64_t b64e_out_size = cp_size + nl_size;*/
+
+          uint64_t b64e_out_size = ((src_len + 2) / 3 * 4) + 1;
+
+          _mppd->v_p1 = malloc(b64e_out_size);
+
+          if (!base64_encode(p_o, (unsigned int) src_len, (char*) _mppd->v_p1,
+              (unsigned int) b64e_out_size))
+            {
+              output[0] = 0x0;
+              print_str(
+                  "ERROR: dt_rval_spec_base64_encode: base64_encode failed [in: %llu] [out: %llu]\n",
+                  src_len, b64e_out_size);
+            }
+          else
+            {
+              return (char*) _mppd->v_p1;
+            }
         }
     }
   else
@@ -344,21 +386,50 @@ static char *
 dt_rval_spec_base64_decode(void *arg, char *match, char *output,
     size_t max_size, void *mppd)
 {
-  char *p_o = ((__d_drt_h ) mppd)->fp_rval1(arg, match,
+  char *p_o = (char*) ((__d_drt_h ) mppd)->fp_rval1(arg, match,
       ((__d_drt_h ) mppd)->tp_b0, sizeof(((__d_drt_h ) mppd)->tp_b0),
       ((__d_drt_h ) mppd)->mppd_next);
 
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+
   if (NULL != p_o)
     {
-      size_t bo_len;
-      if (-1
-          == (bo_len = base64_decode(p_o, (unsigned char*) output, max_size)))
+      uint64_t src_len;
+
+      if (0 == _mppd->mppd_next->ret0)
+        {
+          src_len = strlen((char*) p_o);
+        }
+      else
+        {
+          src_len = _mppd->mppd_next->ret0;
+        }
+
+      if (0 == src_len)
         {
           output[0] = 0x0;
         }
       else
         {
-          output[bo_len] = 0x0;
+          if ( NULL != _mppd->v_p1)
+            {
+              free(_mppd->v_p1);
+            }
+
+          src_len++;
+          _mppd->v_p1 = malloc(src_len);
+
+          unsigned int bo_len;
+          if (-1
+              == (bo_len = base64_decode(p_o, (unsigned char*) _mppd->v_p1,
+                  src_len)))
+            {
+              output[0] = 0x0;
+            }
+          else
+            {
+              return _mppd->v_p1;
+            }
         }
     }
   else
