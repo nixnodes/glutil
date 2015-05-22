@@ -483,14 +483,14 @@ Updated: 16/11/2014
 	
 	-a --silent -lom="score < 5.0 && score" --execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
 	
-	Display all titles with score higher than 6.0, sort by score ascending:
+	Display all titles with score higher than or equal to 6.0, sort by score ascending:
 	
-	-a -lom="score > 6.0" --sort asc,score -print '{score} {:t} {title}'
+	-a -lom="score >= 6.0" --sort asc,score -print '{score} {:t} {title}'
 	
-	Display all titles with score higher than 7.1 of genre Comedy,
+	Display all titles with score higher than 7.0 of genre Comedy,
 	sorted by score ascending:
 	
-	-a -lom="score > 7.1" -l: genres -regexi "Comedy" --sort asc,score -print '{score} {:t} {title} / {genres}'
+	-a -lom="score > 7.0" -l: genres -regexi "Comedy" --sort asc,score -print '{score} {:t} {title} / {genres}'
 
 
  FOLDERS FILE (filesystem based dirlog rebuild only):
@@ -581,5 +581,5 @@ Updated: 16/11/2014
 		
 	  Increment by one for each record matched (regex and LOM filters applied):
 	  
-		-d -lom "u64glob7 += 1" -regex "a" --lom "size > 0 && files > 0" -postprint 'Results: {u64glob7}'
+		-d -regex "a" -lom "size > 0 && files > 0" -lom "u64glob7 += 1" -postprint 'Results: {u64glob7}'
  
