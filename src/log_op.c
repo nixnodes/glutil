@@ -270,7 +270,8 @@ g_proc_mr(__g_handle hdl)
       if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match),
           g_h_deepcp_mrr)))
         {
-          print_str("ERROR: %s: could not copy matches to handle\n", hdl->file);
+          print_str("ERROR: %s: md_copy(_match_rr, handle) failed\n",
+              hdl->file);
           return 2000;
         }
       if (hdl->_match_rr.offset)

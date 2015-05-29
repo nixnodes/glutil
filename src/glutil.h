@@ -87,16 +87,16 @@ off_t max_hits;
 off_t max_results;
 
 int execv_stdout_redir;
-
 int g_regex_flags;
 
 size_t max_datain_f;
 
 char infile_p[PATH_MAX];
+char b_glob[MAX_EXEC_STR + 4];
 
 off_t max_depth, min_depth;
 
-char b_glob[MAX_EXEC_STR + 4];
+_g_handle _dummy_hio;
 
 int g_shmcflags;
 

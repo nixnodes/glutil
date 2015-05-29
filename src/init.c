@@ -149,6 +149,9 @@ pmda _match_clvl = &_match_rr;
 _l_match _match_rr_l =
   { 0 };
 
+_g_handle _dummy_hio =
+  { 0 };
+
 char *GLOBAL_PREEXEC = NULL;
 char *GLOBAL_POSTEXEC = NULL;
 

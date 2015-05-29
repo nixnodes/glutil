@@ -1,4 +1,4 @@
-#@REVISION:3
+#@REVISION:4
 
 INPUT_SOURCES=(
 	"taskd/mod scripts/taskd/modules 744 8" 	
@@ -10,7 +10,7 @@ INPUT_SOURCES=(
 
 INPUT_DEPENDENCIES=(
 	"base/common scripts/common 644 6 0 02"
-	"tvrage/tvrage scripts/tvrage_get.sh 755 6 0 338"
-	"imdb/imdb scripts/imdb_get.sh 755 6 0 246"
 	"updates/10taskd scripts/script_update.d/10taskd 644 6 1 14"
+	"tvrage/tvrage scripts/tvrage_get.sh 755 6 0 338"
+	"imdb/imdb scripts/imdb_get.sh 755 6 0 246"	
 )
