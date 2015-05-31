@@ -18,14 +18,14 @@
 #include <errno.h>
 
 void
-dt_set_inetobj(__g_handle hdl)
+dt_set_gen3(__g_handle hdl)
 {
   hdl->flags |= F_GH_ISGENERIC3;
   hdl->block_sz = G3_SZ;
   hdl->d_memb = 1;
   hdl->g_proc0 = gcb_gen3;
-  hdl->g_proc1_lookup = ref_to_val_lk_zone;
-  hdl->g_proc2 = ref_to_val_ptr_zone;
+  hdl->g_proc1_lookup = ref_to_val_lk_gen3;
+  hdl->g_proc2 = ref_to_val_ptr_gen3;
   hdl->g_proc3 = zone_format_block;
   hdl->g_proc3_batch = zone_format_block_batch;
   hdl->g_proc3_export = zone_format_block_exp;
@@ -78,7 +78,7 @@ zone_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_zone(void *arg, char *match, int *output)
+ref_to_val_ptr_gen3(void *arg, char *match, int *output)
 {
   __d_generic_s800 data = (__d_generic_s800) arg;
   if (!strncmp(match, _MC_GE_I1, 2))
@@ -118,7 +118,7 @@ ref_to_val_ptr_zone(void *arg, char *match, int *output)
 
 
 char *
-dt_rval_zone_path(void *arg, char *match, char *output, size_t max_size,
+dt_rval_gen3_path(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_1);
@@ -196,7 +196,7 @@ dt_rval_gen3_ge4(void *arg, char *match, char *output, size_t max_size,
 }
 
 void *
-ref_to_val_lk_zone(void *arg, char *match, char *output, size_t max_size,
+ref_to_val_lk_gen3(void *arg, char *match, char *output, size_t max_size,
     void *mppd)
 {
   PROC_SH_EX(match)
@@ -209,7 +209,7 @@ ref_to_val_lk_zone(void *arg, char *match, char *output, size_t max_size,
 
   if (!strncmp(match, _MC_GE_I1, 2))
     {
-      return as_ref_to_val_lk(match, dt_rval_zone_path, (__d_drt_h) mppd, "%d");
+      return as_ref_to_val_lk(match, dt_rval_gen3_path, (__d_drt_h) mppd, "%d");
     }
   else if (!strncmp(match, _MC_GE_I2, 2))
     {

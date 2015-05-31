@@ -16,9 +16,9 @@
 __d_format_block zone_format_block, zone_format_block_batch,
     zone_format_block_exp;
 
-__d_ref_to_pval ref_to_val_ptr_zone;
+__d_ref_to_pval ref_to_val_ptr_gen3;
 
-_d_rtv_lk ref_to_val_lk_zone;
+_d_rtv_lk ref_to_val_lk_gen3;
 
 int
 gcb_gen3(void *buffer, char *key, char *val);
