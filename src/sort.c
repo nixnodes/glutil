@@ -391,7 +391,7 @@ g_swapsort_exec(pmda m_ptr, __p_srd psrd)
 }
 
 int
-g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
+preproc_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd)
 {
   g_setjmp(0, "g_sort_numeric", NULL, NULL);
   void *g_fh_f = NULL, *g_fh_s = NULL, *g_fh_f_opp = NULL, *g_fh_s_opp = NULL;
@@ -583,7 +583,7 @@ g_sort(__g_handle hdl, char *field, uint32_t flags)
     {
   case F_GSORT_NUMERIC:
     ;
-    ret = g_sort_numeric(hdl, field, flags, &srd);
+    ret = preproc_sort_numeric(hdl, field, flags, &srd);
     break;
   case F_GSORT_STRING:
     ;

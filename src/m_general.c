@@ -347,15 +347,19 @@ do_string_match(__g_handle hdl, void *d_ptr, __g_match _gm)
 
   int rr;
 
-  if ((_gm->flags & F_GM_ISREGEX)
-      && (rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->match_i_m)
+  if ((_gm->flags & F_GM_ISREGEX))
     {
-      r = 1;
+      if ((rr = regexec(&_gm->preg, mstr, 0, NULL, 0)) == _gm->match_i_m)
+        {
+          r = 1;
+        }
     }
-  else if ((_gm->flags & F_GM_ISFNAME)
-      && (rr = fnmatch(_gm->match, mstr, _gm->fname_flags)) == _gm->match_i_m)
+  else if ((_gm->flags & F_GM_ISFNAME))
     {
-      r = 1;
+      if ((rr = fnmatch(_gm->match, mstr, _gm->fname_flags)) == _gm->match_i_m)
+        {
+          r = 1;
+        }
     }
   else if ((_gm->flags & F_GM_ISMATCH))
     {

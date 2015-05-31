@@ -195,7 +195,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
     int *ret, void **p_ret, uint32_t flags, uint32_t int_flags)
 {
   g_setjmp(0, "g_process_math_string", NULL, NULL);
-  char *ptr, *left, oper = 0x0;
+  char *ptr = string, *left, oper = 0x0;
   size_t i;
 
   size_t sin_len = strlen(string);
@@ -205,9 +205,6 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
       return 0;
     }
 
-  char *string_p = ptr = malloc(sin_len);
-
-  g_del_char(string, string_p, 0x20);
 
   int f_ret = 0;
 
@@ -411,7 +408,6 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
   f_end: ;
 
-  free(string_p);
 
   return f_ret;
 }

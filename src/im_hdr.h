@@ -178,7 +178,7 @@ _dt_set dt_set_dummy;
 #else
 _dt_set dt_set_dummy, dt_set_dirlog, dt_set_nukelog, dt_set_dupefile,
     dt_set_lastonlog, dt_set_oneliners, dt_set_imdb, dt_set_game, dt_set_tvrage,
-    dt_set_gen1, dt_set_gen2, dt_set_gen3, dt_set_gen4, dt_set_gconf,
+    dt_set_gen1, dt_set_gen2, dt_set_inetobj, dt_set_gen4, dt_set_gconf,
     dt_set_sconf, dt_set_altlog, dt_set_online, dt_set_x;
 
 __dt_set pdt_set_dirlog, pdt_set_nukelog, pdt_set_dupefile, pdt_set_lastonlog,

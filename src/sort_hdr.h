@@ -69,7 +69,7 @@ g_heapsort(void **ref_arr, int64_t offset, int64_t dummy, __p_srd psrd);
 void
 g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd);
 int
-g_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
+preproc_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
 int
 g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
 

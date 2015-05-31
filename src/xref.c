@@ -2198,7 +2198,7 @@ g_f_sort(uint32_t flags, __g_eds eds, __g_handle hdl)
     {
   case F_GSORT_NUMERIC:
     ;
-    ret = g_sort_numeric(hdl, g_sort_field, flags, &eds->srd);
+    ret = preproc_sort_numeric(hdl, g_sort_field, flags, &eds->srd);
     break;
   case F_GSORT_STRING:
     ;
