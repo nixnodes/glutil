@@ -116,7 +116,7 @@ dt_rval_oneliners_msg(void *arg, char *match, char *output, size_t max_size,
 }
 
 void *
-ref_to_val_ptr_oneliners(void *arg, char *match, int *output)
+ref_to_val_ptr_oneliners_e(void *arg, char *match, int *output)
 {
 
   struct oneliner *data = (struct oneliner *) arg;
@@ -129,6 +129,11 @@ ref_to_val_ptr_oneliners(void *arg, char *match, int *output)
   return NULL;
 }
 
+void *
+ref_to_val_ptr_oneliners(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_oneliners_e)
+}
 
 int
 gcb_oneliner(void *buffer, char *key, char *val)

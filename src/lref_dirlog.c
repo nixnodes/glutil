@@ -385,8 +385,8 @@ gcb_dirlog(void *buffer, char *key, char *val)
   return 0;
 }
 
-void *
-ref_to_val_ptr_dirlog(void *arg, char *match, int *output)
+static void *
+ref_to_val_ptr_dirlog_e(void *arg, char *match, int *output)
 {
   struct dirlog *data = (struct dirlog *) arg;
 
@@ -420,5 +420,12 @@ ref_to_val_ptr_dirlog(void *arg, char *match, int *output)
       *output = sizeof(data->status);
       return &data->status;
     }
+
   return NULL;
+}
+
+void *
+ref_to_val_ptr_dirlog(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_dirlog_e)
 }

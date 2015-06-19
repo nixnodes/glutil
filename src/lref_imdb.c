@@ -38,7 +38,7 @@ dt_set_imdb(__g_handle hdl)
 }
 
 void *
-ref_to_val_ptr_imdb(void *arg, char *match, int *output)
+ref_to_val_ptr_imdb_e(void *arg, char *match, int *output)
 {
   __d_imdb data = (__d_imdb) arg;
 
@@ -74,6 +74,12 @@ ref_to_val_ptr_imdb(void *arg, char *match, int *output)
     }
 
   return NULL;
+}
+
+void *
+ref_to_val_ptr_imdb(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_imdb_e)
 }
 
 void *

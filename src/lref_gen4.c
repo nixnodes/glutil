@@ -78,7 +78,7 @@ gen4_format_block_exp(void *iarg, char *output)
 
 
 void *
-ref_to_val_ptr_gen4(void *arg, char *match, int *output)
+ref_to_val_ptr_gen4_e(void *arg, char *match, int *output)
 {
   __d_generic_s4640 data = (__d_generic_s4640) arg;
   if (!strncmp(match, _MC_GE_I1, 2))
@@ -114,6 +114,12 @@ ref_to_val_ptr_gen4(void *arg, char *match, int *output)
     }
 
   return NULL;
+}
+
+void *
+ref_to_val_ptr_gen4(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_gen4_e)
 }
 
 

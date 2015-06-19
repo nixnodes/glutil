@@ -76,7 +76,7 @@ gen1_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_gen1(void *arg, char *match, int *output)
+ref_to_val_ptr_gen1_e(void *arg, char *match, int *output)
 {
   __d_generic_s2044 data = (__d_generic_s2044) arg;
 
@@ -89,6 +89,11 @@ ref_to_val_ptr_gen1(void *arg, char *match, int *output)
   return NULL;
 }
 
+void *
+ref_to_val_ptr_gen1(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_gen1_e)
+}
 
 char *
 dt_rval_gen1_i32(void *arg, char *match, char *output, size_t max_size,

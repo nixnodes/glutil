@@ -330,7 +330,7 @@ gcb_lastonlog(void *buffer, char *key, char *val)
 }
 
 void *
-ref_to_val_ptr_lastonlog(void *arg, char *match, int *output)
+ref_to_val_ptr_lastonlog_e(void *arg, char *match, int *output)
 {
   struct lastonlog *data = (struct lastonlog *) arg;
 
@@ -355,4 +355,10 @@ ref_to_val_ptr_lastonlog(void *arg, char *match, int *output)
       return &data->upload;
     }
   return NULL;
+}
+
+void *
+ref_to_val_ptr_lastonlog(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_lastonlog_e)
 }

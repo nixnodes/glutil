@@ -75,7 +75,7 @@ sconf_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_sconf(void *arg, char *match, int *output)
+ref_to_val_ptr_sconf_e(void *arg, char *match, int *output)
 {
   __d_sconf data = (__d_sconf) arg;
   if (!strncmp(match, _MC_SCONF_INT32, 3))
@@ -120,6 +120,13 @@ ref_to_val_ptr_sconf(void *arg, char *match, int *output)
     }
   return NULL;
 }
+
+void *
+ref_to_val_ptr_sconf(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_sconf_e)
+}
+
 
 char *
 dt_rval_sconf_int(void *arg, char *match, char *output, size_t max_size,

@@ -167,7 +167,7 @@ gcb_dupefile(void *buffer, char *key, char *val)
 }
 
 void *
-ref_to_val_ptr_dupefile(void *arg, char *match, int *output)
+ref_to_val_ptr_dupefile_e(void *arg, char *match, int *output)
 {
 
   struct dupefile *data = (struct dupefile *) arg;
@@ -178,4 +178,10 @@ ref_to_val_ptr_dupefile(void *arg, char *match, int *output)
       return &data->timeup;
     }
   return NULL;
+}
+
+void *
+ref_to_val_ptr_dupefile(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_dupefile_e)
 }

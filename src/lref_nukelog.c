@@ -385,7 +385,7 @@ nukelog_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_nukelog(void *arg, char *match, int *output)
+ref_to_val_ptr_nukelog_e(void *arg, char *match, int *output)
 {
 
   struct nukelog *data = (struct nukelog *) arg;
@@ -411,4 +411,10 @@ ref_to_val_ptr_nukelog(void *arg, char *match, int *output)
       return &data->status;
     }
   return NULL;
+}
+
+void *
+ref_to_val_ptr_nukelog(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_nukelog_e)
 }

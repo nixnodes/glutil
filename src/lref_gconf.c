@@ -92,7 +92,7 @@ gconf_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_gconf(void *arg, char *match, int *output)
+ref_to_val_ptr_gconf_e(void *arg, char *match, int *output)
 {
   __d_gconf data = (__d_gconf) arg;
   if (!strncmp(match, _MC_GCONF_O_SHM, 14))
@@ -137,6 +137,12 @@ ref_to_val_ptr_gconf(void *arg, char *match, int *output)
     }
 
   return NULL;
+}
+
+void *
+ref_to_val_ptr_gconf(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_gconf_e)
 }
 
 char *

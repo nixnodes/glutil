@@ -268,7 +268,7 @@ ref_to_val_lk_online(void *arg, char *match, char *output, size_t max_size,
 }
 
 void *
-ref_to_val_ptr_online(void *arg, char *match, int *output)
+ref_to_val_ptr_online_e(void *arg, char *match, int *output)
 {
 
   struct ONLINE *data = (struct ONLINE *) arg;
@@ -316,6 +316,13 @@ ref_to_val_ptr_online(void *arg, char *match, int *output)
 
   return NULL;
 }
+
+void *
+ref_to_val_ptr_online(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_online_e)
+}
+
 
 int
 online_format_block(void *iarg, char *output)

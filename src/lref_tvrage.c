@@ -38,7 +38,7 @@ dt_set_tvrage(__g_handle hdl)
 }
 
 void *
-ref_to_val_ptr_tv(void *arg, char *match, int *output)
+ref_to_val_ptr_tv_e(void *arg, char *match, int *output)
 {
 
   __d_tvrage data = (__d_tvrage) arg;
@@ -85,6 +85,12 @@ ref_to_val_ptr_tv(void *arg, char *match, int *output)
     }
 
   return NULL;
+}
+
+void *
+ref_to_val_ptr_tv(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_tv_e)
 }
 
 char *

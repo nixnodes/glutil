@@ -187,6 +187,8 @@ m_find_prev_dtype(pmda chain, p_md_obj pos)
   return NULL;
 }
 
+#include "lref.h"
+
 #define F_PROC_MATH_STR_INB         (a32 << 1)
 #define F_PROC_MATH_STR_REC         (a32 << 2)
 
@@ -205,6 +207,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
       return 0;
     }
 
+  //g_del_char(string, string_p, 0x20);
 
   int f_ret = 0;
 
@@ -263,9 +266,6 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
               (void*) &pms_ret, flags, int_flags | F_PROC_MATH_STR_INB);
           if (0 != r)
             {
-              print_str(
-                  "ERROR: g_process_math_string (F_PROC_MATH_STR_INB): FAILED: [%d]: %s\n",
-                  r, pms_ret);
               md_g_free(object);
               f_ret = r;
               goto f_end;
@@ -340,23 +340,54 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
       left = ptr;
 
-      if (ptr[0] == 0x2B || ptr[0] == 0x2D)
-        {
-          ptr++;
-        }
+      uint32_t add_flags = 0;
 
-      while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23
-          && ptr[0] != 0x7D && ptr[0] != 0x29 && ptr[0] != 0x3A
-          && ptr[0] != 0x29 && ptr[0] != 0x20)
-        {
-          i++;
-          ptr++;
-        }
+      char in_dummy[8192];
 
-      if (!i)
+      if (ptr[0] == 0x5B)
         {
-          f_ret = 1;
-          goto f_end;
+          void *l_next_ref;
+
+          char *s_ptr = l_mppd_shell_ex(ptr, in_dummy, sizeof(in_dummy),
+              &l_next_ref, 0x5B, 0x5D, F_MPPD_SHX_TZERO);
+
+          if (NULL == s_ptr)
+            {
+              f_ret = 130;
+              goto f_end;
+            }
+
+          if (NULL == l_next_ref || ((char*) l_next_ref)[0] == 0x0)
+            {
+              f_ret = 131;
+              goto f_end;
+            }
+
+          left = s_ptr;
+          ptr = l_next_ref;
+          add_flags |= F_MATH_STRCONV;
+        }
+      else
+        {
+
+          if (ptr[0] == 0x2B || ptr[0] == 0x2D)
+            {
+              ptr++;
+            }
+
+          while (is_ascii_arith_bin_oper(ptr[0]) && ptr[0] && ptr[0] != 0x23
+              && ptr[0] != 0x7D && ptr[0] != 0x29 && ptr[0] != 0x3A
+              && ptr[0] != 0x29 && ptr[0] != 0x20)
+            {
+              i++;
+              ptr++;
+            }
+
+          if (!i)
+            {
+              f_ret = 1;
+              goto f_end;
+            }
         }
 
       if (ptr[0] && ptr[0] != 0x23 && ptr[0] != 0x7D && ptr[0] != 0x29
@@ -386,7 +417,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
         }
 
       __g_math mm;
-      *ret = g_build_math_packet(hdl, left, oper, mdm, &mm, flags);
+      *ret = g_build_math_packet(hdl, left, oper, mdm, &mm, flags | add_flags);
 
       if (*ret)
         {
@@ -396,10 +427,11 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
       if (oper == 0x7E && (ptr[0] == 0x7D || ptr[0] == 0x29))
         {
-          *ret = g_build_math_packet(hdl, left, oper, mdm, NULL, flags);
+          *ret = g_build_math_packet(hdl, left, oper, mdm, NULL,
+              flags | add_flags);
           if (*ret)
             {
-              f_ret = 6;
+              f_ret = 7;
               goto f_end;
             }
         }
@@ -408,6 +440,7 @@ g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
 
   f_end: ;
 
+  //free(string_p);
 
   return f_ret;
 }
@@ -428,6 +461,8 @@ g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
       rt = 1;
       goto end;
     }
+
+  math->flags |= flags;
 
   if ((rt = g_get_math_g_t_ptr(hdl, field, math, 0, p_math)))
     {
@@ -567,8 +602,27 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags,
           math->flags |= F_MATH_HAS_CT;
         }
 
-      math->_m_p = g_get_math_m_p(math, p_math);
+       math->_m_p = g_get_math_m_p(math, p_math);
       math->flags |= F_MATH_IS_GLOB;
+
+      return 0;
+    }
+
+  if (math->flags & F_MATH_STRCONV)
+    {
+      math->misc0 = calloc(1, sizeof(_d_drt_h));
+      ((__d_drt_h ) math->misc0)->hdl = hdl;
+      math->sconv_proc = hdl->g_proc1_lookup(NULL, field, NULL, 0,
+          math->misc0);
+
+      if ( NULL == math->sconv_proc)
+        {
+          return 45;
+        }
+
+      math->flags |= F_MATH_INT;
+      math->vb = sizeof(uint64_t);
+      math->_m_p = g_get_math_m_p(math, p_math);
 
       return 0;
     }

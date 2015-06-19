@@ -20,6 +20,7 @@
 
 #define F_MATH_VAR_KNOWN                (a32 << 4)
 #define F_MATH_NITEM                    (a32 << 5)
+#define F_MATH_STRCONV                  ((uint32_t)1 << 6)
 
 #define F_MATH_IS_SQRT                  (a32 << 10)
 #define F_MATH_IS_GLOB                  (a32 << 11)
@@ -51,6 +52,8 @@ typedef struct ___g_math
   uint8_t vstor[8];
   int vb;
   void *_glob_p;
+  __g_proc_v sconv_proc;
+  void * misc0;
 } _g_math, *__g_math;
 
 int
@@ -119,10 +122,9 @@ __g_math
 m_get_def_val(pmda math);
 
 #define M_PROC_ONE() { \
+  uint64_t *p_v_b = (uint64_t*)&v_b; \
   if (math->flags & F_MATH_NITEM) \
     {  \
-      uint8_t v_b[8] = \
-        { 0 };\
       g_math_res(d_ptr, (pmda) math->next, v_b); \
       c_ptr = v_b; \
     } \
@@ -132,6 +134,14 @@ m_get_def_val(pmda math);
         { \
           c_ptr = math->vstor; \
         } \
+      else if (math->flags & F_MATH_STRCONV) { \
+          char m_str_b[32]; \
+          char *m_str = (char*)math->sconv_proc(d_ptr, NULL, m_str_b , (size_t) sizeof(m_str_b), math->misc0); \
+          uint64_t sconv_res = (uint64_t)strtoull(m_str, NULL, 10); \
+          *p_v_b = 0; \
+          memcpy((void*) v_b, (void*) &sconv_res , math->vb); \
+          c_ptr = (void*) v_b; \
+        } \
       else \
         { \
           if (math->flags & F_MATH_HAS_CT) \
@@ -139,7 +149,7 @@ m_get_def_val(pmda math);
               int32_t *ct = (int32_t *) math->_glob_p; \
               *ct = (int32_t) time(NULL); \
             } \
-          bzero((void*) v_b, 8); \
+            *p_v_b = 0; \
           memcpy((void*) v_b, \
               (math->flags & F_MATH_IS_GLOB) ? \
                   math->_glob_p : d_ptr + math->l_off, math->vb); \

@@ -11,6 +11,7 @@
 #include <l_error.h>
 #include <mc_glob.h>
 #include <str.h>
+#include <lref.h>
 
 #include <errno.h>
 
@@ -56,7 +57,7 @@ g_proc_gstor(__g_handle hdl, char *field, int *output)
 }
 
 void *
-g_get_glob_ptr(__g_handle hdl, char *field, int *output)
+g_get_glob_ptr_e(__g_handle hdl, char *field, int *output)
 {
   g_setjmp(0, "g_get_glob_ptr", NULL, NULL);
 
@@ -71,3 +72,10 @@ g_get_glob_ptr(__g_handle hdl, char *field, int *output)
       return g_proc_gstor(hdl, field, output);
     }
 }
+
+void *
+g_get_glob_ptr(void *arg, char *match, int *output)
+{
+  REF_TO_VAL_RESOLVE(arg, match, output, g_get_glob_ptr_e)
+}
+

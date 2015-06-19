@@ -140,6 +140,52 @@ l_mppd_shex_resnp(char *input, char *output, size_t max_size, void** l_nr,
   return output;
 }
 
+int
+ref_to_val_ptr_offset(char *match, size_t *offset, size_t max_size)
+{
+  char in_dummy[512];
+  void *l_next_ref;
+
+  char *s_ptr = l_mppd_shell_ex(match, in_dummy, sizeof(in_dummy),
+      &l_next_ref,
+      LMS_EX_L,
+      LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == s_ptr || 0 == s_ptr[0])
+    {
+      return 1;
+    }
+
+  while (s_ptr[0] && s_ptr[0] != 0x5B)
+    {
+      s_ptr++;
+    }
+
+  if (s_ptr[0] != 0x5B)
+    {
+      return 1;
+    }
+
+  s_ptr++;
+
+  errno = 0;
+
+  *offset = strtoull(s_ptr, NULL, 10);
+
+  if (errno == ERANGE || errno == EINVAL)
+    {
+      return 1;
+    }
+
+  if (*offset < 0 || *offset > max_size - 1)
+    {
+      return 2;
+    }
+
+  return 0;
+
+}
+
 char*
 l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
     char r, uint32_t flags)
@@ -147,10 +193,10 @@ l_mppd_shell_ex(char *input, char *output, size_t max_size, void** l_nr, char l,
   char *ptr = input;
   char left, right;
 
-  if (ptr[0] == LMS_EX_L)
+  if (ptr[0] == l)
     {
-      left = LMS_EX_L;
-      right = LMS_EX_R;
+      left = l;
+      right = r;
       ptr++;
     }
   else
@@ -1587,6 +1633,94 @@ rt_af_time(void *arg, char *match, char *output, size_t max_size,
     }
 }
 
+static char *
+dt_rval_spec_offbyte(void *arg, char *match, char *output, size_t max_size,
+    void *mppd)
+{
+  unsigned char v_b[16] =
+    { 0 };
+  g_math_res(arg, &((__d_drt_h ) mppd)->math, (void*) v_b);
+
+  __d_drt_h _mppd = (__d_drt_h) mppd;
+
+  uint64_t *offset = (uint64_t*) v_b;
+
+  if (*offset >= _mppd->v_i0)
+    {
+      snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, 0);
+      return output;
+    }
+
+  uint8_t *data = (uint8_t*) (arg + _mppd->vp_off1);
+  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, data[*offset]);
+  return output;
+
+}
+
+static void*
+rt_af_spec_offbyte(void *arg, char *match, char *output, size_t max_size,
+    __d_drt_h mppd)
+{
+  void *l_next_ref;
+
+  char *ptr = l_mppd_shell_ex(match, mppd->r_rep, sizeof(mppd->r_rep),
+      &l_next_ref,
+      LMS_EX_L,
+      LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == ptr || ptr[0] == 0x0)
+    {
+      print_str("ERROR: rt_af_dpec_offbyte: could not resolve option: %s\n",
+          match);
+      return NULL;
+    }
+
+  if ( NULL == l_next_ref)
+    {
+      print_str("ERROR: rt_af_dpec_offbyte: missing field reference: %s\n",
+          ptr);
+      return NULL;
+    }
+
+  md_init(&mppd->chains, 8);
+  md_init(&mppd->math, 8);
+
+  int ret, p_ret;
+
+  if ((ret = g_process_math_string(mppd->hdl, ptr, &mppd->math, &mppd->chains,
+      &p_ret, NULL, 0, 0)))
+    {
+      print_str(
+          "ERROR: rt_af_dpec_offbyte: [%d] [%d]: could not process math string\n",
+          ret, p_ret);
+      return NULL;
+    }
+
+  mppd->mppd_next = l_mppd_create_copy(mppd);
+
+  int vb;
+
+  mppd->vp_off1 = (size_t) mppd->hdl->g_proc2(mppd->hdl->_x_ref,
+      (char*) l_next_ref, &vb);
+
+  if (vb == 0)
+    {
+      print_str("ERROR: rt_af_dpec_offbyte: invalid field: %s\n",
+          (char*) l_next_ref);
+      return NULL;
+    }
+
+  if (vb < 0)
+    {
+      vb = ~vb;
+    }
+
+  mppd->v_i0 = (int32_t) vb;
+
+  return as_ref_to_val_lk(match, dt_rval_spec_offbyte, (__d_drt_h ) mppd,
+      "%hhu");
+}
+
 static void*
 rt_af_spec_chr(void *arg, char *match, char *output, size_t max_size,
     __d_drt_h mppd)
@@ -1905,6 +2039,10 @@ ref_to_val_af(void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
         {
+      case 0x43:
+        ;
+        return rt_af_spec_offbyte(arg, match, output, max_size, mppd);
+        break;
       case 0x58:
         return rt_af_xstat(arg, match, output, max_size, mppd);
       case 0x50:
