@@ -170,14 +170,14 @@ ref_to_val_ptr_offset(char *match, size_t *offset, size_t max_size)
 
   errno = 0;
 
-  *offset = strtoull(s_ptr, NULL, 10);
+  *offset = (size_t) strtoull(s_ptr, NULL, 10);
 
   if (errno == ERANGE || errno == EINVAL)
     {
       return 1;
     }
 
-  if (*offset < 0 || *offset > max_size - 1)
+  if (*offset > max_size - 1)
     {
       return 2;
     }

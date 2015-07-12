@@ -169,7 +169,6 @@ gcb_dupefile(void *buffer, char *key, char *val)
 void *
 ref_to_val_ptr_dupefile_e(void *arg, char *match, int *output)
 {
-
   struct dupefile *data = (struct dupefile *) arg;
 
   if (!strncmp(match, _MC_GLOB_TIME, 4))

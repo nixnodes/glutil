@@ -289,15 +289,15 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
     }
   else if (!strncmp(match, _MC_X_ISREAD, 6))
     {
-      snprintf(output, max_size, "%huu", (uint8_t) !(access(data->name, R_OK)));
+      snprintf(output, max_size, "%hhu", (uint8_t) !(access(data->name, R_OK)));
     }
   else if (!strncmp(match, _MC_X_ISWRITE, 7))
     {
-      snprintf(output, max_size, "%huu", (uint8_t) !(access(data->name, W_OK)));
+      snprintf(output, max_size, "%hhu", (uint8_t) !(access(data->name, W_OK)));
     }
   else if (!strncmp(match, _MC_X_ISEXEC, 6))
     {
-      snprintf(output, max_size, "%huu", (uint8_t) !(access(data->name, X_OK)));
+      snprintf(output, max_size, "%hhu", (uint8_t) !(access(data->name, X_OK)));
     }
   else if (!strncmp(match, _MC_X_UPERM, 5))
     {
@@ -361,7 +361,7 @@ ref_to_val_x(void *arg, char *match, char *output, size_t max_size, void *mppd)
       else
         {
           snprintf(output, max_size, "%hu%hu%hu%hu",
-              (uint16_t) ((st.st_mode & (S_ISUID | S_ISGID | S_ISVTX))) >> 9,
+              (uint16_t) ((st.st_mode & (S_ISUID | S_ISGID | S_ISVTX)) >> 9),
               (uint16_t) ((st.st_mode & S_IRWXU) >> 6),
               (uint16_t) ((st.st_mode & S_IRWXG) >> 3),
               (uint16_t) ((st.st_mode & S_IRWXO)));
