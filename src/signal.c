@@ -30,14 +30,6 @@ sig_handler_null(int signal)
 #include <unistd.h>
 #include <sys/syscall.h>
 
-void
-sig_handler_test(int signal)
-{
-  printf("recv on: %d :             %d     \n", (int)syscall(SYS_gettid), signal);
-  usleep(10000);
-  return;
-}
-
 int
 setup_sighandlers(void)
 {
