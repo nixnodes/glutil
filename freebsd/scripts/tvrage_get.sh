@@ -2,6 +2,7 @@
 #
 #  FreeBSD notes:
 #  Edited out recode
+#  Edited out md5sum check
 #  Changed --iregex to -regexi
 #
 #  Copyright (C) 2013 NixNodes
