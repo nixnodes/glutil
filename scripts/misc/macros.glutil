@@ -1,6 +1,6 @@
 #@REVISION:63
 #
-## NOTE: Requires glutil 2.5 or higher
+## NOTE: Requires glutil 2.6.2 or higher
 #
 ## These are basically just sets of glutil arguments and 
 ##  bash commands, packed into macros for convinience
@@ -97,11 +97,11 @@
 #
 ## Requires logs built with DATABASE_TYPE=0 (see tvrage/imdb_get.sh)
 #
-#@MACRO:tvrage-make-infolinks|Creates folders with release info inside respective folders for every tvlog record erasing any existing ones first:{exe} --tvlog={?q:tvrage@file} -h --silent --exec `rm "\{glroot\}\{dir\}/[ TVRAGE "*;mkdir "\{glroot\}\{dir\}/[ TVRAGE - \{class\} - \{genres\} ]"` {arg1}
+#@MACRO:tvrage-make-infolinks|Creates folders with release info inside respective folders for every tvlog record erasing any existing ones first:{exe} --tvlog={?q:tvrage@file} -h --silent -exec `rm "\{glroot\}\{dir\}/[ TVRAGE "*;mkdir "\{glroot\}\{dir\}/[ TVRAGE - \{class\} - \{genres\} ]"` {arg1}
 #
 ## <make-imdb-dirlinks>
 #
-#@MACRO:imdb-make-infolinks|Creates folders with release info inside respective folders for every imdblog record erasing any existing ones first:{exe} --imdblog={?q:imdb@file} -a --silent --exec `rm "{glroot}\{dir\}/[ IMDB "*;mkdir "\{dir\}" "\{glroot\}\{dir\}/[ IMDB - \{score\} | \{votes\} votes - \{genres\} ]"` {arg1}
+#@MACRO:imdb-make-infolinks|Creates folders with release info inside respective folders for every imdblog record erasing any existing ones first:{exe} --imdblog={?q:imdb@file} -a --silent -exec `rm "{glroot}\{dir\}/[ IMDB "*;mkdir "\{dir\}" "\{glroot\}\{dir\}/[ IMDB - \{score\} | \{votes\} votes - \{genres\} ]"` {arg1}
 #
 # <dirlog-to-ascii> *DEPRECATED - added export option (-E) to glutil, see --help*
 #
@@ -124,12 +124,12 @@
 ##  If --dirlog=<path> is not specified, glutil reverts to 
 ##   default dirlog path
 #
-#@MACRO:dirlog-to-ascii|Convert dirlog records into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{exe} -d --dirlog={?q:dirlog@file} --esredir={arg1} --execv `echo -e "dir \{dir\}\nstatus \{status\}\ntime \{time\}\nuser \{user\}\ngroup \{group\}\nfiles \{files\}\nsize \{size\}\n"` {arg2} --silent --postexec `echo "" >> {arg1}` 
-#@MACRO:imdb-to-ascii|Convert imdblog records into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{exe} -a --imdblog={?q:imdb@file} --imdblog=\{imdbfile\} --esredir={arg1} --execv `echo -e "dir \{dir\}\ntime \{time\}\nimdbid \{imdbid\}\nplot \{plot\}\nscore \{score\}\ngenre \{genre\}\nvotes \{votes\}\ntitle \{title\}\nactors \{actors\}\nrated \{rated\}\nyear \{year\}\nreleased \{released\}\nruntime \{runtime\}\ndirector \{director\}\n"` {arg2} --silent --postexec `echo  "" >> {arg1}` 
-#@MACRO:tvrage-to-ascii|Convert tvlog records into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{exe} -h --tvlog={?q:tvrage@file} --esredir={arg1} --execv `echo -e "dir \{dir\}\ntime \{time\}\nshowid \{showid\}\nname \{name\}\nlink \{link\}\ncountry \{country\}\nairtime \{airtime\}\nairday \{airday\}\nruntime \{runtime\}\nstarted \{started\}\nended \{ended\}\nseasons \{seasons\}\nclass \{class\}\ngenre \{genre\}\nstatus \{status\}\nstartyear \{startyear\}\nendyear \{endyear\}\nnetwork \{network\}\n"` {arg2} --silent --postexec `echo "" >> {arg1}`
+#@MACRO:dirlog-to-ascii|Convert dirlog records into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{exe} -d --dirlog={?q:dirlog@file} --esredir={arg1} -execv `echo -e "dir \{dir\}\nstatus \{status\}\ntime \{time\}\nuser \{user\}\ngroup \{group\}\nfiles \{files\}\nsize \{size\}\n"` {arg2} --silent --postexec `echo "" >> {arg1}` 
+#@MACRO:imdb-to-ascii|Convert imdblog records into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{exe} -a --imdblog={?q:imdb@file} --imdblog=\{imdbfile\} --esredir={arg1} -execv `echo -e "dir \{dir\}\ntime \{time\}\nimdbid \{imdbid\}\nplot \{plot\}\nscore \{score\}\ngenre \{genre\}\nvotes \{votes\}\ntitle \{title\}\nactors \{actors\}\nrated \{rated\}\nyear \{year\}\nreleased \{released\}\nruntime \{runtime\}\ndirector \{director\}\n"` {arg2} --silent --postexec `echo  "" >> {arg1}` 
+#@MACRO:tvrage-to-ascii|Convert tvlog records into ASCII format, suitable for re-injection using -z; Arguments\: -arg1=<output file>; Requires glutil-1.9-18 or above:{exe} -h --tvlog={?q:tvrage@file} --esredir={arg1} -execv `echo -e "dir \{dir\}\ntime \{time\}\nshowid \{showid\}\nname \{name\}\nlink \{link\}\ncountry \{country\}\nairtime \{airtime\}\nairday \{airday\}\nruntime \{runtime\}\nstarted \{started\}\nended \{ended\}\nseasons \{seasons\}\nclass \{class\}\ngenre \{genre\}\nstatus \{status\}\nstartyear \{startyear\}\nendyear \{endyear\}\nnetwork \{network\}\n"` {arg2} --silent --postexec `echo "" >> {arg1}`
 #
 ##
-#@MACRO:tvrage-to-sql:{exe} -h --tvlog={?q:tvrage@file} --silent --execv `echo "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('\{name\}', '\{link\}', '\{country\}', '\{started\}', '\{ended\}', '\{seasons\}', '\{status\}', '\{runtime\}', '\{airtime\}', '\{airday\}', '\{class\}', '\{genres\}', '\{showid\}', '\{time\}', '\{network\}', '\{dir\}', '\{startyear\}', '\{endyear\}');"` --esredir "{arg1}"
+#@MACRO:tvrage-to-sql:{exe} -h --tvlog={?q:tvrage@file} --silent -execv `echo "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('\{name\}', '\{link\}', '\{country\}', '\{started\}', '\{ended\}', '\{seasons\}', '\{status\}', '\{runtime\}', '\{airtime\}', '\{airday\}', '\{class\}', '\{genres\}', '\{showid\}', '\{time\}', '\{network\}', '\{dir\}', '\{startyear\}', '\{endyear\}');"` --esredir "{arg1}"
 #
 ## <dirlog-clean-dupes>
 #

@@ -23,7 +23,7 @@
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:2
 #@REVISION:51
-#@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --lom "mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
+#@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" -lom "mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
 #@MACRO:imdb-su-id|Update imdblog records using existing imdbID's, no searching is done:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{imdbid\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 2 \{basedir\} \{year\}" 
@@ -38,7 +38,7 @@
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
-## Requires: - glutil-2.5 or above
+## Requires: - glutil-2.6.2 or above
 ##           - libxml2 v2.7.7 or above 
 ##           - curl, date, egrep, sed, expr, recode (optional), awk
 #
@@ -228,7 +228,7 @@ if ! [[ $7 -eq 2 ]]; then
 
 #        if [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
 #                s_q=`echo "$QUERY" | sed 's/\+/\\\\\0/g'`
-#                cad $2 "--iregexi" "dir,^$s_q\$" "$3"
+#                cad $2 "! -iregex" "dir,^$s_q\$" "$3"
 #       fi
 
         DTMP=`imdb_do_query "$QUERY""&ex=1"`

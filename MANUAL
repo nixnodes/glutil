@@ -402,10 +402,10 @@ Updated: 16/11/2014
 	 ...
 	
 	
-	Now do the same, but apply a regex filter (--regex) to dirnames 
+	Now do the same, but apply a regex filter (-regex) to dirnames 
 	to -exec ONLY what is matched and quit after first match (--imatchq):
 	
-	 ./glutil -d --silent -execv "./myscript.sh {dir} {files} {time}" --regex \
+	 ./glutil -d --silent -execv "./myscript.sh {dir} {files} {time}" -regex \
 	 "\/The\.Simpsons" --imatchq
 	
 	Output:

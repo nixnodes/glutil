@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 # DO NOT EDIT THESE LINES
-#@MACRO:getscore-f:{m:exe} -x {m:arg1} --silent --dir --exec "{m:spec1} $(basename {arg}) score"
+#@MACRO:getscore-f:{m:exe} -x {m:arg1} --silent --dir -exec "{m:spec1} $(basename {arg}) score"
 #
 ## Retrieves game info using giantbomb API (XML)
 #

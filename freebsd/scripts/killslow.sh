@@ -161,7 +161,7 @@ if [ $SLOW -eq 1 ] && [ -f "/tmp/du-ks/$4" ]; then
 		}
 
     	g_FILE=`echo $6 | cut -f 2- -d " "`
-    	[ -n "$g_FILE" ]  && $7 -e dupefile --match "$g_FILE" --loglevel=6 -vvv
+    	[ -n "$g_FILE" ]  && $7 -e dupefile -match "$g_FILE" --loglevel=6 -vvv
     fi    	
 elif [ $SLOW -eq 1 ]; then
 	touch "/tmp/du-ks/$4"
