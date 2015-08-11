@@ -25,13 +25,12 @@
 #include <exec_t.h>
 #include <l_error.h>
 #include <str.h>
-#include <lref_gen.h>
-
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <fnmatch.h>
+#include "lref_generic.h"
 
 #ifdef HAVE_ZLIB_H
 
@@ -40,15 +39,15 @@ uint8_t comp_level = 0;
 #endif
 
 int
-prio_opt_g_macro(void *arg, int m, void *opt)
+prio_opt_g_macro (void *arg, int m, void *opt)
 {
-  prio_argv_off = g_pg(arg, m);
+  prio_argv_off = g_pg (arg, m);
   updmode = PRIO_UPD_MODE_MACRO;
   return 0;
 }
 
 int
-prio_opt_g_pinfo(void *arg, int m, void *opt)
+prio_opt_g_pinfo (void *arg, int m, void *opt)
 {
   updmode = PRIO_UPD_MODE_INFO;
   return 0;
@@ -56,15 +55,15 @@ prio_opt_g_pinfo(void *arg, int m, void *opt)
 
 // compatibility (obsolete)
 int
-opt_g_loglvl(void *arg, int m, void *opt)
+opt_g_loglvl (void *arg, int m, void *opt)
 {
   return 0;
 }
 
 int
-opt_g_stdout_lvl(void *arg, int m, void *opt)
+opt_g_stdout_lvl (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (!buffer)
     {
@@ -75,7 +74,7 @@ opt_g_stdout_lvl(void *arg, int m, void *opt)
 
   int r;
 
-  if (0 != (r = build_msg_reg(buffer, &stdout_lvl)))
+  if (0 != (r = build_msg_reg (buffer, &stdout_lvl)))
     {
       return r;
     }
@@ -86,9 +85,9 @@ opt_g_stdout_lvl(void *arg, int m, void *opt)
 }
 
 int
-opt_g_stdout_lvl_n(void *arg, int m, void *opt)
+opt_g_stdout_lvl_n (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (!buffer)
     {
@@ -99,7 +98,7 @@ opt_g_stdout_lvl_n(void *arg, int m, void *opt)
 
   uint32_t stdout_lvl = 0;
 
-  int std_lvl = (int) strtol(buffer, NULL, 10);
+  int std_lvl = (int) strtol (buffer, NULL, 10);
 
   if ( errno == EINVAL || errno == ERANGE)
     {
@@ -114,10 +113,10 @@ opt_g_stdout_lvl_n(void *arg, int m, void *opt)
   if (std_lvl)
     {
       while (std_lvl--)
-        {
-          stdout_lvl |= 1;
-          stdout_lvl <<= 1;
-        }
+	{
+	  stdout_lvl |= 1;
+	  stdout_lvl <<= 1;
+	}
     }
 
   STDLOG_LVL = stdout_lvl;
@@ -126,35 +125,35 @@ opt_g_stdout_lvl_n(void *arg, int m, void *opt)
 }
 
 int
-opt_g_verbose(void *arg, int m, void *opt)
+opt_g_verbose (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_VERBOSE;
   return 0;
 }
 
 int
-opt_g_verbose2(void *arg, int m, void *opt)
+opt_g_verbose2 (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_VERBOSE | F_OPT_VERBOSE2;
   return 0;
 }
 
 int
-opt_g_verbose3(void *arg, int m, void *opt)
+opt_g_verbose3 (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_VERBOSE | F_OPT_VERBOSE2 | F_OPT_VERBOSE3;
   return 0;
 }
 
 int
-opt_g_verbose4(void *arg, int m, void *opt)
+opt_g_verbose4 (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_VERBOSE | F_OPT_VERBOSE2 | F_OPT_VERBOSE3 | F_OPT_VERBOSE4;
   return 0;
 }
 
 int
-opt_g_verbose5(void *arg, int m, void *opt)
+opt_g_verbose5 (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_VERBOSE | F_OPT_VERBOSE2 | F_OPT_VERBOSE3 | F_OPT_VERBOSE4
       | F_OPT_VERBOSE5;
@@ -162,53 +161,53 @@ opt_g_verbose5(void *arg, int m, void *opt)
 }
 
 int
-opt_g_force(void *arg, int m, void *opt)
+opt_g_force (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_FORCE;
   return 0;
 }
 
 int
-opt_g_force2(void *arg, int m, void *opt)
+opt_g_force2 (void *arg, int m, void *opt)
 {
   gfl |= (F_OPT_FORCE2 | F_OPT_FORCE);
   return 0;
 }
 
 int
-opt_g_update(void *arg, int m, void *opt)
+opt_g_update (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_UPDATE;
   return 0;
 }
 
 int
-opt_g_loop(void *arg, int m, void *opt)
+opt_g_loop (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 7180;
     }
 
-  g_sleep = (uint32_t) strtol(buffer, NULL, 10);
+  g_sleep = (uint32_t) strtol (buffer, NULL, 10);
   gfl |= F_OPT_LOOP;
 
   return 0;
 }
 
 int
-opt_g_loop_sleep(void *arg, int m, void *opt)
+opt_g_loop_sleep (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 7190;
     }
 
-  g_omfp_sto = (uint32_t) strtoul(buffer, NULL, 10);
+  g_omfp_sto = (uint32_t) strtoul (buffer, NULL, 10);
   if (g_omfp_sto)
     {
       gfl0 |= F_OPT_LOOP_SLEEP;
@@ -218,16 +217,16 @@ opt_g_loop_sleep(void *arg, int m, void *opt)
 }
 
 int
-opt_g_loop_usleep(void *arg, int m, void *opt)
+opt_g_loop_usleep (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 7201;
     }
 
-  g_omfp_suto = (uint32_t) strtoul(buffer, NULL, 10);
+  g_omfp_suto = (uint32_t) strtoul (buffer, NULL, 10);
   if (g_omfp_suto)
     {
       gfl0 |= F_OPT_LOOP_USLEEP;
@@ -237,28 +236,28 @@ opt_g_loop_usleep(void *arg, int m, void *opt)
 }
 
 int
-opt_g_nostats(void *arg, int m, void *opt)
+opt_g_nostats (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_NOSTATS;
   return 0;
 }
 
 int
-opt_g_stats(void *arg, int m, void *opt)
+opt_g_stats (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_STATS;
   return 0;
 }
 
 static int
-opt_g_mlist(void *arg, int m, void *opt)
+opt_g_mlist (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_LIST_MACROS;
   return 0;
 }
 
 static int
-opt_g_comp(void *arg, int m, void *opt)
+opt_g_comp (void *arg, int m, void *opt)
 {
 #ifdef HAVE_ZLIB_H
 
@@ -286,15 +285,16 @@ opt_g_comp(void *arg, int m, void *opt)
   __pf_eof = gz_feof;
   return 0;
 #else
-  print_str("ERROR: this executable was not compiled with zlib, compression disabled\n");
+  print_str (
+      "ERROR: this executable was not compiled with zlib, compression disabled\n");
   return 41513;
 #endif
 }
 
 int
-opt_loop_max(void *arg, int m, void *opt)
+opt_loop_max (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
@@ -302,7 +302,7 @@ opt_loop_max(void *arg, int m, void *opt)
     }
 
   errno = 0;
-  loop_max = (uint64_t) strtol(buffer, NULL, 10);
+  loop_max = (uint64_t) strtol (buffer, NULL, 10);
   if ((errno == ERANGE && (loop_max == LONG_MAX || loop_max == LONG_MIN))
       || (errno != 0 && loop_max == 0))
     {
@@ -313,148 +313,148 @@ opt_loop_max(void *arg, int m, void *opt)
 }
 
 int
-opt_g_udc(void *arg, int m, void *opt)
+opt_g_udc (void *arg, int m, void *opt)
 {
-  p_argv_off = g_pg(arg, m);
+  p_argv_off = g_pg (arg, m);
   updmode = UPD_MODE_DUMP_GEN;
   return 0;
 }
 
 int
-opt_g_dg(void *arg, int m, void *opt)
+opt_g_dg (void *arg, int m, void *opt)
 {
-  p_argv_off = g_pg(arg, m);
+  p_argv_off = g_pg (arg, m);
   updmode = UPD_MODE_DUMP_GENERIC;
   return 0;
 }
 
 int
-opt_g_recursive(void *arg, int m, void *opt)
+opt_g_recursive (void *arg, int m, void *opt)
 {
   flags_udcfg |= F_PD_RECURSIVE;
   return 0;
 }
 
 int
-opt_g_rec_off(void *arg, int m, void *opt)
+opt_g_rec_off (void *arg, int m, void *opt)
 {
   flags_udcfg ^= (flags_udcfg & F_PD_RECURSIVE);
   return 0;
 }
 
 int
-opt_g_udc_dir(void *arg, int m, void *opt)
+opt_g_udc_dir (void *arg, int m, void *opt)
 {
   flags_udcfg |= F_PD_MATCHDIR;
   return 0;
 }
 
 int
-opt_g_udc_f(void *arg, int m, void *opt)
+opt_g_udc_f (void *arg, int m, void *opt)
 {
   flags_udcfg |= F_PD_MATCHREG;
   return 0;
 }
 
 static int
-opt_g_maxresults(void *arg, int m, void *opt)
+opt_g_maxresults (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 19022;
     }
 
-  max_results = (off_t) strtoll(buffer, NULL, 10);
+  max_results = (off_t) strtoll (buffer, NULL, 10);
   gfl |= F_OPT_HASMAXRES;
   l_sfo = L_STFO_FILTER;
   return 0;
 }
 
 static int
-opt_g_maxhits(void *arg, int m, void *opt)
+opt_g_maxhits (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 19032;
     }
 
-  max_hits = (off_t) strtoll(buffer, NULL, 10);
+  max_hits = (off_t) strtoll (buffer, NULL, 10);
   gfl |= F_OPT_HASMAXHIT;
   l_sfo = L_STFO_FILTER;
   return 0;
 }
 
 int
-opt_g_maxdepth(void *arg, int m, void *opt)
+opt_g_maxdepth (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 19042;
     }
 
-  max_depth = ((off_t) strtoll(buffer, NULL, 10)) + 1;
+  max_depth = ((off_t) strtoll (buffer, NULL, 10)) + 1;
   gfl |= F_OPT_MAXDEPTH;
   return 0;
 }
 
 int
-opt_g_mindepth(void *arg, int m, void *opt)
+opt_g_mindepth (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 19052;
     }
 
-  min_depth = ((off_t) strtoll(buffer, NULL, 10)) + 1;
+  min_depth = ((off_t) strtoll (buffer, NULL, 10)) + 1;
   gfl |= F_OPT_MINDEPTH;
   return 0;
 }
 
 int
-opt_g_daemonize(void *arg, int m, void *opt)
+opt_g_daemonize (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_DAEMONIZE;
   return 0;
 }
 
 int
-opt_g_ifres(void *arg, int m, void *opt)
+opt_g_ifres (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_IFIRSTRES;
   return 0;
 }
 
 int
-opt_g_ifhit(void *arg, int m, void *opt)
+opt_g_ifhit (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_IFIRSTHIT;
   return 0;
 }
 
 int
-opt_g_ifrh_e(void *arg, int m, void *opt)
+opt_g_ifrh_e (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_IFRH_E;
   return 0;
 }
 
 int
-opt_g_nofq(void *arg, int m, void *opt)
+opt_g_nofq (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_NOFQ;
   return 0;
 }
 
 int
-opt_g_noereg(void *arg, int m, void *opt)
+opt_g_noereg (void *arg, int m, void *opt)
 {
   if (g_regex_flags & REG_EXTENDED)
     {
@@ -464,112 +464,112 @@ opt_g_noereg(void *arg, int m, void *opt)
 }
 
 int
-opt_prune(void *arg, int m, void *opt)
+opt_prune (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_ZPRUNEDUP;
   return 0;
 }
 
 int
-opt_g_noglconf(void *arg, int m, void *opt)
+opt_g_noglconf (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_NOGLCONF;
   return 0;
 }
 
 int
-opt_g_fix(void *arg, int m, void *opt)
+opt_g_fix (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_FIX;
   return 0;
 }
 
 int
-opt_g_sfv(void *arg, int m, void *opt)
+opt_g_sfv (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_SFV;
   return 0;
 }
 
 int
-opt_bo_formatting(void *arg, int m, void *opt)
+opt_bo_formatting (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_FORMAT_BATCH | F_OPT_STDOUT_SILENT;
   return 0;
 }
 
 int
-opt_ex_o_formatting(void *arg, int m, void *opt)
+opt_ex_o_formatting (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_FORMAT_EXPORT | F_OPT_STDOUT_SILENT;
   return 0;
 }
 
 int
-opt_crof(void *arg, int m, void *opt)
+opt_crof (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_FORMAT_COMP;
   return 0;
 }
 
 int
-opt_g_shmem(void *arg, int m, void *opt)
+opt_g_shmem (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_SHAREDMEM;
   return 0;
 }
 
 int
-opt_g_loadq(void *arg, int m, void *opt)
+opt_g_loadq (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_LOADQ;
   return 0;
 }
 
 int
-opt_g_loadqa(void *arg, int m, void *opt)
+opt_g_loadqa (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_LOADQA;
   return 0;
 }
 
 int
-opt_g_shmdestroy(void *arg, int m, void *opt)
+opt_g_shmdestroy (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_SHMDESTROY;
   return 0;
 }
 
 int
-opt_g_shmdoex(void *arg, int m, void *opt)
+opt_g_shmdoex (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_SHMDESTONEXIT;
   return 0;
 }
 
 int
-opt_g_shmreload(void *arg, int m, void *opt)
+opt_g_shmreload (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_SHMRELOAD;
   return 0;
 }
 
 int
-opt_g_nowrite(void *arg, int m, void *opt)
+opt_g_nowrite (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_NOWRITE;
   return 0;
 }
 
 int
-opt_g_nobuffering(void *arg, int m, void *opt)
+opt_g_nobuffering (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_NOBUFFER;
   return 0;
 }
 
 int
-opt_g_buffering(void *arg, int m, void *opt)
+opt_g_buffering (void *arg, int m, void *opt)
 {
   if (gfl & F_OPT_WBUFFER)
     {
@@ -579,14 +579,14 @@ opt_g_buffering(void *arg, int m, void *opt)
 }
 
 int
-opt_g_flinks(void *arg, int m, void *opt)
+opt_g_flinks (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_FOLLOW_LINKS;
   return 0;
 }
 
 int
-opt_g_ftime(void *arg, int m, void *opt)
+opt_g_ftime (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_PS_TIME;
   return 0;
@@ -594,21 +594,21 @@ opt_g_ftime(void *arg, int m, void *opt)
 
 #ifndef _MAKE_SBIN
 static int
-g_opt_shmflg(void *arg, int m, void *opt)
+g_opt_shmflg (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
       return 32141;
     }
 
-  if (strlen(buffer) != 3)
+  if (strlen (buffer) != 3)
     {
       return 32142;
     }
 
-  int t_flg = (int) strtol(buffer, NULL, 8);
+  int t_flg = (int) strtol (buffer, NULL, 8);
 
   g_shmcflags = t_flg;
 
@@ -618,7 +618,7 @@ g_opt_shmflg(void *arg, int m, void *opt)
 
 #ifndef _MAKE_SBIN
 static int
-g_opt_shmro(void *arg, int m, void *opt)
+g_opt_shmro (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_SHMRO;
   return 0;
@@ -626,36 +626,36 @@ g_opt_shmro(void *arg, int m, void *opt)
 #endif
 
 int
-opt_g_matchq(void *arg, int m, void *opt)
+opt_g_matchq (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_MATCHQ;
   return 0;
 }
 
 int
-opt_g_imatchq(void *arg, int m, void *opt)
+opt_g_imatchq (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_IMATCHQ;
   return 0;
 }
 
 int
-opt_update_single_record(void *arg, int m, void *opt)
+opt_update_single_record (void *arg, int m, void *opt)
 {
-  argv_off = g_pg(arg, m);
+  argv_off = g_pg (arg, m);
   updmode = UPD_MODE_SINGLE;
   return 0;
 }
 
 int
-opt_rec_upd_records(void *arg, int m, void *opt)
+opt_rec_upd_records (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_RECURSIVE;
   return 0;
 }
 
 int
-opt_raw_dump(void *arg, int m, void *opt)
+opt_raw_dump (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_MODE_RAWDUMP | F_OPT_STDOUT_SILENT | F_OPT_NOWRITE;
   gfl0 |= F_OPT_PS_ABSSILENT;
@@ -663,52 +663,52 @@ opt_raw_dump(void *arg, int m, void *opt)
 }
 
 int
-opt_binary(void *arg, int m, void *opt)
+opt_binary (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_MODE_BINARY;
   return 0;
 }
 
 int
-opt_g_reverse(void *arg, int m, void *opt)
+opt_g_reverse (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_PROCREV;
   return 0;
 }
 
 int
-opt_silent(void *arg, int m, void *opt)
+opt_silent (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_STDOUT_SILENT;
   return 0;
 }
 
 int
-opt_logging(void *arg, int m, void *opt)
+opt_logging (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_PS_LOGGING;
   return 0;
 }
 
 int
-opt_nobackup(void *arg, int m, void *opt)
+opt_nobackup (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_NOBACKUP;
   return 0;
 }
 
 int
-opt_backup(void *arg, int m, void *opt)
+opt_backup (void *arg, int m, void *opt)
 {
-  p_argv_off = g_pg(arg, m);
+  p_argv_off = g_pg (arg, m);
   updmode = UPD_MODE_BACKUP;
   return 0;
 }
 
 static int
-opt_g_negate(void *arg, int m, void *opt)
+opt_g_negate (void *arg, int m, void *opt)
 {
-  ar_add(&ar_vref, AR_VRP_OPT_NEGATE_MATCH, -1, NULL);
+  ar_add (&ar_vref, AR_VRP_OPT_NEGATE_MATCH, -1, NULL);
 
   ar_vref.flags |= F_MDA_ST_MISC00;
 
@@ -716,9 +716,9 @@ opt_g_negate(void *arg, int m, void *opt)
 }
 
 static int
-opt_g_tfd(void *arg, int m, void *opt)
+opt_g_tfd (void *arg, int m, void *opt)
 {
-  ar_add(&ar_vref, AR_VRP_OPT_TARGET_FD, -1, NULL);
+  ar_add (&ar_vref, AR_VRP_OPT_TARGET_FD, -1, NULL);
 
   ar_vref.flags |= F_MDA_ST_MISC00;
 
@@ -726,9 +726,9 @@ opt_g_tfd(void *arg, int m, void *opt)
 }
 
 static int
-opt_g_lookup(void *arg, int m, void *opt)
+opt_g_lookup (void *arg, int m, void *opt)
 {
-  ar_add(&ar_vref, AR_VRP_OPT_TARGET_LOOKUP, -1, (void*) g_pg(arg, m));
+  ar_add (&ar_vref, AR_VRP_OPT_TARGET_LOOKUP, -1, (void*) g_pg (arg, m));
 
   ar_vref.flags |= F_MDA_ST_MISC00;
 
@@ -736,9 +736,9 @@ opt_g_lookup(void *arg, int m, void *opt)
 }
 
 static int
-regex_determine_negated(void)
+regex_determine_negated (void)
 {
-  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+  if ( NULL != ar_find (&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
     {
       return REG_NOMATCH;
     }
@@ -749,9 +749,9 @@ regex_determine_negated(void)
 }
 
 static int
-lom_determine_negated(void)
+lom_determine_negated (void)
 {
-  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+  if ( NULL != ar_find (&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
     {
       return F_GM_IMATCH;
     }
@@ -763,9 +763,9 @@ lom_determine_negated(void)
 }
 
 static int
-fname_determine_negated(void)
+fname_determine_negated (void)
 {
-  if ( NULL != ar_find(&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
+  if ( NULL != ar_find (&ar_vref, AR_VRP_OPT_NEGATE_MATCH))
     {
       return FNM_NOMATCH;
     }
@@ -776,113 +776,114 @@ fname_determine_negated(void)
 }
 
 int
-opt_g_d_lom_match(void *arg, int m, void *opt)
+opt_g_d_lom_match (void *arg, int m, void *opt)
 {
-  return opt_g_lom(arg, m, lom_determine_negated());
+  return opt_g_lom (arg, m, lom_determine_negated ());
 }
 
 int
-opt_g_d_regex(void *arg, int m, void *opt)
+opt_g_d_regex (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, regex_determine_negated(), 0, 0, F_GM_ISREGEX, opt);
+  return g_cprg (arg, m, regex_determine_negated (), 0, 0, F_GM_ISREGEX, opt);
 }
 
 int
-opt_g_d_regexi(void *arg, int m, void *opt)
+opt_g_d_regexi (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, regex_determine_negated(), 0, REG_ICASE, F_GM_ISREGEX,
-      opt);
+  return g_cprg (arg, m, regex_determine_negated (), 0, REG_ICASE, F_GM_ISREGEX,
+		 opt);
 }
 
 int
-opt_g_d_match(void *arg, int m, void *opt)
+opt_g_d_match (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, default_determine_negated(), 0, 0, F_GM_ISMATCH, opt);
+  return g_cprg (arg, m, default_determine_negated (), 0, 0, F_GM_ISMATCH, opt);
 }
 
 int
-opt_g_d_fname(void *arg, int m, void *opt)
+opt_g_d_fname (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, default_determine_negated(), 0, 0, F_GM_ISFNAME, opt);
+  return g_cprg (arg, m, default_determine_negated (), 0, 0, F_GM_ISFNAME, opt);
 }
 
 int
-opt_g_d_fnamei(void *arg, int m, void *opt)
+opt_g_d_fnamei (void *arg, int m, void *opt)
 {
 #if defined FNM_CASEFOLD
-  return g_cprg(arg, m, fname_determine_negated(), FNM_CASEFOLD, 0,
-  F_GM_ISFNAME, opt);
+  return g_cprg (arg, m, fname_determine_negated (), FNM_CASEFOLD, 0,
+  F_GM_ISFNAME,
+		 opt);
 #else
   return 9910;
 #endif
 }
 
 int
-opt_g_lom_match(void *arg, int m, void *opt)
+opt_g_lom_match (void *arg, int m, void *opt)
 {
-  return opt_g_lom(arg, m, 0);
+  return opt_g_lom (arg, m, 0);
 }
 
 int
-opt_g_lom_imatch(void *arg, int m, void *opt)
+opt_g_lom_imatch (void *arg, int m, void *opt)
 {
-  return opt_g_lom(arg, m, F_GM_IMATCH);
+  return opt_g_lom (arg, m, F_GM_IMATCH);
 }
 
 int
-opt_g_regexi(void *arg, int m, void *opt)
+opt_g_regexi (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, 0, 0, REG_ICASE, F_GM_ISREGEX, opt);
+  return g_cprg (arg, m, 0, 0, REG_ICASE, F_GM_ISREGEX, opt);
 }
 
 int
-opt_g_match(void *arg, int m, void *opt)
+opt_g_match (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, 0, 0, 0, F_GM_ISMATCH, opt);
+  return g_cprg (arg, m, 0, 0, 0, F_GM_ISMATCH, opt);
 }
 
 int
-opt_g_imatch(void *arg, int m, void *opt)
+opt_g_imatch (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, 1, 0, 0, F_GM_ISMATCH, opt);
+  return g_cprg (arg, m, 1, 0, 0, F_GM_ISMATCH, opt);
 }
 
 int
-opt_g_regex(void *arg, int m, void *opt)
+opt_g_regex (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, 0, 0, 0, F_GM_ISREGEX, opt);
+  return g_cprg (arg, m, 0, 0, 0, F_GM_ISREGEX, opt);
 }
 
 int
-opt_g_iregexi(void *arg, int m, void *opt)
+opt_g_iregexi (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, 0, REG_NOMATCH, REG_ICASE, F_GM_ISREGEX, opt);
+  return g_cprg (arg, m, 0, REG_NOMATCH, REG_ICASE, F_GM_ISREGEX, opt);
 }
 
 int
-opt_g_iregex(void *arg, int m, void *opt)
+opt_g_iregex (void *arg, int m, void *opt)
 {
-  return g_cprg(arg, m, 0, REG_NOMATCH, 0, F_GM_ISREGEX, opt);
+  return g_cprg (arg, m, 0, REG_NOMATCH, 0, F_GM_ISREGEX, opt);
 }
 
 int
-opt_glconf_file(void *arg, int m, void *opt)
+opt_glconf_file (void *arg, int m, void *opt)
 {
-  g_cpg(arg, GLCONF_I, m, PATH_MAX - 1);
+  g_cpg (arg, GLCONF_I, m, PATH_MAX - 1);
   return 0;
 }
 
 int
-opt_dirlog_sect_fl(void *arg, int m, void *opt)
+opt_dirlog_sect_fl (void *arg, int m, void *opt)
 {
-  g_cpg(arg, DU_FLD, m, PATH_MAX - 1);
+  g_cpg (arg, DU_FLD, m, PATH_MAX - 1);
   return 0;
 }
 
 static int
-g_opt_setuid(void *arg, int m, void *opt)
+g_opt_setuid (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
@@ -891,7 +892,7 @@ g_opt_setuid(void *arg, int m, void *opt)
 
   if (buffer[0] != 0x0)
     {
-      snprintf(G_USER, sizeof(G_USER), "%s", buffer);
+      snprintf (G_USER, sizeof(G_USER), "%s", buffer);
 
       gfl0 |= F_OPT_SETUID;
     }
@@ -900,9 +901,9 @@ g_opt_setuid(void *arg, int m, void *opt)
 }
 
 static int
-g_opt_setgid(void *arg, int m, void *opt)
+g_opt_setgid (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
@@ -911,7 +912,7 @@ g_opt_setgid(void *arg, int m, void *opt)
 
   if (buffer[0] != 0x0)
     {
-      snprintf(G_GROUP, sizeof(G_GROUP), "%s", buffer);
+      snprintf (G_GROUP, sizeof(G_GROUP), "%s", buffer);
 
       gfl0 |= F_OPT_SETGID;
     }
@@ -920,72 +921,72 @@ g_opt_setgid(void *arg, int m, void *opt)
 }
 
 int
-print_version(void *arg, int m, void *opt)
+print_version (void *arg, int m, void *opt)
 {
-  print_str("%s-%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH);
+  print_str ("%s-%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH);
   updmode = UPD_MODE_NOOP;
   return 0;
 }
 
 int
-g_opt_mode_noop(void *arg, int m, void *opt)
+g_opt_mode_noop (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_NOOP;
   return 0;
 }
 
 int
-opt_dirlog_check(void *arg, int m, void *opt)
+opt_dirlog_check (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_CHECK;
   return 0;
 }
 
 int
-opt_check_ghost(void *arg, int m, void *opt)
+opt_check_ghost (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_C_GHOSTONLY;
   return 0;
 }
 
 int
-opt_g_xdev(void *arg, int m, void *opt)
+opt_g_xdev (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_XDEV;
   return 0;
 }
 
 int
-opt_g_xblk(void *arg, int m, void *opt)
+opt_g_xblk (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_XBLK;
   return 0;
 }
 
 int
-opt_dirlog_rb_full(void *arg, int m, void *opt)
+opt_dirlog_rb_full (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_DIR_FULL_REBUILD;
   return 0;
 }
 
 int
-opt_no_nuke_chk(void *arg, int m, void *opt)
+opt_no_nuke_chk (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_NO_CHECK_NUKED;
   return 0;
 }
 
 int
-opt_arrange(void *arg, int m, void *opt)
+opt_arrange (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
   if (NULL == buffer)
     {
       return 5610;
     }
 
-  if (!strncmp(buffer, "dist", 4))
+  if (!strncmp (buffer, "dist", 4))
     {
       gfl0 |= F_OPT_ARR_DIST;
     }
@@ -998,108 +999,108 @@ opt_arrange(void *arg, int m, void *opt)
 }
 
 int
-opt_g_indepth(void *arg, int m, void *opt)
+opt_g_indepth (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_DRINDEPTH;
   return 0;
 }
 
 int
-opt_g_cdironly(void *arg, int m, void *opt)
+opt_g_cdironly (void *arg, int m, void *opt)
 {
   gfl |= F_OPT_CDIRONLY;
   return 0;
 }
 
 int
-opt_dirlog_dump(void *arg, int m, void *opt)
+opt_dirlog_dump (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP;
   return 0;
 }
 
 int
-opt_dupefile_dump(void *arg, int m, void *opt)
+opt_dupefile_dump (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_DUPEF;
   return 0;
 }
 
 int
-opt_online_dump(void *arg, int m, void *opt)
+opt_online_dump (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_ONL;
   return 0;
 }
 
 int
-opt_lastonlog_dump(void *arg, int m, void *opt)
+opt_lastonlog_dump (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_LON;
   return 0;
 }
 
 int
-opt_dump_users(void *arg, int m, void *opt)
+opt_dump_users (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_USERS;
   return 0;
 }
 
 int
-opt_dump_grps(void *arg, int m, void *opt)
+opt_dump_grps (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_GRPS;
   return 0;
 }
 
 int
-opt_dirlog_dump_nukelog(void *arg, int m, void *opt)
+opt_dirlog_dump_nukelog (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_NUKE;
   return 0;
 }
 
 int
-opt_g_write(void *arg, int m, void *opt)
+opt_g_write (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_WRITE;
-  p_argv_off = g_pg(arg, m);
+  p_argv_off = g_pg (arg, m);
   return 0;
 }
 
 int
-opt_g_dump_imdb(void *arg, int m, void *opt)
+opt_g_dump_imdb (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_IMDB;
   return 0;
 }
 
 int
-opt_g_dump_game(void *arg, int m, void *opt)
+opt_g_dump_game (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_GAME;
   return 0;
 }
 
 int
-opt_g_dump_tv(void *arg, int m, void *opt)
+opt_g_dump_tv (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_TV;
   return 0;
 }
 
 int
-opt_oneliner_dump(void *arg, int m, void *opt)
+opt_oneliner_dump (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUMP_ONEL;
   return 0;
 }
 
 int
-print_help(void *arg, int m, void *opt)
+print_help (void *arg, int m, void *opt)
 {
-  print_str(hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL,
+  print_str (hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL,
   PACKAGE_BUGREPORT);
   if (m != -1)
     {
@@ -1109,83 +1110,83 @@ print_help(void *arg, int m, void *opt)
 }
 
 int
-opt_g_ex_fork(void *arg, int m, void *opt)
+opt_g_ex_fork (void *arg, int m, void *opt)
 {
-  p_argv_off = g_pg(arg, m);
+  p_argv_off = g_pg (arg, m);
   updmode = UPD_MODE_FORK;
   gfl |= F_OPT_DAEMONIZE;
   return 0;
 }
 
 int
-opt_dirlog_chk_dupe(void *arg, int m, void *opt)
+opt_dirlog_chk_dupe (void *arg, int m, void *opt)
 {
   updmode = UPD_MODE_DUPE_CHK;
   return 0;
 }
 
 int
-opt_memb_limit(void *arg, int m, void *opt)
+opt_memb_limit (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
       return 3512;
     }
 
-  long long int l_buffer = atoll(buffer);
+  long long int l_buffer = atoll (buffer);
   if (l_buffer > 1024)
     {
       db_max_size = l_buffer;
       if (gfl & F_OPT_VERBOSE)
-        {
-          print_str("NOTICE: max memory buffer limit set to %lld bytes\n",
-              l_buffer);
-        }
+	{
+	  print_str ("NOTICE: max memory buffer limit set to %lld bytes\n",
+		     l_buffer);
+	}
     }
   else
     {
-      print_str(
-          "NOTICE: invalid memory buffer limit, using default (%lld bytes)\n",
-          db_max_size);
+      print_str (
+	  "NOTICE: invalid memory buffer limit, using default (%lld bytes)\n",
+	  db_max_size);
     }
   return 0;
 }
 
 int
-opt_memb_limit_in(void *arg, int m, void *opt)
+opt_memb_limit_in (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
       return 3513;
     }
 
-  long long int l_buffer = atoll(buffer);
+  long long int l_buffer = atoll (buffer);
   if (l_buffer > 8192)
     {
       max_datain_f = l_buffer;
       if (gfl & F_OPT_VERBOSE)
-        {
-          print_str("NOTICE: ASCII input buffer limit set to %lld bytes\n",
-              l_buffer);
-        }
+	{
+	  print_str ("NOTICE: ASCII input buffer limit set to %lld bytes\n",
+		     l_buffer);
+	}
     }
   else
     {
-      print_str(
-          "NOTICE: invalid ASCII input buffer limit, using default (%lld bytes)\n",
-          max_datain_f);
+      print_str (
+	  "NOTICE: invalid ASCII input buffer limit, using default (%lld bytes)\n",
+	  max_datain_f);
     }
   return 0;
 }
 
 int
-g_opt_mroot(void *arg, int m, void *opt)
+g_opt_mroot (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
@@ -1200,7 +1201,7 @@ g_opt_mroot(void *arg, int m, void *opt)
 
 #ifndef _MAKE_SBIN
 static int
-g_opt_lav(void *arg, int m, void *opt)
+g_opt_lav (void *arg, int m, void *opt)
 {
   char *s_idx, *data;
   if (m == 2)
@@ -1209,14 +1210,14 @@ g_opt_lav(void *arg, int m, void *opt)
       char *ptr = s_idx;
 
       while (ptr[0] != 0x20 && ptr[0] != 0x0)
-        {
-          ptr++;
-        }
+	{
+	  ptr++;
+	}
 
       if (ptr[0] == 0)
-        {
-          return 78276;
-        }
+	{
+	  return 78276;
+	}
 
       data = ptr;
     }
@@ -1237,11 +1238,11 @@ g_opt_lav(void *arg, int m, void *opt)
     }
 
   errno = 0;
-  uint32_t lav_idx = (uint32_t) strtoul(s_idx, NULL, 10);
+  uint32_t lav_idx = (uint32_t) strtoul (s_idx, NULL, 10);
 
   if (errno == EINVAL || errno == ERANGE)
     {
-      print_str("ERROR: g_opt_lav: could not get index: '%s'\n", s_idx);
+      print_str ("ERROR: g_opt_lav: could not get index: '%s'\n", s_idx);
       return 78288;
     }
 
@@ -1249,8 +1250,8 @@ g_opt_lav(void *arg, int m, void *opt)
 
   if (lav_idx > max_index)
     {
-      print_str("ERROR: g_opt_lav: index out of range: %u, max: %u\n", lav_idx,
-          max_index);
+      print_str ("ERROR: g_opt_lav: index out of range: %u, max: %u\n", lav_idx,
+		 max_index);
       return 78289;
     }
 
@@ -1261,36 +1262,36 @@ g_opt_lav(void *arg, int m, void *opt)
 #endif
 
 int
-opt_g_arg1(void *arg, int m, void *opt)
+opt_g_arg1 (void *arg, int m, void *opt)
 {
-  g_cpg(arg, MACRO_ARG1, m, sizeof(MACRO_ARG1) - 1);
+  g_cpg (arg, MACRO_ARG1, m, sizeof(MACRO_ARG1) - 1);
   l_av_st[1] = (char*) MACRO_ARG1;
   gfl |= F_OPT_HAS_M_ARG1;
   return 0;
 }
 
 int
-opt_g_arg2(void *arg, int m, void *opt)
+opt_g_arg2 (void *arg, int m, void *opt)
 {
-  g_cpg(arg, MACRO_ARG2, m, sizeof(MACRO_ARG2) - 1);
+  g_cpg (arg, MACRO_ARG2, m, sizeof(MACRO_ARG2) - 1);
   l_av_st[2] = (char*) MACRO_ARG2;
   gfl |= F_OPT_HAS_M_ARG2;
   return 0;
 }
 
 int
-opt_g_arg3(void *arg, int m, void *opt)
+opt_g_arg3 (void *arg, int m, void *opt)
 {
-  g_cpg(arg, MACRO_ARG3, m, sizeof(MACRO_ARG3) - 1);
+  g_cpg (arg, MACRO_ARG3, m, sizeof(MACRO_ARG3) - 1);
   l_av_st[3] = (char*) MACRO_ARG3;
   gfl |= F_OPT_HAS_M_ARG3;
   return 0;
 }
 
 int
-opt_g_preexec(void *arg, int m, void *opt)
+opt_g_preexec (void *arg, int m, void *opt)
 {
-  GLOBAL_PREEXEC = g_pd(arg, m, MAX_EXEC_STR);
+  GLOBAL_PREEXEC = g_pd (arg, m, MAX_EXEC_STR);
   if (GLOBAL_PREEXEC)
     {
       gfl |= F_OPT_PREEXEC;
@@ -1299,9 +1300,9 @@ opt_g_preexec(void *arg, int m, void *opt)
 }
 
 int
-opt_g_postexec(void *arg, int m, void *opt)
+opt_g_postexec (void *arg, int m, void *opt)
 {
-  GLOBAL_POSTEXEC = g_pd(arg, m, MAX_EXEC_STR);
+  GLOBAL_POSTEXEC = g_pd (arg, m, MAX_EXEC_STR);
   if (GLOBAL_POSTEXEC)
     {
       gfl |= F_OPT_POSTEXEC;
@@ -1310,7 +1311,7 @@ opt_g_postexec(void *arg, int m, void *opt)
 }
 
 void
-l_opt_cstdin(char *arg)
+l_opt_cstdin (char *arg)
 {
   if (arg[0] == 0x2D && arg[1] == 0x0)
     {
@@ -1319,233 +1320,233 @@ l_opt_cstdin(char *arg)
 }
 
 int
-opt_dirlog_file(void *arg, int m, void *opt)
+opt_dirlog_file (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_DIRLOG))
     {
-      g_cpg(arg, DIRLOG, m, PATH_MAX);
+      g_cpg (arg, DIRLOG, m, PATH_MAX);
       ofl |= F_OVRR_DIRLOG;
-      l_opt_cstdin(DIRLOG);
+      l_opt_cstdin (DIRLOG);
     }
   return 0;
 }
 
 int
-opt_nukelog_file(void *arg, int m, void *opt)
+opt_nukelog_file (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_NUKELOG))
     {
-      g_cpg(arg, NUKELOG, m, PATH_MAX - 1);
+      g_cpg (arg, NUKELOG, m, PATH_MAX - 1);
       ofl |= F_OVRR_NUKELOG;
-      l_opt_cstdin(NUKELOG);
+      l_opt_cstdin (NUKELOG);
     }
   return 0;
 }
 
 int
-opt_glroot(void *arg, int m, void *opt)
+opt_glroot (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GLROOT))
     {
-      g_cpg(arg, GLROOT, m, PATH_MAX);
+      g_cpg (arg, GLROOT, m, PATH_MAX);
       ofl |= F_OVRR_GLROOT;
     }
   return 0;
 }
 
 int
-opt_siteroot(void *arg, int m, void *opt)
+opt_siteroot (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_SITEROOT))
     {
-      g_cpg(arg, SITEROOT_N, m, PATH_MAX);
+      g_cpg (arg, SITEROOT_N, m, PATH_MAX);
       ofl |= F_OVRR_SITEROOT;
     }
   return 0;
 }
 
 int
-opt_dupefile(void *arg, int m, void *opt)
+opt_dupefile (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_DUPEFILE))
     {
-      g_cpg(arg, DUPEFILE, m, PATH_MAX);
+      g_cpg (arg, DUPEFILE, m, PATH_MAX);
       ofl |= F_OVRR_DUPEFILE;
-      l_opt_cstdin(DUPEFILE);
+      l_opt_cstdin (DUPEFILE);
     }
   return 0;
 }
 
 int
-opt_lastonlog(void *arg, int m, void *opt)
+opt_lastonlog (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_LASTONLOG))
     {
-      g_cpg(arg, LASTONLOG, m, PATH_MAX);
+      g_cpg (arg, LASTONLOG, m, PATH_MAX);
       ofl |= F_OVRR_LASTONLOG;
-      l_opt_cstdin(LASTONLOG);
+      l_opt_cstdin (LASTONLOG);
     }
   return 0;
 }
 
 int
-opt_sconf(void *arg, int m, void *opt)
+opt_sconf (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_SCONF))
     {
-      g_cpg(arg, SCONFLOG, m, PATH_MAX);
+      g_cpg (arg, SCONFLOG, m, PATH_MAX);
       ofl |= F_OVRR_SCONF;
-      l_opt_cstdin(SCONFLOG);
+      l_opt_cstdin (SCONFLOG);
     }
   return 0;
 }
 
 int
-opt_gconf(void *arg, int m, void *opt)
+opt_gconf (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GCONF))
     {
-      g_cpg(arg, GCONFLOG, m, PATH_MAX);
+      g_cpg (arg, GCONFLOG, m, PATH_MAX);
       ofl |= F_OVRR_GCONF;
-      l_opt_cstdin(GCONFLOG);
+      l_opt_cstdin (GCONFLOG);
     }
   return 0;
 }
 
 int
-opt_oneliner(void *arg, int m, void *opt)
+opt_oneliner (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_ONELINERS))
     {
-      g_cpg(arg, ONELINERS, m, PATH_MAX);
+      g_cpg (arg, ONELINERS, m, PATH_MAX);
       ofl |= F_OVRR_ONELINERS;
-      l_opt_cstdin(ONELINERS);
+      l_opt_cstdin (ONELINERS);
     }
   return 0;
 }
 
 int
-opt_imdblog(void *arg, int m, void *opt)
+opt_imdblog (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_IMDBLOG))
     {
-      g_cpg(arg, IMDBLOG, m, PATH_MAX);
+      g_cpg (arg, IMDBLOG, m, PATH_MAX);
       ofl |= F_OVRR_IMDBLOG;
-      l_opt_cstdin(IMDBLOG);
+      l_opt_cstdin (IMDBLOG);
     }
   return 0;
 }
 
 int
-opt_tvlog(void *arg, int m, void *opt)
+opt_tvlog (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_TVLOG))
     {
-      g_cpg(arg, TVLOG, m, PATH_MAX);
+      g_cpg (arg, TVLOG, m, PATH_MAX);
       ofl |= F_OVRR_TVLOG;
-      l_opt_cstdin(TVLOG);
+      l_opt_cstdin (TVLOG);
     }
   return 0;
 }
 
 int
-opt_gamelog(void *arg, int m, void *opt)
+opt_gamelog (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GAMELOG))
     {
-      g_cpg(arg, GAMELOG, m, PATH_MAX);
+      g_cpg (arg, GAMELOG, m, PATH_MAX);
       ofl |= F_OVRR_GAMELOG;
-      l_opt_cstdin(GAMELOG);
+      l_opt_cstdin (GAMELOG);
     }
   return 0;
 }
 
 int
-opt_GE1LOG(void *arg, int m, void *opt)
+opt_GE1LOG (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GE1LOG))
     {
-      g_cpg(arg, GE1LOG, m, PATH_MAX);
+      g_cpg (arg, GE1LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE1LOG;
-      l_opt_cstdin(GE1LOG);
+      l_opt_cstdin (GE1LOG);
     }
   return 0;
 }
 
 int
-opt_GE2LOG(void *arg, int m, void *opt)
+opt_GE2LOG (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GE2LOG))
     {
-      g_cpg(arg, GE2LOG, m, PATH_MAX);
+      g_cpg (arg, GE2LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE2LOG;
-      l_opt_cstdin(GE2LOG);
+      l_opt_cstdin (GE2LOG);
     }
   return 0;
 }
 
 int
-opt_GE3LOG(void *arg, int m, void *opt)
+opt_GE3LOG (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GE3LOG))
     {
-      g_cpg(arg, GE3LOG, m, PATH_MAX);
+      g_cpg (arg, GE3LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE3LOG;
-      l_opt_cstdin(GE3LOG);
+      l_opt_cstdin (GE3LOG);
     }
   return 0;
 }
 
 int
-opt_GE4LOG(void *arg, int m, void *opt)
+opt_GE4LOG (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GE4LOG))
     {
-      g_cpg(arg, GE4LOG, m, PATH_MAX);
+      g_cpg (arg, GE4LOG, m, PATH_MAX);
       ofl |= F_OVRR_GE4LOG;
-      l_opt_cstdin(GE4LOG);
+      l_opt_cstdin (GE4LOG);
     }
   return 0;
 }
 
 int
-opt_altlog(void *arg, int m, void *opt)
+opt_altlog (void *arg, int m, void *opt)
 {
   if (!(ofl & F_OVRR_GE4LOG))
     {
-      g_cpg(arg, ALTLOG, m, PATH_MAX);
+      g_cpg (arg, ALTLOG, m, PATH_MAX);
       ofl |= F_OVRR_GE4LOG;
-      l_opt_cstdin(ALTLOG);
+      l_opt_cstdin (ALTLOG);
     }
   return 0;
 }
 
 int
-opt_rebuild(void *arg, int m, void *opt)
+opt_rebuild (void *arg, int m, void *opt)
 {
-  p_argv_off = g_pg(arg, m);
+  p_argv_off = g_pg (arg, m);
   updmode = UPD_MODE_REBUILD;
   return 0;
 }
 
 int
-opt_g_xretry(void *arg, int m, void *opt)
+opt_g_xretry (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_XRETRY;
   return 0;
 }
 
 int
-opt_g_xloop(void *arg, int m, void *opt)
+opt_g_xloop (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_XLOOP;
   return 0;
 }
 
 int
-opt_g_sleep(void *arg, int m, void *opt)
+opt_g_sleep (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
@@ -1557,15 +1558,15 @@ opt_g_sleep(void *arg, int m, void *opt)
       return 25512;
     }
 
-  g_sleep = (uint32_t) strtoul(buffer, NULL, 10);
+  g_sleep = (uint32_t) strtoul (buffer, NULL, 10);
 
   return 0;
 }
 
 int
-opt_g_usleep(void *arg, int m, void *opt)
+opt_g_usleep (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
@@ -1577,23 +1578,23 @@ opt_g_usleep(void *arg, int m, void *opt)
       return 25612;
     }
 
-  g_usleep = (uint32_t) strtoul(buffer, NULL, 10);
+  g_usleep = (uint32_t) strtoul (buffer, NULL, 10);
 
   return 0;
 }
 
 int
-opt_execv_stdout_rd(void *arg, int m, void *opt)
+opt_execv_stdout_rd (void *arg, int m, void *opt)
 {
-  char *ptr = g_pg(arg, m);
+  char *ptr = g_pg (arg, m);
 
   if (NULL == ptr)
     {
       return 28621;
     }
 
-  execv_stdout_redir = open(ptr, O_RDWR | O_CREAT,
-      (mode_t) (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+  execv_stdout_redir = open (ptr, O_RDWR | O_CREAT,
+			     (mode_t) (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
   if (execv_stdout_redir == -1)
     {
       ofl |= F_ESREDIRFAILED;
@@ -1602,31 +1603,30 @@ opt_execv_stdout_rd(void *arg, int m, void *opt)
   return 0;
 }
 
-
 int
-opt_g_infile(void *arg, int m, void *opt)
+opt_g_infile (void *arg, int m, void *opt)
 {
-  g_cpg(arg, infile_p, m, PATH_MAX);
+  g_cpg (arg, infile_p, m, PATH_MAX);
 
   return 0;
 }
 
 int
-opt_shmipc(void *arg, int m, void *opt)
+opt_shmipc (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
       return 53411;
     }
 
-  if (!strlen(buffer))
+  if (!strlen (buffer))
     {
       return 53412;
     }
 
-  SHM_IPC = (key_t) strtoul(buffer, NULL, 16);
+  SHM_IPC = (key_t) strtoul (buffer, NULL, 16);
 
   if (!SHM_IPC)
     {
@@ -1639,18 +1639,18 @@ opt_shmipc(void *arg, int m, void *opt)
 }
 
 int
-opt_log_file(void *arg, int m, void *opt)
+opt_log_file (void *arg, int m, void *opt)
 {
-  g_cpg(arg, LOGFILE, m, PATH_MAX);
+  g_cpg (arg, LOGFILE, m, PATH_MAX);
   gfl |= F_OPT_PS_LOGGING;
   ofl |= F_OVRR_LOGFILE;
   return 0;
 }
 
 int
-opt_print(void *arg, int m, void *opt)
+opt_print (void *arg, int m, void *opt)
 {
-  if ((_print_ptr = g_pg(arg, m)))
+  if ((_print_ptr = g_pg (arg, m)))
     {
       gfl0 |= F_OPT_PRINT;
       return 0;
@@ -1661,15 +1661,15 @@ opt_print(void *arg, int m, void *opt)
 #define MAX_PRINT_LINE_SIZE     ((1024*1024) / 4)
 
 int
-opt_print_stdin(void *arg, int m, void *opt)
+opt_print_stdin (void *arg, int m, void *opt)
 {
   char *b_in, *fn_in;
   FILE *fh_in;
 
   O_FI_STDIN(arg, m, 4273, 4274)
 
-  _cl_print_ptr = _print_ptr = malloc(MAX_PRINT_LINE_SIZE);
-  if (read_file(fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
+  _cl_print_ptr = _print_ptr = malloc (MAX_PRINT_LINE_SIZE);
+  if (read_file (fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
     {
       gfl0 |= F_OPT_PRINT;
       return 0;
@@ -1679,9 +1679,9 @@ opt_print_stdin(void *arg, int m, void *opt)
 }
 
 int
-opt_printf(void *arg, int m, void *opt)
+opt_printf (void *arg, int m, void *opt)
 {
-  if (NULL != (_print_ptr = g_pg(arg, m)))
+  if (NULL != (_print_ptr = g_pg (arg, m)))
     {
       gfl0 |= F_OPT_PRINTF;
       return 0;
@@ -1690,15 +1690,15 @@ opt_printf(void *arg, int m, void *opt)
 }
 
 int
-opt_printf_stdin(void *arg, int m, void *opt)
+opt_printf_stdin (void *arg, int m, void *opt)
 {
   char *b_in, *fn_in;
   FILE *fh_in;
 
   O_FI_STDIN(arg, m, 4323, 4324)
 
-  _cl_print_ptr = _print_ptr = malloc(MAX_PRINT_LINE_SIZE);
-  if (read_file(fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
+  _cl_print_ptr = _print_ptr = malloc (MAX_PRINT_LINE_SIZE);
+  if (read_file (fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
     {
       gfl0 |= F_OPT_PRINTF;
       return 0;
@@ -1707,9 +1707,9 @@ opt_printf_stdin(void *arg, int m, void *opt)
 }
 
 int
-opt_postprintf(void *arg, int m, void *opt)
+opt_postprintf (void *arg, int m, void *opt)
 {
-  if ((_print_ptr_post = g_pg(arg, m)))
+  if ((_print_ptr_post = g_pg (arg, m)))
     {
       gfl0 |= F_OPT_POSTPRINTF;
       return 0;
@@ -1718,9 +1718,9 @@ opt_postprintf(void *arg, int m, void *opt)
 }
 
 int
-opt_postprint(void *arg, int m, void *opt)
+opt_postprint (void *arg, int m, void *opt)
 {
-  if (NULL != (_print_ptr_post = g_pg(arg, m)))
+  if (NULL != (_print_ptr_post = g_pg (arg, m)))
     {
       gfl0 |= F_OPT_POSTPRINT;
       return 0;
@@ -1729,9 +1729,9 @@ opt_postprint(void *arg, int m, void *opt)
 }
 
 int
-opt_preprintf(void *arg, int m, void *opt)
+opt_preprintf (void *arg, int m, void *opt)
 {
-  if (NULL != (_print_ptr_pre = g_pg(arg, m)))
+  if (NULL != (_print_ptr_pre = g_pg (arg, m)))
     {
       gfl0 |= F_OPT_PREPRINTF;
       return 0;
@@ -1740,9 +1740,9 @@ opt_preprintf(void *arg, int m, void *opt)
 }
 
 int
-opt_preprint(void *arg, int m, void *opt)
+opt_preprint (void *arg, int m, void *opt)
 {
-  if (NULL != (_print_ptr_pre = g_pg(arg, m)))
+  if (NULL != (_print_ptr_pre = g_pg (arg, m)))
     {
       gfl0 |= F_OPT_PREPRINT;
       return 0;
@@ -1751,30 +1751,30 @@ opt_preprint(void *arg, int m, void *opt)
 }
 
 int
-opt_stdin(void *arg, int m, void *opt)
+opt_stdin (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_STDIN;
   return 0;
 }
 
 int
-opt_exec(void *arg, int m, void *opt)
+opt_exec (void *arg, int m, void *opt)
 {
-  exec_str = g_pd(arg, m, MAX_EXEC_STR);
+  exec_str = g_pd (arg, m, MAX_EXEC_STR);
   exc = g_do_exec_fb;
   return 0;
 }
 
 int
-opt_exec_stdin(void *arg, int m, void *opt)
+opt_exec_stdin (void *arg, int m, void *opt)
 {
   char *b_in, *fn_in;
   FILE *fh_in;
 
   O_FI_STDIN(arg, m, 6838, 6839)
 
-  exec_str = calloc(MAX_EXEC_STR, 1);
-  if (read_file(fn_in, exec_str, MAX_EXEC_STR, 0, fh_in))
+  exec_str = calloc (MAX_EXEC_STR, 1);
+  if (read_file (fn_in, exec_str, MAX_EXEC_STR, 0, fh_in))
     {
       exc = g_do_exec_fb;
       return 0;
@@ -1784,24 +1784,24 @@ opt_exec_stdin(void *arg, int m, void *opt)
 }
 
 int
-opt_g_progress(void *arg, int m, void *opt)
+opt_g_progress (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_PROGRESS;
   return 0;
 }
 
 int
-opt_g_fsroot(void *arg, int m, void *opt)
+opt_g_fsroot (void *arg, int m, void *opt)
 {
   gfl0 |= F_OPT_FSROOT;
   return 0;
 }
 
 int
-option_crc32(void *arg, int m, void *opt)
+option_crc32 (void *arg, int m, void *opt)
 {
-  g_setjmp(0, "option_crc32", NULL, NULL);
-  char *buffer = g_pg(arg, m);
+  g_setjmp (0, "option_crc32", NULL, NULL);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
@@ -1812,13 +1812,13 @@ option_crc32(void *arg, int m, void *opt)
 
   uint32_t crc32;
 
-  off_t read = file_crc32(buffer, &crc32);
+  off_t read = file_crc32 (buffer, &crc32);
 
   if (read > 0)
-    print_str("%.8X\n", (uint32_t) crc32);
+    print_str ("%.8X\n", (uint32_t) crc32);
   else
     {
-      print_str("ERROR: %s: [%d] could not get CRC32\n", buffer,
+      print_str ("ERROR: %s: [%d] could not get CRC32\n", buffer,
       errno);
       EXITVAL = 1;
     }
@@ -1827,32 +1827,32 @@ option_crc32(void *arg, int m, void *opt)
 }
 
 int
-opt_g_swapmode(void *arg, int m, void *opt)
+opt_g_swapmode (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (buffer == NULL)
     {
       return 140051;
     }
 
-  if (!strncmp(buffer, "swap", 4))
+  if (!strncmp (buffer, "swap", 4))
     {
       gfl0 |= F_OPT_SMETHOD_SWAP;
     }
-  else if (!strncmp(buffer, "heap", 4))
+  else if (!strncmp (buffer, "heap", 4))
     {
       gfl0 |= F_OPT_SMETHOD_HEAP;
     }
-  else if (!strncmp(buffer, "qsort", 5))
+  else if (!strncmp (buffer, "qsort", 5))
     {
       gfl0 |= F_OPT_SMETHOD_Q;
     }
-  else if (!strncmp(buffer, "insert", 5))
+  else if (!strncmp (buffer, "insert", 5))
     {
       gfl0 |= F_OPT_SMETHOD_INSSORT;
     }
-  else if (!strncmp(buffer, "select", 6))
+  else if (!strncmp (buffer, "select", 6))
     {
       gfl0 |= F_OPT_SMETHOD_SELECT;
     }
@@ -1871,33 +1871,33 @@ opt_g_swapmode(void *arg, int m, void *opt)
 #include <glutil_net.h>
 
 static int
-n_proc_intval(char *left, char *right, int *outval, int64_t min, int64_t max,
-    int64_t *out64)
+n_proc_intval (char *left, char *right, int *outval, int64_t min, int64_t max,
+	       int64_t *out64)
 {
   errno = 0;
 
   if (out64)
     {
-      *out64 = (int64_t) strtoll(right, NULL, 10);
+      *out64 = (int64_t) strtoll (right, NULL, 10);
       if (*out64 < min || *out64 > max)
-        {
-          print_str("ERROR: n_proc_intval: '%s': value out of range\n", left);
-          return 1;
-        }
+	{
+	  print_str ("ERROR: n_proc_intval: '%s': value out of range\n", left);
+	  return 1;
+	}
     }
   else
     {
-      *outval = (int) strtol(right, NULL, 10);
+      *outval = (int) strtol (right, NULL, 10);
       if (*outval < min || *outval > max)
-        {
-          print_str("ERROR: n_proc_intval: '%s': value out of range\n", left);
-          return 1;
-        }
+	{
+	  print_str ("ERROR: n_proc_intval: '%s': value out of range\n", left);
+	  return 1;
+	}
     }
 
   if ((errno == EINVAL || errno == ERANGE))
     {
-      print_str("ERROR: n_proc_intval: '%s': invalid value\n", left);
+      print_str ("ERROR: n_proc_intval: '%s': invalid value\n", left);
       return 1;
     }
 
@@ -1907,44 +1907,44 @@ n_proc_intval(char *left, char *right, int *outval, int64_t min, int64_t max,
 #define MSG_NETCTL_OPT_NEEDTHRD         "ERROR: netctl_opt_parse: '%s': thread count must be above 0\n"
 
 static int
-netctl_opt_parse(pmda md, void *arg)
+netctl_opt_parse (pmda md, void *arg)
 {
   p_md_obj ptr = md->objects;
   char *left = (char*) ptr->ptr, *right;
 
   if (NULL == ptr->next)
     {
-      print_str("ERROR: netctl_opt_parse: option '%s' missing value\n", left);
+      print_str ("ERROR: netctl_opt_parse: option '%s' missing value\n", left);
       return 1;
     }
 
   right = (char*) ((p_md_obj) ptr->next)->ptr;
 
-  if (!strncmp(left, "thread_max", 10))
+  if (!strncmp (left, "thread_max", 10))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+	{
+	  return 1;
+	}
       net_opts.max_worker_threads = i_val;
     }
-  else if (!strncmp(left, "sock_max", 8))
+  else if (!strncmp (left, "sock_max", 8))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+	{
+	  return 1;
+	}
       net_opts.max_sock = (uint16_t) i_val;
     }
-  else if (!strncmp(left, "threads_listen", 14))
+  else if (!strncmp (left, "threads_listen", 14))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+	{
+	  return 1;
+	}
 
       /*if (0 == i_val)
        {
@@ -1955,87 +1955,89 @@ netctl_opt_parse(pmda md, void *arg)
 
       net_opts.thread_l = (uint16_t) i_val;
     }
-  else if (!strncmp(left, "threads_recv", 12))
+  else if (!strncmp (left, "threads_recv", 12))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+	{
+	  return 1;
+	}
 
       if (0 == i_val)
-        {
-          print_str(
-          MSG_NETCTL_OPT_NEEDTHRD, left);
-          return 1;
-        }
+	{
+	  print_str (
+	  MSG_NETCTL_OPT_NEEDTHRD,
+		     left);
+	  return 1;
+	}
 
       net_opts.thread_r = (uint16_t) i_val;
     }
-  else if (!strncmp("user", left, 4))
+  else if (!strncmp ("user", left, 4))
     {
-      snprintf(net_opts.user, sizeof(net_opts.user), "%s", right);
+      snprintf (net_opts.user, sizeof(net_opts.user), "%s", right);
       net_opts.flags |= F_NETOPT_HUSER;
     }
-  else if (!strncmp("group", left, 5))
+  else if (!strncmp ("group", left, 5))
     {
-      snprintf(net_opts.group, sizeof(net_opts.group), "%s", right);
+      snprintf (net_opts.group, sizeof(net_opts.group), "%s", right);
       net_opts.flags |= F_NETOPT_HGROUP;
     }
-  else if (!strncmp("uid", left, 4))
+  else if (!strncmp ("uid", left, 4))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+	{
+	  return 1;
+	}
 
-      if (setuid((uid_t) i_val) == -1)
-        {
-          char e_buffer[1024];
-          print_str("ERROR: setuid failed: %s\n",
-              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+      if (setuid ((uid_t) i_val) == -1)
+	{
+	  char e_buffer[1024];
+	  print_str ("ERROR: setuid failed: %s\n",
+		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
 
-          return 1;
-        }
+	  return 1;
+	}
 
-      print_str("DEBUG: setuid: %d\n", i_val);
+      print_str ("DEBUG: setuid: %d\n", i_val);
 
     }
-  else if (!strncmp("gid", left, 5))
+  else if (!strncmp ("gid", left, 5))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+	{
+	  return 1;
+	}
 
-      if (setgid((uid_t) i_val) == -1)
-        {
-          char e_buffer[1024];
-          print_str("ERROR: setgid failed: %s\n",
-              strerror_r(errno, e_buffer, sizeof(e_buffer)));
+      if (setgid ((uid_t) i_val) == -1)
+	{
+	  char e_buffer[1024];
+	  print_str ("ERROR: setgid failed: %s\n",
+		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
 
-          return 1;
-        }
+	  return 1;
+	}
 
-      print_str("DEBUG: setgid: %d\n", i_val);
+      print_str ("DEBUG: setgid: %d\n", i_val);
     }
-  else if (!strncmp("chroot", left, 5))
+  else if (!strncmp ("chroot", left, 5))
     {
-      snprintf(net_opts.chroot, sizeof(net_opts.chroot), "%s", right);
+      snprintf (net_opts.chroot, sizeof(net_opts.chroot), "%s", right);
       net_opts.flags |= F_NETOPT_CHROOT;
-      if (chroot(net_opts.chroot) == -1)
-        {
-          char err_buf[1024];
-          print_str("ERROR: netctl_opt_parse: '%s': chroot failed: [%d] [%s]\n",
-              left, errno, strerror_r(errno, err_buf, sizeof(err_buf)));
-          return 1;
-        }
+      if (chroot (net_opts.chroot) == -1)
+	{
+	  char err_buf[1024];
+	  print_str (
+	      "ERROR: netctl_opt_parse: '%s': chroot failed: [%d] [%s]\n", left,
+	      errno, strerror_r (errno, err_buf, sizeof(err_buf)));
+	  return 1;
+	}
     }
   else
     {
-      print_str("ERROR: netctl_opt_parse: '%s': unknown option\n", left);
+      print_str ("ERROR: netctl_opt_parse: '%s': unknown option\n", left);
       return 1;
     }
 
@@ -2043,16 +2045,16 @@ netctl_opt_parse(pmda md, void *arg)
 }
 
 static int
-opt_netctl(void *arg, int m, void *opt)
+opt_netctl (void *arg, int m, void *opt)
 {
-  char *buffer = g_pg(arg, m);
+  char *buffer = g_pg (arg, m);
 
   if (NULL == buffer)
     {
       return 24200;
     }
 
-  if (0 != g_parse_opts(buffer, netctl_opt_parse, (void*) NULL, P_OPT_DL_O,
+  if (0 != g_parse_opts (buffer, netctl_opt_parse, (void*) NULL, P_OPT_DL_O,
   P_OPT_DL_V))
     {
       return 24201;
@@ -2062,7 +2064,7 @@ opt_netctl(void *arg, int m, void *opt)
 }
 
 static int
-opt_ssl_verify(pmda md, void *arg)
+opt_ssl_verify (pmda md, void *arg)
 {
   __sock_ca ca = (__sock_ca) arg;
 
@@ -2088,7 +2090,7 @@ opt_ssl_verify(pmda md, void *arg)
   else
     {
       print_str("ERROR: net_opt_parse->opt_ssl_verify: '%s': unknown option\n",
-          val);
+	  val);
       return 1;
     }
 
@@ -2102,19 +2104,19 @@ opt_ssl_verify(pmda md, void *arg)
 };
 
 static int
-net_opt_parse(pmda md, void *arg)
+net_opt_parse (pmda md, void *arg)
 {
   p_md_obj ptr = md->objects;
   char *left = (char*) ptr->ptr, *right;
 
   __sock_ca ca = (__sock_ca) arg;
 
-  if (!strncmp("ssl\0", left, 4))
+  if (!strncmp ("ssl\0", left, 4))
     {
       ca->flags |= F_OPSOCK_SSL;
       return 0;
     }
-  else if (!strncmp("first_sock_quit\0", left, 15))
+  else if (!strncmp ("first_sock_quit\0", left, 15))
     {
       ca->flags |= F_OPSOCK_SD_FIRST_DC;
       return 0;
@@ -2122,128 +2124,128 @@ net_opt_parse(pmda md, void *arg)
 
   if (NULL == ptr->next)
     {
-      print_str("ERROR: net_opt_parse: option '%s' missing value\n", left);
+      print_str ("ERROR: net_opt_parse: option '%s' missing value\n", left);
       return 1;
     }
 
   right = (char*) ((p_md_obj) ptr->next)->ptr;
 
-  if (!strncmp("mode", left, 4))
+  if (!strncmp ("mode", left, 4))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, CHAR_MIN, CHAR_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, CHAR_MIN, CHAR_MAX, NULL))
+	{
+	  return 1;
+	}
 
       ca->mode = (uint8_t) i_val;
     }
-  else if (!strncmp("max_sim", left, 7))
+  else if (!strncmp ("max_sim", left, 7))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, INT_MIN, INT_MAX, NULL))
+	{
+	  return 1;
+	}
 
       ca->policy.max_sim_ip = (uint32_t) i_val;
     }
-  else if (!strncmp("idle_timeout", left, 12))
+  else if (!strncmp ("idle_timeout", left, 12))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, INT_MIN, INT_MAX, NULL))
+	{
+	  return 1;
+	}
 
       ca->policy.idle_timeout = (time_t) i_val;
     }
-  else if (!strncmp("ssl_accept_timeout", left, 18))
+  else if (!strncmp ("ssl_accept_timeout", left, 18))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, INT_MIN, INT_MAX, NULL))
+	{
+	  return 1;
+	}
 
       ca->policy.ssl_accept_timeout = (time_t) i_val;
     }
-  else if (!strncmp("ssl_connect_timeout", left, 19))
+  else if (!strncmp ("ssl_connect_timeout", left, 19))
     {
       int i_val;
-      if (n_proc_intval(left, right, &i_val, INT_MIN, INT_MAX, NULL))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, &i_val, INT_MIN, INT_MAX, NULL))
+	{
+	  return 1;
+	}
 
       ca->policy.ssl_connect_timeout = (time_t) i_val;
     }
-  else if (!strncmp("log", left, 3))
+  else if (!strncmp ("log", left, 3))
     {
-      if (NULL == g_dgetf(right))
-        {
-          print_str("ERROR: net_opt_parse: '%s': invalid log: '%s'\n", left,
-              right);
-          return 1;
-        }
-      snprintf(ca->b0, sizeof(ca->b0), "%s", right);
+      if (NULL == g_dgetf (right))
+	{
+	  print_str ("ERROR: net_opt_parse: '%s': invalid log: '%s'\n", left,
+		     right);
+	  return 1;
+	}
+      snprintf (ca->b0, sizeof(ca->b0), "%s", right);
       ca->ca_flags |= F_CA_HAS_LOG;
     }
-  else if (!strncmp("fs_offset", left, 5))
+  else if (!strncmp ("fs_offset", left, 5))
     {
       int64_t i_val;
-      if (n_proc_intval(left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
+	{
+	  return 1;
+	}
 
       ca->opt0.u00 = (uint64_t) i_val;
     }
-  else if (!strncmp("fs_size", left, 5))
+  else if (!strncmp ("fs_size", left, 5))
     {
       int64_t i_val;
-      if (n_proc_intval(left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
-        {
-          return 1;
-        }
+      if (n_proc_intval (left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
+	{
+	  return 1;
+	}
 
       ca->opt0.u01 = (uint64_t) i_val;
     }
-  else if (!strncmp("sslcert", left, 7))
+  else if (!strncmp ("sslcert", left, 7))
     {
-      snprintf(ca->b1, sizeof(ca->b1), "%s", right);
+      snprintf (ca->b1, sizeof(ca->b1), "%s", right);
       ca->ssl_cert = (char*) ca->b1;
       ca->ca_flags |= F_CA_HAS_SSL_CERT;
       ca->flags |= F_OPSOCK_SSL;
     }
-  else if (!strncmp("sslkey", left, 6))
+  else if (!strncmp ("sslkey", left, 6))
     {
-      snprintf(ca->b2, sizeof(ca->b2), "%s", right);
+      snprintf (ca->b2, sizeof(ca->b2), "%s", right);
       ca->ssl_key = (char*) ca->b2;
       ca->ca_flags |= F_CA_HAS_SSL_KEY;
       ca->flags |= F_OPSOCK_SSL;
     }
-  else if (!strncmp("fs_stat", left, 5))
+  else if (!strncmp ("fs_stat", left, 5))
     {
-      snprintf(ca->b3, sizeof(ca->b3), "%s", right);
+      snprintf (ca->b3, sizeof(ca->b3), "%s", right);
       ca->ca_flags |= F_CA_MISC01;
     }
-  else if (!strncmp("fs_recv", left, 5))
+  else if (!strncmp ("fs_recv", left, 5))
     {
-      snprintf(ca->b3, sizeof(ca->b3), "%s", right);
+      snprintf (ca->b3, sizeof(ca->b3), "%s", right);
       ca->ca_flags |= F_CA_MISC00;
     }
-  else if (!strncmp("ssl_verify", left, 10))
+  else if (!strncmp ("ssl_verify", left, 10))
     {
-      if (0 != g_parse_opts(right, opt_ssl_verify, (void*) ca, 0x2C,
+      if (0 != g_parse_opts (right, opt_ssl_verify, (void*) ca, 0x2C,
       P_OPT_DL_V))
-        {
-          return 1;
-        }
+	{
+	  return 1;
+	}
     }
   else
     {
-      print_str("ERROR: net_opt_parse: '%s': unknown option\n", left);
+      print_str ("ERROR: net_opt_parse: '%s': unknown option\n", left);
       return 1;
     }
 
@@ -2259,7 +2261,7 @@ net_opt_parse(pmda md, void *arg)
 #include <net_fs.h>
 
 static int
-opt_queue_connection(void *arg, uint32_t flags)
+opt_queue_connection (void *arg, uint32_t flags)
 {
   char *opt = ((char **) arg)[0];
   char *host = ((char **) arg)[1];
@@ -2280,11 +2282,11 @@ opt_queue_connection(void *arg, uint32_t flags)
       return 24112;
     }
 
-  md_init_le(&_boot_pca, 8192);
+  md_init_le (&_boot_pca, 8192);
 
   __sock_ca ca;
 
-  if (NULL == (ca = md_alloc_le(&_boot_pca, sizeof(_sock_ca), 0, NULL)))
+  if (NULL == (ca = md_alloc_le (&_boot_pca, sizeof(_sock_ca), 0, NULL)))
     {
       return 24116;
     }
@@ -2292,18 +2294,18 @@ opt_queue_connection(void *arg, uint32_t flags)
   ca->host = host;
   ca->port = port;
 
-  if (0 != g_parse_opts(opt, net_opt_parse, (void*) ca, P_OPT_DL_O,
+  if (0 != g_parse_opts (opt, net_opt_parse, (void*) ca, P_OPT_DL_O,
   P_OPT_DL_V))
     {
-      md_unlink_le(&_boot_pca, _boot_pca.pos);
+      md_unlink_le (&_boot_pca, _boot_pca.pos);
       return 24140;
     }
 
   if (ca->mode == 1 && !(ca->ca_flags & F_CA_HAS_LOG))
     {
-      print_str("ERROR: opt_queue_connection: [%s:%s] missing 'log' option\n",
-          host, port);
-      md_unlink_le(&_boot_pca, _boot_pca.pos);
+      print_str ("ERROR: opt_queue_connection: [%s:%s] missing 'log' option\n",
+		 host, port);
+      md_unlink_le (&_boot_pca, _boot_pca.pos);
       return 24141;
     }
 
@@ -2311,88 +2313,89 @@ opt_queue_connection(void *arg, uint32_t flags)
     {
       net_opts.flags |= F_NETOPT_SSLINIT;
       if (!(flags & F_OPSOCK_CONNECT))
-        {
-          if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))
-            {
-              if (gfl & F_OPT_VERBOSE5)
-                {
-                  print_str("NOTICE: [%s:%s] using default key: %s\n", host,
-                      port, net_opts.ssl_key_def);
-                }
-              ca->ssl_key = net_opts.ssl_key_def;
-            }
-          if (!(ca->ca_flags & F_CA_HAS_SSL_CERT))
-            {
-              if (gfl & F_OPT_VERBOSE5)
-                {
-                  print_str("NOTICE: [%s:%s] using default cert: %s\n", host,
-                      port, net_opts.ssl_cert_def);
-                }
-              ca->ssl_cert = net_opts.ssl_cert_def;
-            }
-        }
+	{
+	  if (!(ca->ca_flags & F_CA_HAS_SSL_KEY))
+	    {
+	      if (gfl & F_OPT_VERBOSE5)
+		{
+		  print_str ("NOTICE: [%s:%s] using default key: %s\n", host,
+			     port, net_opts.ssl_key_def);
+		}
+	      ca->ssl_key = net_opts.ssl_key_def;
+	    }
+	  if (!(ca->ca_flags & F_CA_HAS_SSL_CERT))
+	    {
+	      if (gfl & F_OPT_VERBOSE5)
+		{
+		  print_str ("NOTICE: [%s:%s] using default cert: %s\n", host,
+			     port, net_opts.ssl_cert_def);
+		}
+	      ca->ssl_cert = net_opts.ssl_cert_def;
+	    }
+	}
     }
 
-  md_init_le(&ca->init_rc0, 16);
-  md_init_le(&ca->init_rc1, 16);
-  md_init_le(&ca->shutdown_rc0, 16);
-  md_init_le(&ca->shutdown_rc1, 16);
+  md_init_le (&ca->init_rc0, 16);
+  md_init_le (&ca->init_rc1, 16);
+  md_init_le (&ca->shutdown_rc0, 16);
+  md_init_le (&ca->shutdown_rc1, 16);
 
   //net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
-  net_push_rc(&ca->shutdown_rc1, (_t_stocb) net_gl_socket_post_clean, 0);
+  net_push_rc (&ca->shutdown_rc1, (_t_stocb) net_gl_socket_post_clean, 0);
 
   switch (ca->mode)
     {
-  case OPT_CONNECT_MODE_SERV :
-    ca->socket_register = &_sock_r;
+    case OPT_CONNECT_MODE_SERV :
+      ca->socket_register = &_sock_r;
 
-    //ca->rc1 = net_gl_socket_init1;
-    ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
+      //ca->rc1 = net_gl_socket_init1;
+      ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
 
-    net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
-    net_push_rc(&ca->init_rc0, (_t_stocb) net_gl_socket_init0, 0);
+      net_push_rc (&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
+      net_push_rc (&ca->init_rc0, (_t_stocb) net_gl_socket_init0, 0);
 
-    net_push_rc(&ca->shutdown_rc0, (_t_stocb) net_gl_socket_destroy, 0);
+      net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_gl_socket_destroy, 0);
 
-    break;
-  case OPT_CONNECT_MODE_NULL :
-    /*print_str("ERROR: opt_queue_connection: [%s:%s] missing mode\n", host,
-     port);
-     md_unlink(&_boot_pca, _boot_pca.pos);
-     return 24167;*/
-    ca->socket_register = &_sock_r;
-    //ca->rc0 = net_gl_socket_init0;
-    //ca->rc1 = net_gl_socket_init1;
-    ca->proc = (_p_sc_cb) net_baseline_prochdr;
+      break;
+    case OPT_CONNECT_MODE_NULL :
+      /*print_str("ERROR: opt_queue_connection: [%s:%s] missing mode\n", host,
+       port);
+       md_unlink(&_boot_pca, _boot_pca.pos);
+       return 24167;*/
+      ca->socket_register = &_sock_r;
+      //ca->rc0 = net_gl_socket_init0;
+      //ca->rc1 = net_gl_socket_init1;
+      ca->proc = (_p_sc_cb) net_baseline_prochdr;
 
-    net_push_rc(&ca->init_rc0, (_t_stocb) net_baseline_socket_init1, 0);
-    net_push_rc(&ca->init_rc0, (_t_stocb) net_baseline_socket_init0, 0);
+      net_push_rc (&ca->init_rc0, (_t_stocb) net_baseline_socket_init1, 0);
+      net_push_rc (&ca->init_rc0, (_t_stocb) net_baseline_socket_init0, 0);
 
-    md_init_le(&pc_a, 256);
+      md_init_le (&pc_a, 256);
 
-    pc_a.objects[PROT_CODE_FS].ptr = (void*) net_baseline_fsproto;
+      pc_a.objects[PROT_CODE_FS].ptr = (void*) net_baseline_fsproto;
 
-    if (ca->ca_flags & F_CA_MISC00)
-      {
-        net_push_rc(&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer, 0);
-      }
+      if (ca->ca_flags & F_CA_MISC00)
+	{
+	  net_push_rc (&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer,
+		       0);
+	}
 
-    net_push_rc(&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_rc0, 0);
-    break;
-  default:
-    print_str("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n", host,
-        port, ca->mode);
-    md_g_free(&ca->init_rc0);
-    md_g_free(&ca->init_rc1);
-    md_g_free(&ca->shutdown_rc0);
-    md_g_free(&ca->shutdown_rc1);
-    md_unlink_le(&_boot_pca, _boot_pca.pos);
-    return 24168;
+      net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_rc0, 0);
+      break;
+    default:
+      print_str ("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n",
+		 host, port, ca->mode);
+      md_g_free (&ca->init_rc0);
+      md_g_free (&ca->init_rc1);
+      md_g_free (&ca->shutdown_rc0);
+      md_g_free (&ca->shutdown_rc1);
+      md_unlink_le (&_boot_pca, _boot_pca.pos);
+      return 24168;
     }
 
   if (ca->flags & F_OPSOCK_SD_FIRST_DC)
     {
-      net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1_dc_on_ac, 0);
+      net_push_rc (&ca->init_rc1, (_t_stocb) net_gl_socket_init1_dc_on_ac, 0);
     }
 
   ca->policy.mode = ca->mode;
@@ -2401,7 +2404,7 @@ opt_queue_connection(void *arg, uint32_t flags)
 
   //net_socket_init_enforce_policy
 
-  net_push_rc(&ca->init_rc0, (_t_stocb) net_socket_init_enforce_policy, 0);
+  net_push_rc (&ca->init_rc0, (_t_stocb) net_socket_init_enforce_policy, 0);
 
   if (!ca->policy.ssl_accept_timeout)
     {
@@ -2446,15 +2449,15 @@ opt_queue_connection(void *arg, uint32_t flags)
 }
 
 static int
-opt_connect(void *arg, int m, void *opt)
+opt_connect (void *arg, int m, void *opt)
 {
-  return opt_queue_connection(arg, F_OPSOCK_CONNECT);
+  return opt_queue_connection (arg, F_OPSOCK_CONNECT);
 }
 
 static int
-opt_listen(void *arg, int m, void *opt)
+opt_listen (void *arg, int m, void *opt)
 {
-  return opt_queue_connection(arg, F_OPSOCK_LISTEN);
+  return opt_queue_connection (arg, F_OPSOCK_LISTEN);
 }
 
 #endif
@@ -2477,241 +2480,241 @@ _gg_opt gg_prio_f_ref[] =
     { .id = 0x9871, .on = "--user", .ac = 1, .op = g_opt_setuid },
     { .id = 0x9872, .on = "--group", .ac = 1, .op = g_opt_setgid },
 #ifndef _MAKE_SBIN
-        { .id = 0x9981, .on = "-arg", .ac = 2, .op = g_opt_lav },
-        { .id = 0x0005, .on = "-arg1", .ac = 1, .op = opt_g_arg1 },
-        { .id = 0x0006, .on = "--arg1", .ac = 1, .op = opt_g_arg1 },
-        { .id = 0x0007, .on = "-arg2", .ac = 1, .op = opt_g_arg2 },
-        { .id = 0x0008, .on = "--arg2", .ac = 1, .op = opt_g_arg2 },
-        { .id = 0x0009, .on = "-arg3", .ac = 1, .op = opt_g_arg3 },
-        { .id = 0x000A, .on = "--arg3", .ac = 1, .op = opt_g_arg3 },
-        { .id = 0x0002, .on = "--raw", .ac = 0, .op = opt_raw_dump },
-        { .id = 0x0015, .on = "--dirlog", .ac = 1, .op = opt_dirlog_file },
-        { .id = 0x0016, .on = "--ge1log", .ac = 1, .op = opt_GE1LOG },
-        { .id = 0x0017, .on = "--ge2log", .ac = 1, .op = opt_GE2LOG },
-        { .id = 0x0018, .on = "--ge3log", .ac = 1, .op = opt_GE3LOG },
-        { .id = 0x0019, .on = "--ge4log", .ac = 1, .op = opt_GE4LOG },
-        { .id = 0x001A, .on = "--altlog", .ac = 1, .op = opt_altlog },
-        { .id = 0x001B, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
-        { .id = 0x001C, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
-        { .id = 0x001D, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
-        { .id = 0x001E, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
-        { .id = 0x001F, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
-        { .id = 0x0020, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
-        { .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
-        { .id = 0x0021, .on = "--sconf", .ac = 1, .op = opt_sconf },
-        { .id = 0x0022, .on = "--gconf", .ac = 1, .op = opt_gconf },
-        { .id = 0x0023, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
-        { .id = 0x0024, .on = "--glroot", .ac = 1, .op = opt_glroot },
-        { .id = 0x0025, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
-        { .id = 0x0026, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
-        { .id = 0x0010, .on = "-m", .ac = 1, .op = prio_opt_g_macro },
-        { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
-        { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
-        { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
-        { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
-        { .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
+	{ .id = 0x9981, .on = "-arg", .ac = 2, .op = g_opt_lav },
+	{ .id = 0x0005, .on = "-arg1", .ac = 1, .op = opt_g_arg1 },
+	{ .id = 0x0006, .on = "--arg1", .ac = 1, .op = opt_g_arg1 },
+	{ .id = 0x0007, .on = "-arg2", .ac = 1, .op = opt_g_arg2 },
+	{ .id = 0x0008, .on = "--arg2", .ac = 1, .op = opt_g_arg2 },
+	{ .id = 0x0009, .on = "-arg3", .ac = 1, .op = opt_g_arg3 },
+	{ .id = 0x000A, .on = "--arg3", .ac = 1, .op = opt_g_arg3 },
+	{ .id = 0x0002, .on = "--raw", .ac = 0, .op = opt_raw_dump },
+	{ .id = 0x0015, .on = "--dirlog", .ac = 1, .op = opt_dirlog_file },
+	{ .id = 0x0016, .on = "--ge1log", .ac = 1, .op = opt_GE1LOG },
+	{ .id = 0x0017, .on = "--ge2log", .ac = 1, .op = opt_GE2LOG },
+	{ .id = 0x0018, .on = "--ge3log", .ac = 1, .op = opt_GE3LOG },
+	{ .id = 0x0019, .on = "--ge4log", .ac = 1, .op = opt_GE4LOG },
+	{ .id = 0x001A, .on = "--altlog", .ac = 1, .op = opt_altlog },
+	{ .id = 0x001B, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
+	{ .id = 0x001C, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
+	{ .id = 0x001D, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
+	{ .id = 0x001E, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
+	{ .id = 0x001F, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
+	{ .id = 0x0020, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
+	{ .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
+	{ .id = 0x0021, .on = "--sconf", .ac = 1, .op = opt_sconf },
+	{ .id = 0x0022, .on = "--gconf", .ac = 1, .op = opt_gconf },
+	{ .id = 0x0023, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
+	{ .id = 0x0024, .on = "--glroot", .ac = 1, .op = opt_glroot },
+	{ .id = 0x0025, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
+	{ .id = 0x0026, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
+	{ .id = 0x0010, .on = "-m", .ac = 1, .op = prio_opt_g_macro },
+	{ .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
+	{ .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
+	{ .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
+	{ .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
+	{ .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
 #endif
-        { 0x0 } };
+	{ 0x0 } };
 
 _gg_opt gg_f_ref[] =
   {
 #ifdef _G_SSYS_NET
-        { .id = 0x3101, .on = "-connect", .ac = 3, .op = opt_connect },
-        { .id = 0x3104, .on = "-listen", .ac = 3, .op = opt_listen },
-        { .id = 0x3105, .on = "-netctl", .ac = 1, .op = opt_netctl },
+	{ .id = 0x3101, .on = "-connect", .ac = 3, .op = opt_connect },
+	{ .id = 0x3104, .on = "-listen", .ac = 3, .op = opt_listen },
+	{ .id = 0x3105, .on = "-netctl", .ac = 1, .op = opt_netctl },
 #endif
-        { .id = 0x9871, .on = "--user", .ac = 1, .op = g_opt_setuid },
-        { .id = 0x9872, .on = "--group", .ac = 1, .op = g_opt_setgid },
-        { .id = 0x0001, .on = "-noop", .ac = 0, .op = g_opt_mode_noop },
-        { .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
-        { .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
-        { .id = 0x000B, .on = "--sort", .ac = 1, .op = opt_g_sort },
-        { .id = 0x000B, .on = "-sort", .ac = 1, .op = opt_g_sort },
-        { .id = 0x000E, .on = "--cdir", .ac = 0, .op = opt_g_cdironly },
-        { .id = 0x000E, .on = "-prune", .ac = 0, .op = opt_g_cdironly },
-        { .id = 0x000F, .on = "--imatchq", .ac = 0, .op = opt_g_imatchq },
-        { .id = 0x0010, .on = "--matchq", .ac = 0, .op = opt_g_matchq },
-        { .id = 0x0013, .on = "--infile", .ac = 1, .op = opt_g_infile },
-        { .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
-        { .id = 0x0015, .on = "--xdev", .ac = 0, .op = opt_g_xdev },
-        { .id = 0x0016, .on = "-xblk", .ac = 0, .op = opt_g_xblk },
-        { .id = 0x0017, .on = "--xblk", .ac = 0, .op = opt_g_xblk },
-        { .id = 0x0018, .on = "-file", .ac = 0, .op = opt_g_udc_f },
-        { .id = 0x0019, .on = "--file", .ac = 0, .op = opt_g_udc_f },
-        { .id = 0x001A, .on = "-dir", .ac = 0, .op = opt_g_udc_dir },
-        { .id = 0x001B, .on = "--dir", .ac = 0, .op = opt_g_udc_dir },
-        { .id = 0x001C, .on = "--loopmax", .ac = 1, .op = opt_loop_max },
-        { .id = 0x001D, .on = "--ghost", .ac = 0, .op = opt_check_ghost },
-        { .id = 0x0020, .on = "-R", .ac = 0, .op = opt_g_recursive },
-        { .id = 0x0021, .on = "-recursive", .ac = 0, .op = opt_g_recursive },
-        { .id = 0x0022, .on = "--recursive", .ac = 0, .op = opt_g_recursive },
-        { .id = 0x0020, .on = "--no-recursive", .ac = 0, .op = opt_g_rec_off },
-        { .id = 0x0025, .on = "--backup", .ac = 1, .op = opt_backup },
-        { .id = 0x0026, .on = "-preprint", .ac = 1, .op = opt_preprint },
-        { .id = 0x0027, .on = "-preprintf", .ac = 1, .op = opt_preprintf },
-        { .id = 0x0028, .on = "-postprint", .ac = 1, .op = opt_postprint },
-        { .id = 0x0029, .on = "-postprintf", .ac = 1, .op = opt_postprintf },
-        { .id = 0x002A, .on = "-print", .ac = 1, .op = opt_print },
-        { .id = 0x002B, .on = "-print-", .ac = 1, .op = opt_print_stdin },
-        { .id = 0x002C, .on = "-printf-", .ac = 1, .op = opt_printf_stdin },
-        { .id = 0x002D, .on = "-printf", .ac = 1, .op = opt_printf },
-        { .id = 0x002E, .on = "-stdin", .ac = 0, .op = opt_stdin },
-        { .id = 0x002F, .on = "--stdin", .ac = 0, .op = opt_stdin },
-        { .id = 0x0030, .on = "--print", .ac = 1, .op = opt_print },
-        { .id = 0x0031, .on = "--printf", .ac = 1, .op = opt_printf },
-        { .id = 0x0033, .on = "--postexec", .ac = 1, .op = opt_g_postexec },
-        { .id = 0x0034, .on = "--preexec", .ac = 1, .op = opt_g_preexec },
-        { .id = 0x0035, .on = "--usleep", .ac = 1, .op = opt_g_usleep },
-        { .id = 0x0036, .on = "--sleep", .ac = 1, .op = opt_g_sleep },
-        { .id = 0x9981, .on = "-arg", .ac = 2, .op = NULL },
-        { .id = 0x0037, .on = "-arg1", .ac = 1, .op = NULL },
-        { .id = 0x0038, .on = "--arg1", .ac = 1, .op = NULL },
-        { .id = 0x0039, .on = "-arg2", .ac = 1, .op = NULL },
-        { .id = 0x003A, .on = "--arg2", .ac = 1, .op = NULL },
-        { .id = 0x003B, .on = "-arg3", .ac = 1, .op = NULL },
-        { .id = 0x003C, .on = "--arg3", .ac = 1, .op = NULL },
-        { .id = 0x003D, .on = "-m", .ac = 1, .op = NULL },
-        { .id = 0x0042, .on = "--fork", .ac = 1, .op = opt_g_ex_fork },
-        { .id = 0x0043, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
-        { .id = 0x0044, .on = "-vvvv", .ac = 0, .op = opt_g_verbose4 },
-        { .id = 0x0045, .on = "-vvv", .ac = 0, .op = opt_g_verbose3 },
-        { .id = 0x0046, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
-        { .id = 0x0047, .on = "-v", .ac = 0, .op = opt_g_verbose },
-        { .id = 0x004D, .on = "--silent", .ac = 0, .op = opt_silent },
-        { .id = 0x004A, .on = "--logfile", .ac = 0, .op = opt_log_file },
-        { .id = 0x0048, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
-        { .id = 0x0049, .on = "--ftime", .ac = 0, .op = opt_g_ftime },
-        { .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },
-        { .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
-        { .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
+	{ .id = 0x9871, .on = "--user", .ac = 1, .op = g_opt_setuid },
+	{ .id = 0x9872, .on = "--group", .ac = 1, .op = g_opt_setgid },
+	{ .id = 0x0001, .on = "-noop", .ac = 0, .op = g_opt_mode_noop },
+	{ .id = 0x0004, .on = "--rev", .ac = 0, .op = opt_g_reverse },
+	{ .id = 0x0009, .on = "--info", .ac = 0, .op = prio_opt_g_pinfo },
+	{ .id = 0x000B, .on = "--sort", .ac = 1, .op = opt_g_sort },
+	{ .id = 0x000B, .on = "-sort", .ac = 1, .op = opt_g_sort },
+	{ .id = 0x000E, .on = "--cdir", .ac = 0, .op = opt_g_cdironly },
+	{ .id = 0x000E, .on = "-prune", .ac = 0, .op = opt_g_cdironly },
+	{ .id = 0x000F, .on = "--imatchq", .ac = 0, .op = opt_g_imatchq },
+	{ .id = 0x0010, .on = "--matchq", .ac = 0, .op = opt_g_matchq },
+	{ .id = 0x0013, .on = "--infile", .ac = 1, .op = opt_g_infile },
+	{ .id = 0x0014, .on = "-xdev", .ac = 0, .op = opt_g_xdev },
+	{ .id = 0x0015, .on = "--xdev", .ac = 0, .op = opt_g_xdev },
+	{ .id = 0x0016, .on = "-xblk", .ac = 0, .op = opt_g_xblk },
+	{ .id = 0x0017, .on = "--xblk", .ac = 0, .op = opt_g_xblk },
+	{ .id = 0x0018, .on = "-file", .ac = 0, .op = opt_g_udc_f },
+	{ .id = 0x0019, .on = "--file", .ac = 0, .op = opt_g_udc_f },
+	{ .id = 0x001A, .on = "-dir", .ac = 0, .op = opt_g_udc_dir },
+	{ .id = 0x001B, .on = "--dir", .ac = 0, .op = opt_g_udc_dir },
+	{ .id = 0x001C, .on = "--loopmax", .ac = 1, .op = opt_loop_max },
+	{ .id = 0x001D, .on = "--ghost", .ac = 0, .op = opt_check_ghost },
+	{ .id = 0x0020, .on = "-R", .ac = 0, .op = opt_g_recursive },
+	{ .id = 0x0021, .on = "-recursive", .ac = 0, .op = opt_g_recursive },
+	{ .id = 0x0022, .on = "--recursive", .ac = 0, .op = opt_g_recursive },
+	{ .id = 0x0020, .on = "--no-recursive", .ac = 0, .op = opt_g_rec_off },
+	{ .id = 0x0025, .on = "--backup", .ac = 1, .op = opt_backup },
+	{ .id = 0x0026, .on = "-preprint", .ac = 1, .op = opt_preprint },
+	{ .id = 0x0027, .on = "-preprintf", .ac = 1, .op = opt_preprintf },
+	{ .id = 0x0028, .on = "-postprint", .ac = 1, .op = opt_postprint },
+	{ .id = 0x0029, .on = "-postprintf", .ac = 1, .op = opt_postprintf },
+	{ .id = 0x002A, .on = "-print", .ac = 1, .op = opt_print },
+	{ .id = 0x002B, .on = "-print-", .ac = 1, .op = opt_print_stdin },
+	{ .id = 0x002C, .on = "-printf-", .ac = 1, .op = opt_printf_stdin },
+	{ .id = 0x002D, .on = "-printf", .ac = 1, .op = opt_printf },
+	{ .id = 0x002E, .on = "-stdin", .ac = 0, .op = opt_stdin },
+	{ .id = 0x002F, .on = "--stdin", .ac = 0, .op = opt_stdin },
+	{ .id = 0x0030, .on = "--print", .ac = 1, .op = opt_print },
+	{ .id = 0x0031, .on = "--printf", .ac = 1, .op = opt_printf },
+	{ .id = 0x0033, .on = "--postexec", .ac = 1, .op = opt_g_postexec },
+	{ .id = 0x0034, .on = "--preexec", .ac = 1, .op = opt_g_preexec },
+	{ .id = 0x0035, .on = "--usleep", .ac = 1, .op = opt_g_usleep },
+	{ .id = 0x0036, .on = "--sleep", .ac = 1, .op = opt_g_sleep },
+	{ .id = 0x9981, .on = "-arg", .ac = 2, .op = NULL },
+	{ .id = 0x0037, .on = "-arg1", .ac = 1, .op = NULL },
+	{ .id = 0x0038, .on = "--arg1", .ac = 1, .op = NULL },
+	{ .id = 0x0039, .on = "-arg2", .ac = 1, .op = NULL },
+	{ .id = 0x003A, .on = "--arg2", .ac = 1, .op = NULL },
+	{ .id = 0x003B, .on = "-arg3", .ac = 1, .op = NULL },
+	{ .id = 0x003C, .on = "--arg3", .ac = 1, .op = NULL },
+	{ .id = 0x003D, .on = "-m", .ac = 1, .op = NULL },
+	{ .id = 0x0042, .on = "--fork", .ac = 1, .op = opt_g_ex_fork },
+	{ .id = 0x0043, .on = "-vvvvv", .ac = 0, .op = opt_g_verbose5 },
+	{ .id = 0x0044, .on = "-vvvv", .ac = 0, .op = opt_g_verbose4 },
+	{ .id = 0x0045, .on = "-vvv", .ac = 0, .op = opt_g_verbose3 },
+	{ .id = 0x0046, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
+	{ .id = 0x0047, .on = "-v", .ac = 0, .op = opt_g_verbose },
+	{ .id = 0x004D, .on = "--silent", .ac = 0, .op = opt_silent },
+	{ .id = 0x004A, .on = "--logfile", .ac = 0, .op = opt_log_file },
+	{ .id = 0x0048, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
+	{ .id = 0x0049, .on = "--ftime", .ac = 0, .op = opt_g_ftime },
+	{ .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },
+	{ .id = 0x004E, .on = "--loop", .ac = 1, .op = opt_g_loop },
+	{ .id = 0x004F, .on = "--daemon", .ac = 0, .op = opt_g_daemonize },
 #ifdef _GL_DUMMY_NONE
 
 #endif
-        { .id = 0x0468, .on = "-regexi", .ac = 1, .op = opt_g_d_regexi },
-        { .id = 0x046A, .on = "-regex", .ac = 1, .op = opt_g_d_regex },
-        { .id = 0x0441, .on = "-match", .ac = 1, .op = opt_g_d_match },
-        { .id = 0x1441, .on = "-name", .ac = 1, .op = opt_g_d_fname },
-        { .id = 0x1443, .on = "-namei", .ac = 1, .op = opt_g_d_fnamei },
-        { .id = 0x0406, .on = "-lom", .ac = 1, .op = opt_g_d_lom_match },
-        { .id = 0x1000, .on = "!", .ac = 0, .op = opt_g_negate },
-        { .id = 0x1001, .on = "-fd:", .ac = 0, .op = opt_g_tfd },
-        { .id = 0x1001, .on = "-l:", .ac = 1, .op = opt_g_lookup },
-        { .id = 0x1001, .on = "-prune:", .ac = 0, .op = opt_g_tfd },
-        { .id = 0x2002, .on = "-and", .ac = 0, .op = opt_g_operator_and },
-        { .id = 0x2003, .on = "-or", .ac = 0, .op = opt_g_operator_or },
-        { .id = 0x0004, .on = "(", .ac = 0, .op = opt_g_m_raise_level },
-        { .id = 0x0005, .on = ")", .ac = 0, .op = opt_g_m_lower_level },
-        { .id = 0x0070, .on = "-y", .ac = 0, .op = opt_g_flinks },
-        { .id = 0x0072, .on = "--followlinks", .ac = 0, .op = opt_g_flinks },
-        { .id = 0x0075, .on = "-execv", .ac = 1, .op = opt_execv },
-        { .id = 0x0076, .on = "-execv-", .ac = 1, .op = opt_execv_stdin },
-        { .id = 0x0077, .on = "-exec", .ac = 1, .op = opt_exec },
-        { .id = 0x0078, .on = "-exec-", .ac = 1, .op = opt_exec_stdin },
-        { .id = 0x007A, .on = "--fix", .ac = 0, .op = opt_g_fix },
-        { .id = 0x007C, .on = "--memlimit", .ac = 1, .op = opt_memb_limit },
-        { .id = 0x007D, .on = "--memlimita", .ac = 1, .op = opt_memb_limit_in },
-        { .id = 0x007F, .on = "--dupechk", .ac = 0, .op = opt_dirlog_chk_dupe },
-        { .id = 0x0080, .on = "--nobuffer", .ac = 0, .op = opt_g_nobuffering },
-        { .id = 0x0082, .on = "--help", .ac = 0, .op = print_help },
-        { .id = 0x0083, .on = "--version", .ac = 0, .op = print_version },
-        { .id = 0x008A, .on = "--sfv", .ac = 0, .op = opt_g_sfv },
-        { .id = 0x008B, .on = "--crc32", .ac = 1, .op = option_crc32 },
-        { .id = 0x008C, .on = "--nobackup", .ac = 0, .op = opt_nobackup },
-        { .id = 0x008E, .on = "--check", .ac = 0, .op = opt_dirlog_check },
-        { .id = 0x008F, .on = "--dump", .ac = 0, .op = opt_dirlog_dump },
-        { .id = 0x0091, .on = "-f", .ac = 0, .op = opt_g_force },
-        { .id = 0x0092, .on = "-ff", .ac = 0, .op = opt_g_force2 },
-        { .id = 0x0097, .on = "--loadq", .ac = 0, .op = opt_g_loadq },
-        { .id = 0x0098, .on = "--loadqa", .ac = 0, .op = opt_g_loadqa },
-        { .id = 0x009B, .on = "--maxres", .ac = 1, .op = opt_g_maxresults },
-        { .id = 0x009C, .on = "--maxhit", .ac = 1, .op = opt_g_maxhits },
-        { .id = 0x009D, .on = "--ifres", .ac = 0, .op = opt_g_ifres },
-        { .id = 0x009E, .on = "--ifhit", .ac = 0, .op = opt_g_ifhit },
-        { .id = 0x009F, .on = "--ifrhe", .ac = 0, .op = opt_g_ifrh_e },
-        { .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
-        { .id = 0x00A2, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
-        { .id = 0x00A3, .on = "--maxdepth", .ac = 1, .op = opt_g_maxdepth },
-        { .id = 0x00A4, .on = "-maxdepth", .ac = 1, .op = opt_g_maxdepth },
-        { .id = 0x00A5, .on = "--mindepth", .ac = 1, .op = opt_g_mindepth },
-        { .id = 0x00A6, .on = "-mindepth", .ac = 1, .op = opt_g_mindepth },
-        { .id = 0x00A7, .on = "--noereg", .ac = 0, .op = opt_g_noereg },
-        { .id = 0x00AA, .on = "--prune", .ac = 0, .op = opt_prune },
-        { .id = 0x00AE, .on = "--xretry", .ac = 0, .op = opt_g_xretry },
-        { .id = 0x22AE, .on = "--xloop", .ac = 0, .op = opt_g_xloop },
-        { .id = 0x00AF, .on = "--indepth", .ac = 0, .op = opt_g_indepth },
-        { .id = 0x00B0, .on = "--full", .ac = 0, .op = opt_dirlog_rb_full },
-        { .id = 0x00B1, .on = "--arr", .ac = 1, .op = opt_arrange },
-        { .id = 0x00B2, .on = "--nonukechk", .ac = 0, .op = opt_no_nuke_chk },
-        { .id = 0x00B3, .on = "--rsleep", .ac = 1, .op = opt_g_loop_sleep },
-        { .id = 0x00B4, .on = "--rusleep", .ac = 1, .op = opt_g_loop_usleep },
-        { .id = 0x00B5, .on = "--nostats", .ac = 0, .op = opt_g_nostats },
-        { .id = 0x00B6, .on = "--stats", .ac = 0, .op = opt_g_stats },
-        { .id = 0x00B7, .on = "-mlist", .ac = 0, .op = opt_g_mlist },
-        { .id = 0x00B8, .on = "--gz", .ac = 1, .op = opt_g_comp },
-        { .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
-        { .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
-        { .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
-        { .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
-        { .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
-        { .id = 0x5513, .on = "--depth", .ac = 0, .op = opt_xref_depth },
+	{ .id = 0x0468, .on = "-regexi", .ac = 1, .op = opt_g_d_regexi },
+	{ .id = 0x046A, .on = "-regex", .ac = 1, .op = opt_g_d_regex },
+	{ .id = 0x0441, .on = "-match", .ac = 1, .op = opt_g_d_match },
+	{ .id = 0x1441, .on = "-name", .ac = 1, .op = opt_g_d_fname },
+	{ .id = 0x1443, .on = "-namei", .ac = 1, .op = opt_g_d_fnamei },
+	{ .id = 0x0406, .on = "-lom", .ac = 1, .op = opt_g_d_lom_match },
+	{ .id = 0x1000, .on = "!", .ac = 0, .op = opt_g_negate },
+	{ .id = 0x1001, .on = "-fd:", .ac = 0, .op = opt_g_tfd },
+	{ .id = 0x1001, .on = "-l:", .ac = 1, .op = opt_g_lookup },
+	{ .id = 0x1001, .on = "-prune:", .ac = 0, .op = opt_g_tfd },
+	{ .id = 0x2002, .on = "-and", .ac = 0, .op = opt_g_operator_and },
+	{ .id = 0x2003, .on = "-or", .ac = 0, .op = opt_g_operator_or },
+	{ .id = 0x0004, .on = "(", .ac = 0, .op = opt_g_m_raise_level },
+	{ .id = 0x0005, .on = ")", .ac = 0, .op = opt_g_m_lower_level },
+	{ .id = 0x0070, .on = "-y", .ac = 0, .op = opt_g_flinks },
+	{ .id = 0x0072, .on = "--followlinks", .ac = 0, .op = opt_g_flinks },
+	{ .id = 0x0075, .on = "-execv", .ac = 1, .op = opt_execv },
+	{ .id = 0x0076, .on = "-execv-", .ac = 1, .op = opt_execv_stdin },
+	{ .id = 0x0077, .on = "-exec", .ac = 1, .op = opt_exec },
+	{ .id = 0x0078, .on = "-exec-", .ac = 1, .op = opt_exec_stdin },
+	{ .id = 0x007A, .on = "--fix", .ac = 0, .op = opt_g_fix },
+	{ .id = 0x007C, .on = "--memlimit", .ac = 1, .op = opt_memb_limit },
+	{ .id = 0x007D, .on = "--memlimita", .ac = 1, .op = opt_memb_limit_in },
+	{ .id = 0x007F, .on = "--dupechk", .ac = 0, .op = opt_dirlog_chk_dupe },
+	{ .id = 0x0080, .on = "--nobuffer", .ac = 0, .op = opt_g_nobuffering },
+	{ .id = 0x0082, .on = "--help", .ac = 0, .op = print_help },
+	{ .id = 0x0083, .on = "--version", .ac = 0, .op = print_version },
+	{ .id = 0x008A, .on = "--sfv", .ac = 0, .op = opt_g_sfv },
+	{ .id = 0x008B, .on = "--crc32", .ac = 1, .op = option_crc32 },
+	{ .id = 0x008C, .on = "--nobackup", .ac = 0, .op = opt_nobackup },
+	{ .id = 0x008E, .on = "--check", .ac = 0, .op = opt_dirlog_check },
+	{ .id = 0x008F, .on = "--dump", .ac = 0, .op = opt_dirlog_dump },
+	{ .id = 0x0091, .on = "-f", .ac = 0, .op = opt_g_force },
+	{ .id = 0x0092, .on = "-ff", .ac = 0, .op = opt_g_force2 },
+	{ .id = 0x0097, .on = "--loadq", .ac = 0, .op = opt_g_loadq },
+	{ .id = 0x0098, .on = "--loadqa", .ac = 0, .op = opt_g_loadqa },
+	{ .id = 0x009B, .on = "--maxres", .ac = 1, .op = opt_g_maxresults },
+	{ .id = 0x009C, .on = "--maxhit", .ac = 1, .op = opt_g_maxhits },
+	{ .id = 0x009D, .on = "--ifres", .ac = 0, .op = opt_g_ifres },
+	{ .id = 0x009E, .on = "--ifhit", .ac = 0, .op = opt_g_ifhit },
+	{ .id = 0x009F, .on = "--ifrhe", .ac = 0, .op = opt_g_ifrh_e },
+	{ .id = 0x00A1, .on = "--esredir", .ac = 1, .op = opt_execv_stdout_rd },
+	{ .id = 0x00A2, .on = "--noglconf", .ac = 0, .op = opt_g_noglconf },
+	{ .id = 0x00A3, .on = "--maxdepth", .ac = 1, .op = opt_g_maxdepth },
+	{ .id = 0x00A4, .on = "-maxdepth", .ac = 1, .op = opt_g_maxdepth },
+	{ .id = 0x00A5, .on = "--mindepth", .ac = 1, .op = opt_g_mindepth },
+	{ .id = 0x00A6, .on = "-mindepth", .ac = 1, .op = opt_g_mindepth },
+	{ .id = 0x00A7, .on = "--noereg", .ac = 0, .op = opt_g_noereg },
+	{ .id = 0x00AA, .on = "--prune", .ac = 0, .op = opt_prune },
+	{ .id = 0x00AE, .on = "--xretry", .ac = 0, .op = opt_g_xretry },
+	{ .id = 0x22AE, .on = "--xloop", .ac = 0, .op = opt_g_xloop },
+	{ .id = 0x00AF, .on = "--indepth", .ac = 0, .op = opt_g_indepth },
+	{ .id = 0x00B0, .on = "--full", .ac = 0, .op = opt_dirlog_rb_full },
+	{ .id = 0x00B1, .on = "--arr", .ac = 1, .op = opt_arrange },
+	{ .id = 0x00B2, .on = "--nonukechk", .ac = 0, .op = opt_no_nuke_chk },
+	{ .id = 0x00B3, .on = "--rsleep", .ac = 1, .op = opt_g_loop_sleep },
+	{ .id = 0x00B4, .on = "--rusleep", .ac = 1, .op = opt_g_loop_usleep },
+	{ .id = 0x00B5, .on = "--nostats", .ac = 0, .op = opt_g_nostats },
+	{ .id = 0x00B6, .on = "--stats", .ac = 0, .op = opt_g_stats },
+	{ .id = 0x00B7, .on = "-mlist", .ac = 0, .op = opt_g_mlist },
+	{ .id = 0x00B8, .on = "--gz", .ac = 1, .op = opt_g_comp },
+	{ .id = 0x00BA, .on = "--progress", .ac = 0, .op = opt_g_progress },
+	{ .id = 0x2512, .on = "--fsrec", .ac = 0, .op = opt_g_fsroot },
+	{ .id = 0x5591, .on = "--stdlog", .ac = 1, .op = opt_g_stdout_lvl },
+	{ .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
+	{ .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
+	{ .id = 0x5513, .on = "--depth", .ac = 0, .op = opt_xref_depth },
 #ifndef _MAKE_SBIN
-        { .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
-        { .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
-        { .id = 0x006C, .on = "--comp", .ac = 0, .op = opt_crof },
-        { .id = 0x006D, .on = "--batch", .ac = 0, .op = opt_bo_formatting },
-        { .id = 0x006E, .on = "-E", .ac = 0, .op = opt_ex_o_formatting },
-        { .id = 0x006F, .on = "--export", .ac = 0, .op = opt_ex_o_formatting },
-        { .id = 0x0051, .on = "--ipc", .ac = 1, .op = opt_shmipc },
-        { .id = 0x0060, .on = "--nowbuffer", .ac = 0, .op = opt_g_buffering },
-        { .id = 0x0089, .on = "--nowrite", .ac = 0, .op = opt_g_nowrite },
-        { .id = 0x0061, .on = "--raw", .ac = 0, .op = opt_raw_dump },
-        { .id = 0x0062, .on = "--binary", .ac = 0, .op = opt_binary },
-        { .id = 0x0095, .on = "--shmem", .ac = 0, .op = opt_g_shmem },
-        { .id = 0x0096, .on = "--shmreload", .ac = 0, .op = opt_g_shmreload },
-        { .id = 0x0099, .on = "--shmdestroy", .ac = 0, .op = opt_g_shmdestroy },
-        { .id = 0x009A, .on = "--shmdestonexit", .ac = 0, .op = opt_g_shmdoex },
-        { .id = 0x00B9, .on = "--sortmethod", .ac = 1, .op = opt_g_swapmode },
-        { .id = 0x0053, .on = "--ge1log", .ac = 1, .op = opt_GE1LOG },
-        { .id = 0x0054, .on = "--ge2log", .ac = 1, .op = opt_GE2LOG },
-        { .id = 0x0055, .on = "--ge3log", .ac = 1, .op = opt_GE3LOG },
-        { .id = 0x0056, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
-        { .id = 0x0057, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
-        { .id = 0x0058, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
-        { .id = 0x0059, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
-        { .id = 0x005B, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
-        { .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
-        { .id = 0x005E, .on = "--sconf", .ac = 1, .op = opt_sconf },
-        { .id = 0x005F, .on = "--gconf", .ac = 1, .op = opt_gconf },
-        { .id = 0x00AB, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
-        { .id = 0x00AC, .on = "--ge4log", .ac = 1, .op = opt_GE4LOG },
-        { .id = 0x00AD, .on = "--altlog", .ac = 1, .op = opt_altlog },
-        { .id = 0x0084, .on = "--folders", .ac = 1, .op = opt_dirlog_sect_fl },
-        { .id = 0x0085, .on = "--dirlog", .ac = 1, .op = opt_dirlog_file },
-        { .id = 0x0086, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
-        { .id = 0x0087, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
-        { .id = 0x0088, .on = "--glroot", .ac = 1, .op = opt_glroot },
-        { .id = 0x1288, .on = "--shmcflags", .ac = 1, .op = g_opt_shmflg },
-        { .id = 0x1288, .on = "--shmro", .ac = 0, .op = g_opt_shmro },
-        { .id = 0x0023, .on = "-g", .ac = 0, .op = opt_dump_grps },
-        { .id = 0x0024, .on = "-t", .ac = 0, .op = opt_dump_users },
-        { .id = 0x0032, .on = "-b", .ac = 1, .op = opt_backup },
-        { .id = 0x0052, .on = "-l", .ac = 0, .op = opt_lastonlog_dump },
-        { .id = 0x0081, .on = "-n", .ac = 0, .op = opt_dirlog_dump_nukelog },
-        { .id = 0x007E, .on = "-p", .ac = 0, .op = opt_dirlog_chk_dupe },
-        { .id = 0x001E, .on = "-q", .ac = 1, .op = opt_g_dg },
-        { .id = 0x001F, .on = "-x", .ac = 1, .op = opt_g_udc },
-        { .id = 0x000C, .on = "-h", .ac = 0, .op = opt_g_dump_tv },
-        { .id = 0x000D, .on = "-k", .ac = 0, .op = opt_g_dump_game },
-        { .id = 0x0011, .on = "-a", .ac = 0, .op = opt_g_dump_imdb },
-        { .id = 0x0012, .on = "-z", .ac = 1, .op = opt_g_write },
-        { .id = 0x005A, .on = "-o", .ac = 0, .op = opt_oneliner_dump },
-        { .id = 0x0050, .on = "-w", .ac = 0, .op = opt_online_dump },
-        { .id = 0x005C, .on = "-i", .ac = 0, .op = opt_dupefile_dump },
-        { .id = 0x006B, .on = "-e", .ac = 1, .op = opt_rebuild },
-        { .id = 0x008D, .on = "-c", .ac = 0, .op = opt_dirlog_check },
-        { .id = 0x0090, .on = "-d", .ac = 0, .op = opt_dirlog_dump },
-        { .id = 0x007B, .on = "-u", .ac = 0, .op = opt_g_update },
-        { .id = 0x0093, .on = "-s", .ac = 1, .op = opt_update_single_record },
-        { .id = 0x0094, .on = "-r", .ac = 0, .op = opt_rec_upd_records },
+	{ .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
+	{ .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
+	{ .id = 0x006C, .on = "--comp", .ac = 0, .op = opt_crof },
+	{ .id = 0x006D, .on = "--batch", .ac = 0, .op = opt_bo_formatting },
+	{ .id = 0x006E, .on = "-E", .ac = 0, .op = opt_ex_o_formatting },
+	{ .id = 0x006F, .on = "--export", .ac = 0, .op = opt_ex_o_formatting },
+	{ .id = 0x0051, .on = "--ipc", .ac = 1, .op = opt_shmipc },
+	{ .id = 0x0060, .on = "--nowbuffer", .ac = 0, .op = opt_g_buffering },
+	{ .id = 0x0089, .on = "--nowrite", .ac = 0, .op = opt_g_nowrite },
+	{ .id = 0x0061, .on = "--raw", .ac = 0, .op = opt_raw_dump },
+	{ .id = 0x0062, .on = "--binary", .ac = 0, .op = opt_binary },
+	{ .id = 0x0095, .on = "--shmem", .ac = 0, .op = opt_g_shmem },
+	{ .id = 0x0096, .on = "--shmreload", .ac = 0, .op = opt_g_shmreload },
+	{ .id = 0x0099, .on = "--shmdestroy", .ac = 0, .op = opt_g_shmdestroy },
+	{ .id = 0x009A, .on = "--shmdestonexit", .ac = 0, .op = opt_g_shmdoex },
+	{ .id = 0x00B9, .on = "--sortmethod", .ac = 1, .op = opt_g_swapmode },
+	{ .id = 0x0053, .on = "--ge1log", .ac = 1, .op = opt_GE1LOG },
+	{ .id = 0x0054, .on = "--ge2log", .ac = 1, .op = opt_GE2LOG },
+	{ .id = 0x0055, .on = "--ge3log", .ac = 1, .op = opt_GE3LOG },
+	{ .id = 0x0056, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
+	{ .id = 0x0057, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
+	{ .id = 0x0058, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
+	{ .id = 0x0059, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
+	{ .id = 0x005B, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
+	{ .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
+	{ .id = 0x005E, .on = "--sconf", .ac = 1, .op = opt_sconf },
+	{ .id = 0x005F, .on = "--gconf", .ac = 1, .op = opt_gconf },
+	{ .id = 0x00AB, .on = "--glconf", .ac = 1, .op = opt_glconf_file },
+	{ .id = 0x00AC, .on = "--ge4log", .ac = 1, .op = opt_GE4LOG },
+	{ .id = 0x00AD, .on = "--altlog", .ac = 1, .op = opt_altlog },
+	{ .id = 0x0084, .on = "--folders", .ac = 1, .op = opt_dirlog_sect_fl },
+	{ .id = 0x0085, .on = "--dirlog", .ac = 1, .op = opt_dirlog_file },
+	{ .id = 0x0086, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },
+	{ .id = 0x0087, .on = "--siteroot", .ac = 1, .op = opt_siteroot },
+	{ .id = 0x0088, .on = "--glroot", .ac = 1, .op = opt_glroot },
+	{ .id = 0x1288, .on = "--shmcflags", .ac = 1, .op = g_opt_shmflg },
+	{ .id = 0x1288, .on = "--shmro", .ac = 0, .op = g_opt_shmro },
+	{ .id = 0x0023, .on = "-g", .ac = 0, .op = opt_dump_grps },
+	{ .id = 0x0024, .on = "-t", .ac = 0, .op = opt_dump_users },
+	{ .id = 0x0032, .on = "-b", .ac = 1, .op = opt_backup },
+	{ .id = 0x0052, .on = "-l", .ac = 0, .op = opt_lastonlog_dump },
+	{ .id = 0x0081, .on = "-n", .ac = 0, .op = opt_dirlog_dump_nukelog },
+	{ .id = 0x007E, .on = "-p", .ac = 0, .op = opt_dirlog_chk_dupe },
+	{ .id = 0x001E, .on = "-q", .ac = 1, .op = opt_g_dg },
+	{ .id = 0x001F, .on = "-x", .ac = 1, .op = opt_g_udc },
+	{ .id = 0x000C, .on = "-h", .ac = 0, .op = opt_g_dump_tv },
+	{ .id = 0x000D, .on = "-k", .ac = 0, .op = opt_g_dump_game },
+	{ .id = 0x0011, .on = "-a", .ac = 0, .op = opt_g_dump_imdb },
+	{ .id = 0x0012, .on = "-z", .ac = 1, .op = opt_g_write },
+	{ .id = 0x005A, .on = "-o", .ac = 0, .op = opt_oneliner_dump },
+	{ .id = 0x0050, .on = "-w", .ac = 0, .op = opt_online_dump },
+	{ .id = 0x005C, .on = "-i", .ac = 0, .op = opt_dupefile_dump },
+	{ .id = 0x006B, .on = "-e", .ac = 1, .op = opt_rebuild },
+	{ .id = 0x008D, .on = "-c", .ac = 0, .op = opt_dirlog_check },
+	{ .id = 0x0090, .on = "-d", .ac = 0, .op = opt_dirlog_dump },
+	{ .id = 0x007B, .on = "-u", .ac = 0, .op = opt_g_update },
+	{ .id = 0x0093, .on = "-s", .ac = 1, .op = opt_update_single_record },
+	{ .id = 0x0094, .on = "-r", .ac = 0, .op = opt_rec_upd_records },
 #endif
-        { 0x0 } };
+	{ 0x0 } };

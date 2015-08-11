@@ -9,13 +9,13 @@
 #include "lref_online.h"
 
 #include <lref.h>
-#include <lref_gen.h>
 #include <cfgv.h>
 #include <str.h>
 #include <omfp.h>
 
 #include <stdio.h>
 #include <time.h>
+#include "lref_generic.h"
 
 void
 dt_set_online(__g_handle hdl)

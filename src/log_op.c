@@ -31,73 +31,73 @@ char *_print_ptr = NULL, *_cl_print_ptr = NULL, *_print_ptr_post = NULL,
     *_print_ptr_pre = NULL;
 
 char *
-g_dgetf(char *str)
+g_dgetf (char *str)
 {
   if (!str)
     {
       return NULL;
     }
-  if (!strncmp(str, "dirlog", 6))
+  if (!strncmp (str, "dirlog", 6))
     {
       return DIRLOG;
     }
-  else if (!strncmp(str, "nukelog", 7))
+  else if (!strncmp (str, "nukelog", 7))
     {
       return NUKELOG;
     }
-  else if (!strncmp(str, "dupefile", 8))
+  else if (!strncmp (str, "dupefile", 8))
     {
       return DUPEFILE;
     }
-  else if (!strncmp(str, "lastonlog", 9))
+  else if (!strncmp (str, "lastonlog", 9))
     {
       return LASTONLOG;
     }
-  else if (!strncmp(str, "oneliners", 9))
+  else if (!strncmp (str, "oneliners", 9))
     {
       return ONELINERS;
     }
-  else if (!strncmp(str, "imdb", 4))
+  else if (!strncmp (str, "imdb", 4))
     {
       return IMDBLOG;
     }
-  else if (!strncmp(str, "game", 4))
+  else if (!strncmp (str, "game", 4))
     {
       return GAMELOG;
     }
-  else if (!strncmp(str, "tvrage", 6))
+  else if (!strncmp (str, "tvrage", 6))
     {
       return TVLOG;
     }
-  else if (!strncmp(str, "ge1", 3))
+  else if (!strncmp (str, "ge1", 3))
     {
       return GE1LOG;
     }
-  else if (!strncmp(str, "ge2", 3))
+  else if (!strncmp (str, "ge2", 3))
     {
       return GE2LOG;
     }
-  else if (!strncmp(str, "ge3", 3))
+  else if (!strncmp (str, "ge3", 3))
     {
       return GE3LOG;
     }
-  else if (!strncmp(str, "ge4", 3))
+  else if (!strncmp (str, "ge4", 3))
     {
       return GE4LOG;
     }
-  else if (!strncmp(str, "sconf", 5))
+  else if (!strncmp (str, "sconf", 5))
     {
       return SCONFLOG;
     }
-  else if (!strncmp(str, "gconf", 5))
+  else if (!strncmp (str, "gconf", 5))
     {
       return GCONFLOG;
     }
-  else if (!strncmp(str, "altlog", 6))
+  else if (!strncmp (str, "altlog", 6))
     {
       return ALTLOG;
     }
-  else if (!strncmp(str, "x", 1))
+  else if (!strncmp (str, "x", 1))
     {
       return XLOG;
     }
@@ -105,15 +105,15 @@ g_dgetf(char *str)
 }
 
 int
-data_backup_records(char *file)
+data_backup_records (char *file)
 {
-  g_setjmp(0, "data_backup_records", NULL, NULL);
+  g_setjmp (0, "data_backup_records", NULL, NULL);
   int r;
   off_t r_sz;
 
   if (!file)
     {
-      print_str("ERROR: invalid log file\n");
+      print_str ("ERROR: invalid log file\n");
       return -1;
     }
 
@@ -122,66 +122,67 @@ data_backup_records(char *file)
       return 0;
     }
 
-  if (file_exists(file))
+  if (file_exists (file))
     {
       if (gfl & F_OPT_VERBOSE3)
-        {
-          print_str("WARNING: BACKUP: %s: data file doesn't exist\n", file);
-        }
+	{
+	  print_str ("WARNING: BACKUP: %s: data file doesn't exist\n", file);
+	}
       return 0;
     }
 
-  if (!(r_sz = get_file_size(file)))
+  if (!(r_sz = get_file_size (file)))
     {
       if ((gfl & F_OPT_VERBOSE))
-        {
-          print_str("WARNING: %s: refusing to backup 0-byte data file\n", file);
-        }
+	{
+	  print_str ("WARNING: %s: refusing to backup 0-byte data file\n",
+		     file);
+	}
       return 0;
     }
 
   char buffer[PATH_MAX];
 
-  snprintf(buffer, PATH_MAX, "%s.bk", file);
+  snprintf (buffer, PATH_MAX, "%s.bk", file);
 
   if (gfl & F_OPT_VERBOSE2)
     {
-      print_str("NOTICE: %s: creating data backup: %s ..\n", file, buffer);
+      print_str ("NOTICE: %s: creating data backup: %s ..\n", file, buffer);
     }
 
-  if ((r = (int) file_copy(file, buffer, "wb", F_FC_MSET_SRC)) < 1)
+  if ((r = (int) file_copy (file, buffer, "wb", F_FC_MSET_SRC)) < 1)
     {
-      print_str("ERROR: %s: [%d] failed to create backup %s\n", file, r,
-          buffer);
+      print_str ("ERROR: %s: [%d] failed to create backup %s\n", file, r,
+		 buffer);
       return r;
     }
   if (gfl & F_OPT_VERBOSE)
     {
-      print_str("NOTICE: %s: created data backup: %s\n", file, buffer);
+      print_str ("NOTICE: %s: created data backup: %s\n", file, buffer);
     }
   return 0;
 }
 
 static int
-g_op_load_print_mech(__g_handle hdl, pmda print_mech, char *print_ptr)
+g_op_load_print_mech (__g_handle hdl, pmda print_mech, char *print_ptr)
 {
-  size_t pp_l = strlen(print_ptr);
+  size_t pp_l = strlen (print_ptr);
   int r;
 
   if (!pp_l || print_ptr[0] == 0xA)
     {
-      print_str("ERROR: %s: empty print command\n", hdl->file);
+      print_str ("ERROR: %s: empty print command\n", hdl->file);
       return 2010;
     }
   if (pp_l > MAX_EXEC_STR)
     {
-      print_str("ERROR: %s: print string too large\n", hdl->file);
+      print_str ("ERROR: %s: print string too large\n", hdl->file);
       return 2004;
     }
-  if ((r = g_compile_exech(print_mech, hdl, print_ptr)))
+  if ((r = g_compile_exech (print_mech, hdl, print_ptr)))
     {
-      print_str("ERROR: %s: [%d]: could not compile print string\n", hdl->file,
-          r);
+      print_str ("ERROR: %s: [%d]: could not compile print string\n", hdl->file,
+		 r);
       return 2009;
     }
 
@@ -189,7 +190,7 @@ g_op_load_print_mech(__g_handle hdl, pmda print_mech, char *print_ptr)
 }
 
 static int
-g_h_deepcp_mrr(void *source, void *dest, void *d_ptr)
+g_h_deepcp_mrr (void *source, void *dest, void *d_ptr)
 {
 
   __g_match src_pmd = (__g_match) source;
@@ -208,81 +209,81 @@ g_h_deepcp_mrr(void *source, void *dest, void *d_ptr)
 }
 
 static void
-g_determine_output(__g_handle hdl, uint64_t *gfl0, uint64_t f, __d_is_wb *w_d)
+g_determine_output (__g_handle hdl, uint64_t *gfl0, uint64_t f, __d_is_wb *w_d)
 {
   if ((*gfl0 & f))
     {
 #ifdef _G_SSYS_NET
       if (hdl->flags & F_GH_W_NSSYS)
-        {
-          *w_d = g_omfp_q_nssys;
-        }
+	{
+	  *w_d = g_omfp_q_nssys;
+	}
       else
-        {
+	{
 #endif
-          *w_d = g_omfp_write;
+	  *w_d = g_omfp_write;
 #ifdef _G_SSYS_NET
-        }
+	}
 #endif
     }
   else
     {
 #ifdef _G_SSYS_NET
       if (hdl->flags & F_GH_W_NSSYS)
-        {
-          *w_d = g_omfp_q_nssys_nl;
-        }
+	{
+	  *w_d = g_omfp_q_nssys_nl;
+	}
       else
-        {
+	{
 #endif
-          *w_d = g_omfp_write_nl;
+	  *w_d = g_omfp_write_nl;
 #ifdef _G_SSYS_NET
-        }
+	}
 #endif
     }
 }
 
 int
-g_proc_mr(__g_handle hdl)
+g_proc_mr (__g_handle hdl)
 {
-  g_setjmp(0, "g_proc_mr", NULL, NULL);
+  g_setjmp (0, "g_proc_mr", NULL, NULL);
   int r;
 
   if (!(gfl & F_OPT_PROCREV))
     {
       hdl->j_offset = 1;
       if (hdl->buffer.count)
-        {
-          hdl->buffer.r_pos = md_first(&hdl->buffer);
-        }
+	{
+	  hdl->buffer.r_pos = md_first (&hdl->buffer);
+	}
     }
   else
     {
       if (hdl->buffer.count)
-        {
-          hdl->buffer.r_pos = md_last(&hdl->buffer);
-        }
+	{
+	  hdl->buffer.r_pos = md_last (&hdl->buffer);
+	}
       hdl->j_offset = 2;
     }
 
   if (!(hdl->flags & F_GH_HASMATCHES) && _match_rr.count > 0)
     {
-      if ((r = md_copy(&_match_rr, &hdl->_match_rr, sizeof(_g_match),
-          g_h_deepcp_mrr)))
-        {
-          print_str("ERROR: %s: md_copy(_match_rr, handle) failed\n",
-              hdl->file);
-          return 2000;
-        }
+      if ((r = md_copy (&_match_rr, &hdl->_match_rr, sizeof(_g_match),
+			g_h_deepcp_mrr)))
+	{
+	  print_str ("ERROR: %s: md_copy(_match_rr, handle) failed\n",
+		     hdl->file);
+	  return 2000;
+	}
       if (hdl->_match_rr.offset)
-        {
-          if ((gfl & F_OPT_VERBOSE4))
-            {
-              print_str("NOTICE: %s: commit %llu matches to handle\n",
-                  hdl->file, (ulint64_t) hdl->_match_rr.offset);
-            }
-          hdl->flags |= F_GH_HASMATCHES;
-        }
+	{
+	  if ((gfl & F_OPT_VERBOSE4))
+	    {
+	      print_str ("NOTICE: %s: commit %llu matches to handle\n",
+			 hdl->file, (ulint64_t) hdl->_match_rr.offset);
+	    }
+	  hdl->flags |= F_GH_HASMATCHES;
+	}
 
     }
 
@@ -320,76 +321,76 @@ g_proc_mr(__g_handle hdl)
   if ((gfl & F_OPT_HAS_G_REGEX) || (gfl & F_OPT_HAS_G_MATCH)
       || (gfl & F_OPT_HAS_G_FNAME))
     {
-      if ((r = g_load_strm(hdl)))
-        {
-          return r;
-        }
+      if ((r = g_load_strm (hdl)))
+	{
+	  return r;
+	}
     }
 
   if ((gfl & F_OPT_HAS_G_LOM))
     {
-      if ((r = g_load_lom(hdl)))
-        {
-          return r;
-        }
+      if ((r = g_load_lom (hdl)))
+	{
+	  return r;
+	}
     }
 
   if ((exec_v || exec_str))
     {
       if (!(hdl->flags & F_GH_HASEXC))
-        {
-          hdl->exec_args.exc = exc;
+	{
+	  hdl->exec_args.exc = exc;
 
-          if (!hdl->exec_args.exc)
-            {
-              print_str(
-                  "ERROR: %s: no exec call pointer (this is probably a bug)\n",
-                  hdl->file);
-              return 2002;
-            }
-          hdl->flags |= F_GH_HASEXC;
-        }
+	  if (!hdl->exec_args.exc)
+	    {
+	      print_str (
+		  "ERROR: %s: no exec call pointer (this is probably a bug)\n",
+		  hdl->file);
+	      return 2002;
+	    }
+	  hdl->flags |= F_GH_HASEXC;
+	}
       int r;
       if (exec_v && !hdl->exec_args.argv)
-        {
-          hdl->exec_args.argv = exec_v;
-          hdl->exec_args.argc = exec_vc;
+	{
+	  hdl->exec_args.argv = exec_v;
+	  hdl->exec_args.argc = exec_vc;
 
-          if (!hdl->exec_args.argc)
-            {
-              print_str("ERROR: %s: no exec arguments\n", hdl->file);
-              return 2001;
-            }
+	  if (!hdl->exec_args.argc)
+	    {
+	      print_str ("ERROR: %s: no exec arguments\n", hdl->file);
+	      return 2001;
+	    }
 
-          if ((r = g_build_argv_c(hdl)))
-            {
-              print_str("ERROR: %s: [%d]: failed building exec arguments\n",
-                  hdl->file, r);
-              return 2005;
-            }
+	  if ((r = g_build_argv_c (hdl)))
+	    {
+	      print_str ("ERROR: %s: [%d]: failed building exec arguments\n",
+			 hdl->file, r);
+	      return 2005;
+	    }
 
-          if ((r = find_absolute_path(hdl->exec_args.argv_c[0],
-              hdl->exec_args.exec_v_path)))
-            {
-              if (gfl & F_OPT_VERBOSE2)
-                {
-                  print_str(
-                      "WARNING: %s: [%d]: exec unable to get absolute path\n",
-                      hdl->file, r);
-                }
-              snprintf(hdl->exec_args.exec_v_path, PATH_MAX, "%s",
-                  hdl->exec_args.argv_c[0]);
-            }
-        }
+	  if ((r = find_absolute_path (hdl->exec_args.argv_c[0],
+				       hdl->exec_args.exec_v_path)))
+	    {
+	      if (gfl & F_OPT_VERBOSE2)
+		{
+		  print_str (
+		      "WARNING: %s: [%d]: exec unable to get absolute path\n",
+		      hdl->file, r);
+		}
+	      snprintf (hdl->exec_args.exec_v_path, PATH_MAX, "%s",
+			hdl->exec_args.argv_c[0]);
+	    }
+	}
       else if (!hdl->exec_args.mech.offset)
-        {
-          if ((r = g_compile_exech(&hdl->exec_args.mech, hdl, exec_str)))
-            {
-              print_str("ERROR: %s: [%d]: could not compile exec string\n",
-                  hdl->file, r);
-              return 2008;
-            }
-        }
+	{
+	  if ((r = g_compile_exech (&hdl->exec_args.mech, hdl, exec_str)))
+	    {
+	      print_str ("ERROR: %s: [%d]: could not compile exec string\n",
+			 hdl->file, r);
+	      return 2008;
+	    }
+	}
     }
 
   if (gfl & F_OPT_MODE_RAWDUMP)
@@ -397,13 +398,11 @@ g_proc_mr(__g_handle hdl)
       hdl->g_proc4 = g_omfp_raw;
       hdl->flags |= F_GH_PRINT;
 #ifdef HAVE_ZLIB_H
-      if (hdl->flags & F_GH_IO_GZIP)
-        {
-          if ((hdl->gz_fh1 = gzdopen(fd_out, hdl->w_mode)) == NULL)
-            {
-              return 2015;
-            }
-        }
+      if ((hdl->flags & F_GH_IO_GZIP) && NULL == hdl->gz_fh1 &&
+	  hdl->gz_fh1 = gzdopen(fd_out, hdl->w_mode)) == NULL)
+	{
+	  return 2015;
+	}
 #endif
     }
   else if (gfl & F_OPT_FORMAT_BATCH)
@@ -413,16 +412,16 @@ g_proc_mr(__g_handle hdl)
   else if ((gfl0 & F_OPT_PRINT) || (gfl0 & F_OPT_PRINTF))
     {
       if (!hdl->print_mech.offset && _print_ptr)
-        {
-          if ((r = g_op_load_print_mech(hdl, &hdl->print_mech, _print_ptr)))
-            {
-              return r;
-            }
-        }
+	{
+	  if ((r = g_op_load_print_mech (hdl, &hdl->print_mech, _print_ptr)))
+	    {
+	      return r;
+	    }
+	}
 
       hdl->g_proc4 = g_omfp_eassemble;
 
-      g_determine_output(hdl, &gfl0, F_OPT_PRINTF, &hdl->w_d);
+      g_determine_output (hdl, &gfl0, F_OPT_PRINTF, &hdl->w_d);
 
       hdl->act_mech = &hdl->print_mech;
 
@@ -432,53 +431,50 @@ g_proc_mr(__g_handle hdl)
     {
       hdl->g_proc4 = g_omfp_ocomp;
       hdl->g_proc3 = hdl->g_proc3_extra;
-      print_str(
-          "+-------------------------------------------------------------------------------------------------------------------------------------------\n"
-              "|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS                      \n"
-              "|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
+      print_str (
+	  "+-------------------------------------------------------------------------------------------------------------------------------------------\n"
+	  "|                     USER/HOST/PID                       |    TIME ONLINE     |    TRANSFER RATE      |        STATUS                      \n"
+	  "|---------------------------------------------------------|--------------------|-----------------------|------------------------------------\n");
     }
   else if (gfl & F_OPT_FORMAT_EXPORT)
     {
       hdl->g_proc3 = hdl->g_proc3_export;
     }
 
-  if ((gfl0 & (F_OPT_PREPOSTPRINTS)) || (gfl0 & F_OPT_PREPOSTPRINTFS))
+  if ((gfl0 & (F_OPT_POSTPRINT | F_OPT_POSTPRINTF)))
     {
-      if ((gfl0 & (F_OPT_POSTPRINT)) || (gfl0 & F_OPT_POSTPRINTF))
-        {
-          if (!hdl->post_print_mech.offset && _print_ptr_post)
-            {
-              if ((r = g_op_load_print_mech(hdl, &hdl->post_print_mech,
-                  _print_ptr_post)))
-                {
-                  return r;
-                }
-              hdl->flags |= F_GH_POST_PRINT;
-            }
+      if (!hdl->post_print_mech.offset && _print_ptr_post)
+	{
+	  if ((r = g_op_load_print_mech (hdl, &hdl->post_print_mech,
+					 _print_ptr_post)))
+	    {
+	      return r;
+	    }
+	  hdl->flags |= F_GH_POST_PRINT;
+	}
 
-          hdl->g_proc4_po = g_omfp_eassemble;
+      hdl->g_proc4_po = g_omfp_eassemble;
 
-          g_determine_output(hdl, &gfl0, F_OPT_POSTPRINTF, &hdl->w_d_po);
+      g_determine_output (hdl, &gfl0, F_OPT_POSTPRINTF, &hdl->w_d_po);
 
-        }
+    }
 
-      if ((gfl0 & (F_OPT_PREPRINT)) || (gfl0 & F_OPT_PREPRINTF))
-        {
-          if (!hdl->pre_print_mech.offset && _print_ptr_pre)
-            {
-              if ((r = g_op_load_print_mech(hdl, &hdl->pre_print_mech,
-                  _print_ptr_pre)))
-                {
-                  return r;
-                }
-              hdl->flags |= F_GH_PRE_PRINT;
-            }
+  if ((gfl0 & (F_OPT_PREPRINT | F_OPT_PREPRINTF)))
+    {
+      if (!hdl->pre_print_mech.offset && _print_ptr_pre)
+	{
+	  if ((r = g_op_load_print_mech (hdl, &hdl->pre_print_mech,
+					 _print_ptr_pre)))
+	    {
+	      return r;
+	    }
+	  hdl->flags |= F_GH_PRE_PRINT;
+	}
 
-          hdl->g_proc4_pr = g_omfp_eassemble;
+      hdl->g_proc4_pr = g_omfp_eassemble;
 
-          g_determine_output(hdl, &gfl0, F_OPT_PREPRINTF, &hdl->w_d_pr);
+      g_determine_output (hdl, &gfl0, F_OPT_PREPRINTF, &hdl->w_d_pr);
 
-        }
     }
 
   hdl->t_rw = 1;
@@ -498,72 +494,72 @@ g_proc_mr(__g_handle hdl)
 }
 
 int
-determine_datatype(__g_handle hdl, char *file)
+determine_datatype (__g_handle hdl, char *file)
 {
 #ifndef _MAKE_SBIN
-  if (!strncmp(file, DIRLOG, strlen(DIRLOG)))
+  if (!strncmp (file, DIRLOG, strlen (DIRLOG)))
     {
-      pdt_set_dirlog(hdl);
+      pdt_set_dirlog (hdl);
     }
-  else if (!strncmp(file, NUKELOG, strlen(NUKELOG)))
+  else if (!strncmp (file, NUKELOG, strlen (NUKELOG)))
     {
-      pdt_set_nukelog(hdl);
+      pdt_set_nukelog (hdl);
     }
-  else if (!strncmp(file, DUPEFILE, strlen(DUPEFILE)))
+  else if (!strncmp (file, DUPEFILE, strlen (DUPEFILE)))
     {
-      pdt_set_dupefile(hdl);
+      pdt_set_dupefile (hdl);
     }
-  else if (!strncmp(file, LASTONLOG, strlen(LASTONLOG)))
+  else if (!strncmp (file, LASTONLOG, strlen (LASTONLOG)))
     {
-      pdt_set_lastonlog(hdl);
+      pdt_set_lastonlog (hdl);
     }
-  else if (!strncmp(file, ONELINERS, strlen(ONELINERS)))
+  else if (!strncmp (file, ONELINERS, strlen (ONELINERS)))
     {
-      pdt_set_oneliners(hdl);
+      pdt_set_oneliners (hdl);
     }
-  else if (!strncmp(file, IMDBLOG, strlen(IMDBLOG)))
+  else if (!strncmp (file, IMDBLOG, strlen (IMDBLOG)))
     {
-      pdt_set_imdb(hdl);
+      pdt_set_imdb (hdl);
     }
-  else if (!strncmp(file, GAMELOG, strlen(GAMELOG)))
+  else if (!strncmp (file, GAMELOG, strlen (GAMELOG)))
     {
-      pdt_set_game(hdl);
+      pdt_set_game (hdl);
     }
-  else if (!strncmp(file, TVLOG, strlen(TVLOG)))
+  else if (!strncmp (file, TVLOG, strlen (TVLOG)))
     {
-      pdt_set_tvrage(hdl);
+      pdt_set_tvrage (hdl);
     }
-  else if (!strncmp(file, GE1LOG, strlen(GE1LOG)))
+  else if (!strncmp (file, GE1LOG, strlen (GE1LOG)))
     {
-      pdt_set_gen1(hdl);
+      pdt_set_gen1 (hdl);
     }
-  else if (!strncmp(file, GE2LOG, strlen(GE2LOG)))
+  else if (!strncmp (file, GE2LOG, strlen (GE2LOG)))
     {
-      pdt_set_gen2(hdl);
+      pdt_set_gen2 (hdl);
     }
-  else if (!strncmp(file, GE3LOG, strlen(GE3LOG)))
+  else if (!strncmp (file, GE3LOG, strlen (GE3LOG)))
     {
-      pdt_set_gen3(hdl);
+      pdt_set_gen3 (hdl);
     }
-  else if (!strncmp(file, GE4LOG, strlen(GE4LOG)))
+  else if (!strncmp (file, GE4LOG, strlen (GE4LOG)))
     {
-      pdt_set_gen4(hdl);
+      pdt_set_gen4 (hdl);
     }
-  else if (!strncmp(file, SCONFLOG, strlen(SCONFLOG)))
+  else if (!strncmp (file, SCONFLOG, strlen (SCONFLOG)))
     {
-      pdt_set_sconf(hdl);
+      pdt_set_sconf (hdl);
     }
-  else if (!strncmp(file, GCONFLOG, strlen(GCONFLOG)))
+  else if (!strncmp (file, GCONFLOG, strlen (GCONFLOG)))
     {
-      pdt_set_gconf(hdl);
+      pdt_set_gconf (hdl);
     }
-  else if (!strncmp(file, ALTLOG, strlen(ALTLOG)))
+  else if (!strncmp (file, ALTLOG, strlen (ALTLOG)))
     {
-      pdt_set_altlog(hdl);
+      pdt_set_altlog (hdl);
     }
-  else if (!strncmp(file, XLOG, strlen(XLOG)))
+  else if (!strncmp (file, XLOG, strlen (XLOG)))
     {
-      pdt_set_x(hdl);
+      pdt_set_x (hdl);
     }
   else
     {
@@ -575,66 +571,66 @@ determine_datatype(__g_handle hdl, char *file)
 }
 
 int
-d_gen_dump(char *arg)
+d_gen_dump (char *arg)
 {
   if (NULL == arg)
     {
-      print_str("ERROR: "MSG_GEN_MISSING_DTARG" (-q <log>)\n");
+      print_str ("ERROR: "MSG_GEN_MISSING_DTARG" (-q <log>)\n");
       return 1;
     }
 
-  char *datafile = g_dgetf(arg);
+  char *datafile = g_dgetf (arg);
 
   if (!datafile)
     {
-      print_str(MSG_UNRECOGNIZED_DATA_TYPE, arg);
+      print_str (MSG_UNRECOGNIZED_DATA_TYPE, arg);
       return 2;
     }
 
-  if (!strncmp(datafile, "stdin", 5))
+  if (!strncmp (datafile, "stdin", 5))
     {
       gfl0 |= F_OPT_STDIN;
     }
 
-  return g_print_stats(datafile, 0, 0);
+  return g_print_stats (datafile, 0, 0);
 }
 
 int
-rebuild(void *arg)
+rebuild (void *arg)
 {
-  g_setjmp(0, "rebuild", NULL, NULL);
+  g_setjmp (0, "rebuild", NULL, NULL);
   if (NULL == arg)
     {
-      print_str("ERROR: "MSG_GEN_MISSING_DTARG" (-e <log>)\n");
+      print_str ("ERROR: "MSG_GEN_MISSING_DTARG" (-e <log>)\n");
       return 1;
     }
 
   char *a_ptr = (char*) arg;
-  char *datafile = g_dgetf(a_ptr);
+  char *datafile = g_dgetf (a_ptr);
 
   if (!datafile)
     {
-      print_str(MSG_UNRECOGNIZED_DATA_TYPE, a_ptr);
+      print_str (MSG_UNRECOGNIZED_DATA_TYPE, a_ptr);
       return 2;
     }
 
-  if (g_fopen(datafile, "r", F_DL_FOPEN_BUFFER, &g_act_1))
+  if (g_fopen (datafile, "r", F_DL_FOPEN_BUFFER, &g_act_1))
     {
       return 3;
     }
 
   if (!g_act_1.buffer.count)
     {
-      print_str(
-          "ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
+      print_str (
+	  "ERROR: data log rebuilding requires buffering, increase mem limit (or dump with --raw --nobuffer for huge files)\n");
       return 4;
     }
 
   int r;
 
-  if ((r = rebuild_data_file(datafile, &g_act_1)))
+  if ((r = rebuild_data_file (datafile, &g_act_1)))
     {
-      print_str(MSG_GEN_DFRFAIL, datafile);
+      print_str (MSG_GEN_DFRFAIL, datafile);
       return 5;
     }
 
@@ -643,16 +639,16 @@ rebuild(void *arg)
     {
 #ifdef HAVE_ZLIB_H
       if (g_act_1.flags & F_GH_IO_GZIP)
-        {
-          fprintf(stderr, MSG_GEN_WROTE2, datafile,
-              (double) get_file_size(datafile) / 1024.0,
-              (double) g_act_1.bw / 1024.0,
-              (long long unsigned int) g_act_1.rw);
-        }
+	{
+	  fprintf(stderr, MSG_GEN_WROTE2, datafile,
+	      (double) get_file_size(datafile) / 1024.0,
+	      (double) g_act_1.bw / 1024.0,
+	      (long long unsigned int) g_act_1.rw);
+	}
       else
-        {
-          OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
-        }
+	{
+	  OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
+	}
 #else
       OPLOG_OUTPUT_NSTATS(datafile, g_act_1)
 #endif

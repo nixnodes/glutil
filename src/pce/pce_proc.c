@@ -17,7 +17,6 @@
 #include <lref_sconf.h>
 #include <lref_gconf.h>
 #include <lref_imdb.h>
-#include <lref_gen.h>
 #include <omfp.h>
 #include <m_string.h>
 #include <m_lom.h>
@@ -35,6 +34,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include "../lref_generic.h"
 
 _g_handle h_gconf =
   { 0 };

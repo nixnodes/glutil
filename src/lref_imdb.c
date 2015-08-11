@@ -11,7 +11,6 @@
 
 #include <str.h>
 #include <lref.h>
-#include <lref_gen.h>
 #include <xref.h>
 #include <l_sb.h>
 #include <omfp.h>
@@ -19,6 +18,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+#include "lref_generic.h"
 
 void
 dt_set_imdb(__g_handle hdl)

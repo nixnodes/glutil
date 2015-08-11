@@ -10,7 +10,6 @@
 #include <t_glob.h>
 #include <l_sb.h>
 #include <cfgv.h>
-#include <lref_gen.h>
 #include <x_f.h>
 #include <mc_glob.h>
 #include "xref.h"
@@ -34,6 +33,7 @@
 #include <dirent.h>
 #include <math.h>
 #include <errno.h>
+#include "lref_generic.h"
 
 void
 dt_set_x(__g_handle hdl)

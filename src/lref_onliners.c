@@ -11,12 +11,12 @@
 
 #include <mc_glob.h>
 #include <lref.h>
-#include <lref_gen.h>
 #include <omfp.h>
 
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
+#include "lref_generic.h"
 
 
 void

@@ -13,13 +13,13 @@
 #include <lref.h>
 
 #include <str.h>
-#include <lref_gen.h>
 #include "lref_altlog.h"
 #include <misc.h>
 #include <omfp.h>
 
 #include <errno.h>
 #include <time.h>
+#include "lref_generic.h"
 
 void
 dt_set_altlog(__g_handle hdl)

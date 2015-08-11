@@ -11,14 +11,13 @@
 
 #include <mc_glob.h>
 #include <lref.h>
-#include <lref_gen.h>
-
 #include <str.h>
 #include <xref.h>
 #include <omfp.h>
 
 #include <errno.h>
 #include <time.h>
+#include "lref_generic.h"
 
 void
 dt_set_nukelog (__g_handle hdl)

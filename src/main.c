@@ -16,7 +16,6 @@
 #include <arg_proc.h>
 #include <misc.h>
 #include <signal_t.h>
-#include <lref_gen.h>
 #include <log_op.h>
 #include <arg_opts.h>
 #include <dirlog.h>
@@ -29,6 +28,7 @@
 #include <xref.h>
 #include <x_f.h>
 #include <omfp.h>
+#include "lref_generic.h"
 #ifdef _G_SSYS_NET
 #include <glutil_net.h>
 #endif

@@ -17,7 +17,6 @@
 #include <exec_t.h>
 #include <arg_proc.h>
 #include <lref.h>
-#include <lref_gen.h>
 #include <exech.h>
 #include <errno_int.h>
 #include <log_io.h>
@@ -29,6 +28,7 @@
 #include <libgen.h>
 #include <dirent.h>
 #include <errno.h>
+#include "lref_generic.h"
 
 int
 list_macros(void)

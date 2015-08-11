@@ -11,7 +11,6 @@
 #include <mc_glob.h>
 
 #include <lref.h>
-#include <lref_gen.h>
 #include "lref_dupefile.h"
 #include <omfp.h>
 
@@ -19,6 +18,7 @@
 #include <time.h>
 
 #include <errno.h>
+#include "lref_generic.h"
 
 void
 dt_set_dupefile(__g_handle hdl)
