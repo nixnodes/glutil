@@ -1602,6 +1602,7 @@ opt_execv_stdout_rd(void *arg, int m, void *opt)
   return 0;
 }
 
+
 int
 opt_g_infile(void *arg, int m, void *opt)
 {
@@ -1667,7 +1668,7 @@ opt_print_stdin(void *arg, int m, void *opt)
 
   O_FI_STDIN(arg, m, 4273, 4274)
 
-  _cl_print_ptr = _print_ptr = calloc(MAX_PRINT_LINE_SIZE, 1);
+  _cl_print_ptr = _print_ptr = malloc(MAX_PRINT_LINE_SIZE);
   if (read_file(fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
     {
       gfl0 |= F_OPT_PRINT;
@@ -1696,7 +1697,7 @@ opt_printf_stdin(void *arg, int m, void *opt)
 
   O_FI_STDIN(arg, m, 4323, 4324)
 
-  _cl_print_ptr = _print_ptr = calloc(MAX_PRINT_LINE_SIZE, 1);
+  _cl_print_ptr = _print_ptr = malloc(MAX_PRINT_LINE_SIZE);
   if (read_file(fn_in, _print_ptr, MAX_PRINT_LINE_SIZE, 0, fh_in))
     {
       gfl0 |= F_OPT_PRINTF;

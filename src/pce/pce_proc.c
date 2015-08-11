@@ -803,7 +803,8 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
         {
           if (gconf->o_exec_on_lookup_fail == 2)
             {
-              if (fork())
+              int pid = fork();
+              if (pid > 0)
                 {
                   print_str(
                       "NOTICE: o_exec_on_lookup_fail == 2, forked process\n");
@@ -811,13 +812,19 @@ pce_do_lookup(__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
                   p_log->flags |= F_GH_LOCKED;
                   return 0;
                 }
+              else if (pid < 0)
+                {
+                  print_str(
+                      "ERROR: pce_do_lookup: could not fork after failed lookup\n");
+                  exit(1);
+                }
               else
                 {
                   setsid();
                   int pid2 = fork();
                   if (pid2 < 0)
                     {
-                      print_str("ERROR: can't fork after releasing\n");
+                      print_str("ERROR: pce_do_lookup: can't fork after releasing\n");
                       exit(1);
                     }
                   else if (pid2 > 0)

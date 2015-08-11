@@ -154,7 +154,7 @@ char *hpd_up =
     "                        Same as --exec, only instead of calling system(), this uses execv() (man exec)\n"
     "                          It's generally much faster compared to --exec, since it doesn't fork /bin/sh\n"
     "                          for each individual processed record\n"
-    "                          --esredir redirects stdout from executed command to <file>\n"
+    "                          --esredir redirects all output from executed command to <file>\n"
     "                          -execv- <file|-> - read input from file/stdin\n"
     "  --preexec  <command [{field}..{field}..]>\n"
     "                        Execute shell <command> before starting main procedure\n"

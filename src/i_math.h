@@ -122,6 +122,9 @@ __g_math
 m_get_def_val(pmda math);
 
 #define M_PROC_ONE() { \
+  if ( math->flags & F_MATH_FLOAT ) { \
+      printf(":: %f - %d\n", 0.123, math->vb); \
+  } \
   uint64_t *p_v_b = (uint64_t*)&v_b; \
   if (math->flags & F_MATH_NITEM) \
     {  \
@@ -137,9 +140,26 @@ m_get_def_val(pmda math);
       else if (math->flags & F_MATH_STRCONV) { \
           char m_str_b[32]; \
           char *m_str = (char*)math->sconv_proc(d_ptr, NULL, m_str_b , (size_t) sizeof(m_str_b), math->misc0); \
-          uint64_t sconv_res = (uint64_t)strtoull(m_str, NULL, 10); \
+          uint8_t sconv_res[8]; \
+          switch ( math->flags & F_MATH_TYPES ) { \
+            case F_MATH_INT:; \
+                uint64_t *sconv_t_u = (uint64_t*)sconv_res; \
+                *sconv_t_u = (uint64_t)strtoull(m_str, NULL, 10); \
+            break; \
+            case F_MATH_INT_S:; \
+                int64_t *sconv_t_su = (int64_t*)sconv_res; \
+                *sconv_t_su = (int64_t)strtoll(m_str, NULL, 10); \
+            break; \
+            case F_MATH_FLOAT:; \
+                float *sconv_t_f = (float*)sconv_res; \
+                *sconv_t_f = (float)strtof(m_str, NULL); \
+                math->vb = 4; \
+            break; \
+            default:; \
+              abort(); \
+          } \
           *p_v_b = 0; \
-          memcpy((void*) v_b, (void*) &sconv_res , math->vb); \
+          memcpy((void*) v_b, (void*) sconv_res , math->vb); \
           c_ptr = (void*) v_b; \
         } \
       else \
@@ -149,7 +169,7 @@ m_get_def_val(pmda math);
               int32_t *ct = (int32_t *) math->_glob_p; \
               *ct = (int32_t) time(NULL); \
             } \
-            *p_v_b = 0; \
+          *p_v_b = 0; \
           memcpy((void*) v_b, \
               (math->flags & F_MATH_IS_GLOB) ? \
                   math->_glob_p : d_ptr + math->l_off, math->vb); \
