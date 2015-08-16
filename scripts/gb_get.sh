@@ -44,7 +44,7 @@ GIANTBOMB_BURL="http://www.giantbomb.com/"
 GIANTBOMB_URL="${GIANTBOMB_BURL}api"
 #
 ## Get it from giantbomb website (registration required)
-GB_API_KEY=""
+GB_API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
 #
 ## Updates gamelog
 UPDATE_GAMELOG=1
@@ -68,15 +68,15 @@ FIELD="reviews"
 
 [ -z "$QUERY" ] && exit 2
 
-APIKEY_STR="?GB_API_KEY=${GB_API_KEY}"
+APIKEY_STR="?api_key=${GB_API_KEY}"
 
-G_ID=`$CURL $CURL_FLAGS "$GIANTBOMB_URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -`
+G_ID=`$CURL $CURL_FLAGS "${GIANTBOMB_URL}/search/${APIKEY_STR}&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -`
 
 #echo "$GIANTBOMB_URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY"
 
-[ -z "$G_ID" ] && echo "ERROR: '$QUERY': Failed getting game ID" && exit 1
+[ -z "${G_ID}" ] && echo "ERROR: '$QUERY': Failed getting game ID" && exit 1
 
-RES=`$CURL $CURL_FLAGS $GIANTBOMB_BURL""game/3030-$G_ID/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//'`
+RES=`$CURL $CURL_FLAGS ${GIANTBOMB_BURL}game/3030-${G_ID}/user-reviews/ | grep "<span class=\"average-score\">" | head -1 | sed 's/.*<span class="average-score">//' | sed 's/[ ]*stars.*//'`
 
 [ -z "$RES" ] && echo "ERROR: '$QUERY': could not get result score from $GIANTBOMB_BURL""game/3030-$G_ID/user-reviews/" && exit 1
 
