@@ -17,9 +17,10 @@
 #
 # DO NOT EDIT THESE LINES
 #@VERSION:1
-#@REVISION:11
+#@REVISION:12
 #@MACRO:gamescore|Game info lookup based on folder names (filesystem) [-arg1=<path>]:{exe} -x {arg1} -lom "depth>0" --silent -v --loglevel=5 --preexec "{exe} -v --backup game" --dir -execv `{spec1} \{basepath\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} \{path\}`
 #@MACRO:gamescore-d|Game info lookup based on folder names (dirlog) [-arg1=<regex>]:{exe} -d --silent -v --loglevel=5 --preexec "{exe} -v --backup game" -execv "{spec1} \{basedir\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} \{dir\}" -regexi "{arg1}" 
+#@MACRO:gamescore-e|Game info lookup:{exe} -noop  --gamelog={?q:game@file} --silent --loglevel=1 --preexec `{exe} --gamelog={?q:game@file} --backup game; {spec1} \{basedir\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} "{arg1}" 1`
 #
 ## Retrieves game info using giantbomb API (XML)
 #
@@ -40,36 +41,34 @@ XMLLINT="/usr/bin/xmllint"
 ###########################[ BEGIN OPTIONS ]#############################
 #
 GIANTBOMB_BURL="http://www.giantbomb.com/"
-GIANTBOMB_URL="$GIANTBOMB_BURL""api"
+GIANTBOMB_URL="${GIANTBOMB_BURL}api"
 #
 ## Get it from giantbomb website (registration required)
-API_KEY=""
-#
-INPUT_SKIP="^(.* complete .*|sample|subs|no-nfo|incomplete|covers|cover|proof|cd[0-9]{1,3}|dvd[0-9]{1,3}|nuked\-.*|.* incomplete .*|.* no-nfo .*)$"
+GB_API_KEY=""
 #
 ## Updates gamelog
 UPDATE_GAMELOG=1
 #
-INPUT_CLEAN_REGEX="([._-\(\)](MACOSX|EUR|Creators[._-\(\)]Edition|PATCH|DATAPACK|GAMEFIX|READ[._-\(\)]NFO|MULTI[0-9]{1,2}|HD|PL|POLISH|RU|RUSSIAN|JAPANESE|SWEDISH|DANISH|GERMAN|ITALIAN|KOREAN|LINUX|ISO|MAC|NFOFIX|DEVELOPERS[._-\(\)]CUT|READNFO|DLC|INCL[._-\(\)]+|v[0-9]|INSTALL|FIX|UPDATE|PROPER|REPACK|GOTY|MULTI|Crack|DOX)([._-\(\)]|$).*)|(-[A-Z0-9a-z_-]*)$"
-#
 ############################[ END OPTIONS ]##############################
 
-BASEDIR=`dirname $0`
+BASEDIR=`dirname ${0}`
 
-[ -f "$BASEDIR/config" ] && . $BASEDIR/config
+[ -f "${BASEDIR}/config" ] && . ${BASEDIR}/config
 
-echo "$1" | egrep -q -i "$INPUT_SKIP" && exit 1
+if ! [ "${7}" = "1" ]; then
+	echo "${1}" | egrep -q -i "${INPUT_SKIP}" && exit 1
+	QUERY=`echo "$1" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
+else
+	QUERY="${6}"
+fi
 
-[ -z "$API_KEY" ] && echo "ERROR: set API_KEY first" && exit 1
-
-QUERY=`echo "$1" | tr ' ' '.' | sed -r "s/$INPUT_CLEAN_REGEX//gi" | sed -r 's/[\.\_\-\(\)]/+/g' | sed -r 's/(^[+ ]+)|([+ ]+$)//g'`
-
+[ -z "$GB_API_KEY" ] && echo "ERROR: set GB_API_KEY first" && exit 1
 
 FIELD="reviews"
 
 [ -z "$QUERY" ] && exit 2
 
-APIKEY_STR="?api_key=$API_KEY"
+APIKEY_STR="?GB_API_KEY=${GB_API_KEY}"
 
 G_ID=`$CURL $CURL_FLAGS "$GIANTBOMB_URL/search/$APIKEY_STR&limit=1&resources=game&query=$QUERY" | $XMLLINT --xpath "string((/response/results//id)[1])" -`
 
@@ -85,13 +84,13 @@ RES=`$CURL $CURL_FLAGS $GIANTBOMB_BURL""game/3030-$G_ID/user-reviews/ | grep "<s
 echo "SCORE: '$QUERY': $RES"
 
 
-if [ $UPDATE_GAMELOG -eq 1 ]; then
+if [ ${UPDATE_GAMELOG} -eq 1 ]; then
 	trap "rm /tmp/glutil.gg.$$.tmp; exit 2" 2 15 9 6
-	GLR_E=`echo $4 | sed 's/\//\\\\\//g'`	   
-	DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-	$2 -k -regex "$DIR_E" --imatchq > /dev/null || $2 -f -e game ! -match "$DIR_E" > /dev/null
+	GLR_E=`echo ${4} | sed 's/\//\\\\\//g'`	   
+	DIR_E=`echo ${6} | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
+	${2} -k -regex "$DIR_E" --imatchq --silent && ${2} -f -e game ! -match "$DIR_E" --silent
 	echo -en "dir $DIR_E\ntime `date +%s`\nscore $RES\n\n" > "/tmp/glutil.gg.$$.tmp"
-	$2 -z game --nobackup --silent < "/tmp/glutil.gg.$$.tmp" || echo "ERROR: failed writing to gamelog!!"
+	${2} -z game --nobackup --silent < "/tmp/glutil.gg.$$.tmp" || echo "ERROR: failed writing to gamelog!!"
 	rm /tmp/glutil.gg.$$.tmp
 fi
 
