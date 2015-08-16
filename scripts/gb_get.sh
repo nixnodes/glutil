@@ -44,7 +44,7 @@ GIANTBOMB_BURL="http://www.giantbomb.com/"
 GIANTBOMB_URL="${GIANTBOMB_BURL}api"
 #
 ## Get it from giantbomb website (registration required)
-GB_API_KEY="e0c8aa999e45d61f9ada46be9d983f24fdd5e288"
+GB_API_KEY=""
 #
 ## Updates gamelog
 UPDATE_GAMELOG=1
