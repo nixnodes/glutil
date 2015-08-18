@@ -60,7 +60,7 @@
 #define F_GH_NO_ACCU                    (a64 << 48)
 #define F_GH_W_NSSYS                    (a64 << 49)
 #define F_GH_EXECRD_PIPE_OUT            (a64 << 50)
-#define F_GH_EXECRD_HAS_STD_PIPE     (a64 << 51)
+#define F_GH_EXECRD_HAS_STD_PIPE     	(a64 << 51)
 #define F_GH_PRINT                      (a64 << 52)
 #define F_GH_EXECRD_PIPE_IN             (a64 << 53)
 #define F_GH_EXECRD_WAS_PIPED           (a64 << 54)
@@ -68,6 +68,7 @@
 #define F_GH_SPEC_SQ01                  (a64 << 56)
 #define F_GH_SPEC_SQ02                  (a64 << 57)
 #define F_GH_HAS_LEXEC_WPID_CB          (a64 << 58)
+#define F_GH_PRINT0  		        (a64 << 59)
 
 #define F_GH_STATUS_FLAGS               (F_GH_TFD_PROCED)
 

@@ -1658,6 +1658,13 @@ opt_print (void *arg, int m, void *opt)
   return 4250;
 }
 
+static int
+opt_print0 (void *arg, int m, void *opt)
+{
+  gfl0 |= F_OPT_PRINT0;
+  return 0;
+}
+
 #define MAX_PRINT_LINE_SIZE     ((1024*1024) / 4)
 
 int
@@ -2031,7 +2038,8 @@ netctl_opt_parse (pmda md, void *arg)
 	  char err_buf[1024];
 	  print_str (
 	      "ERROR: netctl_opt_parse: '%s': chroot failed: [%d] [%s]\n", left,
-	      errno, strerror_r (errno, err_buf, sizeof(err_buf)));
+	      errno,
+	      strerror_r (errno, err_buf, sizeof(err_buf)));
 	  return 1;
 	}
     }
@@ -2558,6 +2566,7 @@ _gg_opt gg_f_ref[] =
 	{ .id = 0x002B, .on = "-print-", .ac = 1, .op = opt_print_stdin },
 	{ .id = 0x002C, .on = "-printf-", .ac = 1, .op = opt_printf_stdin },
 	{ .id = 0x002D, .on = "-printf", .ac = 1, .op = opt_printf },
+	{ .id = 0x032A, .on = "-print0", .ac = 0, .op = opt_print0 },
 	{ .id = 0x002E, .on = "-stdin", .ac = 0, .op = opt_stdin },
 	{ .id = 0x002F, .on = "--stdin", .ac = 0, .op = opt_stdin },
 	{ .id = 0x0030, .on = "--print", .ac = 1, .op = opt_print },

@@ -37,6 +37,8 @@ g_do_ppprint(__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc);
 int
 g_omfp_write(int fd, char *buffer, size_t max_size, void*);
 int
+g_omfp_write0(int fd, char *buffer, size_t max_size, void*);
+int
 g_omfp_write_nl(int fd, char *buffer, size_t max_size, void*);
 int
 g_omfp_q_nssys(int fd, char *buffer, size_t max_size, void *arg);

@@ -221,7 +221,21 @@ g_determine_output (__g_handle hdl, uint64_t *gfl0, uint64_t f, __d_is_wb *w_d)
       else
 	{
 #endif
-	  *w_d = g_omfp_write;
+	  if (*gfl0 & F_OPT_PRINTF)
+	    {
+	      if (hdl->flags & F_GH_PRINT0)
+		{
+		  *w_d = g_omfp_write0;
+		}
+	      else
+		{
+		  *w_d = g_omfp_write;
+		}
+	    }
+	  else
+	    {
+	      *w_d = g_omfp_write;
+	    }
 #ifdef _G_SSYS_NET
 	}
 #endif
@@ -316,6 +330,11 @@ g_proc_mr (__g_handle hdl)
   else
     {
       hdl->ifrh_l1 = g_ipcbm;
+    }
+
+  if (gfl0 & F_OPT_PRINT0)
+    {
+      hdl->flags |= F_GH_PRINT0;
     }
 
   if ((gfl & F_OPT_HAS_G_REGEX) || (gfl & F_OPT_HAS_G_MATCH)

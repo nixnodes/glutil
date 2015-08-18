@@ -206,6 +206,7 @@ typedef unsigned long long int ulint64_t;
 #define F_OPT_XLOOP                     (a64 << 31)
 #define F_OPT_SETUID                    (a64 << 32)
 #define F_OPT_SETGID                    (a64 << 33)
+#define F_OPT_PRINT0                    (a64 << 34)
 
 #define F_OPT_PREPOSTPRINTS             (F_OPT_PREPRINT|F_OPT_POSTPRINT)
 #define F_OPT_PREPOSTPRINTFS            (F_OPT_PREPRINTF|F_OPT_POSTPRINTF)

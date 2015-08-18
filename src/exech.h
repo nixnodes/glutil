@@ -30,7 +30,7 @@ typedef struct ___d_exec_ch
 
 int
 g_compile_exech(pmda mech, __g_handle hdl, char *instr);
-char *
+size_t
 g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *outstr,
     size_t maxlen);
 

@@ -200,7 +200,7 @@ process_macro(void * arg, char **out)
       goto end;
     }
 
-  if (NULL == (g_exech_build_string(NULL, &hdl.print_mech, &hdl, s_buffer,
+  if (-1 == (g_exech_build_string(NULL, &hdl.print_mech, &hdl, s_buffer,
   MAX_EXEC_STR - 4)))
     {
       print_str("ERROR: process_macro: could not assemble print string\n");

@@ -33,4 +33,5 @@ rebuild(void *arg);
 int
 d_gen_dump(char *arg);
 
+
 #endif /* LOG_OP_H_ */

@@ -476,12 +476,12 @@ process_execv_args (void *data, __g_handle hdl)
   p_md_obj ptr = md_first (&hdl->exec_args.ac_ref);
 
   __d_argv_ch ach = NULL;
-  char *s_ptr;
+
   while (ptr)
     {
       ach = (__d_argv_ch) ptr->ptr;
 
-      if (!(s_ptr = g_exech_build_string(data, &ach->mech,
+      if (-1 == (g_exech_build_string(data, &ach->mech,
 		  hdl, hdl->exec_args.argv_c[ach->cindex], 8191)))
 	{
 
@@ -507,13 +507,13 @@ process_execv_args_bare (void *data, __g_handle hdl, __execv exec_args)
   p_md_obj ptr = md_first (&exec_args->ac_ref);
 
   __d_argv_ch ach;
-  char *s_ptr;
+
   while (ptr)
     {
 
       ach = (__d_argv_ch) ptr->ptr;
 
-      if (!(s_ptr = g_exech_build_string(data, &ach->mech,
+      if (-1 == (g_exech_build_string(data, &ach->mech,
 		  hdl, exec_args->argv_c[ach->cindex], 8191)))
 	{
 
@@ -529,10 +529,9 @@ process_execv_args_bare (void *data, __g_handle hdl, __execv exec_args)
 int
 g_do_exec_fb (void *buffer, void *callback, char *ex_str, void *hdl)
 {
-  char *ptr;
-  if (!(ptr = g_exech_build_string (buffer,
-				    &((__g_handle ) hdl)->exec_args.mech,
-				    (__g_handle) hdl, b_glob, MAX_EXEC_STR)))
+  if (-1
+      == (g_exech_build_string (buffer, &((__g_handle ) hdl)->exec_args.mech,
+				(__g_handle) hdl, b_glob, MAX_EXEC_STR)))
     {
       b_glob[0] = 0x0;
       return -2;

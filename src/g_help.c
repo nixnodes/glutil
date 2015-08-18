@@ -72,6 +72,7 @@ char *hpd_up =
     "                          -print- <file|-> - read <format> from file/stdin\n"
     "  -printf[-] <format>   Same as -print, only does not print a new line character at the end\n"
     "                          -printf- <file|-> - read <format> from file/stdin\n"
+    "                          -print0 - append null character to the standard output of -printf\n"
     "  -preprint <format>    Print formatted string before operation\n"
     "  -postprint <format>   Print formatted string after operation\n"
 #ifndef _MAKE_SBIN

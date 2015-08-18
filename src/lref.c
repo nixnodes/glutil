@@ -679,11 +679,9 @@ dt_rval_spec_print_format_int (void *arg, char *match, char *output,
   __d_drt_h _mppd = (__d_drt_h ) mppd;
   __d_drt_h _mppd_next = _mppd->mppd_next;
 
-  char *s_ptr;
-  if (NULL
-      == (s_ptr = g_exech_build_string (arg, &_mppd->sub_mech, _mppd->hdl,
-					_mppd_next->tp_b0,
-					sizeof(_mppd_next->tp_b0))))
+  if (-1
+      == (g_exech_build_string (arg, &_mppd->sub_mech, _mppd->hdl,
+				_mppd_next->tp_b0, sizeof(_mppd_next->tp_b0))))
     {
       print_str (
 	  "ERROR: dt_rval_spec_print_format_int: could not assemble print string\n");
@@ -2029,11 +2027,18 @@ rt_af_strops (void *arg, char *match, char *output, size_t max_size,
       } \
   };
 
+#define DT_RVAL_MSGNOCRYPT(id) { \
+    print_str ("ERROR: DT_RVAL_MSGNOCRYPT: could not process option: %s (compile with --enable-crypto)\n", \
+	id); \
+}
+
 void *
 ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	       __d_drt_h mppd)
 {
+
   match++;
+
   char *id = match;
   size_t i = 0;
   while (match[0] != 0x3A && match[0])
@@ -2170,6 +2175,16 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	  return as_ref_to_val_lk (match, dt_rval_spec_ripemd160,
 				   (__d_drt_h ) mppd,
 				   NULL);
+	  break;
+#else
+	  case 0x53:;
+	  DT_RVAL_MSGNOCRYPT(id)
+	  break;
+	  case 0x4D:;
+	  DT_RVAL_MSGNOCRYPT(id)
+	  break;
+	  case 0x52:;
+	  DT_RVAL_MSGNOCRYPT(id)
 	  break;
 #endif
 	case 0x42:
