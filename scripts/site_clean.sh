@@ -17,10 +17,10 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:11
+#@REVISION:12
 #@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{exe} -noop --postexec "{spec1} {arg1}"
 #
-## Dependencies:    glutil-2.5
+## Dependencies:    glutil-2.6.2
 #
 GLUTIL="/bin/glutil"
 DF=/bin/df
@@ -124,7 +124,7 @@ for i in "${SECTIONS[@]}"; do
 			
 	${GLUTIL} -x ${ROOT}/${path} -R -xdev --ftime -postprint \
 	"${ROOT}/${path}: {?L:(u64glob2) != 0:(?m:u64glob1/(1024^3)):(?p:0)}/{?m:(u64glob0/(1024^3))} G purged total" \
-	 -lom "u64glob0 += size" and \( -lom "(u64glob0) > ${max_p}" and -lom "u64glob1 += size" \) and \( -lom "mode = 4 || mode = 8" and -lom "u64glob2 += 1" \) \
+	-lom "u64glob0 += size" -and \( -lom "(u64glob0) > ${max_p}" -and -lom "u64glob1 += size" \) -and \( -lom "mode = 4 || mode = 8" -and -lom "u64glob2 += 1" \) \
 	 -execv "${action_cmd}"  -lom "depth=1" --sort desc,mtime --postexec "${action_post_cmd}"
 done
 

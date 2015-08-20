@@ -17,12 +17,12 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:15
+#@REVISION:16
 #@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{exe} -w --loop=1 --silent --daemon --loglevel=3 --glroot={glroot} -execv "{spec1} \{bxfer\} \{lupdtime\} \{user\} \{pid\} \{rate\} \{status\} \{exe\} \{?x:(?Q:(\\{glroot\\}/ftp-data/users/\\{user\\})):FLAGS\} \{dir\} \{usroot\} \{logroot\} \{time\} \{host\} \{ndir\} \{glroot\}"
 #
 ## Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME
 #
-## Requires: - glutil-2.5 or above
+## Requires: - glutil-2.6.2 or above
 ##           - date, kill, expr, sleep, stat
 ## Usage (manual): /glroot/bin/glutil -w --loop=1 --silent --daemon --loglevel=3 -exec "/glroot/bin/scripts/killslow.sh '{bxfer}' '{lupdtime}' '{user}' '{pid}' '{rate}' '{status}' '{exe}' '{FLAGS}' '{dir}' '{usroot}'"
 #
@@ -151,7 +151,7 @@ if [ $BXFER -lt 1 ]; then
 fi
 
 [ $IGNORE_LONE_RANGER -eq 1 ] && {
-	$7 -w --batch -l: user ! -match "${3}" and \( -l: status -regex "^STOR\ " and -lom "bxfer" and -l: ndir -match "${14}" \) | egrep -q "^ONLINE" || {
+	$7 -w --batch -l: user ! -match "${3}" -and \( -l: status -regex "^STOR\ " -and -lom "bxfer" -and -l: ndir -match "${14}" \) | egrep -q "^ONLINE" || {
 		echo "NOTICE: ignoring lone ranger '${3}'" >> "$LOG"
 		[ -f /tmp/du-ks/$4 ] && rm -f /tmp/du-ks/$4
 		exit 1
