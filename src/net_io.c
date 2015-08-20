@@ -650,6 +650,7 @@ net_open_connection(char *addr, char *port, __sock_ca args)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
 
+
   if (getaddrinfo(addr, port, &hints, &aip))
     {
       return -1;

@@ -25,7 +25,9 @@ mda ar_vref =
   { 0 };
 
 _o_dbent glob_dbe_0x2D[UCHAR_MAX] =
-  { NULL };
+  {
+    {
+      { NULL } } };
 
 _o_dbent glob_dbe[UCHAR_MAX] =
   { [0x2D].n_dbent = (void*) glob_dbe_0x2D };
