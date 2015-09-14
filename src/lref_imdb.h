@@ -67,6 +67,7 @@ typedef struct ___d_imdb
   char synopsis[384];
   char language[128];
   char country[128];
+  uint8_t _padding[32];
 } _d_imdb, *__d_imdb;
 
 #pragma pack(pop)
