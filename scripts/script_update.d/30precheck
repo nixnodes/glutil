@@ -1,0 +1,6 @@
+#@REVISION:1
+
+INPUT_SOURCES=(	 	
+ 	"precheck/compiler scripts/precheck_compile.sh 755 0"
+ 	"precheck/gconf ftp-data/glutil/precheck-config/gconf 644 1"	
+)
