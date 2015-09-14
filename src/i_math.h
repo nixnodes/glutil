@@ -139,7 +139,7 @@ m_get_def_val (pmda math);
           char m_str_b[32]; \
           char *m_str = (char*)math->sconv_proc(d_ptr, (char*)math->misc1, m_str_b , (size_t) sizeof(m_str_b), math->misc0); \
           uint8_t sconv_res[8]; \
-          switch ( math->flags & F_MATH_TYPES ) { \
+          switch ( p_math->flags & F_MATH_TYPES ) { \
             case F_MATH_INT:; \
                 uint64_t *sconv_t_u = (uint64_t*)sconv_res; \
                 *sconv_t_u = (uint64_t)strtoull(m_str, NULL, 10); \

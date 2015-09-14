@@ -48,7 +48,6 @@ typedef struct ___d_drt_h
   struct ___d_drt_h *mppd_aux_next;
   char tp_b0[10000];
   char *varg_l;
-  char *_match;
   mda sub_mech;
   uint32_t v_ui0;
   int32_t v_i0;
