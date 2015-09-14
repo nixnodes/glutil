@@ -679,6 +679,8 @@ dt_rval_spec_print_format_int (void *arg, char *match, char *output,
   __d_drt_h _mppd = (__d_drt_h ) mppd;
   __d_drt_h _mppd_next = _mppd->mppd_next;
 
+  _mppd_next->tp_b0[0] = 0x0;
+
   if (-1
       == (g_exech_build_string (arg, &_mppd->sub_mech, _mppd->hdl,
 				_mppd_next->tp_b0, sizeof(_mppd_next->tp_b0))))
