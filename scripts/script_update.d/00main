@@ -1,4 +1,4 @@
-#@REVISION:16
+#@REVISION:18
 
 INPUT_SOURCES=(	
 	"base/script-update-config scripts/script_update_config 644 1"
@@ -13,5 +13,6 @@ INPUT_SOURCES=(
  	"updates/16tvrage scripts/script_update.d/16tvrage 644 0 1"
  	"updates/18siteclean scripts/script_update.d/18siteclean 644 0 1"
  	"updates/20gamebomb scripts/script_update.d/20gamebomb 644 0 1"
+ 	"updates/30precheck scripts/script_update.d/30precheck 644 0 1"
 	"updates/70custom scripts/script_update.d/70custom 644 2 1" 	 
 )
