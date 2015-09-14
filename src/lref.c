@@ -1032,7 +1032,6 @@ dt_rval_spec_regsub (void *arg, char *match, char *output, size_t max_size,
 void *
 as_ref_to_val_lk (char *match, void *c, __d_drt_h mppd, char *defdc)
 {
-
   if (NULL != defdc)
     {
       match = g_get_stf (match);

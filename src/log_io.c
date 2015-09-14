@@ -23,6 +23,7 @@
 #include <str.h>
 #include <exech.h>
 #include <errno_int.h>
+#include "i_math.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -347,6 +348,32 @@ g_close (__g_handle hdl)
   return 0;
 }
 
+static int
+math_cleanup (void *data)
+{
+  __g_math math = (__g_math) data;
+
+  if ( NULL != math->misc0 )
+    {
+      free(math->misc0);
+    }
+
+  if ( NULL != math->misc1 )
+    {
+      free(math->misc1);
+    }
+
+  return 0;
+}
+
+static int
+chains_cleanup (void *data)
+{
+  md_g_free (data);
+
+  return 0;
+}
+
 static void
 clean_drt (__d_drt_h mppd)
 {
@@ -362,16 +389,10 @@ clean_drt (__d_drt_h mppd)
       free(mppd->mppd_aux_next);
     }
 
-  p_md_obj p_ptr = md_first(&mppd->chains);
 
-  while (p_ptr)
-    {
-      md_g_free(p_ptr->ptr);
-      p_ptr = p_ptr->next;
-    }
+  md_g_free_cb(&mppd->math, math_cleanup);
 
-  md_g_free(&mppd->chains);
-  md_g_free(&mppd->math);
+  md_g_free_cb(&mppd->chains, chains_cleanup);
 
   g_clean_print_mech(&mppd->sub_mech);
 

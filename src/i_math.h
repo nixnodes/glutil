@@ -29,16 +29,16 @@
 #define MLIB_TEST_MACRO                 _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L
 
 typedef uint64_t
-(*g_op_tu)(uint64_t s, uint64_t d);
+(*g_op_tu) (uint64_t s, uint64_t d);
 typedef int64_t
-(*g_op_ts)(int64_t s, int64_t d);
+(*g_op_ts) (int64_t s, int64_t d);
 typedef float
-(*g_op_tf)(float s, float d);
+(*g_op_tf) (float s, float d);
 
 typedef void *
-(*g_t_pg)(void *base, size_t offset);
+(*g_t_pg) (void *base, size_t offset);
 typedef void
-(*g_op_tg)(void *s, void *d, void *o);
+(*g_op_tg) (void *s, void *d, void *o);
 
 typedef struct ___g_math
 {
@@ -53,26 +53,27 @@ typedef struct ___g_math
   int vb;
   void *_glob_p;
   __g_proc_v sconv_proc;
-  void * misc0;
+  void * misc0, *misc1;
 } _g_math, *__g_math;
 
 int
-g_math_res(void *d_ptr, pmda mdm, void *res);
+g_math_res (void *d_ptr, pmda mdm, void *res);
 
 int
-g_process_math_string(__g_handle hdl, char *string, pmda mdm, pmda chain,
-    int *ret, void **p_ret, uint32_t flags, uint32_t int_flags);
+g_process_math_string (__g_handle hdl, char *string, pmda mdm, pmda chain,
+		       int *ret, void **p_ret, uint32_t flags,
+		       uint32_t int_flags);
 int
-g_build_math_packet(__g_handle hdl, char *field, char oper, pmda mdm,
-    __g_math *ret, uint32_t flags);
+g_build_math_packet (__g_handle hdl, char *field, char oper, pmda mdm,
+		     __g_math *ret, uint32_t flags);
 void*
-g_get_math_m_p(__g_math math, __g_math p_math);
+g_get_math_m_p (__g_math math, __g_math p_math);
 int
-g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags,
-    __g_math p_math);
+g_get_math_g_t_ptr (__g_handle hdl, char *field, __g_math math, uint32_t flags,
+		    __g_math p_math);
 
 typedef void
-g_op_t(void *s, void *d, void *o);
+g_op_t (void *s, void *d, void *o);
 
 g_op_t g_arith_add_u64, g_arith_rem_u64, g_arith_mult_u64, g_arith_div_u64,
     g_arith_mod_u64, g_arith_bin_and_u64, g_arith_bin_or_u64,
@@ -117,9 +118,9 @@ g_op_t g_arith_add_f_s64, g_arith_rem_f_s64, g_arith_mult_f_s64,
 static void *_m_f_s64[];
 
 int
-is_ascii_arith_bin_oper(char c);
+is_ascii_arith_bin_oper (char c);
 __g_math
-m_get_def_val(pmda math);
+m_get_def_val (pmda math);
 
 #define M_PROC_ONE() { \
   uint64_t *p_v_b = (uint64_t*)&v_b; \
@@ -136,7 +137,7 @@ m_get_def_val(pmda math);
         } \
       else if (math->flags & F_MATH_STRCONV) { \
           char m_str_b[32]; \
-          char *m_str = (char*)math->sconv_proc(d_ptr, NULL, m_str_b , (size_t) sizeof(m_str_b), math->misc0); \
+          char *m_str = (char*)math->sconv_proc(d_ptr, (char*)math->misc1, m_str_b , (size_t) sizeof(m_str_b), math->misc0); \
           uint8_t sconv_res[8]; \
           switch ( math->flags & F_MATH_TYPES ) { \
             case F_MATH_INT:; \
