@@ -612,7 +612,7 @@ g_get_math_g_t_ptr(__g_handle hdl, char *field, __g_math math, uint32_t flags,
     {
       math->misc0 = calloc(1, sizeof(_d_drt_h));
       ((__d_drt_h ) math->misc0)->hdl = hdl;
-      math->sconv_proc = hdl->g_proc1_lookup(NULL, field, NULL, 0,
+      math->sconv_proc = hdl->g_proc1_lookup(hdl->_x_ref, field, NULL, 0,
           math->misc0);
 
       if ( NULL == math->sconv_proc)

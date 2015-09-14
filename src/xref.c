@@ -1179,6 +1179,8 @@ opt_xref_sl_dat (void *arg, int m, void *opt)
 	{
 	  print_str ("ERROR: opt_xref_sl_dat: invalid option '%s'\n",
 		     (char*) ptr->ptr);
+	  md_g_free (&sp_i);
+	  return 24158;
 	}
       ptr = ptr->next;
     }
