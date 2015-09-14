@@ -1,4 +1,4 @@
-#@REVISION:63
+#@REVISION:64
 #
 ## NOTE: Requires glutil 2.6.2 or higher
 #
@@ -216,8 +216,8 @@
 #
 ## iMDB log - statistics - averages
 #
-#@MACRO:imdb-record-avgstats|IMDB - Various averaged stats:{exe} -a -lom "f32glob0+=score||u64glob0+=1||f32glob1+=1.0||u64glob1+=year||u64glob2+=votes||u64glob3+=runtime" --silent -postprint "IMDB: {?q:imdb@file}: Average score/year/votes/runtime ( \{?m:f32glob0/f32glob1#\%\.2f\} / \{?m:u64glob1/u64glob0\} / \{?m:u64glob2/u64glob0\} / \{?m:u64glob3/u64glob0\}min )" --imdblog "{?q:imdb@file}"
-#@MACRO:tvrage-record-avgstats|IMDB - Various averaged stats:{exe} -h -lom "u64glob0+=1||u64glob1+=startyear||u64glob2+=seasons||u64glob3+=runtime" --silent -postprint "TVRAGE: \{?q:tvrage@file\}: Average year/runtime/seasons ( \{?m:u64glob1/u64glob0\} / \{?m:u64glob3/u64glob0\}min / \{?m:u64glob2/u64glob0\} )" --tvlog "{?q:tvrage@file}"
+#@MACRO:imdb-record-avgstats|IMDB - Various averaged stats:{exe} -a ( -lom "votes > 0" -and -lom "f32glob0+=score || f32glob1+=1.0 || u64glob2+=votes" ) -or -lom "u64glob0+=1||u64glob1+=year||u64glob3+=runtime" --silent -postprint "IMDB: {?q:imdb@file}: Average year/votes/score/runtime over \{u64glob0\} releases: ( \{?m:u64glob1/u64glob0\} / \{?m:u64glob2/u64glob0\} / \{?m:f32glob0/f32glob1#\%\.2f\} / \{?m:u64glob3/u64glob0\}min )" --imdblog "{?q:imdb@file}"
+#@MACRO:tvrage-record-avgstats|TVRAGE - Various averaged stats:{exe} -h -lom "u64glob0+=1||u64glob1+=startyear||u64glob2+=seasons||u64glob3+=runtime" --silent -postprint "TVRAGE: \{?q:tvrage@file\}: Average year/runtime/seasons over \{u64glob0\} releases ( \{?m:u64glob1/u64glob0\} / \{?m:u64glob3/u64glob0\}min / \{?m:u64glob2/u64glob0\} )" --tvlog "{?q:tvrage@file}"
 #
 ## iMDB log - total count statistics
 #

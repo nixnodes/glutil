@@ -122,9 +122,6 @@ __g_math
 m_get_def_val(pmda math);
 
 #define M_PROC_ONE() { \
-  if ( math->flags & F_MATH_FLOAT ) { \
-      printf(":: %f - %d\n", 0.123, math->vb); \
-  } \
   uint64_t *p_v_b = (uint64_t*)&v_b; \
   if (math->flags & F_MATH_NITEM) \
     {  \
