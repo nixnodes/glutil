@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:0
-#@REVISION:8
+#@REVISION:08
 #
 GLUTIL=/bin/glutil-chroot
 IMDB_LOG=/ftp-data/glutil/db/imdb.dlog
