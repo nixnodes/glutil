@@ -92,7 +92,8 @@ __d_lom_vp(void *d_ptr, void *_lom);
 
 __d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var, g_lom_var_math,
     g_lom_var_float, g_lom_var_accu_uint, g_lom_var_accu_int,
-    g_lom_var_accu_float;
+    g_lom_var_accu_float, g_lom_var_set_uint, g_lom_var_set_int,
+    g_lom_var_set_float;
 int
 g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
 int

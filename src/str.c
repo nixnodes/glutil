@@ -338,7 +338,7 @@ is_char_uppercase(char c)
 int
 is_comp(char in)
 {
-  if (in == 0x21 || in == 0x3D || in == 0x3C || in == 0x3E || in == 0x2B)
+  if (in == 0x21 || in == 0x3D || in == 0x3C || in == 0x3E || in == 0x2B || in == 0x7E)
     {
       return 0;
     }
@@ -349,7 +349,7 @@ int
 is_opr(char in)
 {
   if (in == 0x21 || in == 0x26 || in == 0x3D || in == 0x3C || in == 0x3E
-      || in == 0x7C || in == 0x2B)
+      || in == 0x7C || in == 0x2B || in == 0x7E )
     {
       return 0;
     }

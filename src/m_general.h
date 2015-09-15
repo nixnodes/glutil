@@ -28,6 +28,7 @@
 #define F_GM_ISFNAME                    (a32 << 9)
 #define F_GM_LOM_SET                    (a32 << 10)
 #define F_GM_IS_MOBJ                    (a32 << 11)
+#define F_GM_ISSET                      (a32 << 12)
 
 #define F_GM_TYPES                      (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISLOM|F_GM_ISFNAME)
 #define F_GM_TYPES_STR                  (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISFNAME)

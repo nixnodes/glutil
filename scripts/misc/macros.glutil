@@ -8,9 +8,9 @@
 ## This file needs to be marked executable
 #
 ## Remember, these 'macros' are nothing other than small
-## bash snippets, not created to work out of the box.
-## Create own macros with functionality specific to what
-## you need.
+## bash snippets, which will not necessarily work on your
+## system. Create own macros with functionality specific 
+## to what you need.
 #
 ## COMPATIBLE WITH NEWER LINUX ENVIRONMENTS ONLY!!
 #
