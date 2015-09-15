@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:00
+#@REVISION:01
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -29,13 +29,13 @@
 #
 ## Install script dependencies + libs into glftpd root (requires mlocate)
 #
-#@MACRO:imdb-installch|Install required libraries into glFTPd root:{exe} -noop  --preexec `! updatedb -e "\{glroot\}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/recode /bin/awk"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "\{glroot\}$f" ] || if cp --preserve=all "$f" "\{glroot\}$f"; then echo "$lf: \{glroot\}$f"; fi; done; [ -f "\{glroot\}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "\{glroot\}/bin/$(basename "$lf")"; then echo "\{glroot\}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#@MACRO:imdb-installch|Install required libraries into glFTPd root:{exe} -noop  --preexec `! updatedb -e "\{glroot\}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/perl /bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/recode /bin/awk"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '{print $3}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "\{glroot\}$f" ] || if cp --preserve=all "$f" "\{glroot\}$f"; then echo "$lf: \{glroot\}$f"; fi; done; [ -f "\{glroot\}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "\{glroot\}/bin/$(basename "$lf")"; then echo "\{glroot\}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets movie info using iMDB native API and omdbapi (XML)
 #
 ## Requires: - glutil-2.6.2 or above
 ##           - libxml2 v2.7.7 or above 
-##           - curl, date, egrep, sed, expr, recode (optional), awk
+##           - curl, date, egrep, sed, expr, perl (optional), awk
 #
 ## Tries to find ID using iMDB native API first - in case of failure, omdbapi search is used
 #
@@ -120,7 +120,7 @@ CURL_FLAGS="--silent"
 XMLLINT="/usr/bin/xmllint"
 
 # recode binary (optional), gets rid of HTML entities
-RECODE="recode"
+RECODE="perl"
 
 BASEDIR=`dirname $0`
 
@@ -356,8 +356,8 @@ fi
 PLOT=`get_field plot`
 
 $RECODE --version 2&> /dev/null && {
-	TITLE=`echo $TITLE | $RECODE -f HTML_4.0`
-	PLOT=`echo $PLOT | $RECODE -f HTML_4.0`
+	TITLE=`echo $TITLE | ${RECODE} -n -mHTML::Entities -e ' ; print HTML::Entities::decode_entities($_) ;'`
+	PLOT=`echo $PLOT | ${RECODE} -n -mHTML::Entities -e ' ; print HTML::Entities::decode_entities($_) ;'`
 }
 
 [ -z "$PLOT" ] && PLOT="N/A"
