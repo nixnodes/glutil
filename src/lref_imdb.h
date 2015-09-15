@@ -17,6 +17,7 @@
 #define _MC_IMDB_VOTES                  "votes"
 #define _MC_IMDB_YEAR                   "year"
 
+#define _MC_IMDB_TYPE                   "type"
 #define _MC_IMDB_ACTORS                 "actors"
 #define _MC_IMDB_TITLE                  "title"
 #define _MC_IMDB_IMDBID                 "imdbid"
@@ -25,7 +26,6 @@
 #define _MC_IMDB_SYNOPSIS               "plot"
 #define _MC_IMDB_LANGUAGE               "language"
 #define _MC_IMDB_COUNTRY                "country"
-
 
 #define STD_FMT_DATE_STR                "%d %b %Y"
 
@@ -44,7 +44,7 @@ __d_format_block imdb_format_block, imdb_format_block_batch,
     imdb_format_block_exp;
 
 int
-gcb_imdbh(void *buffer, char *key, char *val);
+gcb_imdbh (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 
@@ -67,6 +67,7 @@ typedef struct ___d_imdb
   char synopsis[384];
   char language[128];
   char country[128];
+  char type[32];
   uint8_t _padding[32];
 } _d_imdb, *__d_imdb;
 

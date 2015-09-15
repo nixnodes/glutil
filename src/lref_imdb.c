@@ -25,7 +25,7 @@ dt_set_imdb (__g_handle hdl)
 {
   hdl->flags |= F_GH_ISIMDB;
   hdl->block_sz = ID_SZ;
-  hdl->d_memb = 14;
+  hdl->d_memb = 15;
   hdl->g_proc0 = gcb_imdbh;
   hdl->g_proc1_lookup = ref_to_val_lk_imdb;
   hdl->g_proc2 = ref_to_val_ptr_imdb;
@@ -94,6 +94,13 @@ dt_rval_imdb_country (void *arg, char *match, char *output, size_t max_size,
 		      void *mppd)
 {
   return ((__d_imdb) arg)->country;
+}
+
+static char *
+dt_rval_imdb_type (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
+{
+  return ((__d_imdb) arg)->type;
 }
 
 void *
@@ -203,6 +210,11 @@ ref_to_val_lk_imdb (void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp (match, _MC_IMDB_COUNTRY, 7))
     {
       return as_ref_to_val_lk (match, dt_rval_imdb_country, (__d_drt_h ) mppd,
+			       "%s");
+    }
+  else if (!strncmp (match, _MC_IMDB_TYPE, 4))
+    {
+      return as_ref_to_val_lk (match, dt_rval_imdb_type, (__d_drt_h ) mppd,
 			       "%s");
     }
   return NULL;
@@ -511,6 +523,16 @@ gcb_imdbh (void *buffer, char *key, char *val)
 	  v_l > sizeof(ptr->language) - 1 ? sizeof(ptr->language) - 1 : v_l);
       return 1;
     }
+  else if (k_l == 4 && !strncmp (key, _MC_IMDB_TYPE, 4))
+    {
+      if (!(v_l = strlen (val)))
+	{
+	  return 0;
+	}
+      memcpy (ptr->type, val,
+	      v_l > sizeof(ptr->type) - 1 ? sizeof(ptr->type) - 1 : v_l);
+      return 1;
+    }
 
   return 0;
 }
@@ -542,11 +564,11 @@ imdb_format_block_batch (void *iarg, char *output)
 {
   __d_imdb data = (__d_imdb) iarg;
   return printf(
-      "IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%hu\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\n",
+      "IMDB\x9%s\x9%s\x9%d\x9%s\x9%.1f\x9%u\x9%s\x9%hu\x9%d\x9%u\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\x9%s\n",
       data->dirname, data->title, data->timestamp, data->imdb_id,
       data->rating, data->votes, data->genres, data->year, data->released,
       data->runtime, data->rated, data->actors, data->director,
-      data->synopsis);
+      data->synopsis, data->language, data->country, data->type);
 }
 
 int
@@ -569,9 +591,10 @@ imdb_format_block_exp (void *iarg, char *output)
       "director %s\n"
       "plot %s\n"
       "language %s\n"
-      "country %s\n\n",
+      "country %s\n"
+      "type %s\n\n",
       data->dirname, data->title, data->timestamp, data->imdb_id,
       data->rating, data->votes, data->genres, data->year, data->released,
       data->runtime, data->rated, data->actors, data->director,
-      data->synopsis, data->language, data->country);
+      data->synopsis, data->language, data->country, data->type);
 }
