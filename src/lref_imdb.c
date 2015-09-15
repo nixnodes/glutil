@@ -556,7 +556,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
       uint32_t v_ui = (uint32_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
 	{
-	  return 0;
+	  return 1;
 	}
       ptr->screens = v_ui;
       return 1;

@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:02
+#@REVISION:03
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -181,6 +181,11 @@ omdb_search()
 
 get_omdbapi_data() {
         $CURL $CURL_FLAGS "$IMDB_URL""?r=XML&i=$1"
+}
+
+get_imdb_screens_count() {
+		screens_c=`$CURL $CURL_FLAGS "${IMDBURL}/title/${1}/business" | egrep -o '\([,0-9]+ Screens\)' | sed -r 's/[ ()]|Screens|.$//g' | tr -d ',' | sed ':a;N;$!ba;s/\n/ + /g' | sed -r 's/ \+$//' | egrep  '[+ 0-9]' `
+		[ -n "${screens_c}" ] && expr ${screens_c}
 }
 
 cad() {
@@ -356,8 +361,18 @@ fi
 PLOT=`get_field plot`
 
 $RECODE --version 2&> /dev/null && {
-	TITLE=`echo $TITLE | ${RECODE} -n -mHTML::Entities -e ' ; print HTML::Entities::decode_entities($_) ;'`
-	PLOT=`echo $PLOT | ${RECODE} -n -mHTML::Entities -e ' ; print HTML::Entities::decode_entities($_) ;'`
+	html_decode() {
+		dec_t=`echo ${@} | ${RECODE} -n -mHTML::Entities -e ' ; print HTML::Entities::decode_entities($_) ;'`	
+		[ -n "${dec_t}" ] && echo "${dec_t}" || {
+			recode --version 2&> /dev/null && {
+				dec_t=`echo ${@} | recode HTML_4.0..UTF-8`	
+				[ -n "${dec_t}" ] && echo "${dec_t}" || echo ${@}
+			}
+		}
+	}
+	
+	TITLE=`html_decode "$TITLE"`
+	PLOT=`html_decode "$PLOT"`
 }
 
 [ -z "$PLOT" ] && PLOT="N/A"
@@ -377,11 +392,12 @@ ACTORS=`get_field actors`
 [ -z "$ACTORS" ] && ACTORS="N/A"
 DIRECTOR=`get_field director`
 [ -z "$DIRECTOR" ] && DIRECTOR="N/A"
-
 LANGUAGE=`get_field language`
 [ -z "$LANGUAGE" ] && LANGUAGE="N/A"
 COUNTRY=`get_field country`
 [ -z "$COUNTRY" ] && COUNTRY="N/A"
+SCREENS=`get_imdb_screens_count ${iid}`
+[ -z "$SCREENS" ] && SCREENS=0
 
 D_g=`get_field released`
 [ -n "$D_g" ] && [ "$D_g" != "N/A" ] && RELEASED=`date --date="$D_g" +"%s"` || RELEASED=0
@@ -416,7 +432,7 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
                	}
         fi
 
-	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\nlanguage $LANGUAGE\ncountry $COUNTRY\ntype $TYPE\n\n" > /tmp/glutil.img.$$.tmp
+	echo -en "dir $DIR_E\ntime `date +%s`\nimdbid $iid\nscore $RATING\ngenre $GENRE\nvotes $VOTES\ntitle $TITLE\nactors $ACTORS\nrated $RATED\nyear $YEAR\nreleased $RELEASED\nruntime $RUNTIME\ndirector $DIRECTOR\nplot $PLOT\nlanguage $LANGUAGE\ncountry $COUNTRY\ntype $TYPE\nscreens $SCREENS\n\n" > /tmp/glutil.img.$$.tmp
 	${2} --imdblog="${3}${LAPPEND}" -z imdb --nobackup --nostats --silent ${EXTRA_ARGS} < /tmp/glutil.img.$$.tmp || print_str "ERROR: $QUERY: $TD: failed writing to imdblog!!"
 	rm -f /tmp/glutil.img.$$.tmp
 	echo "${10}" | grep -q "1" || [ ${IMDB_SHARED_MEM} -gt 0 ] && ${2} -q imdb --imdblog="${3}${LAPPEND}" --shmem --shmdestroy --shmreload --loadq --silent --shmcflags 666
