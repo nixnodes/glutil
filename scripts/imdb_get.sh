@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:06
+#@REVISION:07
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -360,18 +360,20 @@ fi
 
 PLOT=`get_field plot`
 
-$RECODE --version 2&> /dev/null && {
+${RECODE} --version 2&> /dev/null && {
 	html_decode() {
-		dec_t=`echo ${@} | ${RECODE} -n -mHTML::Entities -e ' ; print HTML::Entities::decode_entities($_) ;'`	
+		dec_t=`echo "${@}" | ${RECODE} -MHTML::Entities -alne "print decode_entities($_)" | ${RECODE} -MHTML::Entities -alne "print decode_entities($_)"`	
+		
 		[ -n "${dec_t}" ] && echo "${dec_t}" || {
 			recode --version 2&> /dev/null && {
-				dec_t=`echo ${@} | recode HTML_4.0..UTF-8`	
+				dec_t=`echo "${@}" | recode HTML_4.0..UTF-8 | recode HTML_4.0..UTF-8`	
 				[ -n "${dec_t}" ] && echo "${dec_t}" || echo ${@}
+				
 			}
 		}
 	}
 	
-	TITLE=`html_decode "$TITLE"`
+	TITLE=`html_decode "${TITLE}"`
 	PLOT=`html_decode "$PLOT"`
 }
 
