@@ -490,7 +490,8 @@ gcb_imdbh (void *buffer, char *key, char *val)
 	{
 	  return 0;
 	}
-      memcpy (ptr->rated, val, v_l > 7 ? 7 : v_l);
+      memcpy (ptr->rated, val,
+	      v_l > sizeof(ptr->rated) - 1 ? sizeof(ptr->rated) - 1 : v_l);
       return 1;
     }
   else if (k_l == 6 && !strncmp (key, _MC_IMDB_ACTORS, 6))
@@ -517,7 +518,9 @@ gcb_imdbh (void *buffer, char *key, char *val)
 	{
 	  return 0;
 	}
-      memcpy (ptr->synopsis, val, v_l > 197 ? 197 : v_l);
+      memcpy (
+	  ptr->synopsis, val,
+	  v_l > sizeof(ptr->synopsis) - 1 ? sizeof(ptr->synopsis) - 1 : v_l);
       return 1;
     }
   else if (k_l == 7 && !strncmp (key, _MC_IMDB_COUNTRY, 7))
