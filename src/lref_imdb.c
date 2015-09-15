@@ -25,7 +25,7 @@ dt_set_imdb (__g_handle hdl)
 {
   hdl->flags |= F_GH_ISIMDB;
   hdl->block_sz = ID_SZ;
-  hdl->d_memb = 15;
+  hdl->d_memb = 14;
   hdl->g_proc0 = gcb_imdbh;
   hdl->g_proc1_lookup = ref_to_val_lk_imdb;
   hdl->g_proc2 = ref_to_val_ptr_imdb;
@@ -527,7 +527,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     {
       if (!(v_l = strlen (val)))
 	{
-	  return 0;
+	  return 1;
 	}
       memcpy (ptr->type, val,
 	      v_l > sizeof(ptr->type) - 1 ? sizeof(ptr->type) - 1 : v_l);
