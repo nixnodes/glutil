@@ -26,6 +26,7 @@
 #define _MC_IMDB_SYNOPSIS               "plot"
 #define _MC_IMDB_LANGUAGE               "language"
 #define _MC_IMDB_COUNTRY                "country"
+#define _MC_IMDB_SCREENS                "screens"
 
 #define STD_FMT_DATE_STR                "%d %b %Y"
 
@@ -68,7 +69,8 @@ typedef struct ___d_imdb
   char language[128];
   char country[128];
   char type[32];
-  uint8_t _padding[32];
+  uint32_t screens;
+  uint8_t _padding[24];
 } _d_imdb, *__d_imdb;
 
 #pragma pack(pop)
