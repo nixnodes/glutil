@@ -349,6 +349,13 @@ dt_rval_generic_imdbfile (void *arg, char *match, char *output, size_t max_size,
 }
 
 char *
+dt_rval_generic_imdb_o_file (void *arg, char *match, char *output,
+			     size_t max_size, void *mppd)
+{
+  return IMDBLOG_O;
+}
+
+char *
 dt_rval_generic_tvfile (void *arg, char *match, char *output, size_t max_size,
 			void *mppd)
 {
@@ -648,6 +655,11 @@ ref_to_val_lk_generic (void *arg, char *match, char *output, size_t max_size,
   else if (!strncmp (match, "imdbfile", 8))
     {
       return as_ref_to_val_lk (match, dt_rval_generic_imdbfile,
+			       (__d_drt_h ) mppd, "%s");
+    }
+  else if (!strncmp (match, "imdbofile", 8))
+    {
+      return as_ref_to_val_lk (match, dt_rval_generic_imdb_o_file,
 			       (__d_drt_h ) mppd, "%s");
     }
   else if (!strncmp (match, "gamefile", 8))

@@ -61,6 +61,10 @@ g_dgetf (char *str)
     {
       return IMDBLOG;
     }
+  else if (!strncmp (str, "oldimdb", 7))
+    {
+      return IMDBLOG_O;
+    }
   else if (!strncmp (str, "game", 4))
     {
       return GAMELOG;
@@ -539,6 +543,10 @@ determine_datatype (__g_handle hdl, char *file)
   else if (!strncmp (file, IMDBLOG, strlen (IMDBLOG)))
     {
       pdt_set_imdb (hdl);
+    }
+  else if (!strncmp (file, IMDBLOG_O, strlen (IMDBLOG_O)))
+    {
+      pdt_set_imdb_o (hdl);
     }
   else if (!strncmp (file, GAMELOG, strlen (GAMELOG)))
     {

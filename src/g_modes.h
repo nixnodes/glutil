@@ -33,6 +33,7 @@
 #define UPD_MODE_DUMP_GENERIC           0x17
 #define UPD_MODE_LIST_MACROS            0x18
 #define UPD_MODE_NETWORK                0x19
+#define UPD_MODE_DUMP_IMDBO             0x20
 
 #define PRIO_UPD_MODE_MACRO             0x1001
 #define PRIO_UPD_MODE_INFO              0x1002

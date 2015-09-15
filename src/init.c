@@ -70,7 +70,7 @@ int g_shmcflags = S_IRUSR | S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
 ;
 
 char GLROOT[PATH_MAX] =
-  { glroot };
+  { glroot};
 char SITEROOT_N[PATH_MAX] =
   { siteroot };
 char SITEROOT[PATH_MAX] =
@@ -91,6 +91,8 @@ char FTPDATA[PATH_MAX] =
   { ftp_data };
 char IMDBLOG[PATH_MAX] =
   { imdb_file };
+char IMDBLOG_O[PATH_MAX] =
+  { imdb_o_file };
 char GAMELOG[PATH_MAX] =
   { game_log };
 char TVLOG[PATH_MAX] =
@@ -139,7 +141,7 @@ sigjmp g_sigjmp =
   {
     {
       {
-        { 0 } } } };
+	{ 0 } } } };
 
 mda _match_rr =
   { 0 };
@@ -178,15 +180,15 @@ char *spec_p4 = NULL;
 __dt_set pdt_set_dirlog = dt_set_dirlog, pdt_set_nukelog = dt_set_nukelog,
     pdt_set_lastonlog = dt_set_lastonlog, pdt_set_dupefile = dt_set_dupefile,
     pdt_set_oneliners = dt_set_oneliners, pdt_set_imdb = dt_set_imdb,
-    pdt_set_game = dt_set_game, pdt_set_tvrage = dt_set_tvrage, pdt_set_gen1 =
-        dt_set_gen1, pdt_set_gen2 = dt_set_gen2, pdt_set_gen3 = dt_set_gen3,
-    pdt_set_gen4 = dt_set_gen4, pdt_set_gconf = dt_set_gconf, pdt_set_sconf =
-        dt_set_sconf, pdt_set_altlog = dt_set_altlog, pdt_set_online =
-        dt_set_online, pdt_set_x = dt_set_x;
+    pdt_set_imdb_o = dt_set_imdb_o, pdt_set_game = dt_set_game, pdt_set_tvrage =
+	dt_set_tvrage, pdt_set_gen1 = dt_set_gen1, pdt_set_gen2 = dt_set_gen2,
+    pdt_set_gen3 = dt_set_gen3, pdt_set_gen4 = dt_set_gen4, pdt_set_gconf =
+	dt_set_gconf, pdt_set_sconf = dt_set_sconf, pdt_set_altlog =
+	dt_set_altlog, pdt_set_online = dt_set_online, pdt_set_x = dt_set_x;
 ;
 #endif
 int
-(*__pf_eof)(void *p);
+(*__pf_eof) (void *p);
 
 char G_USER[128] =
   { 0 };
@@ -204,22 +206,22 @@ pthread_mutex_t mutex_glob00 =
 #endif
 
 void
-g_send_gkill(void)
+g_send_gkill (void)
 {
 #ifdef _G_SSYS_THREAD
-  mutex_lock(&mutex_glob00);
+  mutex_lock (&mutex_glob00);
 #endif
   gfl |= F_OPT_KILL_GLOBAL;
 #ifdef _G_SSYS_THREAD
-  pthread_mutex_unlock(&mutex_glob00);
+  pthread_mutex_unlock (&mutex_glob00);
 #endif
 }
 
 char
-g_get_gkill(void)
+g_get_gkill (void)
 {
 #ifdef _G_SSYS_THREAD
-  mutex_lock(&mutex_glob00);
+  mutex_lock (&mutex_glob00);
 #endif
   int ret;
   if (gfl & F_OPT_KILL_GLOBAL)
@@ -231,7 +233,7 @@ g_get_gkill(void)
       ret = 1;
     }
 #ifdef _G_SSYS_THREAD
-  pthread_mutex_unlock(&mutex_glob00);
+  pthread_mutex_unlock (&mutex_glob00);
 #endif
   return ret;
 }

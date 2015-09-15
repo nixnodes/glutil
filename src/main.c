@@ -572,6 +572,9 @@ g_init (int argc, char **argv, char **l_arg)
     case UPD_MODE_DUMP_IMDB:
       EXITVAL = g_print_stats (IMDBLOG, 0, 0);
       break;
+    case UPD_MODE_DUMP_IMDBO:
+      EXITVAL = g_print_stats (IMDBLOG_O, 0, 0);
+      break;
     case UPD_MODE_DUMP_GAME:
       EXITVAL = g_print_stats (GAMELOG, 0, 0);
       break;

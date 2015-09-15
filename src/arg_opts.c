@@ -1437,6 +1437,19 @@ opt_imdblog (void *arg, int m, void *opt)
   return 0;
 }
 
+static int
+opt_imdblog_o (void *arg, int m, void *opt)
+{
+  if (!(ofl & F_OVRR_IMDBLOG_O))
+    {
+      g_cpg (arg, IMDBLOG_O, m, PATH_MAX);
+      ofl |= F_OVRR_IMDBLOG_O;
+      l_opt_cstdin (IMDBLOG_O);
+    }
+  return 0;
+}
+
+
 int
 opt_tvlog (void *arg, int m, void *opt)
 {
@@ -2505,6 +2518,7 @@ _gg_opt gg_prio_f_ref[] =
 	{ .id = 0x001B, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
 	{ .id = 0x001C, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
 	{ .id = 0x001D, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
+	{ .id = 0x00F3, .on = "--imdblog_o", .ac = 1, .op = opt_imdblog_o },
 	{ .id = 0x001E, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
 	{ .id = 0x001F, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
 	{ .id = 0x0020, .on = "--nukelog", .ac = 1, .op = opt_nukelog_file },

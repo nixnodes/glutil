@@ -78,6 +78,8 @@ char FTPDATA[PATH_MAX] =
   { ftp_data };
 char IMDBLOG[PATH_MAX] =
   { imdb_file };
+char IMDBLOG_O[PATH_MAX] =
+  { imdb_file };
 char GAMELOG[PATH_MAX] =
   { game_log };
 char TVLOG[PATH_MAX] =
@@ -147,7 +149,7 @@ int g_shmcflags = S_IRUSR | S_IRGRP | S_IROTH;
 
 __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
     pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,
-    pdt_set_oneliners = dt_set_dummy, pdt_set_imdb = dt_set_imdb, pdt_set_game =
+    pdt_set_oneliners = dt_set_dummy, pdt_set_imdb = dt_set_imdb, pdt_set_imdb_o = dt_set_imdb_o, pdt_set_game =
         dt_set_game, pdt_set_tvrage = dt_set_tvrage,
     pdt_set_gen1 = dt_set_dummy, pdt_set_gen2 = dt_set_dummy, pdt_set_gen3 =
         dt_set_dummy, pdt_set_gen4 = dt_set_dummy, pdt_set_gconf = dt_set_gconf,

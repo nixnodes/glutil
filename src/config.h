@@ -38,7 +38,8 @@
 #define IPC_KEY_DUPEFILE        0xDEAD1200
 #define IPC_KEY_LASTONLOG       0xDEAD1300
 #define IPC_KEY_ONELINERS       0xDEAD1400
-#define IPC_KEY_IMDBLOG         0xDEAD1500
+#define IPC_KEY_IMDBLOG_O       0xDEAD1500
+#define IPC_KEY_IMDBLOG         0xDEAD1510
 #define IPC_KEY_GAMELOG         0xDEAD1600
 #define IPC_KEY_TVRAGELOG       0xDEAD1700
 #define IPC_KEY_GEN1LOG         0xDEAD1800
@@ -85,7 +86,12 @@
 
 /* imdb log file path */
 #ifndef imdb_file
-#define imdb_file CONF_PREFIX "/ftp-data/glutil/db/imdb"
+#define imdb_file CONF_PREFIX "/ftp-data/glutil/db/imdb.log"
+#endif
+
+/* old imdb log file path */
+#ifndef imdb_o_file
+#define imdb_o_file CONF_PREFIX "/ftp-data/glutil/db/imdb"
 #endif
 
 /* game log file path */

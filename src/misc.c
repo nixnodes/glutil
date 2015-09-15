@@ -412,6 +412,7 @@ build_data_path(char *file, char *path, char *sd)
 #include <lref_altlog.h>
 #include <lref_gconf.h>
 #include <lref_sconf.h>
+#include "lref_imdb_old.h"
 
 int
 g_print_info(void)
@@ -426,6 +427,7 @@ g_print_info(void)
   print_str(" LASTONLOG      %d\t\n", LO_SZ);
   print_str(" ONELINERS      %d\t\n", LO_SZ);
   print_str(" IMDBLOG        %d\t\n", ID_SZ);
+  print_str(" IMDBLOG-OLD    %d\t\n", IDO_SZ);
   print_str(" GAMELOG        %d\t\n", GM_SZ);
   print_str(" TVLOG          %d\t\n", TV_SZ);
   print_str(" GE1            %d\t\n", G1_SZ);

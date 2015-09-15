@@ -61,7 +61,7 @@ typedef struct ___d_imdb
   char title[128];
   int32_t released;
   uint32_t runtime;
-  char rated[8];
+  char rated[32];
   char actors[128];
   char director[64];
   char synopsis[384];
