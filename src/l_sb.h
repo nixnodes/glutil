@@ -10,9 +10,7 @@
 
 #include <t_glob.h>
 
-
 #define sconf_log "SCONF"
-
 
 int updmode;
 char *argv_off;
@@ -52,7 +50,6 @@ char GLCONF_I[PATH_MAX];
 #endif
 
 char b_spec1[PATH_MAX];
-
 
 FILE *fd_log;
 char LOGFILE[PATH_MAX];

@@ -67,33 +67,33 @@ static uint32_t crc_32_tab[] =
       0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D };
 
 off_t
-get_file_size(char *file)
+get_file_size (char *file)
 {
   struct stat st;
 
-  if (stat(file, &st) == -1)
+  if (stat (file, &st) == -1)
     return 0;
 
   return (off_t) st.st_size;
 }
 
 time_t
-get_file_creation_time(struct stat *st)
+get_file_creation_time (struct stat *st)
 {
   return (time_t) birthtime(st);
 }
 
 int
-check_path(char *path)
+check_path (char *path)
 {
   struct stat sb;
-  return stat(path, &sb);
+  return stat (path, &sb);
 }
 
 int
-file_exists(char *file)
+file_exists (char *file)
 {
-  int r = get_file_type(file);
+  int r = get_file_type (file);
 
   if (r == DT_REG)
     {
@@ -103,9 +103,9 @@ file_exists(char *file)
   return 1;
 }
 int
-dir_exists(char *dir)
+dir_exists (char *dir)
 {
-  int r = get_file_type(dir);
+  int r = get_file_type (dir);
 
   if (r == DT_DIR)
     {
@@ -115,11 +115,11 @@ dir_exists(char *dir)
 }
 
 int
-get_file_type(char *file)
+get_file_type (char *file)
 {
   struct stat sb;
 
-  if (stat(file, &sb) == -1)
+  if (stat (file, &sb) == -1)
     {
       return DT_UNKNOWN;
     }
@@ -128,16 +128,16 @@ get_file_type(char *file)
 }
 
 off_t
-file_crc32(char *file, uint32_t *crc_out)
+file_crc32 (char *file, uint32_t *crc_out)
 {
-  g_setjmp(0, "file_crc32", NULL, NULL);
+  g_setjmp (0, "file_crc32", NULL, NULL);
   FILE *fp;
 
   size_t r;
 
   *crc_out = 0x0;
 
-  if ((fp = fopen(file, "rb")) == NULL)
+  if ((fp = fopen (file, "rb")) == NULL)
     {
       return 0;
     }
@@ -148,34 +148,34 @@ file_crc32(char *file, uint32_t *crc_out)
 
   for (;; ptr = buffer)
     {
-      if ((r = fread(buffer, 1, CRC_FILE_READ_BUFFER_SIZE, fp)) < 1)
-        {
-          break;
-        }
+      if ((r = fread (buffer, 1, CRC_FILE_READ_BUFFER_SIZE, fp)) < 1)
+	{
+	  break;
+	}
 
       for (; r; r--, ptr++)
-        {
-          crc = UPDC32(*ptr, crc);
-        }
+	{
+	  crc = UPDC32(*ptr, crc);
+	}
     }
 
-  if (ferror(fp))
+  if (ferror (fp))
     {
-      fclose(fp);
+      fclose (fp);
       return 0;
     }
 
   *crc_out = ~crc;
 
-  fclose(fp);
+  fclose (fp);
 
   return 1;
 }
 
 int
-find_absolute_path(char *exec, char *output)
+find_absolute_path (char *exec, char *output)
 {
-  char *env = getenv("PATH");
+  char *env = getenv ("PATH");
 
   if (!env)
     {
@@ -185,66 +185,66 @@ find_absolute_path(char *exec, char *output)
   mda s_p =
     { 0 };
 
-  md_init(&s_p, 64);
+  md_init (&s_p, 64);
 
-  int p_c = split_string(env, 0x3A, &s_p);
+  int p_c = split_string (env, 0x3A, &s_p);
 
   if (p_c < 1)
     {
       return 2;
     }
 
-  p_md_obj ptr = md_first(&s_p);
+  p_md_obj ptr = md_first (&s_p);
 
   while (ptr)
     {
-      snprintf(output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
-      if (!access(output, R_OK | X_OK))
-        {
-          md_g_free(&s_p);
-          return 0;
-        }
+      snprintf (output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
+      if (!access (output, R_OK | X_OK))
+	{
+	  md_g_free (&s_p);
+	  return 0;
+	}
       ptr = ptr->next;
     }
 
-  md_g_free(&s_p);
+  md_g_free (&s_p);
 
   return 3;
 }
 
 int
-self_get_path(char *out)
+self_get_path (char *out)
 {
-  g_setjmp(0, "self_get_path", NULL, NULL);
+  g_setjmp (0, "self_get_path", NULL, NULL);
 
   char path[PATH_MAX];
   path[0] = 0x0;
   int r;
 
-  snprintf(path, PATH_MAX, "/proc/%d/exe", getpid());
+  snprintf (path, PATH_MAX, "/proc/%d/exe", getpid ());
 
-  if (access(path, R_OK))
+  if (access (path, R_OK))
     {
-      snprintf(path, PATH_MAX, "/compat/linux/proc/%d/exe", getpid());
+      snprintf (path, PATH_MAX, "/compat/linux/proc/%d/exe", getpid ());
     }
   else
     {
       goto read;
     }
 
-  if (access(path, R_OK))
+  if (access (path, R_OK))
     {
-      snprintf(path, PATH_MAX, "/proc/%d/file", getpid());
+      snprintf (path, PATH_MAX, "/proc/%d/file", getpid ());
     }
 
   read:
 
-  if ((r = readlink(path, out, PATH_MAX)) < 1)
+  if ((r = readlink (path, out, PATH_MAX)) < 1)
     {
-      if ((r = find_absolute_path(_p_argv[0], out)))
-        {
-          snprintf(out, PATH_MAX, "%s", _p_argv[0]);
-        }
+      if ((r = find_absolute_path (_p_argv[0], out)))
+	{
+	  snprintf (out, PATH_MAX, "%s", _p_argv[0]);
+	}
       return 0;
     }
 
@@ -253,9 +253,9 @@ self_get_path(char *out)
 }
 
 int
-delete_file(char *name, unsigned char type, void *arg, __g_eds eds)
+delete_file (char *name, unsigned char type, void *arg, __g_eds eds)
 {
-  g_setjmp(0, "delete_file", NULL, NULL);
+  g_setjmp (0, "delete_file", NULL, NULL);
   char *match = (char*) arg;
 
   if (type != DT_REG)
@@ -263,18 +263,18 @@ delete_file(char *name, unsigned char type, void *arg, __g_eds eds)
       return 1;
     }
 
-  if (!reg_match(match, name, 0))
+  if (!reg_match (match, name, 0))
     {
-      return remove(name);
+      return remove (name);
     }
 
   return 2;
 }
 
 ssize_t
-file_copy(char *source, char *dest, char *mode, uint32_t flags)
+file_copy (char *source, char *dest, char *mode, uint32_t flags)
 {
-  g_setjmp(0, "file_copy", NULL, NULL);
+  g_setjmp (0, "file_copy", NULL, NULL);
 
   if (gfl & F_OPT_NOWRITE)
     {
@@ -284,7 +284,7 @@ file_copy(char *source, char *dest, char *mode, uint32_t flags)
   struct stat st_s, st_d;
   mode_t st_mode = 0;
 
-  if (stat(source, &st_s))
+  if (stat (source, &st_s))
     {
       return -9;
     }
@@ -296,34 +296,34 @@ file_copy(char *source, char *dest, char *mode, uint32_t flags)
       return -1;
     }
 
-  FILE *fh_s = fopen(source, "rb");
+  FILE *fh_s = fopen (source, "rb");
 
   if (!fh_s)
     {
       return -2;
     }
 
-  if (!strncmp(mode, "a", 1) && (flags & F_FC_MSET_DEST))
+  if (!strncmp (mode, "a", 1) && (flags & F_FC_MSET_DEST))
     {
-      if (file_exists(dest))
-        {
-          st_mode = st_s.st_mode;
-        }
+      if (file_exists (dest))
+	{
+	  st_mode = st_s.st_mode;
+	}
       else
-        {
-          if (stat(source, &st_d))
-            {
-              return -10;
-            }
-          st_mode = st_d.st_mode;
-        }
+	{
+	  if (stat (source, &st_d))
+	    {
+	      return -10;
+	    }
+	  st_mode = st_d.st_mode;
+	}
     }
   else if (flags & F_FC_MSET_SRC)
     {
       st_mode = st_s.st_mode;
     }
 
-  FILE *fh_d = fopen(dest, mode);
+  FILE *fh_d = fopen (dest, mode);
 
   if (!fh_d)
     {
@@ -331,37 +331,37 @@ file_copy(char *source, char *dest, char *mode, uint32_t flags)
     }
 
   size_t r = 0, t = 0, w;
-  char *buffer = malloc(V_MB);
+  char *buffer = malloc (V_MB);
 
-  while ((r = fread(buffer, 1, V_MB, fh_s)) > 0)
+  while ((r = fread (buffer, 1, V_MB, fh_s)) > 0)
     {
-      if ((w = fwrite(buffer, 1, r, fh_d)))
-        {
-          t += w;
-        }
+      if ((w = fwrite (buffer, 1, r, fh_d)))
+	{
+	  t += w;
+	}
       else
-        {
-          free(buffer);
-          return -4;
-        }
+	{
+	  free (buffer);
+	  return -4;
+	}
     }
 
-  free(buffer);
-  fclose(fh_d);
-  fclose(fh_s);
+  free (buffer);
+  fclose (fh_d);
+  fclose (fh_s);
 
   if (st_mode)
     {
-      chmod(dest, st_mode);
+      chmod (dest, st_mode);
     }
 
   return t;
 }
 
 off_t
-read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
+read_file (char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
 {
-  g_setjmp(0, "read_file", NULL, NULL);
+  g_setjmp (0, "read_file", NULL, NULL);
   size_t read;
   int r;
   FILE *fp;
@@ -373,62 +373,63 @@ read_file(char *file, void *buffer, size_t read_max, off_t offset, FILE *_fp)
   else
     {
       if (!_fp)
-        {
-          if (!file)
-            {
-              return 0;
-            }
+	{
+	  if (!file)
+	    {
+	      return 0;
+	    }
 
-          off_t a_fsz = get_file_size(file);
+	  off_t a_fsz = get_file_size (file);
 
-          if (!a_fsz)
-            return 0;
+	  if (!a_fsz)
+	    return 0;
 
-          if (read_max > a_fsz)
-            {
-              read_max = a_fsz;
-            }
+	  if (read_max > a_fsz)
+	    {
+	      read_max = a_fsz;
+	    }
 
-          if ((fp = fopen(file, "rb")) == NULL)
-            {
-              return 0;
-            }
-        }
+	  if ((fp = fopen (file, "rb")) == NULL)
+	    {
+	      return 0;
+	    }
+	}
       else
-        {
-          fp = _fp;
-        }
+	{
+	  fp = _fp;
+	}
 
       if (offset)
-        {
-          fseek(fp, (off_t) offset, SEEK_SET);
-        }
+	{
+	  fseek (fp, (off_t) offset, SEEK_SET);
+	}
     }
 
-  for (read = 0; !feof(fp) && !ferror(fp) && read < read_max;)
+  for (read = 0; !feof (fp) && !ferror (fp) && read < read_max;)
     {
-      if ((r = fread(&((unsigned char*) buffer)[read], 1, read_max - read, fp))
-          < 1)
-        {
-          break;
-        }
+      if ((r = fread (&((unsigned char*) buffer)[read], 1, read_max - read, fp))
+	  < 1)
+	{
+	  break;
+	}
       read += r;
     }
 
   if (!_fp && fp != stdin)
     {
-      fclose(fp);
+      fclose (fp);
     }
 
   return read;
 }
 
 off_t
-enum_readline(char *file, void *buffer, size_t read_max, off_t max_l, FILE *_fp,
-    int
-    (*call_b)(char *b, void *a), void *arg)
+enum_readline (char *file, void *buffer, size_t read_max, off_t max_l,
+	       FILE *_fp, int
+	       (*call_b) (char *b, void *a),
+	       void *arg)
 {
-  g_setjmp(0, "read_file", NULL, NULL);
+  g_setjmp (0, "read_file", NULL, NULL);
 
   FILE *fp;
 
@@ -438,60 +439,61 @@ enum_readline(char *file, void *buffer, size_t read_max, off_t max_l, FILE *_fp,
     }
   else
     {
-      if ((fp = fopen(file, "rb")) == NULL)
-        {
-          return 0;
-        }
+      if ((fp = fopen (file, "rb")) == NULL)
+	{
+	  return 0;
+	}
     }
 
   off_t lc = 0;
 
-  while (fgets(buffer, read_max, fp) && lc < max_l && !ferror(fp) && !feof(fp))
+  while (fgets (buffer, read_max, fp) && lc < max_l && !ferror (fp)
+      && !feof (fp))
     {
       char *s_b = (char*) buffer;
-      size_t l_len = strlen(s_b) - 1;
+      size_t l_len = strlen (s_b) - 1;
       if (s_b[l_len] == 0xA)
-        {
-          s_b[l_len] = 0x0;
-        }
-      if (!call_b(buffer, arg))
-        {
-          lc++;
-        }
+	{
+	  s_b[l_len] = 0x0;
+	}
+      if (!call_b (buffer, arg))
+	{
+	  lc++;
+	}
     }
 
   if (!_fp && fp != stdin)
     {
-      fclose(fp);
+      fclose (fp);
     }
 
   return lc;
 }
 
 int
-write_file_text(char *data, char *file)
+write_file_text (char *data, char *file)
 {
-  g_setjmp(0, "write_file_text", NULL, NULL);
+  g_setjmp (0, "write_file_text", NULL, NULL);
   int r;
   FILE *fp;
 
-  if ((fp = fopen(file, "a")) == NULL)
+  if ((fp = fopen (file, "a")) == NULL)
     return 0;
 
-  r = fwrite(data, 1, strlen(data), fp);
+  r = fwrite (data, 1, strlen (data), fp);
 
-  fclose(fp);
+  fclose (fp);
 
   return r;
 }
 
 size_t
-exec_and_redirect_output(char *command, FILE *output)
+exec_and_redirect_output (char *command, FILE *output)
 {
   size_t r = 0, w = 0;
   FILE *pipe = NULL;
 
-  if (!(pipe = popen(command, "r")))
+  if (!(pipe = popen (command, "r")))
     {
       return 0;
     }
@@ -500,17 +502,17 @@ exec_and_redirect_output(char *command, FILE *output)
 
   char r_b[0x2000];
 
-  while (!feof(pipe))
+  while (!feof (pipe))
     {
-      if ((r = fread(r_b, 1, 0x2000, pipe)) <= 0)
-        {
-          break;
-        }
-      w += fwrite(r_b, r, 1, output);
+      if ((r = fread (r_b, 1, 0x2000, pipe)) <= 0)
+	{
+	  break;
+	}
+      w += fwrite (r_b, r, 1, output);
       read += r;
     }
 
-  pclose(pipe);
+  pclose (pipe);
 
   return w;
 }
@@ -518,88 +520,87 @@ exec_and_redirect_output(char *command, FILE *output)
 #ifdef HAVE_ZLIB_H
 int
 gz_feof(void *p)
-{
-  return gzeof((gzFile) p);
-}
+  {
+    return gzeof((gzFile) p);
+  }
 #endif
 
 int
-g_feof(void *p)
+g_feof (void *p)
 {
-  return feof((FILE*) p);
+  return feof ((FILE*) p);
 }
 
 int
-load_guid_info(pmda md, char *path)
+load_guid_info (pmda md, char *path)
 {
-  FILE *fh = fopen(path, "r");
+  FILE *fh = fopen (path, "r");
 
   if (NULL == fh)
     {
       return 1;
     }
 
-
   errno = 0;
 
   char buffer[PGF_MAX_LINE_SIZE + 1];
   uint32_t lc = 0;
 
-  while (fgets(buffer, PGF_MAX_LINE_SIZE, fh) && lc < PGF_MAX_LINE_PROC
-      && !ferror(fh) && !feof(fh))
+  while (fgets (buffer, PGF_MAX_LINE_SIZE, fh) && lc < PGF_MAX_LINE_PROC
+      && !ferror (fh) && !feof (fh))
     {
-      if (!strlen(buffer) || buffer[0] == 0xA)
-        {
-          break;
-        }
+      if (!strlen (buffer) || buffer[0] == 0xA)
+	{
+	  break;
+	}
 
       mda spl =
-        { 0 };
-      md_init(&spl, 5);
+	{ 0 };
+      md_init (&spl, 5);
 
-      if (split_string(buffer, 0x3A, &spl) < 3)
-        {
-          md_g_free(&spl);
-          return 2;
-        }
+      if (split_string (buffer, 0x3A, &spl) < 3)
+	{
+	  md_g_free (&spl);
+	  return 2;
+	}
 
-      p_md_obj ptr = md_first(&spl);
+      p_md_obj ptr = md_first (&spl);
 
-      p_gu_n gu = md_alloc(md, sizeof(gu_n));
+      p_gu_n gu = md_alloc (md, sizeof(gu_n));
 
-      strcp_s(gu->name, sizeof(gu->name), (char *) ptr->ptr);
+      strcp_s (gu->name, sizeof(gu->name), (char *) ptr->ptr);
 
       errno = 0;
-      gu->id = (uint32_t) strtoul(ptr[2].ptr, NULL, 10);
+      gu->id = (uint32_t) strtoul (ptr[2].ptr, NULL, 10);
 
       if ( errno == ERANGE || errno == EINVAL)
-        {
-          return 3;
-        }
+	{
+	  return 3;
+	}
 
-      md_g_free(&spl);
+      md_g_free (&spl);
 
       lc++;
     }
 
-  fclose(fh);
+  fclose (fh);
 
   return 0;
 }
 
 p_gu_n
-search_xuid_id(pmda md, uint32_t id)
+search_xuid_id (pmda md, uint32_t id)
 {
-  p_md_obj ptr = md_first(md);
+  p_md_obj ptr = md_first (md);
 
   while (ptr)
     {
       p_gu_n gu = (p_gu_n) ptr->ptr;
 
       if (gu->id == id)
-        {
-          return gu;
-        }
+	{
+	  return gu;
+	}
 
       ptr = ptr->next;
     }
@@ -608,20 +609,20 @@ search_xuid_id(pmda md, uint32_t id)
 }
 
 p_gu_n
-search_xuid_name(pmda md, char *name)
+search_xuid_name (pmda md, char *name)
 {
-  p_md_obj ptr = md_first(md);
-  size_t name_l = strlen(name);
+  p_md_obj ptr = md_first (md);
+  size_t name_l = strlen (name);
 
   while (ptr)
     {
       p_gu_n gu = (p_gu_n) ptr->ptr;
 
-      size_t p_name_l = strlen(gu->name);
-      if (name_l == p_name_l && !strncmp(gu->name, name, p_name_l))
-        {
-          return gu;
-        }
+      size_t p_name_l = strlen (gu->name);
+      if (name_l == p_name_l && !strncmp (gu->name, name, p_name_l))
+	{
+	  return gu;
+	}
 
       ptr = ptr->next;
     }
@@ -632,23 +633,23 @@ search_xuid_name(pmda md, char *name)
 #ifdef HAVE_ZLIB_H
 int
 g_is_file_compressed(char *file)
-{
-  gzFile gz_fh;
+  {
+    gzFile gz_fh;
 
-  if ((gz_fh = gzopen(file, "r")) == NULL)
-    {
-      return 2;
-    }
+    if ((gz_fh = gzopen(file, "r")) == NULL)
+      {
+	return 2;
+      }
 
-  int r = gzdirect(gz_fh);
-  gzclose(gz_fh);
+    int r = gzdirect(gz_fh);
+    gzclose(gz_fh);
 
-  return r;
-}
+    return r;
+  }
 #endif
 
 int
-r_preload_guid_data(pmda md, char *path)
+r_preload_guid_data (pmda md, char *path)
 {
   if (md->offset)
     {
@@ -656,10 +657,10 @@ r_preload_guid_data(pmda md, char *path)
     }
 
   char buffer[PATH_MAX];
-  snprintf(buffer, PATH_MAX, "%s%s", GLROOT, path);
-  md_init(md, 16);
+  snprintf (buffer, PATH_MAX, "%s%s", GLROOT, path);
+  md_init (md, 16);
 
-  int r = load_guid_info(md, buffer);
+  int r = load_guid_info (md, buffer);
 
   return r;
 }

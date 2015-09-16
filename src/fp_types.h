@@ -20,68 +20,67 @@
 /* generic types */
 
 typedef int
-_d_achar_i(char *);
+_d_achar_i (char *);
 typedef int
-(*__d_avoidp_i)(void *);
+(*__d_avoidp_i) (void *);
 typedef int
 *
-_d_avoidp_i(void *);
+_d_avoidp_i (void *);
 typedef char *
-_d_achar_p(char *);
+_d_achar_p (char *);
 typedef int
-_d_avoid_i(void);
+_d_avoid_i (void);
 typedef int
-(*__d_avoid_i)(void);
+(*__d_avoid_i) (void);
 typedef int
-_d_is_am(char in_c);
+_d_is_am (char in_c);
 typedef int
-(*__d_is_am)(uint8_t in_c);
+(*__d_is_am) (uint8_t in_c);
 typedef int
-(*__d_is_wb)(int, char*, size_t, void*);
-
+(*__d_is_wb) (int, char*, size_t, void*);
 
 /* specific types */
 
 typedef int
-__d_ref_to_val(void *, char *, char *, size_t, void *mppd);
+__d_ref_to_val (void *, char *, char *, size_t, void *mppd);
 typedef int
-__d_format_block(void *, char *);
+__d_format_block (void *, char *);
 typedef pmda
-__d_cfg(pmda md, char * file);
+__d_cfg (pmda md, char * file);
 typedef int
-__d_mlref(void *buffer, char *key, char *val);
+__d_mlref (void *buffer, char *key, char *val);
 typedef uint64_t
-__g_t_ptr(void *base, size_t offset);
+__g_t_ptr (void *base, size_t offset);
 typedef void *
-__d_ref_to_pval(void *arg, char *match, int *output);
+__d_ref_to_pval (void *arg, char *match, int *output);
 typedef char *
-__g_proc_rv(void *arg, char *match, char *output, size_t max_size, void *mppd);
+__g_proc_rv (void *arg, char *match, char *output, size_t max_size, void *mppd);
 typedef void *
-_d_rtv_lk(void *arg, char *match, char *output, size_t max_size, void *mppd);
+_d_rtv_lk (void *arg, char *match, char *output, size_t max_size, void *mppd);
 typedef void
-_d_omfp_fp(void *hdl, void *ptr, char *sbuffer);
+_d_omfp_fp (void *hdl, void *ptr, char *sbuffer);
 typedef int64_t
-g_sint_p(void *base, size_t offset);
+g_sint_p (void *base, size_t offset);
 typedef void *
-(*__g_proc_v)(void *, char *, char *, size_t, void *);
+(*__g_proc_v) (void *, char *, char *, size_t, void *);
 typedef void
-(*__g_ipcbm)(void *hdl, pmda md, int *r_p, void *ptr);
+(*__g_ipcbm) (void *hdl, pmda md, int *r_p, void *ptr);
 typedef int
-(*__g_proc_t)(void *, char *, char *, size_t);
+(*__g_proc_t) (void *, char *, char *, size_t);
 typedef void *
-(*__d_ref_to_pv)(void *arg, char *match, int *output);
+(*__d_ref_to_pv) (void *arg, char *match, int *output);
 typedef void
-(*_d_omfp)(void *hdl, void *ptr, char *sbuffer);
+(*_d_omfp) (void *hdl, void *ptr, char *sbuffer);
 typedef int
-(*_d_proc3)(void *, char *);
+(*_d_proc3) (void *, char *);
 typedef int
-(*_d_gcb_pp_hook)(void *, void *hdl);
+(*_d_gcb_pp_hook) (void *, void *hdl);
 typedef int
-(*_d_enuml)(void *hdl, void *ptr, void *buffer);
+(*_d_enuml) (void *hdl, void *ptr, void *buffer);
 
 typedef int
-(*__d_wpid_cb)(pid_t, void*);
+(*__d_wpid_cb) (pid_t, void*);
 typedef int
-_d_wpid_cb(int, void*);
+_d_wpid_cb (int, void*);
 
 #endif /* FP_TYPES_H_ */

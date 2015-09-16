@@ -14,21 +14,21 @@
 #include <fp_types.h>
 
 int
-g_oper_and(int s, int d);
+g_oper_and (int s, int d);
 int
-g_oper_or(int s, int d);
+g_oper_or (int s, int d);
 
 typedef int
-__d_icomp(uint64_t s, uint64_t d);
+__d_icomp (uint64_t s, uint64_t d);
 typedef int
-__d_iscomp(int64_t s, int64_t d);
+__d_iscomp (int64_t s, int64_t d);
 typedef int
-__d_fcomp(float s, float d);
+__d_fcomp (float s, float d);
 typedef int
-__d_comp(void *s, void *d);
+__d_comp (void *s, void *d);
 
 typedef int
-(*gs_cmp_p)(void *s, void *d, void * t_ptr);
+(*gs_cmp_p) (void *s, void *d, void * t_ptr);
 
 __d_iscomp g_is_higher_s, g_is_lower_s, g_is_higherorequal_s, g_is_equal_S,
     g_is_not_equal_s, g_is_lowerorequal_s, g_is_not_s, g_is_s, g_is_lower_2_s,

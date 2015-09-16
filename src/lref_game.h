@@ -35,6 +35,6 @@ __g_proc_rv dt_rval_game_score, dt_rval_game_time, dt_rval_game_mode,
     dt_rval_game_basedir, dt_rval_game_dir;
 
 int
-gcb_game(void *buffer, char *key, char *val);
+gcb_game (void *buffer, char *key, char *val);
 
 #endif /* LREF_GAME_H_ */

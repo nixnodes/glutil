@@ -21,7 +21,7 @@ __d_ref_to_pval ref_to_val_ptr_gen3;
 _d_rtv_lk ref_to_val_lk_gen3;
 
 int
-gcb_gen3(void *buffer, char *key, char *val);
+gcb_gen3 (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 

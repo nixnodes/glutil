@@ -15,7 +15,6 @@
 
 #define _D_DRT_HASREGEX         (a32 << 10)
 
-
 typedef struct ___d_drt_h
 {
   uint32_t flags;
@@ -53,6 +52,5 @@ typedef struct ___d_drt_h
   int32_t v_i0;
   uint64_t ret0;
 } _d_drt_h, *__d_drt_h;
-
 
 #endif /* M_COMP_H_ */

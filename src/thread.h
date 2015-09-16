@@ -64,40 +64,39 @@ typedef struct object_thrd
 } o_thrd, *po_thrd;
 
 int
-thread_create(void *call, int id, pmda _thrd_r, uint16_t role,
-    uint16_t oper_mode);
+thread_create (void *call, int id, pmda _thrd_r, uint16_t role,
+	       uint16_t oper_mode);
 int
-mutex_init(pthread_mutex_t *mutex, int flags, int robust);
+mutex_init (pthread_mutex_t *mutex, int flags, int robust);
 
 int
-thread_destroy(p_md_obj ptr);
+thread_destroy (p_md_obj ptr);
 
 mda _net_thrd_r;
 
 p_md_obj
-search_thrd_id(pmda thread_r, pthread_t *pt);
+search_thrd_id (pmda thread_r, pthread_t *pt);
 int
-thread_broadcast_kill(pmda thread_r);
-
+thread_broadcast_kill (pmda thread_r);
 
 int
-spawn_threads(int num, void *call, int id, pmda thread_register, uint16_t role,
-    uint16_t oper_mode);
+spawn_threads (int num, void *call, int id, pmda thread_register, uint16_t role,
+	       uint16_t oper_mode);
 
 void
-mutex_lock(pthread_mutex_t *mutex);
+mutex_lock (pthread_mutex_t *mutex);
 
 typedef float
-dt_score_pt(pmda in, pmda out, void *arg1, void *arg2);
+dt_score_pt (pmda in, pmda out, void *arg1, void *arg2);
 typedef float
-(*dt_score_ptp)(pmda in, pmda out, void *arg1, void *arg2);
+(*dt_score_ptp) (pmda in, pmda out, void *arg1, void *arg2);
 void
-ts_flag_32(pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
+ts_flag_32 (pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
 void
-ts_unflag_32(pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
+ts_unflag_32 (pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
 
 int
-push_object_to_thread(void *object, pmda threadr, dt_score_ptp scalc);
+push_object_to_thread (void *object, pmda threadr, dt_score_ptp scalc);
 
 #endif /* THREAD_H_ */
 

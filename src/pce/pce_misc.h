@@ -9,6 +9,6 @@
 #define PCE_MISC_H_
 
 int
-pce_log(const char * volatile buf, ...);
+pce_log (const char * volatile buf, ...);
 
 #endif /* PCE_MISC_H_ */

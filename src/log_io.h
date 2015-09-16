@@ -46,54 +46,55 @@
 #define MAX_BWHOLD_BYTES                8388608
 
 typedef int
-(*__g_mdref)(__g_handle hdl, pmda md, off_t count);
+(*__g_mdref) (__g_handle hdl, pmda md, off_t count);
 
 int
-d_write(char *arg);
+d_write (char *arg);
 int
-g_fopen(char *file, char *mode, uint32_t flags, __g_handle hdl);
+g_fopen (char *file, char *mode, uint32_t flags, __g_handle hdl);
 void
-g_set_compression_opts(uint8_t level, __g_handle hdl);
+g_set_compression_opts (uint8_t level, __g_handle hdl);
 void *
-g_read(void *buffer, __g_handle hdl, size_t size);
+g_read (void *buffer, __g_handle hdl, size_t size);
 int
-g_close(__g_handle hdl);
+g_close (__g_handle hdl);
 size_t
-g_load_data_md(void *output, size_t max, char *file, __g_handle hdl);
+g_load_data_md (void *output, size_t max, char *file, __g_handle hdl);
 int
-load_data_md(pmda md, char *file, __g_handle hdl);
+load_data_md (pmda md, char *file, __g_handle hdl);
 int
-gen_md_data_ref_cnull(__g_handle hdl, pmda md, off_t count);
+gen_md_data_ref_cnull (__g_handle hdl, pmda md, off_t count);
 int
-gen_md_data_ref(__g_handle hdl, pmda md, off_t count);
+gen_md_data_ref (__g_handle hdl, pmda md, off_t count);
 int
-gh_rewind(__g_handle hdl);
+gh_rewind (__g_handle hdl);
 int
-g_claf_mech(void *ptr);
+g_claf_mech (void *ptr);
 int
-g_cl_mrr(void *ptr);
+g_cl_mrr (void *ptr);
 int
-g_buffer_into_memory(char *file, __g_handle hdl);
+g_buffer_into_memory (char *file, __g_handle hdl);
 int
-g_handle_pipe_cleanup(__g_handle hdl);
+g_handle_pipe_cleanup (__g_handle hdl);
 int
-g_cleanup(__g_handle hdl);
+g_cleanup (__g_handle hdl);
 int
-g_clean_print_mech(pmda print_mech);
+g_clean_print_mech (pmda print_mech);
 int
-rebuild_data_file(char *file, __g_handle hdl);
+rebuild_data_file (char *file, __g_handle hdl);
 int
-flush_data_md(__g_handle hdl, char *outfile);
+flush_data_md (__g_handle hdl, char *outfile);
 int
-m_load_input_n(__g_handle hdl, FILE *input);
+m_load_input_n (__g_handle hdl, FILE *input);
 int
-g_d_post_proc_gcb(void *buffer, void *p_hdl);
+g_d_post_proc_gcb (void *buffer, void *p_hdl);
 int
-g_enum_log(_d_enuml callback, __g_handle hdl, off_t *nres, void *arg);
+g_enum_log (_d_enuml callback, __g_handle hdl, off_t *nres, void *arg);
 int
-determine_temp_path(char *file, char *output, size_t max_out);
+determine_temp_path (char *file, char *output, size_t max_out);
 int
-g_load_record(__g_handle hdl, pmda w_buffer, const void *data, off_t max, uint16_t flags);
+g_load_record (__g_handle hdl, pmda w_buffer, const void *data, off_t max,
+	       uint16_t flags);
 
 #define OPLOG_OUTPUT_NSTATS(dfile, sdst) { \
   if (sdst.bw > 0) \

@@ -34,34 +34,34 @@
 #define F_GM_TYPES_STR                  (F_GM_ISREGEX|F_GM_ISMATCH|F_GM_ISFNAME)
 
 typedef float
-(*g_tf_p)(void *base, size_t offset);
+(*g_tf_p) (void *base, size_t offset);
 typedef uint64_t
-(*g_t_p)(void *base, size_t offset);
+(*g_t_p) (void *base, size_t offset);
 typedef int64_t
-(*g_ts_p)(void *base, size_t offset);
+(*g_ts_p) (void *base, size_t offset);
 typedef int
-(*g_op)(int s, int d);
+(*g_op) (int s, int d);
 void
-g_ipcbm(void *hdl, pmda md, int *r_p, void *ptr);
+g_ipcbm (void *hdl, pmda md, int *r_p, void *ptr);
 int
-g_filter(__g_handle hdl, pmda md);
+g_filter (__g_handle hdl, pmda md);
 int
-g_bmatch(void *, __g_handle, pmda md);
+g_bmatch (void *, __g_handle, pmda md);
 int
-g_bmatch_dummy(void *d_ptr, __g_handle hdl, pmda md);
+g_bmatch_dummy (void *d_ptr, __g_handle hdl, pmda md);
 
 typedef int
-(*pt_g_bmatch)(void *, __g_handle, pmda md);
+(*pt_g_bmatch) (void *, __g_handle, pmda md);
 
 int
-opt_g_operator_or(void *arg, int m, void *opt);
+opt_g_operator_or (void *arg, int m, void *opt);
 int
-opt_g_operator_and(void *arg, int m, void *opt);
+opt_g_operator_and (void *arg, int m, void *opt);
 
 int
-opt_g_m_raise_level(void *arg, int m, void *opt);
+opt_g_m_raise_level (void *arg, int m, void *opt);
 int
-opt_g_m_lower_level(void *arg, int m, void *opt);
+opt_g_m_lower_level (void *arg, int m, void *opt);
 
 typedef struct ___g_lom
 {
@@ -75,13 +75,13 @@ typedef struct ___g_lom
   g_tf_p g_tf_ptr_left;
   g_tf_p g_tf_ptr_right;
   int
-  (*g_icomp_ptr)(uint64_t s, uint64_t d);
+  (*g_icomp_ptr) (uint64_t s, uint64_t d);
   int
-  (*g_iscomp_ptr)(int64_t s, int64_t d);
+  (*g_iscomp_ptr) (int64_t s, int64_t d);
   int
-  (*g_fcomp_ptr)(float s, float d);
+  (*g_fcomp_ptr) (float s, float d);
   int
-  (*g_lom_vp)(void *d_ptr, void * lom);
+  (*g_lom_vp) (void *d_ptr, void * lom);
   g_op g_oper_ptr;
 
   void *left, *right;
@@ -122,9 +122,9 @@ typedef struct ___last_match
 } _l_match, *__l_match;
 
 __g_match
-g_global_register_match(void);
+g_global_register_match (void);
 int
-do_string_match(__g_handle hdl, void *d_ptr, __g_match _gm);
+do_string_match (__g_handle hdl, void *d_ptr, __g_match _gm);
 
 _l_match _match_rr_l;
 

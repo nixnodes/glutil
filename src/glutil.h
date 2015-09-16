@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-
 #include "g_conf.h"
 #include "t_glob.h"
 #include "l_sb.h"
@@ -124,28 +123,28 @@ pthread_mutex_t mutex_glob00;
 #endif
 
 int
-g_print_str(const char * volatile buf, ...);
+g_print_str (const char * volatile buf, ...);
 
 int
-(*__pf_eof)(void *p);
+(*__pf_eof) (void *p);
 
 #include <signal.h>
 
 int
-setup_sighandlers(void);
+setup_sighandlers (void);
 void
-sig_handler(int);
+sig_handler (int);
 void
-child_sig_handler(int, siginfo_t*, void*);
+child_sig_handler (int, siginfo_t*, void*);
 int
-g_shutdown(void *arg);
+g_shutdown (void *arg);
 int
-g_init(int argc, char **argv, char **l_arg);
+g_init (int argc, char **argv, char **l_arg);
 void
-g_send_gkill(void);
+g_send_gkill (void);
 char
-g_get_gkill(void);
+g_get_gkill (void);
 int
-g_setxid(void);
+g_setxid (void);
 
 #endif /* GLUTIL_H_ */

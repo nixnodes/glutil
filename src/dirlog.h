@@ -31,44 +31,43 @@ typedef struct e_arg
 #define F_EARG_SFV                      (a32 << 1)
 #define F_EAR_NOVERB                    (a32 << 2)
 
-
 #define F_PS_STOP_TRAVERSE              ((uint8_t)1 << 1)
 
 #define MAX_BWHOLD_BYTES_DL             524288 * 2
 
 int
-update_records(char *dirname, int depth);
+update_records (char *dirname, int depth);
 int
-proc_directory(char *name, unsigned char type, void *arg, __g_eds eds);
+proc_directory (char *name, unsigned char type, void *arg, __g_eds eds);
 int
-rebuild_dirlog(void);
+rebuild_dirlog (void);
 int
-proc_section(char *name, unsigned char type, void *arg, __g_eds eds);
+proc_section (char *name, unsigned char type, void *arg, __g_eds eds);
 
 typedef uint64_t
-__d_dlfind(char *, int, uint32_t, void *);
+__d_dlfind (char *, int, uint32_t, void *);
 
 __d_dlfind dirlog_find, dirlog_find_old, dirlog_find_simple;
 
 int
-release_generate_block(char *name, ear *iarg);
+release_generate_block (char *name, ear *iarg);
 
 int
-dirlog_write_record(struct dirlog *buffer, off_t offset, int whence);
+dirlog_write_record (struct dirlog *buffer, off_t offset, int whence);
 int
-get_relative_path(char *subject, char *root, char *output);
+get_relative_path (char *subject, char *root, char *output);
 char*
-get_relative_path_n(char *subject, char *root);
+get_relative_path_n (char *subject, char *root);
 uint64_t
-nukelog_find(char *dirn, int mode, struct nukelog *output);
+nukelog_find (char *dirn, int mode, struct nukelog *output);
 int
-dirlog_check_records(void);
+dirlog_check_records (void);
 int
-dirlog_update_record(char *argv);
+dirlog_update_record (char *argv);
 int
-dirlog_check_dupe(void);
+dirlog_check_dupe (void);
 
 p_md_obj
-dirlog_find_a(char *dirn, uint32_t flags, void *callback);
+dirlog_find_a (char *dirn, uint32_t flags, void *callback);
 
 #endif /* DIRLOG_H_ */

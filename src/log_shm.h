@@ -23,13 +23,13 @@
 #define R_SHMAP_FAILED_SHMAT    (a32 << 3)
 
 int
-g_shmap_data(__g_handle, key_t);
+g_shmap_data (__g_handle, key_t);
 int
-g_map_shm(__g_handle, key_t);
+g_map_shm (__g_handle, key_t);
 void *
-shmap(key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
-    int *shmid, int cflags, int shmflg);
+shmap (key_t ipc, struct shmid_ds *ipcret, size_t size, uint32_t *ret,
+       int *shmid, int cflags, int shmflg);
 int
-g_shm_cleanup(__g_handle hdl);
+g_shm_cleanup (__g_handle hdl);
 
 #endif /* LOG_SHM_H_ */

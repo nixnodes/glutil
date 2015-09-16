@@ -27,24 +27,24 @@ _d_omfp_fp g_omfp_norm, g_omfp_raw, g_omfp_ocomp, g_omfp_eassemble,
     g_xproc_print_d, g_xproc_print;
 
 int
-(*int_printf)(const char *__restrict __format, ...);
+(*int_printf) (const char *__restrict __format, ...);
 
 int
-g_print_stats(char *file, uint32_t flags, size_t block_sz);
+g_print_stats (char *file, uint32_t flags, size_t block_sz);
 void
-g_do_ppprint(__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc);
+g_do_ppprint (__g_handle hdl, uint64_t t_flags, pmda p_mech, _d_omfp g_proc);
 
 int
-g_omfp_write(int fd, char *buffer, size_t max_size, void*);
+g_omfp_write (int fd, char *buffer, size_t max_size, void*);
 int
-g_omfp_write0(int fd, char *buffer, size_t max_size, void*);
+g_omfp_write0 (int fd, char *buffer, size_t max_size, void*);
 int
-g_omfp_write_nl(int fd, char *buffer, size_t max_size, void*);
+g_omfp_write_nl (int fd, char *buffer, size_t max_size, void*);
 int
-g_omfp_q_nssys(int fd, char *buffer, size_t max_size, void *arg);
+g_omfp_q_nssys (int fd, char *buffer, size_t max_size, void *arg);
 int
-g_omfp_q_nssys_nl(int fd, char *buffer, size_t size, void *arg);
+g_omfp_q_nssys_nl (int fd, char *buffer, size_t size, void *arg);
 
-int     fd_out;
+int fd_out;
 
 #endif /* OMFP_H_ */

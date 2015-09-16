@@ -21,7 +21,7 @@ __d_ref_to_pval ref_to_val_ptr_gen1;
 _d_rtv_lk ref_to_val_lk_gen1;
 
 int
-gcb_gen1(void *buffer, char *key, char *val);
+gcb_gen1 (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 
@@ -40,8 +40,6 @@ typedef struct ___d_generic_s2044
 
 #pragma pack(pop)
 
-
 #define G1_SZ                           sizeof(_d_generic_s2044)
-
 
 #endif /* LREF_GEN1_H_ */

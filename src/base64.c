@@ -24,7 +24,7 @@ const char *BASE64_CHARS =
  * @param result buffer of four characters where the result is stored
  */
 void
-_base64_encode_triple(unsigned char triple[3], char result[4])
+_base64_encode_triple (unsigned char triple[3], char result[4])
 {
   int tripleValue, i;
 
@@ -51,8 +51,8 @@ _base64_encode_triple(unsigned char triple[3], char result[4])
  * @return 1 on success, 0 otherwise
  */
 int
-base64_encode(unsigned char *source, unsigned int sourcelen, char *target,
-    unsigned int targetlen)
+base64_encode (unsigned char *source, unsigned int sourcelen, char *target,
+	       unsigned int targetlen)
 {
   /* check if the result will fit in the target buffer */
   if ((sourcelen + 2) / 3 * 4 > targetlen - 1)
@@ -61,7 +61,7 @@ base64_encode(unsigned char *source, unsigned int sourcelen, char *target,
   /* encode all full triples */
   while (sourcelen >= 3)
     {
-      _base64_encode_triple(source, target);
+      _base64_encode_triple (source, target);
       sourcelen -= 3;
       source += 3;
       target += 4;
@@ -71,12 +71,12 @@ base64_encode(unsigned char *source, unsigned int sourcelen, char *target,
   if (sourcelen > 0)
     {
       unsigned char temp[3];
-      memset(temp, 0, sizeof(temp));
-      memcpy(temp, source, sourcelen);
-      _base64_encode_triple(temp, target);
+      memset (temp, 0, sizeof(temp));
+      memcpy (temp, source, sourcelen);
+      _base64_encode_triple (temp, target);
       target[3] = '=';
       if (sourcelen == 1)
-        target[2] = '=';
+	target[2] = '=';
 
       target += 4;
     }
@@ -94,7 +94,7 @@ base64_encode(unsigned char *source, unsigned int sourcelen, char *target,
  * @return the value in case of success (0-63), -1 on failure
  */
 int
-_base64_char_value(char base64char)
+_base64_char_value (char base64char)
 {
   if (base64char >= 'A' && base64char <= 'Z')
     return base64char - 'A';
@@ -117,29 +117,29 @@ _base64_char_value(char base64char)
  * @return lenth of the result (1, 2 or 3), 0 on failure
  */
 int
-_base64_decode_triple(char quadruple[4], unsigned char *result)
+_base64_decode_triple (char quadruple[4], unsigned char *result)
 {
   int i, triple_value, bytes_to_decode = 3, only_equals_yet = 1;
   int char_value[4];
 
   for (i = 0; i < 4; i++)
-    char_value[i] = _base64_char_value(quadruple[i]);
+    char_value[i] = _base64_char_value (quadruple[i]);
 
   /* check if the characters are valid */
   for (i = 3; i >= 0; i--)
     {
       if (char_value[i] < 0)
-        {
-          if (only_equals_yet && quadruple[i] == '=')
-            {
-              /* we will ignore this character anyway, make it something
-               * that does not break our calculations */
-              char_value[i] = 0;
-              bytes_to_decode--;
-              continue;
-            }
-          return 0;
-        }
+	{
+	  if (only_equals_yet && quadruple[i] == '=')
+	    {
+	      /* we will ignore this character anyway, make it something
+	       * that does not break our calculations */
+	      char_value[i] = 0;
+	      bytes_to_decode--;
+	      continue;
+	    }
+	  return 0;
+	}
       /* after we got a real character, no other '=' are allowed anymore */
       only_equals_yet = 0;
     }
@@ -178,7 +178,7 @@ _base64_decode_triple(char quadruple[4], unsigned char *result)
  * @return length of converted data on success, -1 otherwise
  */
 unsigned int
-base64_decode(char *source, unsigned char *target, unsigned int targetlen)
+base64_decode (char *source, unsigned char *target, unsigned int targetlen)
 {
   char *src, *tmpptr;
   char quadruple[4];
@@ -187,11 +187,11 @@ base64_decode(char *source, unsigned char *target, unsigned int targetlen)
   unsigned int converted = 0;
 
   /* concatinate '===' to the source to handle unpadded base64 data */
-  src = (char *) malloc(strlen(source) + 5);
+  src = (char *) malloc (strlen (source) + 5);
   if (src == NULL)
     return -1;
-  strcpy(src, source);
-  strcat(src, "====");
+  strcpy (src, source);
+  strcat (src, "====");
   tmpptr = src;
 
   /* convert as long as we get a full result */
@@ -199,31 +199,31 @@ base64_decode(char *source, unsigned char *target, unsigned int targetlen)
     {
       /* get 4 characters to convert */
       for (i = 0; i < 4; i++)
-        {
-          /* skip invalid characters - we won't reach the end */
-          while (*tmpptr != '=' && _base64_char_value(*tmpptr) < 0)
-            tmpptr++;
+	{
+	  /* skip invalid characters - we won't reach the end */
+	  while (*tmpptr != '=' && _base64_char_value (*tmpptr) < 0)
+	    tmpptr++;
 
-          quadruple[i] = *(tmpptr++);
-        }
+	  quadruple[i] = *(tmpptr++);
+	}
 
       /* convert the characters */
-      tmplen = _base64_decode_triple(quadruple, tmpresult);
+      tmplen = _base64_decode_triple (quadruple, tmpresult);
 
       /* check if the fit in the result buffer */
       if (targetlen < tmplen)
-        {
-          free(src);
-          return -1;
-        }
+	{
+	  free (src);
+	  return -1;
+	}
 
       /* put the partial result in the result buffer */
-      memcpy(target, tmpresult, tmplen);
+      memcpy (target, tmpresult, tmplen);
       target += tmplen;
       targetlen -= tmplen;
       converted += tmplen;
     }
 
-  free(src);
+  free (src);
   return converted;
 }

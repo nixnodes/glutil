@@ -14,8 +14,8 @@
 #include <time.h>
 
 struct tm *
-get_localtime(void)
+get_localtime (void)
 {
-  time_t t = time(NULL);
-  return localtime(&t);
+  time_t t = time (NULL);
+  return localtime (&t);
 }

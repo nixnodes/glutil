@@ -14,26 +14,25 @@
 #include <net_io.h>
 
 int
-net_deploy(void);
+net_deploy (void);
 
 int
-net_baseline_gl_data_in(__sock_o pso, pmda base, pmda threadr, void *data);
+net_baseline_gl_data_in (__sock_o pso, pmda base, pmda threadr, void *data);
 int
-net_gl_socket_init0(__sock_o pso);
+net_gl_socket_init0 (__sock_o pso);
 int
-net_gl_socket_init1(__sock_o pso);
+net_gl_socket_init1 (__sock_o pso);
 int
-net_gl_socket_connect_init1(__sock_o pso);
+net_gl_socket_connect_init1 (__sock_o pso);
 int
-net_gl_socket_post_clean(__sock_o pso);
+net_gl_socket_post_clean (__sock_o pso);
 int
-net_gl_socket_pre_clean(__sock_o pso);
+net_gl_socket_pre_clean (__sock_o pso);
 int
-net_gl_socket_init1_dc_on_ac(__sock_o pso);
+net_gl_socket_init1_dc_on_ac (__sock_o pso);
 
 int
-net_gl_socket_destroy(__sock_o pso);
-
+net_gl_socket_destroy (__sock_o pso);
 
 #define F_NETOPT_HUSER                  (a64 << 1)
 #define F_NETOPT_HGROUP                 (a64 << 2)

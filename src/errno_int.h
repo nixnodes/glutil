@@ -31,12 +31,11 @@ typedef struct errno_msg_ref
 char erm_buf[2048];
 
 char *
-ie_tl(int code, __emr pemr);
-
+ie_tl (int code, __emr pemr);
 
 _emr EMR_enum_dir[4];
 
 char *
-g_strerr_r(int errnum, char *buf, size_t buflen);
+g_strerr_r (int errnum, char *buf, size_t buflen);
 
 #endif /* ERRNO_INT_H_ */

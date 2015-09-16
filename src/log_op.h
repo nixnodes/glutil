@@ -14,24 +14,23 @@
 #include <im_hdr.h>
 
 char *
-g_dgetf(char *str);
+g_dgetf (char *str);
 
 typedef int
-_d_ag_handle_i(__g_handle);
+_d_ag_handle_i (__g_handle);
 
 int
-determine_datatype(__g_handle hdl, char *file);
+determine_datatype (__g_handle hdl, char *file);
 int
-g_proc_mr(__g_handle hdl);
+g_proc_mr (__g_handle hdl);
 
 char *_print_ptr, *_print_ptr_post, *_print_ptr_pre, *_cl_print_ptr;
 
 int
-data_backup_records(char *file);
+data_backup_records (char *file);
 int
-rebuild(void *arg);
+rebuild (void *arg);
 int
-d_gen_dump(char *arg);
-
+d_gen_dump (char *arg);
 
 #endif /* LOG_OP_H_ */

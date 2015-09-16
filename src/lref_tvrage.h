@@ -30,9 +30,7 @@
 __d_ref_to_pval ref_to_val_ptr_tv;
 _d_rtv_lk ref_to_val_lk_tvrage;
 
-__d_format_block tv_format_block, tv_format_block_batch,
-    tv_format_block_exp;
-
+__d_format_block tv_format_block, tv_format_block_batch, tv_format_block_exp;
 
 __g_proc_rv dt_rval_tvrage_dir, dt_rval_tvrage_basedir, dt_rval_tvrage_time,
     dt_rval_tvrage_ended, dt_rval_tvrage_started, dt_rval_tvrage_started,
@@ -43,7 +41,7 @@ __g_proc_rv dt_rval_tvrage_dir, dt_rval_tvrage_basedir, dt_rval_tvrage_time,
     dt_rval_tvrage_class, dt_rval_tvrage_genre, dt_rval_tvrage_network;
 
 int
-gcb_tv(void *buffer, char *key, char *val);
+gcb_tv (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 
@@ -73,6 +71,5 @@ typedef struct ___d_tvrage
 #pragma pack(pop)
 
 #define TV_SZ                           sizeof(_d_tvrage)
-
 
 #endif /* LREF_TVRAGE_H_ */

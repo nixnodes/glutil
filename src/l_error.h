@@ -36,9 +36,9 @@ typedef struct sig_jmp_buf
 } sigjmp, *p_sigjmp;
 
 void
-g_setjmp(uint32_t flags, char *type, void *callback, void *arg);
+g_setjmp (uint32_t flags, char *type, void *callback, void *arg);
 void
-sighdl_error(int sig, siginfo_t* siginfo, void* context);
+sighdl_error (int sig, siginfo_t* siginfo, void* context);
 
 sigjmp g_sigjmp;
 

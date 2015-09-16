@@ -19,7 +19,6 @@
 
 #define M_EXECH_DCNBT   "ERROR: %s: could not build exec string, output too large\n"
 
-
 typedef struct ___d_exec_ch
 {
   char *st_ptr;
@@ -29,9 +28,9 @@ typedef struct ___d_exec_ch
 } _d_exec_ch, *__d_exec_ch;
 
 int
-g_compile_exech(pmda mech, __g_handle hdl, char *instr);
+g_compile_exech (pmda mech, __g_handle hdl, char *instr);
 size_t
-g_exech_build_string(void *d_ptr, pmda mech, __g_handle hdl, char *outstr,
-    size_t maxlen);
+g_exech_build_string (void *d_ptr, pmda mech, __g_handle hdl, char *outstr,
+		      size_t maxlen);
 
 #endif /* EXECH_H_ */

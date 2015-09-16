@@ -8,7 +8,6 @@
 #ifndef MISC_H_
 #define MISC_H_
 
-
 #include <fp_types.h>
 
 #include <unistd.h>
@@ -35,31 +34,31 @@
 #define F_MSG_TYPE_DEBUG                (F_MSG_TYPE_DEBUG0|F_MSG_TYPE_DEBUG1|F_MSG_TYPE_DEBUG2|F_MSG_TYPE_DEBUG3|F_MSG_TYPE_DEBUG4|F_MSG_TYPE_DEBUG5|F_MSG_TYPE_DEBUG6)
 
 void
-enable_logging(void);
+enable_logging (void);
 char *
-build_data_path(char *file, char *path, char *sd);
+build_data_path (char *file, char *path, char *sd);
 uint32_t
-get_msg_type(char *msg);
+get_msg_type (char *msg);
 int
-w_log(char *w, char *ow);
+w_log (char *w, char *ow);
 int
-g_print_info(void);
+g_print_info (void);
 int
-g_memcomp(const void *p1, const void *p2, off_t size);
+g_memcomp (const void *p1, const void *p2, off_t size);
 char *
-g_bitstr(uint64_t value, uint8_t bits, char *buffer);
+g_bitstr (uint64_t value, uint8_t bits, char *buffer);
 
 uint32_t
-opt_get_msg_type(char *msg);
+opt_get_msg_type (char *msg);
 int
-build_msg_reg(char *arg, uint32_t *opt_r);
+build_msg_reg (char *arg, uint32_t *opt_r);
 
 uint32_t STDLOG_LVL;
 
 int
-print_version_long(void *arg, int m, void *opt);
+print_version_long (void *arg, int m, void *opt);
 
 int
-(*print_str)(const char * volatile buf, ...);
+(*print_str) (const char * volatile buf, ...);
 
 #endif /* MISC_H_ */

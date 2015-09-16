@@ -10,9 +10,4 @@
 
 #include <t_glob.h>
 
-
-
-
-
-
 #endif /* G_TYPES_H_ */

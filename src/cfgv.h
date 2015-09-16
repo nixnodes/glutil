@@ -32,7 +32,6 @@
 #define MSG_INIT_PATH_OVERR             "NOTICE: %s path set to '%s'\n"
 #define MSG_INIT_CMDLINE_ERROR          "ERROR: [%d] processing command line arguments failed\n"
 
-
 typedef struct g_cfg_ref
 {
   mda cfg;
@@ -45,24 +44,23 @@ typedef struct config_header
   mda data;
 } cfg_h, *p_cfg_h;
 
-
 char *
-g_rtval_ex(char *arg, char *match, size_t max_size, char *output,
-    uint32_t flags);
+g_rtval_ex (char *arg, char *match, size_t max_size, char *output,
+	    uint32_t flags);
 void *
-ref_to_val_get_cfgval(char *cfg, char *key, char *defpath, int flags, char *out,
-    size_t max);
+ref_to_val_get_cfgval (char *cfg, char *key, char *defpath, int flags,
+		       char *out, size_t max);
 
 int
-load_cfg(pmda pmd, char *file, uint32_t flags, pmda *res);
+load_cfg (pmda pmd, char *file, uint32_t flags, pmda *res);
 void
-free_cfg(pmda md);
+free_cfg (pmda md);
 p_md_obj
-get_cfg_opt(char *key, pmda md, pmda *ret);
+get_cfg_opt (char *key, pmda md, pmda *ret);
 
 __d_cfg search_cfg_rf, register_cfg_rf;
 
 int
-free_cfg_rf(pmda md);
+free_cfg_rf (pmda md);
 
 #endif /* CFGV_H_ */

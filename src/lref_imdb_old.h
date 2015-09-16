@@ -13,7 +13,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-
 #define STD_FMT_DATE_STR                "%d %b %Y"
 
 __g_proc_rv dt_rval_imdb_o_time, dt_rval_imdb_o_score, dt_rval_imdb_o_votes,
@@ -31,7 +30,7 @@ __d_format_block imdb_o_format_block, imdb_o_format_block_batch,
     imdb_o_format_block_exp;
 
 int
-gcb_imdbh_o(void *buffer, char *key, char *val);
+gcb_imdbh_o (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 

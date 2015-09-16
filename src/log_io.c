@@ -389,7 +389,6 @@ clean_drt (__d_drt_h mppd)
       free(mppd->mppd_aux_next);
     }
 
-
   md_g_free_cb(&mppd->math, math_cleanup);
 
   md_g_free_cb(&mppd->chains, chains_cleanup);

@@ -1449,7 +1449,6 @@ opt_imdblog_o (void *arg, int m, void *opt)
   return 0;
 }
 
-
 int
 opt_tvlog (void *arg, int m, void *opt)
 {

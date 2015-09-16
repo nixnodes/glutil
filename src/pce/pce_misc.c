@@ -17,11 +17,11 @@
 #define PCE_PSTR_MAX        16384
 
 int
-pce_log(const char * volatile buf, ...)
+pce_log (const char * volatile buf, ...)
 {
   char d_buffer_2[PCE_PSTR_MAX];
 
-  if (!(get_msg_type((char*) buf) & STDLOG_LVL))
+  if (!(get_msg_type ((char*) buf) & STDLOG_LVL))
     {
       return 0;
     }
@@ -31,15 +31,15 @@ pce_log(const char * volatile buf, ...)
 
   if (NULL != fd_log)
     {
-      struct tm tm = *get_localtime();
-      snprintf(d_buffer_2, PCE_PSTR_MAX,
-          "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] [%d] %s", tm.tm_mday, tm.tm_mon + 1,
-          (tm.tm_year + 1900) % 100, tm.tm_hour, tm.tm_min, tm.tm_sec, getpid(),
-          buf);
+      struct tm tm = *get_localtime ();
+      snprintf (d_buffer_2, PCE_PSTR_MAX,
+		"[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] [%d] %s", tm.tm_mday,
+		tm.tm_mon + 1, (tm.tm_year + 1900) % 100, tm.tm_hour, tm.tm_min,
+		tm.tm_sec, getpid (), buf);
 
       char wl_buffer[PCE_PSTR_MAX];
-      vsnprintf(wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);
-      w_log(wl_buffer, (char*) buf);
+      vsnprintf (wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);
+      w_log (wl_buffer, (char*) buf);
 
     }
 

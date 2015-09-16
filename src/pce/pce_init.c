@@ -124,7 +124,7 @@ sigjmp g_sigjmp =
   {
     {
       {
-        { 0 } } } };
+	{ 0 } } } };
 
 mda _match_rr =
   { 0 };
@@ -149,43 +149,43 @@ int g_shmcflags = S_IRUSR | S_IRGRP | S_IROTH;
 
 __dt_set pdt_set_dirlog = dt_set_dummy, pdt_set_nukelog = dt_set_dummy,
     pdt_set_lastonlog = dt_set_dummy, pdt_set_dupefile = dt_set_dummy,
-    pdt_set_oneliners = dt_set_dummy, pdt_set_imdb = dt_set_imdb, pdt_set_imdb_o = dt_set_imdb_o, pdt_set_game =
-        dt_set_game, pdt_set_tvrage = dt_set_tvrage,
-    pdt_set_gen1 = dt_set_dummy, pdt_set_gen2 = dt_set_dummy, pdt_set_gen3 =
-        dt_set_dummy, pdt_set_gen4 = dt_set_dummy, pdt_set_gconf = dt_set_gconf,
-    pdt_set_sconf = dt_set_sconf;
+    pdt_set_oneliners = dt_set_dummy, pdt_set_imdb = dt_set_imdb,
+    pdt_set_imdb_o = dt_set_imdb_o, pdt_set_game = dt_set_game, pdt_set_tvrage =
+	dt_set_tvrage, pdt_set_gen1 = dt_set_dummy, pdt_set_gen2 = dt_set_dummy,
+    pdt_set_gen3 = dt_set_dummy, pdt_set_gen4 = dt_set_dummy, pdt_set_gconf =
+	dt_set_gconf, pdt_set_sconf = dt_set_sconf;
 
 int
-main(int argc, char *argv[])
+main (int argc, char *argv[])
 {
   print_str = pce_log;
   STDLOG_LVL = LOG_LEVEL;
-  setup_sighandlers();
+  setup_sighandlers ();
 
   //gfl |= F_OPT_PS_SILENT;
-  pce_proc(argv[2], argv[1]);
+  pce_proc (argv[2], argv[1]);
 
   if (fd_log)
     {
-      fclose(fd_log);
+      fclose (fd_log);
     }
 
   if ((pce_f & F_PCE_FORKED))
     {
-      _exit(EXITVAL);
+      _exit (EXITVAL);
     }
-  exit(EXITVAL);
+  exit (EXITVAL);
 }
 
 void
-pce_enable_logging(void)
+pce_enable_logging (void)
 {
   if ((gfl & F_OPT_PS_LOGGING) && !fd_log)
     {
-      if (!(fd_log = fopen(pce_logfile, "a")))
-        {
-          gfl ^= F_OPT_PS_LOGGING;
-        }
+      if (!(fd_log = fopen (pce_logfile, "a")))
+	{
+	  gfl ^= F_OPT_PS_LOGGING;
+	}
     }
   return;
 }

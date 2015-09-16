@@ -18,7 +18,7 @@
 #include "lref_generic.h"
 
 void
-dt_set_gen3(__g_handle hdl)
+dt_set_gen3 (__g_handle hdl)
 {
   hdl->flags |= F_GH_ISGENERIC3;
   hdl->block_sz = G3_SZ;
@@ -36,7 +36,7 @@ dt_set_gen3(__g_handle hdl)
 }
 
 int
-zone_format_block(void *iarg, char *output)
+zone_format_block (void *iarg, char *output)
 {
   __d_generic_s800 data = (__d_generic_s800) iarg;
 
@@ -47,7 +47,7 @@ zone_format_block(void *iarg, char *output)
 }
 
 int
-zone_format_block_batch(void *iarg, char *output)
+zone_format_block_batch (void *iarg, char *output)
 {
   __d_generic_s800 data = (__d_generic_s800) iarg;
 
@@ -58,7 +58,7 @@ zone_format_block_batch(void *iarg, char *output)
 }
 
 int
-zone_format_block_exp(void *iarg, char *output)
+zone_format_block_exp (void *iarg, char *output)
 {
   __d_generic_s800 data = (__d_generic_s800) iarg;
 
@@ -78,7 +78,7 @@ zone_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_gen3_e(void *arg, char *match, int *output)
+ref_to_val_ptr_gen3_e (void *arg, char *match, int *output)
 {
   __d_generic_s800 data = (__d_generic_s800) arg;
   if (!strncmp(match, _MC_GE_I1, 2))
@@ -117,104 +117,104 @@ ref_to_val_ptr_gen3_e(void *arg, char *match, int *output)
 }
 
 void *
-ref_to_val_ptr_gen3(void *arg, char *match, int *output)
+ref_to_val_ptr_gen3 (void *arg, char *match, int *output)
 {
   REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_gen3_e)
 }
 
 char *
-dt_rval_gen3_path(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_path (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_1);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_1);
   return output;
 }
 
 char *
-dt_rval_gen3_i2(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_i2 (void *arg, char *match, char *output, size_t max_size,
+		 void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_2);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->i32_2);
   return output;
 }
 
 char *
-dt_rval_gen3_ui1(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_ui1 (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->ui32_1);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->ui32_1);
   return output;
 }
 
 char *
-dt_rval_gen3_ui2(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_ui2 (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->ui32_2);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_generic_s800) arg)->ui32_2);
   return output;
 }
 
 char *
-dt_rval_gen3_uli1(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_uli1 (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      (ulint64_t) ((__d_generic_s800) arg)->ui64_1);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc,
+	    (ulint64_t) ((__d_generic_s800) arg)->ui64_1);
   return output;
 }
 
 char *
-dt_rval_gen3_uli2(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_uli2 (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc,
-      (ulint64_t) ((__d_generic_s800) arg)->ui64_2);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc,
+	    (ulint64_t) ((__d_generic_s800) arg)->ui64_2);
   return output;
 }
 
 char *
-dt_rval_gen3_ge1(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_ge1 (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
 {
   return ((__d_generic_s800) arg)->s_1;
 }
 
 char *
-dt_rval_gen3_ge2(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_ge2 (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
 {
   return ((__d_generic_s800) arg)->s_2;
 }
 
 char *
-dt_rval_gen3_ge3(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_ge3 (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
 {
   return ((__d_generic_s800) arg)->s_3;
 }
 
 char *
-dt_rval_gen3_ge4(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gen3_ge4 (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
 {
   return ((__d_generic_s800) arg)->s_4;
 }
 
 void *
-ref_to_val_lk_gen3(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+ref_to_val_lk_gen3 (void *arg, char *match, char *output, size_t max_size,
+		    void *mppd)
 {
   PROC_SH_EX(match)
 
   void *ptr;
-  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
+  if ((ptr = ref_to_val_lk_generic (arg, match, output, max_size, mppd)))
     {
       return ptr;
     }
 
-  if (!strncmp(match, _MC_GE_I1, 2))
+  if (!strncmp (match, _MC_GE_I1, 2))
     {
-      return as_ref_to_val_lk(match, dt_rval_gen3_path, (__d_drt_h) mppd, "%d");
+      return as_ref_to_val_lk (match, dt_rval_gen3_path, (__d_drt_h) mppd, "%d");
     }
   else if (!strncmp(match, _MC_GE_I2, 2))
     {
@@ -256,109 +256,108 @@ ref_to_val_lk_gen3(void *arg, char *match, char *output, size_t max_size,
   return NULL;
 }
 
-
 int
-gcb_gen3(void *buffer, char *key, char *val)
+gcb_gen3 (void *buffer, char *key, char *val)
 {
-  size_t k_l = strlen(key), v_l;
+  size_t k_l = strlen (key), v_l;
   __d_generic_s800 ptr = (__d_generic_s800) buffer;
   errno = 0;
 
-  if (k_l == 3 && !strncmp(key, _MC_GE_GE1, 3))
+  if (k_l == 3 && !strncmp (key, _MC_GE_GE1, 3))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return 0;
-        }
-      memcpy(ptr->s_1, val, v_l > 254 ? 254 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return 0;
+	}
+      memcpy (ptr->s_1, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
-  else if (k_l == 3 && !strncmp(key, _MC_GE_GE2, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_GE_GE2, 3))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return 0;
-        }
-      memcpy(ptr->s_2, val, v_l > 254 ? 254 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return 0;
+	}
+      memcpy (ptr->s_2, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
-  else if (k_l == 3 && !strncmp(key, _MC_GE_GE3, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_GE_GE3, 3))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return 0;
-        }
-      memcpy(ptr->s_3, val, v_l > 254 ? 254 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return 0;
+	}
+      memcpy (ptr->s_3, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
-  else if (k_l == 3 && !strncmp(key, _MC_GE_GE4, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_GE_GE4, 3))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return 0;
-        }
-      memcpy(ptr->s_4, val, v_l > 254 ? 254 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return 0;
+	}
+      memcpy (ptr->s_4, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
-  else if (k_l == 2 && !strncmp(key, _MC_GE_I1, 2))
+  else if (k_l == 2 && !strncmp (key, _MC_GE_I1, 2))
     {
-      int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+      int32_t v_ui = (int32_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->i32_1 = v_ui;
       return 1;
     }
-  else if (k_l == 2 && !strncmp(key, _MC_GE_I2, 2))
+  else if (k_l == 2 && !strncmp (key, _MC_GE_I2, 2))
     {
-      int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+      int32_t v_ui = (int32_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->i32_2 = v_ui;
       return 1;
     }
 
-  else if (k_l == 2 && !strncmp(key, _MC_GE_U1, 2))
+  else if (k_l == 2 && !strncmp (key, _MC_GE_U1, 2))
     {
-      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->ui32_1 = v_ui;
       return 1;
     }
-  else if (k_l == 2 && !strncmp(key, _MC_GE_U2, 2))
+  else if (k_l == 2 && !strncmp (key, _MC_GE_U2, 2))
     {
-      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->ui32_2 = v_ui;
       return 1;
     }
 
-  else if (k_l == 3 && !strncmp(key, _MC_GE_UL1, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_GE_UL1, 3))
     {
-      uint64_t v_ul = (uint64_t) strtoull(val, NULL, 10);
+      uint64_t v_ul = (uint64_t) strtoull (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->ui64_1 = v_ul;
       return 1;
     }
-  else if (k_l == 3 && !strncmp(key, _MC_GE_UL2, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_GE_UL2, 3))
     {
-      uint64_t v_ul = (uint64_t) strtoull(val, NULL, 10);
+      uint64_t v_ul = (uint64_t) strtoull (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->ui64_2 = v_ul;
       return 1;
     }

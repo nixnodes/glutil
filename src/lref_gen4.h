@@ -21,7 +21,7 @@ __d_ref_to_pval ref_to_val_ptr_gen4;
 _d_rtv_lk ref_to_val_lk_gen4;
 
 int
-gcb_gen4(void *buffer, char *key, char *val);
+gcb_gen4 (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 
@@ -40,7 +40,6 @@ typedef struct ___d_generic_s4640
 } _d_generic_s4640, *__d_generic_s4640;
 
 #pragma pack(pop)
-
 
 #define G4_SZ                           sizeof(_d_generic_s4640)
 

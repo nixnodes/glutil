@@ -19,9 +19,10 @@ _d_rtv_lk ref_to_val_lk_dupefile;
 
 __g_proc_rv dt_rval_dupefile_time, dt_rval_dupefile_file, dt_rval_dupefile_user;
 
-__d_format_block dupefile_format_block, dupefile_format_block_batch, dupefile_format_block_exp;
+__d_format_block dupefile_format_block, dupefile_format_block_batch,
+    dupefile_format_block_exp;
 
 int
-gcb_dupefile(void *buffer, char *key, char *val);
+gcb_dupefile (void *buffer, char *key, char *val);
 
 #endif /* LREF_DUPEFILE_H_ */

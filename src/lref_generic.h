@@ -47,8 +47,8 @@
 _d_rtv_lk ref_to_val_lk_generic;
 
 int
-ref_to_val_generic(void *arg, char *match, char *output, size_t max_size,
-    void *mppd);
+ref_to_val_generic (void *arg, char *match, char *output, size_t max_size,
+		    void *mppd);
 
 __g_proc_rv dt_rval_generic_nukestr, dt_rval_generic_procid,
     dt_rval_generic_ipc, dt_rval_generic_usroot, dt_rval_generic_logroot,

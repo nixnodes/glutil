@@ -61,60 +61,60 @@ typedef struct ___nn_2x64
 #pragma pack(pop)
 
 int
-md_init(pmda md, int nm);
+md_init (pmda md, int nm);
 p_md_obj
-md_first(pmda md);
+md_first (pmda md);
 int
-md_g_free(pmda md);
+md_g_free (pmda md);
 int
-md_g_free_l(pmda md);
+md_g_free_l (pmda md);
 int
-md_g_free_cb(pmda md, int
-(*cb)(void *));
+md_g_free_cb (pmda md, int
+(*cb) (void *));
 ssize_t
-md_relink(pmda md);
+md_relink (pmda md);
 ssize_t
-md_relink_n(pmda md, off_t base);
+md_relink_n (pmda md, off_t base);
 p_md_obj
-md_first(pmda md);
+md_first (pmda md);
 p_md_obj
-md_last(pmda md);
+md_last (pmda md);
 void *
-md_swap_s(pmda md, p_md_obj md_o1, p_md_obj md_o2);
+md_swap_s (pmda md, p_md_obj md_o1, p_md_obj md_o2);
 void *
-md_swap(pmda md, p_md_obj md_o1, p_md_obj md_o2);
+md_swap (pmda md, p_md_obj md_o1, p_md_obj md_o2);
 void *
-md_unlink(pmda md, p_md_obj md_o);
+md_unlink (pmda md, p_md_obj md_o);
 void *
-md_alloc(pmda md, int b);
+md_alloc (pmda md, int b);
 int
-md_copy(pmda source, pmda dest, size_t block_sz, int
-(*cb)(void *source, void *dest, void *ptr));
+md_copy (pmda source, pmda dest, size_t block_sz, int
+(*cb) (void *source, void *dest, void *ptr));
 int
-md_copy_le(pmda source, pmda dest, size_t block_sz, int
-(*cb)(void *source, void *dest, void *ptr));
+md_copy_le (pmda source, pmda dest, size_t block_sz, int
+(*cb) (void *source, void *dest, void *ptr));
 int
-is_memregion_null(void *addr, size_t size);
+is_memregion_null (void *addr, size_t size);
 int
-md_md_to_array(pmda source, void **dest);
+md_md_to_array (pmda source, void **dest);
 int
-md_array_to_md(void ** source, pmda dest);
+md_array_to_md (void ** source, pmda dest);
 
 #define F_MDALLOC_NOLINK                ((uint32_t)1 << 1)
 
 void *
-md_alloc_le(pmda md, size_t b, uint32_t flags, void *refptr);
+md_alloc_le (pmda md, size_t b, uint32_t flags, void *refptr);
 void *
-md_unlink_le(pmda md, p_md_obj md_o);
+md_unlink_le (pmda md, p_md_obj md_o);
 int
-md_init_le(pmda md, int nm);
+md_init_le (pmda md, int nm);
 
 off_t
-register_count(pmda thread_r);
+register_count (pmda thread_r);
 
 #ifdef _G_SSYS_THREAD
 off_t
-md_get_off_ts(pmda md);
+md_get_off_ts (pmda md);
 #endif
 
 #endif /* MEMORY_H_ */

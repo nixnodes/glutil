@@ -88,38 +88,38 @@ typedef struct ___lom_strings_header
 }
 
 typedef int
-__d_lom_vp(void *d_ptr, void *_lom);
+__d_lom_vp (void *d_ptr, void *_lom);
 
 __d_lom_vp g_lom_var_int, g_lom_var_uint, g_lom_var, g_lom_var_math,
     g_lom_var_float, g_lom_var_accu_uint, g_lom_var_accu_int,
     g_lom_var_accu_float, g_lom_var_set_uint, g_lom_var_set_int,
     g_lom_var_set_float;
 int
-g_lom_match(__g_handle hdl, void *d_ptr, __g_match _gm);
+g_lom_match (__g_handle hdl, void *d_ptr, __g_match _gm);
 int
-g_lom_accu(__g_handle hdl, void *d_ptr, pmda _accumulator);
+g_lom_accu (__g_handle hdl, void *d_ptr, pmda _accumulator);
 int
-g_load_lom(__g_handle hdl);
+g_load_lom (__g_handle hdl);
 int
-g_process_lom_string(__g_handle hdl, char *string, __g_match _gm, int *ret,
-    uint32_t flags);
+g_process_lom_string (__g_handle hdl, char *string, __g_match _gm, int *ret,
+		      uint32_t flags);
 int
-g_build_lom_packet(__g_handle hdl, char *left, char *right, char *comp,
-    size_t comp_l, char *oper, size_t oper_l, __g_match match, __g_lom *ret,
-    uint32_t flags);
+g_build_lom_packet (__g_handle hdl, char *left, char *right, char *comp,
+		    size_t comp_l, char *oper, size_t oper_l, __g_match match,
+		    __g_lom *ret, uint32_t flags);
 
 int
-g_get_lom_g_t_ptr(__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
+g_get_lom_g_t_ptr (__g_handle hdl, char *field, __g_lom lom, uint32_t flags);
 int
-g_get_lom_alignment(__g_lom lom, uint32_t flags, int *vb, size_t off);
+g_get_lom_alignment (__g_lom lom, uint32_t flags, int *vb, size_t off);
 
 int
-opt_g_lom(void *arg, int m, uint32_t flags);
+opt_g_lom (void *arg, int m, uint32_t flags);
 int
-g_build_lom_packet_bare(__g_handle hdl, __g_lom lom, char *field, void *right,
-    void *comp_set[], g_op lop);
+g_build_lom_packet_bare (__g_handle hdl, __g_lom lom, char *field, void *right,
+			 void *comp_set[], g_op lop);
 int
-g_lom_match_bare(__g_handle hdl, void *d_ptr, __g_lom lom);
+g_lom_match_bare (__g_handle hdl, void *d_ptr, __g_lom lom);
 
 void *_lcs_isequal[3];
 void *_lcs_ishigher[3];

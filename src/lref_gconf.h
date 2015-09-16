@@ -49,7 +49,7 @@ __d_ref_to_pval ref_to_val_ptr_gconf;
 _d_rtv_lk ref_to_val_lk_gconf;
 
 int
-gcb_gconf(void *buffer, char *key, char *val);
+gcb_gconf (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 

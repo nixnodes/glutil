@@ -52,28 +52,28 @@ typedef struct g_sref_data
 } _srd, *__p_srd;
 
 typedef int
-(*g_xsort_exec_p)(pmda m_ptr, __p_srd psrd);
+(*g_xsort_exec_p) (pmda m_ptr, __p_srd psrd);
 
 int
-do_sort(__g_handle hdl, char *field, uint32_t flags);
+do_sort (__g_handle hdl, char *field, uint32_t flags);
 int
-opt_g_sort(void *arg, int m, void *opt);
+opt_g_sort (void *arg, int m, void *opt);
 void
-g_invert_sort_order(uint32_t *flags);
+g_invert_sort_order (uint32_t *flags);
 int
-g_sort(__g_handle hdl, char *field, uint32_t flags);
+g_sort (__g_handle hdl, char *field, uint32_t flags);
 int
-g_check_is_data_numeric(__g_handle hdl, char *field);
+g_check_is_data_numeric (__g_handle hdl, char *field);
 void
-g_heapsort(void **ref_arr, int64_t offset, int64_t dummy, __p_srd psrd);
+g_heapsort (void **ref_arr, int64_t offset, int64_t dummy, __p_srd psrd);
 void
-g_qsort(void **arr, int64_t left, int64_t right, __p_srd psrd);
+g_qsort (void **arr, int64_t left, int64_t right, __p_srd psrd);
 int
-preproc_sort_numeric(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
+preproc_sort_numeric (__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
 int
-g_sort_string(__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
+g_sort_string (__g_handle hdl, char *field, uint32_t flags, __p_srd psrd);
 
 typedef void
-(*__d_sort_p)(void **arr, int64_t left, int64_t right, __p_srd psrd);
+(*__d_sort_p) (void **arr, int64_t left, int64_t right, __p_srd psrd);
 
 #endif /* SORT_HDR_H_ */

@@ -79,9 +79,8 @@
 #define F_GH_ISSHM                      (F_GH_SHM|F_GH_ONSHM)
 #define F_GH_ISMP                       (F_GH_HASMATCHES|F_GH_HASMAXRES|F_GH_HASMAXHIT)
 
-
 typedef int
-(*__d_exec)(void *buffer, void *callback, char *ex_str, void *hdl);
+(*__d_exec) (void *buffer, void *callback, char *ex_str, void *hdl);
 
 typedef struct ___execv
 {
@@ -136,7 +135,7 @@ typedef struct g_handle
   int shmid;
   struct shmid_ds ipcbuf;
   int
-  (*g_proc0)(void *, char *, char *);
+  (*g_proc0) (void *, char *, char *);
   __g_proc_v g_proc1_ps;
   __d_ref_to_pv g_proc2;
   __g_proc_v g_proc1_lookup;
@@ -170,23 +169,23 @@ typedef struct g_handle
 #define G_HDL_ERRNO_ALLOC          4
 
 typedef void
-_dt_set(__g_handle hdl);
+_dt_set (__g_handle hdl);
 typedef void
-(*__dt_set)(__g_handle hdl);
+(*__dt_set) (__g_handle hdl);
 
 #ifdef _MAKE_SBIN
 _dt_set dt_set_dummy;
 
 #else
 _dt_set dt_set_dummy, dt_set_dirlog, dt_set_nukelog, dt_set_dupefile,
-    dt_set_lastonlog, dt_set_oneliners, dt_set_imdb, dt_set_imdb_o, dt_set_game, dt_set_tvrage,
-    dt_set_gen1, dt_set_gen2, dt_set_gen3, dt_set_gen4, dt_set_gconf,
-    dt_set_sconf, dt_set_altlog, dt_set_online, dt_set_x;
+    dt_set_lastonlog, dt_set_oneliners, dt_set_imdb, dt_set_imdb_o, dt_set_game,
+    dt_set_tvrage, dt_set_gen1, dt_set_gen2, dt_set_gen3, dt_set_gen4,
+    dt_set_gconf, dt_set_sconf, dt_set_altlog, dt_set_online, dt_set_x;
 
 __dt_set pdt_set_dirlog, pdt_set_nukelog, pdt_set_dupefile, pdt_set_lastonlog,
-    pdt_set_oneliners, pdt_set_imdb, pdt_set_imdb_o, pdt_set_game, pdt_set_tvrage, pdt_set_gen1,
-    pdt_set_gen2, pdt_set_gen3, pdt_set_gen4, pdt_set_gconf, pdt_set_sconf,
-    pdt_set_altlog, pdt_set_online, pdt_set_x;
+    pdt_set_oneliners, pdt_set_imdb, pdt_set_imdb_o, pdt_set_game,
+    pdt_set_tvrage, pdt_set_gen1, pdt_set_gen2, pdt_set_gen3, pdt_set_gen4,
+    pdt_set_gconf, pdt_set_sconf, pdt_set_altlog, pdt_set_online, pdt_set_x;
 #endif
 
 #endif /* IM_HDR_H_ */

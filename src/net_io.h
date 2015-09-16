@@ -66,11 +66,11 @@
 #include <openssl/ssl.h>
 
 typedef int
-(*_p_s_cb)(void *, void *, void *, void *);
+(*_p_s_cb) (void *, void *, void *, void *);
 typedef int
-(*_t_stocb)(void *);
+(*_t_stocb) (void *);
 typedef int
-(*_p_ssend)(void*, void *, size_t length);
+(*_p_ssend) (void*, void *, size_t length);
 
 #define F_ST_MISC00_ACT         ((uint32_t)1 << 1)
 #define F_ST_MISC02_ACT         ((uint32_t)1 << 3)
@@ -158,22 +158,22 @@ typedef struct ___sock_cret
 } _sock_cret, *__sock_cret;
 
 typedef int
-(*_p_sc_cb)(__sock_o sock_o);
+(*_p_sc_cb) (__sock_o sock_o);
 
 typedef int
-p_sc_cb(__sock_o sock_o);
+p_sc_cb (__sock_o sock_o);
 
 typedef int
-(p_s_cb)(__sock_o spso, pmda base, pmda threadr, void *data);
+(p_s_cb) (__sock_o spso, pmda base, pmda threadr, void *data);
 
 typedef int
-(*__p_s_cb)(__sock_o spso, pmda base, pmda threadr, void *data);
+(*__p_s_cb) (__sock_o spso, pmda base, pmda threadr, void *data);
 
 typedef int
-(*_p_enumsr_cb)(__sock_o sock_o, void *arg);
+(*_p_enumsr_cb) (__sock_o sock_o, void *arg);
 
 typedef int
-p_enumsr_cb(__sock_o sock_o, void *arg);
+p_enumsr_cb (__sock_o sock_o, void *arg);
 
 /*
  * int
@@ -212,64 +212,64 @@ typedef struct ___sock_create_args
 p_sc_cb rc_tst, rc_ghs, net_socket_init_enforce_policy;
 
 int
-net_connect_socket(int fd, struct addrinfo *aip);
+net_connect_socket (int fd, struct addrinfo *aip);
 int
-bind_socket(int fd, struct addrinfo *aip);
+bind_socket (int fd, struct addrinfo *aip);
 int
-check_socket_event(__sock_o pso);
+check_socket_event (__sock_o pso);
 int
-net_worker(void *args);
+net_worker (void *args);
 void
-net_worker_dispatcher(int signal);
+net_worker_dispatcher (int signal);
 
 int
-net_enum_sockr(pmda base, _p_enumsr_cb p_ensr_cb, void *arg);
+net_enum_sockr (pmda base, _p_enumsr_cb p_ensr_cb, void *arg);
 
 void
-net_nw_ssig_term_r(pmda objects);
+net_nw_ssig_term_r (pmda objects);
 
 void
-ssl_init(void);
+ssl_init (void);
 void
-ssl_cleanup(void);
+ssl_cleanup (void);
 
 p_s_cb net_recv, net_recv_ssl, net_accept_ssl, net_accept, net_connect_ssl;
 
 int
-net_open_listening_socket(char *addr, char *port, __sock_ca args);
+net_open_listening_socket (char *addr, char *port, __sock_ca args);
 int
-net_open_connection(char *addr, char *port, __sock_ca args);
+net_open_connection (char *addr, char *port, __sock_ca args);
 float
-net_get_score(pmda in, pmda out, __sock_o pso, po_thrd thread);
+net_get_score (pmda in, pmda out, __sock_o pso, po_thrd thread);
 void
-net_send_sock_term_sig(__sock_o pso);
+net_send_sock_term_sig (__sock_o pso);
 int
-net_ssend_b(__sock_o pso, void *data, size_t length);
+net_ssend_b (__sock_o pso, void *data, size_t length);
 int
-net_ssend_ssl_b(__sock_o pso, void *data, size_t length);
+net_ssend_ssl_b (__sock_o pso, void *data, size_t length);
 int
-net_ssend_ssl(__sock_o pso, void *data, size_t length);
+net_ssend_ssl (__sock_o pso, void *data, size_t length);
 int
-net_ssend(__sock_o pso, void *data, size_t length);
+net_ssend (__sock_o pso, void *data, size_t length);
 int
-net_link_sockets(__sock_o pso1, __sock_o pso2);
+net_link_sockets (__sock_o pso1, __sock_o pso2);
 int
-net_link_with_all_registered_sockets(pmda sockr, __sock_o pso,
-    uint16_t match_oper_mode);
+net_link_with_all_registered_sockets (pmda sockr, __sock_o pso,
+				      uint16_t match_oper_mode);
 int
-net_push_to_sendq(__sock_o pso, void *data, size_t size, uint16_t flags);
+net_push_to_sendq (__sock_o pso, void *data, size_t size, uint16_t flags);
 int
-net_sendq_broadcast(pmda base, __sock_o source, void *data, size_t size);
+net_sendq_broadcast (pmda base, __sock_o source, void *data, size_t size);
 int
-net_send_direct(__sock_o pso, const void *data, size_t size);
+net_send_direct (__sock_o pso, const void *data, size_t size);
 int
-net_pop_rc(__sock_o pso, pmda rc);
+net_pop_rc (__sock_o pso, pmda rc);
 int
-net_push_rc(pmda rc, _t_stocb call, uint32_t flags);
+net_push_rc (pmda rc, _t_stocb call, uint32_t flags);
 const char *
-net_get_addrinfo_ip(__sock_o pso, char *out, socklen_t len);
+net_get_addrinfo_ip (__sock_o pso, char *out, socklen_t len);
 uint16_t
-net_get_addrinfo_port(__sock_o pso);
+net_get_addrinfo_port (__sock_o pso);
 
 #endif
 

@@ -628,10 +628,9 @@ g_get_math_g_t_ptr (__g_handle hdl, char *field, __g_math math, uint32_t flags,
       math->vb = sizeof(uint64_t);
       math->_m_p = g_get_math_m_p (math, p_math);
 
-      size_t mlen = strlen(field) + 1;
-      math->misc1 = malloc(mlen);
-      strncpy((char *) math->misc1, (void*) field, mlen);
-
+      size_t mlen = strlen (field) + 1;
+      math->misc1 = malloc (mlen);
+      strncpy ((char *) math->misc1, (void*) field, mlen);
 
       return 0;
     }

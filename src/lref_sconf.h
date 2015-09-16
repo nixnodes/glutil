@@ -37,7 +37,7 @@ __d_ref_to_pval ref_to_val_ptr_sconf;
 _d_rtv_lk ref_to_val_lk_sconf;
 
 int
-gcb_sconf(void *buffer, char *key, char *val);
+gcb_sconf (void *buffer, char *key, char *val);
 
 #pragma pack(push, 4)
 

@@ -18,7 +18,7 @@
 #include "lref_generic.h"
 
 void
-dt_set_sconf(__g_handle hdl)
+dt_set_sconf (__g_handle hdl)
 {
   hdl->flags |= F_GH_ISSCONF;
   hdl->block_sz = SC_SZ;
@@ -35,7 +35,7 @@ dt_set_sconf(__g_handle hdl)
 }
 
 int
-sconf_format_block(void *iarg, char *output)
+sconf_format_block (void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
@@ -45,7 +45,7 @@ sconf_format_block(void *iarg, char *output)
 }
 
 int
-sconf_format_block_batch(void *iarg, char *output)
+sconf_format_block_batch (void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
@@ -55,7 +55,7 @@ sconf_format_block_batch(void *iarg, char *output)
 }
 
 int
-sconf_format_block_exp(void *iarg, char *output)
+sconf_format_block_exp (void *iarg, char *output)
 {
   __d_sconf data = (__d_sconf) iarg;
 
@@ -75,7 +75,7 @@ sconf_format_block_exp(void *iarg, char *output)
 }
 
 void *
-ref_to_val_ptr_sconf_e(void *arg, char *match, int *output)
+ref_to_val_ptr_sconf_e (void *arg, char *match, int *output)
 {
   __d_sconf data = (__d_sconf) arg;
   if (!strncmp(match, _MC_SCONF_INT32, 3))
@@ -122,111 +122,110 @@ ref_to_val_ptr_sconf_e(void *arg, char *match, int *output)
 }
 
 void *
-ref_to_val_ptr_sconf(void *arg, char *match, int *output)
+ref_to_val_ptr_sconf (void *arg, char *match, int *output)
 {
   REF_TO_VAL_RESOLVE(arg, match, output, ref_to_val_ptr_sconf_e)
 }
 
-
 char *
-dt_rval_sconf_int(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_int (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->i32);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->i32);
   return output;
 }
 
 char *
-dt_rval_sconf_uint64(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_uint64 (void *arg, char *match, char *output, size_t max_size,
+		      void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->ui64);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->ui64);
   return output;
 }
 
 char *
-dt_rval_sconf_ui1(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_ui1 (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->ui32_1);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->ui32_1);
   return output;
 }
 
 char *
-dt_rval_sconf_ui2(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_ui2 (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->ui32_2);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->ui32_2);
   return output;
 }
 char *
-dt_rval_sconf_ui3(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_ui3 (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->invert);
-  return output;
-}
-
-char *
-dt_rval_sconf_ui4(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
-{
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->type);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->invert);
   return output;
 }
 
 char *
-dt_rval_sconf_lcomp(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_ui4 (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->lcomp);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->type);
   return output;
 }
 
 char *
-dt_rval_sconf_icase(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_lcomp (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
 {
-  snprintf(output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->icase);
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->lcomp);
   return output;
 }
 
 char *
-dt_rval_sconf_match(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_icase (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
+{
+  snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, ((__d_sconf) arg)->icase);
+  return output;
+}
+
+char *
+dt_rval_sconf_match (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
 {
   return ((__d_sconf) arg)->match;
 }
 
 char *
-dt_rval_sconf_field(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_sconf_field (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
 {
   return ((__d_sconf) arg)->field;
 }
 
 char *
-dt_rval_gconf_msg(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+dt_rval_gconf_msg (void *arg, char *match, char *output, size_t max_size,
+		   void *mppd)
 {
   return ((__d_sconf) arg)->message;
 }
 
 void *
-ref_to_val_lk_sconf(void *arg, char *match, char *output, size_t max_size,
-    void *mppd)
+ref_to_val_lk_sconf (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
 {
   PROC_SH_EX(match)
 
   void *ptr;
-  if ((ptr = ref_to_val_lk_generic(arg, match, output, max_size, mppd)))
+  if ((ptr = ref_to_val_lk_generic (arg, match, output, max_size, mppd)))
     {
       return ptr;
     }
 
-  if (!strncmp(match, _MC_SCONF_INT32, 3))
+  if (!strncmp (match, _MC_SCONF_INT32, 3))
     {
-      return as_ref_to_val_lk(match, dt_rval_sconf_int, (__d_drt_h) mppd, "%d");
+      return as_ref_to_val_lk (match, dt_rval_sconf_int, (__d_drt_h) mppd, "%d");
     }
   else if (!strncmp(match, _MC_SCONF_UINT64, 6))
     {
@@ -273,116 +272,117 @@ ref_to_val_lk_sconf(void *arg, char *match, char *output, size_t max_size,
 }
 
 int
-gcb_sconf(void *buffer, char *key, char *val)
+gcb_sconf (void *buffer, char *key, char *val)
 {
-  size_t k_l = strlen(key), v_l;
+  size_t k_l = strlen (key), v_l;
   __d_sconf ptr = (__d_sconf) buffer;
   errno = 0;
 
-  if (k_l == 5 && !strncmp(key, _MC_SCONF_MATCH, 5))
+  if (k_l == 5 && !strncmp (key, _MC_SCONF_MATCH, 5))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return 0;
-        }
-      memcpy(ptr->match, val, v_l > 4095 ? 4095 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return 0;
+	}
+      memcpy (ptr->match, val, v_l > 4095 ? 4095 : v_l);
       return 1;
     }
-  else if (k_l == 5 && !strncmp(key, _MC_SCONF_FIELD, 5))
+  else if (k_l == 5 && !strncmp (key, _MC_SCONF_FIELD, 5))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return -1;
-        }
-      memcpy(ptr->field, val, v_l > 254 ? 254 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return -1;
+	}
+      memcpy (ptr->field, val, v_l > 254 ? 254 : v_l);
       return 1;
     }
-  else if (k_l == 3 && !strncmp(key, _MC_SCONF_MSG, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_SCONF_MSG, 3))
     {
-      if (!(v_l = strlen(val)))
-        {
-          return -1;
-        }
-      memcpy(ptr->message, val, v_l >= SCONF_MAX_MSG ? SCONF_MAX_MSG - 1 : v_l);
+      if (!(v_l = strlen (val)))
+	{
+	  return -1;
+	}
+      memcpy (ptr->message, val,
+	      v_l >= SCONF_MAX_MSG ? SCONF_MAX_MSG - 1 : v_l);
       return -1;
     }
-  else if (k_l == 3 && !strncmp(key, _MC_SCONF_INT32, 3))
+  else if (k_l == 3 && !strncmp (key, _MC_SCONF_INT32, 3))
     {
-      int32_t v_ui = (int32_t) strtol(val, NULL, 10);
+      int32_t v_ui = (int32_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return 0;
-        }
+	{
+	  return 0;
+	}
       ptr->i32 = v_ui;
       return 1;
     }
-  else if (k_l == 6 && !strncmp(key, _MC_SCONF_UINT64, 6))
+  else if (k_l == 6 && !strncmp (key, _MC_SCONF_UINT64, 6))
     {
-      uint64_t v_ui = (uint64_t) strtoull(val, NULL, 10);
+      uint64_t v_ui = (uint64_t) strtoull (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->ui64 = v_ui;
       return -1;
     }
-  else if (k_l == 2 && !strncmp(key, _MC_GE_U1, 2))
+  else if (k_l == 2 && !strncmp (key, _MC_GE_U1, 2))
     {
-      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->ui32_1 = v_ui;
       return -1;
     }
-  else if (k_l == 2 && !strncmp(key, _MC_GE_U2, 2))
+  else if (k_l == 2 && !strncmp (key, _MC_GE_U2, 2))
     {
-      uint32_t v_ui = (uint32_t) strtoul(val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->ui32_2 = v_ui;
       return -1;
     }
-  else if (k_l == 6 && !strncmp(key, _MC_SCONF_INVERTM, 6))
+  else if (k_l == 6 && !strncmp (key, _MC_SCONF_INVERTM, 6))
     {
-      int8_t v_ui = (int8_t) strtol(val, NULL, 10);
+      int8_t v_ui = (int8_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->invert = v_ui;
       return -1;
     }
-  else if (k_l == 4 && !strncmp(key, _MC_SCONF_TYPE, 4))
+  else if (k_l == 4 && !strncmp (key, _MC_SCONF_TYPE, 4))
     {
-      int8_t v_ui = (int8_t) strtol(val, NULL, 10);
+      int8_t v_ui = (int8_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->type = v_ui;
       return -1;
     }
-  else if (k_l == 5 && !strncmp(key, _MC_SCONF_LCOMP, 5))
+  else if (k_l == 5 && !strncmp (key, _MC_SCONF_LCOMP, 5))
     {
-      int8_t v_ui = (int8_t) strtol(val, NULL, 10);
+      int8_t v_ui = (int8_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->lcomp = v_ui;
       return -1;
     }
-  else if (k_l == 5 && !strncmp(key, _MC_SCONF_ICASE, 5))
+  else if (k_l == 5 && !strncmp (key, _MC_SCONF_ICASE, 5))
     {
-      int8_t v_ui = (int8_t) strtol(val, NULL, 10);
+      int8_t v_ui = (int8_t) strtol (val, NULL, 10);
       if ( errno == ERANGE)
-        {
-          return -1;
-        }
+	{
+	  return -1;
+	}
       ptr->icase = v_ui;
       return -1;
     }

@@ -43,6 +43,6 @@ __d_format_block altlog_format_block, altlog_format_block_exp,
     altlog_format_block_batch;
 
 int
-gcb_altlog(void *buffer, char *key, char *val);
+gcb_altlog (void *buffer, char *key, char *val);
 
 #endif /* LREF_ALTLOG_H_ */

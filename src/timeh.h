@@ -11,6 +11,6 @@
 #include <time.h>
 
 struct tm *
-get_localtime(void);
+get_localtime (void);
 
 #endif /* HTIME_H_ */

@@ -15,14 +15,14 @@
 #include <signal.h>
 
 void
-sig_handler_null(int signal);
+sig_handler_null (int signal);
 void
-sig_handler_test(int signal);
+sig_handler_test (int signal);
 int
-setup_sighandlers(void);
+setup_sighandlers (void);
 void
-child_sig_handler(int signal, siginfo_t * si, void *p);
+child_sig_handler (int signal, siginfo_t * si, void *p);
 void
-sig_handler(int signal);
+sig_handler (int signal);
 
 #endif /* SIGNAL_T_H_ */

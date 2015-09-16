@@ -19,21 +19,21 @@
 #define MAX_SHARG_SZ    4096
 
 void *
-as_ref_to_val_lk(char *match, void *c, __d_drt_h mppd, char *defdc);
+as_ref_to_val_lk (char *match, void *c, __d_drt_h mppd, char *defdc);
 char *
-g_get_stf(char *match);
+g_get_stf (char *match);
 
 typedef void*
-rtv_af(void *arg, char *match, char *output, size_t max_size, __d_drt_h mppd);
+rtv_af (void *arg, char *match, char *output, size_t max_size, __d_drt_h mppd);
 
 rtv_af ref_to_val_af, ref_to_val_af_math;
 
 int
-rtv_q(void *query, char *output, size_t max_size);
+rtv_q (void *query, char *output, size_t max_size);
 
 char*
-l_mppd_shell_ex(char *input, char *output, size_t max_size, void **l_nr, char l,
-    char r, uint32_t flags);
+l_mppd_shell_ex (char *input, char *output, size_t max_size, void **l_nr,
+		 char l, char r, uint32_t flags);
 
 #define F_MPPD_SHX_TZERO        (a32 << 1)
 
@@ -53,12 +53,12 @@ char m_b[MAX_SHARG_SZ]; \
 };
 
 char *
-g_extract_vfield(char *input, char *output, size_t max_size, size_t offset);
+g_extract_vfield (char *input, char *output, size_t max_size, size_t offset);
 int
-ref_to_val_ptr_offset(char *match, size_t *offset, size_t max_size);
+ref_to_val_ptr_offset (char *match, size_t *offset, size_t max_size);
 
 size_t
-l_mppd_gvlen(char *input);
+l_mppd_gvlen (char *input);
 
 #define REF_TO_VAL_RESOLVE(arg, match, output, what) { \
   void *ptr = what(arg, match, output); \

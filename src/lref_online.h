@@ -19,7 +19,7 @@
 #define _MC_ONLINE_HOST         "host"
 
 int
-online_format_block_comp(void *iarg, char *output);
+online_format_block_comp (void *iarg, char *output);
 
 _d_rtv_lk ref_to_val_lk_online;
 
@@ -32,8 +32,7 @@ __g_proc_rv dt_rval_online_ssl, dt_rval_online_group, dt_rval_online_time,
 
 __d_ref_to_pval ref_to_val_ptr_online;
 
-__d_format_block online_format_block, online_format_block_batch, online_format_block_exp;
-
-
+__d_format_block online_format_block, online_format_block_batch,
+    online_format_block_exp;
 
 #endif /* LREF_ONLINE_H_ */

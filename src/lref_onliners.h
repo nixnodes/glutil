@@ -19,9 +19,10 @@ _d_rtv_lk ref_to_val_lk_oneliners;
 
 __d_ref_to_pval ref_to_val_ptr_oneliners;
 
-__d_format_block oneliner_format_block, oneliner_format_block_batch, oneliner_format_block_exp;
+__d_format_block oneliner_format_block, oneliner_format_block_batch,
+    oneliner_format_block_exp;
 
 int
-gcb_oneliner(void *buffer, char *key, char *val);
+gcb_oneliner (void *buffer, char *key, char *val);
 
 #endif /* LREF_ONLINE_H_ */
