@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:08
+#@REVISION:09
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -171,16 +171,16 @@ imdb_do_query() {
 
 imdb_search()
 {
-        echo "$1" | $XMLLINT --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|[ ]*|[\"]//g'
+        echo "${1}" | ${XMLLINT} --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|[ ]*|[\"]//g'
 }
 
 omdb_search()
 {
-        $CURL $CURL_FLAGS "$IMDB_URL?r=xml&s=$1""$YQ_O" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|[ ]*|[\"]//g'
+        $CURL $CURL_FLAGS "${IMDB_URL}?r=xml&s=${1}${YQ_O}" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|[ ]*|[\"]//g'
 }
 
 get_omdbapi_data() {
-        $CURL $CURL_FLAGS "$IMDB_URL""?r=XML&i=$1"
+        $CURL $CURL_FLAGS "${IMDB_URL}?r=XML&i=${1}"
 }
 
 get_imdb_screens_count() {
@@ -309,7 +309,7 @@ if ! [ $7 -eq 2 ]; then
                         if [ ${IMDB_DATABASE_TYPE} -eq 1 ] && [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
                 			cad ${2} "-match" "$iid" "${3}" "imdbid"
 		        		fi
-			TITLE=`get_field title`
+						TITLE=`get_field title`
                         TYPE=`get_field type`
                 elif [ $LOOSE_SEARCH -eq 1 ] && [ $S_LOOSE -eq 0 ] ; then
                         print_str "WARNING: $QUERY ($YEAR_q): $TD: invalid match (type is $TYPE), trying loose search.."
@@ -412,8 +412,8 @@ if [ $UPDATE_IMDBLOG -eq 1 ]; then
         if [ $IMDB_DATABASE_TYPE -eq 0 ]; then
                 GLR_E=`echo $4 | sed 's/\//\\\\\//g'`
                 DIR_E=`echo $6 | sed "s/^$GLR_E//" | sed "s/^$GLSR_E//"`
-                 [ -e "$3$LAPPEND" ] && {
-               	 	${2} --imdblog="$3$LAPPEND" -ff --nobackup --nofq -e imdb ! -regex "$DIR_E" --nostats --silent ${EXTRA_ARGS} || {
+                [ -e "$3$LAPPEND" ] && {
+					${2} --imdblog="${3}${LAPPEND}" -ff --nobackup --nofq -e imdb -l: dir ! -match "${DIR_E}" --nostats --silent ${EXTRA_ARGS} || {
                         print_str "ERROR: $DIR_E: Failed removing old record" && exit 1
                 	}
                 }
