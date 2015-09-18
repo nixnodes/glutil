@@ -39,7 +39,6 @@ g_print_str (const char * volatile buf, ...)
     }
 
   va_list al;
-  va_start(al, buf);
 
   if ((gfl & F_OPT_PS_LOGGING) || (gfl & F_OPT_PS_TIME))
     {
@@ -50,7 +49,9 @@ g_print_str (const char * volatile buf, ...)
       if (fd_log)
 	{
 	  char wl_buffer[PSTR_MAX];
+	  va_start(al, buf);
 	  vsnprintf (wl_buffer, PSTR_MAX, d_buffer_2, al);
+	  va_end(al);
 	  w_log (wl_buffer, (char*) buf);
 	}
     }
@@ -58,37 +59,30 @@ g_print_str (const char * volatile buf, ...)
   uint32_t iserr = stdlog_level
       & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR | F_MSG_TYPE_WARNING);
 
-  if (!iserr && (gfl & F_OPT_STDOUT_SILENT))
+  FILE *output;
+
+  if (!iserr)
     {
-      va_end(al);
-      return 0;
+      if (gfl & F_OPT_STDOUT_SILENT)
+	{
+	  return 0;
+	}
+      output = stdout;
+    }
+  else
+    {
+      output = stderr;
     }
 
-  va_end(al);
   va_start(al, buf);
 
   if (gfl & F_OPT_PS_TIME)
     {
-      if (iserr)
-	{
-	  vfprintf (stderr, d_buffer_2, al);
-	}
-      else
-	{
-	  vprintf (d_buffer_2, al);
-	}
-
+      vfprintf (output, d_buffer_2, al);
     }
   else
     {
-      if (iserr)
-	{
-	  vfprintf (stderr, buf, al);
-	}
-      else
-	{
-	  vprintf (buf, al);
-	}
+      vfprintf (output, buf, al);
     }
 
   va_end(al);
