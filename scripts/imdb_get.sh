@@ -17,11 +17,11 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:09
+#@REVISION:10
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
-#@MACRO:imdb-su-id|Update imdblog records using existing imdbID's, no searching is done:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{imdbid\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 2 \{basedir\} \{year\}" 
+#@MACRO:imdb-su-id|Update imdblog records using existing imdbID's, no searching is done:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{imdbid\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 2 \{basedir\} \{year\}" {arg2}
 #@MACRO:imdb-su-f1:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1" -l: dir -regex "\/"
 #@MACRO:imdb-e-id|iMDB lookups based on -arg1 input (imdbID) [-arg1=<imdbid>]:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb; {spec1} {arg1} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} '-' 2 '-' 0" 
 #@MACRO:imdb-e|iMDB lookups based on -arg1 input [-arg1=<query>]:{exe} -noop  --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb; {spec1} '{arg1}' '\{exe\}' '\{imdbfile\}' '\{glroot\}' '\{siterootn\}' '{arg2}' 0 '' '' {arg3}"
@@ -101,7 +101,7 @@ IMDB_SHARED_MEM=0
 VERBOSE=1
 #
 ## Allowed types regular expression (per omdbapi)
-OMDB_ALLOWED_TYPES="movie|N\/A"
+OMDB_ALLOWED_TYPES="movie|series|N\/A"
 #
 ## Extract year from release string and apply to searches
 IMDB_SEARCH_BY_YEAR=1
@@ -378,7 +378,7 @@ GENRE=`get_field genre`
 [ -z "$GENRE" ] && GENRE="N/A"
 VOTES=`echo $(get_field imdbVotes) | tr -d ','`
 [ -z "$VOTES" ] && VOTES=0
-YEAR=`get_field year | tr -d ' '`
+YEAR=`get_field year | tr -d ' ' | egrep -o '^[0-9]+'`
 [ -z "$YEAR" ] && YEAR=0
 echo "$YEAR" | egrep -q '^[0-9]{1,4}$' || YEAR=0
 RATED=`get_field rated`
