@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:47
+#@REVISION:48
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --sort asc,mtime --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' 3` {arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 
 #@MACRO:tvrage-su|Update existing tvlog records, pass query/dir name through the search engine:{exe} -h --tvlog={q:tvrage@file} --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 1`
@@ -29,13 +29,17 @@
 #
 ## Install script dependencies + libs into glftpd root, preserving library paths (requires mlocate)
 #
-#@MACRO:tvrage-installch|Install required libraries into glFTPd root:{exe} -noop --preexec `! updatedb -e "\{glroot\}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/rev /bin/cut /bin/recode"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '\{print $3\}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "\{glroot\}$f" ] || if cp --preserve=all "$f" "\{glroot\}$f"; then echo "$lf: \{glroot\}$f"; fi; done; [ -f "\{glroot\}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "\{glroot\}/bin/$(basename "$lf")"; then echo "\{glroot\}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
+#@MACRO:tvrage-installch|Install required libraries into glFTPd root:{exe} -noop --preexec `! updatedb -e "\{glroot\}" -o /tmp/glutil.mlocate.db && echo "updatedb failed" && exit 1 ; li="/bin/curl /bin/perl /bin/awk /bin/xmllint /bin/date /bin/egrep /bin/sed /bin/expr /bin/rev /bin/cut"; for lli in $li; do lf=$(locate -d /tmp/glutil.mlocate.db "$lli" | head -1) && l=$(ldd "$lf" | awk '\{print $3\}' | grep -v ')' | sed '/^$/d' ) && for f in $l ; do [ -f "$f" ] && dn="/glftpd$(dirname $f)" && ! [ -d $dn ] && mkdir -p "$dn"; [ -f "\{glroot\}$f" ] || if cp --preserve=all "$f" "\{glroot\}$f"; then echo "$lf: \{glroot\}$f"; fi; done; [ -f "\{glroot\}/bin/$(basename "$lf")" ] || if cp --preserve=all "$lf" "\{glroot\}/bin/$(basename "$lf")"; then echo "\{glroot\}/bin/$(basename "$lf")"; fi; done; rm -f /tmp/glutil.mlocate.db`
 #
 ## Gets show info using TVRAGE API (XML)
 #
 ## Requires: - glutil-2.6.2 or above
 ##			 - libxml2 v2.7.7 or above
-##           - curl, date, egrep, sed, expr, rev, cut, recode (optional)
+##           - curl, date, egrep, sed, expr, rev, cut, perl (HTML::Entities) (optional), awk
+#
+## Notes:    Install the required perl module to decode HTML entities:
+##             
+##             sudo perl -MCPAN -e 'install HTML::Entities'
 #
 ## Usage (macro): -m tvrage --arg1=/path/to/shows [--arg2=<path filter>]                 					(filesystem based)
 ##                -m tvrage-d --arg1 '\/tv\-((sd|hd|)x264|xvid|bluray|dvdr(ip|))\/.*\-[a-zA-Z0-9\-_]+$'   	(dirlog based)
@@ -122,7 +126,7 @@ TITLE_WIPE_CHARS="\'\´\:\"\’"
 ## in the respective order to show name before it
 ## gets written
 #
-TITLE_REPLACE=("s/\&amp\;/and/g" "s/ \& / and /g")
+TITLE_REPLACE=("s/ \& / and /g")
 #
 ############################[ END OPTIONS ]##############################
 ############################[ BEGIN PATHS ]##############################
@@ -134,7 +138,7 @@ CURL_FLAGS="--silent --max-time 30"
 XMLLINT="/usr/bin/xmllint"
 
 # recode binary (optional), gets rid of HTML entities
-RECODE="recode"
+RECODE="perl"
 
 ############################[ BEGIN PATHS ]##############################
 
@@ -277,12 +281,12 @@ echo "$DDT" | egrep -q "^Invalid" && {
 
 get_field()
 {
-	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - 2> /dev/null | sed -r "s/<[\/a-zA-Z0-9\_\ \=\"]+>//g"
+	echo "$DDT" | $XMLLINT --xpath "string((${SFIELD})[1]/${1})" - 2> /dev/null
 }
 
 get_field_t()
 {
-	echo "$DDT" | $XMLLINT --xpath "(($SFIELD)[1]/""$1"")" - 2> /dev/null | sed -r "s/<[\/a-zA-Z0-9\_\ \=\"]+>/,/g" | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
+	echo "$DDT" | $XMLLINT --xpath "string((${SFIELD})[1]/${1})" - 2> /dev/null  | sed -r "s/(^[,]+)|([,]+$)//g" | sed -r "s/[,]{2,}/,/g"
 }
 
 ! [ $7 -eq 2 ] &&
@@ -320,10 +324,15 @@ COUNTRY=`get_field "$SCOUNTRY"`
 [ -z "$COUNTRY" ] && COUNTRY="N/A"
 NETWORK=`get_field "network[@country='$COUNTRY']"`
 
-$RECODE --version 2&> /dev/null && {
-	NAME=`echo $NAME | $RECODE -f HTML_4.0`
-	GENRES=`echo $GENRES | $RECODE -f HTML_4.0`
-	NETWORK=`echo $NETWORK | $RECODE -f HTML_4.0`
+${RECODE} --version 2&> /dev/null && {
+	html_decode() {
+		dec_t=`echo "${@}" | ${RECODE} -MHTML::Entities -alne 'print decode_entities($_)' | ${RECODE} -MHTML::Entities -alne 'print decode_entities($_)'`	
+		[ -n "${dec_t}" ] && echo "${dec_t}" || echo ${@}
+	}
+	
+	NAME=`html_decode "${NAME}"`
+	GENRES=`html_decode "${GENRES}"`
+	NETWORK=`html_decode "${NETWORK}"`
 }
 
 [ -n "${TITLE_REPLACE}" ] && {
@@ -369,7 +378,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 		DIR_E=`echo $6 | sed "s/^$GLR_E//" `  
 
 		[ -e "$3$LAPPEND" ] && {
-	 		$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! -regex "${DIR_E}" --nofq --nostats --silent ${EXTRA_ARGS} || { 
+	 		$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage -l: dir ! -match "${DIR_E}" --nofq --nostats --silent ${EXTRA_ARGS} || { 
 				print_str "ERROR: $DIR_E: Failed removing old record"; exit 1 
 			}
 		}
@@ -377,7 +386,7 @@ if [ $UPDATE_TVLOG -eq 1 ]; then
 	elif [ $TVRAGE_DATABASE_TYPE -eq 1 ]; then		
 		DIR_E=$QUERY
 		[ -e "$3$LAPPEND" ] && {
-			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! -lom "showid=$SHOWID" --nofq --nostats --silent ${EXTRA_ARGS} || {
+			$2 -ff --nobackup --tvlog="$3$LAPPEND" -e tvrage ! -lom "showid=${SHOWID}" --nofq --nostats --silent ${EXTRA_ARGS} || {
 				print_str "ERROR: $SHOWID: Failed removing old record"; exit 1 
 			}
 		}
