@@ -55,7 +55,7 @@ g_print_str (const char * volatile buf, ...)
 	}
     }
 
-  char iserr = stdlog_level
+  uint32_t iserr = stdlog_level
       & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR | F_MSG_TYPE_WARNING);
 
   if (!iserr && (gfl & F_OPT_STDOUT_SILENT))
