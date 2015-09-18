@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:12
+#@REVISION:13
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -166,17 +166,17 @@ IS_COMP=`${2} --preexec "echo -n {?q:imdblog@comp}" -noop  --imdblog="${3}${LAPP
 [[ ${7} -eq 1 ]] && [[ $IMDB_DATABASE_TYPE -eq 1 ]] && TD=`basename "$1"` || TD="$1"
 
 imdb_do_query() {
-        $CURL $CURL_FLAGS "$IMDBURL""xml/find?xml=1&nr=1&tt=on&q=$1"
+        $CURL $CURL_FLAGS "${IMDBURL}xml/find?xml=1&nr=1&tt=on&q=${1}"
 }
 
 imdb_search()
 {
-        echo "${1}" | ${XMLLINT} --xpath "((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null | sed -r 's/(id\=)|[ ]*|[\"]//g'
+        echo "${1}" | ${XMLLINT} --xpath "string((/IMDbResults//ImdbEntity)[1]/@id)" - 2> /dev/null
 }
 
 omdb_search()
 {
-        $CURL $CURL_FLAGS "${IMDB_URL}?r=xml&s=${1}${YQ_O}" | $XMLLINT --xpath "((/root/Movie)[1]/@imdbID)" - 2> /dev/null | sed -r 's/(imdbID\=)|[ ]*|[\"]//g'
+        $CURL $CURL_FLAGS "${IMDB_URL}?r=xml&s=${1}${YQ_O}" | $XMLLINT --xpath "string((/root/Movie)[1]/@imdbID)" - 2> /dev/null
 }
 
 get_omdbapi_data() {
@@ -186,7 +186,7 @@ get_omdbapi_data() {
 check_recieved_omdb_data() {
 		 response=`echo "${DDT}" | $XMLLINT --xpath "((/root)[1]/@response)" -  2> /dev/null | sed -r "s/.*=//g" | tr -d '"'`
 		 [ "${response}" != "True" ] && {
-		 	print_str "ERROR: no response for ${iid}"
+		 	print_str "ERROR: no response for ${iid}: '`echo "${DDT}" | $XMLLINT --xpath "/root[1]/error/text()" - 2> /dev/null`'"
 		 	exit 2
 		 }
 }
@@ -214,7 +214,7 @@ cad() {
 
 get_field()
 {
-        echo "$DDT" | $XMLLINT --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g"
+        echo "$DDT" | $XMLLINT --xpath "string((/root/movie)[1]/@${1})" - 2> /dev/null
 }
 
 
