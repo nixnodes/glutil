@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:11
+#@REVISION:12
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -183,6 +183,14 @@ get_omdbapi_data() {
         $CURL $CURL_FLAGS "${IMDB_URL}?r=XML&i=${1}"
 }
 
+check_recieved_omdb_data() {
+		 response=`echo "${DDT}" | $XMLLINT --xpath "((/root)[1]/@response)" -  2> /dev/null | sed -r "s/.*=//g" | tr -d '"'`
+		 [ "${response}" != "True" ] && {
+		 	print_str "ERROR: no response for ${iid}"
+		 	exit 2
+		 }
+}
+
 get_imdb_screens_count() {
 		screens_c=`$CURL $CURL_FLAGS "${IMDBURL}/title/${1}/business" | egrep -o '\([,0-9]+ Screens\)' | sed -r 's/[ ()]|Screens|.$//g' | tr -d ',' | sed ':a;N;$!ba;s/\n/ + /g' | sed -r 's/ \+$//' | egrep  '[+ 0-9]' `
 		[ -n "${screens_c}" ] && expr ${screens_c}
@@ -208,6 +216,8 @@ get_field()
 {
         echo "$DDT" | $XMLLINT --xpath "((/root/movie)[1]/@$1)" - 2> /dev/null | sed -r "s/($1\=)|(^[ ]+)|([ ]+$)|[\"]//g"
 }
+
+
 
 if ! [ $7 -eq 2 ]; then
         echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
@@ -291,10 +301,9 @@ if ! [ $7 -eq 2 ]; then
                 cad ${2} "-match" "$iid" "${3}" "imdbid"
         fi
 
-        DDT=`get_omdbapi_data "$iid"`
+        DDT=`get_omdbapi_data "$iid"`        
 
         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
-
 
         TYPE=`get_field type`
 
@@ -305,6 +314,7 @@ if ! [ $7 -eq 2 ]; then
                         [ -z "$iid" ] &&
                                 print_str "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using omdbapi search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1         
                         DDT=`get_omdbapi_data "$iid"`
+                        check_recieved_omdb_data
                         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
                         if [ ${IMDB_DATABASE_TYPE} -eq 1 ] && [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
                 			cad ${2} "-match" "$iid" "${3}" "imdbid"
@@ -326,6 +336,7 @@ if ! [ $7 -eq 2 ]; then
                         [ -z "$iid" ] &&
                                 print_str "WARNING: $QUERY ($YEAR_q): $TD: cannot find record using iMDB loose search [$IMDB_URL?r=xml&s=$QUERY""$YQ_O""]" && exit 1      
                         DDT=`get_omdbapi_data "$iid"`
+                        check_recieved_omdb_data
                         [ -z "$DDT" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
                         if [ ${IMDB_DATABASE_TYPE} -eq 1 ] && [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
                 			cad ${2} "-match" "${iid}" "${3}" "imdbid"
@@ -345,6 +356,7 @@ else
 		[ ${IMDB_DATABASE_TYPE} -eq 1 ] && [ ${UPDATE_IMDBLOG} -eq 1 ] && [ ${DENY_IMDBID_DUPE} -eq 1 ] && cad ${2} "-match" "${iid}" "${3}" "imdbid"
 
         DDT=`get_omdbapi_data "$iid"`
+        check_recieved_omdb_data
 
         [ -z "$DDT" ] && print_str "ERROR: $1: unable to get movie data [http://www.omdbapi.com/?r=XML&i=$iid]" && exit 1
 
