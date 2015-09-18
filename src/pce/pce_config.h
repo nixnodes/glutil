@@ -29,7 +29,7 @@
 
 /* imdb log file path */
 #ifndef imdb_file
-#define imdb_file PATH_PREFIX "/ftp-data/glutil/db/imdb"
+#define imdb_file PATH_PREFIX "/ftp-data/glutil/db/imdb.log"
 #endif
 
 /* game log file path */
