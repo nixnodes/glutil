@@ -870,13 +870,13 @@ dt_rval_spec_regsub_g (void *arg, char *match, char *output, size_t max_size,
   char *rep_p;
   if ( NULL != _mppd->fp_rval2)
     {
-      rep_p = _mppd->fp_rval2(arg, (char*)_mppd->varg_l, _mppd->r_rep,
-	  sizeof(_mppd->r_rep), _mppd->mppd_aux_next);
+      rep_p = _mppd->fp_rval2(arg, (char*)_mppd->varg_l, _mppd->tp_b0,
+	  sizeof(_mppd->tp_b0), _mppd->mppd_aux_next);
       _mppd->r_rep_l = strlen(rep_p);
     }
   else
     {
-      rep_p = (char*)_mppd->r_rep;
+      rep_p = (char*)_mppd->tp_b0;
     }
 
   size_t o_l = strlen(rs_p);
@@ -994,13 +994,13 @@ dt_rval_spec_regsub (void *arg, char *match, char *output, size_t max_size,
   char *rep_p;
   if ( NULL != _mppd->fp_rval2)
     {
-      rep_p = _mppd->fp_rval2(arg, (char*)_mppd->varg_l, _mppd->r_rep,
-	  sizeof(_mppd->r_rep), _mppd->mppd_aux_next);
+      rep_p = _mppd->fp_rval2(arg, (char*)_mppd->varg_l, _mppd->tp_b0,
+	  sizeof(_mppd->tp_b0), _mppd->mppd_aux_next);
       _mppd->r_rep_l = strlen(rep_p);
     }
   else
     {
-      rep_p = (char*)_mppd->r_rep;
+      rep_p = (char*)_mppd->tp_b0;
     }
 
   regmatch_t rm[2];
@@ -1485,7 +1485,7 @@ rt_af_regex (void *arg, char *match, char *output, size_t max_size,
       cb_p = dt_rval_spec_regsub;
       if (match[0] == 0x0)
 	{
-	  mppd->r_rep[0] = 0x0;
+	  mppd->tp_b0[0] = 0x0;
 	  mppd->r_rep_l = 0;
 
 	}
@@ -1509,7 +1509,7 @@ rt_af_regex (void *arg, char *match, char *output, size_t max_size,
 	    }
 	  else
 	    {
-	      char *ptr = l_mppd_shell_ex (match, mppd->r_rep,
+	      char *ptr = l_mppd_shell_ex (match, mppd->tp_b0,
 	      REG_PATTERN_BUFFER_MAX,
 					   &l_next_ref,
 					   LMS_EX_L,
@@ -1523,7 +1523,7 @@ rt_af_regex (void *arg, char *match, char *output, size_t max_size,
 		  return NULL;
 		}
 
-	      mppd->r_rep_l = strlen (mppd->r_rep);
+	      mppd->r_rep_l = strlen (mppd->tp_b0);
 	    }
 	}
     }
@@ -1658,14 +1658,9 @@ dt_rval_spec_offbyte (void *arg, char *match, char *output, size_t max_size,
 
   uint64_t *offset = (uint64_t*) v_b;
 
-  if (*offset >= _mppd->v_i0)
-    {
-      snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, 0);
-      return output;
-    }
-
   uint8_t *data = (uint8_t*) (arg + _mppd->vp_off1);
   snprintf (output, max_size, ((__d_drt_h ) mppd)->direc, data[*offset]);
+
   return output;
 
 }
@@ -1676,21 +1671,21 @@ rt_af_spec_offbyte (void *arg, char *match, char *output, size_t max_size,
 {
   void *l_next_ref;
 
-  char *ptr = l_mppd_shell_ex (match, mppd->r_rep, sizeof(mppd->r_rep),
+  char *ptr = l_mppd_shell_ex (match, mppd->tp_b0, sizeof(mppd->tp_b0),
 			       &l_next_ref,
 			       LMS_EX_L,
 			       LMS_EX_R, F_MPPD_SHX_TZERO);
 
   if (NULL == ptr || ptr[0] == 0x0)
     {
-      print_str ("ERROR: rt_af_dpec_offbyte: could not resolve option: %s\n",
+      print_str ("ERROR: rt_af_spec_offbyte: could not resolve option: %s\n",
 		 match);
       return NULL;
     }
 
   if ( NULL == l_next_ref)
     {
-      print_str ("ERROR: rt_af_dpec_offbyte: missing field reference: %s\n",
+      print_str ("ERROR: rt_af_spec_offbyte: missing field reference: %s\n",
 		 ptr);
       return NULL;
     }
@@ -1704,7 +1699,7 @@ rt_af_spec_offbyte (void *arg, char *match, char *output, size_t max_size,
 				    &p_ret, NULL, 0, 0)))
     {
       print_str (
-	  "ERROR: rt_af_dpec_offbyte: [%d] [%d]: could not process math string\n",
+	  "ERROR: rt_af_spec_offbyte: [%d] [%d]: could not process math string\n",
 	  ret, p_ret);
       return NULL;
     }
@@ -1716,9 +1711,9 @@ rt_af_spec_offbyte (void *arg, char *match, char *output, size_t max_size,
   mppd->vp_off1 = (size_t) mppd->hdl->g_proc2 (mppd->hdl->_x_ref,
 					       (char*) l_next_ref, &vb);
 
-  if (vb == 0)
+  if (mppd->vp_off1 == 0)
     {
-      print_str ("ERROR: rt_af_dpec_offbyte: invalid field: %s\n",
+      print_str ("ERROR: rt_af_spec_offbyte: invalid field: %s\n",
 		 (char*) l_next_ref);
       return NULL;
     }
@@ -1801,7 +1796,7 @@ dt_rval_spec_sf (void *arg, char *match, char *output, size_t max_size,
   char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
 				_mppd->mppd_next);
 
-  void *cfgv_pret = ref_to_val_get_cfgval (p_b0, _mppd->r_rep,
+  void *cfgv_pret = ref_to_val_get_cfgval (p_b0, _mppd->tp_b0,
   NULL,
 					   F_CFGV_BUILD_FULL_STRING, output,
 					   max_size);
@@ -1809,7 +1804,7 @@ dt_rval_spec_sf (void *arg, char *match, char *output, size_t max_size,
   if ( NULL == cfgv_pret)
     {
       print_str ("WARNING: dt_rval_spec_sf: key '%s' not found in file '%s'\n",
-		 _mppd->r_rep, p_b0);
+		 _mppd->tp_b0, p_b0);
     }
 
   return cfgv_pret;
@@ -1842,7 +1837,7 @@ rt_af_sf (void *arg, char *match, char *output, size_t max_size, __d_drt_h mppd)
   void *l_next_ref;
 
   char *ptr = l_mppd_shell_ex (((__d_drt_h ) mppd->mppd_next)->varg_l,
-			       mppd->r_rep, sizeof(mppd->r_rep), &l_next_ref,
+			       mppd->tp_b0, sizeof(mppd->tp_b0), &l_next_ref,
 			       LMS_EX_L,
 			       LMS_EX_R, F_MPPD_SHX_TZERO);
 
@@ -2002,7 +1997,7 @@ rt_af_strops (void *arg, char *match, char *output, size_t max_size,
   void *l_next_ref;
 
   char *ptr = l_mppd_shell_ex (((__d_drt_h ) mppd->mppd_next)->varg_l,
-			       mppd->r_rep, sizeof(mppd->r_rep), &l_next_ref,
+			       mppd->tp_b0, sizeof(mppd->tp_b0), &l_next_ref,
 			       LMS_EX_L,
 			       LMS_EX_R, F_MPPD_SHX_TZERO);
 
