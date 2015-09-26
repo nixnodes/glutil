@@ -87,7 +87,7 @@ g_print_str (const char * volatile buf, ...)
 
   va_end(al);
 
-  fflush (stdout);
+  fflush (output);
 
   return 0;
 }
