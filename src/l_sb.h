@@ -9,6 +9,9 @@
 #define L_SB_H_
 
 #include <t_glob.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define sconf_log "SCONF"
 
@@ -51,7 +54,14 @@ char GLCONF_I[PATH_MAX];
 
 char b_spec1[PATH_MAX];
 
-FILE *fd_log;
+typedef void
+(*__p_log_write) (char *buf);
+
+int fd_log;
+__p_log_write p_log_write;
+
+struct stat log_st;
+
 char LOGFILE[PATH_MAX];
 char *NUKESTR;
 char *NUKESTR_d[255];

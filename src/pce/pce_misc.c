@@ -39,7 +39,7 @@ pce_log (const char * volatile buf, ...)
 
       char wl_buffer[PCE_PSTR_MAX];
       vsnprintf (wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);
-      w_log (wl_buffer, (char*) buf);
+      p_log_write (wl_buffer, (char*) buf);
 
     }
 

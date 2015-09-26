@@ -20,6 +20,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 uint32_t pce_f = 0;
 char *s_year = NULL;
@@ -109,7 +112,10 @@ char b_spec1[PATH_MAX];
 
 char LOGFILE[PATH_MAX];
 
-FILE *fd_log = NULL;
+int fd_log = -1;
+struct stat log_st;
+
+__p_log_write p_log_write = NULL;
 
 char *LOOPEXEC = NULL;
 

@@ -685,9 +685,9 @@ g_shutdown (void *arg)
   free_cfg_rf (&cfg_rf);
   free_cfg (&glconf);
 
-  if ((gfl & F_OPT_PS_LOGGING) && fd_log)
+  if (-1 != fd_log)
     {
-      fclose (fd_log);
+      close (fd_log);
     }
 
   if (_p_macro_argv)

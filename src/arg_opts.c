@@ -2603,7 +2603,7 @@ _gg_opt gg_f_ref[] =
 	{ .id = 0x0046, .on = "-vv", .ac = 0, .op = opt_g_verbose2 },
 	{ .id = 0x0047, .on = "-v", .ac = 0, .op = opt_g_verbose },
 	{ .id = 0x004D, .on = "--silent", .ac = 0, .op = opt_silent },
-	{ .id = 0x004A, .on = "--logfile", .ac = 0, .op = opt_log_file },
+	{ .id = 0x004A, .on = "--logfile", .ac = 1, .op = opt_log_file },
 	{ .id = 0x0048, .on = "--loglevel", .ac = 1, .op = opt_g_loglvl },
 	{ .id = 0x0049, .on = "--ftime", .ac = 0, .op = opt_g_ftime },
 	{ .id = 0x004B, .on = "--log", .ac = 0, .op = opt_logging },

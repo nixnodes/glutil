@@ -17,6 +17,9 @@
 #include <errno.h>
 
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 struct d_stats dl_stats =
   { 0 };
@@ -126,7 +129,10 @@ char b_spec1[PATH_MAX];
 
 char LOGFILE[PATH_MAX];
 
-FILE *fd_log = NULL;
+int fd_log = -1;
+struct stat log_st;
+
+__p_log_write p_log_write  = NULL;
 
 char *LOOPEXEC = NULL;
 

@@ -546,6 +546,7 @@ parse_args (int argc, char **argv, _gg_opt fref_t[], char ***la, uint32_t flags)
 		  print_str (
 		      "ERROR: [%d] CRITICAL: improperly configured option ref table, report this! [ '%s' ]\n",
 		      ret, c_arg);
+		  abort();
 		}
 	      else if (ret > 0)
 		{

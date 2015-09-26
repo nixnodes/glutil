@@ -33,14 +33,14 @@
 #define F_MSG_TYPE_NORMAL               (F_MSG_TYPE_EEW|F_MSG_TYPE_NOTICE|F_MSG_TYPE_OTHER|F_MSG_TYPE_STATS|F_MSG_TYPE_INFO|F_MSG_TYPE_MACRO)
 #define F_MSG_TYPE_DEBUG                (F_MSG_TYPE_DEBUG0|F_MSG_TYPE_DEBUG1|F_MSG_TYPE_DEBUG2|F_MSG_TYPE_DEBUG3|F_MSG_TYPE_DEBUG4|F_MSG_TYPE_DEBUG5|F_MSG_TYPE_DEBUG6)
 
-void
+int
 enable_logging (void);
 char *
 build_data_path (char *file, char *path, char *sd);
 uint32_t
 get_msg_type (char *msg);
-int
-w_log (char *w, char *ow);
+void
+w_log (char *w);
 int
 g_print_info (void);
 int

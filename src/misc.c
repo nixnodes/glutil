@@ -21,6 +21,9 @@
 #include <errno.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define PSTR_MAX        (V_MB/4)
 
@@ -31,40 +34,16 @@ g_print_str (const char * volatile buf, ...)
 {
   char d_buffer_2[PSTR_MAX], *out_print;
 
-  uint32_t stdlog_level = get_msg_type ((char*) buf);
+  uint32_t msg_type = get_msg_type ((char*) buf);
 
-  if (!(stdlog_level & STDLOG_LVL))
+  if (!(msg_type & STDLOG_LVL))
     {
       return 0;
     }
 
-  va_list al;
-
-  if ((gfl & F_OPT_PS_LOGGING) || (gfl & F_OPT_PS_TIME))
-    {
-      struct tm tm = *get_localtime ();
-      snprintf (d_buffer_2, PSTR_MAX, "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] %s",
-		tm.tm_mday, tm.tm_mon + 1, (tm.tm_year + 1900) % 100,
-		tm.tm_hour, tm.tm_min, tm.tm_sec, buf);
-      out_print = (char*) d_buffer_2;
-      if (fd_log)
-	{
-	  char wl_buffer[PSTR_MAX];
-	  va_start(al, buf);
-	  vsnprintf (wl_buffer, PSTR_MAX, d_buffer_2, al);
-	  va_end(al);
-	  w_log (wl_buffer, (char*) buf);
-	}
-    }
-  else
-    {
-      out_print = (char*) buf;
-    }
-
   FILE *output;
 
-  if ((stdlog_level
-      & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR | F_MSG_TYPE_WARNING)))
+  if ((msg_type & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR | F_MSG_TYPE_WARNING)))
     {
       output = stderr;
     }
@@ -77,6 +56,21 @@ g_print_str (const char * volatile buf, ...)
       output = stdout;
     }
 
+  va_list al;
+
+  if (gfl & F_OPT_PS_TIME)
+    {
+      struct tm tm = *get_localtime ();
+      snprintf (d_buffer_2, PSTR_MAX, "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] %s",
+		tm.tm_mday, tm.tm_mon + 1, (tm.tm_year + 1900) % 100,
+		tm.tm_hour, tm.tm_min, tm.tm_sec, buf);
+      out_print = (char*) d_buffer_2;
+    }
+  else
+    {
+      out_print = (char*) buf;
+    }
+
   va_start(al, buf);
 
   vfprintf (output, out_print, al);
@@ -84,6 +78,15 @@ g_print_str (const char * volatile buf, ...)
   va_end(al);
 
   fflush (output);
+
+  if (gfl & F_OPT_PS_LOGGING)
+    {
+      char d_buffer_l[PSTR_MAX];
+      va_start(al, buf);
+      vsnprintf (d_buffer_l, PSTR_MAX, out_print, al);
+      va_end(al);
+      p_log_write (d_buffer_l);
+    }
 
   return 0;
 }
@@ -303,49 +306,93 @@ opt_get_msg_type (char *msg)
   return 0;
 }
 
-int
-w_log (char *w, char *ow)
+void
+w_log (char *w)
 {
-
-  /*if (ow && !(get_msg_type(ow) & log_lvl))
-   {
-   return 1;
-   }*/
-
   size_t wc, wll;
 
   wll = strlen (w);
 
-  if ((wc = fwrite (w, 1, wll, fd_log)) != wll)
+  if ((wc = write (fd_log, w, wll)) == -1)
     {
       char e_buffer[1024];
-      printf ("ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE, (int) wc,
-	      (int) wll, g_strerr_r (errno, e_buffer, 1024));
+      fprintf (stderr, "ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE,
+	       (int) wc, (int) wll, g_strerr_r (errno, e_buffer, 1024));
     }
 
-  fflush (fd_log);
-
-  return 0;
+  return;
 }
 
-void
+static void
+w_log_fifo (char *w)
+{
+
+  if (-1 == fd_log && -1 == (fd_log = open (LOGFILE,
+  O_WRONLY | O_NONBLOCK)))
+    {
+      if ( errno != ENXIO)
+	{
+	  fprintf (stderr, "ERROR: w_log_fifo: %s: [%s]: could not open fifo\n",
+		   LOGFILE, strerror (errno));
+	}
+      return;
+    }
+
+  size_t wll;
+
+  wll = strlen (w);
+
+  if ((write (fd_log, w, wll)) == -1)
+    {
+      if (-1 != fd_log)
+	{
+	  close (fd_log);
+	  fd_log = -1;
+	  char e_buffer[1024];
+	  fprintf (stderr,
+		   "ERROR: w_log_fifo: %s: writing pipe failed [%db] %s\n",
+		   LOGFILE, (int) wll, g_strerr_r (errno, e_buffer, 1024));
+	}
+    }
+
+  return;
+}
+
+int
 enable_logging (void)
 {
-  if ((gfl & F_OPT_PS_LOGGING) && !fd_log)
+  if ((gfl & F_OPT_PS_LOGGING) && -1 == fd_log && NULL == p_log_write)
     {
       if (!(ofl & F_OVRR_LOGFILE))
 	{
 	  build_data_path (DEFF_DULOG, LOGFILE, DEFPATH_LOGS);
 	}
-      if (!(fd_log = fopen (LOGFILE, "a")))
+
+      if (-1 != lstat (LOGFILE, &log_st))
+	{
+	  if ((log_st.st_mode & S_IFMT) == S_IFIFO)
+	    {
+	      p_log_write = w_log_fifo;
+	      print_str ("NOTICE: %s: writing log output to fifo\n", LOGFILE);
+	      return 0;
+	    }
+	}
+
+      if (-1 == (fd_log = open (LOGFILE,
+      O_WRONLY | O_CREAT | O_APPEND,
+				S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)))
 	{
 	  gfl ^= F_OPT_PS_LOGGING;
 	  print_str (
 	      "ERROR: %s: [%s]: could not open file for writing, logging disabled\n",
 	      LOGFILE, strerror (errno));
+	  return 1;
 	}
+
+      p_log_write = w_log;
+
     }
-  return;
+  return 0;
 }
 
 #include <libgen.h>

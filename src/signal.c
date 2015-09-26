@@ -69,6 +69,7 @@ setup_sighandlers (void)
   r += sigaction (SIGFPE, &sa_e, NULL);
   r += sigaction (SIGBUS, &sa_e, NULL);
   r += sigaction (SIGTRAP, &sa_e, NULL);
+  r += sigaction (SIGPIPE, &sa, NULL);
 
   signal (SIGKILL, sig_handler);
 
@@ -122,6 +123,16 @@ sig_handler (int signal)
 	  g_send_gkill ();
 	}
 
+      break;
+    case SIGPIPE:
+      if ((gfl & F_OPT_PS_LOGGING)
+	  && -1 != fd_log&& (log_st.st_mode & S_IFMT) == S_IFIFO)
+	{
+	  fprintf (stderr,
+		   "NOTICE: caught SIGPIPE, releasing log fifo descriptor..\n");
+	  close (fd_log);
+	  fd_log = -1;
+	}
       break;
     default:
       //usleep(SIG_BREAK_TIMEOUT_NS);
