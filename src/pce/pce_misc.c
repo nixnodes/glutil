@@ -13,8 +13,34 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <errno.h>
 
 #define PCE_PSTR_MAX        16384
+
+static void
+w_log_p (char *w)
+{
+
+  /*if (ow && !(get_msg_type(ow) & log_lvl))
+   {
+   return 1;
+   }*/
+
+  size_t wc, wll;
+
+  wll = strlen (w);
+
+  if ((wc = fwrite (w, 1, wll, fd_log_pce)) != wll)
+    {
+      char e_buffer[1024];
+      printf ("ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE, (int) wc,
+	      (int) wll, g_strerr_r (errno, e_buffer, 1024));
+      return;
+    }
+
+  fflush (fd_log_pce);
+
+}
 
 int
 pce_log (const char * volatile buf, ...)
@@ -29,7 +55,7 @@ pce_log (const char * volatile buf, ...)
   va_list al;
   va_start(al, buf);
 
-  if (NULL != fd_log)
+  if (NULL != fd_log_pce)
     {
       struct tm tm = *get_localtime ();
       snprintf (d_buffer_2, PCE_PSTR_MAX,
@@ -39,7 +65,7 @@ pce_log (const char * volatile buf, ...)
 
       char wl_buffer[PCE_PSTR_MAX];
       vsnprintf (wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);
-      p_log_write (wl_buffer, (char*) buf);
+      w_log_p (wl_buffer);
 
     }
 
@@ -47,3 +73,4 @@ pce_log (const char * volatile buf, ...)
 
   return 0;
 }
+

@@ -57,6 +57,7 @@ char b_spec1[PATH_MAX];
 typedef void
 (*__p_log_write) (char *buf);
 
+FILE *fd_log_pce;
 int fd_log;
 __p_log_write p_log_write;
 

@@ -83,11 +83,11 @@ pce_proc (char *path, char *dir)
   if (gconf->o_logging == 0)
     {
       gfl ^= F_OPT_PS_LOGGING;
-      if (fd_log)
+      if (fd_log_pce)
 	{
-	  fclose (fd_log);
+	  fclose (fd_log_pce);
 	}
-      fd_log = NULL;
+      fd_log_pce = NULL;
     }
 
   if (strlen (gconf->o_log_string) > 0)
@@ -846,12 +846,12 @@ pce_do_lookup (__g_handle p_log, __d_dgetr dgetr, __d_sconf sconf, char *lp)
 		      chdir ("/");
 		    }
 
-		  if (fd_log)
+		  if (fd_log_pce)
 		    {
-		      fclose (fd_log);
+		      fclose (fd_log_pce);
 		    }
 
-		  fd_log = NULL;
+		  fd_log_pce = NULL;
 
 		  pce_enable_logging ();
 
@@ -1180,16 +1180,16 @@ pce_pfe (void)
 void
 pce_pfe_r (void)
 {
-  if (fd_log)
+  if (fd_log_pce)
     {
-      fclose (fd_log);
-      if (NULL == (fd_log = fopen (pce_logfile, "a")))
+      fclose (fd_log_pce);
+      if (NULL == (fd_log_pce = fopen (pce_logfile, "a")))
 	{
 	  print_str ("ERROR: count not re-open log after fork: %s\n",
 	  pce_logfile);
 	}
-      dup2 (fileno (fd_log), STDOUT_FILENO);
-      dup2 (fileno (fd_log), STDERR_FILENO);
+      dup2 (fileno (fd_log_pce), STDOUT_FILENO);
+      dup2 (fileno (fd_log_pce), STDERR_FILENO);
     }
   else
     {

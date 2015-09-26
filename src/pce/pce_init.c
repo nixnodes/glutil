@@ -112,10 +112,7 @@ char b_spec1[PATH_MAX];
 
 char LOGFILE[PATH_MAX];
 
-int fd_log = -1;
-struct stat log_st;
-
-__p_log_write p_log_write = NULL;
+FILE *fd_log_pce;
 
 char *LOOPEXEC = NULL;
 
@@ -171,9 +168,9 @@ main (int argc, char *argv[])
   //gfl |= F_OPT_PS_SILENT;
   pce_proc (argv[2], argv[1]);
 
-  if (fd_log)
+  if (fd_log_pce)
     {
-      fclose (fd_log);
+      fclose (fd_log_pce);
     }
 
   if ((pce_f & F_PCE_FORKED))
@@ -186,9 +183,9 @@ main (int argc, char *argv[])
 void
 pce_enable_logging (void)
 {
-  if ((gfl & F_OPT_PS_LOGGING) && !fd_log)
+  if ((gfl & F_OPT_PS_LOGGING) && !fd_log_pce)
     {
-      if (!(fd_log = fopen (pce_logfile, "a")))
+      if (!(fd_log_pce = fopen (pce_logfile, "a")))
 	{
 	  gfl ^= F_OPT_PS_LOGGING;
 	}
