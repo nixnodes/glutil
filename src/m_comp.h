@@ -32,7 +32,6 @@ typedef struct ___d_drt_h
   mda chains;
   regex_t preg;
   int regex_flags;
-  char r_rep[10000];
   uint16_t r_rep_l;
   uint8_t uc_1;
   void *st_ptr0;

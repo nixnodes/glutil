@@ -29,7 +29,7 @@ uint32_t STDLOG_LVL = F_MSG_TYPE_NORMAL;
 int
 g_print_str (const char * volatile buf, ...)
 {
-  char d_buffer_2[PSTR_MAX];
+  char d_buffer_2[PSTR_MAX], *out_print;
 
   uint32_t stdlog_level = get_msg_type ((char*) buf);
 
@@ -46,6 +46,7 @@ g_print_str (const char * volatile buf, ...)
       snprintf (d_buffer_2, PSTR_MAX, "[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] %s",
 		tm.tm_mday, tm.tm_mon + 1, (tm.tm_year + 1900) % 100,
 		tm.tm_hour, tm.tm_min, tm.tm_sec, buf);
+      out_print = (char*) d_buffer_2;
       if (fd_log)
 	{
 	  char wl_buffer[PSTR_MAX];
@@ -55,13 +56,19 @@ g_print_str (const char * volatile buf, ...)
 	  w_log (wl_buffer, (char*) buf);
 	}
     }
-
-  uint32_t iserr = stdlog_level
-      & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR | F_MSG_TYPE_WARNING);
+  else
+    {
+      out_print = (char*) buf;
+    }
 
   FILE *output;
 
-  if (!iserr)
+  if ((stdlog_level
+      & (F_MSG_TYPE_EXCEPTION | F_MSG_TYPE_ERROR | F_MSG_TYPE_WARNING)))
+    {
+      output = stderr;
+    }
+  else
     {
       if (gfl & F_OPT_STDOUT_SILENT)
 	{
@@ -69,21 +76,10 @@ g_print_str (const char * volatile buf, ...)
 	}
       output = stdout;
     }
-  else
-    {
-      output = stderr;
-    }
 
   va_start(al, buf);
 
-  if (gfl & F_OPT_PS_TIME)
-    {
-      vfprintf (output, d_buffer_2, al);
-    }
-  else
-    {
-      vfprintf (output, buf, al);
-    }
+  vfprintf (output, out_print, al);
 
   va_end(al);
 
