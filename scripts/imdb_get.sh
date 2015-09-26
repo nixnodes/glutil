@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:3
-#@REVISION:15
+#@REVISION:16
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -372,7 +372,7 @@ fi
 
 [ -n "$IMDB_TITLE_WIPE_CHARS" ] && TITLE=`echo "$TITLE" | sed -r "s/[${IMDB_TITLE_WIPE_CHARS}]+//g"`
 
-[ -z "$TITLE" ] && print_str "ERROR: $QUERY: $TD: could not extract movie title, fatal.." && exit 1
+[ -z "$TITLE" ] && print_str "ERROR: $QUERY: $TD: could not extract movie title" && exit 1
 
 PLOT=`get_field plot`
 
@@ -384,6 +384,8 @@ ${RECODE} --version 2&> /dev/null && {
 	
 	TITLE=`html_decode "${TITLE}"`
 	PLOT=`html_decode "${PLOT}"`
+	
+	[ -z "${TITLE}" ] && print_str "ERROR: $QUERY: $TD: recode failed" && exit 1
 }
 
 [ -z "$PLOT" ] && PLOT="N/A"
