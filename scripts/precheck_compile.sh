@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:00
+#@REVISION:01
 #
 
 [ -z "${1}" ] && P_CONFIG="precheck-config" || P_CONFIG="${1}"
@@ -168,7 +168,7 @@ for ir_f in ${CONFIG_PATH}/*; do
 		mkdir -p "${DATA_PATH}/${d_path}"
 	}
 	#cat /tmp/glutil.$$.pce
-	${GLUTIL} -z sconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/${c_path}" && 
+	${GLUTIL} --stdlog -warning -z sconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/${c_path}" && 
 		echo "BUILD: '${c_path}': OK"
 		
 	rm -f /tmp/glutil.$$.pce
@@ -180,7 +180,7 @@ cat "${CONFIG_PATH}/gconf" | sed -r '/^$/d' > /tmp/glutil.$$.pce
 echo "paths ${g_path}" >> /tmp/glutil.$$.pce
 echo >> /tmp/glutil.$$.pce
 
-${GLUTIL} -z gconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/gconf" && 
+${GLUTIL} --stdlog -warning -z gconf --raw  < /tmp/glutil.$$.pce > "${DATA_PATH}/gconf" && 
 		echo "BUILD: 'GCONF': OK"
 
 ${GLUTIL} -q gconf --shmem --loadq --silent --shmdestroy --shmreload --shmcflags 444 --gconf "${DATA_PATH}/gconf"
