@@ -1,5 +1,0 @@
-g_help.o: g_help.c /usr/include/stdc-predef.h g_help.h
-
-/usr/include/stdc-predef.h:
-
-g_help.h:
