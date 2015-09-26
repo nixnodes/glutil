@@ -2216,15 +2216,18 @@ m_load_input_n (__g_handle hdl, FILE *input)
 	}
 
       size_t s_p1_l = strlen (l_ptr);
-      if (l_ptr[s_p1_l - 1] == 0xA)
-	{
-	  l_ptr[s_p1_l - 1] = 0x0;
-	  s_p1_l--;
-	}
 
       if (!s_p1_l)
 	{
 	  print_str ("WARNING: DATA IMPORT: null value '%s'\n", s_p1);
+	}
+      else
+	{
+	  if (l_ptr[s_p1_l - 1] == 0xA)
+	    {
+	      l_ptr[s_p1_l - 1] = 0x0;
+	      s_p1_l--;
+	    }
 	}
 
       int bd = hdl->g_proc0 (st_buffer, s_p1, l_ptr);
