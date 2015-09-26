@@ -103,11 +103,8 @@
 #
 #@MACRO:imdb-make-infolinks|Creates folders with release info inside respective folders for every imdblog record erasing any existing ones first:{exe} --imdblog={?q:imdb@file} -a --silent -exec `rm "{glroot}\{dir\}/[ IMDB "*;mkdir "\{dir\}" "\{glroot\}\{dir\}/[ IMDB - \{score\} | \{votes\} votes - \{genres\} ]"` {arg1}
 #
-# <dirlog-to-ascii> *DEPRECATED - added export option (-E) to glutil, see --help*
-#
 ##
-##
-#@MACRO:tvrage-to-sql:{exe} -h --tvlog={?q:tvrage@file} --silent -execv `echo "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('\{name\}', '\{link\}', '\{country\}', '\{started\}', '\{ended\}', '\{seasons\}', '\{status\}', '\{runtime\}', '\{airtime\}', '\{airday\}', '\{class\}', '\{genres\}', '\{showid\}', '\{time\}', '\{network\}', '\{dir\}', '\{startyear\}', '\{endyear\}');"` --esredir "{arg1}"
+#@MACRO:tvrage-to-sql:{exe} -h --tvlog={?q:tvrage@file} --silent -print "insert into TVRAGE.shows (name, link, country, started, ended, seasons, status, runtime, airtime, airday, class, genres, showid, time, network, dir, startyear, endyear) VALUES('\{name\}', '\{link\}', '\{country\}', '\{started\}', '\{ended\}', '\{seasons\}', '\{status\}', '\{runtime\}', '\{airtime\}', '\{airday\}', '\{class\}', '\{genres\}', '\{showid\}', '\{time\}', '\{network\}', '\{dir\}', '\{startyear\}', '\{endyear\}');" 
 #
 ## <dirlog-clean-dupes>
 #

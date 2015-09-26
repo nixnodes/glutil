@@ -1793,7 +1793,10 @@ dt_rval_spec_sf (void *arg, char *match, char *output, size_t max_size,
 		 void *mppd)
 {
   __d_drt_h _mppd = (__d_drt_h ) mppd;
-  char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+
+  char tp_b[sizeof(_mppd->tp_b0)];
+
+  char *p_b0 = _mppd->fp_rval1 (arg, match, tp_b, sizeof(tp_b),
 				_mppd->mppd_next);
 
   void *cfgv_pret = ref_to_val_get_cfgval (p_b0, _mppd->tp_b0,
