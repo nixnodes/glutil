@@ -74,6 +74,8 @@ ssl_init (void)
       pthread_mutex_init (&mutex_buf[i], NULL);
     }
 
+  setenv ("OPENSSL_DEFAULT_ZLIB", "1", 1);
+
   CRYPTO_set_locking_callback (ssl_locking_function);
   CRYPTO_set_id_callback (ssl_id_function);
 
@@ -92,7 +94,6 @@ ssl_init (void)
   if (comp_method != NULL)
     {
       SSL_COMP_add_compression_method (1, comp_method);
-      setenv ("OPENSSL_DEFAULT_ZLIB", "1", 1);
     }
 
 }
