@@ -881,8 +881,24 @@ net_baseline_fsproto_recv (__sock_o pso, pmda base, pmda threadr, void *data)
   SHA1_Update (&psts->sha_00.context, pso->buffer0,
 	       (size_t) pso->counters.b_read);
 
-  print_str ("STATS: [%d]: recv: %llu/%llu bytes\r", pso->sock, psts->data_in,
-	     psts->hstat.file_size);
+  if (time (NULL) - psts->l_stat >= 1)
+    {
+
+      uint64_t dpt = psts->data_in - psts->cyc_data_last;
+      uint32_t speed = dpt / (time (NULL) - psts->l_stat);
+      psts->cyc_data_last = psts->data_in;
+      psts->l_stat = time (NULL);
+
+      double p_done = (double) (((double) psts->data_in
+	  / (double) psts->hstat.file_size) * 100);
+
+      fprintf (stderr,
+	       "STATS: [%d]: recv: %llu/%llu [%.2f%%] [%.2f K/s] bytes\r",
+	       pso->sock, (unsigned long long int) psts->data_in,
+	       (unsigned long long int) psts->hstat.file_size, p_done,
+	       (double) speed / 1024);
+
+    }
 
   if (psts->data_in == psts->hstat.file_size)
     {
@@ -926,8 +942,8 @@ net_baseline_fsproto_recv (__sock_o pso, pmda base, pmda threadr, void *data)
     {
       pso->unit_size = (uint64_t) psts->hstat.file_size - psts->data_in;
       print_str (
-	  "D4: net_baseline_fsproto_recv: [%d]: scaling unit size to %lld\n",
-	  pso->sock, pso->unit_size);
+	  "D4: net_baseline_fsproto_recv: [%d]: scaling unit size to %llu\n",
+	  pso->sock, (uint64_t) pso->unit_size);
     }
 
   pso->counters.b_read = 0;
