@@ -92,6 +92,7 @@ ssl_init (void)
   if (comp_method != NULL)
     {
       SSL_COMP_add_compression_method (1, comp_method);
+      setenv ("OPENSSL_DEFAULT_ZLIB", "1", 1);
     }
 
 }
