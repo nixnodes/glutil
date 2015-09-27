@@ -63,7 +63,6 @@ ssl_init (void)
 
   CRYPTO_mem_ctrl (CRYPTO_MEM_CHECK_ON);
 
-  /* static locks area */
   mutex_buf = malloc (CRYPTO_num_locks () * sizeof(pthread_mutex_t));
   if (mutex_buf == NULL)
     {
@@ -74,14 +73,26 @@ ssl_init (void)
     {
       pthread_mutex_init (&mutex_buf[i], NULL);
     }
-  /* static locks callbacks */
+
   CRYPTO_set_locking_callback (ssl_locking_function);
   CRYPTO_set_id_callback (ssl_id_function);
 
   SSL_library_init ();
-  OpenSSL_add_all_algorithms(); /* load & register all cryptos, etc. */
-  SSL_load_error_strings (); /* load all error messages */
-  RAND_load_file ("/dev/urandom", 4096);
+  OpenSSL_add_all_algorithms();
+  SSL_load_error_strings ();
+
+  if (!RAND_load_file ("/dev/urandom", 4096))
+    {
+      print_str ("ERROR: ssl_init: 0 bytes added to PRNG from seed source\n");
+      abort ();
+    }
+
+  COMP_METHOD *comp_method = COMP_zlib ();
+
+  if (comp_method != NULL)
+    {
+      SSL_COMP_add_compression_method (2, comp_method);
+    }
 
 }
 
@@ -703,9 +714,9 @@ net_open_connection (char *addr, char *port, __sock_ca args)
   md_copy_le (&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o),
-	      NULL);
+  NULL);
   md_copy_le (&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
-	      NULL);
+  NULL);
 
   if (!args->unit_size)
     {
@@ -895,9 +906,9 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
   md_copy_le (&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o),
-	      NULL);
+  NULL);
   md_copy_le (&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
-	      NULL);
+  NULL);
   pso->sock_ca = (void*) args;
 
   if (mutex_init (&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
@@ -1788,9 +1799,9 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
   md_copy_le (&spso->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&spso->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
   md_copy_le (&spso->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o),
-	      NULL);
+  NULL);
   md_copy_le (&spso->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
-	      NULL);
+  NULL);
 
   if (!spso->unit_size)
     {

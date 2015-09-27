@@ -1900,7 +1900,8 @@ n_proc_intval (char *left, char *right, int *outval, int64_t min, int64_t max,
       *out64 = (int64_t) strtoll (right, NULL, 10);
       if (*out64 < min || *out64 > max)
 	{
-	  print_str ("ERROR: n_proc_intval: '%s': value out of range\n", left);
+	  print_str ("ERROR: n_proc_intval: '%s': value out of range: %lld\n",
+		     left, (long long int) *out64);
 	  return 1;
 	}
     }
@@ -2004,56 +2005,39 @@ netctl_opt_parse (pmda md, void *arg)
     }
   else if (!strncmp ("uid", left, 4))
     {
-      int i_val;
-      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+
+      int64_t t_val;
+
+      if (n_proc_intval (left, right, NULL, 0,
+			 (int64_t) (uid_t) (((uid_t) 0) | UINT64_MAX), &t_val))
 	{
 	  return 1;
 	}
 
-      if (setuid ((uid_t) i_val) == -1)
-	{
-	  char e_buffer[1024];
-	  print_str ("ERROR: setuid failed: %s\n",
-		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
-
-	  return 1;
-	}
-
-      print_str ("DEBUG: setuid: %d\n", i_val);
+      net_opts.uid = (uid_t) t_val;
+      net_opts.flags |= F_NETOPT_UID;
 
     }
   else if (!strncmp ("gid", left, 4))
     {
-      int i_val;
-      if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))
+
+      int64_t t_val;
+
+      if (n_proc_intval (left, right, NULL, 0,
+			 (int64_t) (uid_t) (((uid_t) 0) | UINT64_MAX), &t_val))
 	{
 	  return 1;
 	}
 
-      if (setgid ((uid_t) i_val) == -1)
-	{
-	  char e_buffer[1024];
-	  print_str ("ERROR: setgid failed: %s\n",
-		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
+      net_opts.gid = (gid_t) t_val;
+      net_opts.flags |= F_NETOPT_GID;
 
-	  return 1;
-	}
-
-      print_str ("DEBUG: setgid: %d\n", i_val);
     }
   else if (!strncmp ("chroot", left, 5))
     {
       snprintf (net_opts.chroot, sizeof(net_opts.chroot), "%s", right);
       net_opts.flags |= F_NETOPT_CHROOT;
-      if (chroot (net_opts.chroot) == -1)
-	{
-	  char err_buf[1024];
-	  print_str (
-	      "ERROR: netctl_opt_parse: '%s': chroot failed: [%d] [%s]\n", left,
-	      errno,
-	      strerror_r (errno, err_buf, sizeof(err_buf)));
-	  return 1;
-	}
+
     }
   else
     {

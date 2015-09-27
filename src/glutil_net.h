@@ -38,6 +38,8 @@ net_gl_socket_destroy (__sock_o pso);
 #define F_NETOPT_HGROUP                 (a64 << 2)
 #define F_NETOPT_SSLINIT                (a64 << 3)
 #define F_NETOPT_CHROOT                 (a64 << 4)
+#define F_NETOPT_UID                    (a64 << 5)
+#define F_NETOPT_GID                    (a64 << 6)
 
 typedef struct ___net_opt
 {
@@ -50,6 +52,8 @@ typedef struct ___net_opt
   char user[64];
   char group[64];
   char chroot[PATH_MAX];
+  uid_t uid;
+  gid_t gid;
 } _net_opt, *__net_opt;
 
 _net_opt net_opts;

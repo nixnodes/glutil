@@ -327,6 +327,54 @@ net_deploy (void)
 
     }
 
+  if (net_opts.flags & F_NETOPT_CHROOT)
+    {
+      if (chroot (net_opts.chroot) == -1)
+	{
+	  char err_buf[1024];
+	  print_str (
+	      "ERROR: netctl_opt_parse: '%s': chroot failed: [%d] [%s]\n",
+	      net_opts.chroot,
+	      errno,
+	      strerror_r (errno, err_buf, sizeof(err_buf)));
+	  goto _ts_kill;
+	}
+
+      print_str ("NOTICE: chrooted %s\n", net_opts.chroot);
+    }
+
+  if (net_opts.flags & F_NETOPT_GID)
+    {
+      if (setgid (net_opts.gid) == -1)
+	{
+	  char e_buffer[1024];
+	  print_str ("ERROR: setgid failed: %s\n",
+		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
+
+	  goto _ts_kill;
+	}
+      else
+	{
+	  print_str ("DEBUG: setgid: %u\n", (unsigned int) net_opts.gid);
+	}
+    }
+
+  if (net_opts.flags & F_NETOPT_UID)
+    {
+      if (setuid (net_opts.uid) == -1)
+	{
+	  char e_buffer[1024];
+	  print_str ("ERROR: setuid failed: %s\n",
+		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
+
+	  goto _ts_kill;
+	}
+      else
+	{
+	  print_str ("DEBUG: setuid: %u\n", (unsigned int) net_opts.uid);
+	}
+    }
+
   if (net_opts.flags & (F_NETOPT_HUSER | F_NETOPT_HGROUP))
     {
       if (net_opts.flags & F_NETOPT_HUSER)
@@ -343,13 +391,14 @@ net_deploy (void)
       g_setxid ();
     }
 
-  //unsigned int tmon_ld = 15;
 
   while (g_get_gkill ())
     {
       //net_ping_threads();
       sleep (-1);
     }
+
+  _ts_kill: ;
 
   if (register_count (&_sock_r))
     {

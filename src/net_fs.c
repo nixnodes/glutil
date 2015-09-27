@@ -892,8 +892,7 @@ net_baseline_fsproto_recv (__sock_o pso, pmda base, pmda threadr, void *data)
       double p_done = (double) (((double) psts->data_in
 	  / (double) psts->hstat.file_size) * 100);
 
-      fprintf (stderr,
-	       "STATS: [%d]: recv: %llu/%llu [%.2f%%] [%u K/s] bytes\r",
+      fprintf (stderr, "STATS: [%d]: recv: %llu/%llu [%.2f%%] [%u K/s] bytes\r",
 	       pso->sock, (unsigned long long int) psts->data_in,
 	       (unsigned long long int) psts->hstat.file_size, p_done,
 	       (unsigned int) speed / 1024);
