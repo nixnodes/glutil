@@ -2022,7 +2022,7 @@ netctl_opt_parse (pmda md, void *arg)
       print_str ("DEBUG: setuid: %d\n", i_val);
 
     }
-  else if (!strncmp ("gid", left, 5))
+  else if (!strncmp ("gid", left, 4))
     {
       int i_val;
       if (n_proc_intval (left, right, &i_val, SHRT_MIN, SHRT_MAX, NULL))

@@ -504,7 +504,7 @@ net_baseline_fsproto_xfer_validate (__sock_o pso, __fs_rh_enc packet, void *arg)
       psts->xfin (pso);
     }
 
-  //pso->flags = F_OPSOCK_TERM;
+  pso->flags = F_OPSOCK_TERM;
 
   psts->notify_cb = net_baseline_fsproto_default;
 
