@@ -59,4 +59,7 @@ typedef struct ___pid_rmd160
 
 #pragma pack(pop)
 
+_pid_sha1
+c_get_file_sha1 (char *path);
+
 #endif /* SRC_G_CRYPTO_H_ */

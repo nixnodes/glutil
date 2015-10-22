@@ -291,6 +291,50 @@ mutex_lock (pthread_mutex_t *mutex)
     }
 }
 
+int
+mutex_trylock (pthread_mutex_t *mutex)
+{
+  int r;
+  switch (r = pthread_mutex_trylock (mutex))
+    {
+    case 0:
+      return 0;
+    case EBUSY:
+      return EBUSY;
+    case EOWNERDEAD:
+      fprintf (stderr,
+	       "ERROR: %d: calling pthread_mutex_consistent [EOWNERDEAD]\n",
+	       getpid ());
+      if (0 == pthread_mutex_consistent (mutex))
+	{
+	  return mutex_trylock (mutex);
+	}
+      else
+	{
+	  fprintf (stderr, "ERROR: %d: pthread_mutex_consistent failed\n",
+		   getpid ());
+	  abort ();
+	}
+
+    case EAGAIN:
+      usleep (10000);
+      return mutex_trylock (mutex);
+
+    case ENOTRECOVERABLE:
+      fprintf (stderr, "ERROR: %d: pthread_mutex_lock: [ENOTRECOVERABLE]\n",
+	       getpid ());
+      abort ();
+
+    default:
+      ;
+      char err_b[1024];
+      fprintf (stderr, "ERROR: %d: pthread_mutex_lock: [%d] [%s]\n", getpid (),
+	       r, g_strerr_r (r, (char*) err_b, sizeof(err_b)));
+      abort ();
+    }
+  return r;
+}
+
 void
 ts_flag_32 (pthread_mutex_t *mutex, uint32_t flags, uint32_t *target)
 {

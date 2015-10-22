@@ -118,8 +118,13 @@ net_fs_compile_breq (int code, unsigned char *data, size_t p_len, void *arg);
 __fs_rh_enc
 net_fs_compile_hstat (__fs_hstat data, void *arg);
 
+int
+net_baseline_fsproto_gstat (char *file, __fs_hstat data);
+
 void
 net_fs_initialize_sts (__sock_o pso);
+int
+net_fs_send_xfer_req (__sock_o pso, uint64_t offset, uint64_t size, char *rpath);
 int
 net_fs_socket_init1_req_xfer (__sock_o pso);
 

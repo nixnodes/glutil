@@ -40,6 +40,7 @@ net_gl_socket_destroy (__sock_o pso);
 #define F_NETOPT_CHROOT                 (a64 << 4)
 #define F_NETOPT_UID                    (a64 << 5)
 #define F_NETOPT_GID                    (a64 << 6)
+#define F_NETOPT_PUBIP                  (a64 << 7)
 
 typedef struct ___net_opt
 {
@@ -60,6 +61,7 @@ _net_opt net_opts;
 
 mda _sock_r;
 mda _boot_pca;
+mda net_post_init_rc;
 
 #endif /* SRC_GLUTIL_NET_H_ */
 

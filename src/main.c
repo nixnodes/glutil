@@ -136,6 +136,8 @@ g_setxid (void)
 }
 
 #include <arg_opts.h>
+#include "net_dis.h"
+
 
 int
 main (int argc, char *argv[])
@@ -239,7 +241,12 @@ int
 g_init (int argc, char **argv, char **l_arg)
 {
 
+
   g_setjmp (0, "g_init", NULL, NULL);
+
+/*  htest();
+     exit(0);*/
+
   int r = 0;
 
   if (strlen (LOGFILE))

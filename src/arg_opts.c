@@ -2048,6 +2048,49 @@ netctl_opt_parse (pmda md, void *arg)
   return 0;
 }
 
+#include "net_gfs.h"
+
+static int
+fsjob_opt_parse (pmda md, void *arg)
+{
+  p_md_obj ptr = md->objects;
+  char *left = (char*) ptr->ptr, *right;
+
+  if (NULL == ptr->next)
+    {
+      print_str ("ERROR: fsjob_opt_parse: option '%s' missing value\n", left);
+      return 1;
+    }
+
+  __gfs job = (__gfs) arg;
+  right = (char*) ((p_md_obj) ptr->next)->ptr;
+
+  if (!strncmp (left, "id", 3))
+    {
+      int i_val;
+
+      if (n_proc_intval (left, right, &i_val, 1, USHRT_MAX, NULL))
+	{
+	  return 1;
+	}
+
+      job->id = i_val;
+    }
+  else if (!strncmp (left, "path", 5))
+    {
+      if (!strlen (right))
+	{
+	  print_str ("ERROR: fsjob_opt_parse: null path\n");
+	  return 1;
+	}
+
+      snprintf (job->vb_0, sizeof(job->vb_0), "%s", right);
+      job->link = (char*) job->vb_0;
+    }
+
+  return 0;
+}
+
 static int
 opt_netctl (void *arg, int m, void *opt)
 {
@@ -2062,6 +2105,34 @@ opt_netctl (void *arg, int m, void *opt)
   P_OPT_DL_V))
     {
       return 24201;
+    }
+
+  return 0;
+}
+
+static int
+opt_fsjob (void *arg, int m, void *opt)
+{
+  char *buffer = g_pg (arg, m);
+
+  if (NULL == buffer)
+    {
+      return 24300;
+    }
+
+  md_init_le (&fs_jobs, 1024);
+
+  __gfs job = fs_job_add (&fs_jobs);
+
+  if (!job)
+    {
+      return 24301;
+    }
+
+  if (0 != g_parse_opts (buffer, fsjob_opt_parse, (void*) job, P_OPT_DL_O,
+  P_OPT_DL_V))
+    {
+      return 24302;
     }
 
   return 0;
@@ -2103,6 +2174,8 @@ opt_ssl_verify (pmda md, void *arg)
   return 0;
 }
 
+#include "net_dis.h"
+
 #define NET_OPT_PARSE_VBMSHOW() { \
      print_str("DEBUG: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
 };
@@ -2117,12 +2190,18 @@ net_opt_parse (pmda md, void *arg)
 
   if (!strncmp ("ssl\0", left, 4))
     {
+
       ca->flags |= F_OPSOCK_SSL;
       return 0;
     }
   else if (!strncmp ("first_sock_quit\0", left, 15))
     {
       ca->flags |= F_OPSOCK_SD_FIRST_DC;
+      return 0;
+    }
+  else if (!strncmp ("dis\0", left, 4))
+    {
+      ca->ca_flags |= F_CA_MISC03;
       return 0;
     }
 
@@ -2205,7 +2284,7 @@ net_opt_parse (pmda md, void *arg)
 
       ca->opt0.u00 = (uint64_t) i_val;
     }
-  else if (!strncmp ("fs_size", left, 5))
+  else if (!strncmp ("fs_size", left, 8))
     {
       int64_t i_val;
       if (n_proc_intval (left, right, NULL, LLONG_MIN, LLONG_MAX, &i_val))
@@ -2214,6 +2293,29 @@ net_opt_parse (pmda md, void *arg)
 	}
 
       ca->opt0.u01 = (uint64_t) i_val;
+    }
+  else if (!strncmp ("ref", left, 4))
+    {
+      int i_val;
+      if (n_proc_intval (left, right, &i_val, 1, USHRT_MAX, NULL))
+	{
+	  return 1;
+	}
+
+      ca->ref_id = i_val;
+      ca->flags |= F_OPSOCK_PERSIST;
+      ca->ca_flags |= F_CA_MISC02;
+    }
+  else if (!strncmp ("root", left, 5))
+    {
+      snprintf (net_opts.chroot, sizeof(net_opts.chroot), "%s", right);
+      snprintf (di_base.root, sizeof(di_base.root), "%s", right);
+      net_opts.flags |= F_NETOPT_CHROOT;
+    }
+  else if (!strncmp ("pubip", left, 6))
+    {
+      snprintf (ca->b4, sizeof(ca->b4), "%s", right);
+      net_opts.flags |= F_NETOPT_PUBIP;
     }
   else if (!strncmp ("sslcert", left, 7))
     {
@@ -2262,7 +2364,7 @@ net_opt_parse (pmda md, void *arg)
 #define OPT_CONNECT_MODE_NULL            (uint8_t)0
 #define OPT_CONNECT_MODE_SERV            (uint8_t)1
 
-#include <net_fs.h>
+#include "net_fs.h"
 
 static int
 opt_queue_connection (void *arg, uint32_t flags)
@@ -2315,6 +2417,7 @@ opt_queue_connection (void *arg, uint32_t flags)
 
   if (ca->flags & F_OPSOCK_SSL)
     {
+
       net_opts.flags |= F_NETOPT_SSLINIT;
       if (!(flags & F_OPSOCK_CONNECT))
 	{
@@ -2377,14 +2480,48 @@ opt_queue_connection (void *arg, uint32_t flags)
       md_init_le (&pc_a, 256);
 
       pc_a.objects[PROT_CODE_FS].ptr = (void*) net_baseline_fsproto;
+      pc_a.objects[PROT_CODE_DIS].ptr = (void*) net_baseline_dis;
 
       if (ca->ca_flags & F_CA_MISC00)
 	{
 	  net_push_rc (&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer,
 		       0);
 	}
+      else if (ca->ca_flags & F_CA_MISC02)
+	{
+	  net_push_rc (&ca->init_rc1, (_t_stocb) net_fs_socket_init1, 0);
+	  net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_gfs,
+		       0);
+	}
+      else if (ca->ca_flags & F_CA_MISC03)
+	{
+	  if (!(flags & F_OPSOCK_CONNECT))
+	    {
+	      net_push_rc (&ca->init_rc1,
+			   (_t_stocb) net_dis_socket_init1_accept, 0);
+	      md_init_le (&net_post_init_rc, 64);
+	      net_push_rc (&net_post_init_rc, dis_rescan, 0);
+	    }
+	  else
+	    {
+	      net_push_rc (&ca->init_rc1,
+			   (_t_stocb) net_dis_socket_init1_connect, 0);
+	    }
+
+	  di_base.nd_pool.d = (void*) ht_create (256);
+	  mutex_init (&di_base.mutex, PTHREAD_MUTEX_RECURSIVE,
+		      PTHREAD_MUTEX_ROBUST);
+	  mutex_init (&di_base.nd_pool.mutex, PTHREAD_MUTEX_RECURSIVE,
+		      PTHREAD_MUTEX_ROBUST);
+
+	  md_init_le (&di_base.hosts_linked, DIS_MAX_HOSTS_GLOBAL);
+	  md_init (&di_base.index_linked, 10);
+	  di_base.hosts_linked.flags |= F_MDA_REFPTR;
+	  di_base.index_linked.flags |= F_MDA_REFPTR;
+	}
 
       net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_rc0, 0);
+
       break;
     default:
       print_str ("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n",
@@ -2527,6 +2664,7 @@ _gg_opt gg_f_ref[] =
 	{ .id = 0x3101, .on = "-connect", .ac = 3, .op = opt_connect },
 	{ .id = 0x3104, .on = "-listen", .ac = 3, .op = opt_listen },
 	{ .id = 0x3105, .on = "-netctl", .ac = 1, .op = opt_netctl },
+	{ .id = 0x3106, .on = "-fsjob", .ac = 1, .op = opt_fsjob },
 #endif
 	{ .id = 0x9871, .on = "--user", .ac = 1, .op = g_opt_setuid },
 	{ .id = 0x9872, .on = "--group", .ac = 1, .op = g_opt_setgid },

@@ -2160,6 +2160,59 @@ enum_dir (char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
 }
 
 int
+d_enum_dir_bare (char *dir, __d_edscb_d callback_f, void *arg, int f,
+		 __g_eds eds, __d_edir_d point_cb)
+{
+
+  int r = 0;
+
+  DIR *dp = opendir (dir);
+
+  if (NULL == dp)
+    {
+      return -2;
+    }
+
+  int fddp = dirfd (dp);
+
+  if (-1 == fddp)
+    {
+      r = -4;
+      goto end;
+    }
+
+  if (fstat (fddp, &eds->st))
+    {
+      r = -3;
+      goto end;
+    }
+
+  if (eds->r_minor == 0)
+    {
+      eds->r_minor = minor(eds->st.st_dev);
+    }
+  else if ((gfl & F_OPT_XDEV) && minor(eds->st.st_dev) != eds->r_minor)
+    {
+      r = 0;
+      goto end;
+    }
+
+  eds->depth++;
+
+  r = point_cb (dir, callback_f, arg, f, eds, dp);
+
+  if (eds)
+    {
+      eds->depth--;
+    }
+
+  end:
+
+  closedir (dp);
+  return r;
+}
+
+int
 g_f_sort (uint32_t flags, __g_eds eds, __g_handle hdl)
 {
   if (NULL == g_sort_field)

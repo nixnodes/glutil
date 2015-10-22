@@ -55,6 +55,7 @@ typedef struct object_thrd
   int sig;
   uint32_t flags, status;
   mda in_objects, proc_objects;
+  pmda pin_objects;
   uint16_t role, oper_mode;
   void *buffer0;
   size_t buffer0_size;
@@ -85,6 +86,8 @@ spawn_threads (int num, void *call, int id, pmda thread_register, uint16_t role,
 
 void
 mutex_lock (pthread_mutex_t *mutex);
+int
+mutex_trylock (pthread_mutex_t *mutex);
 
 typedef float
 dt_score_pt (pmda in, pmda out, void *arg1, void *arg2);

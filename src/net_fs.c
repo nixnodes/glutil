@@ -29,6 +29,51 @@ net_fs_initialize_sts (__sock_o pso)
 }
 
 int
+net_fs_send_xfer_req (__sock_o pso, uint64_t offset, uint64_t size, char *rpath)
+{
+  print_str ("DEBUG: net_fs_send_xfer_req: [%d]: sending xfer request\n",
+	     pso->sock);
+
+  net_fs_initialize_sts (pso);
+  __fs_sts psts = (__fs_sts ) pso->va_p1;
+
+  snprintf (psts->data0, sizeof(psts->data0), "%s", rpath);
+
+  psts->state |= F_FS_STSOCK_FASSOC | F_FS_STSOCK_XFER_R;
+  psts->stage = FS_STSS_XFER_R_WSTAT;
+  psts->notify_cb = net_baseline_fsproto_xfer_stat_ok;
+
+  psts->hstat.file_offset = offset;
+  psts->hstat.file_size = size;
+
+  __fs_rh_enc packet = net_fs_compile_filereq (CODE_FS_RQH_STAT, psts->data0,
+  NULL);
+
+  if ( NULL == packet)
+    {
+      print_str (
+	  "ERROR: net_fs_send_xfer_req: [%d]: could not create xfer request\n",
+	  pso->sock);
+      return 1;
+    }
+
+  int r;
+  if ((r = net_push_to_sendq (pso, (void*) packet, packet->head.content_length,
+			      0)))
+    {
+      print_str (
+	  "ERROR: net_fs_send_xfer_req: [%d]: net_push_to_sendq failed: [%d]\n",
+	  pso->sock, r);
+      free (packet);
+      return 1;
+    }
+
+  free (packet);
+
+  return 0;
+}
+
+int
 net_fs_socket_init1_req_xfer (__sock_o pso)
 {
   mutex_lock (&pso->mutex);
@@ -49,38 +94,10 @@ net_fs_socket_init1_req_xfer (__sock_o pso)
 
       if ( ca->ca_flags & F_CA_MISC00)
 	{
-
-	  print_str("DEBUG: net_fs_socket_init1_req_xfer: [%d]: sending xfer request\n", pso->sock);
-
-	  net_fs_initialize_sts(pso);
-	  __fs_sts psts = (__fs_sts ) pso->va_p1;
-
-	  snprintf(psts->data0, sizeof(psts->data0), "%s", ca->b3);
-
-	  psts->state |= F_FS_STSOCK_FASSOC|F_FS_STSOCK_XFER_R;
-	  psts->stage = FS_STSS_XFER_R_WSTAT;
-	  psts->notify_cb = net_baseline_fsproto_xfer_stat_ok;
-
-	  psts->hstat.file_offset = ca->opt0.u00;
-	  psts->hstat.file_size = ca->opt0.u01;
-
-	  __fs_rh_enc packet = net_fs_compile_filereq(CODE_FS_RQH_STAT, psts->data0, NULL);
-
-	  if ( NULL == packet)
+	  if ( net_fs_send_xfer_req(pso, ca->opt0.u00, ca->opt0.u01, ca->b3) )
 	    {
-	      print_str("ERROR: net_fs_socket_init1_req_xfer: [%d]: could not create xfer request\n", pso->sock);
-	      pso->flags |= F_OPSOCK_TERM;
-	      break;
-	    }
-
-	  int r;
-	  if ( (r=net_push_to_sendq(pso, (void*) packet, packet->head.content_length, 0)) )
-	    {
-	      print_str("ERROR: net_fs_socket_init1_req_xfer: [%d]: net_push_to_sendq failed: [%d]\n", pso->sock, r);
 	      pso->flags |= F_OPSOCK_TERM;
 	    }
-
-	  free (packet);
 	}
 
       break;
@@ -91,7 +108,7 @@ net_fs_socket_init1_req_xfer (__sock_o pso)
   return 0;
 }
 
-static int
+int
 net_baseline_fsproto_gstat (char *file, __fs_hstat data)
 {
   struct stat st;
@@ -678,6 +695,14 @@ net_baseline_fsproto (__sock_o pso, pmda base, pmda threadr, void *data)
 
   __fs_rh_enc input = (__fs_rh_enc ) data, packet = NULL;
 
+  if (input->body.ex_len + sizeof(_fs_rh_enc) != input->head.content_length)
+    {
+      print_str ("ERROR: net_baseline_fsproto: corrupt header on [%d]\n",
+		 pso->sock);
+      pthread_mutex_unlock (&pso->mutex);
+      return -4;
+    }
+
   switch (input->body.code)
     {
     case CODE_FS_RQH_STAT:
@@ -991,7 +1016,7 @@ __fs_rh_enc
 net_fs_compile_filereq (int code, char *data, void *arg)
 {
 
-  size_t p_len = strlen ((char*) data);
+  size_t p_len = strlen ((char*) data) + 1;
 
   if (0 == p_len)
     {
@@ -1005,7 +1030,7 @@ net_fs_compile_filereq (int code, char *data, void *arg)
       return NULL;
     }
 
-  size_t req_len = sizeof(_fs_rh_enc) + p_len + 1;
+  size_t req_len = sizeof(_fs_rh_enc) + p_len;
   __fs_rh_enc request = calloc (1, req_len + 16);
 
   request->head.prot_code = PROT_CODE_FS;

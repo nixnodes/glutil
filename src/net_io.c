@@ -85,7 +85,8 @@ ssl_init (void)
 
   if (!RAND_load_file ("/dev/urandom", 4096))
     {
-      print_str ("ERROR: ssl_init: 0 bytes added to PRNG from seed source\n");
+      print_str (
+	  "ERROR: ssl_init: no bytes were added to PRNG from seed source\n");
       abort ();
     }
 
@@ -600,6 +601,7 @@ net_destroy_connection (__sock_o so)
 
   md_g_free_l (&so->init_rc0);
   md_g_free_l (&so->init_rc1);
+  md_g_free_l (&so->rc_vaar_0);
 
   so->flags |= F_OPSOCK_DISCARDED;
 
@@ -713,11 +715,14 @@ net_open_connection (char *addr, char *port, __sock_ca args)
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
   pso->sock_ca = (void*) args;
+
   md_copy_le (&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o),
   NULL);
   md_copy_le (&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
+  NULL);
+  md_copy_le (&args->rc_vaar_0, &pso->rc_vaar_0, sizeof(_proc_ic_o),
   NULL);
 
   if (!args->unit_size)
@@ -795,6 +800,8 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 	{
 	  pso->send0 = (_p_ssend) net_ssend_ssl_b;
 	}
+
+      print_str ("D4: net_open_connection: enabling SSL..\n");
       //pso->send0 = (_p_ssend) net_ssend_ssl;
     }
   else
@@ -899,18 +906,23 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
   pso->sock = fd;
   pso->oper_mode = SOCKET_OPMODE_LISTENER;
   pso->flags = args->flags;
+  pso->ac_flags = args->ac_flags;
   pso->pcheck_r = (_t_stocb) net_listener_chk_timeout;
   pso->rcv_cb = (_p_s_cb) net_accept;
   pso->host_ctx = args->socket_register;
   pso->unit_size = args->unit_size;
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
+
   md_copy_le (&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o),
   NULL);
   md_copy_le (&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
   NULL);
+  md_copy_le (&args->rc_vaar_0, &pso->rc_vaar_0, sizeof(_proc_ic_o),
+  NULL);
+
   pso->sock_ca = (void*) args;
 
   if (mutex_init (&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
@@ -973,6 +985,8 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
   net_pop_rc (pso, &pso->init_rc1);
 
   pso->flags |= F_OPSOCK_ACT;
+
+  args->pso = pso;
 
   pthread_mutex_unlock (&pso->mutex);
 
@@ -1233,7 +1247,7 @@ net_proc_sock_hmemb (po_thrd thrd)
 
 #define ST_NET_WORKER_ACT               ((uint8_t)1 << 1)
 
-int
+void *
 net_worker (void *args)
 {
   p_md_obj ptr;
@@ -1456,6 +1470,7 @@ net_worker (void *args)
 
 	  if (pso->flags & F_OPSOCK_TERM)
 	    {
+
 	      errno = 0;
 
 	      if (2 == (r = net_destroy_connection (pso)))
@@ -1478,13 +1493,24 @@ net_worker (void *args)
 
 	      net_pop_rc (pso, &pso->shutdown_rc0);
 	      md_g_free_l (&pso->shutdown_rc0);
+	      mda p_rc1 = pso->shutdown_rc1;
 
 	      pthread_mutex_unlock (&pso->mutex);
 	      mutex_lock (&host_ctx->mutex);
 
-	      mda p_rc1 = pso->shutdown_rc1;
-
 	      ptr = md_unlink_le (&thrd->proc_objects, ptr);
+
+	      uint32_t persisting;
+
+	      if ((pso->flags & F_OPSOCK_PERSIST))
+		{
+		  persisting = 1;
+		  host_ctx->flags |= F_MDA_REFPTR;
+		}
+	      else
+		{
+		  persisting = 0;
+		}
 
 	      if (unregister_connection (host_ctx, pso))
 		{
@@ -1494,18 +1520,24 @@ net_worker (void *args)
 		  abort ();
 		}
 
+	      host_ctx->flags ^= (host_ctx->flags & F_MDA_REFPTR);
+
 	      pthread_mutex_unlock (&host_ctx->mutex);
 
 	      net_pop_rc (NULL, &p_rc1);
 
 	      md_g_free_l (&p_rc1);
 
-	      //kill(SIGUSR2, getpid());
+	      if (persisting)
+		{
+		  pso->flags |= F_OPSOCK_ORPHANED;
+		}
 
 	      thrd->timers.t1 = time (NULL);
 	      int_state |= ST_NET_WORKER_ACT;
 
 	      continue;
+
 	    }
 
 	  if ((r = pso->pcheck_r (pso)))
@@ -1723,7 +1755,7 @@ net_worker (void *args)
 
   kill (getpid (), SIGUSR2);
 
-  return 0;
+  return NULL;
 }
 
 static int
@@ -1787,7 +1819,7 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
   pso->parent = (void *) spso;
   pso->st_p0 = spso->st_p0;
   pso->oper_mode = SOCKET_OPMODE_RECIEVER;
-  pso->flags |= F_OPSOCK_CONNECT | F_OPSOCK_IN
+  pso->flags |= spso->ac_flags | F_OPSOCK_CONNECT | F_OPSOCK_IN
       | (spso->flags & (F_OPSOCK_SSL | F_OPSOCK_INIT_SENDQ));
   pso->pcheck_r = (_t_stocb) net_chk_timeout;
   pso->policy = spso->policy;
@@ -1803,6 +1835,8 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
   md_copy_le (&spso->shutdown_rc0, &pso->shutdown_rc0, sizeof(_proc_ic_o),
   NULL);
   md_copy_le (&spso->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
+  NULL);
+  md_copy_le (&spso->rc_vaar_0, &pso->rc_vaar_0, sizeof(_proc_ic_o),
   NULL);
 
   if (!spso->unit_size)
@@ -2408,7 +2442,7 @@ net_ssend_b (__sock_o pso, void *data, size_t length)
       else
 	{
 	  char err_buf[1024];
-	  print_str ("D3: net_ssend_b: [%d] [%d]: %s\n", pso->sock, errno,
+	  print_str ("D6: net_ssend_b: [%d] [%d]: %s\n", pso->sock, errno,
 		     strerror_r (errno, err_buf, 1024));
 	}
 
@@ -2418,13 +2452,13 @@ net_ssend_b (__sock_o pso, void *data, size_t length)
       if (pt_diff > pso->policy.send_timeout)
 	{
 	  print_str (
-	      "WARNING: net_ssend_ssl_b: [%d] SSL_write timed out after %u seconds\n",
+	      "WARNING: net_ssend_ssl_b: [%d] timed out after %u seconds\n",
 	      pso->sock, pt_diff);
 	  pthread_mutex_unlock (&pso->mutex);
 	  return 1;
 	}
 
-      usleep (25000);
+      usleep (100000);
     }
 
   if (!ret)
@@ -2435,7 +2469,7 @@ net_ssend_b (__sock_o pso, void *data, size_t length)
       if (s_ret < (ssize_t) length)
 	{
 	  print_str (
-	      "D2: net_ssend_b: [%d] partial send occured: %zu / %zu [%u]\n",
+	      "D6: net_ssend_b: [%d] partial send occured: %zu / %zu [%u]\n",
 	      pso->sock, s_ret, length, i);
 
 	  in_data = (in_data + s_ret);
@@ -2659,7 +2693,10 @@ net_pop_rc (__sock_o pso, pmda rc)
     {
       __proc_ic_o pic = (__proc_ic_o) ptr->ptr;
 
-      pic->call(pso);
+      if ( NULL != pic->call )
+	{
+	  pic->call(pso);
+	}
 
       ptr = ptr->prev;
     }
@@ -2675,12 +2712,6 @@ net_push_rc (pmda rc, _t_stocb call, uint32_t flags)
   if ( NULL == pic)
     {
       print_str ("ERROR: net_push_rc: could not allocate memory\n");
-      return 1;
-    }
-
-  if ( NULL == call)
-    {
-      print_str ("ERROR: net_push_rc: null call pointer\n");
       return 1;
     }
 

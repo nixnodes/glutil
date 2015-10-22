@@ -823,7 +823,7 @@ md_unlink_le (pmda md, p_md_obj md_o)
 	}
     }
 
-  if (!(md->flags & F_MDA_REFPTR) && md_o->ptr)
+  if (!(md->flags & F_MDA_REFPTR) && NULL != md_o->ptr)
     {
       free (md_o->ptr);
     }

@@ -299,6 +299,36 @@ split_string_l (char *line, char dl, pmda output_t, size_t max_out)
 }
 
 int
+split_string_l_le (char *line, char dl, pmda output_t, size_t max_out)
+{
+  int i, p, c, llen = strlen (line);
+
+  for (i = 0, p = 0, c = 0; i <= llen; i++)
+    {
+      if (c == max_out)
+	{
+	  break;
+	}
+      while (line[i] == dl && line[i])
+	i++;
+      p = i;
+
+      while (line[i] != dl && line[i] != 0xA && line[i])
+	i++;
+
+      if (i > p)
+	{
+	  char *buffer = md_alloc_le (output_t, (i - p) + 10, 0, NULL);
+	  if (!buffer)
+	    return -1;
+	  memcpy (buffer, &line[p], i - p);
+	  c++;
+	}
+    }
+  return c;
+}
+
+int
 split_string_sp_tab (char *line, pmda output_t)
 {
   int i, p, c, llen = strlen (line);

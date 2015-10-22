@@ -8,6 +8,7 @@
 #include <omfp.h>
 #include <m_general.h>
 #include <signal_t.h>
+#include "net_gfs.h"
 
 #include <pthread.h>
 #include <errno.h>
@@ -25,6 +26,8 @@ _net_opt net_opts =
 mda _sock_r =
   { 0 };
 mda _boot_pca =
+  { 0 };
+mda net_post_init_rc =
   { 0 };
 
 pid_t _m_tid;
@@ -253,6 +256,7 @@ net_deploy (void)
 
   md_init_le (&_sock_r, (int) net_opts.max_sock);
   md_init_le (&_net_thrd_r, (int) net_opts.max_worker_threads);
+  md_init_le (&fs_jobs, 1024);
 
   if (net_opts.flags & F_NETOPT_SSLINIT)
     {
@@ -324,7 +328,51 @@ net_deploy (void)
     {
       print_str ("DEBUG: deployed %llu socket(s)\n",
 		 (uint64_t) _boot_pca.offset);
+    }
 
+  if (fs_jobs.offset)
+    {
+      __gfs job = (__gfs ) fs_jobs.first->ptr;
+
+      if (job->id < 1 || job->id > USHRT_MAX)
+	{
+	  print_str ("ERROR: invalid job id\n");
+	  goto _ts_kill;
+	}
+
+      if (NULL == job->link || !strlen (job->link))
+	{
+	  print_str ("ERROR: job [%d] has no path\n", job->id);
+	  goto _ts_kill;
+	}
+
+      int ret;
+
+      if (!(ret = fs_link_socks_to_job (job, &_sock_r)))
+	{
+	  print_str ("ERROR: job [%d] defined but no sockets link to it\n",
+		     job->id);
+	  goto _ts_kill;
+	}
+
+      //job->status |= FS_GFS_JOB_LOPEN;
+
+      print_str ("DEBUG: %d sockets linked to job [%d]\n", ret, job->id);
+
+      if ((r = spawn_threads (1, fs_worker, 0, &_net_thrd_r,
+      THREAD_ROLE_FS_WORKER,
+			      0)))
+	{
+	  print_str (
+	      "ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n", r);
+	  return 2;
+	}
+
+      if (!net_deploy_wait_for_all_threads (&_net_thrd_r))
+	{
+	  print_str ("ERROR: could not spawn fs_worker thread\n");
+	  goto _t_kill;
+	}
     }
 
   if (net_opts.flags & F_NETOPT_CHROOT)
@@ -391,6 +439,7 @@ net_deploy (void)
       g_setxid ();
     }
 
+  net_pop_rc (NULL, &net_post_init_rc);
 
   while (g_get_gkill ())
     {

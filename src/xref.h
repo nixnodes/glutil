@@ -269,12 +269,22 @@ typedef int
 (*__d_edscb) (char *, unsigned char, void *, __g_eds);
 
 typedef int
+(*__d_edscb_d) (char *, struct dirent *, void *, __g_eds);
+
+typedef int
 (*__d_edir) (char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
+	     DIR *dp);
+
+typedef int
+(*__d_edir_d) (char *dir, __d_edscb_d callback_f, void *arg, int f, __g_eds eds,
 	     DIR *dp);
 
 int
 enum_dir (char *dir, __d_edscb callback_f, void *arg, int f, __g_eds eds,
 	  __d_edir point_cb);
+int
+d_enum_dir_bare (char *dir, __d_edscb_d callback_f, void *arg, int f, __g_eds eds,
+	  __d_edir_d point_cb);
 
 typedef int
 (*__d_sf_p) (uint32_t flags, __g_eds eds);

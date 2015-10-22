@@ -43,6 +43,8 @@ split_string (char *line, char dl, pmda output_t);
 int
 split_string_l (char *line, char dl, pmda output_t, size_t max_out);
 int
+split_string_l_le (char *line, char dl, pmda output_t, size_t max_out);
+int
 split_string_sp_tab (char *line, pmda output_t);
 int
 is_char_uppercase (char);

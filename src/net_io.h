@@ -27,6 +27,8 @@
 #define F_OPSOCK_SKIP_SSL_SD            ((uint32_t)1 << 16)
 #define F_OPSOCK_SSL_KEYCERT_L          ((uint32_t)1 << 17)
 #define F_OPSOCK_IN                     ((uint32_t)1 << 18)
+#define F_OPSOCK_PERSIST                ((uint32_t)1 << 19)
+#define F_OPSOCK_ORPHANED               ((uint32_t)1 << 20)
 
 #define F_OPSOCK_CREAT_MODE             (F_OPSOCK_CONNECT|F_OPSOCK_LISTEN)
 #define F_OPSOCK_STATES                 (F_OPSOCK_ST_SSL_ACCEPT|F_OPSOCK_ST_SSL_CONNECT)
@@ -119,11 +121,12 @@ typedef struct ___sock_policy
 typedef struct ___sock_o
 {
   int sock;
-  uint32_t flags, opmode;
+  uint32_t flags, ac_flags, opmode;
   _p_s_cb rcv_cb, rcv_cb_t, rcv0, rcv1, rcv1_t;
   _t_stocb rc0, rc1, shutdown_cleanup_rc0, shutdown_cleanup_rc1;
   mda init_rc0, init_rc1;
   mda shutdown_rc0, shutdown_rc1;
+  mda rc_vaar_0;
   _p_ssend send0;
   _t_stocb pcheck_r;
   struct addrinfo *res, *c_res;
@@ -144,7 +147,7 @@ typedef struct ___sock_o
   mda sendq;
   void *ptr0;
   pthread_mutex_t mutex;
-  void *va_p0, *va_p1;
+  void *va_p0, *va_p1, *va_p2, *va_p3;
   void *st_p0;
   void *st_p1; // thread-specific buffer
   _net_sp policy;
@@ -187,11 +190,13 @@ p_enumsr_cb (__sock_o sock_o, void *arg);
 #define F_CA_HAS_SSL_KEY           ((uint32_t)1 << 3)
 #define F_CA_MISC00                ((uint32_t)1 << 10)
 #define F_CA_MISC01                ((uint32_t)1 << 11)
+#define F_CA_MISC02                ((uint32_t)1 << 12)
+#define F_CA_MISC03                ((uint32_t)1 << 13)
 
 typedef struct ___sock_create_args
 {
   char *host, *port;
-  uint32_t flags, ca_flags;
+  uint32_t flags, ca_flags, ac_flags;
   _p_sc_cb proc;
   pmda socket_register, thread_register;
   char *ssl_cert;
@@ -202,11 +207,15 @@ typedef struct ___sock_create_args
   char b1[PATH_MAX];
   char b2[PATH_MAX];
   char b3[PATH_MAX];
+  char b4[64];
   uint8_t mode;
   _net_sp policy;
   mda init_rc0, init_rc1;
   mda shutdown_rc0, shutdown_rc1;
   _nn_2x64 opt0;
+  mda rc_vaar_0;
+  __sock_o pso;
+  int ref_id;
 } _sock_ca, *__sock_ca;
 
 p_sc_cb rc_tst, rc_ghs, net_socket_init_enforce_policy;
@@ -217,7 +226,7 @@ int
 bind_socket (int fd, struct addrinfo *aip);
 int
 check_socket_event (__sock_o pso);
-int
+void*
 net_worker (void *args);
 void
 net_worker_dispatcher (int signal);
