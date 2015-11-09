@@ -136,7 +136,7 @@ g_setxid (void)
 }
 
 #include <arg_opts.h>
-#include "net_dis.h"
+
 
 
 int
