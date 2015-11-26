@@ -442,7 +442,10 @@ net_deploy (void)
 
   //htest();
 
-  net_ftp_init (ftp_cmd);
+  if ( NULL != ftp_cmd)
+    {
+      net_ftp_init (ftp_cmd);
+    }
 
   net_pop_rc (NULL, &net_post_init_rc);
 
