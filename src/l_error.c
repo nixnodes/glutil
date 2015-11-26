@@ -91,7 +91,7 @@ sighdl_error (int sig, siginfo_t* siginfo, void* context)
     }
 
   snprintf (buffer1, 4096, ", fault address: 0x%.16llX",
-	    (uint64_t) siginfo->si_addr);
+	    (long long unsigned int) siginfo->si_addr);
 
   switch (g_sigjmp.id)
     {
