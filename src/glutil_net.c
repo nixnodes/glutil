@@ -8,7 +8,9 @@
 #include <omfp.h>
 #include <m_general.h>
 #include <signal_t.h>
+#include "taskd.h"
 #include "net_gfs.h"
+#include "net_ftp.h"
 
 #include <pthread.h>
 #include <errno.h>
@@ -19,7 +21,7 @@
 #include <malloc.h>
 
 _net_opt net_opts =
-  { .max_sock = 512, .thread_l = 1, .thread_r = 2, .st_p0 = NULL,
+  { .max_sock = 4096, .thread_l = 1, .thread_r = 2, .st_p0 = NULL,
       .max_worker_threads = 128, .ssl_cert_def = "server.cert", .ssl_key_def =
 	  "server.key", .flags = 0 };
 
@@ -33,7 +35,7 @@ mda net_post_init_rc =
 pid_t _m_tid;
 
 static int
-process_ca_requests (pmda md)
+process_ca_requests (pmda md, uint32_t mode)
 {
   p_md_obj ptr = md->first;
   int ret, fail = 0;
@@ -48,10 +50,9 @@ process_ca_requests (pmda md)
 
       __sock_ca pca = (__sock_ca) ptr->ptr;
 
-      switch (pca->flags & F_OPSOCK_CREAT_MODE)
+      if (pca->flags & mode)
 	{
-	case F_OPSOCK_CONNECT:
-	  if ((ret = net_open_connection (pca->host, pca->port, pca)))
+	  if ((ret = pca->scall (pca->host, pca->port, pca)))
 	    {
 	      print_str (
 		  "ERROR: net_open_connection: host: %s port: %s, status:[%d] %s\n",
@@ -59,17 +60,6 @@ process_ca_requests (pmda md)
 		  ret < 0 ? strerror_r (errno, buf_err, 1024) : "");
 	      fail++;
 	    }
-	  break;
-	case F_OPSOCK_LISTEN:
-	  if ((ret = net_open_listening_socket (pca->host, pca->port, pca)))
-	    {
-	      print_str (
-		  "ERROR: net_open_listening_socket: host: %s port: %s, status:[%d] %s\n",
-		  pca->host, pca->port, ret,
-		  ret < 0 ? strerror_r (errno, buf_err, 1024) : "");
-	      fail++;
-	    }
-	  break;
 	}
 
       ptr = ptr->next;
@@ -135,7 +125,7 @@ net_def_sig_handler (int signal)
   else
     {
       //print_str("D6: net_def_sig_handler: pinging threads..\n");
-      net_ping_threads ();
+      //net_ping_threads ();
       //sleep(1000);
     }
 
@@ -208,9 +198,9 @@ net_deploy (void)
 
   //_m_tid = getpid();
 
-#ifdef M_ARENA_TEST
-  mallopt (M_ARENA_TEST, 1);
-#endif
+  /*#ifdef M_ARENA_TEST
+   mallopt (M_ARENA_TEST, 1);
+   #endif*/
 #ifdef M_ARENA_MAX
   mallopt (M_ARENA_MAX, 1);
 #endif
@@ -243,6 +233,7 @@ net_deploy (void)
   sigaddset (&set, SIGURG);
   sigaddset (&set, SIGIO);
   sigaddset (&set, SIGUSR1);
+  sigaddset (&set, SIGHUP);
 
   int sr = pthread_sigmask (SIG_BLOCK, &set, NULL);
 
@@ -256,6 +247,8 @@ net_deploy (void)
 
   md_init_le (&_sock_r, (int) net_opts.max_sock);
   md_init_le (&_net_thrd_r, (int) net_opts.max_worker_threads);
+  //md_init_le (&_thrd_r_common, 32);
+  md_init_le (&tasks_in, MAX_TASKS_GLOBAL);
   md_init_le (&fs_jobs, 1024);
 
   if (net_opts.flags & F_NETOPT_SSLINIT)
@@ -266,10 +259,18 @@ net_deploy (void)
     }
 
   int r;
+  po_thrd task_worker_object;
+
+  if ((r = thread_create (task_worker, 0, NULL, 0, 0,
+  F_THRD_NOWPID | F_THRD_NOREG,
+			  F_THC_SKIP_IO, NULL, &task_worker_object, NULL)))
+    {
+      return r;
+    }
 
   if ((r = spawn_threads (net_opts.thread_l, net_worker, 0, &_net_thrd_r,
   THREAD_ROLE_NET_WORKER,
-			  SOCKET_OPMODE_LISTENER)))
+			  SOCKET_OPMODE_LISTENER, 0)))
     {
       print_str ("ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n",
 		 r);
@@ -284,7 +285,7 @@ net_deploy (void)
 
   if ((r = spawn_threads (net_opts.thread_r, net_worker, 0, &_net_thrd_r,
   THREAD_ROLE_NET_WORKER,
-			  SOCKET_OPMODE_RECIEVER)))
+			  SOCKET_OPMODE_RECIEVER, 0)))
     {
       print_str ("ERROR: spawn_threads failed [SOCKET_OPMODE_RECIEVER]: %d\n",
 		 r);
@@ -310,23 +311,23 @@ net_deploy (void)
 
   int fail;
 
-  if ((fail = process_ca_requests (&_boot_pca)))
+  if ((fail = process_ca_requests (&_boot_pca, F_OPSOCK_LISTEN)))
     {
       if ((off_t) fail == _boot_pca.offset)
 	{
 	  print_str (
-	      "WARNING: process_ca_requests: no connection requests succeeded\n");
+	      "WARNING: process_ca_requests: no socket requests succeeded\n");
 	  goto _t_kill;
 	}
       else
 	{
 	  print_str (
-	      "WARNING: process_ca_requests: not all connection requests were succesfull\n");
+	      "WARNING: process_ca_requests: not all socket requests were succesfull\n");
 	}
     }
   else
     {
-      print_str ("DEBUG: deployed %llu socket(s)\n",
+      print_str ("DEBUG: deployed %llu listener socket(s)\n",
 		 (uint64_t) _boot_pca.offset);
     }
 
@@ -361,7 +362,7 @@ net_deploy (void)
 
       if ((r = spawn_threads (1, fs_worker, 0, &_net_thrd_r,
       THREAD_ROLE_FS_WORKER,
-			      0)))
+			      0, 0)))
 	{
 	  print_str (
 	      "ERROR: spawn_threads failed [SOCKET_OPMODE_LISTENER]: %d\n", r);
@@ -439,7 +440,28 @@ net_deploy (void)
       g_setxid ();
     }
 
+  //htest();
+
+  net_ftp_init (ftp_cmd);
+
   net_pop_rc (NULL, &net_post_init_rc);
+
+  thread_broadcast_sig (&_net_thrd_r, SIGINT);
+
+  if ((fail = process_ca_requests (&_boot_pca, F_OPSOCK_CONNECT)))
+    {
+      if ((off_t) fail == _boot_pca.offset)
+	{
+	  print_str (
+	      "WARNING: process_ca_requests: no socket requests succeeded\n");
+	  goto _t_kill;
+	}
+      else
+	{
+	  print_str (
+	      "WARNING: process_ca_requests: not all socket requests were succesfull\n");
+	}
+    }
 
   while (g_get_gkill ())
     {
@@ -459,28 +481,25 @@ net_deploy (void)
 
   print_str ("DEBUG: sending F_THRD_TERM to all worker threads\n");
 
+  thread_broadcast_kill (&_net_thrd_r);
+
   print_str ("DEBUG: waiting for threads to exit..\n");
 
-  time_t s = time (NULL), e;
-  off_t l_count;
-
-  while ((l_count = register_count (&_net_thrd_r)) > 0)
+  if ((r = thread_join_threads (&_net_thrd_r)))
     {
-      thread_broadcast_kill (&_net_thrd_r);
-      e = time (NULL);
-      if ((e - s) > NET_WTHRD_CLEANUP_TIMEOUT)
-	{
-	  print_str ("WARNING: %llu worker threads remaining\n",
-		     (uint64_t) l_count);
-	  break;
-	}
-      sleep (1);
+      print_str ("WARNING: %d threads remaining\n", r);
     }
+
+  thread_send_kill (task_worker_object);
+
+  pthread_join (task_worker_object->pt, NULL);
 
   md_g_free_l (&_net_thrd_r);
   md_g_free_l (&_sock_r);
   free (pc_a.objects);
   md_g_free_l (&_boot_pca);
+  md_g_free_l (&tasks_in);
+  md_g_free_l (&fs_jobs);
 
   if (in_f & F_ND_SSL_INIT)
     {

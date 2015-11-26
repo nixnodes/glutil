@@ -274,7 +274,7 @@ net_chk_timeout (__sock_o pso)
 		 time (NULL) - pso->timers.last_act);
       if (pso->flags & F_OPSOCK_SSL)
 	{
-	  pso->flags |= F_OPSOCK_SKIP_SSL_SD;
+	  //pso->flags |= F_OPSOCK_SKIP_SSL_SD;
 	}
       r = 1;
       //goto end;
@@ -291,7 +291,33 @@ net_chk_timeout (__sock_o pso)
 static int
 net_listener_chk_timeout (__sock_o pso)
 {
-  return 0;
+  int r = 0;
+
+  mutex_lock (&pso->mutex);
+
+  time_t last_act = (time (NULL) - pso->timers.last_act);
+
+  if (pso->policy.listener_idle_timeout)
+    {
+      if (last_act >= pso->policy.listener_idle_timeout)
+	{
+	  print_str (
+	      "WARNING: idle timeout occured on listener socket %d [%u]\n",
+	      pso->sock, last_act);
+	  r = 1;
+	}
+      else
+	{
+	  r = -1;
+	}
+    }
+
+  exit: ;
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  return r;
+
   /*
    int r = 0;
 
@@ -331,15 +357,15 @@ uint16_t
 net_get_addrinfo_port (__sock_o pso)
 {
   void *port_data;
-  switch (pso->res->ai_family)
+  switch (pso->res.ai_family)
     {
     case AF_INET:
       ;
-      port_data = &((struct sockaddr_in*) pso->res->ai_addr)->sin_port;
+      port_data = &((struct sockaddr_in*) pso->res.ai_addr)->sin_port;
       break;
     case AF_INET6:
       ;
-      port_data = &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_port;
+      port_data = &((struct sockaddr_in6*) pso->res.ai_addr)->sin6_port;
       break;
     default:
       ;
@@ -354,15 +380,15 @@ const char *
 net_get_addrinfo_ip (__sock_o pso, char *out, socklen_t len)
 {
   void *ip_data;
-  switch (pso->res->ai_family)
+  switch (pso->res.ai_family)
     {
     case AF_INET:
       ;
-      ip_data = (void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr;
+      ip_data = (void*) &((struct sockaddr_in*) pso->res.ai_addr)->sin_addr;
       break;
     case AF_INET6:
       ;
-      ip_data = (void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr;
+      ip_data = (void*) &((struct sockaddr_in6*) pso->res.ai_addr)->sin6_addr;
       break;
     default:
       ;
@@ -370,7 +396,84 @@ net_get_addrinfo_ip (__sock_o pso, char *out, socklen_t len)
       return out;
     }
 
-  return inet_ntop (pso->res->ai_family, ip_data, out, len);
+  return inet_ntop (pso->res.ai_family, ip_data, out, len);
+
+}
+
+int
+net_addr_to_ipr (__sock_o pso, __ipr out)
+{
+  uint16_t *port_data;
+  uint8_t *ip_data;
+  int len;
+  switch (pso->res.ai_family)
+    {
+    case AF_INET:
+      ;
+      ip_data = (uint8_t*) &((struct sockaddr_in*) pso->res.ai_addr)->sin_addr;
+      port_data =
+	  (uint16_t*) &((struct sockaddr_in*) pso->res.ai_addr)->sin_port;
+      len = sizeof(struct in_addr);
+      break;
+    case AF_INET6:
+      ;
+      ip_data =
+	  (uint8_t*) &((struct sockaddr_in6*) pso->res.ai_addr)->sin6_addr;
+      port_data =
+	  (uint16_t*) &((struct sockaddr_in6*) pso->res.ai_addr)->sin6_port;
+      len = sizeof(struct in6_addr);
+      break;
+    default:
+      ;
+      return 1;
+    }
+
+  out->port = ntohs (*port_data);
+
+  int i;
+  for (i = 0; i < len && i < sizeof(out->ip); i++)
+    {
+      out->ip[i] = ip_data[i];
+    }
+
+  return 0;
+
+}
+
+int
+net_addr_to_ipr_sa (struct sockaddr* sa, __sock_o pso, __ipr out)
+{
+  uint16_t *port_data;
+  uint8_t *ip_data;
+  int len;
+  switch (pso->res.ai_family)
+    {
+    case AF_INET:
+      ;
+      ip_data = (uint8_t*) &((struct sockaddr_in*) sa)->sin_addr;
+      port_data = (uint16_t*) &((struct sockaddr_in*) sa)->sin_port;
+      len = sizeof(struct in_addr);
+      break;
+    case AF_INET6:
+      ;
+      ip_data = (uint8_t*) &((struct sockaddr_in6*) sa)->sin6_addr;
+      port_data = (uint16_t*) &((struct sockaddr_in6*) sa)->sin6_port;
+      len = sizeof(struct in6_addr);
+      break;
+    default:
+      ;
+      return 1;
+    }
+
+  out->port = ntohs (*port_data);
+
+  int i;
+  for (i = 0; i < len && i < sizeof(out->ip); i++)
+    {
+      out->ip[i] = ip_data[i];
+    }
+
+  return 0;
 
 }
 
@@ -568,14 +671,9 @@ net_destroy_connection (__sock_o so)
       SSL_CTX_free (so->ctx);
     }
 
-  if (NULL != so->res)
+  if (so->res.ai_addr)
     {
-      freeaddrinfo (so->res);
-    }
-
-  if (NULL != so->c_res)
-    {
-      freeaddrinfo (so->c_res);
+      free (so->res.ai_addr);
     }
 
   if ((ret = close (so->sock)))
@@ -597,11 +695,12 @@ net_destroy_connection (__sock_o so)
    free(so->va_p1);
    }*/
 
-  md_g_free (&so->sendq);
+  md_g_free_l (&so->sendq);
 
   md_g_free_l (&so->init_rc0);
   md_g_free_l (&so->init_rc1);
-  md_g_free_l (&so->rc_vaar_0);
+  md_g_free_l (&so->init_rc0_ssl);
+  md_g_free_l (&so->tasks);
 
   so->flags |= F_OPSOCK_DISCARDED;
 
@@ -619,7 +718,7 @@ unregister_connection (pmda glob_reg, __sock_o pso)
 
   while (ptr)
     {
-      if (((__sock_o ) ptr->ptr)->sock == pso->sock)
+      if ((__sock_o ) ptr->ptr == pso)
 	{
 	  break;
 	}
@@ -644,12 +743,22 @@ unregister_connection (pmda glob_reg, __sock_o pso)
 }
 
 static void
+net_failclean (__sock_o so)
+{
+  md_g_free_l (&so->sendq);
+
+  md_g_free_l (&so->init_rc0);
+  md_g_free_l (&so->init_rc1);
+  md_g_free_l (&so->shutdown_rc0);
+  md_g_free_l (&so->shutdown_rc1);
+  md_g_free_l (&so->init_rc0_ssl);
+  md_g_free_l (&so->tasks);
+
+}
+
+static void
 net_open_connection_cleanup (pmda sockr, struct addrinfo *aip, int fd)
 {
-  if (aip)
-    {
-      freeaddrinfo (aip);
-    }
   close (fd);
   md_unlink_le (sockr, sockr->pos);
   pthread_mutex_unlock (&sockr->mutex);
@@ -706,15 +815,24 @@ net_open_connection (char *addr, char *port, __sock_ca args)
       return 9;
     }
 
-  pso->res = aip;
+  pso->res = *aip;
+
+  pso->res.ai_addr = malloc (sizeof(struct sockaddr));
+  memcpy (pso->res.ai_addr, aip->ai_addr, sizeof(struct sockaddr));
+
+  freeaddrinfo (aip);
+
   pso->sock = fd;
   pso->oper_mode = SOCKET_OPMODE_RECIEVER;
   pso->flags = args->flags;
-  pso->pcheck_r = (_t_stocb) net_chk_timeout;
+  pso->pcheck_r = (_t_rcall) net_chk_timeout;
   pso->timers.last_act = time (NULL);
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
   pso->sock_ca = (void*) args;
+  pso->common = args->common;
+
+  net_addr_to_ipr (pso, &pso->ipr);
 
   md_copy_le (&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
@@ -722,8 +840,9 @@ net_open_connection (char *addr, char *port, __sock_ca args)
   NULL);
   md_copy_le (&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
   NULL);
-  md_copy_le (&args->rc_vaar_0, &pso->rc_vaar_0, sizeof(_proc_ic_o),
+  md_copy_le (&args->init_rc0_ssl, &pso->init_rc0_ssl, sizeof(_proc_ic_o),
   NULL);
+  md_init_le (&pso->tasks, 8);
 
   if (!args->unit_size)
     {
@@ -741,6 +860,7 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 
   if (mutex_init (&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
     {
+      net_failclean (pso);
       net_open_connection_cleanup (args->socket_register, aip, fd);
       return 10;
     }
@@ -756,6 +876,7 @@ net_open_connection (char *addr, char *port, __sock_ca args)
     {
       if (!ssl_init_ctx_client (pso))
 	{
+	  net_failclean (pso);
 	  net_open_connection_cleanup (args->socket_register, aip, fd);
 	  ERR_print_errors_fp (stderr);
 	  ERR_clear_error ();
@@ -764,6 +885,7 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 
       if ((pso->ssl = SSL_new (pso->ctx)) == NULL)
 	{ /* get new SSL state with context */
+	  net_failclean (pso);
 	  net_open_connection_cleanup (args->socket_register, aip, fd);
 	  ERR_print_errors_fp (stderr);
 	  ERR_clear_error ();
@@ -775,6 +897,7 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 	  if ((r = ssl_load_client_certs (pso->ssl, args->ssl_cert,
 					  args->ssl_key)))
 	    {
+	      net_failclean (pso);
 	      net_open_connection_cleanup (args->socket_register, aip, fd);
 	      ERR_print_errors_fp (stderr);
 	      ERR_clear_error ();
@@ -792,14 +915,8 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 
       pso->rcv_cb = (_p_s_cb) net_connect_ssl;
       pso->rcv_cb_t = (_p_s_cb) net_recv_ssl;
-      if (args->flags & F_OPSOCK_INIT_SENDQ)
-	{
-	  pso->send0 = (_p_ssend) net_ssend_ssl_b;
-	}
-      else
-	{
-	  pso->send0 = (_p_ssend) net_ssend_ssl_b;
-	}
+
+      pso->send0 = (_p_ssend) net_ssend_ssl_b;
 
       print_str ("D4: net_open_connection: enabling SSL..\n");
       //pso->send0 = (_p_ssend) net_ssend_ssl;
@@ -807,14 +924,9 @@ net_open_connection (char *addr, char *port, __sock_ca args)
   else
     {
       pso->rcv_cb = (_p_s_cb) net_recv;
-      if (args->flags & F_OPSOCK_INIT_SENDQ)
-	{
-	  pso->send0 = (_p_ssend) net_ssend_b;
-	}
-      else
-	{
-	  pso->send0 = (_p_ssend) net_ssend_b;
-	}
+
+      pso->send0 = (_p_ssend) net_ssend_b;
+
       pso->flags |= F_OPSOCK_PROC_READY;
     }
 
@@ -822,22 +934,83 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 
   net_pop_rc (pso, &pso->init_rc0);
 
-  if ((r = push_object_to_thread (pso, args->thread_register,
-				  (dt_score_ptp) net_get_score)))
+  pthread_t pt;
+
+  if (pso->flags & F_OPSOCK_CS_NOASSIGNTHREAD)
     {
-      print_str ("ERROR: push_object_to_thread failed, code %d, sock %d\n", r,
+      goto ready;
+    }
+  if (pso->flags & F_OPSOCK_CS_MONOTHREAD)
+    {
+      r = 1;
+      print_str ("DEBUG: net_open_connection: spawning new thread for [%d]\n",
 		 pso->sock);
+      pso->flags |= F_OPSOCK_ACT;
+    }
+  else
+    {
+      r = 0;
+    }
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  if (r == 1)
+    {
+      o_thrd data =
+	{ 0 };
+      data.id = 0;
+      data.role = THREAD_ROLE_NET_WORKER;
+      data.oper_mode = SOCKET_OPMODE_RECIEVER;
+      data.host_ctx = args->thread_register;
+      data.in_objects.lref_ptr = pso;
+      data.flags |= F_THRD_DETACH | F_THRD_NOWPID | pso->common.thread_flags;
+      mutex_init (&data.mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+
+      pthread_t pt;
+
+      if ((r = thread_create (net_worker_mono, 0, args->thread_register, 0, 0,
+      F_THRD_MISC00,
+			      F_THC_USER_DATA, &data, NULL, &pt)))
+	{
+	  print_str (
+	      "ERROR: net_open_connection: thread_create failed, code %d, sock %d (accept)\n",
+	      r, pso->sock);
+	  uint32_t pso_flags = pso->flags;
+	  net_failclean (pso);
+	  net_open_connection_cleanup (args->socket_register, aip, fd);
+
+	  return 17;
+
+	}
+      else
+	{
+	  //pthread_kill (pt, SIGUSR1);
+	  goto exit;
+	}
+    }
+  else if ((r = push_object_to_thread (pso, args->thread_register,
+				       (dt_score_ptp) net_get_score, &pt)))
+    {
+      print_str (
+	  "ERROR: net_open_connection: push_object_to_thread failed, code %d, sock %d\n",
+	  r, pso->sock);
+      net_failclean (pso);
       net_open_connection_cleanup (args->socket_register, aip, fd);
       return 13;
     }
 
   mutex_lock (&pso->mutex);
 
+  pso->thread = pt;
   net_pop_rc (pso, &pso->init_rc1);
+
+  ready: ;
 
   pso->flags |= F_OPSOCK_ACT;
 
   pthread_mutex_unlock (&pso->mutex);
+
+  exit: ;
 
   pthread_mutex_unlock (&args->socket_register->mutex);
 
@@ -847,17 +1020,14 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 static void
 net_open_listening_socket_cleanup (pmda sockr, struct addrinfo *aip, int fd)
 {
-  if (aip)
-    {
-      freeaddrinfo (aip);
-    }
   close (fd);
   md_unlink_le (sockr, sockr->pos);
   pthread_mutex_unlock (&sockr->mutex);
 }
 
 int
-net_open_listening_socket (char *addr, char *port, __sock_ca args)
+net_open_listening_socket_e (char *addr, char *port, __sock_ca args,
+			     pthread_t *pt_ret)
 {
   struct addrinfo *aip;
   struct addrinfo hints =
@@ -872,14 +1042,18 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
   hints.ai_protocol = IPPROTO_TCP;
   hints.ai_family = AF_UNSPEC;
 
+  mutex_lock (&args->socket_register->mutex);
+
   if (getaddrinfo (addr, port, &hints, &aip))
     {
+      pthread_mutex_unlock (&args->socket_register->mutex);
       return -1;
     }
 
   if ((fd = socket (aip->ai_family, aip->ai_socktype, aip->ai_protocol)) == -1)
     {
       freeaddrinfo (aip);
+      pthread_mutex_unlock (&args->socket_register->mutex);
       return -2;
     }
 
@@ -887,10 +1061,9 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
     {
       freeaddrinfo (aip);
       close (fd);
+      pthread_mutex_unlock (&args->socket_register->mutex);
       return -3;
     }
-
-  mutex_lock (&args->socket_register->mutex);
 
   __sock_o pso;
 
@@ -902,17 +1075,26 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
       return 9;
     }
 
-  pso->res = aip;
+  pso->res = *aip;
+
+  pso->res.ai_addr = malloc (sizeof(struct sockaddr));
+  memcpy (pso->res.ai_addr, aip->ai_addr, sizeof(struct sockaddr));
+
+  freeaddrinfo (aip);
+
   pso->sock = fd;
   pso->oper_mode = SOCKET_OPMODE_LISTENER;
   pso->flags = args->flags;
   pso->ac_flags = args->ac_flags;
-  pso->pcheck_r = (_t_stocb) net_listener_chk_timeout;
+  pso->pcheck_r = (_t_rcall) net_listener_chk_timeout;
   pso->rcv_cb = (_p_s_cb) net_accept;
   pso->host_ctx = args->socket_register;
   pso->unit_size = args->unit_size;
   pso->st_p0 = args->st_p0;
   pso->policy = args->policy;
+  pso->common = args->common;
+
+  net_addr_to_ipr (pso, &pso->ipr);
 
   md_copy_le (&args->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&args->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
@@ -920,13 +1102,15 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
   NULL);
   md_copy_le (&args->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
   NULL);
-  md_copy_le (&args->rc_vaar_0, &pso->rc_vaar_0, sizeof(_proc_ic_o),
+  md_copy_le (&args->init_rc0_ssl, &pso->init_rc0_ssl, sizeof(_proc_ic_o),
   NULL);
+  md_init_le (&pso->tasks, 8);
 
   pso->sock_ca = (void*) args;
 
   if (mutex_init (&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
     {
+      net_failclean (pso);
       net_open_listening_socket_cleanup (args->socket_register, aip, fd);
       return 10;
     }
@@ -939,6 +1123,7 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
 	{
 	  ERR_print_errors_fp (stderr);
 	  ERR_clear_error ();
+	  net_failclean (pso);
 	  net_open_listening_socket_cleanup (args->socket_register, aip, fd);
 	  return 11;
 	}
@@ -947,6 +1132,7 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
 	{
 	  ERR_print_errors_fp (stderr);
 	  ERR_clear_error ();
+	  net_failclean (pso);
 	  net_open_listening_socket_cleanup (args->socket_register, aip, fd);
 	  print_str (
 	      "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s / %s\n",
@@ -969,37 +1155,231 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
 
   net_pop_rc (pso, &pso->init_rc0);
 
+  if (pso->flags & F_OPSOCK_CS_NOASSIGNTHREAD)
+    {
+      goto ready;
+    }
+  else if (pso->flags & F_OPSOCK_CS_MONOTHREAD)
+    {
+      r = 1;
+      print_str (
+	  "DEBUG: net_open_listening_socket: spawning new thread for [%d]\n",
+	  pso->sock);
+      pso->flags |= F_OPSOCK_ACT;
+    }
+  else
+    {
+      r = 0;
+    }
+
   pthread_mutex_unlock (&pso->mutex);
 
-  if ((r = push_object_to_thread (pso, args->thread_register,
-				  (dt_score_ptp) net_get_score)))
+  pthread_t pt;
+
+  if (r == 1)
     {
-      print_str ("ERROR: push_object_to_thread failed, code %d, sock %d\n", r,
-		 pso->sock);
+      o_thrd data =
+	{ 0 };
+      data.id = 0;
+      data.role = THREAD_ROLE_NET_WORKER;
+      data.oper_mode = SOCKET_OPMODE_LISTENER;
+      data.host_ctx = args->thread_register;
+      data.in_objects.lref_ptr = pso;
+      data.flags |= F_THRD_DETACH | F_THRD_NOWPID | pso->common.thread_flags;
+      mutex_init (&data.mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+
+      pthread_t pt;
+
+      if ((r = thread_create (net_worker_mono, 0, args->thread_register, 0, 0,
+      F_THRD_MISC00,
+			      F_THC_USER_DATA, &data, NULL, &pt)))
+	{
+	  print_str (
+	      "ERROR: net_open_listening_socket: thread_create failed, code %d, sock %d (accept)\n",
+	      r, pso->sock);
+	  uint32_t pso_flags = pso->flags;
+	  net_failclean (pso);
+	  net_open_connection_cleanup (args->socket_register, aip, fd);
+
+	  return 17;
+
+	}
+      else
+	{
+	  /*sigset_t set;
+	   sigemptyset (&set);
+	   sigaddset (&set, SIGHUP);
+
+	   int sig;
+
+	   int re;
+	   if ((re = sigwait (&set, &sig)))
+	   {
+	   fprintf (
+	   stderr,
+	   "WARNING: net_open_listening_socket: [%d]: sigwait (SIGINT) failed with %d\n",
+	   syscall (SYS_gettid), re);
+	   }*/
+
+	  //pthread_kill (pt, SIGUSR1);
+	  if ( NULL != pt_ret)
+	    {
+	      *pt_ret = pt;
+	    }
+	  goto exit;
+	}
+    }
+  else if ((r = push_object_to_thread (pso, args->thread_register,
+				       (dt_score_ptp) net_get_score, &pt)))
+    {
+      print_str (
+	  "ERROR: net_open_listening_socket: push_object_to_thread failed, code %d, sock %d\n",
+	  r, pso->sock);
+      net_failclean (pso);
       net_open_listening_socket_cleanup (args->socket_register, aip, fd);
       return 13;
     }
 
   mutex_lock (&pso->mutex);
 
+  pso->thread = pt;
   net_pop_rc (pso, &pso->init_rc1);
+
+  ready: ;
 
   pso->flags |= F_OPSOCK_ACT;
 
-  args->pso = pso;
-
   pthread_mutex_unlock (&pso->mutex);
+
+  exit: ;
 
   pthread_mutex_unlock (&args->socket_register->mutex);
 
   return 0;
 }
 
+int
+net_open_listening_socket (char *addr, char *port, __sock_ca args)
+{
+  return net_open_listening_socket_e (addr, port, args, NULL);
+}
+
+__sock_o
+net_open_listening_socket_bare (char *addr, char *port, __sock_ca args)
+{
+  struct addrinfo *aip;
+  struct addrinfo hints =
+    { 0 };
+
+  int fd;
+
+  errno = 0;
+
+  hints.ai_flags = AI_ALL | AI_ADDRCONFIG | AI_PASSIVE;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_family = AF_UNSPEC;
+
+  if (getaddrinfo (addr, port, &hints, &aip))
+    {
+      return NULL;
+    }
+
+  if ((fd = socket (aip->ai_family, aip->ai_socktype, aip->ai_protocol)) == -1)
+    {
+      freeaddrinfo (aip);
+      return NULL;
+    }
+
+  if (bind_socket (fd, aip))
+    {
+      freeaddrinfo (aip);
+      close (fd);
+      return NULL;
+    }
+
+  __sock_o pso = calloc (1, sizeof(_sock_o));
+
+  pso->res = *aip;
+
+  pso->res.ai_addr = malloc (sizeof(struct sockaddr));
+  memcpy (pso->res.ai_addr, aip->ai_addr, sizeof(struct sockaddr));
+
+  freeaddrinfo (aip);
+
+  pso->sock = fd;
+  pso->oper_mode = SOCKET_OPMODE_LISTENER;
+  pso->flags = args->flags;
+  pso->ac_flags = args->ac_flags;
+  pso->pcheck_r = (_t_rcall) net_listener_chk_timeout;
+  pso->rcv_cb = (_p_s_cb) net_accept;
+  pso->host_ctx = args->socket_register;
+  pso->unit_size = args->unit_size;
+  pso->st_p0 = args->st_p0;
+  pso->policy = args->policy;
+
+  net_addr_to_ipr (pso, &pso->ipr);
+
+  pso->sock_ca = (void*) args;
+
+  if (mutex_init (&pso->mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST))
+    {
+      free (pso);
+      freeaddrinfo (aip);
+      close (fd);
+      return NULL;
+    }
+
+  int r;
+
+  if (args->flags & F_OPSOCK_SSL)
+    {
+      if (!ssl_init_ctx_server (pso))
+	{
+	  ERR_print_errors_fp (stderr);
+	  ERR_clear_error ();
+	  free (pso);
+	  freeaddrinfo (aip);
+	  close (fd);
+	  return NULL;
+	}
+
+      if ((r = ssl_load_server_certs (pso->ctx, args->ssl_cert, args->ssl_key)))
+	{
+	  ERR_print_errors_fp (stderr);
+	  ERR_clear_error ();
+	  free (pso);
+	  freeaddrinfo (aip);
+	  close (fd);
+	  print_str (
+	      "ERROR: [%d] could not load SSL certificate/key pair [%d]: %s / %s\n",
+	      fd, r, args->ssl_cert, args->ssl_key);
+	  return NULL;
+	}
+
+      pso->flags |= F_OPSOCK_SSL_KEYCERT_L;
+
+      pso->rcv0 = (_p_s_cb) net_recv_ssl;
+    }
+  else
+    {
+      pso->rcv0 = (_p_s_cb) net_recv;
+    }
+
+  pso->rcv1_t = (_p_s_cb) args->proc;
+
+  return pso;
+}
+
 void
-net_send_sock_term_sig (__sock_o pso)
+net_send_sock_sigterm (__sock_o pso)
 {
   mutex_lock (&pso->mutex);
   pso->flags |= F_OPSOCK_TERM;
+  if (pso->thread != (pthread_t) 0)
+    {
+      pthread_kill (pso->thread, SIGUSR1);
+    }
   pthread_mutex_unlock (&pso->mutex);
 }
 
@@ -1053,6 +1433,11 @@ net_push_to_sendq (__sock_o pso, void *data, size_t size, uint16_t flags)
 
   print_str ("D5: net_push_to_sendq: [%d]: suceeded\n", pso->sock);
 
+  if ((pthread_t) 0 != pso->thread)
+    {
+      pthread_kill (pso->thread, SIGUSR1);
+    }
+
   pthread_mutex_unlock (&pso->sendq.mutex);
 
   return 0;
@@ -1087,13 +1472,69 @@ net_sendq_broadcast (pmda base, __sock_o source, void *data, size_t size)
 	  if ((ret += net_push_to_sendq(pso, data, size, 0)) == -1)
 	    {
 	      print_str ("ERROR: net_sendq_broadcast: net_push_to_sendq failed, socket:[%d]\n", pso->sock);
-	      net_send_sock_term_sig(pso);
+	      net_send_sock_sigterm(pso);
 	    }
 	}
 
       l_end:;
 
       pthread_mutex_unlock (&pso->mutex);
+      ptr = ptr->next;
+    }
+
+  pthread_mutex_unlock (&base->mutex);
+
+  return ret;
+}
+
+int
+net_broadcast (pmda base, void *data, size_t size, _net_bc net_bc, void *arg,
+	       uint32_t flags)
+{
+  mutex_lock (&base->mutex);
+
+  int ret = 0;
+
+  p_md_obj ptr = base->first;
+
+  while (ptr)
+    {
+      __sock_o pso = (__sock_o) ptr->ptr;
+
+      mutex_lock (&pso->mutex);
+
+      if (pso->oper_mode != SOCKET_OPMODE_RECIEVER || (pso->flags & F_OPSOCK_TERM))
+	{
+	  goto l_end;
+	}
+
+      if ( NULL != net_bc && net_bc(pso, arg, data) )
+	{
+	  goto l_end;
+	}
+
+      if (flags & F_NET_BROADCAST_SENDQ)
+	{
+	  if (net_push_to_sendq(pso, data, size, 0))
+	    {
+	      print_str ("ERROR: net_sendq_broadcast: net_push_to_sendq failed, socket:[%d]\n", pso->sock);
+	      net_send_sock_sigterm(pso);
+	      ret++;
+	    }
+	}
+      else
+	{
+	  if (net_send_direct(pso, data, size))
+	    {
+	      net_send_sock_sigterm(pso);
+	      ret++;
+	    }
+	}
+
+      l_end:;
+
+      pthread_mutex_unlock (&pso->mutex);
+
       ptr = ptr->next;
     }
 
@@ -1111,7 +1552,7 @@ net_send_direct (__sock_o pso, const void *data, size_t size)
       print_str (
 	  "ERROR: [%d] [%d %d]: net_send_direct: send data failed, payload size: %zd\n",
 	  pso->sock, ret, pso->s_errno, size);
-      net_send_sock_term_sig (pso);
+      net_send_sock_sigterm (pso);
       return -1;
     }
 
@@ -1148,7 +1589,7 @@ net_proc_sendq (__sock_o pso)
 	      case 1:;
 	      print_str ("ERROR: [%d] [%d]: net_proc_sendq: send data failed, payload size: %zd\n", pso->sock, pso->s_errno, psqp->size);
 	      //ptr = net_proc_sendq_destroy_item(psqp, pso, ptr);
-	      net_send_sock_term_sig(pso);
+	      net_send_sock_sigterm(pso);
 	      goto end;
 	      case 2:;
 
@@ -1211,14 +1652,32 @@ net_nw_ssig_term_r (pmda objects)
     {
       __sock_o pso = (__sock_o) ptr->ptr;
 
-      mutex_lock(&pso->mutex);
+      net_send_sock_sigterm(pso);
 
-      if (!(pso->flags & F_OPSOCK_TERM))
+      ptr = ptr->next;
+    }
+
+  pthread_mutex_unlock (&objects->mutex);
+}
+
+void
+net_nw_ssig_term_r_ex (pmda objects, uint32_t flags)
+{
+  mutex_lock (&objects->mutex);
+
+  p_md_obj ptr = objects->first;
+
+  while (ptr)
+    {
+      __sock_o pso = (__sock_o) ptr->ptr;
+
+      mutex_lock (&pso->mutex);
+
+      if ( pso->flags & flags)
 	{
-	  pso->flags |= F_OPSOCK_TERM;
+	  net_send_sock_sigterm(pso);
 	}
-
-      pthread_mutex_unlock(&pso->mutex);
+      pthread_mutex_unlock (&pso->mutex);
 
       ptr = ptr->next;
     }
@@ -1246,6 +1705,616 @@ net_proc_sock_hmemb (po_thrd thrd)
 #define I_NET_WORKER_IDLE_ALERT         (time_t) 30
 
 #define ST_NET_WORKER_ACT               ((uint8_t)1 << 1)
+#define ST_NET_WORKER_IDLE_ALERT        ((uint8_t)1 << 2)
+
+void
+net_worker_cleanup_socket (__sock_o pso)
+{
+  mutex_lock (&pso->mutex);
+
+  pmda host_ctx = pso->host_ctx;
+
+  mda p_rc1 = pso->shutdown_rc1;
+
+  uint32_t t_flags = pso->flags;
+
+  net_pop_rc (pso, &pso->shutdown_rc0);
+  md_g_free_l (&pso->shutdown_rc0);
+
+  int sock = pso->sock;
+
+  if ((t_flags & F_OPSOCK_PERSIST))
+    {
+      pso->flags |= F_OPSOCK_ORPHANED;
+    }
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  mutex_lock (&host_ctx->mutex);
+
+  if ((t_flags & F_OPSOCK_PERSIST))
+    {
+      host_ctx->flags |= F_MDA_REFPTR;
+    }
+
+  if (unregister_connection (host_ctx, pso))
+    {
+      print_str (
+	  "ERROR: [%d] could not find socket entry in register: %d (report this)\n",
+	  syscall (SYS_gettid), sock);
+      abort ();
+    }
+
+  host_ctx->flags ^= (host_ctx->flags & F_MDA_REFPTR);
+
+  pthread_mutex_unlock (&host_ctx->mutex);
+
+  net_pop_rc (NULL, &p_rc1);
+
+  md_g_free_l (&p_rc1);
+
+  /*if ((t_flags & F_OPSOCK_PERSIST))
+   {
+   mutex_lock (&pso->mutex);
+   pso->flags |= F_OPSOCK_ORPHANED;
+   pthread_mutex_unlock (&pso->mutex);
+   }*/
+}
+
+uint32_t
+net_proc_worker_detached_socket (__sock_o pso, uint32_t flags)
+{
+  uint8_t int_state = 0;
+  pid_t _tid = syscall (SYS_gettid);
+  char buffer0[1024];
+  uint32_t status_flags = 0;
+
+  o_thrd dummy_thread =
+    { 0 };
+
+  if (mutex_init (&dummy_thread.mutex, PTHREAD_MUTEX_RECURSIVE,
+		  PTHREAD_MUTEX_ROBUST))
+    {
+      abort ();
+    }
+
+  net_worker_process_socket (pso, NULL, &int_state, flags, &dummy_thread, &_tid,
+			     buffer0, &status_flags);
+
+  return status_flags;
+}
+
+p_md_obj
+net_worker_process_socket (__sock_o pso, p_md_obj ptr, uint8_t *int_state,
+			   uint32_t flags, po_thrd thrd, pid_t *_tid,
+			   char *buffer0, uint32_t *status_flags)
+{
+  int r;
+
+  mutex_lock (&pso->mutex);
+
+  if (pso->flags & F_OPSOCK_DETACH_THREAD)
+    {
+      pso->flags ^= F_OPSOCK_DETACH_THREAD;
+      *int_state |= ST_NET_WORKER_ACT;
+      *status_flags |= F_NW_STATUS_SOCKSD;
+      goto l_end;
+    }
+
+  if (pso->flags & F_OPSOCK_TERM)
+    {
+      if (flags & F_NW_NO_SOCK_KILL)
+	{
+	  *int_state |= ST_NET_WORKER_ACT;
+	  goto l_end;
+	}
+
+      if (net_proc_worker_tasks (pso) == 0)
+	{
+	  thrd->timers.t1 = time (NULL);
+	  *int_state |= ST_NET_WORKER_ACT;
+	}
+
+      errno = 0;
+
+      if (2 == (r = net_destroy_connection (pso)))
+	{
+	  thrd->timers.t1 = time (NULL);
+	  *int_state |= ST_NET_WORKER_ACT;
+	  *status_flags |= F_NW_STATUS_WAITSD;
+	  goto l_end;
+	}
+
+      if (r == 1)
+	{
+	  print_str (
+	      "ERROR: [%d] net_destroy_connection failed, socket [%d], critical\n",
+	      (int) *_tid, pso->sock);
+	  abort ();
+	}
+
+      if (0 != thrd->proc_objects.count)
+	{
+	  ptr = md_unlink_le (&thrd->proc_objects, ptr);
+	}
+
+      pthread_mutex_unlock (&pso->mutex);
+
+      net_worker_cleanup_socket (pso);
+
+      mutex_lock (&thrd->mutex);
+
+      thrd->timers.t1 = time (NULL);
+      *int_state |= ST_NET_WORKER_ACT;
+
+      pthread_mutex_unlock (&thrd->mutex);
+
+      *status_flags |= F_NW_STATUS_SOCKSD;
+
+      return ptr;
+
+    }
+
+  if ((r = pso->pcheck_r (pso)))
+    {
+      if (-1 == r)
+	{
+	  *int_state |= ST_NET_WORKER_IDLE_ALERT;
+	}
+      else
+	{
+	  thrd->timers.t1 = time (NULL);
+	  *int_state |= ST_NET_WORKER_ACT;
+	  pso->flags |= F_OPSOCK_TERM;
+	}
+    }
+
+  pso->flags |= F_OPSOCK_ST_HOOKED;
+
+  errno = 0;
+
+  if ((pso->flags & F_OPSOCK_HALT_RECV) )
+    {
+      pthread_mutex_unlock (&pso->mutex);
+      goto process_data;
+    }
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  switch ((r = pso->rcv_cb (pso, pso->host_ctx, &_net_thrd_r, pso->buffer0)))
+    {
+    case 2:
+      ;
+      if (pso->counters.b_read > 0)
+	{
+	  break;
+	}
+      else
+	{
+	  goto send_q;
+	}
+      break;
+    case 0:
+      ;
+      break;
+    case -3:
+      goto int_st;
+      break;
+    default:
+      print_str (
+	  "ERROR: %s: socket:[%d] code:[%d] status:[%d] errno:[%d] %s\n",
+	  pso->oper_mode == SOCKET_OPMODE_LISTENER ? "rx/tx accept" :
+	  pso->oper_mode == SOCKET_OPMODE_RECIEVER ?
+	      "rx/tx data" : "socket operation",
+	  pso->sock, r, pso->status,
+	  errno,
+	  errno ? strerror_r (errno, (char*) buffer0, 1024) : "");
+
+      pso->flags |= F_OPSOCK_ERROR;
+
+      mutex_lock (&pso->mutex);
+      pso->flags |= F_OPSOCK_ERROR | F_OPSOCK_TERM;
+      pthread_mutex_unlock (&pso->mutex);
+
+      if (!pso->counters.b_read)
+	{
+	  goto e_end;
+	}
+
+      break;
+    }
+
+  process_data: ;
+
+  if (NULL != pso->rcv1 && !(flags & F_NW_HALT_PROC))
+    {
+      switch ((r = pso->rcv1 (pso, pso->host_ctx, &thrd->host_ctx, pso->buffer0)))
+	{
+	case 0:
+	  break;
+	case -2:
+	  break;
+	case -3:
+	  goto int_st;
+	case -4:
+	  goto e_end;
+	default:
+	  print_str (
+	      "ERROR: data processor failed with status %d, socket: [%d]\n", r,
+	      pso->sock);
+
+	  mutex_lock (&pso->mutex);
+	  pso->flags |= F_OPSOCK_ERROR | F_OPSOCK_TERM;
+	  pthread_mutex_unlock (&pso->mutex);
+
+	  break;
+	}
+    }
+
+  if (pso->unit_size == pso->counters.b_read)
+    {
+      pso->counters.b_read = 0;
+    }
+
+  int_st: ;
+
+  thrd->timers.t1 = time (NULL);
+  *int_state |= ST_NET_WORKER_ACT;
+
+  send_q: ;
+
+  mutex_lock (&pso->mutex);
+
+  mutex_lock (&pso->sendq.mutex);
+
+  if (pso->sendq.offset > 0 && (pso->flags & F_OPSOCK_PROC_READY)
+      && !(flags & F_NW_HALT_SEND))
+    {
+      ssize_t sendq_rem;
+      if ((sendq_rem = net_proc_sendq (pso)) != 0)
+	{
+	  print_str ("WARNING: sendq: %zd items remain, socket:[%d]\n",
+		     pso->sendq.offset, pso->sock);
+	}
+      thrd->timers.t1 = time (NULL);
+      *int_state |= ST_NET_WORKER_ACT;
+    }
+
+  pthread_mutex_unlock (&pso->sendq.mutex);
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  e_end: ;
+
+  mutex_lock (&pso->mutex);
+
+  if (pso->flags & F_OPSOCK_ST_HOOKED)
+    {
+      pso->flags ^= F_OPSOCK_ST_HOOKED;
+    }
+
+  l_end: ;
+
+  if (net_proc_worker_tasks (pso) == 0)
+    {
+      usleep (1000);
+      thrd->timers.t1 = time (NULL);
+      *int_state |= ST_NET_WORKER_ACT;
+    }
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  if ( NULL != ptr)
+    {
+      return ptr->next;
+    }
+
+  return ptr;
+}
+
+void *
+net_worker_mono (void *args)
+{
+  int r, s;
+  uint8_t int_state = ST_NET_WORKER_ACT;
+  pid_t _tid = (pid_t) syscall (SYS_gettid);
+
+  po_thrd thrd = (po_thrd) args;
+
+  char buffer0[1024];
+
+  mutex_lock (&thrd->mutex);
+
+  pthread_t _pt = thrd->pt;
+
+  __sock_o pso = (__sock_o ) thrd->in_objects.lref_ptr;
+  uint32_t thread_flags = thrd->flags;
+
+  if (thread_flags & F_THRD_NOINIT)
+    {
+      pthread_mutex_unlock (&thrd->mutex);
+      goto start_proc;
+    }
+
+  sigset_t set;
+
+  sigfillset (&set);
+
+  s = pthread_sigmask (SIG_SETMASK, &set, NULL);
+
+  if (s != 0)
+    {
+      print_str (
+	  "ERROR: net_worker_mono: pthread_sigmask (SIG_BLOCK) failed: %d\n",
+	  s);
+      abort ();
+    }
+
+  sigemptyset (&set);
+  sigaddset (&set, SIGURG);
+  sigaddset (&set, SIGIO);
+  sigaddset (&set, SIGUSR1);
+
+  s = pthread_sigmask (SIG_UNBLOCK, &set, NULL);
+
+  if (s != 0)
+    {
+      print_str (
+	  "ERROR: net_worker_mono: pthread_sigmask (SIG_UNBLOCK) failed: %d\n",
+	  s);
+      abort ();
+    }
+
+  thrd->timers.t1 = time (NULL);
+  thrd->timers.t0 = time (NULL);
+  thrd->timers.act_f |= (F_TTIME_ACT_T0 | F_TTIME_ACT_T1);
+
+  thrd->status |= F_THRD_STATUS_INITIALIZED;
+
+  //pthread_t parent = thrd->caller;
+
+  if ( NULL == pso)
+    {
+      print_str ("ERROR: net_worker_mono: [%d]: no socket to process", _tid);
+      pthread_mutex_unlock (&thrd->mutex);
+      goto shutdown;
+    }
+
+  pthread_mutex_unlock (&thrd->mutex);
+
+  mutex_lock (&pso->mutex);
+  pso->thread = _pt;
+  pthread_mutex_unlock (&pso->mutex);
+
+  //pthread_kill (parent, SIGHUP);
+
+  if (thread_flags & F_THRD_NOWPID)
+    {
+      goto init_done;
+    }
+
+  sigemptyset (&set);
+  sigaddset (&set, SIGUSR1);
+
+  int sig;
+
+  int re;
+  if ((re = sigwait (&set, &sig)))
+    {
+      print_str (
+	  "WARNING: net_worker_mono: [%d]: sigwait (SIGUSR1) failed with %d\n",
+	  _tid, re);
+    }
+
+  init_done: ;
+
+  print_str ("DEBUG: net_worker_mono: [%d]: thread online [%d]\n", _tid,
+	     thrd->oper_mode);
+
+  start_proc: ;
+
+  mutex_lock (&pso->mutex);
+
+  net_pop_rc (pso, &pso->init_rc1);
+
+  struct f_owner_ex fown_ex =
+    { 0 };
+
+  pid_t async = 1;
+
+  if (ioctl (pso->sock, FIOASYNC, &async) == -1)
+    {
+      char err_buf[1024];
+      print_str (
+	  "ERROR: net_worker_mono: [%d]: ioctl (FIOASYNC) failed [%d] [%s]\n",
+	  pso->sock, errno, strerror_r (errno, err_buf, sizeof(err_buf)));
+      pso->flags |= F_OPSOCK_TERM;
+      goto end_sockp;
+    }
+
+  fown_ex.pid = _tid;
+  fown_ex.type = F_OWNER_TID;
+
+  if (fcntl (pso->sock, F_SETOWN_EX, &fown_ex) == -1)
+    {
+      char err_buf[1024];
+      print_str (
+	  "ERROR: net_worker_mono: [%d]: fcntl (F_SETOWN_EX) failed [%d] [%s]\n",
+	  pso->sock, errno, strerror_r (errno, err_buf, sizeof(err_buf)));
+      pso->flags |= F_OPSOCK_TERM;
+    }
+  else
+    {
+      print_str ("D4: net_worker: [%d]: fcntl set F_SETOWN_EX on [%d]\n", _tid,
+		 pso->sock);
+    }
+
+  pso->pthread = thrd;
+
+  end_sockp: ;
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  uint32_t status;
+
+  for (;;)
+    {
+      status = 0;
+
+      mutex_lock (&thrd->mutex);
+      thrd->timers.t0 = time (NULL);
+
+      if (thrd->flags & F_THRD_TERM)
+	{
+	  /*print_str("NOTICE: net_worker: [%d]: thread shutting down..\n",
+	   _tid);*/
+	  pthread_mutex_unlock (&thrd->mutex);
+	  break;
+	}
+
+      pthread_mutex_unlock (&thrd->mutex);
+
+      if (NULL == pso)
+	{
+	  print_str ("ERROR: net_worker: empty socket data reference\n");
+	  abort ();
+	}
+
+      ///
+
+      net_worker_process_socket (pso, NULL, &int_state, 0, thrd, &_tid, buffer0,
+				 &status);
+
+      if ((status & F_NW_STATUS_SOCKSD))
+	{
+	  break;
+	}
+
+      usleep (100);
+
+      //print_str("%d - pooling socket..   \n", (int) _tid);
+
+      if (int_state & ST_NET_WORKER_ACT)
+	{
+	  int_state ^= ST_NET_WORKER_ACT;
+	  continue;
+	}
+
+      time_t thread_inactive = (time (NULL) - thrd->timers.t1);
+
+      if (thread_inactive > 1)
+	{
+	  unsigned int t_interval = I_NET_WORKER_IDLE_ALERT;
+
+	  //t_interval = 5;
+
+	  mutex_lock (&thrd->mutex);
+	  print_str ("D6: [%d]: putting worker to sleep [%hu] [%u]\n", _tid,
+		     thrd->oper_mode, t_interval);
+
+	  ts_flag_32 (&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
+	  pthread_mutex_unlock (&thrd->mutex);
+	  sleep (t_interval);
+
+	  mutex_lock (&thrd->mutex);
+	  thrd->timers.t1 = time (NULL);
+	  ts_unflag_32 (&thrd->mutex, F_THRD_STATUS_SUSPENDED, &thrd->status);
+	  print_str ("D6: [%d]: thread waking up [%hu]\n", _tid,
+		     thrd->oper_mode);
+	  pthread_mutex_unlock (&thrd->mutex);
+
+	}
+
+    }
+
+  shutdown: ;
+
+  if (thread_flags & F_THRD_MISC00)
+    {
+      /*mutex_lock (&sock_host_ctx->mutex);
+
+       int cleanup;
+       if (0 == sock_host_ctx->offset)
+       {
+       cleanup = 1;
+       }
+       else
+       {
+       cleanup = 0;
+       }
+       sock_host_ctx->offset = -1;
+
+       pthread_mutex_unlock (&sock_host_ctx->mutex);
+
+       if (1 == cleanup)
+       {
+       md_g_free_l (sock_host_ctx);
+       print_str (
+       "DEBUG: net_worker_mono: [%d]: cleaned up guest socket's empty registry\n",
+       _tid);
+       }*/
+
+    }
+
+  /*if (NULL != thrd->proc_objects.lref_ptr)
+   {
+   uint32_t *status_ret = (uint32_t*) thrd->proc_objects.lref_ptr;
+   *status_ret = status;
+   }*/
+
+  if (thrd->flags & F_THRD_REGINIT)
+    {
+      pmda thread_host_ctx = thrd->host_ctx;
+
+      mutex_lock (&thread_host_ctx->mutex);
+
+      mutex_lock (&thrd->mutex);
+
+      if (NULL != thrd->buffer0)
+	{
+	  free (thrd->buffer0);
+	}
+
+      pthread_mutex_unlock (&thrd->mutex);
+
+      p_md_obj ptr_thread = search_thrd_id (thread_host_ctx, &_pt);
+
+      if (NULL == ptr_thread)
+	{
+	  print_str (
+	      "ERROR: net_worker: [%d]: thread already unregistered on exit (search_thrd_id failed)\n",
+	      (int) _tid);
+	  abort ();
+	}
+      else
+	{
+	  //thread_host_ctx->flags |= F_MDA_REFPTR;
+	  md_unlink_le (thread_host_ctx, ptr_thread);
+	  //thread_host_ctx->offset--;
+	}
+
+      pthread_mutex_unlock (&thread_host_ctx->mutex);
+      print_str ("DEBUG: net_worker_mono: [%d]: unregistered thread\n", _tid);
+    }
+  else if (thrd->flags & F_THRD_CINIT)
+    {
+      if (NULL != thrd->buffer0)
+	{
+	  free (thrd->buffer0);
+	}
+      free (thrd);
+      print_str ("DEBUG: net_worker_mono: [%d]: released thread resources\n",
+		 _tid);
+    }
+
+  print_str ("DEBUG: net_worker_mono: [%d]: thread shutting down..\n", _tid);
+
+  ERR_remove_state (0);
+
+  kill (getpid (), SIGUSR2);
+
+  return NULL;
+}
 
 void *
 net_worker (void *args)
@@ -1271,7 +2340,7 @@ net_worker (void *args)
    sigaddset(&set, SIGIO);
    sigaddset(&set, SIGURG);*/
 
-  s = pthread_sigmask (SIG_BLOCK, &set, NULL);
+  s = pthread_sigmask (SIG_SETMASK, &set, NULL);
 
   if (s != 0)
     {
@@ -1306,7 +2375,36 @@ net_worker (void *args)
 
   thrd->status |= F_THRD_STATUS_INITIALIZED;
 
-  print_str ("DEBUG: net_worker: [%d]: thread coming online [%d]\n", _tid,
+  //pthread_t parent = thrd->caller;
+
+  pthread_mutex_unlock (&thrd->mutex);
+
+  //pthread_kill (parent, SIGINT);
+
+  mutex_lock (&thrd->mutex);
+  if (thrd->flags & F_THRD_NOWPID)
+    {
+      goto init_done;
+    }
+  pthread_mutex_unlock (&thrd->mutex);
+
+  sigemptyset (&set);
+  sigaddset (&set, SIGINT);
+
+  int sig = SIGINT;
+
+  int re;
+  if ((re = sigwait (&set, &sig)))
+    {
+      print_str ("WARNING: net_worker: [%d]: sigwait (SIGINT) failed with %d\n",
+		 _tid, re);
+    }
+
+  mutex_lock (&thrd->mutex);
+
+  init_done: ;
+
+  print_str ("DEBUG: net_worker: [%d]: thread initializing [%d]\n", _tid,
 	     thrd->oper_mode);
 
   pthread_mutex_unlock (&thrd->mutex);
@@ -1420,6 +2518,8 @@ net_worker (void *args)
 		  t_pso->sock);
 	    }
 
+	  t_pso->pthread = thrd;
+
 	  pthread_mutex_unlock (&t_pso->mutex);
 
 	  if (NULL == md_alloc_le (&thrd->proc_objects, 0, 0, iobj_ptr->ptr))
@@ -1427,13 +2527,30 @@ net_worker (void *args)
 	      print_str (
 		  "ERROR: net_worker: [%d]: could not allocate socket to thread %d (out of memory)\n",
 		  t_pso->sock, _tid);
-	      break;
+	      abort ();
 	    }
 
 	  thrd->timers.t1 = time (NULL);
 	  int_state |= ST_NET_WORKER_ACT;
 
 	  md_unlink_le (&thrd->in_objects, iobj_ptr);
+
+	  mutex_lock (&t_pso->sendq.mutex);
+
+	  if (t_pso->sendq.offset > 0 && (t_pso->flags & F_OPSOCK_PROC_READY))
+	    {
+	      ssize_t sendq_rem;
+	      if ((sendq_rem = net_proc_sendq (t_pso)) != 0)
+		{
+		  print_str (
+		      "WARNING: net_proc_sendq: %zd items remain, socket:[%d]\n",
+		      t_pso->sendq.offset, t_pso->sock);
+		}
+	      thrd->timers.t1 = time (NULL);
+	      int_state |= ST_NET_WORKER_ACT;
+	    }
+
+	  pthread_mutex_unlock (&t_pso->sendq.mutex);
 
 	  io_loend: ;
 
@@ -1466,222 +2583,15 @@ net_worker (void *args)
 	      abort ();
 	    }
 
-	  mutex_lock (&pso->mutex);
+	  uint32_t status = 0;
 
-	  if (pso->flags & F_OPSOCK_TERM)
-	    {
-
-	      errno = 0;
-
-	      if (2 == (r = net_destroy_connection (pso)))
-		{
-		  thrd->timers.t1 = time (NULL);
-		  int_state |= ST_NET_WORKER_ACT;
-
-		  goto l_end;
-		}
-
-	      if (r == 1)
-		{
-		  print_str (
-		      "ERROR: [%d] net_destroy_connection failed, socket [%d], critical\n",
-		      (int) _tid, pso->sock);
-		  abort ();
-		}
-
-	      pmda host_ctx = pso->host_ctx;
-
-	      net_pop_rc (pso, &pso->shutdown_rc0);
-	      md_g_free_l (&pso->shutdown_rc0);
-	      mda p_rc1 = pso->shutdown_rc1;
-
-	      pthread_mutex_unlock (&pso->mutex);
-	      mutex_lock (&host_ctx->mutex);
-
-	      ptr = md_unlink_le (&thrd->proc_objects, ptr);
-
-	      uint32_t persisting;
-
-	      if ((pso->flags & F_OPSOCK_PERSIST))
-		{
-		  persisting = 1;
-		  host_ctx->flags |= F_MDA_REFPTR;
-		}
-	      else
-		{
-		  persisting = 0;
-		}
-
-	      if (unregister_connection (host_ctx, pso))
-		{
-		  print_str (
-		      "ERROR: could not find socket entry in register: %d (report this)\n",
-		      pso->sock);
-		  abort ();
-		}
-
-	      host_ctx->flags ^= (host_ctx->flags & F_MDA_REFPTR);
-
-	      pthread_mutex_unlock (&host_ctx->mutex);
-
-	      net_pop_rc (NULL, &p_rc1);
-
-	      md_g_free_l (&p_rc1);
-
-	      if (persisting)
-		{
-		  pso->flags |= F_OPSOCK_ORPHANED;
-		}
-
-	      thrd->timers.t1 = time (NULL);
-	      int_state |= ST_NET_WORKER_ACT;
-
-	      continue;
-
-	    }
-
-	  if ((r = pso->pcheck_r (pso)))
-	    {
-	      thrd->timers.t1 = time (NULL);
-	      int_state |= ST_NET_WORKER_ACT;
-	      pso->flags |= F_OPSOCK_TERM;
-	    }
-
-	  pso->flags |= F_OPSOCK_ST_HOOKED;
-
-	  errno = 0;
-
-	  if ((pso->flags & F_OPSOCK_HALT_RECV))
-	    {
-	      pthread_mutex_unlock (&pso->mutex);
-	      goto process_data;
-	    }
-
-	  pthread_mutex_unlock (&pso->mutex);
-
-	  switch ((r = pso->rcv_cb (pso, pso->host_ctx, &_net_thrd_r,
-				    pso->buffer0)))
-	    {
-	    case 2:
-	      ;
-	      if (pso->counters.b_read > 0)
-		{
-		  break;
-		}
-	      else
-		{
-		  goto send_q;
-		}
-	      break;
-	    case 0:
-	      ;
-	      break;
-	    case -3:
-	      goto int_st;
-	      break;
-	    default:
-	      print_str (
-		  "ERROR: %s: socket:[%d] code:[%d] status:[%d] errno:[%d] %s\n",
-		  pso->oper_mode == SOCKET_OPMODE_LISTENER ? "rx/tx accept" :
-		  pso->oper_mode == SOCKET_OPMODE_RECIEVER ?
-		      "rx/tx data" : "socket operation",
-		  pso->sock, r, pso->status,
-		  errno,
-		  errno ? strerror_r (errno, (char*) buffer0, 1024) : "");
-
-	      mutex_lock (&pso->mutex);
-	      pso->flags |= F_OPSOCK_TERM;
-	      pthread_mutex_unlock (&pso->mutex);
-
-	      if (!pso->counters.b_read)
-		{
-		  goto e_end;
-		}
-
-	      break;
-	    }
-
-	  process_data: ;
-
-	  if (NULL != pso->rcv1)
-	    {
-	      switch ((r = pso->rcv1 (pso, pso->host_ctx, &_net_thrd_r,
-				      pso->buffer0)))
-		{
-		case 0:
-		  break;
-		case -2:
-		  break;
-		case -3:
-		  goto int_st;
-		case -4:
-		  goto e_end;
-		default:
-		  print_str (
-		      "ERROR: data processor failed with status %d, socket: [%d]\n",
-		      r, pso->sock);
-
-		  mutex_lock (&pso->mutex);
-		  pso->flags |= F_OPSOCK_TERM;
-		  pthread_mutex_unlock (&pso->mutex);
-
-		  break;
-		}
-	    }
-
-	  if (pso->unit_size == pso->counters.b_read)
-	    {
-	      pso->counters.b_read = 0;
-	    }
-
-	  int_st: ;
-
-	  thrd->timers.t1 = time (NULL);
-	  int_state |= ST_NET_WORKER_ACT;
-
-	  send_q: ;
-
-	  mutex_lock (&pso->mutex);
-
-	  mutex_lock (&pso->sendq.mutex);
-
-	  if (pso->sendq.offset > 0 && (pso->flags & F_OPSOCK_PROC_READY))
-	    {
-	      ssize_t sendq_rem;
-	      if ((sendq_rem = net_proc_sendq (pso)) != 0)
-		{
-		  print_str ("WARNING: sendq: %zd items remain, socket:[%d]\n",
-			     pso->sendq.offset, pso->sock);
-		}
-	      thrd->timers.t1 = time (NULL);
-	      int_state |= ST_NET_WORKER_ACT;
-	    }
-
-	  pthread_mutex_unlock (&pso->sendq.mutex);
-
-	  pthread_mutex_unlock (&pso->mutex);
-
-	  e_end: ;
-
-	  mutex_lock (&pso->mutex);
-
-	  if (pso->flags & F_OPSOCK_ST_HOOKED)
-	    {
-	      pso->flags ^= F_OPSOCK_ST_HOOKED;
-	    }
-
-	  l_end: ;
-
-	  pthread_mutex_unlock (&pso->mutex);
-
-	  ptr = ptr->next;
+	  ptr = net_worker_process_socket (pso, ptr, &int_state, 0, thrd, &_tid,
+					   buffer0, &status);
 	}
 
       loop_end: ;
 
       usleep (100);
-
-      //print_str("%d - pooling socket..   \n", (int) _tid);
 
       if (int_state & ST_NET_WORKER_ACT)
 	{
@@ -1697,8 +2607,14 @@ net_worker (void *args)
 
 	  mutex_lock (&thrd->mutex);
 
-	  if (thrd->oper_mode == SOCKET_OPMODE_RECIEVER
-	      && net_proc_sock_hmemb (thrd))
+	  if (md_get_off_ts (&thrd->in_objects))
+	    {
+	      pthread_mutex_unlock (&thrd->mutex);
+	      continue;
+	    }
+	  else if ((int_state & ST_NET_WORKER_IDLE_ALERT)
+	      || (thrd->oper_mode == SOCKET_OPMODE_RECIEVER
+		  && md_get_off_ts (&thrd->proc_objects) > 0))
 	    {
 	      t_interval = I_NET_WORKER_IDLE_ALERT;
 	    }
@@ -1719,9 +2635,9 @@ net_worker (void *args)
 		     thrd->oper_mode);
 	}
 
-    }
+      int_state ^= int_state & ST_NET_WORKER_IDLE_ALERT;
 
-  print_str ("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
+    }
 
   pmda thread_host_ctx = thrd->host_ctx;
 
@@ -1751,6 +2667,8 @@ net_worker (void *args)
 
   pthread_mutex_unlock (&thread_host_ctx->mutex);
 
+  print_str ("DEBUG: net_worker: [%d]: thread shutting down..\n", _tid);
+
   ERR_remove_state (0);
 
   kill (getpid (), SIGUSR2);
@@ -1758,30 +2676,110 @@ net_worker (void *args)
   return NULL;
 }
 
+#define NET_ASSIGN_SOCK_CLEANUP(c) { \
+  mutex_lock (&spso->mutex); \
+  spso->status = c; \
+  spso->s_errno = 0; \
+  pthread_mutex_unlock (&spso->mutex); \
+  net_destroy_connection ( pso); \
+  mutex_lock (&base->mutex); \
+  mutex_lock (&pso->mutex); \
+  net_failclean (pso); \
+  pthread_mutex_unlock (&pso->mutex); \
+  md_unlink_le (base, base->pos); \
+  pthread_mutex_unlock (&base->mutex); \
+};
+
 static int
 net_assign_sock (pmda base, pmda threadr, __sock_o pso, __sock_o spso)
 {
   int r;
 
-  if ((r = push_object_to_thread (pso, threadr, (dt_score_ptp) net_get_score)))
+  mutex_lock (&pso->mutex);
+
+  if (pso->flags & F_OPSOCK_CS_NOASSIGNTHREAD)
+    {
+      goto ready;
+    }
+
+  if (pso->flags & F_OPSOCK_CS_MONOTHREAD)
+    {
+      r = 1;
+      print_str ("DEBUG: net_assign_sock: spawning new thread for [%d]\n",
+		 pso->sock);
+      pso->flags |= F_OPSOCK_ACT | F_OPSOCK_PROC_READY;
+    }
+  else
+    {
+      r = 0;
+    }
+
+  pthread_mutex_unlock (&pso->mutex);
+
+  pthread_t pt;
+
+  if (r == 1)
+    {
+      o_thrd data =
+	{ 0 };
+      data.id = 0;
+      data.role = THREAD_ROLE_NET_WORKER;
+      data.oper_mode = SOCKET_OPMODE_RECIEVER;
+      data.host_ctx = threadr;
+      data.in_objects.lref_ptr = pso;
+      data.flags |= F_THRD_DETACH | F_THRD_NOWPID
+	  | pso->common.thread_inherit_flags;
+      mutex_init (&data.mutex, PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ROBUST);
+      pthread_t pt;
+
+      if ((r = thread_create (net_worker_mono, 0, threadr, 0, 0, 0,
+      F_THC_USER_DATA,
+			      &data, NULL, &pt)))
+	{
+	  print_str (
+	      "ERROR: net_assign_sock: thread_create failed, code %d, sock %d (accept)\n",
+	      r, pso->sock);
+
+	  NET_ASSIGN_SOCK_CLEANUP(9)
+	  return 1;
+	}
+      else
+	{
+	  /*sigset_t set;
+	   sigemptyset (&set);
+	   sigaddset (&set, SIGHUP);
+
+	   int sig;
+
+	   int re;
+	   if ((re = sigwait (&set, &sig)))
+	   {
+	   fprintf (
+	   stderr,
+	   "WARNING: net_open_listening_socket: [%d]: sigwait (SIGINT) failed with %d\n",
+	   syscall (SYS_gettid), re);
+	   }*/
+
+	  return 0;
+	}
+    }
+  else if ((r = push_object_to_thread (pso, threadr,
+				       (dt_score_ptp) net_get_score, &pt)))
     {
       print_str (
 	  "ERROR: push_object_to_thread failed, code %d, sock %d (accept)\n", r,
 	  pso->sock);
-      mutex_lock (&spso->mutex);
-      spso->status = 6;
-      spso->s_errno = 0;
-      pthread_mutex_unlock (&spso->mutex);
-      net_destroy_connection (pso);
-      mutex_lock (&base->mutex);
-      md_unlink_le (base, base->pos);
-      pthread_mutex_unlock (&base->mutex);
+      NET_ASSIGN_SOCK_CLEANUP(6)
       return 1;
     }
 
   mutex_lock (&pso->mutex);
 
+  pso->thread = pt;
+
   net_pop_rc (pso, &pso->init_rc1);
+
+  ready: ;
 
   //if (!(pso->flags & F_OPSOCK_SSL))
   // {
@@ -1796,7 +2794,8 @@ net_assign_sock (pmda base, pmda threadr, __sock_o pso, __sock_o spso)
 }
 
 static __sock_o
-net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
+net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd,
+		 struct sockaddr *sa)
 {
   mutex_lock (&base->mutex);
 
@@ -1821,14 +2820,21 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
   pso->oper_mode = SOCKET_OPMODE_RECIEVER;
   pso->flags |= spso->ac_flags | F_OPSOCK_CONNECT | F_OPSOCK_IN
       | (spso->flags & (F_OPSOCK_SSL | F_OPSOCK_INIT_SENDQ));
-  pso->pcheck_r = (_t_stocb) net_chk_timeout;
+  pso->pcheck_r = (_t_rcall) net_chk_timeout;
   pso->policy = spso->policy;
   //pso->limits.sock_timeout = spso->policy.idle_timeout;
   pso->timers.last_act = time (NULL);
   spso->timers.last_act = time (NULL);
-  pso->res = spso->c_res;
-  spso->c_res = NULL;
+
   pso->sock_ca = spso->sock_ca;
+  pso->common = spso->common;
+
+  pso->res = spso->res;
+
+  pso->res.ai_addr = malloc (sizeof(struct sockaddr));
+  memcpy (pso->res.ai_addr, sa, sizeof(struct sockaddr));
+
+  net_addr_to_ipr (pso, &pso->ipr);
 
   md_copy_le (&spso->init_rc0, &pso->init_rc0, sizeof(_proc_ic_o), NULL);
   md_copy_le (&spso->init_rc1, &pso->init_rc1, sizeof(_proc_ic_o), NULL);
@@ -1836,8 +2842,9 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
   NULL);
   md_copy_le (&spso->shutdown_rc1, &pso->shutdown_rc1, sizeof(_proc_ic_o),
   NULL);
-  md_copy_le (&spso->rc_vaar_0, &pso->rc_vaar_0, sizeof(_proc_ic_o),
+  md_copy_le (&spso->init_rc0_ssl, &pso->init_rc0_ssl, sizeof(_proc_ic_o),
   NULL);
+  md_init_le (&pso->tasks, 8);
 
   if (!spso->unit_size)
     {
@@ -1849,7 +2856,7 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
     }
 
   pso->buffer0 = malloc (pso->unit_size);
-  pso->buffer0_len = SOCK_RECVB_SZ;
+  pso->buffer0_len = pso->unit_size;
 
   pso->host_ctx = base;
 
@@ -1858,6 +2865,7 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
       spso->status = 4;
       shutdown (fd, SHUT_RDWR);
       close (fd);
+      net_failclean (pso);
       md_unlink_le (base, base->pos);
       pthread_mutex_unlock (&base->mutex);
       return NULL;
@@ -1880,6 +2888,7 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
 	  spso->status = 5;
 	  shutdown (fd, SHUT_RDWR);
 	  close (fd);
+	  net_failclean (pso);
 	  md_unlink_le (base, pso_ptr);
 	  pthread_mutex_unlock (&base->mutex);
 	  return NULL;
@@ -1896,28 +2905,16 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd)
       pso->rcv_cb = spso->rcv0;
 
       //pso->rcv_cb_t = spso->rcv0;
-      if (pso->flags & F_OPSOCK_INIT_SENDQ)
-	{
-	  pso->send0 = (_p_ssend) net_ssend_ssl_b;
-	}
-      else
-	{
-	  pso->send0 = (_p_ssend) net_ssend_ssl_b;
-	}
+
+      pso->send0 = (_p_ssend) net_ssend_ssl_b;
 
     }
   else
     {
       pso->rcv_cb = spso->rcv0;
 
-      if (pso->flags & F_OPSOCK_INIT_SENDQ)
-	{
-	  pso->send0 = (_p_ssend) net_ssend_b;
-	}
-      else
-	{
-	  pso->send0 = (_p_ssend) net_ssend_b;
-	}
+      pso->send0 = (_p_ssend) net_ssend_b;
+
     }
 
   net_pop_rc (pso, &pso->init_rc0);
@@ -2000,22 +2997,11 @@ net_accept (__sock_o spso, pmda base, pmda threadr, void *data)
       return 0;
     }
 
-  struct addrinfo *p_net_res = malloc (sizeof(struct addrinfo));
-
-  memcpy (p_net_res, spso->res, sizeof(struct addrinfo));
-  p_net_res->ai_addr = malloc (sizeof(struct sockaddr_storage));
-  memcpy (p_net_res->ai_addr, &a, sizeof(struct sockaddr_storage));
-
-  p_net_res->ai_canonname = NULL;
-  p_net_res->ai_next = NULL;
-
-  p_net_res->ai_addrlen = sin_size;
-
-  spso->c_res = p_net_res;
-
   __sock_o pso;
 
-  pso = net_prep_acsock (base, threadr, spso, fd);
+  //pthread_mutex_unlock (&spso->mutex);
+  pso = net_prep_acsock (base, threadr, spso, fd, (struct sockaddr *) &a);
+  //mutex_lock (&spso->mutex);
 
   if ( NULL == pso)
     {
@@ -2037,12 +3023,25 @@ net_accept (__sock_o spso, pmda base, pmda threadr, void *data)
 
   spso->cc = (void*) pso;
 
-  if (!(spso->flags & F_OPSOCK_SSL))
-    {
-      ret = net_assign_sock (base, threadr, pso, spso);
-    }
+  uint32_t spso_flags = spso->flags;
 
   pthread_mutex_unlock (&spso->mutex);
+
+  if (!(spso_flags & F_OPSOCK_SSL))
+    {
+      ret = net_assign_sock (base, threadr, pso, spso);
+
+      if (0 == ret)
+	{
+	  mutex_lock (&spso->mutex);
+	  spso->children++;
+	  pthread_mutex_unlock (&spso->mutex);
+	}
+      else
+	{
+	  return 2;
+	}
+    }
 
   return 0;
 }
@@ -2237,8 +3236,23 @@ net_accept_ssl (__sock_o spso, pmda base, pmda threadr, void *data)
 	  return -3;
 	}
 
-      print_str ("ERROR: SSL_accept: socket:[%d] code:[%d] sslerr:[%d]\n",
-		 pso->sock, ret, ssl_err);
+      if (ssl_err == SSL_ERROR_SYSCALL && ret == -1)
+	{
+	  char err_buf[1024];
+	  print_str ("ERROR: SSL_accept: [%d]: accept: [%d]: [%s]\n",
+		     spso->sock,
+		     errno,
+		     strerror_r (errno, err_buf, sizeof(err_buf)));
+	}
+      else
+	{
+	  print_str (
+	      "ERROR: SSL_accept: socket: [%d] code: [%d] sslerr: [%d] [%d]\n",
+	      pso->sock, ret, ssl_err, ret);
+	}
+
+      pso->flags |= F_OPSOCK_ERROR;
+      pso->sslerr = ssl_err;
 
       f_term: ;
 
@@ -2290,12 +3304,21 @@ net_accept_ssl (__sock_o spso, pmda base, pmda threadr, void *data)
 
   //pso->flags |= F_OPSOCK_ACT;
 
+  net_pop_rc (pso, &pso->init_rc0_ssl);
+
   pthread_mutex_unlock (&pso->mutex);
   pthread_mutex_unlock (&spso->mutex);
 
   ret = net_assign_sock (base, threadr, pso, spso);
 
-  return ret;
+  if (0 == ret)
+    {
+      mutex_lock (&spso->mutex);
+      spso->children++;
+      pthread_mutex_unlock (&spso->mutex);
+    }
+
+  return 0;
 }
 
 int
@@ -2409,7 +3432,7 @@ net_ssend_b (__sock_o pso, void *data, size_t length)
       abort ();
     }
 
-  if (pso->flags & F_OPSOCK_TERM)
+  if (pso->flags & F_OPSOCK_ORPHANED)
     {
       pthread_mutex_unlock (&pso->mutex);
       return 1;
@@ -2427,8 +3450,8 @@ net_ssend_b (__sock_o pso, void *data, size_t length)
 
   t00 = time (NULL);
 
-  while ((s_ret = send (pso->sock, in_data, length, MSG_WAITALL | MSG_NOSIGNAL))
-      == -1)
+  while ((s_ret = send (pso->sock, in_data, length,
+  MSG_WAITALL | MSG_NOSIGNAL)) == -1)
     {
       if (!(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
 	{
@@ -2499,7 +3522,7 @@ net_ssend_ssl_b (__sock_o pso, void *data, size_t length)
       abort ();
     }
 
-  if (pso->flags & F_OPSOCK_TERM)
+  if (pso->flags & F_OPSOCK_ORPHANED)
     {
       pthread_mutex_unlock (&pso->mutex);
       return 1;
@@ -2680,10 +3703,95 @@ net_ssend (__sock_o pso, void *data, size_t length)
 }
 
 int
+net_proc_worker_tasks (__sock_o pso)
+{
+  pmda rc = &pso->tasks;
+
+  mutex_lock (&rc->mutex);
+
+  if (!rc->offset)
+    {
+      pthread_mutex_unlock (&rc->mutex);
+      return -1;
+    }
+
+  p_md_obj ptr = rc->first;
+  int c = 0;
+
+  while (ptr)
+    {
+      __net_task task = (__net_task ) ptr->ptr;
+
+      if (0 == task->net_task_proc (pso, task))
+	{
+	  print_str ("DEBUG: net_pop_worker_task: [%d]: processed task\n",
+		     syscall (SYS_gettid));
+	  p_md_obj c_ptr = ptr;
+	  ptr = ptr->next;
+	  md_unlink_le (rc, c_ptr);
+	  c++;
+	}
+      else
+	{
+	  ptr = ptr->next;
+	}
+    }
+
+  pthread_mutex_unlock (&rc->mutex);
+
+  return c;
+}
+
+int
+net_register_task (pmda host_ctx, __sock_o pso, pmda rt, _net_task_proc proc,
+		   void *data, uint16_t flags)
+{
+  int ret;
+
+  mutex_lock (&host_ctx->mutex);
+  mutex_lock (&pso->mutex);
+  mutex_lock (&rt->mutex);
+
+  if (rt->offset == rt->count)
+    {
+      ret = 2;
+      goto exit;
+    }
+
+  __net_task task = md_alloc_le (rt, sizeof(_net_task), 0, NULL);
+
+  if ( NULL == task)
+    {
+      ret = 1;
+      goto exit;
+    }
+
+  ret = 0;
+
+  task->data = data;
+  task->net_task_proc = proc;
+
+  if ((pthread_t) 0 != pso->thread)
+    {
+      pthread_kill (pso->thread, SIGUSR1);
+    }
+
+  exit: ;
+
+  pthread_mutex_unlock (&rt->mutex);
+  pthread_mutex_unlock (&pso->mutex);
+  pthread_mutex_unlock (&host_ctx->mutex);
+
+  return ret;
+}
+
+int
 net_pop_rc (__sock_o pso, pmda rc)
 {
+  mutex_lock (&rc->mutex);
   if ( NULL == rc->first)
     {
+      pthread_mutex_unlock (&rc->mutex);
       return 1;
     }
 
@@ -2701,22 +3809,29 @@ net_pop_rc (__sock_o pso, pmda rc)
       ptr = ptr->prev;
     }
 
+  pthread_mutex_unlock (&rc->mutex);
+
   return 0;
 }
 
 int
-net_push_rc (pmda rc, _t_stocb call, uint32_t flags)
+net_push_rc (pmda rc, _t_rcall call, uint32_t flags)
 {
+  mutex_lock (&rc->mutex);
+
   __proc_ic_o pic = md_alloc_le (rc, sizeof(_proc_ic_o), 0, NULL);
 
   if ( NULL == pic)
     {
+      pthread_mutex_unlock (&rc->mutex);
       print_str ("ERROR: net_push_rc: could not allocate memory\n");
       return 1;
     }
 
   pic->call = call;
   pic->flags = flags;
+
+  pthread_mutex_unlock (&rc->mutex);
 
   return 0;
 }
@@ -2725,43 +3840,49 @@ static int
 net_search_dupip (__sock_o pso, void *arg)
 {
   __sock_cret parg = (__sock_cret) arg;
-  if (parg->pso->oper_mode == SOCKET_OPMODE_RECIEVER && (parg->pso)->res->ai_family == pso->res->ai_family)
+  if (pso->oper_mode == parg->pso->oper_mode )
     {
-      switch (pso->res->ai_family)
+      if (!memcmp(
+	      &pso->ipr.ip,
+	      &parg->pso->ipr.ip,
+	      16))
 	{
-	  case AF_INET:
-	  ;
-
-	  if (!memcmp(
-		  (const void*) &((struct sockaddr_in*) pso->res->ai_addr)->sin_addr,
-		  (const void*) &((struct sockaddr_in*) (parg->pso)->res->ai_addr)->sin_addr,
-		  sizeof(struct in_addr)))
-	    {
-	      parg->ret++;
-	    }
-	  break;
-	  case AF_INET6:
-	  ;
-	  if (!memcmp(
-		  (const void*) &((struct sockaddr_in6*) pso->res->ai_addr)->sin6_addr,
-		  (const void*) &((struct sockaddr_in6*) (parg->pso)->res->ai_addr)->sin6_addr,
-		  sizeof(struct in6_addr)))
-	    {
-	      parg->ret++;
-	    }
-	  break;
-
+	  parg->ret++;
 	}
     }
   return 0;
 }
 
 int
+net_parent_proc_rc0_destroy (__sock_o pso)
+{
+  mutex_lock (&pso->mutex);
+
+  switch (pso->flags & F_OPSOCK_OPER_MODE)
+    {
+    case F_OPSOCK_CONNECT:
+      ;
+
+      mutex_lock (&pso->parent->mutex);
+      if (pso->parent->children > 0)
+	{
+	  pso->parent->children--;
+	}
+      pthread_mutex_unlock (&pso->parent->mutex);
+
+      break;
+    }
+
+  pthread_mutex_unlock (&pso->mutex);
+  return 0;
+}
+
+int
 net_socket_init_enforce_policy (__sock_o pso)
 {
-  switch (pso->oper_mode)
+  switch (pso->flags & F_OPSOCK_OPER_MODE)
     {
-    case SOCKET_OPMODE_RECIEVER:
+    case F_OPSOCK_CONNECT:
       ;
 
       if (pso->policy.max_sim_ip)
@@ -2776,7 +3897,7 @@ net_socket_init_enforce_policy (__sock_o pso)
 	      print_str (
 		  "ERROR: net_socket_init_enforce_policy: [%d] net_enum_sockr failed: [%d]\n",
 		  pso->sock, dip_sr);
-	      pso->flags |= F_OPSOCK_TERM | F_OPSOCK_SKIP_SSL_SD;
+	      pso->flags |= F_OPSOCK_TERM;
 	      return 2;
 	    }
 
@@ -2785,13 +3906,212 @@ net_socket_init_enforce_policy (__sock_o pso)
 	      print_str (
 		  "WARNING: net_socket_init_enforce_policy: [%d] max_sim limit reached: [%u/%u]\n",
 		  pso->sock, sc_ret.ret, pso->policy.max_sim_ip);
-	      pso->flags |= F_OPSOCK_TERM | F_OPSOCK_SKIP_SSL_SD;
+	      pso->flags |= F_OPSOCK_TERM;
+	      return 2;
+	    }
+	}
+
+      if (pso->policy.max_connects > 0)
+	{
+	  if (pso->parent->children >= pso->parent->policy.max_connects)
+	    {
+	      print_str (
+		  "WARNING: net_socket_init_enforce_policy: [%d] max_connects limit reached: [%u/%u]\n",
+		  pso->sock, pso->parent->children,
+		  pso->parent->policy.max_connects);
+	      pso->flags |= F_OPSOCK_TERM;
 	      return 2;
 	    }
 	}
       break;
+
     }
 
   return 0;
 }
 
+int
+net_exec_sock (pmda base, __ipr ipr, uint32_t flags, _ne_sock call, void *arg)
+{
+  mutex_lock (&base->mutex);
+
+  p_md_obj ptr = base->first;
+
+  int ret = -2;
+
+  while (ptr)
+    {
+      __sock_o pso = (__sock_o) ptr->ptr;
+
+      mutex_lock (&pso->mutex);
+
+      //printf(":: %hhu.%hhu.%hhu.%hhu:%hu \n", ipr->ip[0], ipr->ip[1], ipr->ip[2], ipr->ip[3], ipr->port);
+      //printf(">> %hhu.%hhu.%hhu.%hhu:%hu \n", pso->ipr.ip[0], pso->ipr.ip[1], pso->ipr.ip[2], pso->ipr.ip[3], pso->ipr.port);
+
+      if (!(pso->flags & flags))
+	{
+	  goto loop_end;
+	}
+
+      if ( memcmp(ipr, &pso->ipr, sizeof(_ipr)) )
+	{
+	  goto loop_end;
+	}
+
+      ret = call(pso, arg);
+
+      pthread_mutex_unlock (&pso->mutex);
+
+      break;
+
+      loop_end:;
+
+      pthread_mutex_unlock (&pso->mutex);
+
+      ptr = ptr->next;
+    }
+
+  pthread_mutex_unlock (&base->mutex);
+
+  return ret;
+}
+
+int
+net_generic_socket_init1 (__sock_o pso)
+{
+  mutex_lock (&pso->mutex);
+  char ip[128];
+  uint16_t port = net_get_addrinfo_port (pso);
+  net_get_addrinfo_ip (pso, (char*) ip, sizeof(ip));
+
+  switch (pso->oper_mode)
+    {
+    case SOCKET_OPMODE_RECIEVER:
+      ;
+      if (pso->flags & F_OPSOCK_IN)
+	{
+	  print_str ("INFO: [%d] client connected from %s:%hu\n", pso->sock, ip,
+		     port);
+
+	}
+      else
+	{
+	  print_str ("INFO: [%d] connected to host %s:%hu\n", pso->sock, ip,
+		     port);
+	}
+      break;
+    case SOCKET_OPMODE_LISTENER:
+      ;
+      print_str ("INFO: [%d]: listening on %s:%hu\n", pso->sock, ip, port);
+      break;
+    }
+  pthread_mutex_unlock (&pso->mutex);
+  return 0;
+}
+
+int
+net_generic_socket_destroy0 (__sock_o pso)
+{
+  mutex_lock (&pso->mutex);
+  char ip[128];
+  uint16_t port = pso->ipr.port;
+  snprintf (ip, sizeof(ip), "%hhu.%hhu.%hhu.%hhu", pso->ipr.ip[0],
+	    pso->ipr.ip[1], pso->ipr.ip[2], pso->ipr.ip[3]);
+
+  switch (pso->oper_mode)
+    {
+    case SOCKET_OPMODE_RECIEVER:
+      ;
+      if (pso->flags & F_OPSOCK_IN)
+	{
+	  print_str ("INFO: [%d] client disconnected %s:%hu\n", pso->sock, ip,
+		     port);
+
+	}
+      else
+	{
+	  print_str ("INFO: [%d] disconnected from host %s:%hu\n", pso->sock,
+		     ip, port);
+	}
+      break;
+    case SOCKET_OPMODE_LISTENER:
+      ;
+      print_str ("INFO: [%d]: closed listener %s:%hu\n", pso->sock, ip, port);
+      break;
+    }
+  pthread_mutex_unlock (&pso->mutex);
+  return 0;
+}
+
+int
+net_join_threads (pmda base)
+{
+  int c = 0;
+
+  mda pt_list =
+    { 0 };
+
+  mutex_lock (&base->mutex);
+
+  md_init_le (&pt_list, (int) base->offset + 1);
+
+  p_md_obj ptr = base->first;
+
+  while (ptr)
+    {
+      __sock_o socket = (__sock_o) ptr->ptr;
+      mutex_lock (&socket->mutex);
+      pthread_t pt = socket->thread;
+      pthread_mutex_unlock (&socket->mutex);
+
+      if ( (pthread_t) 0 == pt)
+	{
+	  print_str ( "ERROR: net_join_threads: uninitialized thread detected : %d\n", socket->sock);
+
+	  goto loop_end;
+	}
+
+      pthread_t *pthread;
+
+      if ( NULL
+	  == (pthread = md_alloc_le (&pt_list, sizeof(pthread_t), 0, NULL)))
+	{
+	  print_str ( "ERROR: net_join_threads: out of memory\n");
+	  abort ();
+	}
+
+      *pthread = pt;
+
+      loop_end:;
+
+      ptr = ptr->next;
+    }
+
+  off_t count = base->offset;
+
+  pthread_mutex_unlock (&base->mutex);
+
+  ptr = pt_list.first;
+
+  while (ptr)
+    {
+      pthread_t *pt = (pthread_t *) ptr->ptr;
+
+      int r;
+
+      if (!(r = pthread_join (*pt, NULL)))
+	{
+	  c++;
+	}
+      else
+	{
+	  print_str ("ERROR: net_join_threads: pthread_join failed [%d]\n", r);
+	}
+
+      ptr = ptr->next;
+    }
+
+  md_g_free (&pt_list);
+
+  return (int) count - c;
+}

@@ -86,5 +86,7 @@ void
 g_del_char (char *input, char *output, char match);
 char *
 bb_to_ascii (unsigned char *block, size_t len, char *out);
+char *
+g_dirname_p (char *input);
 
 #endif /* STR_H_ */

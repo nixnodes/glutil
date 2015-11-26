@@ -5,6 +5,11 @@
  *      Author: reboot
  */
 
+#include "misc.h"
+#include "net_io.h"
+#include "g_crypto.h"
+#include "str.h"
+
 #include "net_fs.h"
 
 #include <string.h>
@@ -13,11 +18,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#include "misc.h"
-#include "net_io.h"
-#include "g_crypto.h"
-#include "str.h"
 
 void
 net_fs_initialize_sts (__sock_o pso)
@@ -162,7 +162,7 @@ net_baseline_fsproto_xfer_stat_ok (__sock_o pso, __fs_rh_enc pkt, void *arg)
       print_str (
 	  "ERROR: net_baseline_fsproto_proc_notify: [%d]: net_fs_compile_filereq failed\n",
 	  pso->sock);
-      net_send_sock_term_sig (pso);
+      net_send_sock_sigterm (pso);
       return 1;
     }
 
@@ -173,7 +173,7 @@ net_baseline_fsproto_xfer_stat_ok (__sock_o pso, __fs_rh_enc pkt, void *arg)
       print_str (
 	  "ERROR: net_baseline_fsproto_xfer_stat_ok: [%d] invalid seek position requested: %llu / %llu\n",
 	  pso->sock, psts->hstat.file_offset, phst->size);
-      net_send_sock_term_sig (pso);
+      net_send_sock_sigterm (pso);
       free (packet);
       return 1;
     }
@@ -622,7 +622,7 @@ net_baseline_fsproto_proc_sdata (__sock_o pso, void *data)
       psts->state |= F_FS_STSOCK_HANDLE_OPEN;
     }
 
-  net_push_rc (&pso->shutdown_rc0, (_t_stocb) net_fs_clean_handles, 0);
+  net_push_rc (&pso->shutdown_rc0, (_t_rcall) net_fs_clean_handles, 0);
 
   if (psts->hstat.file_offset > 0)
     {
@@ -1087,8 +1087,8 @@ net_fs_socket_destroy_rc0 (__sock_o pso)
       pso->va_p1 = NULL;
     }
 
-  pid_t _tid = (pid_t) syscall (SYS_gettid);
-  print_str ("INFO: [%d] socket closed: [%d]\n", _tid, pso->sock);
+  //pid_t _tid = (pid_t) syscall (SYS_gettid);
+  //print_str ("INFO: [%d] socket closed: [%d]\n", _tid, pso->sock);
 
   pthread_mutex_unlock (&pso->mutex);
 

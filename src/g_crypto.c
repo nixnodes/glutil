@@ -22,7 +22,7 @@ c_get_file_sha1 (char *path)
       return digest;
     }
 
-  char buffer[(1024^2)];
+  char buffer[(1024 ^ 2)];
 
   SHA_CTX context;
 
@@ -37,7 +37,24 @@ c_get_file_sha1 (char *path)
 
   SHA1_Final (digest.data, &context);
 
-  fclose(fh);
+  fclose (fh);
 
   return digest;
+}
+
+size_t
+c_get_urandom_bytes (void *out, size_t c, FILE *fh)
+{
+
+  if ( NULL == fh)
+    {
+      return 0;
+    }
+
+  size_t r = fread (out, c, 1, fh);
+
+  fclose (fh);
+
+  return r;
+
 }

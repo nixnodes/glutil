@@ -572,7 +572,7 @@ int
 md_copy_le (pmda source, pmda dest, size_t block_sz, int
 (*cb) (void *source, void *dest, void *ptr))
 {
-  if (!source || !dest)
+  if (!source || 0 == source->count || !dest)
     {
       return 1;
     }
@@ -589,12 +589,13 @@ md_copy_le (pmda source, pmda dest, size_t block_sz, int
   p_md_obj ptr = source->first;
   void *d_ptr;
 
-  md_init_le (dest, source->count);
+  md_init_le (dest, (int) source->count);
 
   while (ptr)
     {
       d_ptr = md_alloc_le (dest, block_sz, 0, NULL);
-      if (!d_ptr)
+      if (!d_ptr )
+
 	{
 	  ret = 10;
 	  break;
@@ -754,7 +755,7 @@ md_alloc_le (pmda md, size_t b, uint32_t flags, void *refptr)
       pos->ptr = calloc (1, b);
     }
 
-  if (!md->first)
+  if (NULL == md->first)
     {
       md->first = pos;
     }

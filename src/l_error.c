@@ -5,12 +5,13 @@
  *      Author: reboot
  */
 
-#include <glutil.h>
-#include <t_glob.h>
-#include <l_sb.h>
-#include <l_error.h>
+#include "l_error.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <unistd.h>
+#include <string.h>
 
 void
 e_pop (p_sigjmp psm)
@@ -90,7 +91,7 @@ sighdl_error (int sig, siginfo_t* siginfo, void* context)
     }
 
   snprintf (buffer1, 4096, ", fault address: 0x%.16llX",
-	    (ulint64_t) siginfo->si_addr);
+	    (uint64_t) siginfo->si_addr);
 
   switch (g_sigjmp.id)
     {

@@ -73,7 +73,11 @@ net_proto_na24_copy (_np_netaddr24 *src, _np_netaddr24 *dst);
 int
 net_baseline_socket_init0 (__sock_o pso);
 int
+net_baseline_socket_t (__sock_o pso);
+int
 net_baseline_socket_init1 (__sock_o pso);
+int
+net_baseline_socket_destroy_rc0 (__sock_o pso);
 
 #endif /* NET_PROTO_H_ */
 

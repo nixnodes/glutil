@@ -20,6 +20,7 @@ mda pc_a =
 int
 net_baseline_socket_init0 (__sock_o pso)
 {
+  mutex_lock (&pso->mutex);
   switch (pso->oper_mode)
     {
     case SOCKET_OPMODE_RECIEVER:
@@ -27,13 +28,30 @@ net_baseline_socket_init0 (__sock_o pso)
       pso->unit_size = BP_HEADER_SIZE;
       break;
     }
+  pthread_mutex_unlock (&pso->mutex);
+  return 0;
+}
 
+int
+net_baseline_socket_t (__sock_o pso)
+{
+  mutex_lock (&pso->mutex);
+  switch (pso->oper_mode)
+    {
+    case SOCKET_OPMODE_RECIEVER:
+      ;
+      pso->unit_size = 8192;
+      break;
+    }
+  pthread_mutex_unlock (&pso->mutex);
   return 0;
 }
 
 int
 net_baseline_socket_init1 (__sock_o pso)
 {
+  mutex_lock (&pso->mutex);
+
   char ip[128];
   uint16_t port = net_get_addrinfo_port (pso);
   net_get_addrinfo_ip (pso, (char*) ip, sizeof(ip));
@@ -59,6 +77,25 @@ net_baseline_socket_init1 (__sock_o pso)
       print_str ("INFO: [%d]: listening on %s:%hu\n", pso->sock, ip, port);
       break;
     }
+
+  pso->timers.last_act = time(NULL);
+
+  pthread_mutex_unlock (&pso->mutex);
+  return 0;
+}
+
+#include <unistd.h>
+#include <sys/syscall.h>
+
+int
+net_baseline_socket_destroy_rc0 (__sock_o pso)
+{
+  mutex_lock (&pso->mutex);
+
+  pid_t _tid = (pid_t) syscall (SYS_gettid);
+  print_str ("INFO: [%d] socket closed: [%d]\n", _tid, pso->sock);
+
+  pthread_mutex_unlock (&pso->mutex);
 
   return 0;
 }

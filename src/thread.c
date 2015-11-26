@@ -1,5 +1,6 @@
-#include <t_glob.h>
-#include <thread.h>
+#include "errno_int.h"
+
+#include "thread.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,12 +8,13 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 #include <errno.h>
 #include <signal.h>
 
-#include <errno_int.h>
-
 mda _net_thrd_r =
+  { 0 };
+mda _thrd_r_common =
   { 0 };
 
 int
@@ -29,41 +31,98 @@ mutex_init (pthread_mutex_t *mutex, int flags, int robust)
 
 int
 thread_create (void *call, int id, pmda thrd_r, uint16_t role,
-	       uint16_t oper_mode)
+	       uint16_t oper_mode, uint32_t flags, uint32_t i_flags,
+	       po_thrd data, po_thrd *ret, pthread_t *pt_ret)
 {
 
-  mutex_lock (&thrd_r->mutex);
+  if ( NULL != thrd_r)
+    {
+      mutex_lock (&thrd_r->mutex);
+    }
 
   int r;
 
   po_thrd object;
 
-  if (!(object = md_alloc_le (thrd_r, sizeof(o_thrd), 0, NULL)))
+  if (i_flags & F_THC_USER_DATA)
     {
-      r = -11;
-      goto end;
+      flags = data->flags;
     }
 
-  object->id = id;
-  object->role = role;
-  object->oper_mode = oper_mode;
-  object->host_ctx = thrd_r;
-  md_init_le (&object->in_objects, 512);
-  md_init_le (&object->proc_objects, 4096);
-  object->in_objects.flags |= F_MDA_REFPTR;
-  object->proc_objects.flags |= F_MDA_REFPTR;
+  uint32_t ex_flags = 0;
 
-  r = mutex_init (&object->mutex, PTHREAD_MUTEX_RECURSIVE,
-		  PTHREAD_MUTEX_ROBUST);
+  if (!(flags & F_THRD_NOREG))
+    {
+      if (!(object = md_alloc_le (thrd_r, sizeof(o_thrd), 0, NULL)))
+	{
+	  r = -11;
+	  goto end;
+	}
+      ex_flags |= F_THRD_REGINIT;
+    }
+  else
+    {
+      object = calloc (1, sizeof(o_thrd));
+      ex_flags |= F_THRD_CINIT;
+    }
+
+  if (!(i_flags & F_THC_USER_DATA))
+    {
+      object->id = id;
+      object->role = role;
+      object->oper_mode = oper_mode;
+      object->host_ctx = thrd_r;
+      object->flags |= flags;
+      if (!(i_flags & F_THC_SKIP_IO))
+	{
+	  md_init_le (&object->in_objects, 512);
+	  md_init_le (&object->proc_objects, 4096);
+	  object->in_objects.flags |= F_MDA_REFPTR;
+	  object->proc_objects.flags |= F_MDA_REFPTR;
+	}
+
+      r = mutex_init (&object->mutex, PTHREAD_MUTEX_RECURSIVE,
+		      PTHREAD_MUTEX_ROBUST);
+    }
+  else
+    {
+      *object = *data;
+    }
+
+  object->caller = pthread_self ();
+  object->flags |= ex_flags;
+
+  mutex_lock (&object->mutex);
 
   if ((r = pthread_create (&object->pt, NULL, call, (void *) object)))
     {
+      pthread_mutex_unlock (&object->mutex);
       goto end;
     }
 
+  if ( NULL != pt_ret)
+    {
+      *pt_ret = object->pt;
+    }
+
+  if (flags & F_THRD_DETACH)
+    {
+      pthread_detach (object->pt);
+    }
+
+  if ( NULL != ret)
+    {
+      *ret = object;
+    }
+
+  pthread_mutex_unlock (&object->mutex);
+
   end:
 
-  pthread_mutex_unlock (&thrd_r->mutex);
+  if ( NULL != thrd_r)
+    {
+      pthread_mutex_unlock (&thrd_r->mutex);
+    }
 
   return r;
 }
@@ -104,6 +163,16 @@ thread_destroy (p_md_obj ptr)
   return 0;
 }
 
+void
+thread_send_kill (po_thrd pthread)
+{
+  mutex_lock (&pthread->mutex);
+  pthread->flags |= F_THRD_TERM;
+  pthread_kill (pthread->pt, SIGINT);
+  pthread_kill (pthread->pt, SIGUSR1);
+  pthread_mutex_unlock (&pthread->mutex);
+}
+
 int
 thread_broadcast_kill (pmda thread_r)
 {
@@ -118,7 +187,96 @@ thread_broadcast_kill (pmda thread_r)
       po_thrd pthrd = (po_thrd) ptr->ptr;
       mutex_lock (&pthrd->mutex);
       pthrd->flags |= F_THRD_TERM;
-      pthread_kill (pthrd->pt, SIGUSR1);
+      if (pthrd->status & F_THRD_STATUS_INITIALIZED)
+	{
+	  pthread_kill (pthrd->pt, SIGINT);
+	  pthread_kill (pthrd->pt, SIGUSR1);
+	}
+      pthread_mutex_unlock (&pthrd->mutex);
+      c++;
+      ptr = ptr->next;
+    }
+
+  pthread_mutex_unlock (&thread_r->mutex);
+
+  return c;
+}
+
+int
+thread_join_threads (pmda thread_r)
+{
+  int c = 0;
+
+  mda pt_list =
+    { 0 };
+
+  mutex_lock (&thread_r->mutex);
+
+  md_init_le (&pt_list, (int) thread_r->offset + 1);
+
+  p_md_obj ptr = thread_r->first;
+
+  while (ptr)
+    {
+      po_thrd pthrd = (po_thrd) ptr->ptr;
+      mutex_lock (&pthrd->mutex);
+      pthread_t pt = pthrd->pt;
+      pthread_mutex_unlock (&pthrd->mutex);
+
+      pthread_t *pthread;
+
+      if ( NULL
+	  == (pthread = md_alloc_le (&pt_list, sizeof(pthread_t), 0, NULL)))
+	{
+	  fprintf (stderr, "ERROR: thread_join_threads: out of memory\n");
+	  abort ();
+	}
+
+      *pthread = pt;
+
+      ptr = ptr->next;
+    }
+
+  off_t count = thread_r->offset;
+
+  pthread_mutex_unlock (&thread_r->mutex);
+
+  ptr = pt_list.first;
+
+  while (ptr)
+    {
+      pthread_t *pt = (pthread_t *) ptr->ptr;
+
+      if (!pthread_join (*pt, NULL))
+	{
+	  c++;
+	}
+
+      ptr = ptr->next;
+    }
+
+  md_g_free (&pt_list);
+
+  return (int) count - c;
+}
+
+int
+thread_broadcast_sig (pmda thread_r, int sig)
+{
+  int c = 0;
+
+  mutex_lock (&thread_r->mutex);
+
+  p_md_obj ptr = thread_r->first;
+
+  while (ptr)
+    {
+      po_thrd pthrd = (po_thrd) ptr->ptr;
+      mutex_lock (&pthrd->mutex);
+      if (pthrd->status & F_THRD_STATUS_INITIALIZED)
+	{
+	  pthread_kill (pthrd->pt, sig);
+	}
       pthread_mutex_unlock (&pthrd->mutex);
       c++;
       ptr = ptr->next;
@@ -154,12 +312,15 @@ search_thrd_id (pmda thread_r, pthread_t *pt)
 
 int
 spawn_threads (int num, void *call, int id, pmda thread_register, uint16_t role,
-	       uint16_t oper_mode)
+	       uint16_t oper_mode, uint32_t flags)
 {
   int r;
   while (num--)
     {
-      if ((r = thread_create (call, id, thread_register, role, oper_mode)))
+      if ((r = thread_create (call, id, thread_register, role, oper_mode, flags,
+			      0,
+			      NULL,
+			      NULL, NULL)))
 	{
 	  return r;
 	}
@@ -168,7 +329,8 @@ spawn_threads (int num, void *call, int id, pmda thread_register, uint16_t role,
 }
 
 int
-push_object_to_thread (void *object, pmda threadr, dt_score_ptp scalc)
+push_object_to_thread (void *object, pmda threadr, dt_score_ptp scalc,
+		       pthread_t *st)
 {
   mutex_lock (&threadr->mutex);
 
@@ -237,6 +399,8 @@ push_object_to_thread (void *object, pmda threadr, dt_score_ptp scalc)
       r = 0;
       //if (sel_thread->status & F_THRD_STATUS_SUSPENDED)
       // {
+      *st = sel_thread->pt;
+
       pthread_kill (sel_thread->pt, SIGUSR1);
 
       // }
@@ -260,8 +424,8 @@ mutex_lock (pthread_mutex_t *mutex)
       return;
     case EOWNERDEAD:
       fprintf (stderr,
-	       "ERROR: %d: calling pthread_mutex_consistent [EOWNERDEAD]\n",
-	       getpid ());
+	       "WARNING: %d: calling pthread_mutex_consistent [EOWNERDEAD]\n",
+	       syscall (SYS_gettid));
       if (0 == pthread_mutex_consistent (mutex))
 	{
 	  mutex_lock (mutex);
@@ -269,7 +433,7 @@ mutex_lock (pthread_mutex_t *mutex)
       else
 	{
 	  fprintf (stderr, "ERROR: %d: pthread_mutex_consistent failed\n",
-		   getpid ());
+		   syscall (SYS_gettid));
 	  abort ();
 	}
       return;
@@ -285,8 +449,9 @@ mutex_lock (pthread_mutex_t *mutex)
     default:
       ;
       char err_b[1024];
-      fprintf (stderr, "ERROR: %d: pthread_mutex_lock: [%d] [%s]\n", getpid (),
-	       r, g_strerr_r (r, (char*) err_b, sizeof(err_b)));
+      fprintf (stderr, "ERROR: %d: pthread_mutex_lock: [%d] [%s]\n",
+	       syscall (SYS_gettid), r,
+	       g_strerr_r (r, (char*) err_b, sizeof(err_b)));
       abort ();
     }
 }

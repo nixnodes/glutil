@@ -1924,7 +1924,7 @@ n_proc_intval (char *left, char *right, int *outval, int64_t min, int64_t max,
   return 0;
 }
 
-#define MSG_NETCTL_OPT_NEEDTHRD         "ERROR: netctl_opt_parse: '%s': thread count must be above 0\n"
+#define MSG_NETCTL_OPT_NEEDTHRD         "ERROR: netctl_opt_parse: '%s': thread count must be positive\n"
 
 static int
 netctl_opt_parse (pmda md, void *arg)
@@ -1983,7 +1983,7 @@ netctl_opt_parse (pmda md, void *arg)
 	  return 1;
 	}
 
-      if (0 == i_val)
+      if (i_val < 0)
 	{
 	  print_str (
 	  MSG_NETCTL_OPT_NEEDTHRD,
@@ -2175,6 +2175,7 @@ opt_ssl_verify (pmda md, void *arg)
 }
 
 #include "net_dis.h"
+#include "net_ftp.h"
 
 #define NET_OPT_PARSE_VBMSHOW() { \
      print_str("DEBUG: net_opt_parse->[%s:%s]->%s = '%s'\n", ca->host, ca->port, left, right); \
@@ -2202,6 +2203,12 @@ net_opt_parse (pmda md, void *arg)
   else if (!strncmp ("dis\0", left, 4))
     {
       ca->ca_flags |= F_CA_MISC03;
+      return 0;
+    }
+  else if (!strncmp ("ftpd\0", left, 5))
+    {
+      ca->ca_flags |= F_CA_MISC04;
+      ca->ac_flags |= F_OPSOCK_CS_MONOTHREAD;
       return 0;
     }
 
@@ -2232,6 +2239,41 @@ net_opt_parse (pmda md, void *arg)
 	}
 
       ca->policy.max_sim_ip = (uint32_t) i_val;
+    }
+  else if (!strncmp ("pasv_ports", left, 11))
+    {
+      mda ps =
+	{ 0 };
+      md_init_le (&ps, 3);
+      if (2 != split_string_l_le (right, 0x2D, &ps, 2))
+	{
+	  print_str ("ERROR: net_opt_parse: invalid pasv_ports range\n", left);
+	  md_g_free (&ps);
+	  return 1;
+	}
+
+      p_md_obj ptr = ps.first;
+
+      int i_val;
+      if (n_proc_intval (left, ptr->ptr, &i_val, 1, USHRT_MAX, NULL))
+	{
+	  md_g_free (&ps);
+	  return 1;
+	}
+
+      ftp_opt.pasv_ports.low = (uint16_t) i_val;
+
+      ptr = ptr->next;
+
+      if (n_proc_intval (left, ptr->ptr, &i_val, 1, USHRT_MAX, NULL))
+	{
+	  md_g_free (&ps);
+	  return 1;
+	}
+
+      ftp_opt.pasv_ports.high = (uint16_t) i_val;
+
+      md_g_free (&ps);
     }
   else if (!strncmp ("idle_timeout", left, 12))
     {
@@ -2316,6 +2358,33 @@ net_opt_parse (pmda md, void *arg)
     {
       snprintf (ca->b4, sizeof(ca->b4), "%s", right);
       net_opts.flags |= F_NETOPT_PUBIP;
+    }
+  else if (!strncmp ("pasv_ip", left, 8))
+    {
+      struct addrinfo *aip;
+      struct addrinfo hints =
+	{ 0 };
+
+      _sock_o dummy;
+
+      hints.ai_flags = AI_ALL | AI_ADDRCONFIG;
+      hints.ai_socktype = SOCK_STREAM;
+      hints.ai_protocol = IPPROTO_TCP;
+
+      if (getaddrinfo (right, "1", &hints, &aip))
+	{
+	  print_str ("ERROR: net_opt_parse: '%s': getaddrinfo: '%s' failed\n",
+		     left, right);
+	  return 1;
+	}
+
+      dummy.res = *aip;
+      net_addr_to_ipr (&dummy, &ftp_state.pasv);
+
+      ftp_state.flags |= F_FTP_STATE_PASV_IP;
+
+      freeaddrinfo (aip);
+
     }
   else if (!strncmp ("sslcert", left, 7))
     {
@@ -2442,13 +2511,22 @@ opt_queue_connection (void *arg, uint32_t flags)
 	}
     }
 
+  if (!(flags & F_OPSOCK_CONNECT))
+    {
+      ca->scall = net_open_listening_socket;
+    }
+  else
+    {
+      ca->scall = net_open_connection;
+    }
+
   md_init_le (&ca->init_rc0, 16);
   md_init_le (&ca->init_rc1, 16);
   md_init_le (&ca->shutdown_rc0, 16);
   md_init_le (&ca->shutdown_rc1, 16);
 
   //net_push_rc(&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
-  net_push_rc (&ca->shutdown_rc1, (_t_stocb) net_gl_socket_post_clean, 0);
+  net_push_rc (&ca->shutdown_rc1, (_t_rcall) net_gl_socket_post_clean, 0);
 
   switch (ca->mode)
     {
@@ -2458,10 +2536,10 @@ opt_queue_connection (void *arg, uint32_t flags)
       //ca->rc1 = net_gl_socket_init1;
       ca->proc = (_p_sc_cb) net_baseline_gl_data_in;
 
-      net_push_rc (&ca->init_rc1, (_t_stocb) net_gl_socket_init1, 0);
-      net_push_rc (&ca->init_rc0, (_t_stocb) net_gl_socket_init0, 0);
+      net_push_rc (&ca->init_rc1, (_t_rcall) net_gl_socket_init1, 0);
+      net_push_rc (&ca->init_rc0, (_t_rcall) net_gl_socket_init0, 0);
 
-      net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_gl_socket_destroy, 0);
+      net_push_rc (&ca->shutdown_rc0, (_t_rcall) net_gl_socket_destroy, 0);
 
       break;
     case OPT_CONNECT_MODE_NULL :
@@ -2474,8 +2552,7 @@ opt_queue_connection (void *arg, uint32_t flags)
       //ca->rc1 = net_gl_socket_init1;
       ca->proc = (_p_sc_cb) net_baseline_prochdr;
 
-      net_push_rc (&ca->init_rc0, (_t_stocb) net_baseline_socket_init1, 0);
-      net_push_rc (&ca->init_rc0, (_t_stocb) net_baseline_socket_init0, 0);
+      net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_init1, 0);
 
       md_init_le (&pc_a, 256);
 
@@ -2484,43 +2561,109 @@ opt_queue_connection (void *arg, uint32_t flags)
 
       if (ca->ca_flags & F_CA_MISC00)
 	{
-	  net_push_rc (&ca->init_rc1, (_t_stocb) net_fs_socket_init1_req_xfer,
+	  net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_init0, 0);
+	  net_push_rc (&ca->init_rc1, (_t_rcall) net_fs_socket_init1_req_xfer,
 		       0);
+	  net_push_rc (&ca->shutdown_rc0, (_t_rcall) net_fs_socket_destroy_rc0,
+		       0);
+
 	}
       else if (ca->ca_flags & F_CA_MISC02)
 	{
-	  net_push_rc (&ca->init_rc1, (_t_stocb) net_fs_socket_init1, 0);
-	  net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_gfs,
+	  net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_init0, 0);
+	  net_push_rc (&ca->init_rc1, (_t_rcall) net_fs_socket_init1, 0);
+	  net_push_rc (&ca->shutdown_rc0, (_t_rcall) net_fs_socket_destroy_gfs,
+		       0);
+	  net_push_rc (&ca->shutdown_rc0, (_t_rcall) net_fs_socket_destroy_rc0,
 		       0);
 	}
       else if (ca->ca_flags & F_CA_MISC03)
 	{
+	  net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_init0, 0);
 	  if (!(flags & F_OPSOCK_CONNECT))
 	    {
 	      net_push_rc (&ca->init_rc1,
-			   (_t_stocb) net_dis_socket_init1_accept, 0);
+			   (_t_rcall) net_dis_socket_init1_accept, 0);
 	      md_init_le (&net_post_init_rc, 64);
 	      net_push_rc (&net_post_init_rc, dis_rescan, 0);
 	    }
 	  else
 	    {
 	      net_push_rc (&ca->init_rc1,
-			   (_t_stocb) net_dis_socket_init1_connect, 0);
+			   (_t_rcall) net_dis_socket_init1_connect, 0);
 	    }
 
-	  di_base.nd_pool.d = (void*) ht_create (256);
 	  mutex_init (&di_base.mutex, PTHREAD_MUTEX_RECURSIVE,
 		      PTHREAD_MUTEX_ROBUST);
 	  mutex_init (&di_base.nd_pool.mutex, PTHREAD_MUTEX_RECURSIVE,
 		      PTHREAD_MUTEX_ROBUST);
+	  di_base.nd_pool.pool.d = (void*) ht_create (256);
+	  di_base.nd_pool.pool.path_c = malloc (PATH_MAX);
+	  snprintf (di_base.nd_pool.pool.path_c, PATH_MAX, "/");
 
 	  md_init_le (&di_base.hosts_linked, DIS_MAX_HOSTS_GLOBAL);
 	  md_init (&di_base.index_linked, 10);
+	  md_init_le (&di_base.msg_log.links, DIS_RMSGL_MAX + 1);
+	  di_base.msg_log.links.flags |= F_MDA_REFPTR;
+	  di_base.index_linked.flags |= F_MDA_REFPTR;
+	  mutex_init (&di_base.msg_log.mutex, PTHREAD_MUTEX_RECURSIVE,
+		      PTHREAD_MUTEX_ROBUST);
+	  di_base.msg_log.ht = ht_create (DIS_RMSGL_MAX);
 	  di_base.hosts_linked.flags |= F_MDA_REFPTR;
 	  di_base.index_linked.flags |= F_MDA_REFPTR;
+	  di_base.fh_urandom = fopen ("/dev/urandom", "rb");
+	  if ( NULL == di_base.fh_urandom)
+	    {
+	      return 24221;
+	    }
+
+	  net_push_rc (&ca->shutdown_rc0, (_t_rcall) net_dis_socket_dc_cleanup,
+		       0);
+	}
+      else if (ca->ca_flags & F_CA_MISC04)
+	{
+
+	  if (NULL == di_base.nd_pool.pool.d)
+	    {
+	      print_str ("ERROR: enable a DIS listener before FTPd\n");
+	      return 24221;
+	    }
+
+	  if (!(flags & F_OPSOCK_CONNECT))
+	    {
+	      ca->proc = (_p_sc_cb) net_baseline_ftp;
+	      net_push_rc (&ca->init_rc1,
+			   (_t_rcall) net_ftp_ctl_socket_init1_accept, 0);
+	      ftp_cmd = ht_create (200);
+
+	      net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_t, 0);
+	      mutex_init (&ftp_state.mutex, PTHREAD_MUTEX_RECURSIVE,
+			  PTHREAD_MUTEX_ROBUST);
+	      ftp_state.pasv.port = ftp_opt.pasv_ports.low;
+	      ftp_state.used_pasv_ports = ht_create (4000);
+	      ftp_state.pasv_ports = ftp_opt.pasv_ports.high
+		  - ftp_opt.pasv_ports.low;
+
+	      net_push_rc (&ca->shutdown_rc0,
+			   (_t_rcall) net_ftp_ctl_socket_rc0_destroy, 0);
+
+	      print_str ("NOTICE: [%s:%s] initializing FTP daemon..\n", host,
+			 port);
+
+	    }
+	  else
+	    {
+	      net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_init0,
+			   0);
+	    }
+	}
+      else
+	{
+	  net_push_rc (&ca->init_rc0, (_t_rcall) net_baseline_socket_init0, 0);
 	}
 
-      net_push_rc (&ca->shutdown_rc0, (_t_stocb) net_fs_socket_destroy_rc0, 0);
+      net_push_rc (&ca->shutdown_rc0, (_t_rcall) net_generic_socket_destroy0,
+		   0);
 
       break;
     default:
@@ -2536,16 +2679,16 @@ opt_queue_connection (void *arg, uint32_t flags)
 
   if (ca->flags & F_OPSOCK_SD_FIRST_DC)
     {
-      net_push_rc (&ca->init_rc1, (_t_stocb) net_gl_socket_init1_dc_on_ac, 0);
+      net_push_rc (&ca->init_rc1, (_t_rcall) net_gl_socket_init1_dc_on_ac, 0);
     }
 
   ca->policy.mode = ca->mode;
   ca->flags |= flags | F_OPSOCK_INIT_SENDQ;
   ca->thread_register = &_net_thrd_r;
 
-  //net_socket_init_enforce_policy
+//net_socket_init_enforce_policy
 
-  net_push_rc (&ca->init_rc0, (_t_stocb) net_socket_init_enforce_policy, 0);
+  net_push_rc (&ca->init_rc0, (_t_rcall) net_socket_init_enforce_policy, 0);
 
   if (!ca->policy.ssl_accept_timeout)
     {

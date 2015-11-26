@@ -22,6 +22,7 @@
 #define F_MDA_FIRST_REUSED              ((uint32_t)1 << 6)
 #define F_MDA_ARR_DIST                  ((uint32_t)1 << 7)
 #define F_MDA_NO_REALLOC                ((uint32_t)1 << 8)
+#define F_MDA_ORPHANED                  ((uint32_t)1 << 10)
 
 #define F_MDA_ST_MISC00                 ((uint32_t)1 << 30)
 #define F_MDA_ST_MISC01                 ((uint32_t)1 << 31)
@@ -56,6 +57,7 @@ typedef struct mda_header
 typedef struct ___nn_2x64
 {
   uint64_t u00, u01;
+  uint16_t u16_00;
 } _nn_2x64, *__nn_2x64;
 
 #pragma pack(pop)

@@ -4,11 +4,13 @@
  *  Created on: Dec 4, 2013
  *      Author: reboot
  */
-#include <glutil.h>
+
+#include "t_glob.h"
+#include "l_error.h"
+
 #include "str.h"
 
-#include <t_glob.h>
-#include <l_error.h>
+
 
 #include <regex.h>
 #include <errno.h>
@@ -32,6 +34,23 @@ g_dirname (char *input)
   if (!b_ptr)
     {
       input[0] = 0x0;
+    }
+  else
+    {
+      b_ptr[0] = 0x0;
+    }
+  return input;
+}
+
+char *
+g_dirname_p (char *input)
+{
+
+  char *b_ptr = strrchr (input, 0x2F);
+  if (NULL == b_ptr || b_ptr == input)
+    {
+      input[0] = 0x2F;
+      input[1] = 0;
     }
   else
     {

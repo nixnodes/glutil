@@ -35,6 +35,9 @@ ie_tl (int code, __emr pemr);
 
 _emr EMR_enum_dir[4];
 
+#include <stddef.h>
+
+
 char *
 g_strerr_r (int errnum, char *buf, size_t buflen);
 

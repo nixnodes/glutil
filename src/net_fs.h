@@ -93,7 +93,7 @@ typedef struct ___fs_state_sock
   uint64_t data_in, data_out;
   char data0[PATH_MAX], data1[PATH_MAX];
   _sha_v sha_00;
-  _t_stocb xfin;
+  _t_rcall xfin;
   time_t l_stat;
   uint32_t cyc_data_last;
 } _fs_sts, *__fs_sts;

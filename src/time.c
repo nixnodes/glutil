@@ -5,17 +5,14 @@
  *      Author: reboot
  */
 
-#include <glutil.h>
 #include "timeh.h"
-
-#include <str.h>
-#include <t_glob.h>
 
 #include <time.h>
 
 struct tm *
-get_localtime (void)
+get_localtime (struct tm * result)
 {
   time_t t = time (NULL);
-  return localtime (&t);
+
+  return localtime_r (&t, result);
 }

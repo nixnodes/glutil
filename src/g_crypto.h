@@ -62,4 +62,9 @@ typedef struct ___pid_rmd160
 _pid_sha1
 c_get_file_sha1 (char *path);
 
+#include <stdio.h>
+
+size_t
+c_get_urandom_bytes (void *out, size_t c, FILE *fh );
+
 #endif /* SRC_G_CRYPTO_H_ */
