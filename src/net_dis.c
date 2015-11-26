@@ -19,9 +19,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <time.h>
 
 _dis di_base =
-  { 0 };
+  {{{ 0 }}};
 
 static int
 d_find_first_free_hslot (__ipr_a hosts)

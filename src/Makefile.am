@@ -41,7 +41,7 @@ else
 gfind_SOURCES=signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c log_op.c omfp.c 
 endif
 
-GLUTIL_DEFAULTLN=-lm
+GLUTIL_DEFAULTLN=-lm -lrt
 
 glutil_LDADD=$(GLUTIL_DEFAULTLN)
 glutil_chroot_LDADD=$(GLUTIL_DEFAULTLN)
