@@ -13,7 +13,8 @@ _pid_sha1
 c_get_file_sha1 (char *path)
 {
   _pid_sha1 digest =
-    { 0 };
+    {
+      { 0 } };
 
   FILE *fh = fopen (path, "rb");
 

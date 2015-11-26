@@ -25,7 +25,9 @@ _ftp_opt ftp_opt =
     { .low = 21500, .high = 31500 } };
 
 _ftp_st ftp_state =
-  { 0 };
+  {
+    {
+      { 0 } } };
 
 static int
 net_ftp_cmd_user (__sock_o pso, char *cmd, char *args)
@@ -156,7 +158,7 @@ net_ftp_cmd_pbsz (__sock_o pso, char *cmd, char *args)
 static void
 net_ftp_cleanup_pasv_host (__sock_o pso)
 {
-  int ret = 0;
+  //int ret = 0;
 
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -328,8 +330,6 @@ net_ftp_list_task (__sock_o pso)
 
       i++;
     }
-
-
 
   pthread_mutex_unlock (&di_base.nd_pool.mutex);
 

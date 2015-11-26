@@ -424,7 +424,7 @@ mutex_lock (pthread_mutex_t *mutex)
       return;
     case EOWNERDEAD:
       fprintf (stderr,
-	       "WARNING: %d: calling pthread_mutex_consistent [EOWNERDEAD]\n",
+	       "WARNING: %ld: calling pthread_mutex_consistent [EOWNERDEAD]\n",
 	       syscall (SYS_gettid));
       if (0 == pthread_mutex_consistent (mutex))
 	{
@@ -432,7 +432,7 @@ mutex_lock (pthread_mutex_t *mutex)
 	}
       else
 	{
-	  fprintf (stderr, "ERROR: %d: pthread_mutex_consistent failed\n",
+	  fprintf (stderr, "ERROR: %ld: pthread_mutex_consistent failed\n",
 		   syscall (SYS_gettid));
 	  abort ();
 	}
@@ -442,14 +442,14 @@ mutex_lock (pthread_mutex_t *mutex)
       mutex_lock (mutex);
       return;
     case ENOTRECOVERABLE:
-      fprintf (stderr, "ERROR: %d: pthread_mutex_lock: [ENOTRECOVERABLE]\n",
-	       getpid ());
+      fprintf (stderr, "ERROR: %u: pthread_mutex_lock: [ENOTRECOVERABLE]\n",
+	       (unsigned int) getpid ());
       abort ();
       return;
     default:
       ;
       char err_b[1024];
-      fprintf (stderr, "ERROR: %d: pthread_mutex_lock: [%d] [%s]\n",
+      fprintf (stderr, "ERROR: %ld: pthread_mutex_lock: [%d] [%s]\n",
 	       syscall (SYS_gettid), r,
 	       g_strerr_r (r, (char*) err_b, sizeof(err_b)));
       abort ();

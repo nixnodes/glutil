@@ -491,7 +491,11 @@ d_update_file_local (char *dir, struct dirent *dp, void *arg, __g_eds eds)
 	}
 
       _do_xfd fdata =
-	{ 0};
+	{
+	    {
+		{
+		    {
+		      0}}}};
 
       errno = 0;
 
@@ -1669,8 +1673,8 @@ dis_rescan (void *arg)
     { 0 };
   mutex_lock (&di_base.nd_pool.mutex);
 
-  int ret = d_enum_dir_bare ("/", d_update_file_local, &di_base.nd_pool.pool,
-			     0, &eds, d_td_uloc);
+  int ret = d_enum_dir_bare ("/", d_update_file_local, &di_base.nd_pool.pool, 0,
+			     &eds, d_td_uloc);
 
   pthread_mutex_unlock (&di_base.nd_pool.mutex);
 
