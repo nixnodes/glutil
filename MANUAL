@@ -185,7 +185,7 @@ Updated: 10/03/2016
 			
 			Example:
 			
-				-d -print '{?m:size/(1024^2)}MB in {files} files, {?m:(size/files)/(1024*1024)}MB avg per file {?c:2:\t} {basedir}' --lom 'files>0' --sort size
+				-d -print '{?m:size/(1024^2)}MB in {files} files, {?m:(size/files)/(1024*1024)}MB avg per file {?c:2:\t} {basedir}' -lom 'files>0' --sort size
 				
 			Output:
 				...
