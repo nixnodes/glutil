@@ -485,7 +485,7 @@ g_init (int argc, char **argv, char **l_arg)
 	}
     }
 
-  if ((gfl & F_OPT_VERBOSE) && (gfl & F_OPT_NOWRITE))
+  if ((gfl & F_OPT_VERBOSE3) && (gfl & F_OPT_NOWRITE))
     {
       print_str ("WARNING: performing dry run, no writing will be done\n");
     }
