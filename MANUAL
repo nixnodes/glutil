@@ -359,7 +359,7 @@ Updated: 10/03/2016
 	Read about '?P' above.
 	
 	Extended directives can be used with with -exec[v], -print[f] and string filters 
-	(--[i]regex[i]/--[i]match):
+	(-regex[i]/-match):
 	
 		-d -l: "(?tl:time#%d %h)" -match "12 Mar" -print '{basedir} was created {(?tl:time#%d %h at %H\\:%M)}'
 		
@@ -367,20 +367,20 @@ Updated: 10/03/2016
 		
 		-d -l: "(?tl:time#%d %h)" -match "12 Mar" --silent -execv 'echo "{basedir} was created {(?tl:time#%d %h at %H\\:%M)}"'			
 		
-	Prints only records created on 23'rd of September from the dirlog, custom formatted.
+	Prints only records created on March 12 from the dirlog, custom formatted.
 
 
  EXTRACTING DATA FROM BINARY LOGS:
 
 	ANY binary log record can easily be extracted as ASCII string and passed 
-	to the shell using --exec, --postexec or --preexec (see --help)
+	to the shell using -exec, --postexec or --preexec (see --help)
 	
 	
 	Let's assume we want to get the path, number of files and directory  
 	creation time out of dirlog, passing these three values for each record 
 	to your script:
 	
-	./glutil  -d --silent -execv "/path/to/myscript.sh {dir} {files} {time}"
+	./glutil -d --silent -execv "/path/to/myscript.sh {dir} {files} {time}"
 	
 	--/* myscript.sh: */-----------------------------------------------
 	
