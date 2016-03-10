@@ -1,4 +1,4 @@
-Updated: 16/11/2014
+Updated: 10/03/2016
   
  INPUT/OUTPUT OPERATIONS:
 
@@ -83,11 +83,11 @@ Updated: 16/11/2014
 	
 	For example:
 	
-		-d -l: dir -regexi "Somefolder" or -lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
+		-d -l: dir -regexi "Somefolder" -or -lom "size == 0 || files == 0" --raw > /glftpd/ftp-data/logs/dirlog
 		
 	would produce the same result as:
 	
-		-e dirlog -l: dir -regexi "Somefolder" or -lom "size == 0 || files == 0"
+		-e dirlog -l: dir -regexi "Somefolder" -or -lom "size == 0 || files == 0"
 		
 	These examples would filter any dirlog record including 'Smallville' in directory 
 	name (case insentitive) and any directories with size/files zero, writing results 
