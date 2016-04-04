@@ -209,6 +209,8 @@ FLAGS:
    released   I     Released time since epoch (man 2 time)
    runtime    I     Runtime 
    year       I     Year of release | !*changed from string to integer in 1.9-72, update existing databases*!
+   country    S     Country
+   language   S     Language
    plot       S     Plot/synopsis
 
 

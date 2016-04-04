@@ -129,29 +129,29 @@ Print the users that are online.
 This will print out online users with pid and loop the information every 1 second.
 	glutil -w -print "username: {user} |  pid: {pid}" --loop 1 --loopexec "clear" --preexec "clear" --silent
 
-This will print out all movies with comedy genre of scores greater than 6.
-	glutil -a iregexi genres,"comedy" and ilom "score > 6.0" --batch | cut -f 3,6
-
+This will print out all movies with comedy genre of scores greater than 6, sorted ascending by score.
+	glutil -a -l: genres -regexi "comedy" -and -lom "score > 6.0" -print " {(?P:(score)#%-4s)} | {title#%-40s} ({year}) | {country} | {language} {:n}------|-- {(?P:plot#%.120s)} " --sort score
+	
 This will print out the tvrage info stored in the tv.log, case insensative.
-	glutil -h --iregexi name,"Hell On Wheels" 
+	glutil -h -l: name -regexi "Hell On Wheels" 
 
 Remove from the dirlog what is in the regex.  In this case it would remove any entries with repeating 
 back-slashes in path
-	glutil -e dirlog -vvv --regex "[\/]{2,}"
+	glutil -e dirlog -vvv ! -regex "[\/]{2,}"
 
 Output all the entries in the nukelog that are under 7 days of age.
-	glutil -n --lom "time < $(expr $(date +%s) - 604800)"
+	glutil -n -lom "time < (curtime-604800)"
 
 Finds dupes in dirlog - all match params apply. If no explicit match is given, it dupefinds for all records (can take
 a long time)
-	glutil -p imatch basedir,"Some.Dir.LA-LA"
+	glutil -p -l: ?b:dir -match "Some.Dir.LA-LA"
 
 Do a recursive search for files or symlinks in /glftpd/site, that contain the 
-word 'linux' in path (case-insensitive) and are not older than 7 days 
+word 'share' in path (case-insensitive) and are not older than 7 days 
 (604800 secs). Stays on the current filesystem. Prints to stdout.
 Type glutil --info -vv to see the list of modes that can be matched against.
 
-	glutil -x /glftpd/site -recursive -xdev ilom "ctime > curtime-604800 && mode==10 || mode==8" and iregexi basepath,"linux" --batch
+	glutil -x / -R -xdev -lom "ctime > (curtime-604800) && mode == 10 || mode == 8" -and -l: ?b:path -regexi "share" -print "Mode: {(?P:(mode#%-5d))} {(?P:(?tl:mtime)#%-25s)} {path}" 
 
 
 glutil is supposed to be able to show me game ratings, how is that done?
