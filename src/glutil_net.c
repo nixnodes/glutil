@@ -871,7 +871,7 @@ net_gl_socket_init1 (__sock_o pso)
 	  char ip[128];
 	  uint16_t port = net_get_addrinfo_port (pso);
 
-	  net_get_addrinfo_ip (pso, (char*) ip, sizeof(ip));
+	  net_get_addrinfo_ip_str (pso, (char*) ip, sizeof(ip));
 
 	  print_str ("NOTICE: [%d]: [%d] data socket active [%s] [%s:%hu]\n",
 		     _tid, pso->sock, (char*) pso->st_p0, ip, port);
@@ -887,7 +887,7 @@ net_gl_socket_init1 (__sock_o pso)
 	  char ip[128];
 	  uint16_t port = net_get_addrinfo_port (pso);
 
-	  net_get_addrinfo_ip (pso, (char*) ip, sizeof(ip));
+	  net_get_addrinfo_ip_str (pso, (char*) ip, sizeof(ip));
 
 	  print_str (
 	      "NOTICE: [%d]: [%d] listener socket active [%s] [%s:%hu]\n", _tid,

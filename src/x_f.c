@@ -201,13 +201,13 @@ find_absolute_path (char *exec, char *output)
       snprintf (output, PATH_MAX, "%s/%s", (char*) ptr->ptr, exec);
       if (!access (output, R_OK | X_OK))
 	{
-	  md_g_free (&s_p);
+	  md_free (&s_p);
 	  return 0;
 	}
       ptr = ptr->next;
     }
 
-  md_g_free (&s_p);
+  md_free (&s_p);
 
   return 3;
 }
@@ -560,7 +560,7 @@ load_guid_info (pmda md, char *path)
 
       if (split_string (buffer, 0x3A, &spl) < 3)
 	{
-	  md_g_free (&spl);
+	  md_free (&spl);
 	  return 2;
 	}
 
@@ -578,7 +578,7 @@ load_guid_info (pmda md, char *path)
 	  return 3;
 	}
 
-      md_g_free (&spl);
+      md_free (&spl);
 
       lc++;
     }

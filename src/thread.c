@@ -255,7 +255,7 @@ thread_join_threads (pmda thread_r)
       ptr = ptr->next;
     }
 
-  md_g_free (&pt_list);
+  md_free (&pt_list);
 
   return (int) count - c;
 }

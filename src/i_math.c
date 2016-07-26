@@ -268,7 +268,7 @@ g_process_math_string (__g_handle hdl, char *string, pmda mdm, pmda chain,
 					 int_flags | F_PROC_MATH_STR_INB);
 	  if (0 != r)
 	    {
-	      md_g_free (object);
+	      md_free (object);
 	      f_ret = r;
 	      goto f_end;
 	    }

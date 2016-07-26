@@ -377,7 +377,7 @@ net_get_addrinfo_port (__sock_o pso)
 }
 
 const char *
-net_get_addrinfo_ip (__sock_o pso, char *out, socklen_t len)
+net_get_addrinfo_ip_str (__sock_o pso, char *out, socklen_t len)
 {
   void *ip_data;
   switch (pso->res.ai_family)
@@ -3982,7 +3982,7 @@ net_generic_socket_init1 (__sock_o pso)
   mutex_lock (&pso->mutex);
   char ip[128];
   uint16_t port = net_get_addrinfo_port (pso);
-  net_get_addrinfo_ip (pso, (char*) ip, sizeof(ip));
+  net_get_addrinfo_ip_str (pso, (char*) ip, sizeof(ip));
 
   switch (pso->oper_mode)
     {
@@ -4111,7 +4111,7 @@ net_join_threads (pmda base)
       ptr = ptr->next;
     }
 
-  md_g_free (&pt_list);
+  md_free (&pt_list);
 
   return (int) count - c;
 }

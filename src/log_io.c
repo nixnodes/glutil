@@ -336,8 +336,8 @@ g_close (__g_handle hdl)
       hdl->offset = 0;
       if ((hdl->flags & F_GH_ONSHM))
 	{
-	  md_g_free (&hdl->buffer);
-	  md_g_free (&hdl->w_buffer);
+	  md_free (&hdl->buffer);
+	  md_free (&hdl->w_buffer);
 	}
     }
 
@@ -369,7 +369,7 @@ math_cleanup (void *data)
 static int
 chains_cleanup (void *data)
 {
-  md_g_free (data);
+  md_free (data);
 
   return 0;
 }
@@ -424,7 +424,7 @@ clean_drt (__d_drt_h mppd)
 
   if (NULL != cond)
     {
-      md_g_free(&cond->match.lom);
+      md_free(&cond->match.lom);
       if (NULL != cond->match.data)
 	{
 	  free(cond->match.data);
@@ -452,7 +452,7 @@ g_clean_print_mech (pmda print_mech)
 	  ptr = ptr->next;
 	}
 
-      return md_g_free (print_mech);
+      return md_free (print_mech);
     }
 
   return 0;
@@ -485,11 +485,11 @@ g_cleanup (__g_handle hdl)
 {
   int r = 0;
 
-  r += md_g_free (&hdl->buffer);
-  r += md_g_free (&hdl->w_buffer);
-  r += md_g_free (&hdl->_accumulator);
-  r += md_g_free (&hdl->uuid_stor);
-  r += md_g_free (&hdl->guid_stor);
+  r += md_free (&hdl->buffer);
+  r += md_free (&hdl->w_buffer);
+  r += md_free (&hdl->_accumulator);
+  r += md_free (&hdl->uuid_stor);
+  r += md_free (&hdl->guid_stor);
 
   g_clean_print_mech (&hdl->print_mech);
   g_clean_print_mech (&hdl->pre_print_mech);
@@ -518,7 +518,7 @@ g_cleanup (__g_handle hdl)
 	  free (hdl->exec_args.argv_c);
 	}
 
-      r += md_g_free (&hdl->exec_args.ac_ref);
+      r += md_free (&hdl->exec_args.ac_ref);
     }
 
   md_g_free_cb (&hdl->exec_args.mech, g_claf_mech);
@@ -550,7 +550,7 @@ g_cl_mrr (void *ptr)
   __g_match g_ptr = (__g_match) ptr;
   if ( g_ptr->flags & F_GM_ISLOM)
     {
-      md_g_free(&g_ptr->lom);
+      md_free(&g_ptr->lom);
     }
 
   if ( g_ptr->flags & F_GM_ISREGEX)
@@ -793,7 +793,7 @@ load_data_md (pmda md, char *file, __g_handle hdl)
     {
       if ((r = g_shmap_data (hdl, SHM_IPC)))
 	{
-	  md_g_free (md);
+	  md_free (md);
 	  return r;
 	}
       count = hdl->total_sz / hdl->block_sz;
@@ -882,7 +882,7 @@ load_data_md (pmda md, char *file, __g_handle hdl)
 	  if ((b_read = g_load_data_md (hdl->data, hdl->total_sz, file, hdl))
 	      % hdl->block_sz)
 	    {
-	      md_g_free (md);
+	      md_free (md);
 	      if (!b_read)
 		{
 		  return 20109;
@@ -1256,7 +1256,7 @@ gen_md_data_ref (__g_handle hdl, pmda md, off_t count)
       w_ptr += hdl->block_sz;
       if (!md_alloc (md, hdl->block_sz))
 	{
-	  md_g_free (md);
+	  md_free (md);
 	  return -5;
 	}
 
@@ -1281,7 +1281,7 @@ gen_md_data_ref_cnull (__g_handle hdl, pmda md, off_t count)
 	  md->lref_ptr = (void*) w_ptr;
 	  if (!md_alloc (md, hdl->block_sz))
 	    {
-	      md_g_free (md);
+	      md_free (md);
 	      return -5;
 	    }
 	}

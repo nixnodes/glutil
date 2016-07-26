@@ -222,7 +222,7 @@ build_msg_reg (char *arg, uint32_t *opt_r)
 
   end: ;
 
-  md_g_free (&sp_s);
+  md_free (&sp_s);
 
   return r;
 }

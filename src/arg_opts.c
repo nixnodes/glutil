@@ -2248,7 +2248,7 @@ net_opt_parse (pmda md, void *arg)
       if (2 != split_string_l_le (right, 0x2D, &ps, 2))
 	{
 	  print_str ("ERROR: net_opt_parse: invalid pasv_ports range\n", left);
-	  md_g_free (&ps);
+	  md_free (&ps);
 	  return 1;
 	}
 
@@ -2257,7 +2257,7 @@ net_opt_parse (pmda md, void *arg)
       int i_val;
       if (n_proc_intval (left, ptr->ptr, &i_val, 1, USHRT_MAX, NULL))
 	{
-	  md_g_free (&ps);
+	  md_free (&ps);
 	  return 1;
 	}
 
@@ -2267,13 +2267,13 @@ net_opt_parse (pmda md, void *arg)
 
       if (n_proc_intval (left, ptr->ptr, &i_val, 1, USHRT_MAX, NULL))
 	{
-	  md_g_free (&ps);
+	  md_free (&ps);
 	  return 1;
 	}
 
       ftp_opt.pasv_ports.high = (uint16_t) i_val;
 
-      md_g_free (&ps);
+      md_free (&ps);
     }
   else if (!strncmp ("idle_timeout", left, 12))
     {
@@ -2669,10 +2669,10 @@ opt_queue_connection (void *arg, uint32_t flags)
     default:
       print_str ("ERROR: opt_queue_connection: [%s:%s] invalid mode: %hhu\n",
 		 host, port, ca->mode);
-      md_g_free (&ca->init_rc0);
-      md_g_free (&ca->init_rc1);
-      md_g_free (&ca->shutdown_rc0);
-      md_g_free (&ca->shutdown_rc1);
+      md_free (&ca->init_rc0);
+      md_free (&ca->init_rc1);
+      md_free (&ca->shutdown_rc0);
+      md_free (&ca->shutdown_rc1);
       md_unlink_le (&_boot_pca, _boot_pca.pos);
       return 24168;
     }

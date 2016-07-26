@@ -480,7 +480,7 @@ int
 pce_print_msg (char *input, __g_handle hdl)
 {
   int r;
-  md_g_free (&hdl->print_mech);
+  md_free (&hdl->print_mech);
   if ((r = g_compile_exech (&hdl->print_mech, hdl, input)))
     {
       print_str ("ERROR: %s: [%d]: could not compile print string\n", hdl->file,

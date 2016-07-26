@@ -241,7 +241,7 @@ rebuild_dirlog (void)
 	  free (ndup);
 	  lend:
 
-	  md_g_free (&buffer2);
+	  md_free (&buffer2);
 	}
       ptr = ptr->next;
     }
@@ -258,7 +258,7 @@ rebuild_dirlog (void)
 
   r_end:
 
-  md_g_free (&dirchain);
+  md_free (&dirchain);
 
   g_close (&g_act_1);
 
@@ -1217,7 +1217,7 @@ dirlog_update_record (char *argv)
     }
   r_end:
 
-  md_g_free (&dirchain);
+  md_free (&dirchain);
 
   if (((gfl0 & F_OPT_STATS) || (gfl & F_OPT_VERBOSE4))
       && !(gfl0 & F_OPT_NOSTATS))

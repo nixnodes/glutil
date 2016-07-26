@@ -484,7 +484,7 @@ parse_args (int argc, char **argv, _gg_opt fref_t[], char ***la, uint32_t flags)
 
   if (ar_vref.count)
     {
-      md_g_free (&ar_vref);
+      md_free (&ar_vref);
     }
 
   md_init (&ar_vref, 8);
@@ -620,7 +620,7 @@ g_parse_opts (char *input, _p_opt_cb _proc, void *arg, int dl_o, int dl_v)
 
       if (split_string (opt, dl_v, &m_dl_v) == 0)
 	{
-	  md_g_free (&m_dl_v);
+	  md_free (&m_dl_v);
 	  ret = 2;
 	  goto end_1;
 	}
@@ -637,14 +637,14 @@ g_parse_opts (char *input, _p_opt_cb _proc, void *arg, int dl_o, int dl_v)
 	  goto end_1;
 	}
 
-      md_g_free (&m_dl_v);
+      md_free (&m_dl_v);
 
       ptr_o = ptr_o->next;
     }
 
   end_1: ;
 
-  md_g_free (&m_dl_o);
+  md_free (&m_dl_o);
 
   return ret;
 }

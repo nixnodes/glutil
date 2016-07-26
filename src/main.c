@@ -64,7 +64,7 @@ g_setxid (void)
       if ((r = load_guid_info (&guid_stor, DEFPATH_GROUP)))
 	{
 	  print_str (MSG_GEN_NOFACC, "", DEFPATH_GROUP);
-	  md_g_free (&guid_stor);
+	  md_free (&guid_stor);
 	  return 1;
 	}
 
@@ -72,7 +72,7 @@ g_setxid (void)
       if (pgn == NULL)
 	{
 	  print_str ("ERROR: group '%s' not found\n", G_GROUP);
-	  md_g_free (&guid_stor);
+	  md_free (&guid_stor);
 	  return 1;
 	}
 
@@ -80,7 +80,7 @@ g_setxid (void)
 	{
 	  print_str ("ERROR: g_setxid: setgid failed: %s\n",
 		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
-	  md_g_free (&guid_stor);
+	  md_free (&guid_stor);
 	  return 1;
 	}
 
@@ -89,7 +89,7 @@ g_setxid (void)
 	  print_str ("NOTICE: setgid: %s, gid: %u\n", pgn->name, pgn->id);
 	}
 
-      md_g_free (&guid_stor);
+      md_free (&guid_stor);
       gfl0 ^= F_OPT_SETGID;
     }
 
@@ -104,7 +104,7 @@ g_setxid (void)
       if ((r = load_guid_info (&uuid_stor, DEFPATH_PASSWD)))
 	{
 	  print_str ( MSG_GEN_NOFACC, "", DEFPATH_PASSWD);
-	  md_g_free (&uuid_stor);
+	  md_free (&uuid_stor);
 	  return 1;
 	}
 
@@ -112,7 +112,7 @@ g_setxid (void)
       if (pgn == NULL)
 	{
 	  print_str ("ERROR: user '%s' not found\n", G_USER);
-	  md_g_free (&uuid_stor);
+	  md_free (&uuid_stor);
 	  return 1;
 	}
 
@@ -120,7 +120,7 @@ g_setxid (void)
 	{
 	  print_str ("ERROR: g_setxid: setuid failed: %s\n",
 		     strerror_r (errno, e_buffer, sizeof(e_buffer)));
-	  md_g_free (&uuid_stor);
+	  md_free (&uuid_stor);
 	  return 1;
 	}
       if (gfl & F_OPT_VERBOSE)
@@ -128,7 +128,7 @@ g_setxid (void)
 	  print_str ("NOTICE: setuid: %s, uid: %u\n", pgn->name, pgn->id);
 	}
 
-      md_g_free (&uuid_stor);
+      md_free (&uuid_stor);
       gfl0 ^= F_OPT_SETUID;
 
     }
@@ -744,10 +744,10 @@ g_shutdown (void *arg)
       close (execv_stdout_redir);
     }
 
-  md_g_free (&_match_rr);
-  md_g_free (&_md_gsort);
+  md_free (&_match_rr);
+  md_free (&_md_gsort);
 #ifdef _G_SSYS_NET
-  md_g_free (&_boot_pca);
+  md_free (&_boot_pca);
 #endif
 
   _p_macro_argc = 0;

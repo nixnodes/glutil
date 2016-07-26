@@ -140,7 +140,7 @@ ref_to_val_get_cfgval (char *cfg, char *key, char *defpath, int flags,
   pthread_mutex_unlock (&ret->mutex);
 #endif
 
-  md_g_free (&s_tk);
+  md_free (&s_tk);
   return p_ret;
 }
 
@@ -215,7 +215,7 @@ load_cfg (pmda pmd, char *file, uint32_t flags, pmda *res)
       md_init (&pce->data, 32);
       if ((rd = split_string_sp_tab (buffer, &pce->data)) < 1)
 	{
-	  md_g_free (&pce->data);
+	  md_free (&pce->data);
 	  md_unlink (md, md->pos);
 	  continue;
 	}
@@ -265,7 +265,7 @@ free_cfg (pmda md)
       pce = (p_cfg_h) ptr->ptr;
       if (pce && &pce->data)
 	{
-	  md_g_free (&pce->data);
+	  md_free (&pce->data);
 	}
       ptr = ptr->next;
     }
@@ -274,7 +274,7 @@ free_cfg (pmda md)
   pthread_mutex_unlock (&md->mutex);
 #endif
 
-  md_g_free (md);
+  md_free (md);
 }
 
 p_md_obj
@@ -436,5 +436,5 @@ free_cfg_rf (pmda md)
   pthread_mutex_unlock (&md->mutex);
 #endif
 
-  return md_g_free (md);
+  return md_free (md);
 }

@@ -2316,7 +2316,7 @@ rtv_q (void *query, char *output, size_t max_size)
 
   end:
 
-  md_g_free (&md_s);
+  md_free (&md_s);
 
   return r;
 }

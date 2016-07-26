@@ -620,7 +620,7 @@ opt_g_sort (void *arg, int m, void *opt)
 
   if (0 != _md_gsort.count)
     {
-      md_g_free (&_md_gsort);
+      md_free (&_md_gsort);
     }
 
   md_init (&_md_gsort, 3);
