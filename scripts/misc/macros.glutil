@@ -155,7 +155,7 @@
 ## Does the job of both <dirlog-clean-empty> 
 ##  and <dirlog-clean-junk>
 #
-#@MACRO:dirlog-full-clean|Does the job of both <dirlog-clean-empty> and <dirlog-clean-junk>:{exe} -e dirlog -vvvv --nofq -l: basedir ! -regexi "^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" and ! -lom "size=0&&files=0"
+#@MACRO:dirlog-full-clean|Does the job of both <dirlog-clean-empty> and <dirlog-clean-junk>:{exe} -e dirlog -vvvv --nofq -l: basedir ! -regexi "^(vobsample|sample|proof|extras|vobsubs(s|())|subpack|booklet|subs|cover(s|())|.*\(no\-(sfv|nfo)|incomplete\| complete ).*|())$" -and ! -lom "size=0&&files=0"
 #
 ## <dirlog-trim>
 #
