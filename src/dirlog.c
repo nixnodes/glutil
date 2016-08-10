@@ -732,6 +732,9 @@ release_generate_block (char *name, ear *iarg)
 	  iarg->dirlog->status = n_buffer.status + 1;
 	  strcp_s (iarg->dirlog->dirname, sizeof(iarg->dirlog->dirname),
 		   n_buffer.dirname);
+
+	  return ret;
+
 	}
       else
 	{
