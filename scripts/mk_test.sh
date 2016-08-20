@@ -17,7 +17,7 @@
 #
 #########################################################################
 #@VERSION:1
-#@REVISION:6
+#@REVISION:7
 #@MACRO:mk-test:{exe} -noop --preexec `{spec1}`
 #
 ## Simple debugger script
