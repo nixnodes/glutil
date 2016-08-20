@@ -17,16 +17,17 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:2
+#@REVISION:3
 #
 
 [ -z "${1}" ] && P_CONFIG="precheck-config" || P_CONFIG="${1}"
 [ -z "${2}" ] && P_DATA="precheck-data" || P_DATA="${2}"
 
+GLROOT="/glftpd"
 
-CONFIG_PATH="/glftpd/ftp-data/glutil/${P_CONFIG}"
-DATA_PATH="/glftpd//ftp-data/glutil/${P_DATA}"
-GLUTIL="/glftpd/bin/glutil"
+CONFIG_PATH="${GLROOT}/ftp-data/glutil/${P_CONFIG}"
+DATA_PATH="${GLROOT}/ftp-data/glutil/${P_DATA}"
+GLUTIL="${GLROOT}/bin/glutil"
 
 #########################################################
 
