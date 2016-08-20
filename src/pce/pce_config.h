@@ -69,6 +69,6 @@
 #define gconf_log PATH_PREFIX  "/ftp-data/glutil/precheck-data/gconf"
 #endif
 
-#define G_HFLAGS PCE_F_OPT_SHAREDMEM
+#define G_HFLAGS PCE_F_OPT_SHAREDMEM|F_OPT_VERBMAX
 
 #endif /* PCE_CONFIG_H_ */

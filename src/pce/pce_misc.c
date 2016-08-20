@@ -15,6 +15,8 @@
 #include <time.h>
 #include <errno.h>
 
+#include <errno_int.h>
+
 #define PCE_PSTR_MAX        16384
 
 static void
@@ -57,11 +59,14 @@ pce_log (const char * volatile buf, ...)
 
   if (NULL != fd_log_pce)
     {
-      struct tm tm = *get_localtime ();
+      struct tm tmd;
+
+      struct tm *tm = get_localtime (&tmd);
+
       snprintf (d_buffer_2, PCE_PSTR_MAX,
-		"[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] [%d] %s", tm.tm_mday,
-		tm.tm_mon + 1, (tm.tm_year + 1900) % 100, tm.tm_hour, tm.tm_min,
-		tm.tm_sec, getpid (), buf);
+		"[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] [%d] %s", tm->tm_mday,
+		tm->tm_mon + 1, (tm->tm_year + 1900) % 100, tm->tm_hour, tm->tm_min,
+		tm->tm_sec, getpid (), buf);
 
       char wl_buffer[PCE_PSTR_MAX];
       vsnprintf (wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);

@@ -60,7 +60,7 @@ pce_proc (char *path, char *dir)
       return 0;
     }
   STDLOG_LVL = 0;
-  gfl |= G_HFLAGS | F_OPT_VERBMAX;
+  gfl |= G_HFLAGS;
   //char *subject_b = strdup(subject);
   int r;
 
