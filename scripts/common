@@ -1,12 +1,10 @@
 #@VERSION:00
-#@REVISION:04
+#@REVISION:05
 
-# PRIVATE
 _lock()             { flock -$1 ${2}; }
 _clear_lock()       { _lock u ${1}; _lock xn ${1}; rm -f "${2}"; }
 _prepare_lock()     { eval "exec ${1}>\"${2}\""; }
 
-# PUBLIC
 exlock_now()        { _lock xn ${1}; }  # obtain an exclusive lock immediately or fail
 exlock()            { _lock x ${1}; }   # obtain an exclusive lock
 shlock()            { _lock s ${1}; }   # obtain a shared lock
@@ -37,8 +35,8 @@ get_trap()
 
 validate_ipv4()
 {
-        echo "${1}" | egrep -q '^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})((:)[0-9]{1,6}|$)$'
-        return $?
+    echo "${1}" | egrep -q '^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})((:)[0-9]{1,6}|$)$'
+    return $?
 }
 
 LOCK_BASEPATH="${GLROOT}/var/lock"
@@ -62,15 +60,15 @@ stack_trap()
 
 try_lock()
 {
-        mk_lockdir ${2}
-		CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
+    mk_lockdir ${2}
+	CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
 
-        _prepare_lock ${1} "${CT_F_LOCKFILE}"
-        exlock_now ${1} || {
-                exit 1
-        }
+    _prepare_lock ${1} "${CT_F_LOCKFILE}"
+    exlock_now ${1} || {
+            exit 1
+    }
 
-       	stack_trap "_clear_lock ${1} ${CT_F_LOCKFILE}" EXIT
+   	stack_trap "_clear_lock ${1} ${CT_F_LOCKFILE}" EXIT
 }
 
 try_lock_r()
@@ -99,6 +97,6 @@ try_lock_r()
 
 controls_unlock()
 {
-		CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
-        _clear_lock ${1} "${CT_F_LOCKFILE}";
+	CT_F_LOCKFILE="${LOCK_BASEPATH}/${2}/${3}.lock"
+	_clear_lock ${1} "${CT_F_LOCKFILE}";
 }
