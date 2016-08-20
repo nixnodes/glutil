@@ -1,5 +1,6 @@
-#@REVISION:01
+#@REVISION:02
 
 INPUT_SOURCES=(	 	
-	"libs/sort_common scripts/sort_common 755 0" 
+	"libs/common scripts/common 644 0"
+	"libs/sort_common scripts/sort_common 644 0" 
 )

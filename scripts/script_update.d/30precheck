@@ -1,6 +1,6 @@
-#@REVISION:03
+#@REVISION:04
 
 INPUT_SOURCES=(	 	
-	"precheck/compipler/gconf ftp-data/glutil/precheck-config/gconf 644 1"	
+	"precheck/compiler/gconf ftp-data/glutil/precheck-config/gconf 644 1"	
  	"precheck/compiler scripts/precheck_compile.sh 755 0" 	
 )

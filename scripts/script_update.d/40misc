@@ -1,6 +1,7 @@
-#@REVISION:03
+#@REVISION:04
 
 INPUT_SOURCES=(	 	
 	"misc/mk-test scripts/mk_test.sh 755 0" 
  	"misc/check-incomplete scripts/check_incomplete.sh 755 0"
+ 	"misc/macros scripts/misc/macros.glutil 755 0"
 )

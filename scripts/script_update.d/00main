@@ -1,10 +1,8 @@
-#@REVISION:21
+#@REVISION:22
 
 INPUT_SOURCES=(	
-	"base/script-update-config scripts/script_update_config 644 1"
-	"base/common scripts/common 644 0"
-	"base/config scripts/config 644 1"  		
- 	"base/macros scripts/misc/macros.glutil 755 0"
+	"base/script-update-config scripts/script_update_config 644 1"	
+	"base/config scripts/config 644 1"  	 	
  	"updates/02libs scripts/script_update.d/02libs 644 0 1"
  	"updates/10taskd scripts/script_update.d/10taskd 644 0 1"
  	"updates/11taskd_00modules scripts/script_update.d/11taskd_00modules 644 0 1"
