@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:1
-#@REVISION:2
+#@REVISION:3
 #@MACRO:incomplete:{exe} -d -execv "{spec1} \{dir\} \{exe\} \{glroot\} {arg1}" --silent
 #@MACRO:incomplete-c:{exe} -d -execv "{spec1} \{dir\} \{exe\} \{glroot\} {arg2}" -regex "{arg1}" --silent
 #
@@ -77,7 +77,7 @@ c_dir() {
 	[ -n "$5" ] && VERBOSE=1
 	echo "NOTICE: processing ${DIR}"
 	c_dir "${DIR}"
-	exit 1
+	exit 0
 }
 
 
@@ -88,4 +88,4 @@ DIR="${GLROOT}${1}"
 
 ${2} -x "${DIR}" -regexi "\.sfv$" -execv "${0} {path} ${2} ${3} cdir ${4}" --silent -R
 
-exit 1
+exit 0
