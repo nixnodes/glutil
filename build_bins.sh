@@ -14,6 +14,9 @@ build()
 	for i in ${3}; do
 		cp src/${i} ${OUT}/${i}${4} || return 2
 	done
+	[ "${INSTALL}" = "true" ] && {
+		make install || return 2	
+	}
 	return 0
 }
 
@@ -23,15 +26,5 @@ build "--enable-precheck ${1}" "${3}" "glutil-precheck" || exit 2
 build "${1} ${2}" "${3}" "glutil" || exit 2
 build "--enable-gfind ${1}" "${3}" "gfind" || exit 2
 build "--enable-chroot-ownbin ${1} ${2}" "${3}" "glutil-chroot" || exit 2
-
-GLROOT=`${OUT}/glutil -noop --preexec "echo -n {glroot}"`
-
-[ "${INSTALL}" = "true" ] && {
-	for k in "${OUT}"/*; do
-		t=`basename "${k}"`
-		echo INSTALLING: "${k}" "->" "${GLROOT}/bin/${t}"
-		cp -p "${k}" "${GLROOT}/bin/${t}"
-	done
-}
 
 exit 0
