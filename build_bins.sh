@@ -1,24 +1,37 @@
-#!/bin/bash
+#!/bin/sh
 OUT="bin"
+INSTALL=true
+
+####################################################
+
+[ -n "${4}" ] && INSTALL="${4}"
 
 build() 
 {
 	make clean || return 2
 	./configure ${1} || return 2
-	make LDFLAGS="${LDFLAGS} ${2}" || return 2
+	make -j2 LDFLAGS="${LDFLAGS} ${2}" || return 2
 	for i in ${3}; do
 		cp src/${i} ${OUT}/${i}${4} || return 2
 	done
+	return 0
 }
 
-rm -f ${OUT}/*
+rm -f "${OUT}"/*
 
-build --enable-precheck -static "glutil glutil-precheck" || exit 2
-build --enable-gfind -static "gfind" || exit 2
-build --enable-chroot-ownbin -static "glutil-chroot" || exit 2
+build "--enable-precheck ${1}" "${3}" "glutil-precheck" || exit 2
+build "${1} ${2}" "${3}" "glutil" || exit 2
+build "--enable-gfind ${1}" "${3}" "gfind" || exit 2
+build "--enable-chroot-ownbin ${1} ${2}" "${3}" "glutil-chroot" || exit 2
 
-build --enable-precheck "" "glutil glutil-precheck" "-dynamic" || exit 2
-build --enable-gfind "" "gfind" "-dynamic" || exit 2
-build --enable-chroot-ownbin "" "glutil-chroot" "-dynamic" || exit 2
+GLROOT=`${OUT}/glutil -noop --preexec "echo -n {glroot}"`
+
+[ "${INSTALL}" = "true" ] && {
+	for k in "${OUT}"/*; do
+		t=`basename "${k}"`
+		echo INSTALLING: "${k}" "->" "${GLROOT}/bin/${t}"
+		cp -p "${k}" "${GLROOT}/bin/${t}"
+	done
+}
 
 exit 0
