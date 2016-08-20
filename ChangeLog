@@ -14,6 +14,17 @@
  *   2.6.1:
  *   - + SHA256, MD4, RIPEMD160 hash functions (extended directives)
  *   - + --enable-crypto option (autotools configure)
+ *   2.6.2:
+ *   - + Math: Cast string to integer, get integer field byte at offset  
+ *   - + -print0 option
+ *   - + iMDB log country,language and screens fields
+ *   - ~ Crash when casting results of certain directives
+ *   - ~ Filesystem traversal: int/float casted string not referencing data
+ *   - + LOM: ~ (set) operator
+ *   - % Removed options which were not POSIX-compilant
+ *   - ~ Several bugfixes and improvements
+ *   2.6.3:
+ *   - ~ Precheck compatibility with current versions
  *
  * v2.5:
  *
