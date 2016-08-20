@@ -84,4 +84,17 @@ l_mppd_gvlen (char *input);
   return ptr; \
 };
 
+#define MSG_UGMISSING          ""
+
+
+#define dt_rval_guid(stor, id, out) \
+{ \
+  p_gu_n pgn = search_xuid_id(stor, (uint32_t)(id)); \
+  if (pgn != NULL) \
+    { \
+      return pgn->name; \
+    } \
+  strncpy(out, MSG_UGMISSING, sizeof(MSG_UGMISSING)); \
+};
+
 #endif /* LREF_H_ */

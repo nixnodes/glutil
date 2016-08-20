@@ -2015,6 +2015,42 @@ rt_af_strops (void *arg, char *match, char *output, size_t max_size,
 
 }
 
+#define DT_RVAL_ID_EXT()  \
+  __d_drt_h _mppd = (__d_drt_h ) mppd; \
+  char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0), \
+				_mppd->mppd_next); \
+  if (NULL == p_b0) \
+    { \
+      output[0] = 0x0; \
+      return output; \
+    } \
+  uint32_t id = (uint32_t) strtoul (p_b0, NULL, 10); \
+  if (errno == ERANGE || errno == EINVAL) \
+    { \
+      output[0] = 0x0; \
+      return output; \
+    } \
+
+
+static char *
+dt_rval_uid_to_user (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
+{
+  DT_RVAL_ID_EXT()
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, id, output)
+
+  return output;
+}
+
+static char *
+dt_rval_gid_to_group (void *arg, char *match, char *output, size_t max_size,
+		      void *mppd)
+{
+  DT_RVAL_ID_EXT()
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor, id, output)
+  return output;
+}
+
 #define DT_RVAL_GENPREPROC()  \
   { \
     mppd->mppd_next = l_mppd_create_copy(mppd); \
@@ -2029,6 +2065,31 @@ rt_af_strops (void *arg, char *match, char *output, size_t max_size,
 #define DT_RVAL_MSGNOCRYPT(id) { \
     print_str ("ERROR: DT_RVAL_MSGNOCRYPT: could not process option: %s (compile with --enable-crypto)\n", \
 	id); \
+}
+
+static void*
+rt_af_guid_res (void *arg, char *match, char *output, size_t max_size,
+		__d_drt_h mppd)
+{
+  DT_RVAL_GENPREPROC()
+  return (void*) 1;
+}
+
+#define DT_PRELOAD_GUID_DATA(stor, path, func) { \
+    int r; \
+    if ((r = r_preload_guid_data (&((__d_drt_h) mppd)->hdl->stor, path))) \
+      { \
+	if ( r == 1 ) \
+	  { \
+	    print_str (MSG_GEN_NOFACC, GLROOT, path ); \
+	  } \
+	return NULL; \
+      } \
+    if ( rt_af_guid_res(arg, match, output, max_size, mppd) == NULL) { \
+      return NULL; \
+    } \
+    return as_ref_to_val_lk (match, func, \
+      				   (__d_drt_h ) mppd, "%s"); \
 }
 
 void *
@@ -2059,10 +2120,12 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
 	{
+	case 0x75:
+	  DT_PRELOAD_GUID_DATA(uuid_stor, DEFPATH_PASSWD, dt_rval_uid_to_user)
+	case 0x67:
+	  DT_PRELOAD_GUID_DATA(guid_stor, DEFPATH_GROUP, dt_rval_gid_to_group)
 	case 0x43:
-	  ;
 	  return rt_af_spec_offbyte (arg, match, output, max_size, mppd);
-	  break;
 	case 0x58:
 	  return rt_af_xstat (arg, match, output, max_size, mppd);
 	case 0x50:

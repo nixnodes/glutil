@@ -317,14 +317,5 @@ opt_xref_sl_dat (void *arg, int m, void *opt);
 int
 opt_xref_depth (void *arg, int m, void *opt);
 
-#define dt_rval_x_guid(stor, id) \
-{ \
-  p_gu_n pgn = search_xuid_id(stor, (uint32_t)(id)); \
-  if (pgn != NULL) \
-    { \
-      return pgn->name; \
-    } \
-  strncpy(output, MSG_X_UMISSING, sizeof(MSG_X_UMISSING)); \
-};
 
 #endif /* XREF_H_ */

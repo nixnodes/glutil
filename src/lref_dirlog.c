@@ -143,8 +143,8 @@ static char *
 dt_rval_dirlog_username (void *arg, char *match, char *output, size_t max_size,
 			 void *mppd)
 {
-  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->uuid_stor,
-		 ((struct dirlog* ) arg)->uploader)
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor,
+		 ((struct dirlog* ) arg)->uploader, output)
   return output;
 }
 
@@ -152,8 +152,8 @@ static char *
 dt_rval_dirlog_groupname (void *arg, char *match, char *output, size_t max_size,
 			  void *mppd)
 {
-  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->guid_stor,
-		 ((struct dirlog* ) arg)->group)
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor,
+		 ((struct dirlog* ) arg)->group, output)
   return output;
 }
 

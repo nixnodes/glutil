@@ -735,7 +735,7 @@ dt_rval_x_user (void *arg, char *match, char *output, size_t max_size,
 		void *mppd)
 {
 
-  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, ((__d_xref) arg)->st.st_uid)
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, ((__d_xref) arg)->st.st_uid, output)
   return output;
 }
 
@@ -743,7 +743,7 @@ char *
 dt_rval_x_group (void *arg, char *match, char *output, size_t max_size,
 		 void *mppd)
 {
-  dt_rval_x_guid(&((__d_drt_h) mppd)->hdl->guid_stor, ((__d_xref) arg)->st.st_gid)
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor, ((__d_xref) arg)->st.st_gid, output)
   return output;
 }
 
