@@ -2031,12 +2031,11 @@ rt_af_strops (void *arg, char *match, char *output, size_t max_size,
       return output; \
     } \
 
-
 static char *
 dt_rval_uid_to_user (void *arg, char *match, char *output, size_t max_size,
 		     void *mppd)
 {
-  DT_RVAL_ID_EXT()
+  DT_RVAL_ID_EXT();
   dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, id, output)
 
   return output;
@@ -2046,7 +2045,7 @@ static char *
 dt_rval_gid_to_group (void *arg, char *match, char *output, size_t max_size,
 		      void *mppd)
 {
-  DT_RVAL_ID_EXT()
+  DT_RVAL_ID_EXT();
   dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor, id, output)
   return output;
 }

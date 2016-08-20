@@ -96,13 +96,9 @@ if [ test "$glutil_chroot" = "no" ] && [ test "$glutil_chroot_ownbin" = "no" ]; 
 else 
 	AC_DEFINE_UNQUOTED([CONF_PREFIX], [""], [//])
 	AC_DEFINE([_GLCONF_NOROOTPATH], [], [//])
-	AS_IF([test "$glutil_chroot_ownbin" = "yes"],
+	AS_IF([test "$glutil_chroot_ownbin" = "yes"], 
 		[AC_MSG_NOTICE(compiling for chrooted environment (glutil-chroot)..)],
 		[AC_MSG_NOTICE(compiling for chrooted environment..)]) 
-fi
-
-if shrev=`git rev-parse --short=8 HEAD`; then 
-	AC_DEFINE_UNQUOTED([GIT_SHORTREV], ["$shrev"])
 fi
 
 AM_CONDITIONAL(ENABLE_CHROOT_OWNBIN, test "$glutil_chroot_ownbin" = "yes")

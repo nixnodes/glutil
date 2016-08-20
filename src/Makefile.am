@@ -48,3 +48,5 @@ glutil_chroot_LDADD=$(GLUTIL_DEFAULTLN)
 glutil_precheck_LDADD=$(GLUTIL_DEFAULTLN)
 glutil_precheck_nonchroot_LDADD=$(GLUTIL_DEFAULTLN)
 gfind_LDADD=$(GLUTIL_DEFAULTLN)
+
+AM_CPPFLAGS=-DGIT_SHORTREV=\"`git rev-parse --short=8 HEAD`\"
