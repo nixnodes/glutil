@@ -2967,6 +2967,7 @@ _gg_opt gg_f_ref[] =
 	{ .id = 0x0056, .on = "--gamelog", .ac = 1, .op = opt_gamelog },
 	{ .id = 0x0057, .on = "--tvlog", .ac = 1, .op = opt_tvlog },
 	{ .id = 0x0058, .on = "--imdblog", .ac = 1, .op = opt_imdblog },
+	{ .id = 0x00F3, .on = "--imdblog_o", .ac = 1, .op = opt_imdblog_o },
 	{ .id = 0x0059, .on = "--oneliners", .ac = 1, .op = opt_oneliner },
 	{ .id = 0x005B, .on = "--lastonlog", .ac = 1, .op = opt_lastonlog },
 	{ .id = 0x005D, .on = "--dupefile", .ac = 1, .op = opt_dupefile },
