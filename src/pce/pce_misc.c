@@ -35,8 +35,8 @@ w_log_p (char *w)
   if ((wc = fwrite (w, 1, wll, fd_log_pce)) != wll)
     {
       char e_buffer[1024];
-      printf ("ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE, (int) wc,
-	      (int) wll, g_strerr_r (errno, e_buffer, 1024));
+      fprintf (stderr, "ERROR: %s: writing log failed [%d/%d] %s\n", LOGFILE,
+	       (int) wc, (int) wll, g_strerr_r (errno, e_buffer, 1024));
       return;
     }
 
@@ -65,8 +65,8 @@ pce_log (const char * volatile buf, ...)
 
       snprintf (d_buffer_2, PCE_PSTR_MAX,
 		"[%.2u/%.2u/%.2u %.2u:%.2u:%.2u] [%d] %s", tm->tm_mday,
-		tm->tm_mon + 1, (tm->tm_year + 1900) % 100, tm->tm_hour, tm->tm_min,
-		tm->tm_sec, getpid (), buf);
+		tm->tm_mon + 1, (tm->tm_year + 1900) % 100, tm->tm_hour,
+		tm->tm_min, tm->tm_sec, getpid (), buf);
 
       char wl_buffer[PCE_PSTR_MAX];
       vsnprintf (wl_buffer, PCE_PSTR_MAX, d_buffer_2, al);
