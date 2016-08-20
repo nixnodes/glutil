@@ -5214,6 +5214,13 @@ $as_echo "$as_me: compiling for chrooted environment.." >&6;}
 fi
 fi
 
+if shrev=`git rev-parse --short=8 HEAD`; then
+	cat >>confdefs.h <<_ACEOF
+#define GIT_SHORTREV "$shrev"
+_ACEOF
+
+fi
+
  if test "$glutil_chroot_ownbin" = "yes"; then
   ENABLE_CHROOT_OWNBIN_TRUE=
   ENABLE_CHROOT_OWNBIN_FALSE='#'
