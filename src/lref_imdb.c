@@ -428,7 +428,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_IMDB_VOTES, 5))
     {
-      uint32_t v_ui = (uint32_t) strtol (val, NULL, 10);
+      uint32_t v_ui = (uint32_t) strtoul (val, NULL, 10);
       if ( errno == ERANGE)
 	{
 	  return 0;
