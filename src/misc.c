@@ -566,8 +566,6 @@ g_bitstr (uint64_t value, uint8_t bits, char *buffer)
 int
 print_version_long (void *arg, int m, void *opt)
 {
-  print_str ("* %s-%s.%s - glFTPd general purpose utility *\n", PACKAGE_NAME,
-  PACKAGE_VERSION,
-	     __STR_ARCH);
+  print_str ("* %s-" BASE_VERSION " - glFTPd general purpose utility *\n", PACKAGE_NAME);
   return 0;
 }

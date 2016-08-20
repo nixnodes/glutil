@@ -923,7 +923,7 @@ g_opt_setgid (void *arg, int m, void *opt)
 int
 print_version (void *arg, int m, void *opt)
 {
-  print_str ("%s-%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION, __STR_ARCH);
+  print_str ("%s-" BASE_VERSION "\n", PACKAGE_NAME);
   updmode = UPD_MODE_NOOP;
   return 0;
 }

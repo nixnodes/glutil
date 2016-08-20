@@ -49,6 +49,12 @@ typedef unsigned long long int ulint64_t;
 #define __AA_SPFH       "%.8X"
 #endif
 
+#ifdef GIT_SHORTREV
+#define BASE_VERSION 			PACKAGE_VERSION "." GIT_SHORTREV "." __STR_ARCH
+#else
+#define BASE_VERSION 			PACKAGE_VERSION "." __STR_ARCH
+#endif
+
 #define MSG_NL                          "\n"
 #define MSG_CR                          "\r"
 #define MSG_TAB                         "\t"
