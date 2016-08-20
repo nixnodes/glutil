@@ -1,4 +1,4 @@
-#@REVISION:01
+#@REVISION:02
 #
 ## Minimum allowed transfer rate (bytes per second)
 MINRATE=512000

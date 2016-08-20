@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:00
-#@REVISION:10
+#@REVISION:11
 #@MACRO:imdb-sort|Build sorted links based on iMDB data:{exe} --silent -q imdb --sort asc,time --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
 #
 ##

@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT THESE LINES
 #@VERSION:01
-#@REVISION:12
+#@REVISION:13
 #@MACRO:gamescore|Game info lookup based on folder names (filesystem) [-arg1=<path>]:{exe} -x {arg1} -lom "depth>0" --silent -v --loglevel=5 --preexec "{exe} -v --backup game" --dir -execv `{spec1} \{basepath\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} \{path\}`
 #@MACRO:gamescore-d|Game info lookup based on folder names (dirlog) [-arg1=<regex>]:{exe} -d --silent -v --loglevel=5 --preexec "{exe} -v --backup game" -execv "{spec1} \{basedir\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} \{dir\}" -regexi "{arg1}" 
 #@MACRO:gamescore-e|Game info lookup:{exe} -noop  --gamelog={?q:game@file} --silent --loglevel=1 --preexec `{exe} --gamelog={?q:game@file} --backup game; {spec1} \{basedir\} \{exe\} \{gamefile\} \{glroot\} \{siterootn\} "{arg1}" 1`

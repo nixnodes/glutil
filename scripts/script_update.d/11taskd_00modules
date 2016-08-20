@@ -1,4 +1,4 @@
-#@REVISION:04
+#@REVISION:05
 
 INPUT_SOURCES=(
 	"taskd/mod scripts/taskd/modules 744 8" 	

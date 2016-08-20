@@ -1,4 +1,4 @@
-#@REVISION:01
+#@REVISION:02
 
 INPUT_SOURCES=(	 	
 	"misc/mk-test scripts/mk_test.sh 755 0" 

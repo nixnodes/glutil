@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:01
-#@REVISION:03
+#@REVISION:04
 #
 
 [ -z "${1}" ] && P_CONFIG="precheck-config" || P_CONFIG="${1}"
