@@ -309,7 +309,14 @@ Updated: 10/03/2016
 			<option> can be one of:
 				ascii			- Is an ASCII string?
 				alphanumeric	- Is an alphanumeric ASCII string?
-				numeric			- Is a numeric ASCII string? 		
+				numeric			- Is a numeric ASCII string?
+				
+	?u   <uid>
+			Translates <uid> to user name using <glroot>/etc/passwd
+							
+	?g   <gid>
+			Translates <gid> to group name using <glroot>/etc/group
+		
 				
 	Hash functions:
 		
