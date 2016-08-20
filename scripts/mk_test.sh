@@ -83,10 +83,15 @@ tvrage_lom_fields=("time showid started ended startyear endyear seasons")
 tvrage_lom_values=(1384575576 17 378687600 417222000 1982 1983 1)
 tvrage_values=(- 1384575576 Seven Scripted 17 http://www.tvrage.com/shows/id-17 Canceled/Ended Wednesday 20:00 60 378687600 417222000 Drama,Music US 1 1982 1983 CBS)
 
-imdb_fields=("dir title time imdbid score votes genre year released runtime rated actors director plot")
-imdb_lom_fields=("time score votes year released runtime")
-imdb_lom_values=(1385027223 6.6 47 2008 1 14)
-imdb_values=(- One 1385027223 tt1302196 6.6 47 Short,Comedy 2008 1 14 blabla Joe Hattie WePlot)
+oldimdb_fields=("dir title time imdbid score votes genre year released runtime rated actors director plot")
+oldimdb_lom_fields=("time score votes year released runtime")
+oldimdb_lom_values=(1385027223 6.6 47 2008 1 14)
+oldimdb_values=(- One 1385027223 tt1302196 6.6 47 Short,Comedy 2008 1 14 blabla Joe Hattie WePlot)
+
+imdb_fields=("dir title time imdbid score votes genre year released runtime rated actors director plot country language screens type")
+imdb_lom_fields=("time score votes year released runtime screens")
+imdb_lom_values=(1385027223 6.6 47 2008 1 14 10100)
+imdb_values=(- One 1385027223 tt1302196 6.6 47 Short,Comedy 2008 1 14 blabla Joe Hattie WePlot Spain Spanish 10100 movie)
 
 gconf_fields=("r_path_clean r_path_postproc r_year_extract r_exclude_user paths use_shared_mem execute_on_lookup_fail path_exec_on_lookup_fail_imdb path_exec_on_lookup_fail_tvrage path_exec_on_match r_skip_basedir r_exclude_user_flags lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase log_string imdb_skip_zero_votes")
 gconf_lom_fields=("use_shared_mem execute_on_lookup_fail lookup_match_strictness_imdb lookup_match_strictness_tvrage logging imdb_skip_zero_score r_path_clean_icase imdb_skip_zero_votes")
@@ -153,6 +158,8 @@ launch_test() {
 	r=0
 	if [ "${lt_log}" = "tvrage" ]; then
 		lt_ft="tvlog"
+	elif [ "${lt_log}" = "oldimdb" ]; then
+		lt_ft="imdblog_o"
 	elif [ "${lt_log}" = "imdb" ]; then
 		lt_ft="imdblog"
 	elif [ "${lt_log}" = "game" ]; then
@@ -167,11 +174,12 @@ launch_test() {
 		lt_ft="ge4log"
 	elif [ "${lt_log}" = "gconf" ]; then
 		lt_ft="gconf"
-
 	else
 		lt_ft=${lt_log}
 	fi
+
 	echo -n "$1: creating test log.. "
+
 	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} --silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv &&
 	create_packet "${lt_log}_fields" "${lt_log}_values" | ${GLUTIL} --silent --nostats --nobackup -z ${lt_log} --${lt_ft} ${g_td} -vvvv && {
 		echo -e "       \tOK"
@@ -186,7 +194,7 @@ launch_test() {
 		echo -e "   \tOK"
 	} || {
 		echo -e "   \tFAILED"
-		${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} --batch
+		${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} -E
 		echo ${lt_ms}
 		r=1
 	}
@@ -206,6 +214,7 @@ launch_test() {
 		echo -e "\t\tOK"
 	} || {
 		echo -e "\t\tFAILED"
+		${GLUTIL} -q ${lt_log} --nofq --${lt_ft} ${g_td} -E
 		echo ${lt_ms}
 		r=3
 	}	
@@ -249,7 +258,7 @@ launch_test() {
 		echo $lt_rv
 		return 1
 	}	
-	
+		
 	return ${r}
 }
 
@@ -270,6 +279,7 @@ trap "rm -f ${g_td}; rm -fR ${fs_td}; exit 2" 2 15 9 6 3 15
 launch_test dirlog || t_quit ${?}
 launch_test nukelog || t_quit ${?}
 launch_test tvrage || t_quit ${?}
+launch_test oldimdb || t_quit ${?}
 launch_test imdb || t_quit ${?}
 launch_test dupefile || t_quit ${?}
 launch_test lastonlog || t_quit ${?}

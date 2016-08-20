@@ -188,6 +188,7 @@ FLAGS:
    btxfer     I     Bytes transferred in the last loop (speed limiting)
    rate       I     Transfer rate in B/s, calculated from bxfer and lupdtime
    
+
 ; glutil specific: 
  
 ; IMDB
@@ -212,6 +213,8 @@ FLAGS:
    country    S     Country
    language   S     Language
    plot       S     Plot/synopsis
+   screens    I     Number of screenings
+   type       S     Media type (movie/tv/..)
 
 
 ; TVRAGE
