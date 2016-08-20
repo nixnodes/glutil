@@ -16,8 +16,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
-#@VERSION:1
-#@REVISION:7
+#@VERSION:01
+#@REVISION:07
 #@MACRO:mk-test:{exe} -noop --preexec `{spec1}`
 #
 ## Simple debugger script

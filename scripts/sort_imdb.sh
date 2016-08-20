@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:0
+#@VERSION:00
 #@REVISION:10
 #@MACRO:imdb-sort|Build sorted links based on iMDB data:{exe} --silent -q imdb --sort asc,time --imdblog "{?q:imdb@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{year\} \{actors\} \{director\} \{rated\} \{score\}`
 #

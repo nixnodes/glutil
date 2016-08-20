@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:1
+#@VERSION:01
 #@REVISION:17
 #@MACRO:killslow|Kills any matched transfer that is under $MINRATE bytes/s for a minimum duration of $MAXSLOWTIME (see inside script file):{exe} -w --loop=1 --silent --daemon --loglevel=3 --glroot={glroot} -execv "{spec1} \{bxfer\} \{lupdtime\} \{user\} \{pid\} \{rate\} \{status\} \{exe\} \{?x:(?Q:(\\{glroot\\}/ftp-data/users/\\{user\\})):FLAGS\} \{dir\} \{usroot\} \{logroot\} \{time\} \{host\} \{ndir\} \{glroot\}"
 #

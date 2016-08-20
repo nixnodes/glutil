@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:0
+#@VERSION:00
 #@REVISION:12
 #@MACRO:tvrage-sort|Build sorted links based on TVRage data:{exe} --silent -q tvrage --sort asc,time --tvlog "{?q:tvrage@file}" -execv `{spec1} \{dir\} none \{?p:\} \{siterootb\} "{arg1} " \{genre\} \{startyear\} \{country\} \{airtime\} \{airday\} \{seasons\} \{class\} \{runtime\} \{network\} \{status\} \{(?L:endyear>=startyear:(?m:(endyear-startyear)):(?p:0))\}`
 #

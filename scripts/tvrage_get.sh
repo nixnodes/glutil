@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:3
+#@VERSION:03
 #@REVISION:48
 #@MACRO:tvrage|TVRage lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0" --silent --dir --sort asc,mtime --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basepath\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{path\} 0 0 '' 3` {arg2}
 #@MACRO:tvrage-d|TVRage lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --tvlog={q:tvrage@file} --backup tvrage" -execv `{spec1} \{basedir\} \{exe\} \{tvragefile\} \{glroot\} \{siterootn\} \{dir\} 0 0 '' {arg3}` -l: dir -regexi "{arg1}" {arg2} 

@@ -16,8 +16,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:1
-#@REVISION:3
+#@VERSION:01
+#@REVISION:03
 #@MACRO:incomplete:{exe} -d -execv "{spec1} \{dir\} \{exe\} \{glroot\} {arg1}" --silent
 #@MACRO:incomplete-c:{exe} -d -execv "{spec1} \{dir\} \{exe\} \{glroot\} {arg2}" -regex "{arg1}" --silent
 #

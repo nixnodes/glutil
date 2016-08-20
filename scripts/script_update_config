@@ -1,4 +1,4 @@
-#@REVISION:1
+#@REVISION:01
 
 CURL_FLAGS="--silent --max-time 30"
 CURL=/usr/bin/curl

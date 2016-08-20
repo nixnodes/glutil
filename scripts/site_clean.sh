@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:0
+#@VERSION:00
 #@REVISION:12
 #@MACRO:site-clean|Usage\: -m site-clean [-arg1=<config file>]:{exe} -noop --postexec "{spec1} {arg1}"
 #

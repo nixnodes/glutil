@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:0
+#@VERSION:00
 #@REVISION:30
 #@MACRO:script-update-self|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{?d:(spec1)}";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
 #@MACRO:script-update|Install/update native scripts <-arg 1 <install|update>> [ -arg 2 <regex filter> ]:{exe} -noop --preexec `{spec1} {glroot} "{arg1}" "{arg2}"`

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-#@VERSION:0
-#@REVISION:3
+#@VERSION:00
+#@REVISION:03
 #
 GLUTIL=/bin/glutil-chroot
 SQLITE=/bin/sqlite3

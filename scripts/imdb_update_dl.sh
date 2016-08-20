@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # DO NOT EDIT/REMOVE THESE LINES
-#@VERSION:0
+#@VERSION:00
 #@REVISION:08
 #
 GLUTIL=/bin/glutil-chroot
