@@ -17,7 +17,7 @@
 #
 # DO NOT EDIT/REMOVE THESE LINES
 #@VERSION:03
-#@REVISION:18
+#@REVISION:19
 #@MACRO:imdb|iMDB lookups based on folder names (filesystem) [-arg1=<path>] [-arg2=<path regex>]:{exe} -x {arg1} -lom "depth>0 && mode=4" --silent --sort asc,mtime --dir --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" --execv `{spec1} \{basepath\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{path\} 0 '' '' 3` {arg2}
 #@MACRO:imdb-d|iMDB lookups based on folder names (dirlog) [-arg1=<regex filter>]:{exe} -d --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{basedir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 0 '' '' {arg3}" -l: dir -regexi "{arg1}" 
 #@MACRO:imdb-su|Update existing imdblog records, pass query/dir name through the search engine:{exe} -a --imdblog={?q:imdb@file} --silent --loglevel=1 --preexec "{exe} --imdblog={?q:imdb@file} --backup imdb" -execv "{spec1} \{dir\} \{exe\} \{imdbfile\} \{glroot\} \{siterootn\} \{dir\} 1 \{year\}" 
@@ -117,11 +117,11 @@ IMDB_TITLE_WIPE_CHARS="\'\´\:\"\’"
 #
 ############################[ END OPTIONS ]##############################
 
-CURL="/usr/bin/curl"
+CURL="curl"
 CURL_FLAGS="--silent"
 
 # libxml2 version 2.7.7 or above required
-XMLLINT="/usr/bin/xmllint"
+XMLLINT="xmllint"
 
 # recode binary (optional), gets rid of HTML entities
 RECODE="perl"
@@ -209,8 +209,7 @@ cad() {
         else
                 if [ -n "$RTIME" ]; then
                         [ $VERBOSE -gt 0 ] && print_str "WARNING: $QUERY: [${2} ${3} (${5})]: already exists in database (`expr ${DIFF1} / 60` min old)"
-                        II_ID=`$1 --imdblog "$4$LAPPEND" -a ${2} "${3}" --imatchq -printf "{imdbid}" --silent --nobuffer --rev`
-                        [ ${op_id} -eq 1 ] && echo "${II_ID}"
+                        [ ${op_id} -eq 1 ] && echo "${3}"
                         exit 0
                 fi
         fi
@@ -220,8 +219,6 @@ get_field()
 {
         echo "$DDT" | $XMLLINT --xpath "string((/root/movie)[1]/@${1})" - 2> /dev/null
 }
-
-
 
 if ! [ $7 -eq 2 ]; then
         echo "$TD" | egrep -q -i "$INPUT_SKIP" && exit 1
@@ -298,7 +295,7 @@ if ! [ $7 -eq 2 ]; then
                 SMODE=1
                 S_LOOSE=1
         }
-
+       
         [ -z "$iid" ] && print_str "ERROR: $QUERY ($YEAR_q): $TD: cannot find record [$IMDB_URL?r=xml&s=$QUERY]" && exit 1
 
         if [ ${IMDB_DATABASE_TYPE} -eq 1 ] && [ $UPDATE_IMDBLOG -eq 1 ] && [ $DENY_IMDBID_DUPE -eq 1 ]; then
