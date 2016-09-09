@@ -261,14 +261,9 @@ g_determine_output (__g_handle hdl, uint64_t *gfl0, uint64_t f, __d_is_wb *w_d)
     }
 }
 
-
 static int
 g_populate_htref (__g_handle hdl)
 {
-  if (hdl->ht_ref == NULL || hdl->ht_field == NULL)
-    {
-      return 0;
-    }
   p_md_obj ptr = md_first (&hdl->buffer);
 
   while (ptr)
@@ -308,13 +303,9 @@ g_populate_htref (__g_handle hdl)
       if ( NULL == shell)
 	{
 	  shell = calloc (1, sizeof(mda));
-	  md_init (shell, 32);
+	  md_init (shell, 4);
 	  shell->flags |= F_MDA_REFPTR;
 	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell, sizeof(pmda));
-	}
-      else
-	{
-
 	}
 
       shell->lref_ptr = ptr->ptr;
@@ -585,17 +576,18 @@ g_proc_mr (__g_handle hdl)
     {
       if (0 == hdl->buffer.offset)
 	{
-	  print_str ("ERROR: %s: could not determine hashtable size\n", hdl->file);
+	  print_str ("ERROR: %s: could not determine hashtable size\n",
+		     hdl->file);
 	  return 2089;
 	}
 
-      hdl->ht_ref = ht_create ((size_t) 100);
+      hdl->ht_ref = ht_create ((size_t) hdl->buffer.offset / 4);
       hdl->ht_field = ht_field;
 
-      if (g_populate_htref (&g_act_1))
-        {
+      if (g_populate_htref (hdl))
+	{
 	  return 2088;
-        }
+	}
 
     }
 
