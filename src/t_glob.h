@@ -113,6 +113,7 @@ typedef unsigned long long int ulint64_t;
 
 // gfl
 
+#define F_OPT_MAKEHT                 1
 #define F_OPT_FORCE                     (a64 << 1)
 #define F_OPT_VERBOSE                   (a64 << 2)
 #define F_OPT_VERBOSE2                  (a64 << 3)

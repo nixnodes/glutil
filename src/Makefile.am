@@ -28,7 +28,7 @@ GLUTIL_DEFAULTSRC=signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c ma
 endif
 endif
 
-GLUTIL_PRECHECK_SRC=pce/pce_signal.c g_help.c memory.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+GLUTIL_PRECHECK_SRC=pce/pce_signal.c g_help.c memory.c hasht.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 
 glutil_SOURCES=$(GLUTIL_DEFAULTSRC)
 glutil_chroot_SOURCES=$(GLUTIL_DEFAULTSRC)

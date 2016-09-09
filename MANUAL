@@ -340,8 +340,16 @@ Updated: 10/03/2016
 	?D    <directive>
 			Base64 decode result from <directive>.
 			
-	
+	?h    <directive>:<option>
+			Query the hashtable using <directive> as the key.
 			
+			<option> can be one of:
+				c	- Returns entry count
+				u	- Gets the value of <directive>
+				p	- Returns 1 if value has been accessed with 'u' option, 0 otherwise 
+
+
+
 	Mind that '{' and '}' need to be escaped with '\' whenever used inside the scope
 	of a directive.
 	

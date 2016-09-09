@@ -14,6 +14,8 @@
 
 #include "thread.h"
 
+#include "t_glob.h"
+
 int
 md_init (pmda md, int nm)
 {
@@ -314,12 +316,10 @@ md_alloc (pmda md, int b)
 	  return NULL;
 	}
 
-      /*if (gfl & F_OPT_VERBOSE5)
-       {
        print_str(
-       "WARNING: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
+       "DEBUG: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
        (ulint64_t) md->objects, (ulint64_t) md->count);
-       }*/
+
       md->objects = realloc (md->objects, (md->count * sizeof(md_obj)) * 2);
       md->pos = md->objects;
       md->pos += md->count;
@@ -337,12 +337,11 @@ md_alloc (pmda md, int b)
 	  md_relink (md);
 	}
       flags |= MDA_MDALLOC_RE;
-      /*if (gfl & F_OPT_VERBOSE5)
-       {
+
        print_str(
-       "WARNING: re-allocation done; new address: 0x%.16llX, new size: %llu, re-linked %llu records\n",
-       (ulint64_t) md->objects, (ulint64_t) md->count, (ulint64_t) rlc);
-       }*/
+       "DEBUG: re-allocation done; new address: 0x%.16llX, new size: %llu\n",
+       (ulint64_t) md->objects, (ulint64_t) md->count);
+
     }
 
   p_md_obj prev = md->pos;

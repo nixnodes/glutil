@@ -24,8 +24,9 @@
 #define F_MDA_NO_REALLOC                ((uint32_t)1 << 8)
 #define F_MDA_ORPHANED                  ((uint32_t)1 << 10)
 
-#define F_MDA_ST_MISC00                 ((uint32_t)1 << 30)
-#define F_MDA_ST_MISC01                 ((uint32_t)1 << 31)
+#define F_MDA_ST_MISC00                 ((uint32_t)1 << 15)
+#define F_MDA_ST_MISC01                 ((uint32_t)1 << 16)
+#define F_MDA_ST_MISC02                 ((uint32_t)1 << 11)
 
 #define MDA_MDALLOC_RE                  ((uint32_t)1 << 1)
 

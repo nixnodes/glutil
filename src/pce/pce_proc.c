@@ -918,10 +918,10 @@ pce_match_log (__g_handle hdl, __d_sconf sconf, int m_i_m)
   _d_drt_h dtr =
     { 0 };
 
+  dtr.hdl = hdl;
+
   __g_proc_v h_lk = hdl->g_proc1_lookup (hdl->buffer.pos->ptr, sconf->field,
-					 hdl->mv1_b,
-					 MAX_VAR_LEN,
-					 &dtr);
+					 hdl->mv1_b, sizeof(hdl->mv1_b), &dtr);
 
   if (!h_lk)
     {
@@ -929,8 +929,7 @@ pce_match_log (__g_handle hdl, __d_sconf sconf, int m_i_m)
     }
 
   char *r_v = h_lk (hdl->buffer.pos->ptr, sconf->field, hdl->mv1_b,
-  MAX_VAR_LEN,
-		    &dtr);
+		    sizeof(hdl->mv1_b), &dtr);
 
   if (!r_v)
     {

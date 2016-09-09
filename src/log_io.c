@@ -480,6 +480,13 @@ g_handle_pipe_cleanup (__g_handle hdl)
   return 0;
 }
 
+static void
+g_free_ht (entry_t *ptr)
+{
+  md_free ((pmda) ptr->value);
+  free (ptr->value);
+}
+
 int
 g_cleanup (__g_handle hdl)
 {
@@ -494,6 +501,11 @@ g_cleanup (__g_handle hdl)
   g_clean_print_mech (&hdl->print_mech);
   g_clean_print_mech (&hdl->pre_print_mech);
   g_clean_print_mech (&hdl->post_print_mech);
+
+  if (NULL != hdl->ht_ref)
+    {
+      ht_destroy (hdl->ht_ref, g_free_ht);
+    }
 
   g_handle_pipe_cleanup (hdl);
 
@@ -1443,7 +1455,7 @@ rebuild_data_file (char *file, __g_handle hdl)
 	}
     }
 
-  if (do_sort (&g_act_1, g_sort_field, g_sort_flags))
+  if (do_sort (hdl, g_sort_field, g_sort_flags))
     {
       ret = 11;
       goto end;
@@ -1606,8 +1618,10 @@ rebuild_data_file (char *file, __g_handle hdl)
 	  if ((r = (int) file_copy (hdl->s_buffer, file, "ab",
 	  F_FC_MSET_SRC)) < 1)
 	    {
-	      print_str ("ERROR: %s: [%d] merging temp file failed!\n",
-			 hdl->s_buffer, r);
+	      char b[1024];
+	      char *err_msg = g_strerr_r (errno, b, sizeof(b));
+	      print_str ("ERROR: %s: [%d] merging temp file failed [%s]\n",
+			 hdl->s_buffer, r, err_msg);
 	      ret = 4;
 	    }
 

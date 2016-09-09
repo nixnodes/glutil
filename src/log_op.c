@@ -261,6 +261,74 @@ g_determine_output (__g_handle hdl, uint64_t *gfl0, uint64_t f, __d_is_wb *w_d)
     }
 }
 
+
+static int
+g_populate_htref (__g_handle hdl)
+{
+  if (hdl->ht_ref == NULL || hdl->ht_field == NULL)
+    {
+      return 0;
+    }
+  p_md_obj ptr = md_first (&hdl->buffer);
+
+  while (ptr)
+    {
+      _d_drt_h dtr =
+	{ 0 };
+
+      dtr.hdl = hdl;
+
+      __g_proc_v fp_rval = hdl->g_proc1_lookup (ptr->ptr, hdl->ht_field,
+						hdl->mv1_b, sizeof(hdl->mv1_b),
+						&dtr);
+
+      if (NULL == fp_rval)
+	{
+	  print_str ("ERROR: g_populate_htref: could not resolve: '%s'\n",
+		     hdl->ht_field);
+	  return 1;
+	}
+
+      char *r_v = fp_rval (ptr->ptr, hdl->ht_field, hdl->mv1_b,
+			   sizeof(hdl->mv1_b), &dtr);
+
+      if (NULL == r_v)
+	{
+	  goto fin;
+	}
+
+      size_t l = strlen (r_v);
+      if (0 == l)
+	{
+	  goto fin;
+	}
+
+      pmda shell = (pmda) ht_get (hdl->ht_ref, (unsigned char*) r_v, l);
+
+      if ( NULL == shell)
+	{
+	  shell = calloc (1, sizeof(mda));
+	  md_init (shell, 32);
+	  shell->flags |= F_MDA_REFPTR;
+	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell, sizeof(pmda));
+	}
+      else
+	{
+
+	}
+
+      shell->lref_ptr = ptr->ptr;
+      md_alloc (shell, 0);
+
+      fin: ;
+
+      ptr = ptr->next;
+
+    }
+
+  return 0;
+}
+
 int
 g_proc_mr (__g_handle hdl)
 {
@@ -511,6 +579,24 @@ g_proc_mr (__g_handle hdl)
   if (NULL == hdl->execv_wpid_fp)
     {
       hdl->execv_wpid_fp = l_waitpid_def;
+    }
+
+  if ((gfl0 & F_OPT_MAKEHT) && hdl->ht_ref == NULL)
+    {
+      if (0 == hdl->buffer.offset)
+	{
+	  print_str ("ERROR: %s: could not determine hashtable size\n", hdl->file);
+	  return 2089;
+	}
+
+      hdl->ht_ref = ht_create ((size_t) 100);
+      hdl->ht_field = ht_field;
+
+      if (g_populate_htref (&g_act_1))
+        {
+	  return 2088;
+        }
+
     }
 
   return 0;

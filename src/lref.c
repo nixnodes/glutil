@@ -2015,6 +2015,177 @@ rt_af_strops (void *arg, char *match, char *output, size_t max_size,
 
 }
 
+static char *
+dt_rval_ht_count (void *arg, char *match, char *output, size_t max_size,
+		  void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+				_mppd->mppd_next);
+
+  if (0 == p_b0[0])
+    {
+      goto _ex;
+    }
+
+  pmda shell = ht_get (_mppd->hdl->ht_ref, (unsigned char*) p_b0,
+		       strlen (p_b0));
+
+  if (NULL == shell)
+    {
+      goto _ex;
+    }
+
+  snprintf (output, max_size, "%llu", (unsigned long long int) shell->offset);
+  return output;
+
+  _ex: ;
+  output[0] = 0x0;
+
+  return output;
+}
+
+static char *
+dt_rval_ht_get (void *arg, char *match, char *output, size_t max_size,
+		void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+				_mppd->mppd_next);
+
+  if (NULL == _mppd->hdl->ht_ref || 0 == p_b0[0])
+    {
+      goto _ex;
+    }
+
+  pmda shell = ht_get (_mppd->hdl->ht_ref, (unsigned char*) p_b0,
+		       strlen (p_b0));
+
+  if (NULL == shell || shell->offset == 0)
+    {
+      print_str ("ERROR: dt_rval_ht_get: no cached entry: '%s'\n", p_b0);
+      goto _ex;
+    }
+
+  if (!(shell->flags & F_MDA_ST_MISC02))
+    {
+      shell->flags |= F_MDA_ST_MISC02;
+    }
+  else
+    {
+
+    }
+
+  snprintf (output, max_size, "%s", p_b0);
+  return output;
+
+  _ex: ;
+  output[0] = 0x0;
+
+  return output;
+}
+
+static char *
+dt_rval_ht_accessed (void *arg, char *match, char *output, size_t max_size,
+		     void *mppd)
+{
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+  char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0),
+				_mppd->mppd_next);
+
+  if (0 == p_b0[0])
+    {
+      goto _ex;
+    }
+
+  pmda shell = (pmda) ht_get (_mppd->hdl->ht_ref, (unsigned char*) p_b0,
+			      strlen (p_b0));
+
+  if (NULL == shell || shell->offset == 0)
+    {
+      goto _ex;
+    }
+
+  if (shell->flags & F_MDA_ST_MISC02)
+    {
+      snprintf (output, max_size, "1");
+    }
+  else
+    {
+      snprintf (output, max_size, "0");
+    }
+
+  return output;
+
+  _ex: ;
+  output[0] = 0x0;
+
+  return output;
+}
+
+static void*
+rt_af_htget_go (void *input, char *match, __d_drt_h mppd)
+{
+  if (((char*) input)[0] == 0x63)
+    {
+      return as_ref_to_val_lk (match, dt_rval_ht_count, mppd, "%s");
+    }
+  else if (((char*) input)[0] == 0x75)
+    {
+      return as_ref_to_val_lk (match, dt_rval_ht_get, mppd, "%s");
+    }
+  else if (((char*) input)[0] == 0x70)
+    {
+      return as_ref_to_val_lk (match, dt_rval_ht_accessed, mppd, "%s");
+    }
+  else
+    {
+      return NULL;
+    }
+
+}
+
+static void*
+rt_af_htget (void *arg, char *match, char *output, size_t max_size,
+	     __d_drt_h mppd)
+{
+  mppd->mppd_next = l_mppd_create_copy (mppd);
+
+  mppd->fp_rval1 = mppd->hdl->g_proc1_lookup (arg, match, output, max_size,
+					      mppd->mppd_next);
+
+  if (NULL == mppd->fp_rval1)
+    {
+      print_str ("ERROR: rt_af_htget: could not resolve: '%s'\n", match);
+      return NULL;
+    }
+
+  if (NULL == ((__d_drt_h ) mppd->mppd_next)->varg_l
+      || ((__d_drt_h ) mppd->mppd_next)->varg_l[0] == 0x0)
+    {
+      print_str ("ERROR: rt_af_htget: could not resolve field argument: '%s'\n",
+		 match);
+      return NULL;
+    }
+
+  void *l_next_ref;
+
+  char *ptr = l_mppd_shell_ex (((__d_drt_h ) mppd->mppd_next)->varg_l,
+			       mppd->tp_b0, sizeof(mppd->tp_b0), &l_next_ref,
+			       LMS_EX_L,
+			       LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == ptr || ptr[0] == 0x0)
+    {
+      print_str ("ERROR: rt_af_htget: could not resolve option: %s\n",
+		 ((__d_drt_h ) mppd->mppd_next)->varg_l);
+      return NULL;
+    }
+
+  return rt_af_htget_go (ptr, match, mppd);
+
+}
+
 #define DT_RVAL_ID_EXT()  \
   __d_drt_h _mppd = (__d_drt_h ) mppd; \
   char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0), \
@@ -2035,7 +2206,8 @@ static char *
 dt_rval_uid_to_user (void *arg, char *match, char *output, size_t max_size,
 		     void *mppd)
 {
-  DT_RVAL_ID_EXT();
+  DT_RVAL_ID_EXT()
+  ;
   dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, id, output)
 
   return output;
@@ -2045,7 +2217,8 @@ static char *
 dt_rval_gid_to_group (void *arg, char *match, char *output, size_t max_size,
 		      void *mppd)
 {
-  DT_RVAL_ID_EXT();
+  DT_RVAL_ID_EXT()
+  ;
   dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor, id, output)
   return output;
 }
@@ -2119,6 +2292,8 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
 	{
+	case 0x68: // h
+	  return rt_af_htget (arg, match, output, max_size, mppd);
 	case 0x75:
 	  DT_PRELOAD_GUID_DATA(uuid_stor, DEFPATH_PASSWD, dt_rval_uid_to_user)
 	case 0x67:
@@ -2142,13 +2317,11 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	case 0x71:
 	  return as_ref_to_val_lk (match, ((__d_drt_h ) mppd)->st_ptr0,
 				   (__d_drt_h ) mppd, "%s");
-	  break;
 	case 0x6C:
 	  ;
 	  DT_RVAL_GENPREPROC()
 	  return as_ref_to_val_lk (match, dt_rval_spec_slen, (__d_drt_h ) mppd,
 	  NULL);
-	  break;
 	case 0x74:
 	  ;
 	  return rt_af_time (arg, match, output, max_size, mppd, id);
@@ -2158,19 +2331,15 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	case 0x6D:
 	  ;
 	  return ref_to_val_af_math (arg, match, output, max_size, mppd);
-	  break;
 	case 0x72:
 	  ;
 	  return rt_af_regex (arg, match, output, max_size, mppd, id);
-	  break;
 	case 0x78:
 	  ;
 	  return rt_af_sf (arg, match, output, max_size, mppd);
-	  break;
 	case 0x73: // s
 	  ;
 	  return rt_af_strops (arg, match, output, max_size, mppd);
-	  break;
 #ifdef _G_SSYS_CRYPTO
 	case 0x53:
 	  DT_RVAL_GENPREPROC()
@@ -2185,12 +2354,10 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 		  return as_ref_to_val_lk (match, dt_rval_spec_sha224,
 					   (__d_drt_h ) mppd,
 					   NULL);
-		  break;
 		case 0x35:
 		  return as_ref_to_val_lk (match, dt_rval_spec_sha256,
 					   (__d_drt_h ) mppd,
 					   NULL);
-		  break;
 		}
 	      break;
 	    case 0x33:
@@ -2198,19 +2365,16 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	      return as_ref_to_val_lk (match, dt_rval_spec_sha384,
 				       (__d_drt_h ) mppd,
 				       NULL);
-	      break;
 	    case 0x35:
 	      ;
 	      return as_ref_to_val_lk (match, dt_rval_spec_sha512,
 				       (__d_drt_h ) mppd,
 				       NULL);
-	      break;
 	    default:
 	      ;
 	      return as_ref_to_val_lk (match, dt_rval_spec_sha1,
 				       (__d_drt_h ) mppd,
 				       NULL);
-	      break;
 	    }
 	  break;
 	case 0x4D:
@@ -2222,13 +2386,11 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	      return as_ref_to_val_lk (match, dt_rval_spec_md4,
 				       (__d_drt_h ) mppd,
 				       NULL);
-	      break;
 	    case 0x35:
 	      ;
 	      return as_ref_to_val_lk (match, dt_rval_spec_md5,
 				       (__d_drt_h ) mppd,
 				       NULL);
-	      break;
 	    }
 	  break;
 	case 0x52:
@@ -2236,7 +2398,6 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	  return as_ref_to_val_lk (match, dt_rval_spec_ripemd160,
 				   (__d_drt_h ) mppd,
 				   NULL);
-	  break;
 #else
 	  case 0x53:;
 	  DT_RVAL_MSGNOCRYPT(id)
@@ -2254,14 +2415,12 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
 	  return as_ref_to_val_lk (match, dt_rval_spec_base64_encode,
 				   (__d_drt_h ) mppd,
 				   NULL);
-	  break;
 	case 0x44:
 	  ;
 	  DT_RVAL_GENPREPROC()
 	  return as_ref_to_val_lk (match, dt_rval_spec_base64_decode,
 				   (__d_drt_h ) mppd,
 				   NULL);
-	  break;
 	}
 
     }

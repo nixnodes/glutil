@@ -1,4 +1,4 @@
-#@REVISION:66
+#@REVISION:67
 #
 ## NOTE: Requires glutil 2.6.2 or higher
 #
@@ -231,3 +231,9 @@
 #@MACRO:clean-path|Deletes oldest files, exceeding <limit> GBytes [-arg1=<limit> -arg2=<path>]:{exe} -x "{arg2}" -lom "depth>0" -v --sort desc,mtime -lom "mode=8" -lom "u64glob0+=size" -lom "(u64glob0) > ({arg1}*(1024^3))" -execv "rm -f \{path\}"
 
 #@MACRO:script-update-sh|Update script-update.sh:{exe} -noop --preexec `B="https://raw.githubusercontent.com/nixnodes/glutil/master/scripts/";D="{glroot}/bin/scripts";[ -d "$\{D\}" ] || mkdir "$\{D\}"; if curl --silent "$\{B\}"script_update.sh > "$\{D\}/script_update.sh"; then echo -e "$\{D\}/script_update.sh \t\tv$(cat "$\{D\}/script_update.sh" | egrep "^\#\@VERSION\:" | cut -d ":" -f 2).$(cat "$\{D\}/script_update.sh" | egrep "^\#\@REVISION\:" | cut -d ":" -f 2) \tOK"; chmod 755 "$\{D\}/script_update.sh"; else echo "$\{D\}/script_update.sh \tFAILED"; fi; `
+
+
+#@MACRO:dupe-scan|Searches for duplicate entries by field <-arg1=log> <-arg2=field>:{exe} -q {arg1} --ht {arg2} -lom `([?h:({arg2}):c]) > 1 && ([?h:({arg2}):p]) = 0` -lom `([?h:({arg2}):u]) = 0 || 1` -print `\{(?P:(?h:({arg2}):c)#%-8s)\} \{{arg2}\}` --stats {arg3}
+#@MACRO:dupe-clean|Cleans duplicate entries by field <-arg1=log> <-arg2=field>:{exe} -e {arg1} -vvvv --ht {arg2} -lom `([?h:({arg2}):p]) = 0` -lom `([?h:({arg2}):u]) = 0 || 1`
+
+

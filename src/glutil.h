@@ -115,6 +115,8 @@ uint32_t g_omfp_sto, g_omfp_suto;
 
 uint32_t xref_flags;
 
+char *ht_field;
+
 #ifdef _G_SSYS_THREAD
 
 #include <pthread.h>

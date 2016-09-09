@@ -1677,6 +1677,29 @@ opt_print0 (void *arg, int m, void *opt)
   return 0;
 }
 
+static int
+opt_makeht (void *arg, int m, void *opt)
+{
+
+  char *buffer = g_pg (arg, m);
+
+  if (NULL == buffer)
+    {
+      return 63411;
+    }
+
+  if (!strlen (buffer))
+    {
+      return 63412;
+    }
+
+  gfl0 |= F_OPT_MAKEHT;
+
+  ht_field = buffer;
+
+  return 0;
+}
+
 #define MAX_PRINT_LINE_SIZE     ((1024*1024) / 4)
 
 int
@@ -2944,6 +2967,7 @@ _gg_opt gg_f_ref[] =
 	{ .id = 0x5592, .on = "--stdlvl", .ac = 1, .op = opt_g_stdout_lvl_n },
 	{ .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
 	{ .id = 0x5513, .on = "--depth", .ac = 0, .op = opt_xref_depth },
+	{ .id = 0x5522, .on = "--ht", .ac = 1, .op = opt_makeht },
 #ifndef _MAKE_SBIN
 	{ .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
 	{ .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },

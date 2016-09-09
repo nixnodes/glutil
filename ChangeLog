@@ -25,6 +25,7 @@
  *   - ~ Several bugfixes and improvements
  *   2.6.3:
  *   - ~ Precheck compatibility with current versions
+ *   - + Fast dupechecking (--ht option, ?h directive)
  *
  * v2.5:
  *
