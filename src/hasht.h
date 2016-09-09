@@ -12,16 +12,23 @@
 
 struct entry_s
 {
-  char *key;
+  unsigned char *key;
   void *value;
   struct entry_s *next;
 };
 
 typedef struct entry_s entry_t;
 
+#define F_HT_FREEVAL_ONCE	(uint8_t) 1
+
+typedef void (*_cb_destroy) (entry_t * ptr);
+
+#include <stdint.h>
+
 struct hashtable_s
 {
   size_t size;
+  uint8_t flags;
   struct entry_s **table;
 };
 
@@ -30,7 +37,7 @@ typedef struct hashtable_s hashtable_t;
 hashtable_t *
 ht_create (size_t size);
 int
-ht_destroy (hashtable_t * hashtable);
+ht_destroy (hashtable_t * hashtable, _cb_destroy call);
 int
 ht_hash (hashtable_t *hashtable, unsigned char *key, size_t keyLength);
 entry_t *

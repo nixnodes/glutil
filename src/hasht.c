@@ -5,12 +5,10 @@
  *      Author: reboot
  */
 
-
-#include "hasht.h"
-
 #include <stdlib.h>
 #include <string.h>
 
+#include "hasht.h"
 
 /* Create a new hashtable. */
 hashtable_t *
@@ -23,13 +21,13 @@ ht_create (size_t size)
     return NULL;
 
   /* Allocate the table itself. */
-  if ((hashtable = malloc (sizeof(hashtable_t))) == NULL)
+  if ((hashtable = (hashtable_t *) malloc (sizeof(hashtable_t))) == NULL)
     {
       return NULL;
     }
 
   /* Allocate pointers to the head nodes. */
-  if ((hashtable->table = calloc (sizeof(entry_t *), size)) == NULL)
+  if ((hashtable->table = (entry_t**) calloc (sizeof(entry_t *), size)) == NULL)
     {
       return NULL;
     }
@@ -41,8 +39,40 @@ ht_create (size_t size)
 
 /* Destroy a  hashtable. */
 int
-ht_destroy (hashtable_t * hashtable)
+ht_destroy (hashtable_t * hashtable, _cb_destroy call)
 {
+
+  entry_t *ptr = NULL;
+
+  size_t i;
+  for (i = 0; i < hashtable->size; i++)
+    {
+      ptr = hashtable->table[i];
+
+      if (!ptr)
+	{
+	  continue;
+	}
+
+      while (ptr)
+	{
+	  if (call)
+	    {
+	      call (ptr);
+	    }
+	  if (ptr->key)
+	    {
+	      free (ptr->key);
+	    }
+	  entry_t *t_ptr = ptr;
+	  ptr = ptr->next;
+	  free (t_ptr);
+	}
+
+    }
+
+  free (hashtable->table);
+  free (hashtable);
 
   return 0;
 }
@@ -71,14 +101,14 @@ ht_newpair (unsigned char *key, size_t k_size, void *value, size_t size)
 {
   entry_t *newpair;
 
-  if ((newpair = malloc (sizeof(entry_t))) == NULL)
+  if ((newpair = (entry_t*) malloc (sizeof(entry_t))) == NULL)
     {
-      return NULL;
+      abort ();
     }
 
-  if ((newpair->key = malloc (k_size)) == NULL)
+  if ((newpair->key = (unsigned char*) malloc (k_size)) == NULL)
     {
-      return NULL;
+      abort ();
     }
 
   memcpy (newpair->key, (void*) key, k_size);
@@ -103,8 +133,7 @@ ht_remove (hashtable_t *hashtable, unsigned char *key, size_t k_size)
 
   next = hashtable->table[bin];
 
-  while (next != NULL && next->key != NULL
-      && memcmp (key, next->key, k_size) > 0)
+  while (next != NULL && next->key != NULL && memcmp (key, next->key, k_size))
     {
       last = next;
       next = next->next;
@@ -114,6 +143,11 @@ ht_remove (hashtable_t *hashtable, unsigned char *key, size_t k_size)
     {
 
       free (next->key);
+
+      if (hashtable->flags & F_HT_FREEVAL_ONCE)
+	{
+	  free (next->value);
+	}
 
       /* We're at the start of the linked list in this bin. */
       if (next == hashtable->table[bin])
@@ -136,6 +170,11 @@ ht_remove (hashtable_t *hashtable, unsigned char *key, size_t k_size)
       return 0;
     }
 
+  if (hashtable->flags & F_HT_FREEVAL_ONCE)
+    {
+      hashtable->flags ^= F_HT_FREEVAL_ONCE;
+    }
+
   return 1;
 
 }
@@ -154,8 +193,7 @@ ht_set (hashtable_t *hashtable, unsigned char *key, size_t k_size, void *value,
 
   next = hashtable->table[bin];
 
-  while (next != NULL && next->key != NULL
-      && memcmp (key, next->key, k_size) > 0)
+  while (next != NULL && next->key != NULL && memcmp (key, next->key, k_size))
     {
       last = next;
       next = next->next;
@@ -166,9 +204,9 @@ ht_set (hashtable_t *hashtable, unsigned char *key, size_t k_size, void *value,
     {
       next->value = value;
 
-      /* Nope, could't find it.  Time to grow a pair. */
     }
   else
+  /* Nope, could't find it.  Time to grow a pair. */
     {
       newpair = ht_newpair (key, k_size, value, size);
 
