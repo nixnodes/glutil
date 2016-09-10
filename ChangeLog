@@ -21,11 +21,13 @@
  *   - ~ Crash when casting results of certain directives
  *   - ~ Filesystem traversal: int/float casted string not referencing data
  *   - + LOM: ~ (set) operator
- *   - % Removed options which were not POSIX-compilant
+ *   - % Renamed options which were not POSIX-compilant
+ *   - ~ Fixed nuked directory string leaking into dirlog
  *   - ~ Several bugfixes and improvements
  *   2.6.3:
- *   - ~ Precheck compatibility with current versions
+ *   - ~ Precheck compatibility with current version
  *   - + Fast dupechecking (--ht option, ?h directive)
+ *   - + Made commit hash part of version string
  *
  * v2.5:
  *

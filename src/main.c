@@ -137,8 +137,6 @@ g_setxid (void)
 
 #include <arg_opts.h>
 
-
-
 int
 main (int argc, char *argv[])
 {
@@ -241,11 +239,10 @@ int
 g_init (int argc, char **argv, char **l_arg)
 {
 
-
   g_setjmp (0, "g_init", NULL, NULL);
 
-/*  htest();
-     exit(0);*/
+  /*  htest();
+   exit(0);*/
 
   int r = 0;
 
@@ -331,7 +328,7 @@ g_init (int argc, char **argv, char **l_arg)
     {
       print_str ("INFO: %s_%s starting [PID: %d]\n",
       PACKAGE_NAME,
-      BASE_VERSION, getpid ());
+		 BASE_VERSION, getpid ());
     }
 #ifndef _MAKE_SBIN
   if (!(gfl & F_OPT_NOGLCONF))

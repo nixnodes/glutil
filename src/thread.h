@@ -26,7 +26,6 @@
 #define F_THRD_CINIT                    ((uint32_t)1 << 7)
 #define F_THRD_MISC00                   ((uint32_t)1 << 10)
 
-
 #define THREAD_MAX	                50
 #define	MAX_OBJ_GEN_WORKER_ARG	        256
 
@@ -77,7 +76,8 @@ typedef struct object_thrd
 
 int
 thread_create (void *call, int id, pmda _thrd_r, uint16_t role,
-	       uint16_t oper_mode, uint32_t flags, uint32_t i_flags,  po_thrd data, po_thrd *ret, pthread_t *pt_ret);
+	       uint16_t oper_mode, uint32_t flags, uint32_t i_flags,
+	       po_thrd data, po_thrd *ret, pthread_t *pt_ret);
 int
 mutex_init (pthread_mutex_t *mutex, int flags, int robust);
 
@@ -117,7 +117,8 @@ void
 ts_unflag_32 (pthread_mutex_t *mutex, uint32_t flags, uint32_t *target);
 
 int
-push_object_to_thread (void *object, pmda threadr, dt_score_ptp scalc,  pthread_t *st);
+push_object_to_thread (void *object, pmda threadr, dt_score_ptp scalc,
+		       pthread_t *st);
 
 #endif /* THREAD_H_ */
 
