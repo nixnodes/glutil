@@ -5,11 +5,13 @@
  *      Author: reboot
  */
 
-#include <g_help.h>
+#include "g_help.h"
+#include <t_glob.h>
 
 char *hpd_up =
     HSTR_HEADER
-    "%s\n"
+    BASE_VERSION
+    "\n%s\n"
     "\n"
 #ifndef _MAKE_SBIN
     "Main options:\n"
@@ -232,6 +234,7 @@ char *hpd_up =
     "  --loadq               Quit after loading data into memory\n"
     "  --loadqa              Quit after filtering/sorting\n"
     "                          Applies to dump operations only\n"
+    "  --ht <directive>      Build a hash table, using the results of <directive> as keys (usefull for dupe detection)\n"
 #else
     "  --dir                 Scan directories only (obsolete)\n"
     "  --file                Scan files only (obsolete)\n"
@@ -240,9 +243,9 @@ char *hpd_up =
     "  --mindepth            Process only when recursor depth level is greater or equal to <limit> (obsolete)\n"
     "                          note: depth level 0 is the current level (<root dir>)\n"
     "  --depth               Process each directory's contents before the directory itself\n"
-    "  --recursive, -R       Traverse the whole <root dir> directory tree\n"
     "  --xretry              Re-start the operation when no results\n"
     "  --xloop               Loop the operation until a termination signal is recieved\n"
+    "  --recursive, -R       Traverse the whole <root dir> directory tree\n"
     "  --no-recursive        Disable recursive directory tree traversal\n"
 #endif
     "  --progress            Show progress of the current operation (where it applies)\n"

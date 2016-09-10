@@ -329,9 +329,9 @@ g_init (int argc, char **argv, char **l_arg)
   if (updmode && updmode != UPD_MODE_NOOP && !(gfl & F_OPT_FORMAT_BATCH)
       && !(gfl & F_OPT_FORMAT_COMP) && (gfl & F_OPT_VERBOSE2))
     {
-      print_str ("INFO: %s_%s-%s starting [PID: %d]\n",
+      print_str ("INFO: %s_%s starting [PID: %d]\n",
       PACKAGE_NAME,
-		 PACKAGE_VERSION, __STR_ARCH, getpid ());
+      BASE_VERSION, getpid ());
     }
 #ifndef _MAKE_SBIN
   if (!(gfl & F_OPT_NOGLCONF))

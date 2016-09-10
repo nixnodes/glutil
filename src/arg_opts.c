@@ -1100,7 +1100,7 @@ opt_oneliner_dump (void *arg, int m, void *opt)
 int
 print_help (void *arg, int m, void *opt)
 {
-  print_str (hpd_up, PACKAGE_VERSION, __STR_ARCH, PACKAGE_URL,
+  print_str (hpd_up, PACKAGE_URL,
   PACKAGE_BUGREPORT);
   if (m != -1)
     {
