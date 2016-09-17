@@ -67,7 +67,12 @@ dirlog_update_record (char *argv);
 int
 dirlog_check_dupe (void);
 
+typedef  p_md_obj
+(*df_func) (void *, uint32_t, void *);
+
 p_md_obj
-dirlog_find_a (char *dirn, uint32_t flags, void *callback);
+dirlog_find_a (void *, uint32_t, void *);
+p_md_obj
+dirlog_find_ht (void *, uint32_t, void *);
 
 #endif /* DIRLOG_H_ */

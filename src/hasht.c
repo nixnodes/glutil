@@ -244,7 +244,6 @@ ht_get (hashtable_t *hashtable, unsigned char *key, size_t k_size)
   pair = hashtable->table[bin];
   while (pair != NULL && pair->key != NULL && memcmp (key, pair->key, k_size))
     {
-
       pair = pair->next;
     }
 

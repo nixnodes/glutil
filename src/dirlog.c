@@ -63,6 +63,17 @@ rebuild_dirlog (void)
       strncpy (mode, "w+", 2);
     }
 
+  if (gfl & F_OPT_UPDATE)
+    {
+      gfl0 |= F_OPT_MAKEHT;
+      ht_field = "dir";
+      g_act_1.cb0 = (void*) dirlog_find_ht;
+    }
+  else
+    {
+      g_act_1.cb0 = (void*) dirlog_find_a;
+    }
+
   if (gfl & F_OPT_WBUFFER)
     {
       strncpy (g_act_1.mode, "r", 1);
@@ -456,7 +467,9 @@ proc_section (char *name, unsigned char type, void *arg, __g_eds eds)
 	  if (gfl & F_OPT_UPDATE)
 	    {
 	      p_md_obj ptr;
-	      if ((ptr = dirlog_find_a (name, F_DL_FOPEN_REWIND, NULL)) != NULL)
+	      df_func dff = (df_func) g_act_1.cb0;
+
+	      if ((ptr = dff (&g_act_1, 0, name)) != NULL)
 		{
 		  if (gfl & F_OPT_VERBOSE2)
 		    {
@@ -465,10 +478,9 @@ proc_section (char *name, unsigned char type, void *arg, __g_eds eds)
 			  name);
 		    }
 
-		  if (ptr != (p_md_obj) -1)
-		    {
-		      md_unlink (&g_act_1.buffer, ptr);
-		    }
+		  ht_remove (g_act_1.ht_ref, (unsigned char*) name,
+			     strlen (name));
+		  md_unlink (&g_act_1.buffer, ptr);
 
 		  goto end;
 		}
@@ -899,8 +911,9 @@ dirlog_find_old (char *dirn, int mode, uint32_t flags, void *callback)
 }
 
 p_md_obj
-dirlog_find_a (char *dirn, uint32_t flags, void *callback)
+dirlog_find_a (void *f, uint32_t flags, void *callback)
 {
+  char *dirn = (char*) f;
   if (g_fopen (DIRLOG, "r", F_DL_FOPEN_BUFFER | flags, &g_act_1))
     {
       return NULL;
@@ -933,6 +946,35 @@ dirlog_find_a (char *dirn, uint32_t flags, void *callback)
     }
 
   return NULL;
+}
+
+p_md_obj
+dirlog_find_ht (void *f, uint32_t flags, void *path)
+{
+  __g_handle hdl = (__g_handle) f;
+
+  size_t klen = strlen (path);
+
+  if (0 == klen)
+    {
+      return NULL;
+    }
+
+  pmda shell = ht_get (hdl->ht_ref, (unsigned char*) path, klen);
+
+  if (NULL == shell || shell->offset == 0)
+    {
+      return NULL;
+    }
+
+  p_md_obj ptr = md_first (shell);
+
+  if ( NULL == ptr)
+    {
+      return NULL;
+    }
+
+  return (p_md_obj) ptr->ptr;
 }
 
 uint64_t

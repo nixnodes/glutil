@@ -308,7 +308,7 @@ g_populate_htref (__g_handle hdl)
 	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell, sizeof(pmda));
 	}
 
-      shell->lref_ptr = ptr->ptr;
+      shell->lref_ptr = ptr;
       md_alloc (shell, 0);
 
       fin: ;
@@ -584,11 +584,12 @@ g_proc_mr (__g_handle hdl)
       hdl->ht_ref = ht_create ((size_t) hdl->buffer.offset / 4);
       hdl->ht_field = ht_field;
 
+      print_str("DEBUG: %s: generating hashtable\n", hdl->file);
+
       if (g_populate_htref (hdl))
 	{
 	  return 2088;
 	}
-
     }
 
   return 0;

@@ -161,6 +161,7 @@ typedef struct g_handle
   _pipe_obj pipe;
   char strerr_b[1024];
   void *v_b0;
+  void *cb0;
   size_t v_b0_sz;
   __d_wpid_cb execv_wpid_fp;
 #ifdef _G_SSYS_NET
