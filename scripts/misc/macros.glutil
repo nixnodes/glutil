@@ -1,4 +1,4 @@
-#@REVISION:67
+#@REVISION:68
 #
 ## NOTE: Requires glutil 2.6.2 or higher
 #
@@ -235,5 +235,9 @@
 
 #@MACRO:dupe-scan|Searches for duplicate entries by field <-arg1=log> <-arg2=field>:{exe} -q {arg1} --ht {arg2} -lom `([?h:({arg2}):c]) > 1 && ([?h:({arg2}):p]) = 0` -lom `([?h:({arg2}):u]) = 0 || 1` -print `\{(?P:(?h:({arg2}):c)#%-8s)\} \{{arg2}\}` --stats {arg3}
 #@MACRO:dupe-clean|Cleans duplicate entries by field <-arg1=log> <-arg2=field>:{exe} -e {arg1} -vvvv --ht {arg2} -lom `([?h:({arg2}):p]) = 0` -lom `([?h:({arg2}):u]) = 0 || 1`
+
+
+
+#@MACRO:log-set|Sets values [-arg 1 <log> -arg 2 <field> -arg 3 <match> -arg 4 <value> ]:{exe} -e {arg1} ( -match "{arg3}" -lom "([?e:{arg2}:({arg4})])" ) -or -lom "1" -vvvv
 
 
