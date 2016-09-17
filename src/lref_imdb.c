@@ -390,7 +390,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
 
   if (k_l == 3 && !strncmp (key, _MC_GLOB_DIR, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 1;
 	}
@@ -409,7 +409,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 6 && !strncmp (key, _MC_IMDB_IMDBID, 6))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -448,7 +448,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_GLOB_GENRE, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -457,7 +457,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_IMDB_TITLE, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -486,7 +486,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_IMDB_RATED, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -496,7 +496,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 6 && !strncmp (key, _MC_IMDB_ACTORS, 6))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -505,7 +505,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 8 && !strncmp (key, _MC_IMDB_DIRECT, 8))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -514,7 +514,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 4 && !strncmp (key, _MC_IMDB_SYNOPSIS, 4))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -525,7 +525,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 7 && !strncmp (key, _MC_IMDB_COUNTRY, 7))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 1;
 	}
@@ -535,7 +535,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 8 && !strncmp (key, _MC_IMDB_LANGUAGE, 8))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 1;
 	}
@@ -546,7 +546,7 @@ gcb_imdbh (void *buffer, char *key, char *val)
     }
   else if (k_l == 4 && !strncmp (key, _MC_IMDB_TYPE, 4))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 1;
 	}

@@ -415,6 +415,16 @@ clean_drt (__d_drt_h mppd)
       free(mppd->st_p0);
     }
 
+  if (NULL != mppd->chb0)
+    {
+      free(mppd->chb0);
+    }
+
+  if (NULL != mppd->chb1)
+    {
+      free(mppd->chb1);
+    }
+
   if ( mppd->flags & _D_DRT_HASREGEX)
     {
       regfree(&mppd->preg);

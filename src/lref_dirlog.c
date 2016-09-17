@@ -144,7 +144,7 @@ dt_rval_dirlog_username (void *arg, char *match, char *output, size_t max_size,
 			 void *mppd)
 {
   dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor,
-		 ((struct dirlog* ) arg)->uploader, output)
+	       ((struct dirlog* ) arg)->uploader, output)
   return output;
 }
 
@@ -153,7 +153,7 @@ dt_rval_dirlog_groupname (void *arg, char *match, char *output, size_t max_size,
 			  void *mppd)
 {
   dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor,
-		 ((struct dirlog* ) arg)->group, output)
+	       ((struct dirlog* ) arg)->group, output)
   return output;
 }
 
@@ -319,7 +319,7 @@ gcb_dirlog (void *buffer, char *key, char *val)
   struct dirlog * ptr = (struct dirlog *) buffer;
   if (k_l == 3 && !strncmp (key, _MC_GLOB_DIR, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}

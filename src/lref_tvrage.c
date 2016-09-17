@@ -400,7 +400,7 @@ gcb_tv (void *buffer, char *key, char *val)
 
   if (k_l == 3 && !strncmp (key, _MC_GLOB_DIR, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -419,7 +419,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 6 && !strncmp (key, _MC_TV_AIRDAY, 6))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -428,7 +428,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 7 && !strncmp (key, _MC_TV_AIRTIME, 7))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -437,7 +437,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 7 && !strncmp (key, _MC_TV_COUNTRY, 7))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -446,7 +446,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 4 && !strncmp (key, _MC_TV_LINK, 4))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -455,7 +455,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 4 && !strncmp (key, _MC_TV_NAME, 4))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -514,7 +514,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 6 && !strncmp (key, _MC_GLOB_STATUS, 6))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -523,7 +523,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_TV_CLASS, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -532,7 +532,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_GLOB_GENRE, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -561,7 +561,7 @@ gcb_tv (void *buffer, char *key, char *val)
     }
   else if (k_l == 7 && !strncmp (key, _MC_TV_NETWORK, 7))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}

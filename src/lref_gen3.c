@@ -265,7 +265,7 @@ gcb_gen3 (void *buffer, char *key, char *val)
 
   if (k_l == 3 && !strncmp (key, _MC_GE_GE1, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -274,7 +274,7 @@ gcb_gen3 (void *buffer, char *key, char *val)
     }
   else if (k_l == 3 && !strncmp (key, _MC_GE_GE2, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -283,7 +283,7 @@ gcb_gen3 (void *buffer, char *key, char *val)
     }
   else if (k_l == 3 && !strncmp (key, _MC_GE_GE3, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -292,7 +292,7 @@ gcb_gen3 (void *buffer, char *key, char *val)
     }
   else if (k_l == 3 && !strncmp (key, _MC_GE_GE4, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}

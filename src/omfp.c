@@ -158,11 +158,6 @@ g_print_stats (char *file, uint32_t flags, size_t block_sz)
 
   g_act_1.buffer.offset = 0;
 
-  if (gfl & F_OPT_VERBOSE3)
-    {
-      print_str ("NOTICE: %s: generating hash table..\n", g_act_1.file);
-    }
-
   if (!sigsetjmp(g_sigjmp.env, 1))
     {
       while ((ptr = g_read (buffer, &g_act_1, g_act_1.block_sz)))

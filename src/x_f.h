@@ -16,6 +16,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <zlib.h>
+#include <dirent.h>
+
+#ifndef IFTODT
+#define IFTODT(mode)	(((mode) & 0170000) >> 12)
+#endif
 
 #ifdef HAVE_ST_BIRTHTIME
 #define birthtime(x) x->st_birthtime

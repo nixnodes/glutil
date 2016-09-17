@@ -241,7 +241,7 @@ int
 g_l_fmode_n (char *path, size_t max_size, char *output);
 
 __g_proc_rv dt_rval_x_path, dt_rval_x_basepath, dt_rval_x_dirpath, dt_rval_c,
-    dt_rval_x_size, dt_rval_x_mode, dt_rval_x_devid, dt_rval_x_minor, major,
+    dt_rval_x_size, dt_rval_x_mode, dt_rval_x_devid, dt_rval_x_minor, dt_rval_x_major,
     dt_rval_x_inode, dt_rval_x_links, dt_rval_x_uid, dt_rval_x_gid,
     dt_rval_x_blksize, dt_rval_x_blocks, dt_rval_x_atime, dt_rval_x_ctime,
     dt_rval_x_mtime, dt_rval_x_isread, dt_rval_x_iswrite, dt_rval_x_isexec,

@@ -388,7 +388,7 @@ gcb_gconf (void *buffer, char *key, char *val)
 
   if (k_l == 12 && !strncmp (key, _MC_GCONF_R_CLEAN, 12))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -398,7 +398,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 10 && !strncmp (key, _MC_GCONF_LOGSTR, 10))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -411,7 +411,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 15 && !strncmp (key, _MC_GCONF_R_POSTPROC, 15))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -421,7 +421,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 14 && !strncmp (key, _MC_GCONF_R_YEARM, 14))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -431,7 +431,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_GCONF_R_SECTS, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -461,7 +461,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 29 && !strncmp (key, _MC_GCONF_E_LF_IMDB, 29))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -471,7 +471,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 31 && !strncmp (key, _MC_GCONF_E_LF_TVRAGE, 31))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -481,7 +481,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 18 && !strncmp (key, _MC_GCONF_E_M, 18))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -491,7 +491,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 14 && !strncmp (key, _MC_GCONF_R_SKIPBDIR, 14))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -501,7 +501,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 20 && !strncmp (key, _MC_GCONF_EX_UF, 20))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -511,7 +511,7 @@ gcb_gconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 14 && !strncmp (key, _MC_GCONF_EX_U, 14))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}

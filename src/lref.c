@@ -2186,6 +2186,67 @@ rt_af_htget (void *arg, char *match, char *output, size_t max_size,
 
 }
 
+static char *
+dt_rval_setstr (void *arg, char *match, char *output, size_t max_size,
+		void *mppd)
+{
+
+  __d_drt_h _mppd = (__d_drt_h ) mppd;
+
+  if (0 == _mppd->hdl->g_proc0 (arg, _mppd->chb0, _mppd->chb1))
+    {
+      print_str ("ERROR: dt_rval_setstr: unable to set value, key '%s'\n",
+		 _mppd->chb0);
+    }
+
+  output[0] = 0x0;
+  output[1] = 0x31;
+
+  return output;
+}
+
+static void*
+rt_af_setstr (void *arg, char *match, char *output, size_t max_size,
+	      __d_drt_h mppd)
+{
+  void *l_next_ref;
+
+  char *ptr = l_mppd_shell_ex (match, mppd->tp_b0, sizeof(mppd->tp_b0),
+			       &l_next_ref,
+			       LMS_EX_L,
+			       LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == ptr || ptr[0] == 0x0)
+    {
+      print_str ("ERROR: rt_af_setstr: could not key: %s\n", match);
+      return NULL;
+    }
+
+  if (l_next_ref == NULL)
+    {
+      print_str ("ERROR: rt_af_setstr: no value given");
+      return NULL;
+    }
+
+  mppd->chb0 = strdup (ptr);
+
+  ptr = l_mppd_shell_ex ((char*)l_next_ref, mppd->tp_b0, sizeof(mppd->tp_b0), &l_next_ref,
+  LMS_EX_L,
+			 LMS_EX_R, F_MPPD_SHX_TZERO);
+
+  if (NULL == ptr || ptr[0] == 0x0)
+    {
+      print_str ("ERROR: rt_af_setstr: could not resolve value: %s\n",
+		 (char*) l_next_ref);
+      return NULL;
+    }
+
+  mppd->chb1 = strdup (ptr);
+
+  return as_ref_to_val_lk (match, dt_rval_setstr, mppd, "%s");
+
+}
+
 #define DT_RVAL_ID_EXT()  \
   __d_drt_h _mppd = (__d_drt_h ) mppd; \
   char *p_b0 = _mppd->fp_rval1 (arg, match, _mppd->tp_b0, sizeof(_mppd->tp_b0), \
@@ -2292,6 +2353,8 @@ ref_to_val_af (void *arg, char *match, char *output, size_t max_size,
     {
       switch (id[0])
 	{
+	case 0x65: // e
+	  return rt_af_setstr (arg, match, output, max_size, mppd);
 	case 0x68: // h
 	  return rt_af_htget (arg, match, output, max_size, mppd);
 	case 0x75:

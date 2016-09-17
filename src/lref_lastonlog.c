@@ -252,7 +252,7 @@ gcb_lastonlog (void *buffer, char *key, char *val)
 
   if (k_l == 4 && !strncmp (key, _MC_GLOB_USER, 4))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -261,7 +261,7 @@ gcb_lastonlog (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_GLOB_GROUP, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -270,7 +270,7 @@ gcb_lastonlog (void *buffer, char *key, char *val)
     }
   else if (k_l == 3 && !strncmp (key, _MC_GLOB_TAG, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -319,7 +319,7 @@ gcb_lastonlog (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_LASTONLOG_STATS, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}

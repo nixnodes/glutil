@@ -181,7 +181,7 @@ gcb_game (void *buffer, char *key, char *val)
 
   if (k_l == 3 && !strncmp (key, _MC_GLOB_DIR, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}

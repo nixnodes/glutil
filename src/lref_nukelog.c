@@ -237,7 +237,7 @@ gcb_nukelog (void *buffer, char *key, char *val)
   struct nukelog* ptr = (struct nukelog*) buffer;
   if (k_l == 3 && !strncmp (key, _MC_GLOB_DIR, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -246,7 +246,7 @@ gcb_nukelog (void *buffer, char *key, char *val)
     }
   else if (k_l == 6 && !strncmp (key, _MC_NUKELOG_REASON, 6))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -275,7 +275,7 @@ gcb_nukelog (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_NUKELOG_NUKEE, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -284,7 +284,7 @@ gcb_nukelog (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_NUKELOG_NUKER, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -293,7 +293,7 @@ gcb_nukelog (void *buffer, char *key, char *val)
     }
   else if (k_l == 7 && !strncmp (key, _MC_NUKELOG_UNNUKER, 7))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 1;
 	}

@@ -280,7 +280,7 @@ gcb_sconf (void *buffer, char *key, char *val)
 
   if (k_l == 5 && !strncmp (key, _MC_SCONF_MATCH, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
@@ -289,7 +289,7 @@ gcb_sconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 5 && !strncmp (key, _MC_SCONF_FIELD, 5))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}
@@ -298,7 +298,7 @@ gcb_sconf (void *buffer, char *key, char *val)
     }
   else if (k_l == 3 && !strncmp (key, _MC_SCONF_MSG, 3))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return -1;
 	}

@@ -51,6 +51,8 @@ typedef struct ___d_drt_h
   uint32_t v_ui1;
   int32_t v_i0;
   uint64_t ret0;
+  void *chb0;
+  void *chb1;
 } _d_drt_h, *__d_drt_h;
 
 #endif /* M_COMP_H_ */

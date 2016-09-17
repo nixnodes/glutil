@@ -316,7 +316,7 @@ gcb_altlog (void *buffer, char *key, char *val)
   struct altlog * ptr = (struct altlog *) buffer;
   if (k_l == 4 && !strncmp (key, _MC_GLOB_FILE, 4))
     {
-      if (!(v_l = strlen (val)))
+      if (!(v_l = strlen (val) + 1))
 	{
 	  return 0;
 	}
