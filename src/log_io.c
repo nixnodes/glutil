@@ -73,6 +73,8 @@ g_fopen (char *file, char *mode, uint32_t flags, __g_handle hdl)
   g_setjmp (0, "g_fopen", NULL, NULL);
   int r = 0;
   uint8_t b = 0;
+
+#ifndef NO_SHAREDMEM
   if (flags & F_DL_FOPEN_SHM)
     {
       if ((r = g_map_shm (hdl, SHM_IPC)))
@@ -85,6 +87,7 @@ g_fopen (char *file, char *mode, uint32_t flags, __g_handle hdl)
 	}
       return 0;
     }
+#endif
 
   if (flags & F_DL_FOPEN_REWIND)
     {
@@ -549,10 +552,12 @@ g_cleanup (__g_handle hdl)
     {
       free (hdl->data);
     }
+#ifndef NO_SHAREDMEM
   else if ((hdl->flags & F_GH_ISSHM) && hdl->data)
     {
       g_shm_cleanup (hdl);
     }
+#endif
   bzero (hdl, sizeof(_g_handle));
   return r;
 }
@@ -811,6 +816,7 @@ load_data_md (pmda md, char *file, __g_handle hdl)
 
   uint32_t sh_ret = 0;
 
+#ifndef NO_SHAREDMEM
   if (hdl->flags & F_GH_ONSHM)
     {
       if ((r = g_shmap_data (hdl, SHM_IPC)))
@@ -860,7 +866,9 @@ load_data_md (pmda md, char *file, __g_handle hdl)
 	}
       count = hdl->total_sz / hdl->block_sz;
     }
-  else if (hdl->flags & F_GH_FROMSTDIN)
+  else
+#endif
+  if (hdl->flags & F_GH_FROMSTDIN)
     {
       count = 32;
       hdl->total_sz = count * hdl->block_sz;
@@ -893,12 +901,14 @@ load_data_md (pmda md, char *file, __g_handle hdl)
 
   __g_mdref cb = NULL;
 
+#ifndef NO_SHAREDMEM
   if ((hdl->flags & F_GH_ONSHM))
     {
       cb = (__g_mdref ) gen_md_data_ref_cnull;
     }
   else
     {
+#endif
       if (!((sh_ret & R_SHMAP_ALREADY_EXISTS)) || ((hdl->flags & F_GH_SHMRB)))
 	{
 	  if ((b_read = g_load_data_md (hdl->data, hdl->total_sz, file, hdl))
@@ -923,9 +933,13 @@ load_data_md (pmda md, char *file, __g_handle hdl)
 	      hdl->total_sz = b_read;
 	      count = hdl->total_sz / hdl->block_sz;
 	    }
+
 	}
       cb = (__g_mdref ) gen_md_data_ref;
+
+#ifndef NO_SHAREDMEM
     }
+#endif
 
   if (md_init (md, count))
     {
@@ -1093,6 +1107,7 @@ g_buffer_into_memory (char *file, __g_handle hdl)
       strncpy (hdl->file, "stdin", 7);
     }
 
+#ifndef NO_SHAREDMEM
   if (gfl & F_OPT_SHAREDMEM)
     {
       hdl->flags |= F_GH_SHM;
@@ -1172,6 +1187,7 @@ g_buffer_into_memory (char *file, __g_handle hdl)
 	  return 20206;
 	}
     }
+#endif
 
   if (gfl & F_OPT_VERBOSE2)
     {

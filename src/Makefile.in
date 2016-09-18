@@ -109,6 +109,7 @@ am__gfind_SOURCES_DIST = signal.c g_help.c memory.c hasht.c arg_opts.c \
 	m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c \
 	arg_proc.c exech.c exec.c base64.c xref.c lref.c \
 	lref_generic.c log_op.c omfp.c g_crypto.c
+@ENABLE_ARM_FALSE@am__objects_1 = log_shm.$(OBJEXT)
 @ENABLE_CRYPTO_FALSE@am_gfind_OBJECTS = signal.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@	hasht.$(OBJEXT) arg_opts.$(OBJEXT) \
@@ -117,7 +118,7 @@ am__gfind_SOURCES_DIST = signal.c g_help.c memory.c hasht.c arg_opts.c \
 @ENABLE_CRYPTO_FALSE@	errno_int.$(OBJEXT) str.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@	time.$(OBJEXT) misc.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@	lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
-@ENABLE_CRYPTO_FALSE@	log_io.$(OBJEXT) log_shm.$(OBJEXT) \
+@ENABLE_CRYPTO_FALSE@	log_io.$(OBJEXT) $(am__objects_1) \
 @ENABLE_CRYPTO_FALSE@	gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@	m_general.$(OBJEXT) sort.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@	m_string.$(OBJEXT) lref_glob.$(OBJEXT) \
@@ -135,7 +136,7 @@ am__gfind_SOURCES_DIST = signal.c g_help.c memory.c hasht.c arg_opts.c \
 @ENABLE_CRYPTO_TRUE@	errno_int.$(OBJEXT) str.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@	time.$(OBJEXT) misc.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@	lc_oper.$(OBJEXT) x_f.$(OBJEXT) \
-@ENABLE_CRYPTO_TRUE@	log_io.$(OBJEXT) log_shm.$(OBJEXT) \
+@ENABLE_CRYPTO_TRUE@	log_io.$(OBJEXT) $(am__objects_1) \
 @ENABLE_CRYPTO_TRUE@	gv_off.$(OBJEXT) cfgv.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@	m_general.$(OBJEXT) sort.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@	m_string.$(OBJEXT) g_crypto.$(OBJEXT) \
@@ -147,7 +148,7 @@ am__gfind_SOURCES_DIST = signal.c g_help.c memory.c hasht.c arg_opts.c \
 @ENABLE_CRYPTO_TRUE@	log_op.$(OBJEXT) omfp.$(OBJEXT)
 gfind_OBJECTS = $(am_gfind_OBJECTS)
 am__DEPENDENCIES_1 =
-gfind_DEPENDENCIES = $(am__DEPENDENCIES_1)
+gfind_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 	arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c \
 	time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c \
@@ -160,7 +161,7 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 	lref_altlog.c log_op.c omfp.c dirlog.c g_crypto.c thread.c \
 	taskd.c net_io.c net_proto.c net_gfs.c net_fs.c net_dis.c \
 	net_cmdproc.c net_ftp.c net_fsjproc.c glutil_net.c
-@ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@am__objects_1 = signal.$(OBJEXT) \
+@ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@am__objects_2 = signal.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	memory.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	hasht.$(OBJEXT) \
@@ -176,7 +177,7 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	lc_oper.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	x_f.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	log_io.$(OBJEXT) \
-@ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	log_shm.$(OBJEXT) \
+@ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	$(am__objects_1) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	gv_off.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	cfgv.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	m_general.$(OBJEXT) \
@@ -212,7 +213,7 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	log_op.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	omfp.$(OBJEXT) \
 @ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@	dirlog.$(OBJEXT)
-@ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@am__objects_1 =  \
+@ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@am__objects_2 =  \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	signal.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	g_help.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	memory.$(OBJEXT) \
@@ -229,7 +230,7 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	lc_oper.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	x_f.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	log_io.$(OBJEXT) \
-@ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	log_shm.$(OBJEXT) \
+@ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	$(am__objects_1) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	gv_off.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	cfgv.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	m_general.$(OBJEXT) \
@@ -266,7 +267,7 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	log_op.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	omfp.$(OBJEXT) \
 @ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@	dirlog.$(OBJEXT)
-@ENABLE_NET_SUBSYS_TRUE@am__objects_1 = signal.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@am__objects_2 = signal.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	g_help.$(OBJEXT) memory.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	hasht.$(OBJEXT) thread.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	arg_opts.$(OBJEXT) init.$(OBJEXT) \
@@ -283,7 +284,7 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 @ENABLE_NET_SUBSYS_TRUE@	net_fsjproc.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	glutil_net.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	g_crypto.$(OBJEXT) log_io.$(OBJEXT) \
-@ENABLE_NET_SUBSYS_TRUE@	log_shm.$(OBJEXT) gv_off.$(OBJEXT) \
+@ENABLE_NET_SUBSYS_TRUE@	$(am__objects_1) gv_off.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	cfgv.$(OBJEXT) m_general.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	sort.$(OBJEXT) m_string.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lref_glob.$(OBJEXT) m_lom.$(OBJEXT) \
@@ -309,9 +310,9 @@ am__glutil_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 @ENABLE_NET_SUBSYS_TRUE@	lref_gconf.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	lref_altlog.$(OBJEXT) log_op.$(OBJEXT) \
 @ENABLE_NET_SUBSYS_TRUE@	omfp.$(OBJEXT) dirlog.$(OBJEXT)
-am_glutil_OBJECTS = $(am__objects_1)
+am_glutil_OBJECTS = $(am__objects_2)
 glutil_OBJECTS = $(am_glutil_OBJECTS)
-glutil_DEPENDENCIES = $(am__DEPENDENCIES_1)
+glutil_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__glutil_chroot_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 	arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c \
 	time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c \
@@ -324,15 +325,24 @@ am__glutil_chroot_SOURCES_DIST = signal.c g_help.c memory.c hasht.c \
 	lref_altlog.c log_op.c omfp.c dirlog.c g_crypto.c thread.c \
 	taskd.c net_io.c net_proto.c net_gfs.c net_fs.c net_dis.c \
 	net_cmdproc.c net_ftp.c net_fsjproc.c glutil_net.c
-am_glutil_chroot_OBJECTS = $(am__objects_1)
+am_glutil_chroot_OBJECTS = $(am__objects_2)
 glutil_chroot_OBJECTS = $(am_glutil_chroot_OBJECTS)
-glutil_chroot_DEPENDENCIES = $(am__DEPENDENCIES_1)
+glutil_chroot_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__glutil_precheck_SOURCES_DIST = pce/pce_signal.c g_help.c memory.c \
+	hasht.c pce/pce_init.c macros.c l_error.c errno_int.c str.c \
+	time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c gv_off.c \
+	cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c \
+	i_math.c arg_proc.c exech.c exec.c base64.c xref.c lref.c \
+	lref_generic.c lref_online.c lref_imdb.c lref_imdb_old.c \
+	lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c \
+	omfp.c pce/pce_proc.c pce/pce_misc.c
 am__dirstamp = $(am__leading_dot)dirstamp
-am__objects_2 = pce/pce_signal.$(OBJEXT) g_help.$(OBJEXT) \
+am__objects_3 = pce/pce_signal.$(OBJEXT) g_help.$(OBJEXT) \
 	memory.$(OBJEXT) hasht.$(OBJEXT) pce/pce_init.$(OBJEXT) \
 	macros.$(OBJEXT) l_error.$(OBJEXT) errno_int.$(OBJEXT) \
 	str.$(OBJEXT) time.$(OBJEXT) misc.$(OBJEXT) lc_oper.$(OBJEXT) \
-	x_f.$(OBJEXT) log_io.$(OBJEXT) log_shm.$(OBJEXT) \
+	x_f.$(OBJEXT) log_io.$(OBJEXT) $(am__objects_1) \
 	gv_off.$(OBJEXT) cfgv.$(OBJEXT) m_general.$(OBJEXT) \
 	sort.$(OBJEXT) m_string.$(OBJEXT) lref_glob.$(OBJEXT) \
 	m_lom.$(OBJEXT) i_math.$(OBJEXT) arg_proc.$(OBJEXT) \
@@ -342,13 +352,23 @@ am__objects_2 = pce/pce_signal.$(OBJEXT) g_help.$(OBJEXT) \
 	lref_tvrage.$(OBJEXT) lref_game.$(OBJEXT) lref_sconf.$(OBJEXT) \
 	lref_gconf.$(OBJEXT) log_op.$(OBJEXT) omfp.$(OBJEXT) \
 	pce/pce_proc.$(OBJEXT) pce/pce_misc.$(OBJEXT)
-am_glutil_precheck_OBJECTS = $(am__objects_2)
+am_glutil_precheck_OBJECTS = $(am__objects_3)
 glutil_precheck_OBJECTS = $(am_glutil_precheck_OBJECTS)
-glutil_precheck_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_glutil_precheck_nonchroot_OBJECTS = $(am__objects_2)
+glutil_precheck_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am__glutil_precheck_nonchroot_SOURCES_DIST = pce/pce_signal.c g_help.c \
+	memory.c hasht.c pce/pce_init.c macros.c l_error.c errno_int.c \
+	str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c \
+	gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c \
+	m_lom.c i_math.c arg_proc.c exech.c exec.c base64.c xref.c \
+	lref.c lref_generic.c lref_online.c lref_imdb.c \
+	lref_imdb_old.c lref_tvrage.c lref_game.c lref_sconf.c \
+	lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+am_glutil_precheck_nonchroot_OBJECTS = $(am__objects_3)
 glutil_precheck_nonchroot_OBJECTS =  \
 	$(am_glutil_precheck_nonchroot_OBJECTS)
-glutil_precheck_nonchroot_DEPENDENCIES = $(am__DEPENDENCIES_1)
+glutil_precheck_nonchroot_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -381,8 +401,9 @@ SOURCES = $(gfind_SOURCES) $(glutil_SOURCES) $(glutil_chroot_SOURCES) \
 	$(glutil_precheck_SOURCES) \
 	$(glutil_precheck_nonchroot_SOURCES)
 DIST_SOURCES = $(am__gfind_SOURCES_DIST) $(am__glutil_SOURCES_DIST) \
-	$(am__glutil_chroot_SOURCES_DIST) $(glutil_precheck_SOURCES) \
-	$(glutil_precheck_nonchroot_SOURCES)
+	$(am__glutil_chroot_SOURCES_DIST) \
+	$(am__glutil_precheck_SOURCES_DIST) \
+	$(am__glutil_precheck_nonchroot_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -503,22 +524,26 @@ top_srcdir = @top_srcdir@
 @ENABLE_CHROOT_OWNBIN_TRUE@GLUTIL_APP = glutil-chroot
 @ENABLE_SEARCHBIN_FALSE@GLUTIL_APP = glutil
 @ENABLE_SEARCHBIN_TRUE@GLUTIL_APP = gfind
-@ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
-@ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c g_crypto.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
-@ENABLE_NET_SUBSYS_TRUE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c hasht.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c taskd.c net_io.c net_proto.c net_gfs.c net_fs.c net_dis.c net_cmdproc.c net_ftp.c net_fsjproc.c glutil_net.c g_crypto.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
-GLUTIL_PRECHECK_SRC = pce/pce_signal.c g_help.c memory.c hasht.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
+@ENABLE_ARM_FALSE@SHM_SRC = log_shm.c
+@ENABLE_ARM_TRUE@SHM_SRC = 
+@ENABLE_ARM_FALSE@X64_LD = -lrt -lm
+@ENABLE_ARM_TRUE@X64_LD = 
+@ENABLE_CRYPTO_FALSE@@ENABLE_NET_SUBSYS_FALSE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  $(SHM_SRC)  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
+@ENABLE_CRYPTO_TRUE@@ENABLE_NET_SUBSYS_FALSE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  $(SHM_SRC)  gv_off.c cfgv.c m_general.c sort.c m_string.c g_crypto.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
+@ENABLE_NET_SUBSYS_TRUE@GLUTIL_DEFAULTSRC = signal.c g_help.c memory.c hasht.c thread.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c taskd.c net_io.c net_proto.c net_gfs.c net_fs.c net_dis.c net_cmdproc.c net_ftp.c net_fsjproc.c glutil_net.c g_crypto.c log_io.c $(SHM_SRC)  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_dirlog.c lref_nukelog.c lref_dupefile.c lref_lastonlog.c lref_onliners.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_gen1.c lref_gen2.c lref_gen3.c lref_gen4.c lref_sconf.c lref_gconf.c lref_altlog.c log_op.c omfp.c  dirlog.c
+GLUTIL_PRECHECK_SRC = pce/pce_signal.c g_help.c memory.c hasht.c pce/pce_init.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c  $(SHM_SRC)  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c lref_online.c lref_imdb.c lref_imdb_old.c lref_tvrage.c lref_game.c lref_sconf.c lref_gconf.c log_op.c omfp.c pce/pce_proc.c pce/pce_misc.c
 glutil_SOURCES = $(GLUTIL_DEFAULTSRC)
 glutil_chroot_SOURCES = $(GLUTIL_DEFAULTSRC)
 glutil_precheck_SOURCES = $(GLUTIL_PRECHECK_SRC)
 glutil_precheck_nonchroot_SOURCES = $(GLUTIL_PRECHECK_SRC)
-@ENABLE_CRYPTO_FALSE@gfind_SOURCES = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c log_op.c omfp.c 
-@ENABLE_CRYPTO_TRUE@gfind_SOURCES = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c log_shm.c  gv_off.c cfgv.c m_general.c sort.c m_string.c g_crypto.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c log_op.c omfp.c 
-GLUTIL_DEFAULTLN = -lm -lrt
-glutil_LDADD = $(GLUTIL_DEFAULTLN)
-glutil_chroot_LDADD = $(GLUTIL_DEFAULTLN)
-glutil_precheck_LDADD = $(GLUTIL_DEFAULTLN)
-glutil_precheck_nonchroot_LDADD = $(GLUTIL_DEFAULTLN)
-gfind_LDADD = $(GLUTIL_DEFAULTLN)
+@ENABLE_CRYPTO_FALSE@gfind_SOURCES = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c $(SHM_SRC)  gv_off.c cfgv.c m_general.c sort.c m_string.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c log_op.c omfp.c 
+@ENABLE_CRYPTO_TRUE@gfind_SOURCES = signal.c g_help.c memory.c hasht.c arg_opts.c init.c main.c macros.c l_error.c errno_int.c str.c time.c misc.c lc_oper.c x_f.c log_io.c $(SHM_SRC)  gv_off.c cfgv.c m_general.c sort.c m_string.c g_crypto.c lref_glob.c m_lom.c i_math.c  arg_proc.c exech.c exec.c base64.c xref.c lref.c lref_generic.c log_op.c omfp.c 
+GLUTIL_DEFAULTLN = 
+glutil_LDADD = $(GLUTIL_DEFAULTLN) $(X64_LD)
+glutil_chroot_LDADD = $(GLUTIL_DEFAULTLN) $(X64_LD)
+glutil_precheck_LDADD = $(GLUTIL_DEFAULTLN) $(X64_LD)
+glutil_precheck_nonchroot_LDADD = $(GLUTIL_DEFAULTLN) $(X64_LD)
+gfind_LDADD = $(GLUTIL_DEFAULTLN) $(X64_LD)
 AM_CPPFLAGS = -DGIT_SHORTREV=\"`git rev-parse --short=8 HEAD`\"
 all: all-am
 

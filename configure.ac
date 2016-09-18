@@ -103,24 +103,32 @@ fi
 
 AM_CONDITIONAL(ENABLE_CHROOT_OWNBIN, test "$glutil_chroot_ownbin" = "yes")
 
-AC_CHECK_FILE( \
-["$PWD/src/glconf.h"],, \
-AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
-	[AC_MSG_NOTICE(copying '$prefix/bin/sources/glconf.h' to 'src/' folder..); \
-	AS_IF([cp "$prefix/bin/sources/glconf.h" "$PWD/src/glconf.h"],, \
-	[AC_MSG_ERROR([could not copy "$prefix/bin/sources/glconf.h" to "$PWD/src/glconf.h"])]) \
-]) \
-)
+if [ ! test "$host" ]; then
+
+	AC_CHECK_FILE( \
+	["$PWD/src/glconf.h"],, \
+	AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
+		[AC_MSG_NOTICE(copying '$prefix/bin/sources/glconf.h' to 'src/' folder..); \
+		AS_IF([cp "$prefix/bin/sources/glconf.h" "$PWD/src/glconf.h"],, \
+		[AC_MSG_ERROR([could not copy "$prefix/bin/sources/glconf.h" to "$PWD/src/glconf.h"])]) \
+	]) \
+	)
+fi
 
 
 AS_VAR_SET(datadir, ["$prefix/scripts"])
 
+if echo $host | egrep -q "arm|eabi"; then
+	AC_DEFINE([NO_SHAREDMEM])
+	AC_DEFINE([H_ISARM])
+fi
 
 AM_CONDITIONAL(ENABLE_PRECHECK_NONCHROOT, test "$glutil_precheck_nonchroot" = "yes")	
 AM_CONDITIONAL(ENABLE_PRECHECK, test "$glutil_precheck" = "yes")
 AM_CONDITIONAL(ENABLE_SEARCHBIN, test "$glutil_enable_sbin" = "yes")
 AM_CONDITIONAL(ENABLE_NET_SUBSYS, test "$glutil_enable_net" = "yes")
 AM_CONDITIONAL(ENABLE_CRYPTO, test "$glutil_enable_crypto" = "yes")
+AM_CONDITIONAL(ENABLE_ARM, echo $host | egrep -q "arm|eabi")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
@@ -147,7 +155,10 @@ AC_HEADER_STDC
 
 GLUTIL_MSG_FH="missing procedure"
 
-AC_CHECK_FUNCS([bzero],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (bzero)])])
+if [ ! test "$host" ]; then
+	AC_CHECK_FUNCS([bzero],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (bzero)])])
+fi
+
 AC_CHECK_FUNCS([dup2],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (dup2)])])
 AC_CHECK_FUNCS([memmove],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (memmove)])])
 AC_CHECK_FUNCS([memset],,[AC_MSG_ERROR([$GLUTIL_MSG_FH (memset)])])

@@ -316,9 +316,9 @@ md_alloc (pmda md, int b)
 	  return NULL;
 	}
 
-       print_str(
-       "DEBUG: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
-       (ulint64_t) md->objects, (ulint64_t) md->count);
+      print_str (
+	  "DEBUG: re-allocating memory segment to increase size; current address: 0x%.16llX, current size: %llu\n",
+	  (size_t) md->objects, (ulint64_t) md->count);
 
       md->objects = realloc (md->objects, (md->count * sizeof(md_obj)) * 2);
       md->pos = md->objects;
@@ -338,9 +338,9 @@ md_alloc (pmda md, int b)
 	}
       flags |= MDA_MDALLOC_RE;
 
-       print_str(
-       "DEBUG: re-allocation done; new address: 0x%.16llX, new size: %llu\n",
-       (ulint64_t) md->objects, (ulint64_t) md->count);
+      print_str (
+	  "DEBUG: re-allocation done; new address: 0x%.16llX, new size: %llu\n",
+	  (size_t) md->objects, (ulint64_t) md->count);
 
     }
 
@@ -593,7 +593,7 @@ md_copy_le (pmda source, pmda dest, size_t block_sz, int
   while (ptr)
     {
       d_ptr = md_alloc_le (dest, block_sz, 0, NULL);
-      if (!d_ptr )
+      if (!d_ptr)
 
 	{
 	  ret = 10;
@@ -862,3 +862,13 @@ register_count (pmda thread_r)
 #endif
   return ret;
 }
+
+#if HAVE_MALLOC == 0
+void*
+rpl_malloc (size_t n)
+{
+  if (n == 0)
+    n = 1;
+  return malloc (n);
+}
+#endif

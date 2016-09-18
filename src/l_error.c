@@ -90,8 +90,8 @@ sighdl_error (int sig, siginfo_t* siginfo, void* context)
       s_ptr1 = "UNKNOWN EXCEPTION";
     }
 
-  snprintf (buffer1, 4096, ", fault address: 0x%.16llX",
-	    (long long unsigned int) siginfo->si_addr);
+  snprintf (buffer1, 4096, ", fault address: 0x" __AE_SPFH,
+	    (__AE_INTTL) siginfo->si_addr);
 
   switch (g_sigjmp.id)
     {

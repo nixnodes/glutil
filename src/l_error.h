@@ -41,4 +41,13 @@ sighdl_error (int sig, siginfo_t* siginfo, void* context);
 
 sigjmp g_sigjmp;
 
+#if __x86_64__ || __ppc64__
+#define __AE_INTTL	long long unsigned int
+#define __AE_SPFH       "%.16llX"
+#else
+#define __AE_INTTL	unsigned int
+#define __AE_SPFH       "%.8X"
+#endif
+
+
 #endif /* L_ERROR_H_ */

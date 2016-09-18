@@ -191,7 +191,8 @@ ref_to_val_x (void *arg, char *match, char *output, size_t max_size, void *mppd)
 	{
 	  return 1;
 	}
-      snprintf (output, max_size, "%u", minor(st.st_dev));
+      snprintf (output, max_size, "%llu",
+		(unsigned long long int) minor(st.st_dev));
     }
   else if (!strncmp (match, _MC_X_MAJOR, 5))
     {
@@ -200,7 +201,8 @@ ref_to_val_x (void *arg, char *match, char *output, size_t max_size, void *mppd)
 	{
 	  return 1;
 	}
-      snprintf (output, max_size, "%u", major(st.st_dev));
+      snprintf (output, max_size, "%llu",
+		(unsigned long long int) major(st.st_dev));
     }
   else if (!strncmp (match, _MC_X_INODE, 5))
     {
@@ -735,7 +737,8 @@ dt_rval_x_user (void *arg, char *match, char *output, size_t max_size,
 		void *mppd)
 {
 
-  dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, ((__d_xref) arg)->st.st_uid, output)
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->uuid_stor, ((__d_xref) arg)->st.st_uid,
+	       output)
   return output;
 }
 
@@ -743,7 +746,8 @@ char *
 dt_rval_x_group (void *arg, char *match, char *output, size_t max_size,
 		 void *mppd)
 {
-  dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor, ((__d_xref) arg)->st.st_gid, output)
+  dt_rval_guid(&((__d_drt_h) mppd)->hdl->guid_stor, ((__d_xref) arg)->st.st_gid,
+	       output)
   return output;
 }
 

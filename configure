@@ -629,6 +629,8 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 GLUTIL_PREFIX
+ENABLE_ARM_FALSE
+ENABLE_ARM_TRUE
 ENABLE_CRYPTO_FALSE
 ENABLE_CRYPTO_TRUE
 ENABLE_NET_SUBSYS_FALSE
@@ -5223,19 +5225,21 @@ else
 fi
 
 
-as_ac_File=`$as_echo "ac_cv_file_\\
-"$PWD/src/glconf.h"" | $as_tr_sh`
+if  ! test "$host" ; then
+
+	as_ac_File=`$as_echo "ac_cv_file_\\
+	"$PWD/src/glconf.h"" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for \
-\"$PWD/src/glconf.h\"" >&5
+	\"$PWD/src/glconf.h\"" >&5
 $as_echo_n "checking for \
-\"$PWD/src/glconf.h\"... " >&6; }
+	\"$PWD/src/glconf.h\"... " >&6; }
 if eval \${$as_ac_File+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
 if test -r "\
-"$PWD/src/glconf.h""; then
+	"$PWD/src/glconf.h""; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -5248,7 +5252,7 @@ if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
 
 else
   \
-as_ac_File=`$as_echo "ac_cv_file_"$prefix/bin/sources/glconf.h"" | $as_tr_sh`
+	as_ac_File=`$as_echo "ac_cv_file_"$prefix/bin/sources/glconf.h"" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"$prefix/bin/sources/glconf.h\"" >&5
 $as_echo_n "checking for \"$prefix/bin/sources/glconf.h\"... " >&6; }
 if eval \${$as_ac_File+:} false; then :
@@ -5267,13 +5271,13 @@ eval ac_res=\$$as_ac_File
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
   \
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: copying '$prefix/bin/sources/glconf.h' to 'src/' folder.." >&5
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: copying '$prefix/bin/sources/glconf.h' to 'src/' folder.." >&5
 $as_echo "$as_me: copying '$prefix/bin/sources/glconf.h' to 'src/' folder.." >&6;}; \
-	if cp "$prefix/bin/sources/glconf.h" "$PWD/src/glconf.h"; then :
+		if cp "$prefix/bin/sources/glconf.h" "$PWD/src/glconf.h"; then :
 
 else
   \
-	as_fn_error $? "could not copy \"$prefix/bin/sources/glconf.h\" to \"$PWD/src/glconf.h\"" "$LINENO" 5
+		as_fn_error $? "could not copy \"$prefix/bin/sources/glconf.h\" to \"$PWD/src/glconf.h\"" "$LINENO" 5
 fi \
 
 fi
@@ -5281,10 +5285,17 @@ fi
 
 fi
 
+fi
 
 
 datadir="$prefix/scripts"
 
+if echo $host | egrep -q "arm|eabi"; then
+	$as_echo "#define NO_SHAREDMEM 1" >>confdefs.h
+
+	$as_echo "#define H_ISARM 1" >>confdefs.h
+
+fi
 
  if test "$glutil_precheck_nonchroot" = "yes"; then
   ENABLE_PRECHECK_NONCHROOT_TRUE=
@@ -5324,6 +5335,14 @@ fi
 else
   ENABLE_CRYPTO_TRUE='#'
   ENABLE_CRYPTO_FALSE=
+fi
+
+ if echo $host | egrep -q "arm|eabi"; then
+  ENABLE_ARM_TRUE=
+  ENABLE_ARM_FALSE='#'
+else
+  ENABLE_ARM_TRUE='#'
+  ENABLE_ARM_FALSE=
 fi
 
 
@@ -5592,7 +5611,8 @@ fi
 
 GLUTIL_MSG_FH="missing procedure"
 
-for ac_func in bzero
+if  ! test "$host" ; then
+	for ac_func in bzero
 do :
   ac_fn_c_check_func "$LINENO" "bzero" "ac_cv_func_bzero"
 if test "x$ac_cv_func_bzero" = xyes; then :
@@ -5604,6 +5624,8 @@ else
   as_fn_error $? "$GLUTIL_MSG_FH (bzero)" "$LINENO" 5
 fi
 done
+
+fi
 
 for ac_func in dup2
 do :
@@ -6729,6 +6751,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CRYPTO_TRUE}" && test -z "${ENABLE_CRYPTO_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_CRYPTO\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_ARM_TRUE}" && test -z "${ENABLE_ARM_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_ARM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

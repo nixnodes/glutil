@@ -47,7 +47,7 @@ ie_tl (int code, __emr pemr)
 char *
 g_strerr_r (int errnum, char *buf, size_t buflen)
 {
-#if (_POSIX_VERSION == 200112L || _XOPEN_VERSION >= 600) && __FreeBSD__
+#if ((_POSIX_VERSION == 200112L || _XOPEN_VERSION >= 600) && __FreeBSD__) || H_ISARM
   int ret = strerror_r(errnum, buf, buflen);
   if (0 != ret)
     {

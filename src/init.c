@@ -143,11 +143,7 @@ char *NUKESTR = (char*) NUKESTR_d;
 int updmode = 0;
 char *argv_off = NULL;
 
-sigjmp g_sigjmp =
-  {
-    {
-      {
-	{ 0 } } } };
+sigjmp g_sigjmp;
 
 mda _match_rr =
   { 0 };
