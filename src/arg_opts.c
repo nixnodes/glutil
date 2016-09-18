@@ -1678,6 +1678,13 @@ opt_print0 (void *arg, int m, void *opt)
 }
 
 static int
+opt_noht (void *arg, int m, void *opt)
+{
+  gfl0 |= F_OPT_NOHT;
+  return 0;
+}
+
+static int
 opt_makeht (void *arg, int m, void *opt)
 {
 
@@ -2968,6 +2975,7 @@ _gg_opt gg_f_ref[] =
 	{ .id = 0x5512, .on = "--xflags", .ac = 1, .op = opt_xref_sl_dat },
 	{ .id = 0x5513, .on = "--depth", .ac = 0, .op = opt_xref_depth },
 	{ .id = 0x5522, .on = "--ht", .ac = 1, .op = opt_makeht },
+	{ .id = 0x5523, .on = "--noht", .ac = 1, .op = opt_noht },
 #ifndef _MAKE_SBIN
 	{ .id = 0x1282, .on = "--mroot", .ac = 1, .op = g_opt_mroot },
 	{ .id = 0x00A0, .on = "--nofq", .ac = 0, .op = opt_g_nofq },
