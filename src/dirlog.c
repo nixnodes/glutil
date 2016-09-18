@@ -967,7 +967,7 @@ dirlog_find_ht (void *f, uint32_t flags, void *path)
       return NULL;
     }
 
-  pmda shell = ht_get (hdl->ht_ref, (unsigned char*) path, klen);
+  pmda shell = ht_get (hdl->ht_ref, (unsigned char*) path, klen + 1);
 
   if (NULL == shell || shell->offset == 0)
     {
