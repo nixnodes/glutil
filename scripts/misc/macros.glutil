@@ -1,4 +1,4 @@
-#@REVISION:68
+#@REVISION:69
 #
 ## NOTE: Requires glutil 2.6.2 or higher
 #
@@ -238,6 +238,6 @@
 
 
 
-#@MACRO:log-set|Sets values [-arg 1 <log> -arg 2 <field> -arg 3 <match> -arg 4 <value> ]:{exe} -e {arg1} ( -match "{arg3}" -lom "([?e:{arg2}:({arg4})])" ) -or -lom "1" {arg5}
+#@MACRO:log-set|Sets values [-arg 1 <log> -arg 2 <field> -arg 3 <match> -arg 4 <value> ]:{exe} -e {arg1} ( ( -match "{arg3}" -lom "([?e:{arg2}:({arg4})])" ) -or -lom "1" ) {arg5}
 
 

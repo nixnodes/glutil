@@ -28,6 +28,10 @@
  *   - ~ Precheck compatibility with current version
  *   - + Fast dupechecking (--ht option, ?h directive)
  *   - + Made commit hash part of version string
+ *   2.6.4:
+ *   - + Modify buffered data (?e directive)
+ *   - ! Major performance boost for dirlog rebuild update mode
+ *   - % Cross compile for androideabi (./configure --host arm-linux-androideabi)
  *
  * v2.5:
  *
