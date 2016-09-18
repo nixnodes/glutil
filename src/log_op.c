@@ -292,8 +292,8 @@ g_populate_htref (__g_handle hdl)
 	  goto fin;
 	}
 
-      size_t l = strlen (r_v);
-      if (0 == l)
+      size_t l = strlen (r_v) + 1;
+      if (1 == l)
 	{
 	  goto fin;
 	}
@@ -305,7 +305,8 @@ g_populate_htref (__g_handle hdl)
 	  shell = calloc (1, sizeof(mda));
 	  md_init (shell, 4);
 	  shell->flags |= F_MDA_REFPTR;
-	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell, sizeof(pmda));
+	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell,
+		  sizeof(pmda));
 	}
 
       shell->lref_ptr = ptr;
@@ -572,7 +573,7 @@ g_proc_mr (__g_handle hdl)
       hdl->execv_wpid_fp = l_waitpid_def;
     }
 
-  if ((gfl0 & F_OPT_MAKEHT) && hdl->ht_ref == NULL)
+  if ((gfl0 & F_OPT_MAKEHT) && !(gfl0 & F_OPT_NOHT) && hdl->ht_ref == NULL)
     {
       if (0 == hdl->buffer.offset)
 	{
@@ -584,7 +585,7 @@ g_proc_mr (__g_handle hdl)
       hdl->ht_ref = ht_create ((size_t) hdl->buffer.offset / 4);
       hdl->ht_field = ht_field;
 
-      print_str("DEBUG: %s: generating hashtable\n", hdl->file);
+      print_str ("DEBUG: %s: generating hashtable\n", hdl->file);
 
       if (g_populate_htref (hdl))
 	{

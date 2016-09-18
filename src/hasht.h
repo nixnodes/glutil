@@ -13,6 +13,7 @@
 struct entry_s
 {
   unsigned char *key;
+  unsigned short k_size;
   void *value;
   struct entry_s *next;
 };

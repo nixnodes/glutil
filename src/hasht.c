@@ -114,7 +114,7 @@ ht_newpair (unsigned char *key, size_t k_size, void *value, size_t size)
   memcpy (newpair->key, (void*) key, k_size);
 
   newpair->value = value;
-
+  newpair->k_size = (unsigned short) k_size;
   newpair->next = NULL;
 
   return newpair;
@@ -133,13 +133,15 @@ ht_remove (hashtable_t *hashtable, unsigned char *key, size_t k_size)
 
   next = hashtable->table[bin];
 
-  while (next != NULL && next->key != NULL && memcmp (key, next->key, k_size))
+  while (next != NULL && next->key != NULL
+      && (k_size != next->k_size || memcmp (key, next->key, k_size)))
     {
       last = next;
       next = next->next;
     }
 
-  if (next != NULL && next->key != NULL && memcmp (key, next->key, k_size) == 0)
+  if (next != NULL && next->key != NULL && k_size == next->k_size
+      && memcmp (key, next->key, k_size) == 0)
     {
 
       free (next->key);
@@ -193,14 +195,16 @@ ht_set (hashtable_t *hashtable, unsigned char *key, size_t k_size, void *value,
 
   next = hashtable->table[bin];
 
-  while (next != NULL && next->key != NULL && memcmp (key, next->key, k_size))
+  while (next != NULL && next->key != NULL
+      && (k_size != next->k_size || memcmp (key, next->key, k_size)))
     {
       last = next;
       next = next->next;
     }
 
   /* There's already a pair.  Let's replace that string. */
-  if (next != NULL && next->key != NULL && memcmp (key, next->key, k_size) == 0)
+  if (next != NULL && next->key != NULL && k_size == next->k_size
+      && memcmp (key, next->key, k_size) == 0)
     {
       next->value = value;
 
@@ -240,18 +244,18 @@ ht_get (hashtable_t *hashtable, unsigned char *key, size_t k_size)
 
   bin = ht_hash (hashtable, key, k_size);
 
-  /* Step through the bin, looking for our value. */
   pair = hashtable->table[bin];
-  while (pair != NULL && pair->key != NULL && memcmp (key, pair->key, k_size))
+  while (pair != NULL && pair->key != NULL
+      && (k_size != pair->k_size || memcmp (key, pair->key, k_size)))
     {
       pair = pair->next;
     }
 
   /* Did we actually find anything? */
-  if (pair == NULL || pair->key == NULL || memcmp (key, pair->key, k_size) != 0)
+  if (pair == NULL || pair->key == NULL || k_size != pair->k_size
+      || memcmp (key, pair->key, k_size) != 0)
     {
       return NULL;
-
     }
   else
     {

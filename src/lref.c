@@ -2029,7 +2029,7 @@ dt_rval_ht_count (void *arg, char *match, char *output, size_t max_size,
     }
 
   pmda shell = ht_get (_mppd->hdl->ht_ref, (unsigned char*) p_b0,
-		       strlen (p_b0));
+		       strlen (p_b0) + 1);
 
   if (NULL == shell)
     {
@@ -2059,7 +2059,7 @@ dt_rval_ht_get (void *arg, char *match, char *output, size_t max_size,
     }
 
   pmda shell = ht_get (_mppd->hdl->ht_ref, (unsigned char*) p_b0,
-		       strlen (p_b0));
+		       strlen (p_b0) + 1);
 
   if (NULL == shell || shell->offset == 0)
     {
@@ -2099,7 +2099,7 @@ dt_rval_ht_accessed (void *arg, char *match, char *output, size_t max_size,
     }
 
   pmda shell = (pmda) ht_get (_mppd->hdl->ht_ref, (unsigned char*) p_b0,
-			      strlen (p_b0));
+			      strlen (p_b0) + 1);
 
   if (NULL == shell || shell->offset == 0)
     {
@@ -2230,8 +2230,9 @@ rt_af_setstr (void *arg, char *match, char *output, size_t max_size,
 
   mppd->chb0 = strdup (ptr);
 
-  ptr = l_mppd_shell_ex ((char*)l_next_ref, mppd->tp_b0, sizeof(mppd->tp_b0), &l_next_ref,
-  LMS_EX_L,
+  ptr = l_mppd_shell_ex ((char*) l_next_ref, mppd->tp_b0, sizeof(mppd->tp_b0),
+			 &l_next_ref,
+			 LMS_EX_L,
 			 LMS_EX_R, F_MPPD_SHX_TZERO);
 
   if (NULL == ptr || ptr[0] == 0x0)
