@@ -32,6 +32,8 @@
  *   - + Modify buffered data (?e directive)
  *   - ! Major performance boost for dirlog rebuild update mode
  *   - % Cross compile for androideabi (./configure --host arm-linux-androideabi)
+ *   2.6.5:
+ *   - ~ Stuff already in the dirlog was being added in update mode 
  *
  * v2.5:
  *
