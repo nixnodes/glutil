@@ -18,7 +18,7 @@ mda pc_a =
   { 0 };
 
 int
-net_baseline_socket_init0 (__sock_o pso)
+net_baseline_socket_init0 (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->oper_mode)
@@ -33,7 +33,7 @@ net_baseline_socket_init0 (__sock_o pso)
 }
 
 int
-net_baseline_socket_t (__sock_o pso)
+net_baseline_socket_t (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->oper_mode)
@@ -48,7 +48,7 @@ net_baseline_socket_t (__sock_o pso)
 }
 
 int
-net_baseline_socket_init1 (__sock_o pso)
+net_baseline_socket_init1 (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -88,7 +88,7 @@ net_baseline_socket_init1 (__sock_o pso)
 #include <sys/syscall.h>
 
 int
-net_baseline_socket_destroy_rc0 (__sock_o pso)
+net_baseline_socket_destroy_rc0 (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -101,7 +101,7 @@ net_baseline_socket_destroy_rc0 (__sock_o pso)
 }
 
 static void
-net_baseline_respond_protocol_version (__sock_o pso)
+net_baseline_respond_protocol_version (__sock pso)
 {
   int ret;
 
@@ -126,7 +126,7 @@ net_baseline_respond_protocol_version (__sock_o pso)
 }
 
 static int
-net_baseline_proc_tier1_req (__sock_o pso, __bp_header bph)
+net_baseline_proc_tier1_req (__sock pso, __bp_header bph)
 {
   switch (bph->prot_code)
     {
@@ -143,7 +143,7 @@ net_baseline_proc_tier1_req (__sock_o pso, __bp_header bph)
 }
 
 int
-net_baseline_prochdr (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_prochdr (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -203,7 +203,7 @@ net_baseline_prochdr (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 void
-net_proto_reset_to_baseline (__sock_o pso)
+net_proto_reset_to_baseline (__sock pso)
 {
   pso->unit_size = BP_HEADER_SIZE;
   pso->rcv1 = (_p_s_cb) net_baseline_prochdr;

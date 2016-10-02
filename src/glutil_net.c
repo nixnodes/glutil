@@ -518,7 +518,7 @@ net_deploy (void)
 #include <fcntl.h>
 
 static int
-net_proc_piped_q (__sock_o pso, __g_handle hdl)
+net_proc_piped_q (__sock pso, __g_handle hdl)
 {
   unsigned char buffer[32768];
 
@@ -573,7 +573,7 @@ net_proc_piped_q (__sock_o pso, __g_handle hdl)
 }
 
 int
-net_baseline_gl_data_in (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_gl_data_in (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -636,7 +636,7 @@ net_baseline_gl_data_in (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 static void
-net_baseline_pipedata_cleanup (__sock_o pso, __g_handle hdl)
+net_baseline_pipedata_cleanup (__sock pso, __g_handle hdl)
 {
   if (pso->flags & F_OPSOCK_HALT_RECV)
     {
@@ -647,7 +647,7 @@ net_baseline_pipedata_cleanup (__sock_o pso, __g_handle hdl)
 }
 
 int
-net_baseline_pipe_data (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_pipe_data (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -673,7 +673,7 @@ net_baseline_pipe_data (__sock_o pso, pmda base, pmda threadr, void *data)
 	  g_strerr_r (errno, hdl->strerr_b, sizeof(hdl->strerr_b)));
     }
 
-  int nppq = net_proc_piped_q ((__sock_o ) hdl->pso_ref, hdl);
+  int nppq = net_proc_piped_q ((__sock ) hdl->pso_ref, hdl);
 
   if ((wp_ret == 0 || wp_ret == -1) && (nppq))
     {
@@ -702,7 +702,7 @@ net_baseline_pipe_data (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_gl_socket_destroy (__sock_o pso)
+net_gl_socket_destroy (__sock pso)
 {
 
   mutex_lock (&pso->mutex);
@@ -749,7 +749,7 @@ net_l_wp_setup_pipe (pid_t c_pid, void *arg)
 {
   __g_handle hdl = (__g_handle) arg;
 
-  __sock_o pso = (__sock_o)hdl->pso_ref;
+  __sock pso = (__sock)hdl->pso_ref;
 
   fcntl(hdl->pipe.pfd_out[0], F_SETFL, O_NONBLOCK);
 
@@ -776,7 +776,7 @@ net_l_wp_setup_pipe (pid_t c_pid, void *arg)
 }
 
 int
-net_gl_socket_init0 (__sock_o pso)
+net_gl_socket_init0 (__sock pso)
 {
 
   switch (pso->oper_mode)
@@ -858,7 +858,7 @@ net_gl_socket_init0 (__sock_o pso)
 }
 
 int
-net_gl_socket_init1 (__sock_o pso)
+net_gl_socket_init1 (__sock pso)
 {
   switch (pso->oper_mode)
     {
@@ -900,7 +900,7 @@ net_gl_socket_init1 (__sock_o pso)
 }
 
 int
-net_gl_socket_connect_init1 (__sock_o pso)
+net_gl_socket_connect_init1 (__sock pso)
 {
   switch (pso->oper_mode)
     {
@@ -914,7 +914,7 @@ net_gl_socket_connect_init1 (__sock_o pso)
 }
 
 int
-net_gl_socket_pre_clean (__sock_o pso)
+net_gl_socket_pre_clean (__sock pso)
 {
   switch (pso->oper_mode)
     {
@@ -938,7 +938,7 @@ net_gl_socket_pre_clean (__sock_o pso)
 }
 
 int
-net_gl_socket_post_clean (__sock_o pso)
+net_gl_socket_post_clean (__sock pso)
 {
   kill (getpid (), SIGUSR2);
 
@@ -946,7 +946,7 @@ net_gl_socket_post_clean (__sock_o pso)
 }
 
 int
-net_gl_socket_init1_dc_on_ac (__sock_o pso)
+net_gl_socket_init1_dc_on_ac (__sock pso)
 {
   switch (pso->oper_mode)
     {
@@ -956,7 +956,7 @@ net_gl_socket_init1_dc_on_ac (__sock_o pso)
 	{
 	  break;
 	}
-      __sock_o spso = pso->parent;
+      __sock spso = pso->parent;
       spso->flags |= F_OPSOCK_TERM;
       print_str ("NOTICE: [%d]: sending F_OPSOCK_TERM to parent: %d\n",
 		 pso->sock, spso->sock);

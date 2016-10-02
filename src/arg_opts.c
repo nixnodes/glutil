@@ -2395,7 +2395,7 @@ net_opt_parse (pmda md, void *arg)
       struct addrinfo hints =
 	{ 0 };
 
-      _sock_o dummy;
+      _sock dummy;
 
       hints.ai_flags = AI_ALL | AI_ADDRCONFIG;
       hints.ai_socktype = SOCK_STREAM;

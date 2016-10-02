@@ -134,7 +134,7 @@ ssl_cleanup (void)
 }
 
 static void
-ssl_init_setctx (__sock_o pso)
+ssl_init_setctx (__sock pso)
 {
   SSL_CTX_set_options(pso->ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
@@ -146,7 +146,7 @@ ssl_init_setctx (__sock_o pso)
 }
 
 SSL_CTX*
-ssl_init_ctx_server (__sock_o pso)
+ssl_init_ctx_server (__sock pso)
 {
   if ((pso->ctx = SSL_CTX_new (SSLv23_server_method ())) == NULL)
     { /* create new context from method */
@@ -162,7 +162,7 @@ ssl_init_ctx_server (__sock_o pso)
 }
 
 SSL_CTX*
-ssl_init_ctx_client (__sock_o pso)
+ssl_init_ctx_client (__sock pso)
 {
   if ((pso->ctx = SSL_CTX_new (SSLv23_client_method ())) == NULL)
     { /* create new context from method */
@@ -234,7 +234,7 @@ ssl_load_server_certs (SSL_CTX* ctx, char* cert_file, char* key_file)
 }
 
 static void
-ssl_show_client_certs (__sock_o pso, SSL* ssl)
+ssl_show_client_certs (__sock pso, SSL* ssl)
 {
   X509 *cert;
 
@@ -261,7 +261,7 @@ ssl_show_client_certs (__sock_o pso, SSL* ssl)
 }
 
 static int
-net_chk_timeout (__sock_o pso)
+net_chk_timeout (__sock pso)
 {
   int r = 0;
 
@@ -289,7 +289,7 @@ net_chk_timeout (__sock_o pso)
 }
 
 static int
-net_listener_chk_timeout (__sock_o pso)
+net_listener_chk_timeout (__sock pso)
 {
   int r = 0;
 
@@ -354,7 +354,7 @@ net_listener_chk_timeout (__sock_o pso)
 }
 
 uint16_t
-net_get_addrinfo_port (__sock_o pso)
+net_get_addrinfo_port (__sock pso)
 {
   void *port_data;
   switch (pso->res.ai_family)
@@ -377,7 +377,7 @@ net_get_addrinfo_port (__sock_o pso)
 }
 
 const char *
-net_get_addrinfo_ip_str (__sock_o pso, char *out, socklen_t len)
+net_get_addrinfo_ip_str (__sock pso, char *out, socklen_t len)
 {
   void *ip_data;
   switch (pso->res.ai_family)
@@ -401,7 +401,7 @@ net_get_addrinfo_ip_str (__sock_o pso, char *out, socklen_t len)
 }
 
 int
-net_addr_to_ipr (__sock_o pso, __ipr out)
+net_addr_to_ipr (__sock pso, __ipr out)
 {
   uint16_t *port_data;
   uint8_t *ip_data;
@@ -441,7 +441,7 @@ net_addr_to_ipr (__sock_o pso, __ipr out)
 }
 
 int
-net_addr_to_ipr_sa (struct sockaddr* sa, __sock_o pso, __ipr out)
+net_addr_to_ipr_sa (struct sockaddr* sa, __sock pso, __ipr out)
 {
   uint16_t *port_data;
   uint8_t *ip_data;
@@ -511,7 +511,7 @@ bind_socket (int fd, struct addrinfo *aip)
 }
 
 static void
-net_destroy_tnsat (__sock_o pso)
+net_destroy_tnsat (__sock pso)
 {
   if (!(pso->timers.flags & F_ST_MISC02_ACT))
     {
@@ -533,7 +533,7 @@ net_destroy_tnsat (__sock_o pso)
 }
 
 int
-net_destroy_connection (__sock_o so)
+net_destroy_connection (__sock so)
 {
   int ret;
 
@@ -710,7 +710,7 @@ net_destroy_connection (__sock_o so)
 }
 
 int
-unregister_connection (pmda glob_reg, __sock_o pso)
+unregister_connection (pmda glob_reg, __sock pso)
 {
   mutex_lock (&glob_reg->mutex);
 
@@ -718,7 +718,7 @@ unregister_connection (pmda glob_reg, __sock_o pso)
 
   while (ptr)
     {
-      if ((__sock_o ) ptr->ptr == pso)
+      if ((__sock ) ptr->ptr == pso)
 	{
 	  break;
 	}
@@ -743,7 +743,7 @@ unregister_connection (pmda glob_reg, __sock_o pso)
 }
 
 static void
-net_failclean (__sock_o so)
+net_failclean (__sock so)
 {
   md_g_free_l (&so->sendq);
 
@@ -805,9 +805,9 @@ net_open_connection (char *addr, char *port, __sock_ca args)
 
   mutex_lock (&args->socket_register->mutex);
 
-  __sock_o pso;
+  __sock pso;
 
-  if (!(pso = md_alloc_le (args->socket_register, sizeof(_sock_o), 0, NULL)))
+  if (!(pso = md_alloc_le (args->socket_register, sizeof(_sock), 0, NULL)))
     {
       freeaddrinfo (aip);
       close (fd);
@@ -1065,9 +1065,9 @@ net_open_listening_socket_e (char *addr, char *port, __sock_ca args,
       return -3;
     }
 
-  __sock_o pso;
+  __sock pso;
 
-  if (!(pso = md_alloc_le (args->socket_register, sizeof(_sock_o), 0, NULL)))
+  if (!(pso = md_alloc_le (args->socket_register, sizeof(_sock), 0, NULL)))
     {
       freeaddrinfo (aip);
       close (fd);
@@ -1264,7 +1264,7 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args)
   return net_open_listening_socket_e (addr, port, args, NULL);
 }
 
-__sock_o
+__sock
 net_open_listening_socket_bare (char *addr, char *port, __sock_ca args)
 {
   struct addrinfo *aip;
@@ -1298,7 +1298,7 @@ net_open_listening_socket_bare (char *addr, char *port, __sock_ca args)
       return NULL;
     }
 
-  __sock_o pso = calloc (1, sizeof(_sock_o));
+  __sock pso = calloc (1, sizeof(_sock));
 
   pso->res = *aip;
 
@@ -1372,7 +1372,7 @@ net_open_listening_socket_bare (char *addr, char *port, __sock_ca args)
 }
 
 void
-net_send_sock_sigterm (__sock_o pso)
+net_send_sock_sigterm (__sock pso)
 {
   mutex_lock (&pso->mutex);
   pso->flags |= F_OPSOCK_TERM;
@@ -1384,7 +1384,7 @@ net_send_sock_sigterm (__sock_o pso)
 }
 
 float
-net_get_score (pmda in, pmda out, __sock_o pso, po_thrd thread)
+net_get_score (pmda in, pmda out, __sock pso, po_thrd thread)
 {
   mutex_lock (&pso->mutex);
 
@@ -1402,7 +1402,7 @@ net_get_score (pmda in, pmda out, __sock_o pso, po_thrd thread)
 }
 
 int
-net_push_to_sendq (__sock_o pso, void *data, size_t size, uint16_t flags)
+net_push_to_sendq (__sock pso, void *data, size_t size, uint16_t flags)
 {
   mutex_lock (&pso->sendq.mutex);
 
@@ -1444,7 +1444,7 @@ net_push_to_sendq (__sock_o pso, void *data, size_t size, uint16_t flags)
 }
 
 int
-net_sendq_broadcast (pmda base, __sock_o source, void *data, size_t size)
+net_sendq_broadcast (pmda base, __sock source, void *data, size_t size)
 {
   mutex_lock (&base->mutex);
 
@@ -1454,7 +1454,7 @@ net_sendq_broadcast (pmda base, __sock_o source, void *data, size_t size)
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o) ptr->ptr;
+      __sock pso = (__sock) ptr->ptr;
       mutex_lock (&pso->mutex);
 
       if (NULL != source && source->sock == pso->sock)
@@ -1499,7 +1499,7 @@ net_broadcast (pmda base, void *data, size_t size, _net_bc net_bc, void *arg,
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o) ptr->ptr;
+      __sock pso = (__sock) ptr->ptr;
 
       mutex_lock (&pso->mutex);
 
@@ -1544,7 +1544,7 @@ net_broadcast (pmda base, void *data, size_t size, _net_bc net_bc, void *arg,
 }
 
 int
-net_send_direct (__sock_o pso, const void *data, size_t size)
+net_send_direct (__sock pso, const void *data, size_t size)
 {
   int ret;
   if (0 != (ret = pso->send0 (pso, (void*) data, size)))
@@ -1561,14 +1561,14 @@ net_send_direct (__sock_o pso, const void *data, size_t size)
 }
 
 static void *
-net_proc_sendq_destroy_item (__sock_sqp psqp, __sock_o pso, p_md_obj ptr)
+net_proc_sendq_destroy_item (__sock_sqp psqp, __sock pso, p_md_obj ptr)
 {
   free (psqp->data);
   return md_unlink_le (&pso->sendq, ptr);
 }
 
 static ssize_t
-net_proc_sendq (__sock_o pso)
+net_proc_sendq (__sock pso)
 {
   p_md_obj ptr = pso->sendq.first;
 
@@ -1618,7 +1618,7 @@ net_enum_sockr (pmda base, _p_enumsr_cb p_ensr_cb, void *arg)
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o) ptr->ptr;
+      __sock pso = (__sock) ptr->ptr;
 
       //mutex_lock(&pso->mutex);
 
@@ -1650,7 +1650,7 @@ net_nw_ssig_term_r (pmda objects)
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o) ptr->ptr;
+      __sock pso = (__sock) ptr->ptr;
 
       net_send_sock_sigterm(pso);
 
@@ -1669,7 +1669,7 @@ net_nw_ssig_term_r_ex (pmda objects, uint32_t flags)
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o) ptr->ptr;
+      __sock pso = (__sock) ptr->ptr;
 
       mutex_lock (&pso->mutex);
 
@@ -1708,7 +1708,7 @@ net_proc_sock_hmemb (po_thrd thrd)
 #define ST_NET_WORKER_IDLE_ALERT        ((uint8_t)1 << 2)
 
 void
-net_worker_cleanup_socket (__sock_o pso)
+net_worker_cleanup_socket (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -1762,7 +1762,7 @@ net_worker_cleanup_socket (__sock_o pso)
 }
 
 uint32_t
-net_proc_worker_detached_socket (__sock_o pso, uint32_t flags)
+net_proc_worker_detached_socket (__sock pso, uint32_t flags)
 {
   uint8_t int_state = 0;
   pid_t _tid = syscall (SYS_gettid);
@@ -1785,7 +1785,7 @@ net_proc_worker_detached_socket (__sock_o pso, uint32_t flags)
 }
 
 p_md_obj
-net_worker_process_socket (__sock_o pso, p_md_obj ptr, uint8_t *int_state,
+net_worker_process_socket (__sock pso, p_md_obj ptr, uint8_t *int_state,
 			   uint32_t flags, po_thrd thrd, pid_t *_tid,
 			   char *buffer0, uint32_t *status_flags)
 {
@@ -2027,7 +2027,7 @@ net_worker_mono (void *args)
 
   pthread_t _pt = thrd->pt;
 
-  __sock_o pso = (__sock_o ) thrd->in_objects.lref_ptr;
+  __sock pso = (__sock ) thrd->in_objects.lref_ptr;
   uint32_t thread_flags = thrd->flags;
 
   if (thread_flags & F_THRD_NOINIT)
@@ -2471,7 +2471,7 @@ net_worker (void *args)
 	    {
 	      break;
 	    }
-	  __sock_o t_pso = (__sock_o ) iobj_ptr->ptr;
+	  __sock t_pso = (__sock ) iobj_ptr->ptr;
 
 	  mutex_lock (&t_pso->mutex);
 	  if (!(t_pso->flags & F_OPSOCK_ACT))
@@ -2575,7 +2575,7 @@ net_worker (void *args)
 
       while (ptr)
 	{
-	  __sock_o pso = (__sock_o ) ptr->ptr;
+	  __sock pso = (__sock ) ptr->ptr;
 
 	  if (NULL == pso)
 	    {
@@ -2691,7 +2691,7 @@ net_worker (void *args)
 };
 
 static int
-net_assign_sock (pmda base, pmda threadr, __sock_o pso, __sock_o spso)
+net_assign_sock (pmda base, pmda threadr, __sock pso, __sock spso)
 {
   int r;
 
@@ -2793,15 +2793,15 @@ net_assign_sock (pmda base, pmda threadr, __sock_o pso, __sock_o spso)
 
 }
 
-static __sock_o
-net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd,
+static __sock
+net_prep_acsock (pmda base, pmda threadr, __sock spso, int fd,
 		 struct sockaddr *sa)
 {
   mutex_lock (&base->mutex);
 
-  __sock_o pso;
+  __sock pso;
 
-  if (NULL == (pso = md_alloc_le (base, sizeof(_sock_o), 0, NULL)))
+  if (NULL == (pso = md_alloc_le (base, sizeof(_sock), 0, NULL)))
     {
       print_str ("ERROR: net_prep_acsock: out of resources [%llu/%llu]\n",
 		 (unsigned long long int) base->offset,
@@ -2925,7 +2925,7 @@ net_prep_acsock (pmda base, pmda threadr, __sock_o spso, int fd,
 }
 
 int
-net_accept (__sock_o spso, pmda base, pmda threadr, void *data)
+net_accept (__sock spso, pmda base, pmda threadr, void *data)
 {
   int fd;
   socklen_t sin_size = sizeof(struct sockaddr_storage);
@@ -2997,7 +2997,7 @@ net_accept (__sock_o spso, pmda base, pmda threadr, void *data)
       return 0;
     }
 
-  __sock_o pso;
+  __sock pso;
 
   //pthread_mutex_unlock (&spso->mutex);
   pso = net_prep_acsock (base, threadr, spso, fd, (struct sockaddr *) &a);
@@ -3047,7 +3047,7 @@ net_accept (__sock_o spso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_recv (__sock_o pso, pmda base, pmda threadr, void *data)
+net_recv (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -3094,7 +3094,7 @@ net_recv (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_recv_ssl (__sock_o pso, pmda base, pmda threadr, void *data)
+net_recv_ssl (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -3189,11 +3189,11 @@ net_recv_ssl (__sock_o pso, pmda base, pmda threadr, void *data)
 #define T_NET_ACCEPT_SSL        (time_t) 4
 
 int
-net_accept_ssl (__sock_o spso, pmda base, pmda threadr, void *data)
+net_accept_ssl (__sock spso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&spso->mutex);
 
-  __sock_o pso = (__sock_o ) spso->cc;
+  __sock pso = (__sock ) spso->cc;
 
   mutex_lock (&pso->mutex);
 
@@ -3322,7 +3322,7 @@ net_accept_ssl (__sock_o spso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_connect_ssl (__sock_o pso, pmda base, pmda threadr, void *data)
+net_connect_ssl (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -3422,7 +3422,7 @@ net_connect_ssl (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_ssend_b (__sock_o pso, void *data, size_t length)
+net_ssend_b (__sock pso, void *data, size_t length)
 {
   mutex_lock (&pso->mutex);
 
@@ -3510,7 +3510,7 @@ net_ssend_b (__sock_o pso, void *data, size_t length)
 }
 
 int
-net_ssend_ssl_b (__sock_o pso, void *data, size_t length)
+net_ssend_ssl_b (__sock pso, void *data, size_t length)
 {
 
   mutex_lock (&pso->mutex);
@@ -3612,7 +3612,7 @@ net_ssend_ssl_b (__sock_o pso, void *data, size_t length)
 }
 
 int
-net_ssend_ssl (__sock_o pso, void *data, size_t length)
+net_ssend_ssl (__sock pso, void *data, size_t length)
 {
   if (!length)
     {
@@ -3672,7 +3672,7 @@ net_ssend_ssl (__sock_o pso, void *data, size_t length)
 }
 
 int
-net_ssend (__sock_o pso, void *data, size_t length)
+net_ssend (__sock pso, void *data, size_t length)
 {
   int ret;
 
@@ -3703,7 +3703,7 @@ net_ssend (__sock_o pso, void *data, size_t length)
 }
 
 int
-net_proc_worker_tasks (__sock_o pso)
+net_proc_worker_tasks (__sock pso)
 {
   pmda rc = &pso->tasks;
 
@@ -3743,7 +3743,7 @@ net_proc_worker_tasks (__sock_o pso)
 }
 
 int
-net_register_task (pmda host_ctx, __sock_o pso, pmda rt, _net_task_proc proc,
+net_register_task (pmda host_ctx, __sock pso, pmda rt, _net_task_proc proc,
 		   void *data, uint16_t flags)
 {
   int ret;
@@ -3786,7 +3786,7 @@ net_register_task (pmda host_ctx, __sock_o pso, pmda rt, _net_task_proc proc,
 }
 
 int
-net_pop_rc (__sock_o pso, pmda rc)
+net_pop_rc (__sock pso, pmda rc)
 {
   mutex_lock (&rc->mutex);
   if ( NULL == rc->first)
@@ -3837,7 +3837,7 @@ net_push_rc (pmda rc, _t_rcall call, uint32_t flags)
 }
 
 static int
-net_search_dupip (__sock_o pso, void *arg)
+net_search_dupip (__sock pso, void *arg)
 {
   __sock_cret parg = (__sock_cret) arg;
   if (pso->oper_mode == parg->pso->oper_mode )
@@ -3854,7 +3854,7 @@ net_search_dupip (__sock_o pso, void *arg)
 }
 
 int
-net_parent_proc_rc0_destroy (__sock_o pso)
+net_parent_proc_rc0_destroy (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -3878,7 +3878,7 @@ net_parent_proc_rc0_destroy (__sock_o pso)
 }
 
 int
-net_socket_init_enforce_policy (__sock_o pso)
+net_socket_init_enforce_policy (__sock pso)
 {
   switch (pso->flags & F_OPSOCK_OPER_MODE)
     {
@@ -3941,7 +3941,7 @@ net_exec_sock (pmda base, __ipr ipr, uint32_t flags, _ne_sock call, void *arg)
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o) ptr->ptr;
+      __sock pso = (__sock) ptr->ptr;
 
       mutex_lock (&pso->mutex);
 
@@ -3977,7 +3977,7 @@ net_exec_sock (pmda base, __ipr ipr, uint32_t flags, _ne_sock call, void *arg)
 }
 
 int
-net_generic_socket_init1 (__sock_o pso)
+net_generic_socket_init1 (__sock pso)
 {
   mutex_lock (&pso->mutex);
   char ip[128];
@@ -4010,7 +4010,7 @@ net_generic_socket_init1 (__sock_o pso)
 }
 
 int
-net_generic_socket_destroy0 (__sock_o pso)
+net_generic_socket_destroy0 (__sock pso)
 {
   mutex_lock (&pso->mutex);
   char ip[128];
@@ -4059,7 +4059,7 @@ net_join_threads (pmda base)
 
   while (ptr)
     {
-      __sock_o socket = (__sock_o) ptr->ptr;
+      __sock socket = (__sock) ptr->ptr;
       mutex_lock (&socket->mutex);
       pthread_t pt = socket->thread;
       pthread_mutex_unlock (&socket->mutex);

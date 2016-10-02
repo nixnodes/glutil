@@ -181,31 +181,31 @@ typedef struct ___sock_o
   po_thrd pthread;
   struct __sock_common_args common;
   mda tasks;
-} _sock_o, *__sock_o;
+} _sock, *__sock;
 
 typedef struct ___sock_cret
 {
-  __sock_o pso;
+  __sock pso;
   uint32_t ret;
 } _sock_cret, *__sock_cret;
 
 typedef int
-(*_p_sc_cb) (__sock_o sock_o);
+(*_p_sc_cb) (__sock sock_o);
 
 typedef int
-p_sc_cb (__sock_o sock_o);
+p_sc_cb (__sock sock_o);
 
 typedef int
-(p_s_cb) (__sock_o spso, pmda base, pmda threadr, void *data);
+(p_s_cb) (__sock spso, pmda base, pmda threadr, void *data);
 
 typedef int
-(*__p_s_cb) (__sock_o spso, pmda base, pmda threadr, void *data);
+(*__p_s_cb) (__sock spso, pmda base, pmda threadr, void *data);
 
 typedef int
-(*_p_enumsr_cb) (__sock_o sock_o, void *arg);
+(*_p_enumsr_cb) (__sock sock_o, void *arg);
 
 typedef int
-p_enumsr_cb (__sock_o sock_o, void *arg);
+p_enumsr_cb (__sock sock_o, void *arg);
 
 /*
  * int
@@ -256,26 +256,26 @@ typedef struct ___sock_create_args
 typedef struct ___net_task
 {
   int
-  (*net_task_proc) (__sock_o pso, struct ___net_task *task);
+  (*net_task_proc) (__sock pso, struct ___net_task *task);
   void *data;
   uint16_t flags;
 } _net_task, *__net_task;
 
 typedef int
-(*_net_task_proc) (__sock_o pso, struct ___net_task *task);
+(*_net_task_proc) (__sock pso, struct ___net_task *task);
 
 int
-net_register_task (pmda host_ctx, __sock_o pso, pmda rt, _net_task_proc proc,
+net_register_task (pmda host_ctx, __sock pso, pmda rt, _net_task_proc proc,
 		   void *data, uint16_t flags);
 int
-net_proc_worker_tasks (__sock_o pso);
+net_proc_worker_tasks (__sock pso);
 
 p_sc_cb rc_tst, rc_ghs, net_socket_init_enforce_policy;
 
 #define F_NET_BROADCAST_SENDQ	(uint32_t) 1 << 1
 
 typedef int
-(*_net_bc) (__sock_o pso, void *arg, void *data);
+(*_net_bc) (__sock pso, void *arg, void *data);
 
 int
 net_broadcast (pmda base, void *data, size_t size, _net_bc net_bc, void *arg,
@@ -286,7 +286,7 @@ net_connect_socket (int fd, struct addrinfo *aip);
 int
 bind_socket (int fd, struct addrinfo *aip);
 int
-check_socket_event (__sock_o pso);
+check_socket_event (__sock pso);
 void*
 net_worker (void *args);
 void *
@@ -314,58 +314,58 @@ net_open_listening_socket (char *addr, char *port, __sock_ca args);
 int
 net_open_listening_socket_e (char *addr, char *port, __sock_ca args,
 			     pthread_t *pt_ret);
-__sock_o
+__sock
 net_open_listening_socket_bare (char *addr, char *port, __sock_ca args);
 int
 net_open_connection (char *addr, char *port, __sock_ca args);
 int
-net_destroy_connection (__sock_o so);
+net_destroy_connection (__sock so);
 float
-net_get_score (pmda in, pmda out, __sock_o pso, po_thrd thread);
+net_get_score (pmda in, pmda out, __sock pso, po_thrd thread);
 void
-net_send_sock_sigterm (__sock_o pso);
+net_send_sock_sigterm (__sock pso);
 int
-net_ssend_b (__sock_o pso, void *data, size_t length);
+net_ssend_b (__sock pso, void *data, size_t length);
 int
-net_ssend_ssl_b (__sock_o pso, void *data, size_t length);
+net_ssend_ssl_b (__sock pso, void *data, size_t length);
 int
-net_ssend_ssl (__sock_o pso, void *data, size_t length);
+net_ssend_ssl (__sock pso, void *data, size_t length);
 int
-net_ssend (__sock_o pso, void *data, size_t length);
+net_ssend (__sock pso, void *data, size_t length);
 int
-net_link_sockets (__sock_o pso1, __sock_o pso2);
+net_link_sockets (__sock pso1, __sock pso2);
 int
-net_link_with_all_registered_sockets (pmda sockr, __sock_o pso,
+net_link_with_all_registered_sockets (pmda sockr, __sock pso,
 				      uint16_t match_oper_mode);
 int
-net_push_to_sendq (__sock_o pso, void *data, size_t size, uint16_t flags);
+net_push_to_sendq (__sock pso, void *data, size_t size, uint16_t flags);
 int
-net_sendq_broadcast (pmda base, __sock_o source, void *data, size_t size);
+net_sendq_broadcast (pmda base, __sock source, void *data, size_t size);
 int
-net_send_direct (__sock_o pso, const void *data, size_t size);
+net_send_direct (__sock pso, const void *data, size_t size);
 int
-net_pop_rc (__sock_o pso, pmda rc);
+net_pop_rc (__sock pso, pmda rc);
 int
 net_push_rc (pmda rc, _t_rcall call, uint32_t flags);
 const char *
-net_get_addrinfo_ip_str (__sock_o pso, char *out, socklen_t len);
+net_get_addrinfo_ip_str (__sock pso, char *out, socklen_t len);
 uint16_t
-net_get_addrinfo_port (__sock_o pso);
+net_get_addrinfo_port (__sock pso);
 int
-net_addr_to_ipr (__sock_o pso, __ipr out);
+net_addr_to_ipr (__sock pso, __ipr out);
 
 typedef int
-(*_ne_sock) (__sock_o pso, void *arg);
+(*_ne_sock) (__sock pso, void *arg);
 
 int
 net_exec_sock (pmda base, __ipr ipr, uint32_t flags, _ne_sock call, void *arg);
 
 int
-net_generic_socket_init1 (__sock_o pso);
+net_generic_socket_init1 (__sock pso);
 int
-net_generic_socket_destroy0 (__sock_o pso);
+net_generic_socket_destroy0 (__sock pso);
 int
-net_parent_proc_rc0_destroy (__sock_o pso);
+net_parent_proc_rc0_destroy (__sock pso);
 int
 net_join_threads (pmda base);
 
@@ -377,13 +377,13 @@ net_join_threads (pmda base);
 #define		F_NW_HALT_SEND		(uint32_t)1 << 3
 
 p_md_obj
-net_worker_process_socket (__sock_o pso, p_md_obj ptr, uint8_t *int_state,
+net_worker_process_socket (__sock pso, p_md_obj ptr, uint8_t *int_state,
 			   uint32_t flags, po_thrd thrd, pid_t *_tid,
 			   char *buffer0, uint32_t *status_flags);
 uint32_t
-net_proc_worker_detached_socket (__sock_o pso, uint32_t flags);
+net_proc_worker_detached_socket (__sock pso, uint32_t flags);
 void
-net_worker_cleanup_socket (__sock_o pso);
+net_worker_cleanup_socket (__sock pso);
 
 #endif
 

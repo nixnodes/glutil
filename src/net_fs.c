@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 void
-net_fs_initialize_sts (__sock_o pso)
+net_fs_initialize_sts (__sock pso)
 {
   if ( NULL == pso->va_p1)
     {
@@ -29,7 +29,7 @@ net_fs_initialize_sts (__sock_o pso)
 }
 
 int
-net_fs_send_xfer_req (__sock_o pso, uint64_t offset, uint64_t size, char *rpath)
+net_fs_send_xfer_req (__sock pso, uint64_t offset, uint64_t size, char *rpath)
 {
   print_str ("DEBUG: net_fs_send_xfer_req: [%d]: sending xfer request\n",
 	     pso->sock);
@@ -74,7 +74,7 @@ net_fs_send_xfer_req (__sock_o pso, uint64_t offset, uint64_t size, char *rpath)
 }
 
 int
-net_fs_socket_init1_req_xfer (__sock_o pso)
+net_fs_socket_init1_req_xfer (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->oper_mode)
@@ -139,7 +139,7 @@ net_baseline_fsproto_gstat (char *file, __fs_hstat data)
 }
 
 int
-net_baseline_fsproto_xfer_stat_ok (__sock_o pso, __fs_rh_enc pkt, void *arg)
+net_baseline_fsproto_xfer_stat_ok (__sock pso, __fs_rh_enc pkt, void *arg)
 {
   __fs_sts psts = (__fs_sts ) pso->va_p1;
   __fs_hstat phst = (__fs_hstat ) arg;
@@ -219,7 +219,7 @@ net_baseline_fsproto_xfer_stat_ok (__sock_o pso, __fs_rh_enc pkt, void *arg)
 }
 
 int
-net_baseline_fsproto_xfer_in_ok (__sock_o pso, __fs_rh_enc packet, void *arg)
+net_baseline_fsproto_xfer_in_ok (__sock pso, __fs_rh_enc packet, void *arg)
 {
   __fs_sts psts = (__fs_sts ) pso->va_p1;
 
@@ -280,7 +280,7 @@ net_baseline_fsproto_xfer_in_ok (__sock_o pso, __fs_rh_enc packet, void *arg)
 }
 
 int
-net_baseline_fsproto_default (__sock_o pso, __fs_rh_enc packet, void *arg)
+net_baseline_fsproto_default (__sock pso, __fs_rh_enc packet, void *arg)
 {
   char *message = (char*) ((void*) packet + sizeof(_fs_rh_enc));
   print_str ("NOTICE: [%d]: '%s'\n", pso->sock, message);
@@ -289,7 +289,7 @@ net_baseline_fsproto_default (__sock_o pso, __fs_rh_enc packet, void *arg)
 }
 
 static int
-net_baseline_fsproto_proc_notify (__sock_o pso, __fs_rh_enc packet)
+net_baseline_fsproto_proc_notify (__sock pso, __fs_rh_enc packet)
 {
   net_fs_initialize_sts (pso);
 
@@ -342,7 +342,7 @@ net_baseline_fsproto_proc_notify (__sock_o pso, __fs_rh_enc packet)
 }
 
 static __fs_rh_enc
-net_baseline_fsproto_proc_stat (__sock_o pso, void *data)
+net_baseline_fsproto_proc_stat (__sock pso, void *data)
 {
   __fs_rh_enc packet;
   char *st_path = (char*) (data + sizeof(_fs_rh_enc));
@@ -377,7 +377,7 @@ net_baseline_fsproto_proc_stat (__sock_o pso, void *data)
 }
 
 int
-net_fs_clean_handles (__sock_o pso)
+net_fs_clean_handles (__sock pso)
 {
   switch (pso->oper_mode)
     {
@@ -417,7 +417,7 @@ net_fs_clean_handles (__sock_o pso)
 }
 
 static int
-net_baseline_fsproto_xfer_conf (__sock_o pso, __fs_rh_enc packet, void *arg)
+net_baseline_fsproto_xfer_conf (__sock pso, __fs_rh_enc packet, void *arg)
 {
   char *message = (char*) ((void*) packet + sizeof(_fs_rh_enc));
 
@@ -440,7 +440,7 @@ net_baseline_fsproto_xfer_conf (__sock_o pso, __fs_rh_enc packet, void *arg)
 }
 
 static int
-net_baseline_fsproto_recv_validate (__sock_o pso, uint8_t status_flags,
+net_baseline_fsproto_recv_validate (__sock pso, uint8_t status_flags,
 				    char *msg)
 {
   __fs_rh_enc packet;
@@ -463,7 +463,7 @@ net_baseline_fsproto_recv_validate (__sock_o pso, uint8_t status_flags,
 }
 
 static int
-net_baseline_fsproto_xfer_validate (__sock_o pso, __fs_rh_enc packet, void *arg)
+net_baseline_fsproto_xfer_validate (__sock pso, __fs_rh_enc packet, void *arg)
 {
   int ret = 0;
 
@@ -529,7 +529,7 @@ net_baseline_fsproto_xfer_validate (__sock_o pso, __fs_rh_enc packet, void *arg)
 }
 
 static int
-net_baseline_fsproto_proc_sdata (__sock_o pso, void *data)
+net_baseline_fsproto_proc_sdata (__sock pso, void *data)
 {
   __fs_rh_enc packet, input = (__fs_rh_enc ) data;
 
@@ -683,7 +683,7 @@ net_baseline_fsproto_proc_sdata (__sock_o pso, void *data)
 }
 
 int
-net_baseline_fsproto (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_fsproto (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -761,7 +761,7 @@ net_baseline_fsproto (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_baseline_fsproto_send (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_fsproto_send (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -887,7 +887,7 @@ net_baseline_fsproto_send (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_baseline_fsproto_recv (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_fsproto_recv (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -1077,7 +1077,7 @@ net_fs_compile_hstat (__fs_hstat data, void *arg)
 #include <sys/syscall.h>
 
 int
-net_fs_socket_destroy_rc0 (__sock_o pso)
+net_fs_socket_destroy_rc0 (__sock pso)
 {
   mutex_lock (&pso->mutex);
 

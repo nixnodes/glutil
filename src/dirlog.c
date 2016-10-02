@@ -960,6 +960,8 @@ dirlog_find_ht (void *f, uint32_t flags, void *path)
 {
   __g_handle hdl = (__g_handle) f;
 
+  path = get_relative_path_n ((char*) path, GLROOT);
+
   size_t klen = strlen (path);
 
   if (0 == klen)

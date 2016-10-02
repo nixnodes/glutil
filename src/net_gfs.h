@@ -24,7 +24,7 @@ typedef struct ___gfs_job_dblock
   ssize_t offset;
   ssize_t size;
   uint32_t status;
-  __sock_o pso;
+  __sock pso;
   pthread_mutex_t mutex;
 } _gfs_jdb, *__gfs_jdb;
 
@@ -53,9 +53,9 @@ mda fs_jobs;
 int
 fs_worker (void *args);
 int
-net_fs_socket_destroy_gfs (__sock_o pso);
+net_fs_socket_destroy_gfs (__sock pso);
 int
-net_fs_socket_init1 (__sock_o pso);
+net_fs_socket_init1 (__sock pso);
 __gfs
 fs_job_add (pmda jobs);
 int

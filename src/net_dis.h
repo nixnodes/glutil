@@ -165,7 +165,7 @@ int
 htest ();
 
 int
-net_baseline_dis (__sock_o pso, pmda base, pmda threadr, void *data);
+net_baseline_dis (__sock pso, pmda base, pmda threadr, void *data);
 
 __do_base_h_enc
 net_dis_compile_update (int code, char *data, __ipr ipr, size_t ipr_count,
@@ -173,13 +173,13 @@ net_dis_compile_update (int code, char *data, __ipr ipr, size_t ipr_count,
 __do_base_h_enc
 net_dis_compile_genreq (int code, uint8_t f, void *data, size_t size);
 int
-net_dis_socket_init1_accept (__sock_o pso);
+net_dis_socket_init1_accept (__sock pso);
 int
 d_build_path_index (__do pool, char *out);
 int
-net_dis_socket_init1_connect (__sock_o pso);
+net_dis_socket_init1_connect (__sock pso);
 int
-net_dis_socket_dc_cleanup (__sock_o pso);
+net_dis_socket_dc_cleanup (__sock pso);
 __do_base_h_enc
 d_assemble_update (__do pool, __do basepool, char *path, uint8_t flags);
 int

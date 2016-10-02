@@ -289,7 +289,7 @@ g_omfp_write_nl (int fd, char *buffer, size_t max_size, void *arg)
 int
 g_omfp_q_nssys (int fd, char *buffer, size_t size, void *arg)
 {
-  __sock_o pso = (__sock_o) arg;
+  __sock pso = (__sock) arg;
 
   int ret;
   if ((ret = net_send_direct(pso, (const void*) buffer, size)) == -1)
@@ -305,7 +305,7 @@ g_omfp_q_nssys (int fd, char *buffer, size_t size, void *arg)
 int
 g_omfp_q_nssys_nl (int fd, char *buffer, size_t size, void *arg)
 {
-  __sock_o pso = (__sock_o) arg;
+  __sock pso = (__sock) arg;
 
   buffer[size] = 0xA;
   size++;

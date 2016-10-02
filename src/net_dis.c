@@ -746,7 +746,7 @@ net_dis_decompile_update (__do_base_h_enc packet, __do_updex *puex, __ipr *pipr)
 }
 
 static int
-net_dis_broadcast_check (__sock_o pso, void *arg, void *data)
+net_dis_broadcast_check (__sock pso, void *arg, void *data)
 {
   __ipr ipr_d = &((__do_sst ) pso->va_p3)->ipr, ipr_s = (__ipr) arg;
 
@@ -762,7 +762,7 @@ net_dis_broadcast_check (__sock_o pso, void *arg, void *data)
 }
 
 static int
-net_dis_process_inbound_update_msgl (__sock_o pso, __do_updex updex)
+net_dis_process_inbound_update_msgl (__sock pso, __do_updex updex)
 {
   int ret = 0;
 
@@ -825,7 +825,7 @@ net_dis_process_inbound_update_msgl (__sock_o pso, __do_updex updex)
 }
 
 static int
-net_dis_process_inbound_update (__sock_o pso, pmda threadr,
+net_dis_process_inbound_update (__sock pso, pmda threadr,
 				__do_base_h_enc packet)
 {
 
@@ -1003,7 +1003,7 @@ d_assemble_update (__do pool, __do base_pool, char *path, uint8_t flags)
 }
 
 __do_base_h_enc
-net_assemble_update (__sock_o pso, __do basepool, char *path, uint8_t flags)
+net_assemble_update (__sock pso, __do basepool, char *path, uint8_t flags)
 {
   mutex_lock (&di_base.nd_pool.mutex);
 
@@ -1073,7 +1073,7 @@ net_de_send_update (__do pool, void *data)
       return 0;
     }
 
-  __sock_o pso = (__sock_o) data;
+  __sock pso = (__sock) data;
 
   char b[PATH_MAX];
 
@@ -1116,13 +1116,13 @@ net_de_send_update (__do pool, void *data)
 struct net_smu
 {
   pthread_t pt;
-  __sock_o pso;
+  __sock pso;
   pthread_mutex_t mutex;
   uint8_t status;
 };
 
 int
-net_send_mass_updates (__sock_o pso)
+net_send_mass_updates (__sock pso)
 {
 
   //mutex_lock (&nsmu->pso->mutex);
@@ -1168,7 +1168,7 @@ net_send_mass_updates (__sock_o pso)
 }
 
 static int
-net_dis_process_inbound_request (__sock_o pso, pmda threadr,
+net_dis_process_inbound_request (__sock pso, pmda threadr,
 				 __do_base_h_enc packet)
 {
   if (packet->body.m00_8 & F_DH_REQUPD_ALL)
@@ -1226,7 +1226,7 @@ net_dis_process_inbound_request (__sock_o pso, pmda threadr,
 }
 
 static int
-net_dis_process_inbound_notify (__sock_o pso, pmda threadr,
+net_dis_process_inbound_notify (__sock pso, pmda threadr,
 				__do_base_h_enc packet)
 {
   if (packet->body.m00_8 & F_DH_UPDATE_EOS)
@@ -1255,7 +1255,7 @@ net_dis_process_inbound_notify (__sock_o pso, pmda threadr,
 }
 
 static int
-net_dis_check_header (__sock_o pso, __do_base_h_enc input)
+net_dis_check_header (__sock pso, __do_base_h_enc input)
 {
   size_t total = input->body.ex_len1 + input->body.ex_len2 + input->body.ex_len
       + sizeof(_do_base_h_enc);
@@ -1273,7 +1273,7 @@ net_dis_check_header (__sock_o pso, __do_base_h_enc input)
 }
 
 int
-net_baseline_dis (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_dis (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -1354,7 +1354,7 @@ net_baseline_dis (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_dis_socket_dc_cleanup (__sock_o pso)
+net_dis_socket_dc_cleanup (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -1369,7 +1369,7 @@ net_dis_socket_dc_cleanup (__sock_o pso)
 }
 
 static int
-net_dis_initialize_sts (__sock_o pso)
+net_dis_initialize_sts (__sock pso)
 {
   if ( NULL == pso->va_p3)
     {
@@ -1382,7 +1382,7 @@ net_dis_initialize_sts (__sock_o pso)
 }
 
 int
-net_dis_socket_init1_accept (__sock_o pso)
+net_dis_socket_init1_accept (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->oper_mode)
@@ -1421,7 +1421,7 @@ net_dis_socket_init1_accept (__sock_o pso)
 	  struct addrinfo hints =
 	    { 0};
 
-	  _sock_o dummy;
+	  _sock dummy;
 
 	  hints.ai_flags = AI_ALL | AI_ADDRCONFIG;
 	  hints.ai_socktype = SOCK_STREAM;
@@ -1477,7 +1477,7 @@ net_dis_socket_init1_accept (__sock_o pso)
 }
 
 int
-net_dis_socket_init1_connect (__sock_o pso)
+net_dis_socket_init1_connect (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->oper_mode)

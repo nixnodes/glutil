@@ -33,7 +33,7 @@ typedef struct ___fsd_info
   _ipr l_ip;
   uint32_t status, flags;
   pmda pasv_socks;
-  __sock_o ctl;
+  __sock ctl;
   uint8_t type;
   time_t t00;
   _t_rcall task_call;
@@ -68,15 +68,15 @@ typedef struct ___ftp_state
 _ftp_st ftp_state;
 
 int
-net_baseline_ftp (__sock_o pso, pmda base, pmda threadr, void *data);
+net_baseline_ftp (__sock pso, pmda base, pmda threadr, void *data);
 int
-net_ftp_ctl_socket_init1_accept (__sock_o pso);
+net_ftp_ctl_socket_init1_accept (__sock pso);
 int
-net_ftp_ctl_socket_rc0_destroy (__sock_o pso);
+net_ftp_ctl_socket_rc0_destroy (__sock pso);
 int
-net_ftp_msg_send (__sock_o pso, int code, char *message, ...);
+net_ftp_msg_send (__sock pso, int code, char *message, ...);
 int
-net_ftp_msg_send_q (__sock_o pso, int code, char *message, ...);
+net_ftp_msg_send_q (__sock pso, int code, char *message, ...);
 void
 net_ftp_init (hashtable_t *ht);
 

@@ -69,9 +69,9 @@ typedef struct ___fs_stat_header
 #define FS_STSS_XFER_R_WSHA             5
 
 typedef int
-(*_nfs_ncb) (__sock_o pso, __fs_rh_enc packet, void *arg);
+(*_nfs_ncb) (__sock pso, __fs_rh_enc packet, void *arg);
 typedef int
-nfs_ncb (__sock_o pso, __fs_rh_enc packet, void *arg);
+nfs_ncb (__sock pso, __fs_rh_enc packet, void *arg);
 
 #include <g_crypto.h>
 
@@ -106,11 +106,11 @@ nfs_ncb net_baseline_fsproto_xfer_stat_ok, net_baseline_fsproto_xfer_in_ok,
 p_sc_cb net_fs_socket_destroy_rc0, net_fs_clean_handles;
 
 int
-net_baseline_fsproto (__sock_o pso, pmda base, pmda threadr, void *data);
+net_baseline_fsproto (__sock pso, pmda base, pmda threadr, void *data);
 int
-net_baseline_fsproto_send (__sock_o pso, pmda base, pmda threadr, void *data);
+net_baseline_fsproto_send (__sock pso, pmda base, pmda threadr, void *data);
 int
-net_baseline_fsproto_recv (__sock_o pso, pmda base, pmda threadr, void *data);
+net_baseline_fsproto_recv (__sock pso, pmda base, pmda threadr, void *data);
 __fs_rh_enc
 net_fs_compile_filereq (int code, char *data, void *arg);
 __fs_rh_enc
@@ -122,10 +122,10 @@ int
 net_baseline_fsproto_gstat (char *file, __fs_hstat data);
 
 void
-net_fs_initialize_sts (__sock_o pso);
+net_fs_initialize_sts (__sock pso);
 int
-net_fs_send_xfer_req (__sock_o pso, uint64_t offset, uint64_t size, char *rpath);
+net_fs_send_xfer_req (__sock pso, uint64_t offset, uint64_t size, char *rpath);
 int
-net_fs_socket_init1_req_xfer (__sock_o pso);
+net_fs_socket_init1_req_xfer (__sock pso);
 
 #endif /* SRC_NET_FS_H_ */

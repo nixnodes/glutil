@@ -68,7 +68,7 @@ fs_link_socks_to_job (__gfs job, pmda psockr)
 
   while (ptr)
     {
-      __sock_o pso = (__sock_o ) ptr->ptr;
+      __sock pso = (__sock ) ptr->ptr;
 
       mutex_lock (&pso->mutex);
 
@@ -131,7 +131,7 @@ fs_link_socks_to_job (__gfs job, pmda psockr)
 static int
 fs_send_stat_req (__gfs job, p_md_obj ptr)
 {
-  __sock_o pso = (__sock_o) ptr->ptr;
+  __sock pso = (__sock) ptr->ptr;
 
   if ( mutex_trylock(&pso->mutex) == EBUSY )
     {
@@ -354,7 +354,7 @@ fs_worker (void *args)
 }
 
 int
-net_fs_socket_init1 (__sock_o pso)
+net_fs_socket_init1 (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->oper_mode)
@@ -399,7 +399,7 @@ net_fs_socket_init1 (__sock_o pso)
 }
 
 int
-net_fs_socket_destroy_gfs (__sock_o pso)
+net_fs_socket_destroy_gfs (__sock pso)
 {
   mutex_lock (&pso->mutex);
 

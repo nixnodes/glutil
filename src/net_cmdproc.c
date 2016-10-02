@@ -40,7 +40,7 @@ nc_get (hashtable_t *ht, char *cmd)
 }
 
 int
-nc_proc (hashtable_t *ht, __sock_o pso, char *cmd, char *args)
+nc_proc (hashtable_t *ht, __sock pso, char *cmd, char *args)
 {
   size_t cmdlen = strlen (cmd) + 1;
   __nc_proc ncp;

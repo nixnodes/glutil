@@ -30,25 +30,25 @@ _ftp_st ftp_state =
       { 0 } } };
 
 static int
-net_ftp_cmd_user (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_user (__sock pso, char *cmd, char *args)
 {
   return net_ftp_msg_send (pso, 331, "Password required for %s", args);
 }
 
 static int
-net_ftp_cmd_pass (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_pass (__sock pso, char *cmd, char *args)
 {
   return net_ftp_msg_send (pso, 230, "User logged in");
 }
 
 static int
-net_ftp_cmd_syst (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_syst (__sock pso, char *cmd, char *args)
 {
   return net_ftp_msg_send (pso, 215, "UNIX Type: L8");
 }
 
 static int
-net_ftp_cmd_quit (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_quit (__sock pso, char *cmd, char *args)
 {
 
   net_ftp_msg_send (pso, 200, "Bye");
@@ -59,7 +59,7 @@ net_ftp_cmd_quit (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_cmd_cwd (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_cwd (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -115,7 +115,7 @@ net_ftp_cmd_cwd (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_cmd_cdup (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_cdup (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -127,7 +127,7 @@ net_ftp_cmd_cdup (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_cmd_pwd (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_pwd (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -135,7 +135,7 @@ net_ftp_cmd_pwd (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_cmd_pbsz (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_pbsz (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -156,7 +156,7 @@ net_ftp_cmd_pbsz (__sock_o pso, char *cmd, char *args)
 }
 
 static void
-net_ftp_cleanup_pasv_host (__sock_o pso)
+net_ftp_cleanup_pasv_host (__sock pso)
 {
   //int ret = 0;
 
@@ -170,7 +170,7 @@ net_ftp_cleanup_pasv_host (__sock_o pso)
 }
 
 static int
-net_ftp_cmd_prot (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_prot (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -214,7 +214,7 @@ net_ftp_cmd_prot (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_cmd_type (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_type (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -240,7 +240,7 @@ net_ftp_cmd_type (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_pasv_host_do_endgame (__sock_o pso)
+net_ftp_pasv_host_do_endgame (__sock pso)
 {
   if (!(pso->flags & F_OPSOCK_CONNECT))
     {
@@ -262,7 +262,7 @@ net_ftp_pasv_host_do_endgame (__sock_o pso)
 #define FTP_LIST_TIMEOUT	30
 
 static int
-net_ftp_list_task (__sock_o pso)
+net_ftp_list_task (__sock pso)
 {
 
   if (pso->flags & F_OPSOCK_ERROR)
@@ -343,7 +343,7 @@ net_ftp_list_task (__sock_o pso)
 #define		NET_FTP_MAX_PASV_HOST_WAIT_TIME		30
 
 static int
-net_ftp_pasv_check_dead_ctl (__sock_o pso, __net_task task)
+net_ftp_pasv_check_dead_ctl (__sock pso, __net_task task)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -359,7 +359,7 @@ net_ftp_pasv_check_dead_ctl (__sock_o pso, __net_task task)
 #include <sys/syscall.h>
 
 static int
-net_ftp_pasv_process_ctl (__sock_o pso, __net_task task)
+net_ftp_pasv_process_ctl (__sock pso, __net_task task)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -374,7 +374,7 @@ net_ftp_pasv_process_ctl (__sock_o pso, __net_task task)
 }
 
 static int
-net_ftp_handle_pasv_host (__sock_o pso)
+net_ftp_handle_pasv_host (__sock pso)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -394,7 +394,7 @@ net_ftp_handle_pasv_host (__sock_o pso)
       return 1;
     }
 
-  __sock_o listener = fsdi->pasv_socks->first->ptr;
+  __sock listener = fsdi->pasv_socks->first->ptr;
 
   o_thrd dummy_thread =
     { 0};
@@ -421,7 +421,7 @@ net_ftp_handle_pasv_host (__sock_o pso)
       return 2;
     }
 
-  __sock_o pasv_data = fsdi->pasv_socks->first->next->ptr;
+  __sock pasv_data = fsdi->pasv_socks->first->next->ptr;
   dummy_thread.in_objects.lref_ptr = (void*) pasv_data;
 
   pasv_data->flags |= F_OPSOCK_TERM;
@@ -487,7 +487,7 @@ net_ftp_handle_pasv_host (__sock_o pso)
  }*/
 
 static int
-net_ftp_cmd_list (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_list (__sock pso, char *cmd, char *args)
 {
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
 
@@ -523,7 +523,7 @@ net_ftp_cmd_list (__sock_o pso, char *cmd, char *args)
 }
 
 static int
-net_ftp_pasv_host_task_init (__sock_o pso)
+net_ftp_pasv_host_task_init (__sock pso)
 {
   __sock_ca ca = (__sock_ca) pso->sock_ca;
 
@@ -565,7 +565,7 @@ net_ftp_pasv_host_task_init (__sock_o pso)
 }
 
 static int
-net_ftp_pasv_host_init0_ssl (__sock_o pso)
+net_ftp_pasv_host_init0_ssl (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -591,7 +591,7 @@ net_ftp_pasv_host_init0_ssl (__sock_o pso)
 }
 
 static int
-net_ftp_pasv_host_init0 (__sock_o pso)
+net_ftp_pasv_host_init0 (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -613,7 +613,7 @@ net_ftp_pasv_host_init0 (__sock_o pso)
 }
 
 static int
-net_baseline_pasv_host_init1 (__sock_o pso)
+net_baseline_pasv_host_init1 (__sock pso)
 {
   mutex_lock (&pso->mutex);
 
@@ -708,7 +708,7 @@ net_baseline_pasv_host_init1 (__sock_o pso)
  }*/
 
 static int
-net_baseline_pasv_host_rc0_destroy (__sock_o pso)
+net_baseline_pasv_host_rc0_destroy (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->flags & F_OPSOCK_OPER_MODE)
@@ -773,13 +773,13 @@ net_baseline_pasv_host_rc0_destroy (__sock_o pso)
 }
 
 static int
-net_baseline_pasv_host (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_pasv_host (__sock pso, pmda base, pmda threadr, void *data)
 {
   return 0;
 }
 
 static int
-net_deploy_pasv_host (__sock_o pso, uint16_t pasv_port)
+net_deploy_pasv_host (__sock pso, uint16_t pasv_port)
 {
 
   __fsd_info fsdi = (__fsd_info) pso->va_p3;
@@ -891,7 +891,7 @@ net_deploy_pasv_host (__sock_o pso, uint16_t pasv_port)
 }
 
 static int
-net_ftp_sock_shutdown (__sock_o pso, void *arg)
+net_ftp_sock_shutdown (__sock pso, void *arg)
 {
   pso->flags |= F_OPSOCK_TERM;
 
@@ -899,7 +899,7 @@ net_ftp_sock_shutdown (__sock_o pso, void *arg)
 }
 
 static int
-net_ftp_cmd_pasv (__sock_o pso, char *cmd, char *args)
+net_ftp_cmd_pasv (__sock pso, char *cmd, char *args)
 {
   uint16_t pasv_port;
 
@@ -1039,7 +1039,7 @@ net_ftp_init (hashtable_t *ht)
 }
 
 static int
-net_ftp_initialize_sts (__sock_o pso)
+net_ftp_initialize_sts (__sock pso)
 {
   if ( NULL == pso->va_p3)
     {
@@ -1059,7 +1059,7 @@ net_ftp_initialize_sts (__sock_o pso)
 }
 
 int
-net_baseline_ftp (__sock_o pso, pmda base, pmda threadr, void *data)
+net_baseline_ftp (__sock pso, pmda base, pmda threadr, void *data)
 {
   mutex_lock (&pso->mutex);
 
@@ -1156,7 +1156,7 @@ net_baseline_ftp (__sock_o pso, pmda base, pmda threadr, void *data)
 }
 
 int
-net_ftp_ctl_socket_init1_accept (__sock_o pso)
+net_ftp_ctl_socket_init1_accept (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->flags & F_OPSOCK_OPER_MODE)
@@ -1221,7 +1221,7 @@ net_ftp_ctl_socket_init1_accept (__sock_o pso)
  }
  */
 int
-net_ftp_ctl_socket_rc0_destroy (__sock_o pso)
+net_ftp_ctl_socket_rc0_destroy (__sock pso)
 {
   mutex_lock (&pso->mutex);
   switch (pso->flags & F_OPSOCK_OPER_MODE)
@@ -1245,7 +1245,7 @@ net_ftp_ctl_socket_rc0_destroy (__sock_o pso)
 	{
 	  c++;
 
-	  __sock_o ptr = fsdi->pasv_socks->pos->ptr;
+	  __sock ptr = fsdi->pasv_socks->pos->ptr;
 
 	  ptr->flags ^= ptr->flags & F_OPSOCK_DETACH_THREAD;
 	  ptr->flags |= F_OPSOCK_TERM;
@@ -1304,7 +1304,7 @@ net_ftp_ctl_socket_rc0_destroy (__sock_o pso)
 }
 
 int
-net_ftp_msg_send (__sock_o pso, int code, char *message, ...)
+net_ftp_msg_send (__sock pso, int code, char *message, ...)
 {
 
   char packet[NET_FTP_MAX_MSG_SIZE], msg_b[2048];
@@ -1330,7 +1330,7 @@ net_ftp_msg_send (__sock_o pso, int code, char *message, ...)
 }
 
 int
-net_ftp_msg_send_q (__sock_o pso, int code, char *message, ...)
+net_ftp_msg_send_q (__sock pso, int code, char *message, ...)
 {
   char packet[NET_FTP_MAX_MSG_SIZE], msg_b[2048];
 
