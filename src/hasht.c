@@ -21,7 +21,7 @@ ht_create (size_t size)
     return NULL;
 
   /* Allocate the table itself. */
-  if ((hashtable = (hashtable_t *) malloc (sizeof(hashtable_t))) == NULL)
+  if ((hashtable = (hashtable_t *) calloc (1, sizeof(hashtable_t))) == NULL)
     {
       return NULL;
     }
