@@ -348,8 +348,8 @@ Updated: 10/03/2016
 				u	- Gets the value of <directive>
 				p	- Returns 1 if value has been accessed with 'u' option, 0 otherwise 
 				
-	?e    <field>:<value>
-			Write string <value> to <field> of the currently processed log.
+	?e    <field>:<directive|value>
+			Write the result of <directive> or a static <value> to <field> of the currently processed log.
 			
 			Strings are automatically converted to integers where necessary.
 
