@@ -1,4 +1,4 @@
-Updated: 10/03/2016
+Updated: 18/12/2016
   
  INPUT/OUTPUT OPERATIONS:
 
@@ -501,16 +501,16 @@ Updated: 10/03/2016
 	Say we want to do something with releases (in this case just 'echo'), 
 	with a score lower than 5.0, but higher than 0
 	
-	-a --silent -lom="score < 5.0 && score" --execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
+	-a --silent -lom "score < 5.0 && score" -execv "echo \">> {title} << is below the score limit {score}/5.0\"" 
 	
 	Display all titles with score higher than or equal to 6.0, sort by score ascending:
 	
-	-a -lom="score >= 6.0" --sort asc,score -print '{score} {:t} {title}'
+	-a -lom "score >= 6.0" --sort asc,score -print '{score} {:t} {title}'
 	
 	Display all titles with score higher than 7.0 of genre Comedy,
 	sorted by score ascending:
 	
-	-a -lom="score > 7.0" -l: genres -regexi "Comedy" --sort asc,score -print '{score} {:t} {title} / {genres}'
+	-a -lom "score > 7.0" -l: genres -regexi "Comedy" --sort asc,score -print '{score} {:t} {title} / {genres}'
 
 
  FOLDERS FILE (filesystem based dirlog rebuild only):

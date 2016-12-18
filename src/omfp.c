@@ -40,7 +40,6 @@ g_print_do_filter (__g_handle hdl, void *s_exec)
 
   if (r == 1)
     {
-      print_str ("WARNING: %s: all records were filtered\n", hdl->file);
     }
   else if (r)
     {
@@ -49,7 +48,6 @@ g_print_do_filter (__g_handle hdl, void *s_exec)
 
   return r;
 }
-
 
 int
 g_print_stats (char *file, uint32_t flags, size_t block_sz)
