@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 
 
-AC_INIT([glutil], [2.6.6], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
+AC_INIT([glutil], [2.6.7], [devel@nixnodes.net],,[http://glutil.nixnodes.net/]) 
 AC_CONFIG_SRCDIR([src/main.c]) 
 
 AM_INIT_AUTOMAKE([subdir-objects silent-rules]) 
@@ -101,20 +101,11 @@ else
 		[AC_MSG_NOTICE(compiling for chrooted environment..)]) 
 fi
 
-AM_CONDITIONAL(ENABLE_CHROOT_OWNBIN, test "$glutil_chroot_ownbin" = "yes")
-
-if [ ! test "$host" ]; then
-
-	AC_CHECK_FILE( \
-	["$PWD/src/glconf.h"],, \
-	AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
-		[AC_MSG_NOTICE(copying '$prefix/bin/sources/glconf.h' to 'src/' folder..); \
-		AS_IF([cp "$prefix/bin/sources/glconf.h" "$PWD/src/glconf.h"],, \
-		[AC_MSG_ERROR([could not copy "$prefix/bin/sources/glconf.h" to "$PWD/src/glconf.h"])]) \
-	]) \
-	)
+if [ test "$glutil_enable_sbin" = "yes" ]; then
+	AC_DEFINE([_G_MODE_GFIND])
 fi
 
+AM_CONDITIONAL(ENABLE_CHROOT_OWNBIN, test "$glutil_chroot_ownbin" = "yes")
 
 AS_VAR_SET(datadir, ["$prefix/scripts"])
 
@@ -149,7 +140,19 @@ AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (fnctl.h)])])
 AC_CHECK_HEADER([limits.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (limits.h)])])
 AC_CHECK_HEADER([utime.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (utime.h)])])
 AC_CHECK_HEADER([errno.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (errno.h)])])
-AC_CHECK_HEADER([$PWD/src/glconf.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (src/glconf.h)])])
+
+if [ ! test "$host" ] && [ test "$glutil_enable_sbin" = "no" ]; then
+	AC_CHECK_FILE(["$PWD/src/glconf.h"],, \
+	AC_CHECK_FILE(["$prefix/bin/sources/glconf.h"], \
+		[AC_MSG_NOTICE(copying '$prefix/bin/sources/glconf.h' to 'src/' folder..); \
+		AS_IF([cp "$prefix/bin/sources/glconf.h" "$PWD/src/glconf.h"],, \
+		[AC_MSG_ERROR([could not copy "$prefix/bin/sources/glconf.h" to "$PWD/src/glconf.h"])]) \
+	]) \
+	)
+	
+	AC_CHECK_HEADER([$PWD/src/glconf.h],,[AC_MSG_ERROR([$GLUTIL_MSG_REQH (src/glconf.h)])])
+fi
+
 
 AC_HEADER_STDC
 

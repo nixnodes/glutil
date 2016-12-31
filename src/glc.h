@@ -8,6 +8,10 @@
 #ifndef GLC_H_
 #define GLC_H_
 
+#ifndef _G_MODE_GFIND
+
 #include <glconf.h>
+
+#endif
 
 #endif /* GLC_H_ */

@@ -10,12 +10,16 @@
 
 #include <glc.h>
 
+#ifndef _G_MODE_GFIND
+
 #define DL_SZ                           sizeof(struct dirlog)
 #define NL_SZ                           sizeof(struct nukelog)
 #define DF_SZ                           sizeof(struct dupefile)
 #define LO_SZ                           sizeof(struct lastonlog)
 #define OL_SZ                           sizeof(struct oneliner)
 #define ON_SZ                           sizeof(struct ONLINE)
+
+#endif
 
 #include <stdint.h>
 #include <inttypes.h>

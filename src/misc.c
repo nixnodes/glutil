@@ -441,6 +441,8 @@ build_data_path (char *file, char *path, char *sd)
   return ret;
 }
 
+#ifndef _G_MODE_GFIND
+
 #include <lref_imdb.h>
 #include <lref_tvrage.h>
 #include <lref_game.h>
@@ -453,11 +455,15 @@ build_data_path (char *file, char *path, char *sd)
 #include <lref_sconf.h>
 #include "lref_imdb_old.h"
 
+#endif
+
 int
 g_print_info (void)
 {
   print_version_long (NULL, 0, NULL);
   print_str (MSG_NL);
+
+#ifndef _G_MODE_GFIND
   print_str (" DATA SRC   BLOCK SIZE(B)   \n"
 	     "--------------------------\n");
   print_str (" DIRLOG         %d\t\n", DL_SZ);
@@ -478,6 +484,8 @@ g_print_info (void)
   print_str (" GCONF          %d\t\n", GC_SZ);
   print_str (" SCONF          %d\t\n", SC_SZ);
   print_str (MSG_NL);
+#endif
+
   if (gfl & F_OPT_VERBOSE)
     {
       print_str ("  TYPE         SIZE(B)   \n"
