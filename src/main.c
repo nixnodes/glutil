@@ -18,7 +18,11 @@
 #include <signal_t.h>
 #include <log_op.h>
 #include <arg_opts.h>
+
+#ifndef _G_MODE_GFIND
 #include <dirlog.h>
+#endif
+
 #include <log_io.h>
 #include <exec_t.h>
 #include <m_general.h>
@@ -29,9 +33,11 @@
 #include <x_f.h>
 #include <omfp.h>
 #include "lref_generic.h"
+
 #ifdef _G_SSYS_NET
 #include <glutil_net.h>
 #endif
+
 //#include <imdb_pload.h>
 #include <g_help.h>
 
