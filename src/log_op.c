@@ -305,8 +305,7 @@ g_populate_htref (__g_handle hdl)
 	  shell = calloc (1, sizeof(mda));
 	  md_init (shell, 4);
 	  shell->flags |= F_MDA_REFPTR;
-	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell,
-		  sizeof(pmda));
+	  ht_set (hdl->ht_ref, (unsigned char*) r_v, l, shell, sizeof(pmda));
 	}
 
       shell->lref_ptr = ptr;
@@ -582,7 +581,14 @@ g_proc_mr (__g_handle hdl)
 	  return 2089;
 	}
 
-      hdl->ht_ref = ht_create ((size_t) hdl->buffer.offset / 4);
+      size_t max = (size_t) hdl->buffer.offset / 4;
+
+      if (max == 0)
+	{
+	  max = 1;
+	}
+
+      hdl->ht_ref = ht_create (max);
       hdl->ht_field = ht_field;
 
       print_str ("DEBUG: %s: generating hashtable\n", hdl->file);

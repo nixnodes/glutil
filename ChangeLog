@@ -37,7 +37,8 @@
  *   2.6.6:
  *   - ~ Critical fix: uninitialized ht settings causing double freeing 
  *   2.6.7:
- *   - + Removed 'glconf.h' dependancy when compiling the filesystem search utility
+ *   - % Removed 'glconf.h' dependancy when compiling the filesystem search utility
+ *   - ~ Fixed segfault when running dirlog update on a very small log
  *
  * v2.5:
  *
