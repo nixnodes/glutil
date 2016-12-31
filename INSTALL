@@ -156,7 +156,6 @@ Time to test it out:
 Other precheck scripts/tools can be included as parts of an existing chain.
 Look in examples (/ftp-data/glutil/precheck-confg/) to see how.
 If you've already got a set of yourown precheck scripts to which you are used
-too, there's no need to dismiss them, rather stack their filtering tasks using 
+to, there's no need to dismiss them, rather stack their filtering tasks using 
 glutil's engine, forming a powerfull filter chain.
-
 

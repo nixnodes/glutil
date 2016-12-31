@@ -7,13 +7,13 @@
   filtering options available, making it a powerfull filesystem search 
   application.
       
-  Check /scripts folder in this repo for examples on what can be done 
+    Check /scripts folder in this repo for examples on what can be done 
     with this tool. This is a C source project, scripts are NOT required
     for any part of glutil to function.  However, scripts depend on 
     glutil to read/write binary log/shm/filesystem/config data. 
     Scripts are NOT maintained and tested on different evironments. 
     That said, they should work fine on most newer linux environments 
-    and provide scripters with a base for porting to theirown select platforms.
+    and provide scripters with a base for porting to theirown platforms.
 
   See ./glutil --help for full list of options with short descriptions.
 
@@ -30,16 +30,16 @@
       along argument strings converted from binary data to shell (-execv)
   - Write to any binary log, using an ASCII formatted text or binary 
   	  source
-  - Calculate CRC32 hashes
+  - Calculate CRC32 of files
 
  INSTALLATION:
 
   - Unpack and compile:
 
-      git clone https://github.com/nixnodes/glutil.git      
-      cp /glroot/bin/sources/glconf.h glutil/src/
-      ./configure --prefix=/glroot
-      make
+      git clone https://github.com/nixnodes/glutil.git
+      cd glutil
+      cp /glroot/bin/sources/glconf.h src/
+      ./configure --prefix=/glroot && make      
       
       Some warnings might pop up (should be safe)
       glconf.h (found in /bin/sources) is needed to compile properly,
@@ -47,8 +47,7 @@
       
   - Install:
       
-      make install      
-       
+      make install
 
 
  SUPPORTED glFTPd BINARY LOGS (with default paths):
