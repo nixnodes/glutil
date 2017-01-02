@@ -107,6 +107,7 @@ g_proc_lom (__g_handle hdl, pmda match_rr, int *loaded)
   p_md_obj ptr = md_first (match_rr);
   __g_match _m_ptr;
   int r, ret;
+
   while (ptr)
     {
       _m_ptr = (__g_match) ptr->ptr;
@@ -151,8 +152,6 @@ g_proc_lom (__g_handle hdl, pmda match_rr, int *loaded)
 int
 g_load_lom (__g_handle hdl)
 {
-  g_setjmp (0, "g_load_lom", NULL, NULL);
-
   if ((hdl->flags & F_GH_HASLOM))
     {
       return 0;
@@ -186,7 +185,6 @@ g_load_lom (__g_handle hdl)
 #ifdef _G_SSYS_THREAD
       pthread_mutex_unlock (&mutex_glob00);
 #endif
-
     }
 
   return rt;
@@ -196,7 +194,6 @@ int
 g_process_lom_string (__g_handle hdl, char *string, __g_match _gm, int *ret,
 		      uint32_t flags)
 {
-  g_setjmp (0, "g_process_lom_string", NULL, NULL);
   char *ptr = string;
   char c_b[3], o_b[3];
   char *left, *right, *comp = c_b, *oper = o_b;
@@ -465,7 +462,6 @@ g_build_lom_packet (__g_handle hdl, char *left, char *right, char *comp,
 		    size_t comp_l, char *oper, size_t oper_l, __g_match match,
 		    __g_lom *ret, uint32_t flags)
 {
-  g_setjmp (0, "g_build_lom_packet", NULL, NULL);
   int rt = 0;
   __g_lom lom;
 
@@ -696,7 +692,6 @@ g_build_lom_packet (__g_handle hdl, char *left, char *right, char *comp,
 static int
 gl_var_known (__g_handle hdl, char *field, uint32_t flags, __g_lom lom)
 {
-
   uint32_t t_f = 0;
   int base = 10;
 
@@ -818,9 +813,70 @@ copy_and_term_math_field (char *in, char *out, size_t max_size)
     }
 
   out[0] = in[0];
-  out++;
-  in++;
-  out[0] = 0x0;
+  out[1] = 0x0;
+
+  return 0;
+}
+
+static int
+proc_lom_math_g_t (__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
+{
+  md_init (&lom->chains, 8);
+  md_init (&lom->math_l, 8);
+  md_init (&lom->math_r, 8);
+
+  size_t field_l = strlen (field);
+  char *m_field = calloc (1, field_l + 1);
+  if (copy_and_term_math_field (field, m_field, field_l))
+    {
+      free (m_field);
+      return 31;
+    }
+
+  pmda p_math = NULL;
+
+  switch (flags & F_GLT_DIRECT)
+    {
+    case F_GLT_LEFT:
+      ;
+      p_math = &lom->math_l;
+      break;
+    case F_GLT_RIGHT:
+      ;
+      p_math = &lom->math_r;
+      break;
+    default:
+      ;
+      free (m_field);
+      return 34;
+    }
+
+  int m_ret2, m_ret = 0;
+  if ((m_ret2 = g_process_math_string (hdl, m_field, p_math, &lom->chains,
+				       &m_ret, NULL, 0, 0)))
+    {
+      print_str ("ERROR: [%d] [%d]: could not process math string (LOM): %s\n",
+		 m_ret2, m_ret, field);
+      free (m_field);
+      return 32;
+    }
+
+  free (m_field);
+  __g_math math = m_get_def_val (p_math);
+
+  lom->flags |= (math->flags & F_MATH_TYPES);
+
+  switch (flags & F_GLT_DIRECT)
+    {
+    case F_GLT_LEFT:
+      lom->flags |= F_LOM_IS_LVAR_MATH;
+      break;
+    case F_GLT_RIGHT:
+      lom->flags |= F_LOM_IS_RVAR_MATH;
+      break;
+    }
+
+  set_lom_vp (lom);
 
   return 0;
 }
@@ -828,67 +884,9 @@ copy_and_term_math_field (char *in, char *out, size_t max_size)
 int
 g_get_lom_g_t_ptr (__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
 {
-  g_setjmp (0, "g_get_lom_g_t_ptr", NULL, NULL);
-
   if (field[0] == 0x28)
     {
-      md_init (&lom->chains, 8);
-      md_init (&lom->math_l, 8);
-      md_init (&lom->math_r, 8);
-
-      size_t field_l = strlen (field);
-      char *m_field = calloc (field_l + 1, 1);
-      if (copy_and_term_math_field (field, m_field, field_l))
-	{
-	  free (m_field);
-	  return 31;
-	}
-
-      pmda p_math = NULL;
-
-      switch (flags & F_GLT_DIRECT)
-	{
-	case F_GLT_LEFT:
-	  p_math = &lom->math_l;
-	  break;
-	case F_GLT_RIGHT:
-	  p_math = &lom->math_r;
-	  break;
-	default:
-	  ;
-	  free (m_field);
-	  return 34;
-	}
-
-      int m_ret2, m_ret = 0;
-      if ((m_ret2 = g_process_math_string (hdl, m_field, p_math, &lom->chains,
-					   &m_ret, NULL, 0, 0)))
-	{
-	  print_str (
-	      "ERROR: [%d] [%d]: could not process math string (LOM): %s\n",
-	      m_ret2, m_ret, field);
-	  free (m_field);
-	  return 32;
-	}
-
-      free (m_field);
-      __g_math math = m_get_def_val (p_math);
-
-      lom->flags |= (math->flags & F_MATH_TYPES);
-
-      switch (flags & F_GLT_DIRECT)
-	{
-	case F_GLT_LEFT:
-	  lom->flags |= F_LOM_IS_LVAR_MATH;
-	  break;
-	case F_GLT_RIGHT:
-	  lom->flags |= F_LOM_IS_RVAR_MATH;
-	  break;
-	}
-
-      set_lom_vp (lom);
-
-      return 0;
+      return proc_lom_math_g_t (hdl, field, lom, flags);
     }
 
   int vb = 0;
@@ -901,7 +899,6 @@ g_get_lom_g_t_ptr (__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
     }
   else
     {
-
       if (off > hdl->block_sz)
 	{
 	  return 601;
