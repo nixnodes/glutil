@@ -837,7 +837,7 @@ g_get_lom_g_t_ptr (__g_handle hdl, char *field, __g_lom lom, uint32_t flags)
       md_init (&lom->math_r, 8);
 
       size_t field_l = strlen (field);
-      char *m_field = calloc (field_l, 1);
+      char *m_field = calloc (field_l + 1, 1);
       if (copy_and_term_math_field (field, m_field, field_l))
 	{
 	  free (m_field);

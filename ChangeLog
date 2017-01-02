@@ -39,6 +39,7 @@
  *   2.6.7:
  *   - % Removed 'glconf.h' dependancy when compiling the filesystem search utility
  *   - ~ Fixed segfault when running dirlog update on a very small log
+ *   - ~ Fixed buffer overrun in LOM math argument processing 
  *
  * v2.5:
  *
