@@ -779,14 +779,14 @@ dt_rval_x_data (void *arg, char *match, char *output, size_t max_size,
 
   if (0 == file_size)
     {
-      print_str ("WARNING: dt_rval_x_data: '%s': zero-byte file\n", ((__d_xref) arg)->name);
+      //print_str ("WARNING: dt_rval_x_data: '%s': zero-byte file\n", ((__d_xref) arg)->name);
       output[0] = 0x0;
       return (void*) output;
     }
 
   if (((__d_xref) arg)->st.st_mode & S_IFDIR)
     {
-      print_str("WARNING: dt_rval_x_data: '%s': is a directory\n", ((__d_xref) arg)->name);
+      //print_str("WARNING: dt_rval_x_data: '%s': is a directory\n", ((__d_xref) arg)->name);
       output[0] = 0x0;
       return (void*) output;
     }
