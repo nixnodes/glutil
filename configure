@@ -5291,7 +5291,7 @@ fi
 GLUTIL_PREFIX=$prefix
 
 
-CFLAGS="-Wall -O2"
+CFLAGS="-Wall -O2 -fcommon"
 
 
 ac_fn_c_check_member "$LINENO" "struct stat" "st_blksize" "ac_cv_member_struct_stat_st_blksize" "$ac_includes_default"
