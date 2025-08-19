@@ -123,7 +123,7 @@ AM_CONDITIONAL(ENABLE_ARM, echo $host | egrep -q "arm|eabi")
 
 AC_SUBST(GLUTIL_PREFIX, [$prefix])
 
-CFLAGS="-Wall -O2"
+CFLAGS="-Wall -O2 -fcommon"
 AC_SUBST(CFLAGS)
 
 AC_CHECK_MEMBERS([struct stat.st_blksize])
